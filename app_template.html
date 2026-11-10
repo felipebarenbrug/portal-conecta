@@ -207,6 +207,18 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
   .nav button{padding:9px 8px;font-size:14px}
   .secao-nome{display:none}
 }
+.aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
+.ajuda-b{background:none;border:1px solid rgba(0,0,0,.18);color:inherit;width:26px;height:26px;border-radius:50%;font-weight:700;cursor:pointer;line-height:1;margin-left:8px;flex:0 0 auto}
+.tour-bg{position:fixed;inset:0;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.tour-card{background:#fff;color:#1a1a1a;max-width:420px;width:100%;border-radius:14px;padding:22px 20px 18px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.tour-rot{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro,#0a3)}
+.tour-card h3{margin:.3em 0 .35em;font-size:20px}
+.tour-card p{margin:0;font-size:15px;line-height:1.5;color:#333}
+.tour-dots{display:flex;gap:6px;margin:16px 0 14px}
+.tour-dots i{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,.15)}
+.tour-dots i.on{background:var(--amarelo,#ffdb00)}
+.tour-acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media(prefers-color-scheme:dark){.tour-card{background:#15202b;color:#eef}.tour-card p{color:#cdd}}
 </style>
 </head>
 <body>
@@ -523,10 +535,92 @@ function preloadCidades(perfil){
 }
 
 /* ---------- boot ---------- */
+/* ---------- sessão: expiração por inatividade / tempo ---------- */
+const SESSAO_INATIV_MIN=30, SESSAO_MAX_H=12;
+function marcarAtividade(){try{localStorage.setItem("pc_lastact",String(Date.now()));}catch(e){}}
+function sessaoExpirada(){try{
+  const la=+localStorage.getItem("pc_lastact")||0, ss=+localStorage.getItem("pc_sessstart")||0, n=Date.now();
+  if(ss&&n-ss>SESSAO_MAX_H*3600000)return"tempo";
+  if(la&&n-la>SESSAO_INATIV_MIN*60000)return"inativ";
+}catch(e){}return null;}
+function iniciarSessao(){try{const n=String(Date.now());localStorage.setItem("pc_sessstart",n);localStorage.setItem("pc_lastact",n);}catch(e){}}
+async function expirarSessao(motivo){
+  try{await sb.auth.signOut();}catch(e){}
+  try{localStorage.removeItem("pc_lastact");localStorage.removeItem("pc_sessstart");}catch(e){}
+  S.user=null;S.profile=null;S.perfil=null;S.secao=null;S.pag="hub";S.tour=null;
+  S._erro=motivo==="tempo"?"Sua sessão expirou por tempo de conexão. Entre de novo.":"Sua sessão expirou por inatividade. Entre de novo.";
+  render();
+}
+let _wdog=null;
+function iniciarWatchdog(){
+  marcarAtividade();
+  if(!window._pcAtiv){window._pcAtiv=1;["click","keydown","scroll","mousemove","touchstart"].forEach(ev=>document.addEventListener(ev,marcarAtividade,{passive:true}));}
+  if(_wdog)clearInterval(_wdog);
+  _wdog=setInterval(()=>{const m=sessaoExpirada();if(m&&S.user)expirarSessao(m);},60000);
+}
+
+/* ---------- bloqueio por curso não concluído em 90 dias ---------- */
+const PRAZO_CURSO_DIAS=90;
+const cursoFeito=()=>qtdFeitas()>=ORDEM.length;
+function diasDesdeAcesso(){const d=S.profile&&S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):NaN;return isNaN(d)?0:Math.floor((Date.now()-d)/86400000);}
+function bloqueadoCurso(){
+  if(ehAdmin())return false;
+  if(!S.profile||S.profile.exige_curso===false)return false;
+  if(cursoFeito())return false;
+  return diasDesdeAcesso()>PRAZO_CURSO_DIAS;
+}
+function fmtDataHora(s){if(!s)return"nunca acessou";const d=new Date(s);if(isNaN(d))return"—";return d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+
+/* ---------- tour de onboarding ---------- */
+const TOURS={
+  portal:{t:"Bem-vindo ao Portal Conecta Barenbrug",p:[
+    ["O que é este portal","Um só lugar para treinar os híbridos, achar materiais de apoio à venda e acompanhar os programas comerciais da Barenbrug."],
+    ["Suas áreas","No início aparecem os cards das áreas que você tem acesso: Academia de Híbridos, Conecta RC e Conecta Revendas. Clique em uma para entrar."],
+    ["Academia de Híbridos","A trilha de vídeos e provas de Sabiá, Cayana e Carcará. Concluindo as três, você ganha o certificado."],
+    ["Seu perfil e sessão","No topo, em 'Meu perfil', você completa seus dados e troca a senha. Por segurança, a sessão expira após um tempo sem uso — é só entrar de novo. Toque no '?' a qualquer momento para rever este tour."]
+  ]},
+  academia:{t:"Academia de Híbridos",p:[
+    ["Trilha","Assista aos vídeos de cada cultivar e faça a prova (70% para aprovar). Ao concluir as três, sai o certificado."],
+    ["Base de conhecimento","Vídeos, apostilas, podcasts e os casos de sucesso reais de fazendas — material de apoio liberado desde o primeiro acesso."]
+  ]},
+  "conecta-rc":{t:"Conecta RC",p:[
+    ["Apresentação","Entenda o programa de representação: tiers por volume, comissões e como funciona."],
+    ["Curso","Quatro vídeos para dominar o Conecta RC de ponta a ponta."],
+    ["Ranking","Acompanhe sua posição por volume de híbridas na safra, o que já faturou e o que vai faturar, e quanto falta para subir de tier."]
+  ]},
+  "conecta-revendas":{t:"Conecta Revendas",p:[
+    ["Apresentação","O programa para os canais: metas de híbridas, IGDB e bônus de performance."],
+    ["Curso","Dois vídeos para entender e operar o Conecta Revendas no dia a dia."]
+  ]},
+  gestao:{t:"Painel de gerenciamento",p:[
+    ["Pessoas","Cadastre acessos, defina perfil e seções, e acompanhe quem está evoluindo."],
+    ["Evolução e último acesso","Veja módulos concluídos, o acerto por cultivar (Sabiá, Cayana, Carcará) e o último acesso de cada pessoa para medir a usabilidade."]
+  ]}
+};
+const tourVisto=k=>{try{return localStorage.getItem("pc_tour_"+k)==="1";}catch(e){return true;}};
+const marcarTour=k=>{try{localStorage.setItem("pc_tour_"+k,"1");}catch(e){}};
+function abrirTour(ctx){if(TOURS[ctx]){S.tour={ctx,i:0};render();}}
+function talvezTour(ctx){if(TOURS[ctx]&&!tourVisto(ctx)&&!S.tour){S.tour={ctx,i:0};}}
+function vTour(){
+  if(!S.tour)return"";const T=TOURS[S.tour.ctx];if(!T)return"";
+  const i=S.tour.i,step=T.p[i],ult=i>=T.p.length-1;
+  return `<div class="tour-bg"><div class="tour-card" role="dialog" aria-modal="true">
+    <span class="tour-rot">${esc(T.t)} · ${i+1}/${T.p.length}</span>
+    <h3>${esc(step[0])}</h3><p>${esc(step[1])}</p>
+    <div class="tour-dots">${T.p.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join("")}</div>
+    <div class="tour-acoes"><button class="btn sec" data-a="tour-fechar">Pular</button>${i>0?`<button class="btn sec" data-a="tour-prev">Voltar</button>`:""}<button class="btn" data-a="${ult?'tour-fechar':'tour-next'}">${ult?"Entendi":"Próximo"}</button></div>
+  </div></div>`;
+}
+function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
+
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){render();return;}
+  const m=sessaoExpirada();
+  if(m){await expirarSessao(m);return;}
+  try{if(!localStorage.getItem("pc_sessstart"))localStorage.setItem("pc_sessstart",String(Date.now()));}catch(e){}
   await carregarUsuario(session.user);
+  iniciarWatchdog();
   render();
 }
 async function carregarUsuario(u){
@@ -540,6 +634,12 @@ async function carregarUsuario(u){
   const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
   S.feitas=(prog||[]).map(r=>r.etapa);
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
+  try{
+    const agora=new Date().toISOString();const patch={ultimo_acesso:agora};
+    if(!S.profile.acesso_desde){patch.acesso_desde=agora;S.profile.acesso_desde=agora;}
+    sb.from("profiles").update(patch).eq("id",u.id);
+    S.profile.ultimo_acesso=agora;
+  }catch(e){}
   S.secao=null;S.pag="hub";
 }
 
@@ -603,7 +703,7 @@ function vPerfil(){
 /* ---------- shell ---------- */
 function cabecalho(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
-    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div></div></header>`;
+    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div><button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>`;
 }
 function subnavAcademia(){
   const abas=[["trilha","Trilha"],["base","Base de conhecimento"]];
@@ -625,12 +725,16 @@ function heroHub(){
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   const secs=SECOES.filter(s=>ehAdmin()||acessos.includes(s.id));
+  const bloq=bloqueadoCurso();
+  const banner=bloq?`<div class="aviso-bloq">⏳ Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
   const gestao=ehAdmin()?`<button class="card" data-a="secao" data-v="gestao"><span class="card-tag">Administração</span><h3>Painel de gerenciamento</h3><p>Cadastre pessoas, defina perfil e acessos, acompanhe o ranking e edite ou exclua usuários.</p><span class="card-cta">Abrir →</span></button>`:"";
-  return `${heroHub()}
+  return `${heroHub()}${banner}
   <div><h2 class="sec">Suas áreas</h2></div>
-  <div class="cards">${gestao}${secs.map(s=>s.ativo
-    ?`<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`
-    :`<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`).join("")}</div>`;
+  <div class="cards">${gestao}${secs.map(s=>{
+    if(!s.ativo)return `<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`;
+    if(bloq&&s.id!=="academia")return `<div class="card off"><span class="card-tag">🔒 Bloqueado</span><h3>${s.nome}</h3><p>Conclua o curso de híbridos para liberar esta área.</p></div>`;
+    return `<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`;
+  }).join("")}</div>`;
 }
 
 /* ---------- Academia ---------- */
@@ -944,6 +1048,7 @@ function vCriarAcesso(){
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
     <div><label for="n_rccrm">Vínculo no ranking (nome no CRM) <span class="meta">— para RC e Assessor de Vendas Digital</span></label><select id="n_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}">${esc(x.nome)}</option>`).join("")}</select></div>
+    <div><label class="check"><input type="checkbox" id="n_exige_curso" checked> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa fazer o curso (ex.: dono de revenda). Quem precisa e não concluir no prazo fica bloqueado nas demais áreas.</span></div>
     ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
     <div><button class="btn" type="submit">Criar acesso</button></div>
   </form>
@@ -961,11 +1066,11 @@ function vAcomp(){
   ${vCriarAcesso()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
-  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th><th>Sabiá</th><th>Cayana</th><th>Carcará</th><th>Geral</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td>${x.feitas} de ${ORDEM.length}</td><td>${cel("sabia")}</td><td>${cel("cayana")}</td><td>${cel("carcara")}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
+  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th><th>Sabiá</th><th>Cayana</th><th>Carcará</th><th>Geral</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}</td><td>${x.feitas} de ${ORDEM.length}</td><td>${cel("sabia")}</td><td>${cel("cayana")}</td><td>${cel("carcara")}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
 }
 const totalQ=id=>{const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
 async function carregarEquipe(){
-  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone");
+  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone,ultimo_acesso");
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota");
   const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||{})[r.etapa]=r.nota;});
   S.progPorUser=porUser;
@@ -975,7 +1080,7 @@ async function carregarEquipe(){
     let soma=0; feitasAtivas.forEach(id=>soma+=(rs[id]/totalQ(id))*100);
     const conhecimento=feitasAtivas.length?Math.round(soma/feitasAtivas.length):null;
     const cult={};ETAPAS_ATIVAS.forEach(id=>{cult[id]=rs[id]!=null?Math.round(rs[id]/totalQ(id)*100):null;});
-    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,
+    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,ultimo_acesso:p.ultimo_acesso,
             feitas:feitasAtivas.length, conhecimento, cult};
   }).sort((a,b)=> (b.feitas-a.feitas) || ((b.conhecimento||0)-(a.conhecimento||0)) || a.nome.localeCompare(b.nome));
 }
@@ -993,11 +1098,12 @@ function vUsuarioAdmin(){
   const u=S.adminUser,ehEu=u.id===S.user.id;
   const ac=Array.isArray(S.adminForm.acessos)?S.adminForm.acessos:[];
   return `<button class="voltar" data-a="pag" data-v="gestao-home">‹ Painel de gerenciamento</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
   ${evolucaoHTML(u.id)}
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -1018,7 +1124,8 @@ async function abrirUsuario(id){
 }
 
 /* ---------- render ---------- */
-function render(){
+function render(){renderApp();paintTour();}
+function renderApp(){
   const app=document.getElementById("app");
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
@@ -1026,8 +1133,10 @@ function render(){
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
+  if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"){S.secao="academia";S.pag="trilha";}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
-  if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  talvezTour(S.secao);
   if(S.secao==="gestao"){
     if(!ehAdmin()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
     if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
@@ -1068,9 +1177,13 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
+  if(a==="tour-fechar"){const c=S.tour&&S.tour.ctx;if(c)marcarTour(c);S.tour=null;render();return;}
+  if(a==="tour-next"){if(S.tour)S.tour.i++;render();return;}
+  if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
+  if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
@@ -1160,7 +1273,7 @@ document.addEventListener("submit",async ev=>{
     const btn=f.querySelector("button");btn.disabled=true;btn.textContent="Entrando…";
     const {error}=await sb.auth.signInWithPassword({email,password:senha});
     if(error){S._erro=/invalid login/i.test(error.message)?"E-mail ou senha incorretos.":"Não foi possível entrar. Tente de novo.";render();return;}
-    const {data:{session}}=await sb.auth.getSession();await carregarUsuario(session.user);render();
+    const {data:{session}}=await sb.auth.getSession();iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();
   }
   if(f.id==="f-senha"){
     const s1=f.querySelector("#s1").value,s2=f.querySelector("#s2").value;
@@ -1189,6 +1302,7 @@ document.addEventListener("submit",async ev=>{
     if(schema.some(c=>c.req&&!((S.adminForm[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
     const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.adminForm[c.k]||"").trim();});
     dados.acessos=[...f.querySelectorAll("[data-acesso]:checked")].map(c=>c.getAttribute("data-acesso"));
+    dados.exige_curso=!!(f.querySelector("[data-exige]")&&f.querySelector("[data-exige]").checked);
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
@@ -1202,6 +1316,7 @@ document.addEventListener("submit",async ev=>{
     const perfil=f.querySelector("#n_perfil").value;
     const acessos=[...f.querySelectorAll(".n_acesso:checked")].map(c=>c.value);
     const rcCrm=(perfil==="RC"||perfil==="Assessor de Vendas Digital")?(f.querySelector("#n_rccrm").value||null):null;
+    const exigeCurso=!!(f.querySelector("#n_exige_curso")&&f.querySelector("#n_exige_curso").checked);
     S._erroCriar=null;
     if(!acessos.length){S._erroCriar="Marque pelo menos uma seção de acesso.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Criando…";
@@ -1210,7 +1325,7 @@ document.addEventListener("submit",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
-    await sb.from("profiles").update({acessos}).eq("email",email);
+    await sb.from("profiles").update({acessos,exige_curso:exigeCurso}).eq("email",email);
     if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
     return;
