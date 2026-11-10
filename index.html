@@ -21,9 +21,7 @@ p{margin:0}
 img{max-width:100%}
 :focus-visible{outline:3px solid var(--azul-escuro);outline-offset:2px}
 .sci{font-style:italic}
-.oculto{display:none!important}
 
-/* layout base */
 .topo{background:var(--amarelo);padding:12px 16px 0}
 .topo-in{max-width:880px;margin:0 auto}
 .topo-linha{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
@@ -43,22 +41,20 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .btn:disabled{background:var(--bloqueado);cursor:not-allowed}
 .btn.preto{background:var(--preto)}
 .link{text-align:left;background:none;border:0;padding:0;color:var(--azul-escuro);text-decoration:underline;cursor:pointer}
-
-/* carregando */
 .carregando{min-height:70vh;display:grid;place-items:center;color:var(--apagado)}
 
-/* login / senha */
 .acesso{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;background:var(--branco)}
 .acesso-marca{background:var(--amarelo);padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
 .acesso-marca h1{font-size:clamp(30px,5vw,42px);font-weight:800;color:var(--preto)}
 .acesso-form{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px}
 .acesso-form h2{color:var(--azul);font-weight:800;font-size:24px}
 label{font-weight:700;font-size:14px;display:block;margin-bottom:5px}
-input{width:100%;padding:12px;border:1.5px solid var(--linha);border-radius:6px;background:var(--branco);color:var(--preto)}
+input,select{width:100%;padding:12px;border:1.5px solid var(--linha);border-radius:6px;background:var(--branco);color:var(--preto)}
+input:disabled{background:var(--papel);color:var(--apagado)}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .erro{background:var(--amarelo-claro);padding:10px 12px;font-size:14px;border-left:4px solid var(--preto)}
 .dica{font-size:13px;color:var(--apagado)}
 
-/* próximo passo */
 .proximo{background:var(--amarelo);padding:22px;display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
 .proximo>div{min-width:0;flex:1 1 260px}
 .rot{font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
@@ -67,7 +63,6 @@ input{width:100%;padding:12px;border:1.5px solid var(--linha);border-radius:6px;
 .barra i{display:block;height:100%;background:var(--azul)}
 .resumo{display:grid;gap:7px;font-size:14px;color:var(--apagado)}
 
-/* trilha */
 .trilha{list-style:none;margin:0;padding:0;display:grid}
 .trilha li{display:grid;grid-template-columns:44px 1fr;gap:14px;position:relative;padding-bottom:12px}
 .trilha li:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:3px;background:var(--linha)}
@@ -83,7 +78,6 @@ button.etapa-b:hover h3{text-decoration:underline}
 .bloq .etapa-b h3{color:var(--apagado)}
 .est{font-size:12px;font-weight:700;color:var(--azul-escuro)}
 
-/* etapa */
 .player{background:var(--azul-escuro);color:var(--branco);aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:16px;text-align:center}
 .play{width:0;height:0;border-left:30px solid var(--amarelo);border-top:18px solid transparent;border-bottom:18px solid transparent}
 .player h3{font-size:clamp(18px,4vw,24px);color:var(--branco)}
@@ -99,11 +93,10 @@ button.etapa-b:hover h3{text-decoration:underline}
 .check input{width:18px;height:18px;accent-color:var(--azul-escuro)}
 .bloco{display:grid;gap:12px}
 
-/* quiz */
 .perg{background:var(--branco);padding:16px;border:0;margin:0;border-radius:6px}
 .perg legend{font-weight:700;padding:0;margin-bottom:10px}
 .perg .op{display:flex;gap:9px;align-items:flex-start;padding:7px 0;font-weight:400;font-size:15px;cursor:pointer;margin:0}
-.perg .op input{margin-top:4px;accent-color:var(--azul-escuro)}
+.perg .op input{margin-top:4px;width:auto;accent-color:var(--azul-escuro)}
 .mark{font-size:13px;font-weight:700;margin-top:8px}
 .resultado{padding:16px;border-radius:6px}
 .resultado.ok{background:var(--azul);color:var(--branco)}
@@ -111,13 +104,13 @@ button.etapa-b:hover h3{text-decoration:underline}
 .resultado h3{font-size:22px;font-weight:800}
 .resultado.ok h3 b{color:var(--amarelo)}
 
-/* base */
 .filtros{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border:0;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--linha);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px;color:var(--preto)}
+.chip{border:0;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--linha);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px;color:var(--preto);width:auto}
 .chip[aria-pressed=true]{background:var(--azul-escuro);color:var(--branco);box-shadow:none}
 .vazio{padding:20px;background:var(--branco);color:var(--apagado);border-radius:6px}
 
-/* certificado */
+.form-card{background:var(--branco);padding:18px;border-radius:6px;display:grid;gap:14px;max-width:520px}
+
 .cert{background:var(--azul);color:var(--branco);padding:clamp(24px,6vw,48px);display:grid;gap:14px;border-radius:6px}
 .cert .rot{color:var(--amarelo)}
 .cert h2{font-size:clamp(26px,6vw,40px);font-weight:800;color:var(--branco)}
@@ -125,7 +118,6 @@ button.etapa-b:hover h3{text-decoration:underline}
 .cert .slogan{font-weight:800;font-size:20px;margin-top:10px}
 .cert .slogan b{color:var(--amarelo)}
 
-/* admin */
 .tab{overflow-x:auto;background:var(--branco);border-radius:6px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
 th{text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--apagado);padding:10px 12px;border-bottom:2px solid var(--linha)}
@@ -196,16 +188,18 @@ const BASE=[];
 ["Sabiá","Cayana","Carcará"].forEach(c=>[["Apostila","PDF"],["Podcast","Áudio"],["Banco de imagens","Fotos"],["Posts","Artes prontas"]].forEach(([t,f])=>BASE.push({c,t,f,n:`${t} ${c}`})));
 BASE.push({c:"Geral",t:"Apostila",f:"PDF",n:"Glossário do pasto"},{c:"Geral",t:"Apostila",f:"PDF",n:"Perguntas frequentes do vendedor"});
 
-let S={user:null, perfil:null, feitas:[], notas:{}, pag:"trilha", etapa:null, video:0, vistos:{}, res:null,
-       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null};
+const REQUIRED=["nome","telefone"];
 
-const hoje=()=>new Date().toLocaleDateString("pt-BR");
+let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, pag:"trilha", etapa:null, video:0, vistos:{}, res:null,
+       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null};
+
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
 const feitasOrdenadas=()=>ORDEM.filter(id=>S.feitas.includes(id));
 const qtdFeitas=()=>feitasOrdenadas().length;
 const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORDEM[i]))return i;}return ORDEM.length;};
 const estado=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador";
+const cadastroCompleto=()=>REQUIRED.every(f=>S.profile&&(S.profile[f]||"").trim());
 
 /* ---------- boot ---------- */
 async function boot(){
@@ -217,8 +211,8 @@ async function boot(){
 async function carregarUsuario(u){
   S.user=u;
   let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
-  if(!prof){ // segurança: cria se o trigger não tiver criado
-    await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email}).select();
+  if(!prof){
+    await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email});
     ({data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle());
   }
   S.profile=prof||{};
@@ -229,7 +223,7 @@ async function carregarUsuario(u){
   S.pag=ehAdmin()?"acomp":"trilha";
 }
 
-/* ---------- telas de acesso ---------- */
+/* ---------- acesso ---------- */
 function vLogin(erro){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
     <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">O ponto de partida de quem vende Sabiá, Cayana e Carcará.</p></div></div>
@@ -248,14 +242,39 @@ function vTrocaSenha(erro){
       <div><label for="s1">Nova senha</label><input id="s1" type="password" required minlength="8" autocomplete="new-password"></div>
       <div><label for="s2">Repita a nova senha</label><input id="s2" type="password" required minlength="8" autocomplete="new-password"></div>
       ${erro?`<div class="erro" role="alert">${esc(erro)}</div>`:""}
-      <button class="btn" type="submit">Salvar e entrar</button>
+      <button class="btn" type="submit">Salvar e continuar</button>
       <p class="dica">Pelo menos 8 caracteres.</p>
     </form></div>`;
+}
+function camposPerfil(){
+  const p=S.profile||{};
+  const campo=(id,lbl,val,req,tipo)=>`<div><label for="${id}">${lbl}${req?" *":""}</label><input id="${id}" type="${tipo||"text"}" value="${esc(val)}" ${req?"required":""}></div>`;
+  return campo("c_nome","Nome completo",p.nome,true)
+    +`<div><label for="c_email">E-mail</label><input id="c_email" value="${esc(S.user.email)}" disabled></div>`
+    +campo("c_tel","Telefone / WhatsApp",p.telefone,true,"tel")
+    +`<div class="dupla">${campo("c_cidade","Cidade",p.cidade,false)}${campo("c_uf","UF",p.uf,false)}</div>`
+    +campo("c_funcao","Função / cargo",p.funcao,false);
+}
+function vCadastroObrig(){
+  return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Primeiro acesso: complete seu cadastro para continuar.</p></div></div>
+    <form class="acesso-form" id="f-cadastro"><h2>Complete seu cadastro</h2><p>Os campos com <strong>*</strong> são obrigatórios.</p>
+      ${camposPerfil()}
+      ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+      <button class="btn" type="submit">Salvar e continuar</button>
+    </form></div>`;
+}
+function vPerfil(){
+  return `<div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
+  <form class="form-card" id="f-cadastro">${camposPerfil()}
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div><button class="btn" type="submit">Salvar</button></div></form>`;
 }
 
 /* ---------- app ---------- */
 function cabecalho(){
-  const it=ehAdmin()?[["acomp","Acompanhamento"],["base","Base de conhecimento"]]:[["trilha","Minha trilha"],["base","Base de conhecimento"]];
+  const comuns=[["base","Base de conhecimento"],["perfil","Meu perfil"]];
+  const it=ehAdmin()?[["acomp","Acompanhamento"],...comuns]:[["trilha","Minha trilha"],...comuns];
   return `<header class="topo"><div class="topo-in"><div class="topo-linha"><img class="logo" src="${LOGO}" alt="Barenbrug">
     <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="sair">Sair</button></div></div>
     <nav class="nav" aria-label="Principal">${it.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav></div></header>`;
@@ -305,14 +324,14 @@ function vAcomp(){
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS[x.feitas]?ETAPAS[x.feitas].n:"—");
   const conc=S.equipe.filter(x=>x.feitas>=ORDEM.length).length;
   return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha.</p></div>
-  <div class="nota-admin">O painel para você cadastrar novas pessoas e gerar a senha é o próximo passo. Por enquanto, os acessos são criados junto comigo.</div>
-  <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td></tr>`).join("")}</tbody></table></div></section>`;
+  <div class="nota-admin">O painel para você cadastrar novas pessoas (com o perfil de cada uma e a senha gerada automaticamente) é o próximo passo. Por enquanto, os acessos são criados junto comigo.</div>
+  <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 async function carregarEquipe(){
-  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil");
+  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone");
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota");
   const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||[]).push(r);});
-  S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
+  S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
     .sort((a,b)=>b.feitas-a.feitas);
 }
 
@@ -321,11 +340,12 @@ function render(){
   const app=document.getElementById("app");
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
-  const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp}[S.pag]||vTrilha;
+  if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
+  const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp,perfil:vPerfil}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
   app.innerHTML=cabecalho()+`<main>${corpo()}</main>`;
   if(S.pag==="acomp"&&!S.equipe){carregarEquipe().then(render);}
 }
-const ir=p=>{S.pag=p;S.res=null;render();window.scrollTo(0,0);};
+const ir=p=>{S.pag=p;S.res=null;S._erro=null;render();window.scrollTo(0,0);};
 async function concluir(id,nota){
   if(!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=nota;
     await sb.from("progresso").upsert({user_id:S.user.id,etapa:id,nota},{onConflict:"user_id,etapa"});}
@@ -335,7 +355,7 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,perfil:null,feitas:[],notas:{},pag:"trilha",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null};render();}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},pag:"trilha",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null};render();}
   if(a==="pag")ir(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;ir("etapa");}
   if(a==="video"){S.video=+v;render();}
@@ -373,6 +393,18 @@ document.addEventListener("submit",async ev=>{
     if(error){S._erro="Não foi possível salvar a senha. Tente de novo.";render();return;}
     await sb.from("profiles").update({precisa_trocar_senha:false}).eq("id",S.user.id);
     S.profile.precisa_trocar_senha=false;render();
+  }
+  if(f.id==="f-cadastro"){
+    const g=id=>f.querySelector(id).value.trim();
+    const dados={nome:g("#c_nome"),telefone:g("#c_tel"),cidade:g("#c_cidade"),uf:g("#c_uf"),funcao:g("#c_funcao")};
+    if(!dados.nome||!dados.telefone){S._erro="Preencha os campos obrigatórios (*).";render();return;}
+    const eraObrig=!cadastroCompleto();
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+    const {error}=await sb.from("profiles").update(dados).eq("id",S.user.id);
+    if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
+    Object.assign(S.profile,dados);S._erro=null;
+    if(eraObrig){S.pag=ehAdmin()?"acomp":"trilha";render();aviso("Cadastro completo. Bem-vindo!");}
+    else{render();aviso("Dados salvos.");}
   }
   if(f.id==="f-quiz"){
     const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=id==="prova"?6:2;
