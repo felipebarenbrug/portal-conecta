@@ -173,6 +173,20 @@ td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:t
 .faq-item{background:var(--branco);border-radius:6px;padding:12px 14px}
 .faq-item summary{font-weight:700;cursor:pointer}
 .faq-item p{margin-top:8px;color:var(--apagado);font-size:15px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.metric{background:var(--branco);border-radius:8px;padding:14px}
+.metric span{font-size:12px;color:var(--apagado);text-transform:uppercase;letter-spacing:.04em}
+.metric strong{display:block;font-size:20px;margin-top:4px;color:var(--azul-escuro)}
+.acoes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.acao-card{background:var(--branco);border-radius:8px;padding:14px;display:grid;gap:6px;box-shadow:0 1px 0 var(--linha)}
+.acao-card.sel{box-shadow:inset 0 0 0 2px var(--azul)}
+.acao-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.acao-bot{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.stbadge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.stbadge.ok{background:#E3F7E8;color:#1E7A34}
+.stbadge.no{background:#FBE9EA;color:var(--vermelho)}
+.stbadge.an{background:var(--amarelo-claro);color:#6b5e00}
+.anexo-item{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:4px 0;border-bottom:1px solid var(--linha)}
 .checks{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:4px}
 .checks .check{font-weight:500}
 .precos-nota{background:var(--azul-claro);border-left:4px solid var(--azul);padding:12px 14px;border-radius:4px;font-size:14px;display:grid;gap:6px}
@@ -476,7 +490,8 @@ const schemaDoPerfil=p=>SCHEMAS[p]||BASE_CAMPOS;
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
        fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null,
-       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null, rcEtapa:null, rvEtapa:null};
+       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null, rcEtapa:null, rvEtapa:null,
+       canais:null, acoesCanal:{}, canalSel:null, acaoSel:null, editCanal:false, novaAcao:false};
 
 const formAtual=()=>S[S.formAlvo]||{};
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
@@ -721,8 +736,9 @@ function vRCEtapa(){
 /* ---------- Conecta Revendas ---------- */
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
+  if(ehAdmin())abas.push(["rv-canais","Canais"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta Revendas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Conecta Revendas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
 }
 function vRVApresentacao(){
@@ -763,6 +779,87 @@ function vRVEtapa(){
   <div><span class="rot">Vídeo ${i+1} de ${RV_CURSO.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
   ${e.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${e.yt}?rel=0" title="${esc(e.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${e.n}</h3><p>Vídeo em breve</p></div>`}
   <div class="acoes">${i+1<RV_CURSO.length?`<button class="btn" data-a="rv-abrir" data-v="${i+1}">Próximo vídeo →</button>`:`<button class="btn sec" data-a="pag" data-v="rv-apresentacao">Voltar à apresentação</button>`}</div>`;
+}
+/* ---------- Conecta Revendas — Painel de Canais (admin) ---------- */
+const fmtR=n=>"R$ "+(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtKg=n=>(Number(n)||0).toLocaleString("pt-BR")+" kg";
+async function carregarCanais(){
+  const {data:cs}=await sb.from("canais").select("*");
+  const {data:as}=await sb.from("acoes_pgd").select("*");
+  const porCanal={};(as||[]).forEach(a=>{(porCanal[a.canal_id]=porCanal[a.canal_id]||[]).push(a);});
+  const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
+  S.canais=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));
+  S.acoesCanal=porCanal;
+}
+function metricasCanal(c){
+  const pot=(Number(c.meta_kg)||0)*(Number(c.valor_kg)||0)*(Number(c.pct_conecta)||0);
+  const ac=S.acoesCanal[c.id]||[];
+  const soma=ac.reduce((s,a)=>s+(Number(a.valor_igdb)||0),0);
+  return {pot,igdb:pot/2,bonus:pot/2,soma,saldo:pot/2-soma,n:ac.length};
+}
+const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
+function vRVCanais(){
+  if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
+  const rows=S.canais.map(c=>{const m=metricasCanal(c);return `<tr><td>${esc(c.nome)}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td>${m.n}</td><td class="val">${c.valor_kg>0?fmtR(m.igdb):"a definir"}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`;}).join("");
+  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta de híbridos, verba de IGDB, bônus estimado e o PGD de cada canal.</p></div>
+  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th>Ações</th><th class="val">IGDB est.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function vAcaoEditor(a){
+  const anexos=Array.isArray(a.anexos)?a.anexos:[];
+  return `<form class="form-card" id="f-acao" data-id="${a.id}" style="box-shadow:inset 0 0 0 2px var(--azul)">
+    <h3 class="sec">${esc(a.tipo||"Ação")}</h3>
+    <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}${a.data_acao?" · "+esc(a.data_acao):""}</div>
+    <div><label>Descrição</label><textarea id="a_descr" rows="3">${esc(a.descricao||"")}</textarea></div>
+    <div class="dupla"><div><label>Status (aprovação Barenbrug)</label><select id="a_status">${["Em Análise","Aprovado","Reprovado"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div><label>Valor de IGDB da ação (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div></div>
+    <div><label>Comentário de status (Barenbrug)</label><textarea id="a_coment" rows="2" placeholder="Observações sobre esta ação…">${esc(a.comentario||"")}</textarea></div>
+    <div><label>Anexos</label><div class="lista">${anexos.length?anexos.map((x,i)=>`<div class="anexo-item"><a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.nome||x.url)}</a><button type="button" class="link perigo" data-a="delanexo" data-v="${i}">remover</button></div>`).join(""):`<span class="meta">Nenhum anexo.</span>`}</div>
+      <div class="dupla" style="margin-top:8px"><input id="a_anexo_nome" placeholder="Nome do anexo"><input id="a_anexo_url" placeholder="Link (https://…)"></div></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar ação</button><button class="btn sec" type="button" data-a="fecharacao">Fechar</button><button class="btn perigo" type="button" data-a="delacao" data-v="${a.id}">Excluir</button></div>
+  </form>`;
+}
+function vCanalEditor(c){
+  return `<form class="form-card" id="f-canal"><h3 class="sec">Editar dados do canal</h3>
+    <div class="dupla"><div><label>Tier</label><select id="c_tier">${["Blue","Yellow","Yellow Pro","Yellow Master"].map(t=>`<option ${c.tier===t?"selected":""}>${t}</option>`).join("")}</select></div>
+      <div><label>Responsável Barenbrug</label><input id="c_resp" value="${esc(c.responsavel||"")}"></div></div>
+    <div><label>Responsável legal (contrato)</label><input id="c_legal" value="${esc(c.responsavel_legal||"")}"></div>
+    <div class="dupla"><div><label>Meta de híbridos (kg)</label><input id="c_meta" type="number" value="${Number(c.meta_kg)||0}"></div>
+      <div><label>Valor médio do kg (R$)</label><input id="c_valor" type="number" step="0.01" value="${Number(c.valor_kg)||0}"></div></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="editarcanal">Cancelar</button></div></form>`;
+}
+function vNovaAcao(){
+  const tipos=["Ação em Loja","AT - Assistente Técnico","Bonificação / Campo Demonstrativo","Campanha Digital","Dia de Campo","Encontro de Produtores","Evento/Feira","Incentivo de Vendas / Rebate","Incentivo de Vendas / Viagem","Leilão/Patrocínio","Material POS/PDV","Palestra Técnica","Treinamento Canal","Visita Técnica","Webinar/Live","Outros"];
+  return `<form class="form-card" id="f-novaacao"><h3 class="sec">Nova ação</h3>
+    <div><label>Tipo (Geração de demanda)</label><select id="na_tipo">${tipos.map(t=>`<option>${t}</option>`).join("")}</select></div>
+    <div class="dupla"><div><label>Cidade</label><input id="na_cidade"></div><div><label>Valor de IGDB (R$)</label><input id="na_valor" type="number" step="0.01" value="0"></div></div>
+    <div><label>Descrição</label><textarea id="na_descr" rows="2"></textarea></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar ação</button><button class="btn sec" type="button" data-a="novaacao">Cancelar</button></div></form>`;
+}
+function vRVCanal(){
+  const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
+  if(!c) return `<div class="carregando">Carregando…</div>`;
+  const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
+  const cards=ac.map(a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}"><div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
+    <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
+    <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span><button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button></div></div>`).join("");
+  const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
+  return `<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>
+  <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
+    <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}</p></div>
+  <div class="metrics">
+    <div class="metric"><span>Meta (híbridos)</span><strong>${fmtKg(c.meta_kg)}</strong></div>
+    <div class="metric"><span>Potencial Conecta (est.)</span><strong>${c.valor_kg>0?fmtR(m.pot):"—"}</strong></div>
+    <div class="metric"><span>Verba IGDB (est.)</span><strong>${c.valor_kg>0?fmtR(m.igdb):"—"}</strong></div>
+    <div class="metric"><span>Bônus performance (est.)</span><strong>${c.valor_kg>0?fmtR(m.bonus):"—"}</strong></div>
+  </div>
+  <div class="precos-nota">PGD: soma das ações <strong>${fmtR(m.soma)}</strong>${c.valor_kg>0?` de ${fmtR(m.igdb)} de verba IGDB · Saldo <strong style="color:${m.saldo>=0?'var(--azul-escuro)':'var(--vermelho)'}">${fmtR(m.saldo)}</strong>${m.saldo<0?" — acima da verba!":""}`:" · defina o valor médio do kg (em Editar dados do canal) para estimar a verba"}</div>
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD — Plano de Geração de Demanda (${ac.length})</h2><div class="acoes"><button class="btn sec" data-a="editarcanal">Editar dados do canal</button><button class="btn" data-a="novaacao">+ Nova ação</button></div></div>
+  ${S.editCanal?vCanalEditor(c):""}
+  ${S.novaAcao?vNovaAcao():""}
+  ${ac.length?`<div class="acoes-grid">${cards}</div>`:`<div class="vazio">Nenhuma ação cadastrada.${c.nome==="Imperagro"?" (PGD com template diferente — importar depois.)":""}</div>`}
+  ${sel?vAcaoEditor(sel):""}
+  </section>`;
 }
 function vBase(){
   const b=S.busca.toLowerCase();
@@ -816,7 +913,7 @@ function vAcomp(){
   ${vCriarAcesso()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
-  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Módulos</th><th>Conhecimento</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>`<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")}</tbody></table></div></section>`;
+  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th><th>Sabiá</th><th>Cayana</th><th>Carcará</th><th>Geral</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td>${x.feitas} de ${ORDEM.length}</td><td>${cel("sabia")}</td><td>${cel("cayana")}</td><td>${cel("carcara")}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
 }
 const totalQ=id=>{const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
 async function carregarEquipe(){
@@ -829,8 +926,9 @@ async function carregarEquipe(){
     const feitasAtivas=ETAPAS_ATIVAS.filter(id=>rs[id]!=null);
     let soma=0; feitasAtivas.forEach(id=>soma+=(rs[id]/totalQ(id))*100);
     const conhecimento=feitasAtivas.length?Math.round(soma/feitasAtivas.length):null;
+    const cult={};ETAPAS_ATIVAS.forEach(id=>{cult[id]=rs[id]!=null?Math.round(rs[id]/totalQ(id)*100):null;});
     return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,
-            feitas:feitasAtivas.length, conhecimento};
+            feitas:feitasAtivas.length, conhecimento, cult};
   }).sort((a,b)=> (b.feitas-a.feitas) || ((b.conhecimento||0)-(a.conhecimento||0)) || a.nome.localeCompare(b.nome));
 }
 function evolucaoHTML(uid){
@@ -893,6 +991,14 @@ function render(){
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="conecta-revendas"){
+    if(S.pag==="rv-canais"||S.pag==="rv-canal"){
+      if(!ehAdmin()){S.pag="rv-apresentacao";}
+      else{
+        app.innerHTML=cabecalho()+subnavRV()+`<main>${S.pag==="rv-canal"?vRVCanal():vRVCanais()}</main>`;
+        if(!S.canais){carregarCanais().then(render);}
+        return;
+      }
+    }
     const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
@@ -912,11 +1018,18 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false};render();}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
+  if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
+  if(a==="veracao"){S.acaoSel=S.acaoSel===v?null:v;render();}
+  if(a==="editarcanal"){S.editCanal=!S.editCanal;S.novaAcao=false;render();}
+  if(a==="novaacao"){S.novaAcao=!S.novaAcao;S.editCanal=false;render();}
+  if(a==="fecharacao"){S.acaoSel=null;render();}
+  if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
+  if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
@@ -966,6 +1079,32 @@ document.addEventListener("input",ev=>{
 });
 document.addEventListener("submit",async ev=>{
   const f=ev.target;ev.preventDefault();
+  if(f.id==="f-acao"){
+    const id=f.dataset.id;
+    const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===id);
+    const an=sel&&Array.isArray(sel.anexos)?sel.anexos.slice():[];
+    const nome=f.querySelector("#a_anexo_nome").value.trim(),url=f.querySelector("#a_anexo_url").value.trim();
+    if(url)an.push({nome:nome||url,url});
+    const dados={descricao:f.querySelector("#a_descr").value.trim(),status:f.querySelector("#a_status").value,valor_igdb:+f.querySelector("#a_valor").value||0,comentario:f.querySelector("#a_coment").value.trim(),anexos:an};
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+    const {error}=await sb.from("acoes_pgd").update(dados).eq("id",id);
+    if(error){aviso("Erro ao salvar a ação.");render();return;}
+    S.canais=null;render();aviso("Ação atualizada.");return;
+  }
+  if(f.id==="f-canal"){
+    const dados={tier:f.querySelector("#c_tier").value,responsavel:f.querySelector("#c_resp").value.trim(),responsavel_legal:f.querySelector("#c_legal").value.trim(),meta_kg:+f.querySelector("#c_meta").value||0,valor_kg:+f.querySelector("#c_valor").value||0};
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+    const {error}=await sb.from("canais").update(dados).eq("id",S.canalSel);
+    if(error){aviso("Erro ao salvar.");render();return;}
+    S.canais=null;S.editCanal=false;render();aviso("Canal atualizado.");return;
+  }
+  if(f.id==="f-novaacao"){
+    const dados={canal_id:S.canalSel,tipo:f.querySelector("#na_tipo").value,cidade:f.querySelector("#na_cidade").value.trim(),valor_igdb:+f.querySelector("#na_valor").value||0,descricao:f.querySelector("#na_descr").value.trim(),status:"Em Análise"};
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
+    const {error}=await sb.from("acoes_pgd").insert(dados);
+    if(error){aviso("Erro ao adicionar.");render();return;}
+    S.canais=null;S.novaAcao=false;render();aviso("Ação adicionada.");return;
+  }
   if(f.id==="f-login"){
     const email=f.querySelector("#email").value.trim();const senha=f.querySelector("#senha").value;
     const btn=f.querySelector("button");btn.disabled=true;btn.textContent="Entrando…";
