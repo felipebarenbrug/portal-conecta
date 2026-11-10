@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Portal Conecta Barenbrug</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -298,12 +300,12 @@ const ETAPAS=[
    q("Qual o índice de pureza das sementes de Sabiá com tecnologia Yellow Jacket®?",["80%","85%","95%","99%"],2)
   ]},
  {id:"cayana",n:"Cayana",d:`Híbrido de ${sci("Brachiaria")} para alto teto produtivo.`,
-  v:[{t:"Origem e Genética",yt:"rJtlBXGWw-w"},{t:"Morfologia e Perfilhamento",yt:"b0qdzPHVCfY"},{t:"Massa, Nitrogênio e Sanidade",yt:"qeUgT2LH0kY"},{t:"Desempenho Animal, Manejo e Implantação",yt:"WEikH700-fI"},{t:"Posicionamento, Fertilidade e ROI",yt:"c_-4lhAc3r8"}],mat:[{n:"Podcast — Cayana e o ganho de peso",tipo:"Podcast",audio:"materiais/podcast-cayana.m4a"}],
+  v:[{t:"Origem e Genética",yt:"rJtlBXGWw-w"},{t:"Morfologia e Perfilhamento",yt:"b0qdzPHVCfY"},{t:"Massa, Nitrogênio e Sanidade",yt:"qeUgT2LH0kY"},{t:"Desempenho Animal, Manejo e Implantação",yt:"WEikH700-fI"},{t:"Posicionamento, Fertilidade e ROI",yt:"c_-4lhAc3r8"}],mat:[{n:"Base de conhecimento — Cayana (60 perguntas)",tipo:"Apostila",url:"materiais/base-conhecimento-cayana.pdf"},{n:"Podcast — Cayana e o ganho de peso",tipo:"Podcast",audio:"materiais/podcast-cayana.m4a"}],
   quiz:[q("Qual é o cruzamento do Cayana?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`Híbrido de ${sci("Panicum")}`,`${sci("B. ruziziensis")} pura`],0),
         q("O que mais caracteriza o Cayana a campo?",["Bom perfilhamento e alta relação folha/colmo","Baixa cobertura do solo","Pouca resposta à fertilidade"],0),
         q("O Cayana é indicado principalmente para:",["Sistemas de alto teto produtivo","Áreas sem manejo","Qualquer situação, sem avaliar"],0)]},
  {id:"carcara",n:"Carcará",d:`Híbrido de ${sci("Panicum")} para quem corrige o solo, aduba e maneja a lotação.`,
-  v:[{t:"Origem Genética e Pesquisa",yt:"6belogLtue8"},{t:"Produtividade Animal e Comparativo com Mombaça",yt:"UOMs887P-9k"},{t:"Morfologia e Qualidade Nutricional",yt:"6AYp11iyqSw"},{t:"Yellow Jacket® e Implantação",yt:"eHB_oscftjk"},{t:"Manejo de Pastejo, Aptidões e Sanidade",yt:"9XY78nZb24Y"}],mat:[{n:"Podcast — A engenharia genética do Carcará",tipo:"Podcast",audio:"materiais/podcast-carcara.m4a"}],
+  v:[{t:"Origem Genética e Pesquisa",yt:"6belogLtue8"},{t:"Produtividade Animal e Comparativo com Mombaça",yt:"UOMs887P-9k"},{t:"Morfologia e Qualidade Nutricional",yt:"6AYp11iyqSw"},{t:"Yellow Jacket® e Implantação",yt:"eHB_oscftjk"},{t:"Manejo de Pastejo, Aptidões e Sanidade",yt:"9XY78nZb24Y"}],mat:[{n:"Base de conhecimento — Carcará (60 perguntas)",tipo:"Apostila",url:"materiais/base-conhecimento-carcara.pdf"},{n:"Podcast — A engenharia genética do Carcará",tipo:"Podcast",audio:"materiais/podcast-carcara.m4a"}],
   quiz:[q("A que grupo pertence o Carcará?",[sci("Brachiaria"),`${sci("Megathyrsus maximus")} (${sci("Panicum")})`,sci("Cynodon")],1),
         q("Qual é a referência de comparação do Carcará?",["Marandu","Mombaça","Ruziziensis"],1),
         q("Para qual produtor o Carcará é mais indicado?",["Quem corrige o solo, aduba e maneja a lotação","Quem não pretende adubar","Quem busca a semente mais barata"],0)]},
@@ -328,6 +330,8 @@ const ORDEM=ETAPAS_ON.map(e=>e.id);
 const MATERIAIS=[
  {c:"Sabiá", tipo:"Apostila", n:"Apostila de vendas — Sabiá", url:"materiais/apostila-vendas-sabia.pdf"},
  {c:"Sabiá", tipo:"Apostila", n:"Base de conhecimento — Sabiá (60 perguntas)", url:"materiais/sabia-60-perguntas.pdf"},
+ {c:"Cayana", tipo:"Apostila", n:"Base de conhecimento — Cayana (60 perguntas)", url:"materiais/base-conhecimento-cayana.pdf"},
+ {c:"Carcará", tipo:"Apostila", n:"Base de conhecimento — Carcará (60 perguntas)", url:"materiais/base-conhecimento-carcara.pdf"},
  {c:"Sabiá", tipo:"Podcast", n:"Podcast — Sabiá acaba com o boi sanfona", audio:"materiais/podcast-sabia.m4a"},
  {c:"Cayana", tipo:"Podcast", n:"Podcast — Cayana e o ganho de peso", audio:"materiais/podcast-cayana.m4a"},
  {c:"Carcará", tipo:"Podcast", n:"Podcast — A engenharia genética do Carcará", audio:"materiais/podcast-carcara.m4a"},
@@ -407,15 +411,15 @@ const RC_CURSO=[
  {n:"Rotina Operacional, do Pedido ao Pagamento",d:"Do CRM e análise cadastral à liquidação; calendário financeiro (demonstrativo até o 5º dia útil, NF até o dia 10, pagamento até o dia 15), estornos, prazos de fechamento, aviso prévio e indenização de 1/12, e o checklist da primeira semana.",yt:"9mCU_uNWkD0"}
 ];
 const RC_TIERS=[
- {t:"Blue",vol:"Até 3.000 kg",prod:"10%",canal:"8%"},
- {t:"Yellow",vol:"3.001 a 6.000 kg",prod:"11,5%",canal:"9%"},
- {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13%",canal:"10%"},
- {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15%",canal:"11%"}
+ {t:"Blue",vol:"0 a 3.000 kg",prod:"10,0%",canal:"8,0%"},
+ {t:"Yellow",vol:"3.001 a 6.000 kg",prod:"11,5%",canal:"9,0%"},
+ {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13,0%",canal:"10,0%"},
+ {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15,0%",canal:"11,0%"}
 ];
 const RC_CONV=[
- {t:"Incrustadas e grafitadas",prod:"8%",canal:"6%"},
- {t:"Azevéns e trevos",prod:"6%",canal:"5%"},
- {t:"Convencionais peladas",prod:"6%",canal:"4%"}
+ {t:"Incrustadas e grafitadas",prod:"8,0%",canal:"6,0%"},
+ {t:"Nuas (ruziziensis)",prod:"6,0%",canal:"4,0%"},
+ {t:"Azevéns e trevos (temperadas)",prod:"6,0%",canal:"5,0%"}
 ];
 const RC_FAQ=[
  ["O que define o meu Tier?","O total de quilos de híbridos Barenbrug e Cynodon vendidos na safra, somando produtor e canal."],
