@@ -435,9 +435,10 @@ const SECOES=[
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens, vídeo institucional e brindes — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
-  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null}
+  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null},
+  {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
  {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Sabiá","Cayana","Carcará"],link:""},
@@ -478,7 +479,8 @@ const RC_FAQ=[
  ["O que a exclusividade cobre?","Híbridos forrageiros Barenbrug (Sabiá, Cayana, Carcará e Cynodon). É vedado representar cultivares híbridos forrageiros concorrentes dessas espécies."],
  ["Como o programa é formalizado?","Por um Contrato de Representação Comercial 26/27, apresentado pelo Responsável Comercial, que reúne a mecânica, as alíquotas e as regras de exclusividade."]
 ];
-const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Administrador"];
+const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Administrador"];
+const VENDEDORAS_IS=["Laura","Maria Giulia","Thaís","Maria Eduarda"];
 const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 const OPC={
   formacao:["Agronomia","Zootecnia","Medicina Veterinária","Engenharia Agronômica","Técnico Agrícola/Agropecuária","Administração/Comercial","Outra"],
@@ -797,6 +799,53 @@ function vLeads(){
     <div class="aviso-bloq">🔧 Em construção. A base de leads será conectada ao RD Station (Marketing + funil MQL do CRM) com acesso restrito por estado (LGPD). Esta tela já mostra como o canal/RC vai ver e atender os leads da região dele.</div>
     ${corpo}
   </section>`;
+}
+const veTimeIS=()=>ehAdmin()||S.perfil==="Comercial Barenbrug"||S.perfil==="Gestor de Revenda";
+async function carregarIS(){try{const {data}=await sb.from("is_metricas").select("*");S.isMetr=data||[];}catch(e){S.isMetr=[];}}
+function subnavIS(){
+  const abas=[["is-painel",veTimeIS()?"Painel":"Meu painel"]];
+  if(veTimeIS())abas.push(["is-time","Time"]);
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Inside Sales">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Inside Sales</span></div></div>`;
+}
+function vInsideSales(){
+  const rows=S.isMetr,manager=veTimeIS();
+  const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
+  if(rows==null)return `<div class="carregando">Carregando indicadores…</div>`;
+  const aviso=`<div class="aviso-bloq">🔧 Em construção. Os indicadores serão alimentados pela integração ao vivo do RD Station (funil de vendas + funil MQL). A estrutura abaixo já é a visão final de cada vendedora e do time.</div>`;
+  if(S.pag==="is-time"&&manager){
+    const r=(rows||[]).slice().sort((a,b)=>(b.vendas_rs||0)-(a.vendas_rs||0));
+    const tbl=r.length?`<div class="tab"><table><thead><tr><th>Vendedora</th><th class="val">Funil</th><th class="val">Pausadas</th><th class="val">MQL</th><th class="val">SQL</th><th class="val">Conv.</th><th class="val">Vendas</th><th class="val">R$ vendas</th><th class="val">Atrasadas</th><th class="val">Sem att.</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.vendedora)}</td><td class="val">${fmtN(x.funil_n)}</td><td class="val">${fmtN(x.pausadas_n)}</td><td class="val">${fmtN(x.mql)}</td><td class="val">${fmtN(x.sql_n)}</td><td class="val">${x.mql?Math.round(100*(x.sql_n||0)/x.mql):0}%</td><td class="val">${fmtN(x.vendas_n)}</td><td class="val">${fmtR(x.vendas_rs)}</td><td class="val">${x.atrasadas_n?`<strong style="color:#c0392b">${fmtN(x.atrasadas_n)}</strong>`:"0"}</td><td class="val">${x.sem_att_n?`<strong style="color:#c0392b">${fmtN(x.sem_att_n)}</strong>`:"0"}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Sem dados ainda.</div>`;
+    return `<div><h1 class="titulo">Inside Sales · Time</h1><p class="sub">Comparativo das vendedoras: funil, conversão MQL→SQL, vendas e alertas.</p></div>${aviso}<section class="bloco"><h2 class="sec">Visão do time</h2>${tbl}</section>`;
+  }
+  const alvo=manager?(S.isSel||(rows[0]&&rows[0].vendedora)||VENDEDORAS_IS[0]):(S.profile&&S.profile.is_vendedora);
+  const seletor=manager?`<div class="filtros">${VENDEDORAS_IS.map(v=>`<button class="chip" data-a="is-sel" data-v="${esc(v)}" aria-pressed="${alvo===v}">${esc(v)}</button>`).join("")}</div>`:"";
+  if(!manager&&!alvo)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma vendedora. Peça ao administrador para fazer o vínculo e seu painel aparece aqui.</p></section>`;
+  const row=(rows||[]).find(x=>x.vendedora===alvo);
+  const funilMax=Math.max(1,(row&&row.mql)||0);
+  const bar=(lbl,val,cor)=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:62px;font-size:13px;font-weight:600">${lbl}</span><span style="flex:1;height:14px;background:var(--linha,#eee);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(100*(val||0)/funilMax)}%;background:${cor}"></i></span><span style="width:70px;text-align:right;font-weight:700">${fmtN(val)}</span></div>`;
+  if(!row)return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1></div>${seletor}<section class="bloco">${aviso}<div class="vazio">Sem dados para ${esc(alvo||"")} ainda.</div></section>`;
+  const meses=Array.isArray(row.fat_meses)?row.fat_meses:[];
+  const maxM=Math.max(1,...meses.map(m=>m.rs||0));
+  return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1><p class="sub">Performance na safra: funil, faturamento e alertas. Atualizado pela integração do RD Station.</p></div>
+  ${seletor}${aviso}
+  <div class="metrics">
+    <div class="metric"><span>No funil (ativas)</span><strong>${fmtN(row.funil_n)}</strong></div>
+    <div class="metric"><span>Pausadas</span><strong>${fmtN(row.pausadas_n)}</strong></div>
+    <div class="metric"><span>Faturar no mês</span><strong>${fmtR(row.fat_mes_rs)}</strong></div>
+    <div class="metric"><span>Próximos meses</span><strong>${fmtR(row.fat_prox_rs)}</strong></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Forecast ponderado</span><strong>${fmtR(row.ponderado_rs)}</strong></div>
+  </div>
+  <div class="metrics" style="margin-top:10px">
+    <div class="metric" style="${row.atrasadas_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Atrasadas</span><strong>${fmtN(row.atrasadas_n)}</strong></div>
+    <div class="metric" style="${row.sem_att_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Sem atualização (+15d)</span><strong>${fmtN(row.sem_att_n)}</strong></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Funil MQL → SQL → Venda</h2>
+    ${bar("MQL",row.mql,"#86b3c4")}${bar("SQL",row.sql_n,"#4e9a6b")}${bar("Venda",row.vendas_n,"var(--amarelo,#ffdb00)")}
+    <p class="sub" style="margin:8px 0 0">Conversão MQL→SQL ${row.mql?Math.round(100*(row.sql_n||0)/row.mql):0}% · venda ${row.mql?Math.round(100*(row.vendas_n||0)/row.mql):0}% · R$ ${fmtR(row.vendas_rs)}.</p></section>
+  <section class="bloco"><h2 class="sec">Faturamento por mês</h2>
+    ${meses.length?meses.map(m=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:72px;font-size:13px;font-weight:600">${esc(m.mes)}</span><span style="flex:1;height:14px;background:var(--linha,#eee);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(100*(m.rs||0)/maxM)}%;background:var(--azul-escuro,#0a5)"></i></span><span style="width:90px;text-align:right;font-weight:700">${fmtR(m.rs)}</span></div>`).join(""):`<div class="vazio">Sem dados mensais ainda.</div>`}</section>`;
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -1288,6 +1337,12 @@ function renderApp(){
     if(!S.leadsCache){carregarLeads().then(render);}
     return;
   }
+  if(S.secao==="inside-sales"){
+    if(S.pag==="is-time"&&!veTimeIS())S.pag="is-painel";
+    app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
+    if(!S.isMetr){carregarIS().then(render);}
+    return;
+  }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
 const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
@@ -1306,7 +1361,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
@@ -1332,6 +1387,7 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-add"){S.mktNovo=v;S._erro=null;render();window.scrollTo(0,0);}
   if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
+  if(a==="is-sel"){S.isSel=v;render();}
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="excluir"){S.confirmExcluir=true;render();}
   if(a==="excluir-cancela"){S.confirmExcluir=false;render();}
