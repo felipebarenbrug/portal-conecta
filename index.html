@@ -171,6 +171,8 @@ td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:t
 .faq-item{background:var(--branco);border-radius:6px;padding:12px 14px}
 .faq-item summary{font-weight:700;cursor:pointer}
 .faq-item p{margin-top:8px;color:var(--apagado);font-size:15px}
+.checks{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:4px}
+.checks .check{font-weight:500}
 .precos-nota{background:var(--azul-claro);border-left:4px solid var(--azul);padding:12px 14px;border-radius:4px;font-size:14px;display:grid;gap:6px}
 .precos-cap{font-size:13px;color:var(--apagado);margin-top:6px}
 table.precos td.cult{font-weight:700;color:var(--azul-escuro);white-space:nowrap}
@@ -383,6 +385,7 @@ const SECOES=[
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Relacionamento e apoio às revendas parceiras da Barenbrug.",ativo:false,perfis:null}
 ];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"]];
 const RC_CURSO=[
  {n:"O Programa e o Modelo de Parceria",d:"O que é o Conecta RC e a representação comercial autônoma (PJ, Lei 4.886/1965): autonomia, inscrição no CORE, responsabilidades de cada parte, vigência por prazo indeterminado e o papel do Responsável Comercial.",yt:"yZBbZ1xkwwE"},
  {n:"Como Atuar, Regras de Campo e Portfólio",d:"Portfólio autorizado (híbridos, Cynodon, tropicais convencionais, Barmix e temperadas), exclusividade estrita em híbridos, atuação nacional sem exclusividade de praça, aprovação prévia fora do estado sede e cobrança amigável (vedado o del credere).",yt:"DvwjcUYObnQ"},
@@ -566,10 +569,15 @@ function cabecalho(){
     <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div></div></header>`;
 }
 function subnavAcademia(){
-  const abas=ehAdmin()?[["acomp","Acompanhamento"],["base","Base de conhecimento"]]:[["trilha","Trilha"],["base","Base de conhecimento"]];
+  const abas=[["trilha","Trilha"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||S.pag==="usuario"&&k==="acomp"?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
+}
+function subnavGestao(){
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Painel de gerenciamento"><button data-a="pag" data-v="gestao-home" ${S.pag==="gestao-home"||S.pag==="usuario"?'aria-current="page"':""}>Pessoas</button></nav>
+    <span class="secao-nome">Painel de gerenciamento</span></div></div>`;
 }
 function heroHub(){
   return `<section class="hero"><div class="hero-txt"><span class="rot">Portal Conecta Barenbrug</span>
@@ -578,10 +586,12 @@ function heroHub(){
     <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div></section>`;
 }
 function vHub(){
-  const secs=SECOES.filter(s=>!s.perfis||ehAdmin()||s.perfis.includes(S.perfil));
+  const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
+  const secs=SECOES.filter(s=>ehAdmin()||acessos.includes(s.id));
+  const gestao=ehAdmin()?`<button class="card" data-a="secao" data-v="gestao"><span class="card-tag">Administração</span><h3>Painel de gerenciamento</h3><p>Cadastre pessoas, defina perfil e acessos, acompanhe o ranking e edite ou exclua usuários.</p><span class="card-cta">Abrir →</span></button>`:"";
   return `${heroHub()}
   <div><h2 class="sec">Suas áreas</h2></div>
-  <div class="cards">${secs.map(s=>s.ativo
+  <div class="cards">${gestao}${secs.map(s=>s.ativo
     ?`<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`
     :`<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`).join("")}</div>`;
 }
@@ -724,6 +734,7 @@ function vCriarAcesso(){
     <div><label for="n_nome">Nome completo *</label><input id="n_nome" required></div>
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
+    <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
     ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
     <div><button class="btn" type="submit">Criar acesso</button></div>
   </form>
@@ -737,8 +748,7 @@ function vAcomp(){
   const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}º`;
   const comConhec=S.equipe.filter(x=>x.conhecimento!=null);
   const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
-  return `${heroAcademia()}
-  <div><h2 class="sec">Acompanhamento</h2><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
+  return `<div><h1 class="titulo">Painel de gerenciamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
   ${vCriarAcesso()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
@@ -771,11 +781,13 @@ function evolucaoHTML(uid){
 function vUsuarioAdmin(){
   if(!S.adminUser)return `<div class="carregando">Carregando…</div>`;
   const u=S.adminUser,ehEu=u.id===S.user.id;
-  return `<button class="voltar" data-a="pag" data-v="acomp">‹ Acompanhamento</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · acesso de <strong>${esc(u.perfil)}</strong>. Veja a evolução, edite os dados ou altere o perfil de acesso.</p></div>
+  const ac=Array.isArray(S.adminForm.acessos)?S.adminForm.acessos:[];
+  return `<button class="voltar" data-a="pag" data-v="gestao-home">‹ Painel de gerenciamento</button>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
   ${evolucaoHTML(u.id)}
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
+    <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Salvar alterações</button></div>
@@ -790,7 +802,7 @@ function vUsuarioAdmin(){
 async function abrirUsuario(id){
   S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S._erro=null;S.pag="usuario";render();
   const {data:prof}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();
-  if(!prof){S._erro="Não foi possível abrir este usuário.";S.pag="acomp";render();return;}
+  if(!prof){S._erro="Não foi possível abrir este usuário.";S.pag="gestao-home";render();return;}
   S.adminUser=prof;S.adminForm={...prof};S.formAlvo="adminForm";preloadCidades(prof.perfil);render();
 }
 
@@ -805,16 +817,20 @@ function render(){
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  if(S.secao==="gestao"){
+    if(!ehAdmin()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+    if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
+    app.innerHTML=cabecalho()+subnavGestao()+`<main>${vAcomp()}</main>`;
+    if(!S.equipe){carregarEquipe().then(render);}
+    return;
+  }
   if(S.secao==="conecta-rc"){
     const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos}[S.pag]||vRCApresentacao;
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavAcademia()+`<main>${vUsuarioAdmin()}</main>`;return;}
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp,precos:vPrecos}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;
-    if(S.pag==="acomp"&&!S.equipe){carregarEquipe().then(render);}
-    return;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
@@ -830,7 +846,7 @@ document.addEventListener("click",async ev=>{
   if(a==="visto")return;
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){S.secao=v;S.pag=v==="conecta-rc"?"rc-apresentacao":(ehAdmin()?"acomp":"trilha");S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
@@ -854,7 +870,7 @@ document.addEventListener("click",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível excluir.";}catch(_){erro="Não foi possível excluir. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erro=erro;S.confirmExcluir=false;render();return;}
-    S.equipe=null;S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S.formAlvo="form";S.pag="acomp";render();aviso("Acesso de "+nome+" excluído.");
+    S.equipe=null;S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S.formAlvo="form";S.pag="gestao-home";render();aviso("Acesso de "+nome+" excluído.");
   }
 });
 document.addEventListener("change",async ev=>{
@@ -914,6 +930,7 @@ document.addEventListener("submit",async ev=>{
     const perfil=S.adminForm.perfil;const schema=schemaDoPerfil(perfil);
     if(schema.some(c=>c.req&&!((S.adminForm[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
     const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.adminForm[c.k]||"").trim();});
+    dados.acessos=[...f.querySelectorAll("[data-acesso]:checked")].map(c=>c.getAttribute("data-acesso"));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
@@ -923,13 +940,16 @@ document.addEventListener("submit",async ev=>{
     const nome=f.querySelector("#n_nome").value.trim();
     const email=f.querySelector("#n_email").value.trim();
     const perfil=f.querySelector("#n_perfil").value;
+    const acessos=[...f.querySelectorAll(".n_acesso:checked")].map(c=>c.value);
     S._erroCriar=null;
+    if(!acessos.length){S._erroCriar="Marque pelo menos uma seção de acesso.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Criando…";
     const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome,email,perfil}});
     let erro=null;
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
+    await sb.from("profiles").update({acessos}).eq("email",email);
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
     return;
   }
