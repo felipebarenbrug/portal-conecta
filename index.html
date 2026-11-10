@@ -218,7 +218,13 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
 .tour-dots i{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,.15)}
 .tour-dots i.on{background:var(--amarelo,#ffdb00)}
 .tour-acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-@media(prefers-color-scheme:dark){.tour-card{background:#15202b;color:#eef}.tour-card p{color:#cdd}}
+.casos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card-caso{border:1px solid var(--linha,#e5e5e5);border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;text-align:left;padding:0;transition:box-shadow .15s,transform .15s}
+.card-caso:hover{box-shadow:0 6px 18px rgba(0,0,0,.12);transform:translateY(-2px)}
+.card-caso.ativa{outline:2px solid var(--amarelo,#ffdb00)}
+.card-caso img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}
+.card-caso span{display:block;padding:8px 10px;font-size:12.5px;font-weight:600;line-height:1.3}
+@media(prefers-color-scheme:dark){.tour-card{background:#15202b;color:#eef}.tour-card p{color:#cdd}.card-caso{background:#15202b;border-color:#2a3b4a}}
 </style>
 </head>
 <body>
@@ -427,9 +433,20 @@ const FRETE=[
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
-  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null}
+  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
+  {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens, vídeo institucional e brindes — tudo o que você precisa para divulgar.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"]];
+const ENXOVAL=[
+ {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
+ {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Sabiá","Cayana","Carcará"],link:""},
+ {id:"banners",n:"Banners",d:"Banners para eventos, feiras e ponto de venda.",link:""},
+ {id:"folders",n:"Folders",d:"Folders e materiais impressos dos híbridos.",link:""},
+ {id:"imagens",n:"Banco de imagens",d:"Todas as fotos em alta resolução, organizadas por cultivar e campanha.",link:"",drive:true},
+ {id:"video",n:"Vídeo institucional",d:"O vídeo institucional da Barenbrug para abrir apresentações e reuniões.",yt:""},
+ {id:"guia",n:"Guia de uso de Marca",d:"Como aplicar a marca corretamente — o brandbook oficial.",link:""},
+ {id:"brindes",n:"Brindes Institucionais",d:"Catálogo de brindes institucionais e como solicitar.",link:""}
+];
 const RC_CURSO=[
  {n:"O Programa e o Modelo de Parceria",d:"O que é o Conecta RC e a representação comercial autônoma (PJ, Lei 4.886/1965): autonomia, inscrição no CORE, responsabilidades de cada parte, vigência por prazo indeterminado e o papel do Responsável Comercial.",yt:"yZBbZ1xkwwE"},
  {n:"Como Atuar, Regras de Campo e Portfólio",d:"Portfólio autorizado (híbridos, Cynodon, tropicais convencionais, Barmix e temperadas), exclusividade estrita em híbridos, atuação nacional sem exclusividade de praça, aprovação prévia fora do estado sede e cobrança amigável (vedado o del credere).",yt:"DvwjcUYObnQ"},
@@ -442,7 +459,7 @@ const RC_TIERS=[
  {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13,0%",canal:"10,0%"},
  {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15,0%",canal:"11,0%"}
 ];
-const RC_RANKING=[{"crm": "Faturando Sementes Ltda", "nome": "Faturando Sementes Ltda", "fat": 0, "aFat": 25000, "kg": 25000}, {"crm": "Laura Costa", "nome": "Laura Costa", "fat": 10310, "aFat": 3600, "kg": 13910}, {"crm": "Maria Giulia", "nome": "Maria Giulia", "fat": 11605, "aFat": 720, "kg": 12325}, {"crm": "J V Dalmagro Representacoes Ltda", "nome": "J V Dalmagro Representacoes Ltda", "fat": 8720, "aFat": 0, "kg": 8720}, {"crm": "Leite E Tobias Consultoria E Representacao Ltda", "nome": "Leite E Tobias Consultoria E Representacao Ltda", "fat": 8000, "aFat": 0, "kg": 8000}, {"crm": "Thaís", "nome": "Thaís", "fat": 3985, "aFat": 1580, "kg": 5565}, {"crm": "Produza Corretora De Cereais Ltda", "nome": "Produza Corretora De Cereais Ltda", "fat": 4900, "aFat": 0, "kg": 4900}, {"crm": "Abate Representacoes Ltda", "nome": "Abate Representacoes Ltda", "fat": 4530, "aFat": 0, "kg": 4530}, {"crm": "Jc Agro Representacoes Comerciais Eireli", "nome": "Jc Agro Representacoes Comerciais Eireli", "fat": 4520, "aFat": 0, "kg": 4520}, {"crm": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "nome": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "fat": 4460, "aFat": 0, "kg": 4460}, {"crm": "Construsul Ltda", "nome": "Construsul Ltda", "fat": 2690, "aFat": 0, "kg": 2690}, {"crm": "Global Pec Representacoes  Servicos Ltda", "nome": "Global Pec Representacoes  Servicos Ltda", "fat": 1200, "aFat": 0, "kg": 1200}, {"crm": "Luiz Curci Junior", "nome": "Luiz Curci Junior", "fat": 1120, "aFat": 0, "kg": 1120}, {"crm": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "nome": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "fat": 1050, "aFat": 0, "kg": 1050}, {"crm": "Capelli E Carvalho Representacoes Eireli", "nome": "Capelli E Carvalho Representacoes Eireli", "fat": 890, "aFat": 0, "kg": 890}, {"crm": "M. Gomes Representacoes Ltda", "nome": "M. Gomes Representacoes Ltda", "fat": 800, "aFat": 0, "kg": 800}, {"crm": "M Gomes Representacoes Ltda", "nome": "M Gomes Representacoes Ltda", "fat": 320, "aFat": 400, "kg": 720}, {"crm": "Agroserv Amazonia Ltda", "nome": "Agroserv Amazonia Ltda", "fat": 0, "aFat": 710, "kg": 710}, {"crm": "Pagano Sementes Representacoes Comerciais Ltda", "nome": "Pagano Sementes Representacoes Comerciais Ltda", "fat": 650, "aFat": 0, "kg": 650}, {"crm": "Alex Sandro Clinica Veterinaria Ltda", "nome": "Alex Sandro Clinica Veterinaria Ltda", "fat": 480, "aFat": 60, "kg": 540}, {"crm": "Ativa Agro Representacao Comercial Ltda", "nome": "Ativa Agro Representacao Comercial Ltda", "fat": 400, "aFat": 0, "kg": 400}, {"crm": "Maria Eduarda", "nome": "Maria Eduarda", "fat": 90, "aFat": 240, "kg": 330}, {"crm": "Stm Comercio E Representacoes Ltda", "nome": "Stm Comercio E Representacoes Ltda", "fat": 300, "aFat": 0, "kg": 300}, {"crm": "Fg2 Representacoes Comerciais Ltda", "nome": "Fg2 Representacoes Comerciais Ltda", "fat": 280, "aFat": 0, "kg": 280}, {"crm": "M D Costa", "nome": "M D Costa", "fat": 250, "aFat": 0, "kg": 250}, {"crm": "Solido Agronegocios Representacoes Ltda", "nome": "Solido Agronegocios Representacoes Ltda", "fat": 240, "aFat": 0, "kg": 240}, {"crm": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "nome": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "fat": 210, "aFat": 0, "kg": 210}, {"crm": "Inova Solucoes Em Agropecuaria Ltda", "nome": "Inova Solucoes Em Agropecuaria Ltda", "fat": 120, "aFat": 0, "kg": 120}, {"crm": "Terra Forte Agropecuaria Posse Ltda", "nome": "Terra Forte Agropecuaria Posse Ltda", "fat": 60, "aFat": 0, "kg": 60}, {"crm": "Sulreal Solucoes E Negocios Ltda", "nome": "Sulreal Solucoes E Negocios Ltda", "fat": 50, "aFat": 0, "kg": 50}];
+const RC_RANKING=[{"crm": "Faturando Sementes Ltda", "nome": "Faturando Sementes Ltda", "fat": 0, "aFat": 25000, "kg": 25000}, {"crm": "Laura Costa", "nome": "Laura Costa", "fat": 10310, "aFat": 3600, "kg": 13910}, {"crm": "Maria Giulia", "nome": "Maria Giulia", "fat": 11605, "aFat": 720, "kg": 12325}, {"crm": "J V Dalmagro Representacoes Ltda", "nome": "J V Dalmagro Representacoes Ltda", "fat": 8720, "aFat": 0, "kg": 8720}, {"crm": "Leite E Tobias Consultoria E Representacao Ltda", "nome": "Leite E Tobias Consultoria E Representacao Ltda", "fat": 8000, "aFat": 0, "kg": 8000}, {"crm": "Thaís Franco", "nome": "Thaís Franco", "fat": 3985, "aFat": 1580, "kg": 5565}, {"crm": "Produza Corretora De Cereais Ltda", "nome": "Produza Corretora De Cereais Ltda", "fat": 4900, "aFat": 0, "kg": 4900}, {"crm": "Abate Representacoes Ltda", "nome": "Abate Representacoes Ltda", "fat": 4530, "aFat": 0, "kg": 4530}, {"crm": "Jc Agro Representacoes Comerciais Eireli", "nome": "Jc Agro Representacoes Comerciais Eireli", "fat": 4520, "aFat": 0, "kg": 4520}, {"crm": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "nome": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "fat": 4460, "aFat": 0, "kg": 4460}, {"crm": "Construsul Ltda", "nome": "Construsul Ltda", "fat": 2690, "aFat": 0, "kg": 2690}, {"crm": "Global Pec Representacoes  Servicos Ltda", "nome": "Global Pec Representacoes  Servicos Ltda", "fat": 1200, "aFat": 0, "kg": 1200}, {"crm": "Luiz Curci Junior", "nome": "Luiz Curci Junior", "fat": 1120, "aFat": 0, "kg": 1120}, {"crm": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "nome": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "fat": 1050, "aFat": 0, "kg": 1050}, {"crm": "Capelli E Carvalho Representacoes Eireli", "nome": "Capelli E Carvalho Representacoes Eireli", "fat": 890, "aFat": 0, "kg": 890}, {"crm": "M. Gomes Representacoes Ltda", "nome": "M. Gomes Representacoes Ltda", "fat": 800, "aFat": 0, "kg": 800}, {"crm": "M Gomes Representacoes Ltda", "nome": "M Gomes Representacoes Ltda", "fat": 320, "aFat": 400, "kg": 720}, {"crm": "Agroserv Amazonia Ltda", "nome": "Agroserv Amazonia Ltda", "fat": 0, "aFat": 710, "kg": 710}, {"crm": "Pagano Sementes Representacoes Comerciais Ltda", "nome": "Pagano Sementes Representacoes Comerciais Ltda", "fat": 650, "aFat": 0, "kg": 650}, {"crm": "Alex Sandro Clinica Veterinaria Ltda", "nome": "Alex Sandro Clinica Veterinaria Ltda", "fat": 480, "aFat": 60, "kg": 540}, {"crm": "Ativa Agro Representacao Comercial Ltda", "nome": "Ativa Agro Representacao Comercial Ltda", "fat": 400, "aFat": 0, "kg": 400}, {"crm": "Maria Eduarda", "nome": "Maria Eduarda", "fat": 90, "aFat": 240, "kg": 330}, {"crm": "Stm Comercio E Representacoes Ltda", "nome": "Stm Comercio E Representacoes Ltda", "fat": 300, "aFat": 0, "kg": 300}, {"crm": "Fg2 Representacoes Comerciais Ltda", "nome": "Fg2 Representacoes Comerciais Ltda", "fat": 280, "aFat": 0, "kg": 280}, {"crm": "M D Costa", "nome": "M D Costa", "fat": 250, "aFat": 0, "kg": 250}, {"crm": "Solido Agronegocios Representacoes Ltda", "nome": "Solido Agronegocios Representacoes Ltda", "fat": 240, "aFat": 0, "kg": 240}, {"crm": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "nome": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "fat": 210, "aFat": 0, "kg": 210}, {"crm": "Inova Solucoes Em Agropecuaria Ltda", "nome": "Inova Solucoes Em Agropecuaria Ltda", "fat": 120, "aFat": 0, "kg": 120}, {"crm": "Terra Forte Agropecuaria Posse Ltda", "nome": "Terra Forte Agropecuaria Posse Ltda", "fat": 60, "aFat": 0, "kg": 60}, {"crm": "Sulreal Solucoes E Negocios Ltda", "nome": "Sulreal Solucoes E Negocios Ltda", "fat": 50, "aFat": 0, "kg": 50}];
 const TIERS_RC=[{t:"Blue",min:0,max:3000},{t:"Yellow",min:3001,max:6000},{t:"Yellow Pro",min:6001,max:9000},{t:"Yellow Master",min:9001,max:Infinity}];
 const RANKING_FONTE="RD Station CRM · Funil de Vendas Barenbrug · híbridas (Sabiá, Cayana, Carcará, Mulato II) + Cynodon. Todos os pedidos ganhos com data de faturamento entre 01/jul/2026 e 30/jun/2027. Já faturou = data de faturamento até hoje; Vai faturar = faturamento futuro. Puxado do CRM em 10/nov/2026";
 const tierDoKg=kg=>{for(const x of TIERS_RC)if(kg>=x.min&&kg<=x.max)return x.t;return "Blue";};
@@ -710,6 +727,25 @@ function subnavAcademia(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
+}
+function subnavEnxoval(){
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Enxoval de Marketing"><button data-a="pag" data-v="enxoval" aria-current="page">Materiais</button></nav>
+    <span class="secao-nome">Enxoval de Marketing</span></div></div>`;
+}
+function vEnxoval(){
+  const card=s=>{
+    const temLink=s.link&&s.link!=="#";
+    const acao=temLink?`<a class="card-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${s.drive?"Abrir no Google Drive ↗":"Abrir ↗"}</a>`:`<span class="card-tag">Em breve</span>`;
+    const subs=s.sub?`<div class="filtros" style="margin:8px 0 0">${s.sub.map(x=>`<span class="chip" aria-pressed="false">${esc(x)}</span>`).join("")}</div>`:"";
+    const vid=s.yt?`<div class="video-wrap" style="margin-top:10px"><iframe src="https://www.youtube.com/embed/${s.yt}?rel=0" title="${esc(s.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:"";
+    return `<div class="card off" style="cursor:default"><h3>${esc(s.n)}</h3><p>${esc(s.d)}</p>${subs}${vid}<div style="margin-top:10px">${acao}</div></div>`;
+  };
+  return `<section class="hero azul"><div class="hero-txt"><span class="rot">Enxoval de Marketing</span>
+    <h1 class="titulo" style="color:#fff">Tudo para divulgar os híbridos Barenbrug</h1>
+    <p>Marca, artes para redes sociais, banners, folders, banco de imagens, vídeo institucional e brindes — reunidos para você usar no dia a dia comercial.</p></div></section>
+  <div class="cards">${ENXOVAL.map(card).join("")}</div>
+  <p class="precos-nota" style="margin-top:14px">Os materiais e links são adicionados pelo time de marketing. Precisa de algo que não está aqui? Fale com o marketing da Barenbrug.</p>`;
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -1016,22 +1052,24 @@ function vBase(){
   const b=S.busca.toLowerCase();
   const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
   const mats=MATERIAIS.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||x.tipo===S.fTipo)&&txtPlano(x.n).includes(b));
-  const vids=VIDEOS_BASE.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
+  const vidsG=VIDEOS_BASE.filter(x=>x.g!=="Caso de sucesso"&&(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
+  const casos=VIDEOS_BASE.filter(x=>x.g==="Caso de sucesso"&&(S.fCult==="Todos"||S.fCult==="Geral")&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
   const vatual=S.baseVideo?VIDEOS_BASE.find(x=>x.yt===S.baseVideo):null;
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${x}" aria-pressed="${sel===x}">${x}</button>`).join("");
   const mostraMat=S.fTipo==="Todos"||["Apostila","Podcast"].includes(S.fTipo);
   const mostraVid=S.fTipo==="Todos"||S.fTipo==="Vídeo";
   const vidRow=x=>`<div class="linha ${x.yt===S.baseVideo?"ativa":""}"><div><strong>${x.t}</strong><span class="meta">${x.c} · Vídeo</span></div><button class="link" data-a="bvideo" data-v="${x.yt}">${x.yt===S.baseVideo?"Assistindo":"Assistir"}</button></div>`;
+  const casoCard=x=>`<button class="card-caso ${x.yt===S.baseVideo?"ativa":""}" data-a="bvideo" data-v="${x.yt}"><img src="https://img.youtube.com/vi/${x.yt}/mqdefault.jpg" alt="" loading="lazy"><span>${esc(x.t)}</span></button>`;
   let vidHTML="";
-  if(vids.length){ VID_GRUPOS.forEach(g=>{const gl=vids.filter(v=>v.g===g); if(gl.length) vidHTML+=`<div class="sub-vid">${g}</div><div class="lista">${gl.map(vidRow).join("")}</div>`;}); }
+  if(vidsG.length){ VID_GRUPOS.filter(g=>g!=="Caso de sucesso").forEach(g=>{const gl=vidsG.filter(v=>v.g===g); if(gl.length) vidHTML+=`<div class="sub-vid">${g}</div><div class="lista">${gl.map(vidRow).join("")}</div>`;}); }
   else vidHTML=`<div class="vazio">Nenhum vídeo encontrado.</div>`;
   return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Vídeos e materiais de apoio à venda dos híbridos, liberados desde o primeiro acesso.</p></div>
   <div><label for="busca">Buscar na base</label><input id="busca" type="search" value="${esc(S.busca)}" placeholder="Ex.: Cayana, estresse hídrico, apostila, fazenda"></div>
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
   <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast"],S.fTipo,"ftipo")}</div>
-  ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>
-    ${vatual?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:""}
-    ${vidHTML}</section>`:""}
+  ${vatual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></section>`:""}
+  ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Cases de Sucesso</h2><p class="sub" style="margin:0 0 10px">Produtores reais contando o resultado dos híbridos Barenbrug no campo. Toque para assistir.</p><div class="casos-grid">${casos.map(casoCard).join("")}</div></section>`:""}
+  ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>${vidHTML}</section>`:""}
   ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
 }
@@ -1165,6 +1203,7 @@ function renderApp(){
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
+  if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;return;}
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
 const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
@@ -1183,7 +1222,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
