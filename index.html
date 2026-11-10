@@ -211,9 +211,10 @@ const SECOES=[
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de relacionamento e ranking dos RCs.",ativo:false}
 ];
 const REQUIRED=["nome","telefone"];
+const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Administrador"];
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
-       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null};
+       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null};
 
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
 const feitasOrdenadas=()=>ORDEM.filter(id=>S.feitas.includes(id));
@@ -354,7 +355,7 @@ function vAcomp(){
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS[x.feitas]?ETAPAS[x.feitas].n:"—");
   const conc=S.equipe.filter(x=>x.feitas>=ORDEM.length).length;
   return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha.</p></div>
-  <div class="nota-admin">O painel para você cadastrar novas pessoas (escolhendo o perfil e com a senha gerada automaticamente) é o próximo passo. Por enquanto, os acessos são criados junto comigo.</div>
+  ${vCriarAcesso()}
   <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 async function carregarEquipe(){
@@ -363,6 +364,20 @@ async function carregarEquipe(){
   const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||[]).push(r);});
   S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
     .sort((a,b)=>b.feitas-a.feitas);
+}
+function vCriarAcesso(){
+  const r=S.novoAcesso;
+  return `<section class="bloco"><h2 class="sec">Cadastrar pessoa</h2>
+  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória para você enviar à pessoa. No primeiro acesso ela troca a senha e completa o cadastro.</p>
+  <form class="form-card" id="f-criar">
+    <div><label for="n_nome">Nome completo *</label><input id="n_nome" required></div>
+    <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
+    <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
+    ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
+    <div><button class="btn" type="submit">Criar acesso</button></div>
+  </form>
+  ${r?`<div class="nota-admin"><strong>Acesso criado.</strong> Envie estes dados para a pessoa — a senha aparece só uma vez:<br>E-mail: <strong>${esc(r.email)}</strong><br>Senha provisória: <strong>${esc(r.senha)}</strong></div>`:""}
+  </section>`;
 }
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
@@ -397,9 +412,9 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null};render();}
-  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;render();window.scrollTo(0,0);}
-  if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;render();window.scrollTo(0,0);}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null};render();}
+  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="perfil"){S.pag="perfil";S._erro=null;render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
@@ -450,6 +465,20 @@ document.addEventListener("submit",async ev=>{
     Object.assign(S.profile,dados);S._erro=null;
     if(eraObrig){S.secao=null;S.pag="hub";render();aviso("Cadastro completo. Bem-vindo!");}
     else{render();aviso("Dados salvos.");}
+  }
+  if(f.id==="f-criar"){
+    const nome=f.querySelector("#n_nome").value.trim();
+    const email=f.querySelector("#n_email").value.trim();
+    const perfil=f.querySelector("#n_perfil").value;
+    S._erroCriar=null;
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Criando…";
+    const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome,email,perfil}});
+    let erro=null;
+    if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
+    else if(data&&data.error){erro=data.error;}
+    if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
+    S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
+    return;
   }
   if(f.id==="f-quiz"){
     const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=id==="prova"?6:2;
