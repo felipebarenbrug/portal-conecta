@@ -97,6 +97,8 @@ button.etapa-b:hover h3{text-decoration:underline}
 .est{font-size:12px;font-weight:700;color:var(--azul-escuro)}
 
 .player{background:var(--azul-escuro);color:var(--branco);aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:16px;text-align:center;border-radius:6px}
+.video-wrap{width:100%;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#000}
+.video-wrap iframe{width:100%;height:100%;border:0;display:block}
 .play{width:0;height:0;border-left:30px solid var(--amarelo);border-top:18px solid transparent;border-bottom:18px solid transparent}
 .player h3{font-size:clamp(18px,4vw,24px);color:var(--branco)}
 .player p{font-size:13px;opacity:.9}
@@ -166,32 +168,32 @@ const q=(p,ops,c)=>({p,ops,c});
 
 const ETAPAS=[
  {id:"boas",n:"Boas-vindas",d:"A Barenbrug, a marca e o seu papel na venda de híbridos.",
-  v:[["Quem é a Barenbrug",4],["Cultive Confiança: o que a marca promete",3],["Seu papel na venda",5]],mat:[],
+  v:[{t:"Quem é a Barenbrug",m:4},{t:"Cultive Confiança: o que a marca promete",m:3},{t:"Seu papel na venda",m:5}],mat:[],
   quiz:[q("Qual é o slogan da Barenbrug?",["Plante seu Legado","Cultive Confiança","Pasto forte o ano todo"],1),
         q("Quais híbridos fazem parte desta formação?",["Sabiá, Cayana e Carcará","Só o Sabiá","Sabiá e Cayana"],0),
         q("A Barenbrug é uma empresa de origem:",["Holandesa, de genética de sementes forrageiras","Americana, de defensivos","Brasileira, de nutrição animal"],0)]},
  {id:"hibrido",n:"Por que híbrido",d:"A lógica de valor para o pecuarista.",
-  v:[["O que é um híbrido forrageiro",5],["Melhoramento genético Barenbrug",4],["Sistema certo, resultado certo",5]],mat:["Apostila"],
+  v:[{t:"O que é um híbrido forrageiro",m:5},{t:"Melhoramento genético Barenbrug",m:4},{t:"Sistema certo, resultado certo",m:5}],mat:["Apostila"],
   quiz:[q("De onde vêm Sabiá, Cayana e Carcará?",["Do programa de melhoramento da Barenbrug","De coleta em pastagens nativas","De sementes sem seleção"],0),
         q("Que sistema tira o melhor de um híbrido?",["Solo corrigido, adubação na dose certa e lotação equilibrada","Área sem correção e sem adubação","Lotação máxima o ano inteiro"],0),
         q("Como falar de resultado com o produtor?",["Produção máxima garantida","Observado em ensaios; varia conforme manejo, solo e chuvas","Funciona igual em qualquer fazenda"],1)]},
  {id:"sabia",n:"Sabiá",d:`Híbrido de ${sci("Brachiaria")}. Resistência e Segurança.`,
-  v:[["Genética e origem",5],["Produtividade e sazonalidade",5],["Diferimento",4],["Sanidade da planta",5]],mat:["Podcast","Apostila","Banco de imagens","Posts"],
+  v:[{t:"Aula 1",yt:"rJtlBXGWw-w"},{t:"Aula 2",yt:"yeOjr6ocbWk"},{t:"Aula 3",yt:"gbe-5Eqbws0"},{t:"Aula 4",yt:"9lKse6Zmmbc"},{t:"Aula 5",yt:"0LKc47gERs4"}],mat:["Podcast","Apostila","Banco de imagens","Posts"],
   quiz:[q("Qual é o cruzamento do Sabiá?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`${sci("Megathyrsus maximus")} × ${sci("B. ruziziensis")}`,`${sci("B. brizantha")} × ${sci("Megathyrsus maximus")}`],0),
         q("Característica documentada do Sabiá frente à falta de água?",["Tolerância muito alta à seca","Exige irrigação","Só produz nas águas"],0),
         q("Par de atributos que resume o Sabiá?",["Precocidade e Rusticidade","Resistência e Segurança","Volume e Preço"],1)]},
  {id:"cayana",n:"Cayana",d:`Híbrido de ${sci("Brachiaria")} para alto teto produtivo.`,
-  v:[["Genética e origem",5],["Perfilhamento e qualidade",5],["Para qual sistema indicar",4],["Sanidade da planta",5]],mat:["Podcast","Apostila","Banco de imagens","Posts"],
+  v:[{t:"Aula 1",yt:"rJtlBXGWw-w"},{t:"Aula 2",yt:"b0qdzPHVCfY"},{t:"Aula 3",yt:"qeUgT2LH0kY"},{t:"Aula 4",yt:"WEikH700-fI"},{t:"Aula 5",yt:"c_-4lhAc3r8"}],mat:["Podcast","Apostila","Banco de imagens","Posts"],
   quiz:[q("Qual é o cruzamento do Cayana?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`Híbrido de ${sci("Panicum")}`,`${sci("B. ruziziensis")} pura`],0),
         q("O que mais caracteriza o Cayana a campo?",["Bom perfilhamento e alta relação folha/colmo","Baixa cobertura do solo","Pouca resposta à fertilidade"],0),
         q("O Cayana é indicado principalmente para:",["Sistemas de alto teto produtivo","Áreas sem manejo","Qualquer situação, sem avaliar"],0)]},
  {id:"carcara",n:"Carcará",d:`Híbrido de ${sci("Panicum")} para quem corrige o solo, aduba e maneja a lotação.`,
-  v:[["Genética e origem",4],["Produção e qualidade",5],["Manejo e lotação",5],["Quando indicar",4]],mat:["Podcast","Apostila","Banco de imagens","Posts"],
+  v:[{t:"Aula 1",yt:"6belogLtue8"},{t:"Aula 2",yt:"UOMs887P-9k"},{t:"Aula 3",yt:"6AYp11iyqSw"},{t:"Aula 4",yt:"eHB_oscftjk"},{t:"Aula 5",yt:"9XY78nZb24Y"}],mat:["Podcast","Apostila","Banco de imagens","Posts"],
   quiz:[q("A que grupo pertence o Carcará?",[sci("Brachiaria"),`${sci("Megathyrsus maximus")} (${sci("Panicum")})`,sci("Cynodon")],1),
         q("Qual é a referência de comparação do Carcará?",["Marandu","Mombaça","Ruziziensis"],1),
         q("Para qual produtor o Carcará é mais indicado?",["Quem corrige o solo, aduba e maneja a lotação","Quem não pretende adubar","Quem busca a semente mais barata"],0)]},
  {id:"vender",n:"Como vender",d:"Objeções, preço e argumentação.",
-  v:[["Vender valor, não saco",5],["Objeções mais comuns no campo",5],["Preço e papel de cada canal",5]],mat:["Apostila"],
+  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:["Apostila"],
   quiz:[q("O que avaliar antes de indicar um cultivar?",["Só o preço do saco","Solo, sistema e janela de plantio do produtor","A cor da embalagem"],1),
         q("Peso do saco de Sabiá, Cayana e Carcará?",["3 kg","10 kg","25 kg"],1),
         q("A comunicação pode citar cultivares concorrentes?",["Não","Sim, sempre","Sim, nos impressos"],0)]},
@@ -413,8 +415,8 @@ function vEtapa(){
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button>
   <div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
-  <div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m} min · O vídeo do YouTube entra aqui</p></div>
-  <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button><span class="meta"> · ${x.m} min</span></div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div></section>
+  ${v.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${v.yt}?rel=0" title="${esc(v.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m?v.m+" min · ":""}O vídeo entra aqui no site final</p></div>`}
+  <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button>${x.m?`<span class="meta"> · ${x.m} min</span>`:""}</div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div></section>
   ${e.mat.length?`<section class="bloco"><h2 class="sec">Materiais de apoio</h2><div class="lista">${e.mat.map(m=>`<div class="linha"><div><strong>${m}</strong></div><button class="link" data-a="mat">Abrir</button></div>`).join("")}</div></section>`:""}
   <section class="bloco"><h2 class="sec">Questionário</h2>${s==="feita"&&!S.res?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar o questionário. Aprovação com 2 de 3 acertos.</div>`}</section>`;
 }
