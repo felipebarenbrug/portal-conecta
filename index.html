@@ -734,19 +734,44 @@ function subnavEnxoval(){
     <nav class="nav" aria-label="Enxoval de Marketing"><button data-a="pag" data-v="enxoval" aria-current="page">Materiais</button></nav>
     <span class="secao-nome">Enxoval de Marketing</span></div></div>`;
 }
+async function carregarEnxoval(){try{const {data}=await sb.from("materiais_mkt").select("*").order("ordem",{ascending:true});S.mkt=data||[];}catch(e){S.mkt=[];}}
+function vMktForm(){
+  const s=ENXOVAL.find(x=>x.id===S.mktNovo);if(!s)return"";
+  return `<section class="bloco"><h2 class="sec">Adicionar material · ${esc(s.n)}</h2>
+  <form class="form-card" id="f-mkt">
+    <div><label for="m_tit">Título *</label><input id="m_tit" required placeholder="Ex.: Logo horizontal (PNG)"></div>
+    <div><label for="m_desc">Descrição</label><input id="m_desc" placeholder="Opcional"></div>
+    ${s.sub?`<div><label for="m_tema">Tema *</label><select id="m_tema" required>${s.sub.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select></div>`:""}
+    <div><label for="m_tipo">Tipo</label><select id="m_tipo"><option value="link">Link / arquivo</option><option value="drive">Pasta do Google Drive</option><option value="video">Vídeo (YouTube)</option></select></div>
+    <div><label for="m_url">URL *</label><input id="m_url" type="url" required placeholder="https://…"></div>
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="mkt-cancel">Cancelar</button></div>
+  </form></section>`;
+}
 function vEnxoval(){
-  const card=s=>{
-    const temLink=s.link&&s.link!=="#";
-    const acao=temLink?`<a class="card-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${s.drive?"Abrir no Google Drive ↗":"Abrir ↗"}</a>`:`<span class="card-tag">Em breve</span>`;
-    const subs=s.sub?`<div class="filtros" style="margin:8px 0 0">${s.sub.map(x=>`<span class="chip" aria-pressed="false">${esc(x)}</span>`).join("")}</div>`:"";
-    const vid=s.yt?`<div class="video-wrap" style="margin-top:10px"><iframe src="https://www.youtube.com/embed/${s.yt}?rel=0" title="${esc(s.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:"";
-    return `<div class="card off" style="cursor:default"><h3>${esc(s.n)}</h3><p>${esc(s.d)}</p>${subs}${vid}<div style="margin-top:10px">${acao}</div></div>`;
+  const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
+  const its=S.mkt;
+  const porSec=(sec,tema)=>(its||[]).filter(m=>m.secao===sec&&(!tema||m.tema===tema));
+  const abrir=m=>{const lbl=m.tipo==="drive"?"Abrir no Google Drive ↗":m.tipo==="video"?"Assistir ↗":"Abrir ↗";return m.url?`<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener">${lbl}</a>`:"";};
+  const item=m=>`<div class="linha"><div><strong>${esc(m.titulo||"Material")}</strong>${m.descricao?`<span class="meta">${esc(m.descricao)}</span>`:""}</div><div style="display:flex;gap:10px;align-items:center">${abrir(m)}${admin?`<button class="link" data-a="mkt-del" data-v="${m.id}">excluir</button>`:""}</div></div>`;
+  const bloco=s=>{
+    const temas=s.sub||[null];
+    const inner=temas.map(t=>{
+      const list=porSec(s.id,t);
+      const head=t?`<div class="sub-vid">${esc(t)}</div>`:"";
+      const body=list.length?`<div class="lista">${list.map(item).join("")}</div>`:`<div class="vazio" style="padding:10px 12px">Sem material ainda.</div>`;
+      return head+body;
+    }).join("");
+    const add=admin?`<div style="margin-top:10px"><button class="btn sec" data-a="mkt-add" data-v="${s.id}">+ Adicionar em ${esc(s.n)}</button></div>`:"";
+    return `<section class="bloco"><h2 class="sec">${esc(s.n)}</h2><p class="sub" style="margin:0 0 8px">${esc(s.d)}</p>${inner}${add}</section>`;
   };
+  const carregando=its==null?`<div class="carregando" style="margin-top:12px">Carregando materiais…</div>`:"";
   return `<section class="hero azul"><div class="hero-txt"><span class="rot">Enxoval de Marketing</span>
     <h1 class="titulo" style="color:#fff">Tudo para divulgar os híbridos Barenbrug</h1>
     <p>Marca, artes para redes sociais, banners, folders, banco de imagens, vídeo institucional e brindes — reunidos para você usar no dia a dia comercial.</p></div></section>
-  <div class="cards">${ENXOVAL.map(card).join("")}</div>
-  <p class="precos-nota" style="margin-top:14px">Os materiais e links são adicionados pelo time de marketing. Precisa de algo que não está aqui? Fale com o marketing da Barenbrug.</p>`;
+  ${admin?`<p class="precos-nota" style="margin:12px 0">Você é administrador: use "+ Adicionar" em cada bloco para publicar os links e materiais. Eles aparecem para todos que têm acesso a esta seção.</p>`:""}
+  ${S.mktNovo!=null?vMktForm():""}
+  ${carregando||ENXOVAL.map(bloco).join("")}`;
 }
 function subnavLeads(){
   const abas=[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]];
@@ -1257,7 +1282,7 @@ function renderApp(){
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
-  if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;return;}
+  if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
     app.innerHTML=cabecalho()+subnavLeads()+`<main>${vLeads()}</main>`;
     if(!S.leadsCache){carregarLeads().then(render);}
@@ -1304,6 +1329,9 @@ document.addEventListener("click",async ev=>{
   if(a==="ftipo"){S.fTipo=v;render();}
   if(a==="mapacult"){S.mapaCult=v;render();}
   if(a==="maparep"){S.mapaRep=v;render();}
+  if(a==="mkt-add"){S.mktNovo=v;S._erro=null;render();window.scrollTo(0,0);}
+  if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
+  if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="excluir"){S.confirmExcluir=true;render();}
   if(a==="excluir-cancela"){S.confirmExcluir=false;render();}
@@ -1428,6 +1456,20 @@ document.addEventListener("submit",async ev=>{
     await sb.from("profiles").update({acessos,exige_curso:exigeCurso}).eq("email",email);
     if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
+    return;
+  }
+  if(f.id==="f-mkt"){
+    const titulo=f.querySelector("#m_tit").value.trim();
+    const url=f.querySelector("#m_url").value.trim();
+    const descricao=f.querySelector("#m_desc").value.trim();
+    const tipo=f.querySelector("#m_tipo").value;
+    const temaEl=f.querySelector("#m_tema");const tema=temaEl?temaEl.value:null;
+    if(!titulo||!url){S._erro="Preencha título e URL.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
+    const reg={secao:S.mktNovo,titulo,descricao,tipo,url};if(tema)reg.tema=tema;
+    const {error}=await sb.from("materiais_mkt").insert(reg);
+    if(error){S._erro="Não foi possível salvar. Verifique se você é administrador.";render();return;}
+    S.mktNovo=null;S.mkt=null;S._erro=null;render();aviso("Material adicionado.");
     return;
   }
   if(f.id==="f-quiz"){
