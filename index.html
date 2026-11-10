@@ -434,9 +434,10 @@ const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
-  {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens, vídeo institucional e brindes — tudo o que você precisa para divulgar.",ativo:true,perfis:null}
+  {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens, vídeo institucional e brindes — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
+  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
  {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Sabiá","Cayana","Carcará"],link:""},
@@ -746,6 +747,31 @@ function vEnxoval(){
     <p>Marca, artes para redes sociais, banners, folders, banco de imagens, vídeo institucional e brindes — reunidos para você usar no dia a dia comercial.</p></div></section>
   <div class="cards">${ENXOVAL.map(card).join("")}</div>
   <p class="precos-nota" style="margin-top:14px">Os materiais e links são adicionados pelo time de marketing. Precisa de algo que não está aqui? Fale com o marketing da Barenbrug.</p>`;
+}
+function subnavLeads(){
+  const abas=[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="LeadsBaren">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">LeadsBaren</span></div></div>`;
+}
+async function carregarLeads(){try{const {data}=await sb.from("leads").select("*");S.leadsCache=data||[];}catch(e){S.leadsCache=[];}}
+function vLeads(){
+  const inbound=S.pag!=="leads-outbound";
+  const origem=inbound?"inbound":"outbound";
+  const minhaUf=(S.profile&&(S.profile.uf||S.profile.estado))||"";
+  const rows=(S.leadsCache||[]).filter(l=>(l.origem||"inbound")===origem);
+  const fmtTel=t=>t?`<a class="link" href="https://wa.me/55${String(t).replace(/\D/g,"")}" target="_blank" rel="noopener">${esc(t)}</a>`:"—";
+  const corpo=rows.length
+    ? `<div class="tab"><table><thead><tr><th>Produtor</th><th>Cidade/UF</th><th>Cultura/Interesse</th><th>Volume</th><th>WhatsApp</th><th>Status</th></tr></thead><tbody>${rows.map(l=>`<tr><td>${esc(l.nome||"—")}</td><td>${esc((l.cidade||"—")+(l.uf?" / "+l.uf:""))}</td><td>${esc(l.cultura||l.interesse||"—")}</td><td>${esc(l.volume||"—")}</td><td>${fmtTel(l.telefone||l.whatsapp)}</td><td><span class="selo">${esc(l.status||"Novo")}</span></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="vazio">${S.leadsCache?`Nenhum lead ${inbound?"de cotação":"de prospecção"} disponível para a sua região${minhaUf?" ("+esc(minhaUf)+")":""} por enquanto.`:"Carregando leads…"}</div>`;
+  return `<div><h1 class="titulo">LeadsBaren${minhaUf?` · ${esc(minhaUf)}`:""}</h1>
+    <p class="sub">${inbound
+      ? "Produtores que pediram cotação e caíram no funil do CRM, do(s) estado(s) que você atende. Atenda rápido — lead inbound esfria em horas."
+      : "Base de produtores do RD Marketing da sua região para você prospectar ativamente. Pegue o lead e registre o contato para não duplicar com outro canal."}</p></div>
+  <section class="bloco">
+    <div class="aviso-bloq">🔧 Em construção. A base de leads será conectada ao RD Station (Marketing + funil MQL do CRM) com acesso restrito por estado (LGPD). Esta tela já mostra como o canal/RC vai ver e atender os leads da região dele.</div>
+    ${corpo}
+  </section>`;
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -1232,6 +1258,11 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;return;}
+  if(S.secao==="leads"){
+    app.innerHTML=cabecalho()+subnavLeads()+`<main>${vLeads()}</main>`;
+    if(!S.leadsCache){carregarLeads().then(render);}
+    return;
+  }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
 const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
@@ -1250,7 +1281,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
