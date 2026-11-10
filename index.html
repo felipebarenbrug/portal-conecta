@@ -637,24 +637,47 @@ function vCriarAcesso(){
 }
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
-  const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS[x.feitas]?ETAPAS[x.feitas].n:"—");
+  const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS_ON[x.feitas]?ETAPAS_ON[x.feitas].n:"—");
   const conc=S.equipe.filter(x=>x.feitas>=ORDEM.length).length;
-  return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha.</p></div>
+  const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}º`;
+  const comConhec=S.equipe.filter(x=>x.conhecimento!=null);
+  const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
+  return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
   ${vCriarAcesso()}
-  <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th><th></th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")}</tbody></table></div></section>`;
+  <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
+  <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
+  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Módulos</th><th>Conhecimento</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>`<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")}</tbody></table></div></section>`;
 }
+const totalQ=id=>{const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
 async function carregarEquipe(){
   const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone");
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota");
-  const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||[]).push(r);});
-  S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
-    .sort((a,b)=>b.feitas-a.feitas);
+  const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||{})[r.etapa]=r.nota;});
+  S.progPorUser=porUser;
+  S.equipe=(profs||[]).map(p=>{
+    const rs=porUser[p.id]||{};
+    const feitasAtivas=ETAPAS_ATIVAS.filter(id=>rs[id]!=null);
+    let soma=0; feitasAtivas.forEach(id=>soma+=(rs[id]/totalQ(id))*100);
+    const conhecimento=feitasAtivas.length?Math.round(soma/feitasAtivas.length):null;
+    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,
+            feitas:feitasAtivas.length, conhecimento};
+  }).sort((a,b)=> (b.feitas-a.feitas) || ((b.conhecimento||0)-(a.conhecimento||0)) || a.nome.localeCompare(b.nome));
+}
+function evolucaoHTML(uid){
+  const rs=(S.progPorUser&&S.progPorUser[uid])||{};
+  const done=ETAPAS_ATIVAS.filter(id=>rs[id]!=null).length;
+  const linhas=ETAPAS_ATIVAS.map(id=>{const e=ETAPAS.find(x=>x.id===id);const nota=rs[id];const tot=totalQ(id);const feito=nota!=null;
+    return `<div class="linha"><div><strong>${e.n}</strong><span class="meta">${feito?`Aprovado · ${nota} de ${tot} acertos (${Math.round(nota/tot*100)}%)`:"Pendente"}</span></div><span class="selo">${feito?"✓ concluído":"—"}</span></div>`;}).join("");
+  return `<section class="bloco"><h2 class="sec">Evolução</h2>
+    <div class="resumo"><div class="barra"><i style="width:${done/ETAPAS_ATIVAS.length*100}%"></i></div><span>${done} de ${ETAPAS_ATIVAS.length} módulos concluídos</span></div>
+    <div class="lista">${linhas}</div></section>`;
 }
 function vUsuarioAdmin(){
   if(!S.adminUser)return `<div class="carregando">Carregando…</div>`;
   const u=S.adminUser,ehEu=u.id===S.user.id;
   return `<button class="voltar" data-a="pag" data-v="acomp">‹ Acompanhamento</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · acesso de <strong>${esc(u.perfil)}</strong>. Edite os dados abaixo ou altere o perfil de acesso.</p></div>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · acesso de <strong>${esc(u.perfil)}</strong>. Veja a evolução, edite os dados ou altere o perfil de acesso.</p></div>
+  ${evolucaoHTML(u.id)}
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     ${camposPerfil(S.adminForm.perfil)}
