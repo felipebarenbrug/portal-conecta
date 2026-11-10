@@ -1,4 +1,4 @@
-<title>Academia de Híbridos Barenbrug</title>
+<title>Portal Conecta Barenbrug</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&display=swap">
@@ -234,7 +234,7 @@ const demo=()=>`<div class="demo"><div class="demo-in"><span>Protótipo com cont
 
 function vLogin(){
  const e=S.passo==="email";
- return `${demo()}<div class="login"><div class="login-marca"><img class="logo" src="${LOGO}" alt="Barenbrug"><div><h1>Academia de Híbridos</h1><p style="margin-top:10px">O ponto de partida de quem vende Sabiá, Cayana e Carcará.</p></div></div>
+ return `${demo()}<div class="login"><div class="login-marca"><img class="logo" src="${LOGO}" alt="Barenbrug"><div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">O ponto de partida de quem vende Sabiá, Cayana e Carcará.</p></div></div>
  <form class="login-form" id="f-login">${e?`<h2>Entrar</h2><p>Informe seu e-mail. Enviaremos um código de acesso novo.</p>
   <div><label for="email">E-mail</label><input id="email" type="email" required value="${esc(S.email)}" autocomplete="email"></div>
   ${S.erro?`<div class="erro" role="alert">${S.erro}</div>`:""}<button class="btn">Receber código</button>
@@ -256,7 +256,7 @@ function cabecalho(){
 
 function vTrilha(){
  const f=qtdFeitas(),tot=ETAPAS.length,fim=f>=tot,at=ETAPAS[f];
- return `<div><h1 class="titulo">Academia de Híbridos</h1><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
+ return `<div><h1 class="titulo">Portal Conecta Barenbrug</h1><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
  ${fim?`<section class="proximo"><div><span class="rot">Jornada concluída</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
  :`<section class="proximo"><div><span class="rot">Sua próxima etapa · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${f}">${f===0&&!Object.keys(prog().vistos).length?"Começar":"Continuar"}</button></section>`}
  <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} etapas concluídas</span></div>
@@ -304,7 +304,7 @@ function vModulos(){
 
 function vCert(){
  const p=prog();
- return `<button class="voltar" data-a="pag" data-v="trilha">‹ Minha trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.user.nome)}</strong> concluiu a jornada de Sabiá, Cayana e Carcará em ${p.data||hoje()}, com ${p.notas.prova||"–"} acertos na prova final.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
+ return `<button class="voltar" data-a="pag" data-v="trilha">‹ Minha trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Portal <b>Conecta</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.user.nome)}</strong> concluiu a jornada de Sabiá, Cayana e Carcará em ${p.data||hoje()}, com ${p.notas.prova||"–"} acertos na prova final.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
 }
 
 function vAcomp(){
