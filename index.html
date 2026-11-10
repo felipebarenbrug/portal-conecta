@@ -9,7 +9,7 @@
 :root{
   --amarelo:#FFDB00; --azul:#00A8E2; --azul-escuro:#00557A; --preto:#1E1E1E;
   --branco:#FFFFFF; --papel:#F3F7F9; --linha:#D5E1E7; --apagado:#5A6B74; --bloqueado:#A9B7BE;
-  --azul-claro:#E3F5FC; --amarelo-claro:#FFF7BF;
+  --azul-claro:#E3F5FC; --amarelo-claro:#FFF7BF; --vermelho:#B4232A;
   --fonte:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 *{box-sizing:border-box}
@@ -46,8 +46,12 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .btn{background:var(--azul-escuro);color:var(--branco);border:0;border-radius:6px;padding:12px 20px;font-weight:700;cursor:pointer;display:inline-block}
 .btn:disabled{background:var(--bloqueado);cursor:not-allowed}
 .btn.preto{background:var(--preto)}
+.btn.perigo{background:var(--vermelho)}
+.btn.sec{background:var(--branco);color:var(--azul-escuro);box-shadow:inset 0 0 0 2px var(--azul-escuro)}
 .link{text-align:left;background:none;border:0;padding:0;color:var(--azul-escuro);text-decoration:underline;cursor:pointer}
+.link.perigo{color:var(--vermelho)}
 .carregando{min-height:70vh;display:grid;place-items:center;color:var(--apagado)}
+.acoes{display:flex;gap:10px;flex-wrap:wrap}
 
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .card{text-align:left;background:var(--branco);border:0;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:8px;cursor:pointer;box-shadow:0 1px 0 var(--linha);min-height:150px}
@@ -137,11 +141,12 @@ button.etapa-b:hover h3{text-decoration:underline}
 .cert .slogan b{color:var(--amarelo)}
 
 .tab{overflow-x:auto;background:var(--branco);border-radius:6px}
-table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
 th{text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--apagado);padding:10px 12px;border-bottom:2px solid var(--linha)}
 td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:tabular-nums}
 .selo{font-size:12px;font-weight:700;padding:2px 8px;background:var(--azul-claro);color:var(--azul-escuro);border-radius:4px;white-space:nowrap}
 .nota-admin{background:var(--amarelo-claro);border-left:4px solid var(--amarelo);padding:12px 14px;font-size:14px;border-radius:4px}
+.perigo-box{background:#FBE9EA;border-left:4px solid var(--vermelho);padding:12px 14px;font-size:14px;border-radius:4px;display:grid;gap:10px}
 
 .aviso{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:var(--preto);color:var(--branco);padding:10px 16px;font-size:14px;max-width:calc(100% - 32px);z-index:20;border-radius:6px}
 
@@ -178,7 +183,7 @@ const ETAPAS=[
         q("Que sistema tira o melhor de um híbrido?",["Solo corrigido, adubação na dose certa e lotação equilibrada","Área sem correção e sem adubação","Lotação máxima o ano inteiro"],0),
         q("Como falar de resultado com o produtor?",["Produção máxima garantida","Observado em ensaios; varia conforme manejo, solo e chuvas","Funciona igual em qualquer fazenda"],1)]},
  {id:"sabia",n:"Sabiá",d:`Híbrido de ${sci("Brachiaria")}. Resistência e Segurança.`,
-  v:[{t:"Atributos da Planta e Estrutura de Pastejo",yt:"yeOjr6ocbWk"},{t:"Produtividade na Seca e Sanidade",yt:"gbe-5Eqbws0"},{t:"Diferimento, Ganho Animal e Plantio",yt:"9lKse6Zmmbc"},{t:"Solo, Florescimento e Retorno (ROI)",yt:"0LKc47gERs4"}],mat:["Podcast","Apostila","Banco de imagens","Posts"],
+  v:[{t:"Origem e Genética",yt:"llcJ7vpDTWw"},{t:"Atributos da Planta e Estrutura de Pastejo",yt:"yeOjr6ocbWk"},{t:"Produtividade na Seca e Sanidade",yt:"gbe-5Eqbws0"},{t:"Diferimento, Ganho Animal e Plantio",yt:"9lKse6Zmmbc"},{t:"Solo, Florescimento e Retorno (ROI)",yt:"0LKc47gERs4"}],mat:["Podcast","Apostila","Banco de imagens","Posts"],
   quiz:[q("Qual é o cruzamento do Sabiá?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`${sci("Megathyrsus maximus")} × ${sci("B. ruziziensis")}`,`${sci("B. brizantha")} × ${sci("Megathyrsus maximus")}`],0),
         q("Característica documentada do Sabiá frente à falta de água?",["Tolerância muito alta à seca","Exige irrigação","Só produz nas águas"],0),
         q("Par de atributos que resume o Sabiá?",["Precocidade e Rusticidade","Resistência e Segurança","Volume e Preço"],1)]},
@@ -206,6 +211,15 @@ const ORDEM=ETAPAS.map(e=>e.id);
 const BASE=[];
 ["Sabiá","Cayana","Carcará"].forEach(c=>[["Apostila","PDF"],["Podcast","Áudio"],["Banco de imagens","Fotos"],["Posts","Artes prontas"]].forEach(([t,f])=>BASE.push({c,t,f,n:`${t} ${c}`})));
 BASE.push({c:"Geral",t:"Apostila",f:"PDF",n:"Glossário do pasto"},{c:"Geral",t:"Apostila",f:"PDF",n:"Perguntas frequentes do vendedor"});
+const VIDEOS_BASE=[
+ {c:"Geral",t:"Melhoramento de forrageiras tropicais: da inovação ao campo",yt:"F00jAPYIXdQ"},
+ {c:"Geral",t:"A importância dos híbridos para a formação da forrageira",yt:"kgSpuBh0Bp4"},
+ {c:"Geral",t:`Aspectos técnicos e resultados com novos cultivares de ${sci("Brachiaria")}`,yt:"KpuiMq3Fwvo"},
+ {c:"Geral",t:"Qual capim encaixa melhor na sua fazenda?",yt:"GZlCjclo2mE"},
+ {c:"Geral",t:"Tem novidade no prato do boi",yt:"zzIyuOBnHbo"},
+ {c:"Sabiá",t:"Braquiária híbrida: boa opção para regiões com estresse hídrico",yt:"z0XVSyLlNdM"},
+ {c:"Cayana",t:"Conheça as características da cultivar Cayana",yt:"BXbKSyvG-cI"}
+];
 
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha, base de conhecimento e certificado.",ativo:true},
@@ -229,51 +243,43 @@ const BASE_CAMPOS=[
 ];
 const SCHEMAS={
   "RC":[...BASE_CAMPOS,
-    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
-    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
-    {k:"cnpj",l:"CNPJ",t:"text",req:true},
-    {k:"razao_social",l:"Razão social da empresa",t:"text",req:true},
-    {k:"empresa_uf",l:"Estado da sede da empresa",t:"uf",req:true},
-    {k:"empresa_cidade",l:"Cidade sede da empresa",t:"cidade",uf:"empresa_uf",req:true},
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},{k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"cnpj",l:"CNPJ",t:"text",req:true},{k:"razao_social",l:"Razão social da empresa",t:"text",req:true},
+    {k:"empresa_uf",l:"Estado da sede da empresa",t:"uf",req:true},{k:"empresa_cidade",l:"Cidade sede da empresa",t:"cidade",uf:"empresa_uf",req:true},
     {k:"raio_atuacao",l:"Raio de atuação a partir da sede",t:"select",o:OPC.raio_atuacao,req:true},
     {k:"marcas",l:"Marcas que representa além da Barenbrug",t:"text",req:false},
-    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
-    {k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},{k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
     {k:"qtd_clientes",l:"Quantidade de clientes na carteira",t:"select",o:OPC.qtd_clientes,req:true},
     {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
   "Vendedor de Revenda":[...BASE_CAMPOS,
-    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
-    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},{k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
     {k:"revenda",l:"Revenda onde trabalha",t:"text",req:true},
-    {k:"revenda_uf",l:"Estado da revenda",t:"uf",req:true},
-    {k:"revenda_cidade",l:"Cidade da revenda",t:"cidade",uf:"revenda_uf",req:true},
+    {k:"revenda_uf",l:"Estado da revenda",t:"uf",req:true},{k:"revenda_cidade",l:"Cidade da revenda",t:"cidade",uf:"revenda_uf",req:true},
     {k:"tempo_revenda",l:"Há quanto tempo está na revenda",t:"select",o:OPC.tempo_revenda,req:true},
-    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
-    {k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},{k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
     {k:"qtd_clientes",l:"Quantidade de clientes na carteira",t:"select",o:OPC.qtd_clientes,req:true},
     {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
   "Gestor de Revenda":[...BASE_CAMPOS,
-    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
-    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},{k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
     {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
     {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
   "Assessor de Vendas Digital":[...BASE_CAMPOS,
     {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
-    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
-    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},{k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
     {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}]
 };
 const schemaDoPerfil=p=>SCHEMAS[p]||BASE_CAMPOS;
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
        fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null,
-       form:null, cidadesCache:{}};
+       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null};
 
+const formAtual=()=>S[S.formAlvo]||{};
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
 const feitasOrdenadas=()=>ORDEM.filter(id=>S.feitas.includes(id));
 const qtdFeitas=()=>feitasOrdenadas().length;
 const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORDEM[i]))return i;}return ORDEM.length;};
-const estado=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
+const estadoEt=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador";
 const cadastroCompleto=()=>schemaDoPerfil(S.perfil).every(c=>!c.req||(S.profile&&(S.profile[c.k]||"").trim()));
 const primeiroNome=()=>String(S.profile&&S.profile.nome||S.user.email||"").trim().split(/\s+/)[0];
@@ -283,13 +289,12 @@ async function carregarCidades(uf){
   S.cidadesCache[uf]="__LOADING__";
   try{
     const r=await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
-    const j=await r.json();
-    S.cidadesCache[uf]=j.map(x=>x.nome);
+    const j=await r.json();S.cidadesCache[uf]=j.map(x=>x.nome);
   }catch(e){ S.cidadesCache[uf]="__ERRO__"; }
 }
-function preloadCidades(){
-  schemaDoPerfil(S.perfil).filter(c=>c.t==="cidade").forEach(c=>{
-    const uf=S.form&&S.form[c.uf];
+function preloadCidades(perfil){
+  schemaDoPerfil(perfil).filter(c=>c.t==="cidade").forEach(c=>{
+    const uf=formAtual()[c.uf];
     if(uf&&!S.cidadesCache[uf]){ carregarCidades(uf).then(render); }
   });
 }
@@ -308,9 +313,7 @@ async function carregarUsuario(u){
     await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email});
     ({data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle());
   }
-  S.profile=prof||{};
-  S.perfil=(prof&&prof.perfil)||"RC";
-  S.form=null;
+  S.profile=prof||{};S.perfil=(prof&&prof.perfil)||"RC";S.form=null;S.formAlvo="form";
   const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
   S.feitas=(prog||[]).map(r=>r.etapa);
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
@@ -341,12 +344,12 @@ function vTrocaSenha(erro){
     </form></div>`;
 }
 function campoHTML(c){
-  const v=(S.form&&S.form[c.k])||"";
+  const F=formAtual();const v=F[c.k]||"";
   const lbl=`<label for="f_${c.k}">${c.l}${c.req?" *":""}</label>`;
-  if(c.t==="email_fixo") return `<div><label>${c.l}</label><input value="${esc(S.user.email)}" disabled></div>`;
+  if(c.t==="email_fixo") return `<div><label>${c.l}</label><input value="${esc(F.email||S.user.email)}" disabled></div>`;
   if(c.t==="uf") return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" data-ufload="1" ${c.req?"required":""}><option value="">Selecione…</option>${UFS.map(u=>`<option value="${u}" ${v===u?"selected":""}>${u}</option>`).join("")}</select></div>`;
   if(c.t==="cidade"){
-    const uf=(S.form&&S.form[c.uf])||"";const ci=S.cidadesCache[uf];
+    const uf=F[c.uf]||"";const ci=S.cidadesCache[uf];
     if(ci==="__ERRO__") return `<div>${lbl}<input id="f_${c.k}" data-fk="${c.k}" type="text" value="${esc(v)}" placeholder="Digite a cidade" ${c.req?"required":""}></div>`;
     let inner,dis="";
     if(!uf){inner=`<option value="">Selecione o estado primeiro</option>`;dis="disabled";}
@@ -357,19 +360,19 @@ function campoHTML(c){
   if(c.t==="select") return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" ${c.req?"required":""}><option value="">Selecione…</option>${c.o.map(o=>`<option value="${esc(o)}" ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
   return `<div>${lbl}<input id="f_${c.k}" data-fk="${c.k}" type="${c.t==="tel"?"tel":"text"}" value="${esc(v)}" ${c.req?"required":""}></div>`;
 }
-function camposPerfil(){ return schemaDoPerfil(S.perfil).map(campoHTML).join(""); }
+const camposPerfil=perfil=>schemaDoPerfil(perfil).map(campoHTML).join("");
 function vCadastroObrig(){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
     <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Primeiro acesso: complete seu cadastro para continuar.</p></div></div>
     <form class="acesso-form rolavel" id="f-cadastro"><h2>Complete seu cadastro</h2><p>Perfil: <strong>${esc(S.perfil)}</strong>. Os campos com <strong>*</strong> são obrigatórios.</p>
-      ${camposPerfil()}
+      ${camposPerfil(S.perfil)}
       ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
       <button class="btn" type="submit">Salvar e continuar</button>
     </form></div>`;
 }
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
-  <form class="form-card" id="f-cadastro">${camposPerfil()}
+  <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div><button class="btn" type="submit">Salvar</button></div></form>`;
 }
@@ -382,7 +385,7 @@ function cabecalho(){
 function subnavAcademia(){
   const abas=ehAdmin()?[["acomp","Acompanhamento"],["base","Base de conhecimento"]]:[["trilha","Trilha"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||S.pag==="usuario"&&k==="acomp"?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
 }
 function vHub(){
@@ -399,7 +402,7 @@ function vTrilha(){
   ${fim?`<section class="proximo"><div><span class="rot">Jornada concluída</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Sua próxima etapa · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
   <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} etapas concluídas</span></div>
-  <ol class="trilha">${ETAPAS.map((e,i)=>{const s=estado(i),nota=S.notas[e.id];
+  <ol class="trilha">${ETAPAS.map((e,i)=>{const s=estadoEt(i),nota=S.notas[e.id];
     const corpo=`<h3>${e.n}</h3><p>${e.d}</p><span class="est">${s==="feita"?`Concluída${nota!=null?" · "+nota+" acertos":""}`:s==="atual"?"Etapa atual":"Bloqueada"}</span>`;
     return `<li class="${s}"><span class="marco" aria-hidden="true">${s==="feita"?"✓":i+1}</span>${s==="bloq"?`<div class="etapa-b">${corpo}</div>`:`<button class="etapa-b" data-a="abrir" data-v="${i}">${corpo}</button>`}</li>`;}).join("")}</ol>`;
 }
@@ -410,7 +413,7 @@ function vQuiz(lista,id){
   ${r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length?"Ver certificado":"Ir para a trilha"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
 }
 function vEtapa(){
-  const i=S.etapa,e=ETAPAS[i],vistos=S.vistos[e.id]||[],s=estado(i);
+  const i=S.etapa,e=ETAPAS[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
   if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button>
@@ -423,12 +426,21 @@ function vEtapa(){
 function vBase(){
   const b=S.busca.toLowerCase();
   const l=BASE.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||x.t===S.fTipo)&&x.n.toLowerCase().includes(b));
+  const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
+  const vids=VIDEOS_BASE.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
+  const vatual=S.baseVideo?VIDEOS_BASE.find(x=>x.yt===S.baseVideo):null;
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${x}" aria-pressed="${sel===x}">${x}</button>`).join("");
-  return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Materiais de apoio à venda dos híbridos, liberados desde o primeiro acesso.</p></div>
-  <div><label for="busca">Buscar material</label><input id="busca" type="search" value="${esc(S.busca)}" placeholder="Ex.: apostila Sabiá"></div>
+  const mostraMat=S.fTipo==="Todos"||["Apostila","Podcast","Banco de imagens","Posts"].includes(S.fTipo);
+  const mostraVid=S.fTipo==="Todos"||S.fTipo==="Vídeo";
+  return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Vídeos e materiais de apoio à venda dos híbridos, liberados desde o primeiro acesso.</p></div>
+  <div><label for="busca">Buscar na base</label><input id="busca" type="search" value="${esc(S.busca)}" placeholder="Ex.: Cayana, estresse hídrico, apostila"></div>
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
-  <div class="filtros">${chips(["Todos","Apostila","Podcast","Banco de imagens","Posts"],S.fTipo,"ftipo")}</div>
-  <div class="lista" id="res-base">${l.length?l.map(x=>`<div class="linha"><div><strong>${x.n}</strong><span class="meta">${x.c} · ${x.f}</span></div><button class="link" data-a="mat">Abrir</button></div>`).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div>`;
+  <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast","Banco de imagens","Posts"],S.fTipo,"ftipo")}</div>
+  ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>
+    ${vatual?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:""}
+    <div class="lista">${vids.length?vids.map(x=>`<div class="linha ${x.yt===S.baseVideo?"ativa":""}"><div><strong>${x.t}</strong><span class="meta">${x.c} · Vídeo</span></div><button class="link" data-a="bvideo" data-v="${x.yt}">${x.yt===S.baseVideo?"Assistindo":"Assistir"}</button></div>`).join(""):`<div class="vazio">Nenhum vídeo encontrado.</div>`}</div></section>`:""}
+  ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
+    <div class="lista" id="res-base">${l.length?l.map(x=>`<div class="linha"><div><strong>${x.n}</strong><span class="meta">${x.c} · ${x.f}</span></div><button class="link" data-a="mat">Abrir</button></div>`).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
 }
 function vCert(){
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu a trilha de Sabiá, Cayana e Carcará${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
@@ -436,7 +448,7 @@ function vCert(){
 function vCriarAcesso(){
   const r=S.novoAcesso;
   return `<section class="bloco"><h2 class="sec">Cadastrar pessoa</h2>
-  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória para você enviar à pessoa. No primeiro acesso ela troca a senha e completa o cadastro.</p>
+  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória para você enviar à pessoa.</p>
   <form class="form-card" id="f-criar">
     <div><label for="n_nome">Nome completo *</label><input id="n_nome" required></div>
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
@@ -453,14 +465,38 @@ function vAcomp(){
   const conc=S.equipe.filter(x=>x.feitas>=ORDEM.length).length;
   return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha.</p></div>
   ${vCriarAcesso()}
-  <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td></tr>`).join("")}</tbody></table></div></section>`;
+  <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th><th></th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")}</tbody></table></div></section>`;
 }
 async function carregarEquipe(){
   const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone");
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota");
   const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||[]).push(r);});
-  S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
+  S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
     .sort((a,b)=>b.feitas-a.feitas);
+}
+function vUsuarioAdmin(){
+  if(!S.adminUser)return `<div class="carregando">Carregando…</div>`;
+  const u=S.adminUser,ehEu=u.id===S.user.id;
+  return `<button class="voltar" data-a="pag" data-v="acomp">‹ Acompanhamento</button>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · acesso de <strong>${esc(u.perfil)}</strong>. Edite os dados abaixo ou altere o perfil de acesso.</p></div>
+  <form class="form-card" id="f-usuario">
+    <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
+    ${camposPerfil(S.adminForm.perfil)}
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div class="acoes"><button class="btn" type="submit">Salvar alterações</button></div>
+  </form>
+  <section class="bloco"><h2 class="sec">Excluir acesso</h2>
+  ${ehEu?`<div class="nota-admin">Você não pode excluir o seu próprio acesso.</div>`
+  :S.confirmExcluir
+    ?`<div class="perigo-box"><strong>Tem certeza?</strong> Isso apaga o acesso de ${esc(S.adminForm.nome||u.email)} e todo o progresso dele. Não dá para desfazer.<div class="acoes"><button class="btn perigo" data-a="excluir-confirma">Sim, excluir</button><button class="btn sec" data-a="excluir-cancela">Cancelar</button></div></div>`
+    :`<div class="perigo-box">Remove o acesso da pessoa e o progresso dela, de forma permanente.<div><button class="btn perigo" data-a="excluir">Excluir acesso</button></div></div>`}
+  </section>`;
+}
+async function abrirUsuario(id){
+  S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S._erro=null;S.pag="usuario";render();
+  const {data:prof}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();
+  if(!prof){S._erro="Não foi possível abrir este usuário.";S.pag="acomp";render();return;}
+  S.adminUser=prof;S.adminForm={...prof};S.formAlvo="adminForm";preloadCidades(prof.perfil);render();
 }
 
 /* ---------- render ---------- */
@@ -468,12 +504,14 @@ function render(){
   const app=document.getElementById("app");
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
+  if(S.pag!=="usuario")S.formAlvo="form";
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
-  if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades();}
+  if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
   if(S.secao==="academia"){
+    if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavAcademia()+`<main>${vUsuarioAdmin()}</main>`;return;}
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;
     if(S.pag==="acomp"&&!S.equipe){carregarEquipe().then(render);}
@@ -481,7 +519,7 @@ function render(){
   }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
-const irPag=p=>{S.pag=p;S.res=null;S._erro=null;render();window.scrollTo(0,0);};
+const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
 async function concluir(id,nota){
   if(!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=nota;
     await sb.from("progresso").upsert({user_id:S.user.id,etapa:id,nota},{onConflict:"user_id,etapa"});}
@@ -491,18 +529,32 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,cidadesCache:{}};render();}
-  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;render();window.scrollTo(0,0);}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false};render();}
+  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
-  if(a==="perfil"){S.pag="perfil";S._erro=null;S.form={...S.profile};preloadCidades();render();window.scrollTo(0,0);}
+  if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
   if(a==="mat")aviso("No lançamento, este botão abre o material.");
+  if(a==="bvideo"){S.baseVideo=S.baseVideo===v?null:v;render();if(S.baseVideo)window.scrollTo(0,0);}
   if(a==="pos-quiz")irPag(qtdFeitas()>=ORDEM.length?"cert":"trilha");
   if(a==="cert")irPag("cert");
   if(a==="fcult"){S.fCult=v;render();}
   if(a==="ftipo"){S.fTipo=v;render();}
+  if(a==="verusuario"){abrirUsuario(v);}
+  if(a==="excluir"){S.confirmExcluir=true;render();}
+  if(a==="excluir-cancela"){S.confirmExcluir=false;render();}
+  if(a==="excluir-confirma"){
+    const id=S.adminUser.id,nome=S.adminForm.nome||S.adminUser.email;
+    b.disabled=true;b.textContent="Excluindo…";
+    const {data,error}=await sb.functions.invoke("excluir-usuario",{body:{id}});
+    let erro=null;
+    if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível excluir.";}catch(_){erro="Não foi possível excluir. Tente de novo.";}}
+    else if(data&&data.error){erro=data.error;}
+    if(erro){S._erro=erro;S.confirmExcluir=false;render();return;}
+    S.equipe=null;S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S.formAlvo="form";S.pag="acomp";render();aviso("Acesso de "+nome+" excluído.");
+  }
 });
 document.addEventListener("change",async ev=>{
   const c=ev.target;
@@ -511,18 +563,20 @@ document.addEventListener("change",async ev=>{
     S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
     if(c.checked&&k+1<ETAPAS[S.etapa].v.length)S.video=k+1;render();return;
   }
-  if(c.dataset.fk&&S.form){
-    S.form[c.dataset.fk]=c.value;
+  if(c.dataset.fk){
+    const F=formAtual();F[c.dataset.fk]=c.value;
+    if(c.dataset.reperfil){render();return;}
     if(c.dataset.ufload){
-      const dep=schemaDoPerfil(S.perfil).find(x=>x.t==="cidade"&&x.uf===c.dataset.fk);
-      if(dep)S.form[dep.k]="";
+      const sch=schemaDoPerfil(S.formAlvo==="adminForm"?S.adminForm.perfil:S.perfil);
+      const dep=sch.find(x=>x.t==="cidade"&&x.uf===c.dataset.fk);
+      if(dep)F[dep.k]="";
       await carregarCidades(c.value);render();
     }
   }
 });
 document.addEventListener("input",ev=>{
   if(ev.target.id==="busca"){S.busca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
-  if(ev.target.dataset&&ev.target.dataset.fk&&S.form){S.form[ev.target.dataset.fk]=ev.target.value;}
+  if(ev.target.dataset&&ev.target.dataset.fk){formAtual()[ev.target.dataset.fk]=ev.target.value;}
 });
 document.addEventListener("submit",async ev=>{
   const f=ev.target;ev.preventDefault();
@@ -545,8 +599,7 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-cadastro"){
     const schema=schemaDoPerfil(S.perfil);
-    const falta=schema.some(c=>c.req&&!((S.form[c.k]||"").trim()));
-    if(falta){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
+    if(schema.some(c=>c.req&&!((S.form[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
     const dados={};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.form[c.k]||"").trim();});
     const eraObrig=!cadastroCompleto();
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
@@ -555,6 +608,15 @@ document.addEventListener("submit",async ev=>{
     Object.assign(S.profile,dados);S.form={...S.profile};S._erro=null;
     if(eraObrig){S.secao=null;S.pag="hub";render();aviso("Cadastro completo. Bem-vindo!");}
     else{render();aviso("Dados salvos.");}
+  }
+  if(f.id==="f-usuario"){
+    const perfil=S.adminForm.perfil;const schema=schemaDoPerfil(perfil);
+    if(schema.some(c=>c.req&&!((S.adminForm[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
+    const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.adminForm[c.k]||"").trim();});
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+    const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
+    if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
+    Object.assign(S.adminUser,dados);S.equipe=null;S._erro=null;render();aviso("Dados atualizados.");
   }
   if(f.id==="f-criar"){
     const nome=f.querySelector("#n_nome").value.trim();
