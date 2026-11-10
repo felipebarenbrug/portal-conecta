@@ -22,15 +22,21 @@ img{max-width:100%}
 :focus-visible{outline:3px solid var(--azul-escuro);outline-offset:2px}
 .sci{font-style:italic}
 
-.topo{background:var(--amarelo);padding:12px 16px 0}
-.topo-in{max-width:880px;margin:0 auto}
-.topo-linha{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.logo{height:34px;width:auto;display:block;align-self:flex-start;flex:0 0 auto}
+.topo{background:var(--amarelo)}
+.topo-in{max-width:880px;margin:0 auto;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo-b{background:none;border:0;padding:0;cursor:pointer;line-height:0}
+.logo{height:34px;width:auto;display:block}
 .quem{font-size:13px;text-align:right}
 .quem button{background:none;border:0;padding:0;color:var(--preto);text-decoration:underline;cursor:pointer;font-size:13px}
-.nav{display:flex;gap:4px;margin-top:10px;overflow-x:auto}
+
+.subnav{background:var(--amarelo);border-top:1px solid rgba(0,0,0,.08)}
+.subnav-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.voltar-inicio{background:none;border:0;padding:9px 0;color:var(--preto);font-weight:700;font-size:14px;cursor:pointer}
+.nav{display:flex;gap:4px;overflow-x:auto}
 .nav button{background:none;border:0;padding:9px 12px;font-weight:700;font-size:15px;cursor:pointer;color:var(--preto);border-radius:6px 6px 0 0;white-space:nowrap}
 .nav button[aria-current=page]{background:var(--papel)}
+.secao-nome{margin-left:auto;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
+
 main{max-width:880px;margin:0 auto;padding:26px 16px 56px;display:grid;gap:24px}
 main>*{min-width:0}
 .titulo{color:var(--azul);font-weight:800;font-size:clamp(26px,6vw,36px)}
@@ -43,9 +49,20 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .link{text-align:left;background:none;border:0;padding:0;color:var(--azul-escuro);text-decoration:underline;cursor:pointer}
 .carregando{min-height:70vh;display:grid;place-items:center;color:var(--apagado)}
 
+/* hub */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.card{text-align:left;background:var(--branco);border:0;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:8px;cursor:pointer;box-shadow:0 1px 0 var(--linha);min-height:150px}
+.card h3{font-size:20px;font-weight:800;color:var(--azul-escuro)}
+.card p{font-size:14px;color:var(--apagado);flex:1}
+.card-tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
+.card-cta{font-weight:700;color:var(--azul)}
+.card.off{cursor:default;opacity:.65;box-shadow:inset 0 0 0 1.5px var(--linha);background:transparent}
+.card.off .card-tag{color:var(--apagado)}
+
 .acesso{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;background:var(--branco)}
 .acesso-marca{background:var(--amarelo);padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
 .acesso-marca h1{font-size:clamp(30px,5vw,42px);font-weight:800;color:var(--preto)}
+.acesso-marca .logo{height:34px;align-self:flex-start}
 .acesso-form{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px}
 .acesso-form h2{color:var(--azul);font-weight:800;font-size:24px}
 label{font-weight:700;font-size:14px;display:block;margin-bottom:5px}
@@ -54,8 +71,9 @@ input:disabled{background:var(--papel);color:var(--apagado)}
 .dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .erro{background:var(--amarelo-claro);padding:10px 12px;font-size:14px;border-left:4px solid var(--preto)}
 .dica{font-size:13px;color:var(--apagado)}
+.form-card{background:var(--branco);padding:18px;border-radius:6px;display:grid;gap:14px;max-width:520px}
 
-.proximo{background:var(--amarelo);padding:22px;display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.proximo{background:var(--amarelo);padding:22px;display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-radius:6px}
 .proximo>div{min-width:0;flex:1 1 260px}
 .rot{font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
 .proximo h2{font-size:24px;font-weight:800;color:var(--preto);margin-top:3px}
@@ -78,7 +96,7 @@ button.etapa-b:hover h3{text-decoration:underline}
 .bloq .etapa-b h3{color:var(--apagado)}
 .est{font-size:12px;font-weight:700;color:var(--azul-escuro)}
 
-.player{background:var(--azul-escuro);color:var(--branco);aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:16px;text-align:center}
+.player{background:var(--azul-escuro);color:var(--branco);aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:16px;text-align:center;border-radius:6px}
 .play{width:0;height:0;border-left:30px solid var(--amarelo);border-top:18px solid transparent;border-bottom:18px solid transparent}
 .player h3{font-size:clamp(18px,4vw,24px);color:var(--branco)}
 .player p{font-size:13px;opacity:.9}
@@ -109,8 +127,6 @@ button.etapa-b:hover h3{text-decoration:underline}
 .chip[aria-pressed=true]{background:var(--azul-escuro);color:var(--branco);box-shadow:none}
 .vazio{padding:20px;background:var(--branco);color:var(--apagado);border-radius:6px}
 
-.form-card{background:var(--branco);padding:18px;border-radius:6px;display:grid;gap:14px;max-width:520px}
-
 .cert{background:var(--azul);color:var(--branco);padding:clamp(24px,6vw,48px);display:grid;gap:14px;border-radius:6px}
 .cert .rot{color:var(--amarelo)}
 .cert h2{font-size:clamp(26px,6vw,40px);font-weight:800;color:var(--branco)}
@@ -131,6 +147,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:t
   .acesso{grid-template-columns:1fr;min-height:0}
   .logo{height:28px}
   .nav button{padding:9px 8px;font-size:14px}
+  .secao-nome{display:none}
 }
 </style>
 </head>
@@ -188,9 +205,14 @@ const BASE=[];
 ["Sabiá","Cayana","Carcará"].forEach(c=>[["Apostila","PDF"],["Podcast","Áudio"],["Banco de imagens","Fotos"],["Posts","Artes prontas"]].forEach(([t,f])=>BASE.push({c,t,f,n:`${t} ${c}`})));
 BASE.push({c:"Geral",t:"Apostila",f:"PDF",n:"Glossário do pasto"},{c:"Geral",t:"Apostila",f:"PDF",n:"Perguntas frequentes do vendedor"});
 
+const SECOES=[
+  {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha, base de conhecimento e certificado.",ativo:true},
+  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de relacionamento e acompanhamento das revendas.",ativo:false},
+  {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de relacionamento e ranking dos RCs.",ativo:false}
+];
 const REQUIRED=["nome","telefone"];
 
-let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, pag:"trilha", etapa:null, video:0, vistos:{}, res:null,
+let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
        fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null};
 
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
@@ -200,6 +222,7 @@ const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORD
 const estado=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador";
 const cadastroCompleto=()=>REQUIRED.every(f=>S.profile&&(S.profile[f]||"").trim());
+const primeiroNome=()=>String(S.profile&&S.profile.nome||S.user.email||"").trim().split(/\s+/)[0];
 
 /* ---------- boot ---------- */
 async function boot(){
@@ -220,13 +243,13 @@ async function carregarUsuario(u){
   const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
   S.feitas=(prog||[]).map(r=>r.etapa);
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
-  S.pag=ehAdmin()?"acomp":"trilha";
+  S.secao=null;S.pag="hub";
 }
 
 /* ---------- acesso ---------- */
 function vLogin(erro){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
-    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">O ponto de partida de quem vende Sabiá, Cayana e Carcará.</p></div></div>
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Treinamento e apoio à venda, em um só lugar.</p></div></div>
     <form class="acesso-form" id="f-login"><h2>Entrar</h2><p>Use o e-mail e a senha que você recebeu.</p>
       <div><label for="email">E-mail</label><input id="email" type="email" required autocomplete="email"></div>
       <div><label for="senha">Senha</label><input id="senha" type="password" required autocomplete="current-password"></div>
@@ -264,21 +287,28 @@ function vCadastroObrig(){
       <button class="btn" type="submit">Salvar e continuar</button>
     </form></div>`;
 }
-function vPerfil(){
-  return `<div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
-  <form class="form-card" id="f-cadastro">${camposPerfil()}
-    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
-    <div><button class="btn" type="submit">Salvar</button></div></form>`;
+
+/* ---------- shell ---------- */
+function cabecalho(){
+  return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
+    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div></div></header>`;
+}
+function subnavAcademia(){
+  const abas=ehAdmin()?[["acomp","Acompanhamento"],["base","Base de conhecimento"]]:[["trilha","Trilha"],["base","Base de conhecimento"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Academia de Híbridos</span></div></div>`;
 }
 
-/* ---------- app ---------- */
-function cabecalho(){
-  const comuns=[["base","Base de conhecimento"],["perfil","Meu perfil"]];
-  const it=ehAdmin()?[["acomp","Acompanhamento"],...comuns]:[["trilha","Minha trilha"],...comuns];
-  return `<header class="topo"><div class="topo-in"><div class="topo-linha"><img class="logo" src="${LOGO}" alt="Barenbrug">
-    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="sair">Sair</button></div></div>
-    <nav class="nav" aria-label="Principal">${it.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav></div></header>`;
+/* ---------- hub ---------- */
+function vHub(){
+  return `<div><h1 class="titulo">Olá, ${esc(primeiroNome())}</h1><p class="sub">Bem-vindo ao Portal Conecta Barenbrug. Escolha uma área para começar.</p></div>
+  <div class="cards">${SECOES.map(s=>s.ativo
+    ?`<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`
+    :`<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`).join("")}</div>`;
 }
+
+/* ---------- Academia ---------- */
 function vTrilha(){
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS[indiceAtual()];
   return `<div><h1 class="titulo">Trilha de treinamento</h1><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
@@ -297,9 +327,9 @@ function vQuiz(lista,id){
 }
 function vEtapa(){
   const i=S.etapa,e=ETAPAS[i],vistos=S.vistos[e.id]||[],s=estado(i);
-  if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Minha trilha</button><div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
+  if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
-  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Minha trilha</button>
+  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button>
   <div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
   <div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m} min · O vídeo do YouTube entra aqui</p></div>
   <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button><span class="meta"> · ${x.m} min</span></div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div></section>
@@ -310,21 +340,21 @@ function vBase(){
   const b=S.busca.toLowerCase();
   const l=BASE.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||x.t===S.fTipo)&&x.n.toLowerCase().includes(b));
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${x}" aria-pressed="${sel===x}">${x}</button>`).join("");
-  return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Materiais de apoio à venda, liberados desde o primeiro acesso.</p></div>
+  return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Materiais de apoio à venda dos híbridos, liberados desde o primeiro acesso.</p></div>
   <div><label for="busca">Buscar material</label><input id="busca" type="search" value="${esc(S.busca)}" placeholder="Ex.: apostila Sabiá"></div>
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
   <div class="filtros">${chips(["Todos","Apostila","Podcast","Banco de imagens","Posts"],S.fTipo,"ftipo")}</div>
   <div class="lista" id="res-base">${l.length?l.map(x=>`<div class="linha"><div><strong>${x.n}</strong><span class="meta">${x.c} · ${x.f}</span></div><button class="link" data-a="mat">Abrir</button></div>`).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div>`;
 }
 function vCert(){
-  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Minha trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Portal <b>Conecta</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu a trilha de Sabiá, Cayana e Carcará${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
+  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu a trilha de Sabiá, Cayana e Carcará${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
 }
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS[x.feitas]?ETAPAS[x.feitas].n:"—");
   const conc=S.equipe.filter(x=>x.feitas>=ORDEM.length).length;
   return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha.</p></div>
-  <div class="nota-admin">O painel para você cadastrar novas pessoas (com o perfil de cada uma e a senha gerada automaticamente) é o próximo passo. Por enquanto, os acessos são criados junto comigo.</div>
+  <div class="nota-admin">O painel para você cadastrar novas pessoas (escolhendo o perfil e com a senha gerada automaticamente) é o próximo passo. Por enquanto, os acessos são criados junto comigo.</div>
   <section class="bloco"><h2 class="sec">Pessoas</h2><div class="tab"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Etapa atual</th><th>Concluídas</th><th>Prova</th></tr></thead><tbody>${S.equipe.map(x=>`<tr><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""}</span></td><td>${esc(x.perfil)}</td><td><span class="selo">${nEtapa(x)}</span></td><td>${x.feitas} de ${ORDEM.length}</td><td>${x.prova!=null?x.prova+" acertos":"—"}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 async function carregarEquipe(){
@@ -334,6 +364,12 @@ async function carregarEquipe(){
   S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
     .sort((a,b)=>b.feitas-a.feitas);
 }
+function vPerfil(){
+  return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
+  <form class="form-card" id="f-cadastro">${camposPerfil()}
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div><button class="btn" type="submit">Salvar</button></div></form>`;
+}
 
 /* ---------- render ---------- */
 function render(){
@@ -341,11 +377,17 @@ function render(){
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
-  const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp,perfil:vPerfil}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
-  app.innerHTML=cabecalho()+`<main>${corpo()}</main>`;
-  if(S.pag==="acomp"&&!S.equipe){carregarEquipe().then(render);}
+  if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
+  if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  if(S.secao==="academia"){
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;
+    if(S.pag==="acomp"&&!S.equipe){carregarEquipe().then(render);}
+    return;
+  }
+  app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
-const ir=p=>{S.pag=p;S.res=null;S._erro=null;render();window.scrollTo(0,0);};
+const irPag=p=>{S.pag=p;S.res=null;S._erro=null;render();window.scrollTo(0,0);};
 async function concluir(id,nota){
   if(!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=nota;
     await sb.from("progresso").upsert({user_id:S.user.id,etapa:id,nota},{onConflict:"user_id,etapa"});}
@@ -355,13 +397,16 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},pag:"trilha",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null};render();}
-  if(a==="pag")ir(v);
-  if(a==="abrir"){S.etapa=+v;S.video=0;ir("etapa");}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null};render();}
+  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;render();window.scrollTo(0,0);}
+  if(a==="perfil"){S.pag="perfil";S._erro=null;render();window.scrollTo(0,0);}
+  if(a==="pag")irPag(v);
+  if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
   if(a==="mat")aviso("No lançamento, este botão abre o material.");
-  if(a==="pos-quiz")ir(qtdFeitas()>=ORDEM.length?"cert":"trilha");
-  if(a==="cert")ir("cert");
+  if(a==="pos-quiz")irPag(qtdFeitas()>=ORDEM.length?"cert":"trilha");
+  if(a==="cert")irPag("cert");
   if(a==="fcult"){S.fCult=v;render();}
   if(a==="ftipo"){S.fTipo=v;render();}
 });
@@ -403,7 +448,7 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.from("profiles").update(dados).eq("id",S.user.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
     Object.assign(S.profile,dados);S._erro=null;
-    if(eraObrig){S.pag=ehAdmin()?"acomp":"trilha";render();aviso("Cadastro completo. Bem-vindo!");}
+    if(eraObrig){S.secao=null;S.pag="hub";render();aviso("Cadastro completo. Bem-vindo!");}
     else{render();aviso("Dados salvos.");}
   }
   if(f.id==="f-quiz"){
