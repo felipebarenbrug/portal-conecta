@@ -361,6 +361,20 @@ const VIDEOS_BASE=[
 ];
 const VID_GRUPOS=["Conteúdo técnico","Caso de sucesso","Bate-papo"];
 // Tabela de preços Safra 26/27 (Out/26-01) — valores em R$/kg, preço ao produtor
+const RV_CURSO=[
+ {n:"Como funciona a parceria e o retorno de até 7%",d:"A visão geral do Conecta Revendas 26/27: categorias, IGDB e bônus de performance.",yt:"6yGGA3WJFjk"},
+ {n:"Guia operacional passo a passo para o gestor",d:"Contrato, PGD, acúmulo de IGDB, execução das ações e recebimento — a operação na prática.",yt:"t6soJIAg7VE"}
+];
+const RV_TIERS=[
+ {t:"Blue",piso:"5.000 kg de híbridos (entrada)",ih:"2,0%",ic:"0,75%",bonus:"+2,0%"},
+ {t:"Yellow",piso:"10.000 kg híbridos ou 20.000 kg conv.",ih:"2,5%",ic:"1,0%",bonus:"+2,5%"},
+ {t:"Yellow Pro",piso:"15.000 kg híbridos ou 40.000 kg conv.",ih:"3,0%",ic:"1,25%",bonus:"+3,0%"},
+ {t:"Yellow Master",piso:"30.000 kg híbridos ou 80.000 kg conv.",ih:"3,5%",ic:"1,5%",bonus:"+3,5%"}
+];
+const RV_CAL=[["1º trimestre","Jul–Set 2026","Out 2026"],["2º trimestre","Out–Dez 2026","Jan 2027"],["3º trimestre","Jan–Mar 2027","Abr 2027"],["4º trimestre","Abr–Jun 2027","Jul 2027"]];
+const RV_BONUS=[["100% ou mais da meta","100% do bônus do Tier"],["90% a 99,99%","70% do bônus do Tier"],["Abaixo de 90%","0% (o IGDB continua sendo pago)"]];
+const RV_PERM=["Dias de campo e eventos técnicos com produtores","Workshops e demonstrações a campo dos híbridos","Feiras agropecuárias regionais","Parcelas demonstrativas em propriedades","Mídia rural voltada ao produtor","Materiais técnicos de PDV e de genética"];
+const RV_VEDADO=["Campanhas promocionais internas do time do canal","Prêmios ou bonificação por cota para vendedores","Comissões ou incentivos para a equipe interna","Promoções ou descontos de preço ao produtor","Ações sem a participação do produtor"];
 const PRECOS_MESES=["out/26","nov/26","dez/26","jan/27","fev/27","mar/27","abr/27"];
 const PRECOS_MES_ATUAL=1; // nov/26
 const PRECOS=[
@@ -383,7 +397,7 @@ const FRETE=[
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
-  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Relacionamento e apoio às revendas parceiras da Barenbrug.",ativo:false,perfis:null}
+  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"]];
 const RC_CURSO=[
@@ -458,7 +472,7 @@ const schemaDoPerfil=p=>SCHEMAS[p]||BASE_CAMPOS;
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
        fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null,
-       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null, rcEtapa:null};
+       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null, rcEtapa:null, rvEtapa:null};
 
 const formAtual=()=>S[S.formAlvo]||{};
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
@@ -700,6 +714,52 @@ function vRCEtapa(){
   ${e.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${e.yt}?rel=0" title="${esc(e.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${e.n}</h3><p>Vídeo em breve</p></div>`}
   <div class="acoes">${i+1<RC_CURSO.length?`<button class="btn" data-a="rc-abrir" data-v="${i+1}">Próximo vídeo →</button>`:`<button class="btn sec" data-a="pag" data-v="rc-apresentacao">Voltar à apresentação</button>`}</div>`;
 }
+/* ---------- Conecta Revendas ---------- */
+function subnavRV(){
+  const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Conecta Revendas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Conecta Revendas</span></div></div>`;
+}
+function vRVApresentacao(){
+  const tiers=RV_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.piso}</td><td class="val">${x.ih}</td><td class="val">${x.ic}</td><td class="val">${x.bonus}</td></tr>`).join("");
+  const cal=RV_CAL.map(([t,p,m])=>`<tr><td><strong>${t}</strong></td><td>${p}</td><td>${m}</td></tr>`).join("");
+  const bonus=RV_BONUS.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join("");
+  const li=a=>a.map(x=>`<li>${x}</li>`).join("");
+  return `<section class="hero-rc"><span class="rot">Programa de canais · Safra 26/27</span>
+    <h1 class="titulo" style="color:var(--preto)">Venda os híbridos que mais entregam e ganhe até 7% de volta</h1>
+    <p>O Conecta Revendas é o programa de incentivo da Barenbrug para as revendas parceiras. O retorno pode chegar a <strong>7%</strong> nas compras de híbridos (Yellow Master a 100% da meta: 3,5% de IGDB + 3,5% de bônus de performance).</p></section>
+  <section class="bloco"><h2 class="sec">Como funciona</h2><ol class="trilha">
+    <li class="feita"><span class="marco" aria-hidden="true">1</span><div class="etapa-b"><h3>Contrato e categoria</h3><p>Assinar o contrato é obrigatório para ter qualquer benefício. A categoria vem do volume da safra 25/26 e fica fixa na 26/27. Contrato até 15/08/2026 e PGD (Plano de Geração de Demanda) até 31/08/2026.</p></div></li>
+    <li class="feita"><span class="marco" aria-hidden="true">2</span><div class="etapa-b"><h3>Plano de demanda + compras = IGDB</h3><p>O IGDB acumula a cada trimestre sobre o valor efetivamente pago (não faturado), com o PGD aprovado e executado, mediante comprovação.</p></div></li>
+    <li class="atual"><span class="marco" aria-hidden="true">3</span><div class="etapa-b"><h3>100% da meta = bônus</h3><p>A meta é de volume de híbridos. Atingir 100% ou mais garante o bônus do Tier (120% paga o mesmo que 100%). O bônus é pago no fechamento, em jul–ago/2027.</p></div></li>
+  </ol></section>
+  <section class="bloco"><h2 class="sec">Categorias e percentuais</h2>
+    <div class="tab"><table class="frete"><thead><tr><th>Tier</th><th>Piso (híbridos ou convencional)</th><th class="val">IGDB híbridos</th><th class="val">IGDB conv.</th><th class="val">Bônus (híbridos)</th></tr></thead><tbody>${tiers}</tbody></table></div>
+    <p class="precos-cap">Participação mínima de 5.000 kg de híbridos em todos os tiers. Yellow e acima exigem exclusividade nos híbridos. Teto de R$ 300.000 por canal por safra (IGDB + bônus).</p></section>
+  <section class="bloco"><h2 class="sec">IGDB — Investimento em Geração de Demanda Barenbrug</h2>
+    <p class="sub" style="margin:0">Verba gerada pelas compras trimestrais, destinada a promover os híbridos com os produtores da região. É garantida para uso, mas só em ações do PGD aprovadas — precisa ser usada.</p>
+    <div class="cards"><div class="card off" style="opacity:1;cursor:default"><span class="card-tag" style="color:var(--azul-escuro)">Pode usar em</span><ul class="cond" style="margin-top:8px">${li(RV_PERM)}</ul></div>
+    <div class="card off" style="opacity:1;cursor:default"><span class="card-tag" style="color:var(--vermelho)">Não pode usar em</span><ul class="cond" style="margin-top:8px">${li(RV_VEDADO)}</ul></div></div></section>
+  <section class="bloco"><h2 class="sec">Calendário de pagamento do IGDB</h2>
+    <div class="tab"><table class="frete"><thead><tr><th>Trimestre</th><th>Período</th><th>Pagamento</th></tr></thead><tbody>${cal}</tbody></table></div>
+    <p class="precos-cap">A Barenbrug tem até 30 dias corridos após cada trimestre para pagar. O acúmulo começa na 1ª compra paga; o saldo acumulado é liberado ao cruzar o gatilho de 5.000 kg de híbridos.</p></section>
+  <section class="bloco"><h2 class="sec">Bônus de performance</h2>
+    <div class="tab"><table class="frete"><thead><tr><th>Atingimento da meta</th><th>Pagamento do bônus</th></tr></thead><tbody>${bonus}</tbody></table></div>
+    <p class="precos-cap">Pago no fechamento (jul–ago/2027), por valor fixo do Tier. Ações de valorização dos híbridos exigidas por safra: Yellow Master 3, Yellow Pro 2, Yellow e Blue 1 — submetidas à Barenbrug com ao menos 15 dias de antecedência.</p></section>
+  <div class="precos-nota">Guia explicativo, versão 1.0 (jun/2026). O contrato assinado é o documento oficial e prevalece em caso de conflito. Dúvidas sobre regras e percentuais: Junio Santos (jsantos@barenbrug.com.br). <a class="link" href="https://materiais.barenbrug.com.br/conecta-revendas-barenbrug" target="_blank" rel="noopener">Página oficial e calculadoras ↗</a></div>`;
+}
+function vRVCurso(){
+  return `<div><h1 class="titulo">Curso</h1><p class="sub">Dois vídeos para entender e operar o Conecta Revendas.</p></div>
+  <div class="cards">${RV_CURSO.map((e,i)=>`<button class="card" data-a="rv-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RV_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>`;
+}
+function vRVEtapa(){
+  const i=S.rvEtapa,e=RV_CURSO[i]||RV_CURSO[0];
+  return `<button class="voltar" data-a="pag" data-v="rv-curso">‹ Curso</button>
+  <div><span class="rot">Vídeo ${i+1} de ${RV_CURSO.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
+  ${e.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${e.yt}?rel=0" title="${esc(e.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${e.n}</h3><p>Vídeo em breve</p></div>`}
+  <div class="acoes">${i+1<RV_CURSO.length?`<button class="btn" data-a="rv-abrir" data-v="${i+1}">Próximo vídeo →</button>`:`<button class="btn sec" data-a="pag" data-v="rv-apresentacao">Voltar à apresentação</button>`}</div>`;
+}
 function vBase(){
   const b=S.busca.toLowerCase();
   const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
@@ -828,6 +888,10 @@ function render(){
     const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos}[S.pag]||vRCApresentacao;
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
   }
+  if(S.secao==="conecta-revendas"){
+    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
+    app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
+  }
   if(S.secao==="academia"){
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
@@ -846,8 +910,9 @@ document.addEventListener("click",async ev=>{
   if(a==="visto")return;
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
+  if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
