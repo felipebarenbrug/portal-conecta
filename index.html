@@ -155,6 +155,22 @@ td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:t
 .banner-precos div{min-width:0}
 .banner-precos h3{font-size:19px;font-weight:800;color:var(--preto)}
 .banner-precos p{font-size:13px;color:#6b5e00}
+.hero{background:var(--amarelo);border-radius:10px;padding:clamp(20px,5vw,36px);display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hero.azul{background:var(--azul)}
+.hero .hero-txt{min-width:0;flex:1 1 300px;display:grid;gap:8px}
+.hero .rot{color:#6b5e00}
+.hero.azul .rot{color:var(--amarelo)}
+.hero.azul h1,.hero.azul p{color:var(--branco)}
+.hero-logo{flex:0 0 auto;height:40px;width:auto;background:var(--branco);padding:12px 16px;border-radius:12px}
+.slogan-b{font-weight:800;font-size:17px;color:var(--preto);margin-top:2px}
+.slogan-b b{color:var(--azul)}
+.hero-rc{background:var(--amarelo);border-radius:10px;padding:clamp(22px,5vw,40px);display:grid;gap:10px}
+.hero-rc .rot{color:#6b5e00}
+.hero-rc h1{color:var(--preto)}
+.faq{display:grid;gap:8px}
+.faq-item{background:var(--branco);border-radius:6px;padding:12px 14px}
+.faq-item summary{font-weight:700;cursor:pointer}
+.faq-item p{margin-top:8px;color:var(--apagado);font-size:15px}
 .precos-nota{background:var(--azul-claro);border-left:4px solid var(--azul);padding:12px 14px;border-radius:4px;font-size:14px;display:grid;gap:6px}
 .precos-cap{font-size:13px;color:var(--apagado);margin-top:6px}
 table.precos td.cult{font-weight:700;color:var(--azul-escuro);white-space:nowrap}
@@ -189,26 +205,26 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",
 const q=(p,ops,c)=>({p,ops,c});
 // Provas de certificação (20 questões, geradas no NotebookLM a partir das fontes Barenbrug; 70% = 14)
 const QUIZ_SABIA=[
-  q("GENÉTICA E ORIGEM DO CULTIVAR O Cultivar Sabiá foi desenvolvido pelo programa de melhoramento genético de forrageiras tropicais da Barenbrug do Brasil. Em relação à sua base biológica, genealogia e método de seleção, assinale a alternativa correta:",["Trata-se de uma seleção massal pura de ecótipo silvestre de Brachiaria brizantha coletada no Cerrado brasileiro e registrada após dois anos de avaliações clonais.","É um híbrido interespecífico resultante do cruzamento artificial entre Brachiaria brizantha e Brachiaria ruziziensis, tendo sua seleção final fixada na 4ª geração de cruzamentos.","Trata-se de uma linhagem sintética obtida pela hibridação de Brachiaria humidicola com Brachiaria decumbens cv. Basilisk após seis retrocruzamentos sucessivos.","É uma cultivar resultante de mutação induzida por radiação sobre sementes comerciais de Brachiaria brizantha cv. Marandu, selecionada especificamente na 2ª geração."],1),
-  q("VALIDAÇÃO OFICIAL E PROTOCOLOS DO MAPA Para atender às exigências regulatórias do Ministério da Agricultura e Pecuária (MAPA) para o Registro Nacional de Cultivares (RNC), quais ensaios obrigatórios foram conduzidos com o Cultivar Sabiá?",["Apenas ensaios de campo em parcelas isoladas por um ano, dispensando ensaios com animais por se tratar de planta apomítica.","Ensaios laboratoriais in vitro de digestibilidade ruminal durante 36 meses e avaliação sensorial com ovinos confinados.","Dois anos de ensaios de Valor de Cultivo e Uso (VCU) sob corte comparados a testemunhas comerciais, seguidos da etapa oficial de VCU sob pastejo contínuo para avaliação do desempenho animal.","Quatro anos de ensaios exclusivos de produção de sementes e germinação em câmara climática sem pastejo direto."],2),
-  q("ACÚMULO DE FORRAGEM E DESEMPENHO ESTACIONAL VS. MARANDU Em ensaios oficiais conduzidos durante dois anos em cinco ambientes representativos do Brasil Central (Colinas do Tocantins/TO, Pontes e Lacerda/MT, UNEMAT/MT, Uberlândia/MG e Xinguara/PA), qual foi o comportamento produtivo do Sabiá em comparação ao cv. Marandu?",["Produziu exatamente a mesma massa anual, diferenciando-se apenas por menor exigência de adubação fosfatada.","Acumulou em média 18,11 t MS/ha/ano (+34% em relação aos 13,47 t MS/ha/ano do Marandu), superando a testemunha em +31% na época das águas e +42% na estação seca.","Apresentou produção 50% superior na estação chuvosa, porém com queda drástica e inferioridade de 25% na época da estiagem.","Obteve média de 25,50 t MS/ha/ano nas águas e estabilizou em apenas 5% de acúmulo no inverno em todas as regiões."],1),
-  q("PRODUÇÃO DE FOLHAS VERDES NA SECA A perda drástica de qualidade da forragem no período de estiagem é o principal fator responsável pelo efeito 'boi sanfona'. Nos ensaios regionais, qual foi a entrega de lâminas foliares (folhas verdes) do Cultivar Sabiá no período seco em comparação ao Marandu?",["Entrega de +50% a mais de toneladas de matéria seca de lâmina foliar no período seco em relação ao Marandu.","Redução de 15% na proporção de folhas verdes, compensada por maior acúmulo de colmo fibroso.","Acúmulo de folhas idêntico ao Marandu, porém com maior teor de umidade no colmo principal.","Produção de lâminas foliares superior apenas quando submetido a irrigação por pivô central durante o inverno."],0),
-  q("DISTRIBUIÇÃO ESTACIONAL ANUAL (% ÁGUAS VS. % SECA) A curva de estacionalidade de produção define a capacidade de suporte de uma fazenda ao longo do ano. Como se compara a distribuição percentual anual de forragem entre o Cultivar Sabiá e o Cultivar Marandu?",["Sabiá: 90% águas / 10% seca; Marandu: 70% águas / 30% seca.","Sabiá: 50% águas / 50% seca; Marandu: 50% águas / 50% seca.","Sabiá: cerca de 65% a 66% nas águas e 34% a 35% na seca; Marandu: cerca de 80% nas águas e apenas 19% a 20% na seca.","Sabiá: 40% nas águas e 60% na seca; Marandu: 85% nas águas e 15% na seca."],2),
-  q("DESEMPENHO ANIMAL SOB PASTEJO E GANHO DE ARROBAS Nos ensaios de VCU sob pastejo com bovinos de corte, qual foi o ganho de produtividade animal médio nacional e o maior valor regional alcançado pelo Sabiá?",["Média de +2,0 @/ha/ano (+10%), com teto de 20 @/ha/ano em Uberlândia/MG.","Média de +7,0 @/ha/ano (+36,1% em ganho de carne), com teto produtivo de 38,5 @/ha/ano em Xinguara/PA (+11,1 @/ha/ano a mais que o Marandu).","Média de +15,0 @/ha/ano (+80%), com teto de 50 @/ha/ano no Tocantins.","Média de +4,5 @/ha/ano (+18%), atingindo no máximo 27,9 @/ha/ano em Pontes e Lacerda/MT."],1),
-  q("POTENCIAL PRODUTIVO E RESPOSTA À ADUBAÇÃO NITROGENADA Em experimento avaliando o incremento de fertilização nitrogenada no Cultivar Sabiá ao elevar a dose de 50 kg de N/ha para 200 kg de N/ha, quais foram os resultados observados no acúmulo de biomassa?",["Incremento de apenas 10% na massa total, demonstrando baixa capacidade responsiva ao nitrogênio.","Ocorrência de acamamento precoce sem alteração estatística no acúmulo de lâminas foliares.","Incremento de 44,8% (cerca de 45%) no acúmulo total de forragem e de 77,5% (quase o dobro) no acúmulo de lâminas foliares.","Redução de 20% na relação folha/colmo em virtude do alongamento hipertrofiado dos entrenós."],2),
-  q("RESISTÊNCIA BIOLÓGICA A CIGARRINHAS-DAS-PASTAGENS Em ensaios entomológicos controlados em gaiolas para mensuração de notas de dano por cigarrinhas (escala de 1 a 5, onde 1 = altamente resistente e 5 = altamente suscetível), como o Sabiá se comportou frente às espécies Notozulia entreriana e Mahanarva fimbriolata (cigarrinha-da-cana)?",["Apresentou nota 5 (morte total de perfilhos) para ambas as espécies, demonstrando alta suscetibilidade.","Apresentou nota 2 (altamente resistente com sintomas mínimos de clorose foliar), superando o Marandu (nota 3) e o Basilisk/Decumbens (nota 4) para Mahanarva.","Mostrou-se resistente à Notozulia, mas totalmente suscetível à Mahanarva fimbriolata com nota de dano 4.","Comportou-se de forma idêntica à Brachiaria decumbens cv. Basilisk, necessitando de pulverização química preventiva constante."],1),
-  q("PASTEJO DIFERIDO (VEDAÇÃO DE PASTO) NO IFTO No ensaio de pastejo diferido conduzido pelo IFTO em Colinas do Tocantins (TO), simulando vedação iniciada em 20 de março ao longo de 168 dias de estiagem, qual foi o acúmulo de matéria seca alcançado pelo Sabiá?",["Produção entre 11 e 14,7 toneladas de MS/ha ao longo dos cortes periódicos, superando o Marandu e a B. decumbens.","Produção constante de apenas 5 toneladas de MS/ha devido à senescência precoce das touceiras aos 56 dias.","Produção inferior à Brachiaria decumbens após 84 dias de diferimento por perda excessiva de colmos basais.","Acúmulo máximo de 8 t MS/ha restrito ao corte inicial de 56 dias, caindo a zero aos 168 dias."],0),
-  q("QUALIDADE DA FORRAGEM NO DIFERIMENTO PROLONGADO Ao final dos 168 dias de pastejo diferido no ensaio do IFTO, quais foram os diferenciais de proporção e acúmulo de lâminas foliares do Sabiá em relação às testemunhas (Marandu e Decumbens)?",["Proporção de folhas 50% menor, com acúmulo de folhas 10% inferior ao Marandu.","Mais de 100% de proporção de lâmina foliar e mais de 130% de acúmulo de matéria seca de folhas ao término da seca.","Ausência total de folhas verdes remanescentes, acumulando apenas bainhas e inflorescências secas.","Comportamento idêntico à Decumbens em massa de folhas, porém com colmos 40% mais lignificados."],1),
-  q("BIOMASSA RADICULAR E RESISTÊNCIA À SECA (PAVESI & HENRIQUE) Nos dados de pesquisa de biomassa subterrânea e aérea sob diferimento (maio a outubro) conduzidos pelos professores Raphael Pavesi e Esdras Henrique (IFTO), como o Sabiá se destacou frente ao Marandu?",["Produziu menor massa de raízes (3,0 t MS/ha vs 5,0 t MS/ha do Marandu), concentrando energia apenas nas folhas.","Acumulou em média 6,4 t MS/ha de raízes vs 4,1 t MS/ha do Marandu (+56% ou +2,3 t/ha de raiz) e 3,2 t MS/ha de folhas vs 2,4 t do Marandu (+33%).","Apresentou sistema radicular pivotante profundo, porém com massa seca de raízes idêntica à do capim Marandu.","As raízes se degradaram integralmente no mês de agosto (140 dias de diferimento) em solos arenosos."],1),
-  q("MANEJO DO PASTEJO ROTACIONADO Para maximizar a interceptação luminosa (95% de IL), evitar o alongamento de colmo e garantir rápida rebrota no pastejo rotacionado do Sabiá, quais são as alturas recomendadas de entrada e saída dos animais?",["Entrada a 50 cm e saída a 35 cm.","Entrada a 40 cm e saída a 25 cm.","Entrada a 30 cm e saída entre 15 e 20 cm.","Entrada a 20 cm e saída a 5 cm (pastejo rente ao solo)."],2),
-  q("MANEJO EM PASTEJO CONTÍNUO E AJUSTE DE CARGA No sistema de pastejo contínuo com lotação variável, qual é a altura média de manejo alvo para o dossel do Sabiá e qual decisão operacional deve ser tomada caso o pasto ultrapasse os 30 cm de altura?",["Manter entre 10 e 15 cm; se ultrapassar 30 cm, deve-se retirar o gado e realizar roçada mecânica imediata.","Manter entre 25 e 30 cm; caso a altura média ultrapasse 30 cm, deve-se aumentar a carga animal (colocar mais animais) para colher o excedente de forragem antes que haja perda de qualidade.","Manter entre 40 e 50 cm; se ultrapassar 30 cm, deve-se suspender o fornecimento de sal mineral no cocho.","Manter a 15 cm contínuos; alturas acima de 30 cm indicam superpastejo e exigem adubação de cobertura."],1),
-  q("PROFUNDIDADE DE SEMEADURA E EMERGÊNCIA A semeadura incorreta é uma das maiores causas de insucesso na implantação de pastagens. Qual é a regra estrita de profundidade para a deposição das sementes do Cultivar Sabiá?",["De 4 a 6 cm, para proteger as sementes contra a dessecação solar e ataque de pássaros.","De 1 a 2 cm de profundidade, nunca ultrapassando 2 cm para não retardar a emergência e não comprometer o estande de plantas.","Apenas na superfície sem nenhuma incorporação ou compactação, independentemente do implemento.","De 3 a 5 cm em solos arenosos e de 0,5 cm em solos argilosos pesados."],1),
-  q("TAXAS DE SEMEADURA (KG/HA) E MÉTODOS DE PLANTIO A recomendação técnica da taxa de semeadura do Cultivar Sabiá varia de acordo com as condições de preparo de solo, tecnologia de maquinário e método de plantio. Quais são as taxas preconizadas?",["Taxa única de 5 kg/ha para qualquer condição de relevo e método de distribuição.","10 kg/ha para condição ideal (plantio em linha com boa regulagem); 12 kg/ha para condição intermediária; e 15 kg/ha para condições adversas, áreas de morro, semeadura a lanço ou via drone/avião.","20 kg/ha em linha e 30 kg/ha a lanço para compensar sementes sem tratamento.","8 kg/ha exclusivo para semeadura aérea e 18 kg/ha para plantio direto com dessecação prévia."],1),
-  q("MOMENTO E MANEJO DO PRIMEIRO PASTEJO Após a emergência do Cultivar Sabiá, em quanto tempo deve ser realizado o primeiro pastejo e qual é a diretriz zootécnica correta para essa operação?",["Aos 30 dias após o plantio, utilizando vacas pesadas e touros para acamar todo o capim.","Apenas após 180 dias de plantio, quando as plantas já tiverem produzido sementes maduras.","Entre 60 e 90 dias após a emergência, utilizando animais jovens e leves para realizar o desponte do capim e estimular o perfilhamento basal sem arrancar as plantas.","Aos 120 dias, com taxa de lotação máxima para rebaixar o capim até 5 cm do solo."],2),
-  q("RESTRIÇÕES AGRONÔMICAS CRÍTICAS E DRENAGEM Embora o Cultivar Sabiá seja altamente rústico e adaptável, existe uma contraindicação agronômica severa onde seu plantio NÃO deve ser realizado. Assinale-a:",["Solos com saturação por bases (V%) entre 50% e 60%.","Solos sujeitos a encharcamento prolongado, várzeas ou regiões com má drenagem onde a chuva acumulada ultrapassa 300 mm/mês sem escoamento (situações onde se indica B. humidicola).","Áreas com precipitação anual entre 1.000 mm e 1.500 mm no Centro-Oeste.","Sistemas de consórcio com milho safrinha em espaçamento entrelinhas de 50 cm."],1),
-  q("EXIGÊNCIAS DE FERTILIDADE E CORREÇÃO DE SOLO Quais são os parâmetros químicos de fertilidade de solo recomendados para permitir a expressão do potencial genético do Cultivar Sabiá?",["Solos de baixíssima fertilidade com V% de 20%, P de 1 mg/dm³ e tolerância ilimitada a alumínio tóxico.","Solos de média a alta fertilidade, com saturação por bases (V%) entre 50% e 60%, teor de fósforo [P] mínimo de 5 mg/dm³ e potássio [K] entre 3% e 5% da CTC.","Solos agrícolas ultraexigentes com V% acima de 80%, semelhantes à alfafa irrigada.","Necessidade restrita de solos hidromórficos com alto teor de matéria orgânica não mineralizada."],1),
-  q("DENSIDADE DE PERFILHAMENTO E FISIOLOGIA DO BOCADO Nos dados de pesquisa da Universidade Federal de Uberlândia (UFU), qual foi a contagem média de perfilhos do Sabiá em relação ao Marandu nas estações das águas e seca, e qual é o impacto disso no pastejo animal?",["Sabiá: 500 perfilhos/m² nas águas e 400 na seca; Marandu: 800 e 700; o gado precisa dar mais passos para encher o rúmen.","Sabiá: 850 perfilhos/m² nas águas e 760 na seca; Marandu: 760 nas águas e 600 na seca; mais pontos de crescimento aumentam a massa do bocado e fazem o animal caminhar menos para se alimentar.","Ambas as cultivares apresentaram exatamente 650 perfilhos/m² nas duas épocas do ano.","O Sabiá não produz perfilhos vegetativos na seca, emitindo exclusivamente perfilhos reprodutivos com sementes."],1),
-  q("FLORESCIMENTO TARDIO E MANEJO NA TRANSIÇÃO ÁGUAS-SECA O Cultivar Sabiá apresenta florescimento tardio no Brasil Central (a partir de abril). Qual é a principal vantagem zootécnica e operacional dessa característica fenológica para o produtor?",["Permite colher sementes comerciais no auge do verão (janeiro), antes do florescimento das plantas invasoras.","Induz a lignificação antecipada do dossel, transformando as folhas em palhada seca antes de maio.","Reduz a perda de valor nutritivo da forragem no final do período chuvoso, mantendo colmos macios e folhas verdes durante a transição crítica entre águas e seca.","Impede que a planta responda a qualquer adubação nitrogenada realizada após o mês de fevereiro."],2)
+  q("O Cultivar Sabiá foi desenvolvido pelo programa de melhoramento genético de forrageiras tropicais da Barenbrug do Brasil. Em relação à sua base biológica, genealogia e método de seleção, assinale a alternativa correta:",["Trata-se de uma seleção massal pura de ecótipo silvestre de Brachiaria brizantha coletada no Cerrado brasileiro e registrada após dois anos de avaliações clonais.","É um híbrido interespecífico resultante do cruzamento artificial entre Brachiaria brizantha e Brachiaria ruziziensis, tendo sua seleção final fixada na 4ª geração de cruzamentos.","Trata-se de uma linhagem sintética obtida pela hibridação de Brachiaria humidicola com Brachiaria decumbens cv. Basilisk após seis retrocruzamentos sucessivos.","É uma cultivar resultante de mutação induzida por radiação sobre sementes comerciais de Brachiaria brizantha cv. Marandu, selecionada especificamente na 2ª geração."],1),
+  q("Para atender às exigências regulatórias do Ministério da Agricultura e Pecuária (MAPA) para o Registro Nacional de Cultivares (RNC), quais ensaios obrigatórios foram conduzidos com o Cultivar Sabiá?",["Apenas ensaios de campo em parcelas isoladas por um ano, dispensando ensaios com animais por se tratar de planta apomítica.","Ensaios laboratoriais in vitro de digestibilidade ruminal durante 36 meses e avaliação sensorial com ovinos confinados.","Dois anos de ensaios de Valor de Cultivo e Uso (VCU) sob corte comparados a testemunhas comerciais, seguidos da etapa oficial de VCU sob pastejo contínuo para avaliação do desempenho animal.","Quatro anos de ensaios exclusivos de produção de sementes e germinação em câmara climática sem pastejo direto."],2),
+  q("Em ensaios oficiais conduzidos durante dois anos em cinco ambientes representativos do Brasil Central (Colinas do Tocantins/TO, Pontes e Lacerda/MT, UNEMAT/MT, Uberlândia/MG e Xinguara/PA), qual foi o comportamento produtivo do Sabiá em comparação ao cv. Marandu?",["Produziu exatamente a mesma massa anual, diferenciando-se apenas por menor exigência de adubação fosfatada.","Acumulou em média 18,11 t MS/ha/ano (+34% em relação aos 13,47 t MS/ha/ano do Marandu), superando a testemunha em +31% na época das águas e +42% na estação seca.","Apresentou produção 50% superior na estação chuvosa, porém com queda drástica e inferioridade de 25% na época da estiagem.","Obteve média de 25,50 t MS/ha/ano nas águas e estabilizou em apenas 5% de acúmulo no inverno em todas as regiões."],1),
+  q("A perda drástica de qualidade da forragem no período de estiagem é o principal fator responsável pelo efeito 'boi sanfona'. Nos ensaios regionais, qual foi a entrega de lâminas foliares (folhas verdes) do Cultivar Sabiá no período seco em comparação ao Marandu?",["Entrega de +50% a mais de toneladas de matéria seca de lâmina foliar no período seco em relação ao Marandu.","Redução de 15% na proporção de folhas verdes, compensada por maior acúmulo de colmo fibroso.","Acúmulo de folhas idêntico ao Marandu, porém com maior teor de umidade no colmo principal.","Produção de lâminas foliares superior apenas quando submetido a irrigação por pivô central durante o inverno."],0),
+  q("A curva de estacionalidade de produção define a capacidade de suporte de uma fazenda ao longo do ano. Como se compara a distribuição percentual anual de forragem entre o Cultivar Sabiá e o Cultivar Marandu?",["Sabiá: 90% águas / 10% seca; Marandu: 70% águas / 30% seca.","Sabiá: 50% águas / 50% seca; Marandu: 50% águas / 50% seca.","Sabiá: cerca de 65% a 66% nas águas e 34% a 35% na seca; Marandu: cerca de 80% nas águas e apenas 19% a 20% na seca.","Sabiá: 40% nas águas e 60% na seca; Marandu: 85% nas águas e 15% na seca."],2),
+  q("Nos ensaios de VCU sob pastejo com bovinos de corte, qual foi o ganho de produtividade animal médio nacional e o maior valor regional alcançado pelo Sabiá?",["Média de +2,0 @/ha/ano (+10%), com teto de 20 @/ha/ano em Uberlândia/MG.","Média de +7,0 @/ha/ano (+36,1% em ganho de carne), com teto produtivo de 38,5 @/ha/ano em Xinguara/PA (+11,1 @/ha/ano a mais que o Marandu).","Média de +15,0 @/ha/ano (+80%), com teto de 50 @/ha/ano no Tocantins.","Média de +4,5 @/ha/ano (+18%), atingindo no máximo 27,9 @/ha/ano em Pontes e Lacerda/MT."],1),
+  q("Em experimento avaliando o incremento de fertilização nitrogenada no Cultivar Sabiá ao elevar a dose de 50 kg de N/ha para 200 kg de N/ha, quais foram os resultados observados no acúmulo de biomassa?",["Incremento de apenas 10% na massa total, demonstrando baixa capacidade responsiva ao nitrogênio.","Ocorrência de acamamento precoce sem alteração estatística no acúmulo de lâminas foliares.","Incremento de 44,8% (cerca de 45%) no acúmulo total de forragem e de 77,5% (quase o dobro) no acúmulo de lâminas foliares.","Redução de 20% na relação folha/colmo em virtude do alongamento hipertrofiado dos entrenós."],2),
+  q("Em ensaios entomológicos controlados em gaiolas para mensuração de notas de dano por cigarrinhas (escala de 1 a 5, onde 1 = altamente resistente e 5 = altamente suscetível), como o Sabiá se comportou frente às espécies Notozulia entreriana e Mahanarva fimbriolata (cigarrinha-da-cana)?",["Apresentou nota 5 (morte total de perfilhos) para ambas as espécies, demonstrando alta suscetibilidade.","Apresentou nota 2 (altamente resistente com sintomas mínimos de clorose foliar), superando o Marandu (nota 3) e o Basilisk/Decumbens (nota 4) para Mahanarva.","Mostrou-se resistente à Notozulia, mas totalmente suscetível à Mahanarva fimbriolata com nota de dano 4.","Comportou-se de forma idêntica à Brachiaria decumbens cv. Basilisk, necessitando de pulverização química preventiva constante."],1),
+  q("No ensaio de pastejo diferido conduzido pelo IFTO em Colinas do Tocantins (TO), simulando vedação iniciada em 20 de março ao longo de 168 dias de estiagem, qual foi o acúmulo de matéria seca alcançado pelo Sabiá?",["Produção entre 11 e 14,7 toneladas de MS/ha ao longo dos cortes periódicos, superando o Marandu e a B. decumbens.","Produção constante de apenas 5 toneladas de MS/ha devido à senescência precoce das touceiras aos 56 dias.","Produção inferior à Brachiaria decumbens após 84 dias de diferimento por perda excessiva de colmos basais.","Acúmulo máximo de 8 t MS/ha restrito ao corte inicial de 56 dias, caindo a zero aos 168 dias."],0),
+  q("Ao final dos 168 dias de pastejo diferido no ensaio do IFTO, quais foram os diferenciais de proporção e acúmulo de lâminas foliares do Sabiá em relação às testemunhas (Marandu e Decumbens)?",["Proporção de folhas 50% menor, com acúmulo de folhas 10% inferior ao Marandu.","Mais de 100% de proporção de lâmina foliar e mais de 130% de acúmulo de matéria seca de folhas ao término da seca.","Ausência total de folhas verdes remanescentes, acumulando apenas bainhas e inflorescências secas.","Comportamento idêntico à Decumbens em massa de folhas, porém com colmos 40% mais lignificados."],1),
+  q("Nos dados de pesquisa de biomassa subterrânea e aérea sob diferimento (maio a outubro) conduzidos pelos professores Raphael Pavesi e Esdras Henrique (IFTO), como o Sabiá se destacou frente ao Marandu?",["Produziu menor massa de raízes (3,0 t MS/ha vs 5,0 t MS/ha do Marandu), concentrando energia apenas nas folhas.","Acumulou em média 6,4 t MS/ha de raízes vs 4,1 t MS/ha do Marandu (+56% ou +2,3 t/ha de raiz) e 3,2 t MS/ha de folhas vs 2,4 t do Marandu (+33%).","Apresentou sistema radicular pivotante profundo, porém com massa seca de raízes idêntica à do capim Marandu.","As raízes se degradaram integralmente no mês de agosto (140 dias de diferimento) em solos arenosos."],1),
+  q("Para maximizar a interceptação luminosa (95% de IL), evitar o alongamento de colmo e garantir rápida rebrota no pastejo rotacionado do Sabiá, quais são as alturas recomendadas de entrada e saída dos animais?",["Entrada a 50 cm e saída a 35 cm.","Entrada a 40 cm e saída a 25 cm.","Entrada a 30 cm e saída entre 15 e 20 cm.","Entrada a 20 cm e saída a 5 cm (pastejo rente ao solo)."],2),
+  q("No sistema de pastejo contínuo com lotação variável, qual é a altura média de manejo alvo para o dossel do Sabiá e qual decisão operacional deve ser tomada caso o pasto ultrapasse os 30 cm de altura?",["Manter entre 10 e 15 cm; se ultrapassar 30 cm, deve-se retirar o gado e realizar roçada mecânica imediata.","Manter entre 25 e 30 cm; caso a altura média ultrapasse 30 cm, deve-se aumentar a carga animal (colocar mais animais) para colher o excedente de forragem antes que haja perda de qualidade.","Manter entre 40 e 50 cm; se ultrapassar 30 cm, deve-se suspender o fornecimento de sal mineral no cocho.","Manter a 15 cm contínuos; alturas acima de 30 cm indicam superpastejo e exigem adubação de cobertura."],1),
+  q("A semeadura incorreta é uma das maiores causas de insucesso na implantação de pastagens. Qual é a regra estrita de profundidade para a deposição das sementes do Cultivar Sabiá?",["De 4 a 6 cm, para proteger as sementes contra a dessecação solar e ataque de pássaros.","De 1 a 2 cm de profundidade, nunca ultrapassando 2 cm para não retardar a emergência e não comprometer o estande de plantas.","Apenas na superfície sem nenhuma incorporação ou compactação, independentemente do implemento.","De 3 a 5 cm em solos arenosos e de 0,5 cm em solos argilosos pesados."],1),
+  q("A recomendação técnica da taxa de semeadura do Cultivar Sabiá varia de acordo com as condições de preparo de solo, tecnologia de maquinário e método de plantio. Quais são as taxas preconizadas?",["Taxa única de 5 kg/ha para qualquer condição de relevo e método de distribuição.","10 kg/ha para condição ideal (plantio em linha com boa regulagem); 12 kg/ha para condição intermediária; e 15 kg/ha para condições adversas, áreas de morro, semeadura a lanço ou via drone/avião.","20 kg/ha em linha e 30 kg/ha a lanço para compensar sementes sem tratamento.","8 kg/ha exclusivo para semeadura aérea e 18 kg/ha para plantio direto com dessecação prévia."],1),
+  q("Após a emergência do Cultivar Sabiá, em quanto tempo deve ser realizado o primeiro pastejo e qual é a diretriz zootécnica correta para essa operação?",["Aos 30 dias após o plantio, utilizando vacas pesadas e touros para acamar todo o capim.","Apenas após 180 dias de plantio, quando as plantas já tiverem produzido sementes maduras.","Entre 60 e 90 dias após a emergência, utilizando animais jovens e leves para realizar o desponte do capim e estimular o perfilhamento basal sem arrancar as plantas.","Aos 120 dias, com taxa de lotação máxima para rebaixar o capim até 5 cm do solo."],2),
+  q("Embora o Cultivar Sabiá seja altamente rústico e adaptável, existe uma contraindicação agronômica severa onde seu plantio NÃO deve ser realizado. Assinale-a:",["Solos com saturação por bases (V%) entre 50% e 60%.","Solos sujeitos a encharcamento prolongado, várzeas ou regiões com má drenagem onde a chuva acumulada ultrapassa 300 mm/mês sem escoamento (situações onde se indica B. humidicola).","Áreas com precipitação anual entre 1.000 mm e 1.500 mm no Centro-Oeste.","Sistemas de consórcio com milho safrinha em espaçamento entrelinhas de 50 cm."],1),
+  q("Quais são os parâmetros químicos de fertilidade de solo recomendados para permitir a expressão do potencial genético do Cultivar Sabiá?",["Solos de baixíssima fertilidade com V% de 20%, P de 1 mg/dm³ e tolerância ilimitada a alumínio tóxico.","Solos de média a alta fertilidade, com saturação por bases (V%) entre 50% e 60%, teor de fósforo [P] mínimo de 5 mg/dm³ e potássio [K] entre 3% e 5% da CTC.","Solos agrícolas ultraexigentes com V% acima de 80%, semelhantes à alfafa irrigada.","Necessidade restrita de solos hidromórficos com alto teor de matéria orgânica não mineralizada."],1),
+  q("Nos dados de pesquisa da Universidade Federal de Uberlândia (UFU), qual foi a contagem média de perfilhos do Sabiá em relação ao Marandu nas estações das águas e seca, e qual é o impacto disso no pastejo animal?",["Sabiá: 500 perfilhos/m² nas águas e 400 na seca; Marandu: 800 e 700; o gado precisa dar mais passos para encher o rúmen.","Sabiá: 850 perfilhos/m² nas águas e 760 na seca; Marandu: 760 nas águas e 600 na seca; mais pontos de crescimento aumentam a massa do bocado e fazem o animal caminhar menos para se alimentar.","Ambas as cultivares apresentaram exatamente 650 perfilhos/m² nas duas épocas do ano.","O Sabiá não produz perfilhos vegetativos na seca, emitindo exclusivamente perfilhos reprodutivos com sementes."],1),
+  q("O Cultivar Sabiá apresenta florescimento tardio no Brasil Central (a partir de abril). Qual é a principal vantagem zootécnica e operacional dessa característica fenológica para o produtor?",["Permite colher sementes comerciais no auge do verão (janeiro), antes do florescimento das plantas invasoras.","Induz a lignificação antecipada do dossel, transformando as folhas em palhada seca antes de maio.","Reduz a perda de valor nutritivo da forragem no final do período chuvoso, mantendo colmos macios e folhas verdes durante a transição crítica entre águas e seca.","Impede que a planta responda a qualquer adubação nitrogenada realizada após o mês de fevereiro."],2)
  ];
 const QUIZ_CAYANA=[
   q("A Brachiaria híbrida cv. Cayana foi desenvolvida através de um programa pioneiro de melhoramento genético de forrageiras tropicais no Brasil. Do ponto de vista botânico e genético, assinale a alternativa que descreve corretamente a genealogia e a obtenção dessa cultivar:",["Trata-se de um híbrido simples F1 resultante do cruzamento direto entre Brachiaria decumbens e Brachiaria humidicola.","É uma seleção massal intracultivar a partir de populações naturais de Brachiaria brizantha coletadas nas savanas africanas.","É um híbrido interespecífico resultante do cruzamento entre Brachiaria brizantha e Brachiaria ruziziensis, selecionado na 5ª geração de cruzamentos (F5) após múltiplos ciclos de seleção.","Consiste em uma mutação induzida por radiação aplicada sobre sementes pré-germinadas de Brachiaria brizantha cv. Marandu."],2),
@@ -254,8 +270,6 @@ const QUIZ_CARCARA=[
   q("Quanto às tolerâncias climáticas e ambientais oficiais (seca e encharcamento), como o Carcará é classificado na ficha técnica?",["Alta tolerância à seca (até 12 meses sem chuva) e tolerância nula à água no solo.","Tolerância média à seca (suportando até 6 meses sem chuva) e tolerância média à má drenagem (suportando encharcamento temporário, mas sem indicação para brejos).","Planta exclusiva para solos hidromórficos pantanosos com lâmina de água permanente.","Baixa tolerância a qualquer período sem chuva superior a 15 dias."],1),
   q("Além do pastejo de bovinos de corte e leite, quais outras aptidões e características de sanidade foram comprovadas para o Carcará?",["Apenas produção de celulose para papel, sendo tóxico para bovinos e equinos.","Aptidão para silagem, feno pré-secado, integração lavoura-pecuária (ILP), boa aceitação por equinos e resistência moderada à cigarrinha-das-pastagens.","Imunidade genética total e absoluta a todas as pragas e lagartas do Cerrado sem necessidade de monitoramento.","Forrageira de uso exclusivo para ovinos em confinamento pleno."],1)
  ];
-
-
 const ETAPAS=[
  {id:"boas",n:"Boas-vindas",d:"A Barenbrug, a marca e o seu papel na venda de híbridos.",
   v:[{t:"Quem é a Barenbrug",m:4},{t:"Cultive Confiança: o que a marca promete",m:3},{t:"Seu papel na venda",m:5}],mat:[],
@@ -315,7 +329,6 @@ const MATERIAIS=[
  {c:"Sabiá", tipo:"Podcast", n:"Podcast — Sabiá acaba com o boi sanfona", audio:"materiais/podcast-sabia.m4a"},
  {c:"Cayana", tipo:"Podcast", n:"Podcast — Cayana e o ganho de peso", audio:"materiais/podcast-cayana.m4a"},
  {c:"Carcará", tipo:"Podcast", n:"Podcast — A engenharia genética do Carcará", audio:"materiais/podcast-carcara.m4a"},
- {c:"Geral", tipo:"Tabela", n:"Tabela de preços — Safra 26/27", pagina:"precos", url:"materiais/tabela-precos-out26.pdf"},
  {c:"Geral", tipo:"Apostila", n:"E-book — Quem planta capim quer colher arroba", url:"materiais/ebook-colher-arroba.pdf"},
  {c:"Geral", tipo:"Apostila", n:"Política de Crédito e Cobrança (análise de crédito do RC)", url:"materiais/politica-credito-cobranca.pdf"}
 ];
@@ -366,9 +379,35 @@ const FRETE=[
 ];
 
 const SECOES=[
-  {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha, base de conhecimento e certificado.",ativo:true},
-  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de relacionamento e acompanhamento das revendas.",ativo:false},
-  {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de relacionamento e ranking dos RCs.",ativo:false}
+  {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
+  {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração e tabela de preços.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
+  {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Relacionamento e apoio às revendas parceiras da Barenbrug.",ativo:false,perfis:null}
+];
+const RC_CURSO=[
+ {n:"O Programa e o Modelo de Parceria",d:"O que é o Conecta RC e a representação comercial autônoma (PJ, Lei 4.886/1965): autonomia, inscrição no CORE, responsabilidades de cada parte, vigência por prazo indeterminado e o papel do Responsável Comercial.",yt:"yZBbZ1xkwwE"},
+ {n:"Como Atuar, Regras de Campo e Portfólio",d:"Portfólio autorizado (híbridos, Cynodon, tropicais convencionais, Barmix e temperadas), exclusividade estrita em híbridos, atuação nacional sem exclusividade de praça, aprovação prévia fora do estado sede e cobrança amigável (vedado o del credere).",yt:"DvwjcUYObnQ"},
+ {n:"Como Funciona a Remuneração e Comissões",d:"Taxas fixas das convencionais x alíquotas progressivas em tiers (Blue, Yellow, Yellow Pro, Yellow Master), volume unificado produtor + canal, adiantamento mensal pelo piso e excedente flat sobre 100% da safra no fechamento.",yt:"eyR8xSdxwlI"},
+ {n:"Rotina Operacional, do Pedido ao Pagamento",d:"Do CRM e análise cadastral à liquidação; calendário financeiro (demonstrativo até o 5º dia útil, NF até o dia 10, pagamento até o dia 15), estornos, prazos de fechamento, aviso prévio e indenização de 1/12, e o checklist da primeira semana.",yt:"9mCU_uNWkD0"}
+];
+const RC_TIERS=[
+ {t:"Blue",vol:"Até 3.000 kg",prod:"10%",canal:"8%"},
+ {t:"Yellow",vol:"3.001 a 6.000 kg",prod:"11,5%",canal:"9%"},
+ {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13%",canal:"10%"},
+ {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15%",canal:"11%"}
+];
+const RC_CONV=[
+ {t:"Incrustadas e grafitadas",prod:"8%",canal:"6%"},
+ {t:"Azevéns e trevos",prod:"6%",canal:"5%"},
+ {t:"Convencionais peladas",prod:"6%",canal:"4%"}
+];
+const RC_FAQ=[
+ ["O que define o meu Tier?","O total de quilos de híbridos Barenbrug e Cynodon vendidos na safra, somando produtor e canal."],
+ ["Quando eu recebo?","Mensalmente pelo piso (10% produtor / 8% canal) sobre o que foi liquidado, mais o excedente no fechamento da safra conforme o seu Tier."],
+ ["A alíquota final é marginal ou sobre tudo?","Ela é aplicada de forma flat sobre todo o volume da safra, não por faixa."],
+ ["O Cynodon conta para o Tier?","Sim. Ele tem as mesmas alíquotas progressivas dos híbridos e os quilos contam para o Tier."],
+ ["Como são pagas as convencionais?","Por alíquotas fixas, pagas em cada nota, fora do cálculo de Tier."],
+ ["O que a exclusividade cobre?","Híbridos forrageiros Barenbrug (Sabiá, Cayana, Carcará e Cynodon). É vedado representar cultivares híbridos forrageiros concorrentes dessas espécies."],
+ ["Como o programa é formalizado?","Por um Contrato de Representação Comercial 26/27, apresentado pelo Responsável Comercial, que reúne a mecânica, as alíquotas e as regras de exclusividade."]
 ];
 const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Administrador"];
 const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
@@ -416,7 +455,7 @@ const schemaDoPerfil=p=>SCHEMAS[p]||BASE_CAMPOS;
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
        fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null,
-       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null};
+       form:null, formAlvo:"form", cidadesCache:{}, adminUser:null, adminForm:null, confirmExcluir:false, baseVideo:null, rcEtapa:null};
 
 const formAtual=()=>S[S.formAlvo]||{};
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
@@ -532,17 +571,32 @@ function subnavAcademia(){
     <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||S.pag==="usuario"&&k==="acomp"?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
 }
+function heroHub(){
+  return `<section class="hero"><div class="hero-txt"><span class="rot">Portal Conecta Barenbrug</span>
+    <h1 class="titulo" style="color:var(--preto)">Olá, ${esc(primeiroNome())} 👋</h1>
+    <p>Este é o seu ponto de partida na Barenbrug: treinamento dos híbridos, materiais de apoio à venda e os programas comerciais, reunidos em um só lugar. Escolha uma área abaixo para começar.</p>
+    <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div>
+    <img class="hero-logo" src="${LOGO}" alt="Barenbrug"></section>`;
+}
 function vHub(){
-  return `<div><h1 class="titulo">Olá, ${esc(primeiroNome())}</h1><p class="sub">Bem-vindo ao Portal Conecta Barenbrug. Escolha uma área para começar.</p></div>
-  <div class="cards">${SECOES.map(s=>s.ativo
+  const secs=SECOES.filter(s=>!s.perfis||ehAdmin()||s.perfis.includes(S.perfil));
+  return `${heroHub()}
+  <div><h2 class="sec">Suas áreas</h2></div>
+  <div class="cards">${secs.map(s=>s.ativo
     ?`<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`
     :`<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`).join("")}</div>`;
 }
 
 /* ---------- Academia ---------- */
+function heroAcademia(){
+  return `<section class="hero azul"><div class="hero-txt"><span class="rot">Academia de Híbridos</span>
+    <h1 class="titulo" style="color:#fff">Venda com confiança Sabiá, Cayana e Carcará</h1>
+    <p>Uma trilha de vídeos por cultivar, provas de certificação e uma base de conhecimento com apostilas, podcasts e vídeos de casos reais. Tudo para você dominar os híbridos Barenbrug no campo.</p></div></section>`;
+}
 function vTrilha(){
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
-  return `<div><h1 class="titulo">Trilha de treinamento</h1><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
+  return `${heroAcademia()}
+  <div><h2 class="sec">Trilha de treinamento</h2><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
   ${fim?`<section class="proximo"><div><span class="rot">Jornada concluída</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Sua próxima etapa · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
   <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} etapas concluídas</span></div>
@@ -575,7 +629,7 @@ function matHTML(m){
   return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><button class="link" data-a="mat">Abrir</button></div>`;
 }
 function vPrecos(){
-  const voltar=S.precosVolta==="vender"?`<button class="voltar" data-a="pag" data-v="etapa">‹ Voltar ao curso</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
+  const voltar=S.secao==="conecta-rc"?`<button class="voltar" data-a="pag" data-v="rc-apresentacao">‹ Conecta RC</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
   const linhas=PRECOS.map(p=>`<tr><td class="cult">${p.cult}</td><td>${p.cod}</td><td>${esc(p.cat)}</td><td>${p.trat}</td><td>${p.emb}</td>${p.v.map((x,i)=>`<td class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${x}</td>`).join("")}</tr>`).join("");
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
@@ -594,6 +648,49 @@ function vPrecos(){
     <li>Esta tabela cancela as versões anteriores e pode ser revogada a qualquer momento, sem aviso prévio.</li></ul></div></div>
   <div class="acoes"><a class="btn sec" href="materiais/tabela-precos-out26.pdf" target="_blank" rel="noopener">Baixar PDF original ↗</a></div>`;
 }
+/* ---------- Conecta RC ---------- */
+function subnavRC(){
+  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["precos","Tabela de preços"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Conecta RC</span></div></div>`;
+}
+function vRCApresentacao(){
+  const tier=RC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${x.prod}</td><td class="val">${x.canal}</td></tr>`).join("");
+  const conv=RC_CONV.map(x=>`<tr><td>${x.t}</td><td class="val">${x.prod}</td><td class="val">${x.canal}</td></tr>`).join("");
+  const faq=RC_FAQ.map(([p,a])=>`<details class="faq-item"><summary>${p}</summary><p>${a}</p></details>`).join("");
+  return `<section class="hero-rc"><span class="rot">Programa de representação · Safra 26/27</span>
+    <h1 class="titulo" style="color:var(--preto)">Represente os híbridos que mais crescem e ganhe até 15% de comissão</h1>
+    <p>O Conecta RC é o programa de incentivo da Barenbrug para representantes comerciais. Quanto mais faturamento em híbridos você gera, maior o percentual de comissão — com regras claras também para as convencionais, tudo em um só contrato.</p></section>
+  <section class="bloco"><h2 class="sec">Benefícios</h2><div class="cards">
+    <div class="card off" style="opacity:1;cursor:default"><span class="card-tag">Comissão progressiva</span><h3>Até 15%</h3><p>Híbridos e Cynodon: de 10% ao produtor (8% ao canal) no piso até 15% (11% ao canal) no topo, conforme o faturamento acumulado da safra.</p></div>
+    <div class="card off" style="opacity:1;cursor:default"><span class="card-tag">Convencionais</span><h3>Taxas fixas</h3><p>Definidas por tipo de semente e comprador, pagas direto em cada nota, sem acerto de safra.</p></div>
+    <div class="card off" style="opacity:1;cursor:default"><span class="card-tag">Exclusividade</span><h3>Portfólio Barenbrug</h3><p>Representação exclusiva dos híbridos forrageiros Barenbrug: Sabiá, Cayana, Carcará e Cynodon.</p></div>
+  </div></section>
+  <section class="bloco"><h2 class="sec">Como funciona</h2><ol class="trilha">
+    <li class="feita"><span class="marco" aria-hidden="true">1</span><div class="etapa-b"><h3>Pagamento mensal</h3><p>A Barenbrug paga o piso (10% produtor / 8% canal) sobre as notas liquidadas no mês, mesmo nos tiers mais altos.</p></div></li>
+    <li class="feita"><span class="marco" aria-hidden="true">2</span><div class="etapa-b"><h3>Acerto no fechamento</h3><p>No fim da safra soma-se o volume de híbridos e Cynodon (produtor + canal), define-se o Tier e aplica-se a alíquota final flat sobre o total; o excedente é pago de uma vez.</p></div></li>
+    <li class="atual"><span class="marco" aria-hidden="true">3</span><div class="etapa-b"><h3>Convencionais</h3><p>Pagas em cada nota, por alíquota fixa, fora do cálculo de Tier.</p></div></li>
+  </ol></section>
+  <section class="bloco"><h2 class="sec">Tiers de comissão (híbridos + Cynodon)</h2>
+    <div class="tab"><table class="frete"><thead><tr><th>Tier</th><th>Volume acumulado na safra</th><th class="val">Ao produtor</th><th class="val">Ao canal</th></tr></thead><tbody>${tier}</tbody></table></div>
+    <p class="precos-cap">A alíquota final é aplicada de forma flat sobre todo o volume da safra, não por faixa.</p></section>
+  <section class="bloco"><h2 class="sec">Convencionais (alíquotas fixas)</h2>
+    <div class="tab"><table class="frete"><thead><tr><th>Tipo de semente</th><th class="val">Ao produtor</th><th class="val">Ao canal</th></tr></thead><tbody>${conv}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Perguntas frequentes</h2><div class="faq">${faq}</div></section>
+  <div class="precos-nota">Vigência safra 26/27 (jul/2026 a jun/2027). O Contrato de Representação Comercial assinado é o documento oficial e prevalece em caso de conflito. <a class="link" href="https://materiais.barenbrug.com.br/conecta-rcs-barenbrug" target="_blank" rel="noopener">Página oficial e calculadoras ↗</a></div>`;
+}
+function vRCCurso(){
+  return `<div><h1 class="titulo">Curso de integração</h1><p class="sub">Quatro vídeos para você entender o Conecta RC de ponta a ponta. Assista na ordem que preferir — não é obrigatório.</p></div>
+  <div class="cards">${RC_CURSO.map((e,i)=>`<button class="card" data-a="rc-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RC_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>`;
+}
+function vRCEtapa(){
+  const i=S.rcEtapa,e=RC_CURSO[i]||RC_CURSO[0];
+  return `<button class="voltar" data-a="pag" data-v="rc-curso">‹ Curso de integração</button>
+  <div><span class="rot">Vídeo ${i+1} de ${RC_CURSO.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
+  ${e.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${e.yt}?rel=0" title="${esc(e.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${e.n}</h3><p>Vídeo em breve</p></div>`}
+  <div class="acoes">${i+1<RC_CURSO.length?`<button class="btn" data-a="rc-abrir" data-v="${i+1}">Próximo vídeo →</button>`:`<button class="btn sec" data-a="pag" data-v="rc-apresentacao">Voltar à apresentação</button>`}</div>`;
+}
 function vBase(){
   const b=S.busca.toLowerCase();
   const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
@@ -601,17 +698,16 @@ function vBase(){
   const vids=VIDEOS_BASE.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
   const vatual=S.baseVideo?VIDEOS_BASE.find(x=>x.yt===S.baseVideo):null;
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${x}" aria-pressed="${sel===x}">${x}</button>`).join("");
-  const mostraMat=S.fTipo==="Todos"||["Apostila","Podcast","Tabela"].includes(S.fTipo);
+  const mostraMat=S.fTipo==="Todos"||["Apostila","Podcast"].includes(S.fTipo);
   const mostraVid=S.fTipo==="Todos"||S.fTipo==="Vídeo";
   const vidRow=x=>`<div class="linha ${x.yt===S.baseVideo?"ativa":""}"><div><strong>${x.t}</strong><span class="meta">${x.c} · Vídeo</span></div><button class="link" data-a="bvideo" data-v="${x.yt}">${x.yt===S.baseVideo?"Assistindo":"Assistir"}</button></div>`;
   let vidHTML="";
   if(vids.length){ VID_GRUPOS.forEach(g=>{const gl=vids.filter(v=>v.g===g); if(gl.length) vidHTML+=`<div class="sub-vid">${g}</div><div class="lista">${gl.map(vidRow).join("")}</div>`;}); }
   else vidHTML=`<div class="vazio">Nenhum vídeo encontrado.</div>`;
   return `<div><h1 class="titulo">Base de conhecimento</h1><p class="sub">Vídeos e materiais de apoio à venda dos híbridos, liberados desde o primeiro acesso.</p></div>
-  <div class="banner-precos"><div><h3>Tabela de preços — Safra 26/27</h3><p>Preços ao produtor e frete por região, sempre à mão.</p></div><button class="btn preto" data-a="precos">Ver tabela</button></div>
   <div><label for="busca">Buscar na base</label><input id="busca" type="search" value="${esc(S.busca)}" placeholder="Ex.: Cayana, estresse hídrico, apostila, fazenda"></div>
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
-  <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast","Tabela"],S.fTipo,"ftipo")}</div>
+  <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast"],S.fTipo,"ftipo")}</div>
   ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>
     ${vatual?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:""}
     ${vidHTML}</section>`:""}
@@ -642,7 +738,8 @@ function vAcomp(){
   const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}º`;
   const comConhec=S.equipe.filter(x=>x.conhecimento!=null);
   const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
-  return `<div><h1 class="titulo">Acompanhamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
+  return `${heroAcademia()}
+  <div><h2 class="sec">Acompanhamento</h2><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
   ${vCriarAcesso()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
@@ -709,6 +806,10 @@ function render(){
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  if(S.secao==="conecta-rc"){
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos}[S.pag]||vRCApresentacao;
+    app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
+  }
   if(S.secao==="academia"){
     if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavAcademia()+`<main>${vUsuarioAdmin()}</main>`;return;}
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,acomp:vAcomp,precos:vPrecos}[S.pag]||(ehAdmin()?vAcomp:vTrilha);
@@ -730,7 +831,8 @@ document.addEventListener("click",async ev=>{
   if(a==="visto")return;
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){S.secao=v;S.pag=v==="conecta-rc"?"rc-apresentacao":(ehAdmin()?"acomp":"trilha");S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
