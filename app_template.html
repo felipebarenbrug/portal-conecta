@@ -730,7 +730,9 @@ function vRCRanking(){
       </div>
       ${prox?`<div class="resumo"><div class="barra"><i style="width:${pct}%"></i></div><span>Faltam <strong>${fmt(falta)}</strong> para subir de ${t} para ${prox.t}</span></div>`:`<p class="precos-cap">Você já está no tier máximo do Conecta RC. 👏</p>`}</section>`;
   }
-  const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td><td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td></tr>`;};
+  const verTudo=ehAdmin()||S.perfil==="Comercial Barenbrug";
+  const lider=rk.length?Math.max(1,rk[0].kg):1;
+  const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.kg/lider*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td>`}</tr>`;};
   const top=rk.slice(0,10);
   let rows=top.map((x,i)=>linha(x,i)).join("");
   if(minhaPos>=10){rows+=`<tr><td colspan="6" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linha(rk[minhaPos],minhaPos);}
@@ -738,7 +740,8 @@ function vRCRanking(){
     <p class="sub">Top 10 representantes por <strong>híbridos + Cynodon</strong> na safra 26/27: o que já faturou + o que vai faturar (negociações em aberto) = total. O tier segue a tabela de comissão (Blue até 3 t · Yellow 3–6 t · Yellow Pro 6–9 t · Yellow Master acima de 9 t). Sem valores de negociação — só volume.</p></div>
   ${hero}
   <section class="bloco"><h2 class="sec">Ranking geral · Top 10</h2>
-  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th><th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div>
+  ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, os volumes dos outros representantes aparecem só como posição relativa (barra). Você vê o seu número cheio no topo.</p>`}
   <p class="precos-nota">${RANKING_FONTE}. Atualização manual por enquanto; na integração com o RD Station passa a atualizar sozinho.</p></section>`;
 }
 function vRCApresentacao(){
