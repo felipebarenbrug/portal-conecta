@@ -430,6 +430,10 @@ const RC_TIERS=[
  {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13,0%",canal:"10,0%"},
  {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15,0%",canal:"11,0%"}
 ];
+const RC_RANKING=[{"crm":"Faturando Sementes Ltda","nome":"Faturando Sementes Ltda","kg":25000,"n":1},{"crm":"Maria Giulia (RC digital)","nome":"Maria Giulia","kg":11665,"n":33},{"crm":"Laura Alteia (RC digital)","nome":"Laura Costa","kg":11580,"n":55},{"crm":"J V Dalmagro Representacoes Ltda","nome":"J V Dalmagro Representacoes Ltda","kg":8120,"n":29},{"crm":"Leite e Tobias Consultoria e Representacao Ltda","nome":"Leite e Tobias Consultoria e Representacao Ltda","kg":8000,"n":3},{"crm":"Produza Corretora de Cereais Ltda","nome":"Produza Corretora de Cereais Ltda","kg":4900,"n":2},{"crm":"Abate Representacoes Ltda","nome":"Abate Representacoes Ltda","kg":4500,"n":2},{"crm":"Jc Agro Representacoes Comerciais Eireli","nome":"Jc Agro Representacoes Comerciais Eireli","kg":4500,"n":4},{"crm":"Thaís Franco (RC digital)","nome":"Thaís","kg":3765,"n":32},{"crm":"Boiadeiro Comercio e Representacoes Aracatuba Ltda","nome":"Boiadeiro Comercio e Representacoes Aracatuba Ltda","kg":3660,"n":7},{"crm":"Construsul Ltda","nome":"Construsul Ltda","kg":2690,"n":7},{"crm":"Global Pec Representacoes  Servicos Ltda","nome":"Global Pec Representacoes  Servicos Ltda","kg":1200,"n":1},{"crm":"Nutriprev Representacoes e Consultoria Agropecuaria Ltda","nome":"Nutriprev Representacoes e Consultoria Agropecuaria Ltda","kg":1030,"n":2},{"crm":"Luiz Curci Junior","nome":"Luiz Curci Junior","kg":920,"n":5},{"crm":"Capelli e Carvalho Representacoes Eireli","nome":"Capelli e Carvalho Representacoes Eireli","kg":890,"n":4},{"crm":"M. Gomes Representacoes Ltda","nome":"M. Gomes Representacoes Ltda","kg":800,"n":2},{"crm":"Alex Sandro Clinica Veterinaria Ltda","nome":"Alex Sandro Clinica Veterinaria Ltda","kg":480,"n":2},{"crm":"Ativa Agro Representacao Comercial Ltda","nome":"Ativa Agro Representacao Comercial Ltda","kg":400,"n":1},{"crm":"M Gomes Representacoes Ltda","nome":"M Gomes Representacoes Ltda","kg":400,"n":1},{"crm":"Stm Comercio e Representacoes Ltda","nome":"Stm Comercio e Representacoes Ltda","kg":300,"n":1},{"crm":"Fg2 Representacoes Comerciais Ltda","nome":"Fg2 Representacoes Comerciais Ltda","kg":280,"n":1},{"crm":"M D Costa","nome":"M D Costa","kg":250,"n":1},{"crm":"Rotha Farms Agrobusiness Com. Consultoria e Representacoes Ltda","nome":"Rotha Farms Agrobusiness Com. Consultoria e Representacoes Ltda","kg":210,"n":1},{"crm":"Pagano Sementes Representacoes Comerciais Ltda","nome":"Pagano Sementes Representacoes Comerciais Ltda","kg":140,"n":3},{"crm":"Inova Solucoes Em Agropecuaria Ltda","nome":"Inova Solucoes Em Agropecuaria Ltda","kg":120,"n":1},{"crm":"Sulreal Solucoes e Negocios Ltda","nome":"Sulreal Solucoes e Negocios Ltda","kg":50,"n":1},{"crm":"Maria Eduarda Serutti","nome":"Maria Eduarda","kg":0,"n":0}];
+const TIERS_RC=[{t:"Blue",min:0,max:3000},{t:"Yellow",min:3001,max:6000},{t:"Yellow Pro",min:6001,max:9000},{t:"Yellow Master",min:9001,max:Infinity}];
+const RANKING_FONTE="RD Station CRM · Funil Barenbrug · híbridos + Cynodon faturados na safra 26/27 (snapshot 13/out/2026)";
+const tierDoKg=kg=>{for(const x of TIERS_RC)if(kg>=x.min&&kg<=x.max)return x.t;return "Blue";};
 const RC_CONV=[
  {t:"Incrustadas e grafitadas",prod:"8,0%",canal:"6,0%"},
  {t:"Nuas (ruziziensis)",prod:"6,0%",canal:"4,0%"},
@@ -691,11 +695,49 @@ function vPrecos(){
   <div class="acoes"><a class="btn sec" href="materiais/tabela-precos-out26.pdf" target="_blank" rel="noopener">Baixar PDF original ↗</a></div>`;
 }
 /* ---------- Conecta RC ---------- */
+const vePainelRC=()=>ehAdmin()||S.perfil==="RC"||S.perfil==="Comercial Barenbrug";
 function subnavRC(){
   const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["precos","Tabela de preços"]];
+  if(vePainelRC())abas.push(["rc-ranking","Ranking de vendas"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
+}
+function vRCRanking(){
+  const rk=RC_RANKING;
+  const meuCrm=S.profile&&S.profile.rc_crm;
+  const minhaPos=meuCrm?rk.findIndex(x=>x.crm===meuCrm):-1;
+  const eu=minhaPos>=0?rk[minhaPos]:null;
+  const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}º`;
+  const fmt=n=>(Number(n)||0).toLocaleString("pt-BR")+" kg";
+  let hero="";
+  if(S.perfil==="RC"&&!meuCrm){
+    hero=`<section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a um representante no CRM, então não dá para mostrar seu volume pessoal. Peça ao administrador para fazer o vínculo no seu cadastro.</p></section>`;
+  }else if(eu){
+    const kg=eu.kg;const t=tierDoKg(kg);
+    const prox=TIERS_RC.find(x=>x.min>kg);
+    const falta=prox?prox.min-kg:0;
+    const tierIdx=TIERS_RC.findIndex(x=>x.t===t);
+    const faixa=TIERS_RC[tierIdx];
+    const base=faixa.min, topo=(prox?prox.min:kg*1.1);
+    const pct=Math.max(4,Math.min(100,Math.round((kg-base)/((prox?prox.min:kg)-base||1)*100)));
+    hero=`<section class="hero-rc" style="margin-bottom:14px"><span class="rot">Seu desempenho na safra · híbridos + Cynodon</span>
+      <h1 class="titulo" style="color:var(--preto);margin:.1em 0">${esc(eu.nome)}</h1>
+      <div class="metrics" style="margin:12px 0">
+        <div class="metric"><span>Vendido na safra</span><strong>${fmt(kg)}</strong></div>
+        <div class="metric"><span>Seu tier hoje</span><strong>${t}</strong></div>
+        <div class="metric"><span>Posição no ranking</span><strong>${minhaPos+1}º de ${rk.length}</strong></div>
+        <div class="metric"><span>${prox?"Falta para "+prox.t:"Tier máximo"}</span><strong>${prox?fmt(falta):"🏆"}</strong></div>
+      </div>
+      ${prox?`<div class="resumo"><div class="barra"><i style="width:${pct}%"></i></div><span>Faltam <strong>${fmt(falta)}</strong> para subir de ${t} para ${prox.t}</span></div>`:`<p class="precos-cap">Você já está no tier máximo do Conecta RC. 👏</p>`}</section>`;
+  }
+  const rows=rk.map((x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td><td class="val">${fmt(x.kg)}</td></tr>`;}).join("");
+  return `<div><h1 class="titulo">Ranking de vendas · Conecta RC</h1>
+    <p class="sub">Representantes ordenados por volume de <strong>híbridos + Cynodon</strong> faturado na safra 26/27. O tier segue a tabela de comissão (Blue até 3 t · Yellow 3–6 t · Yellow Pro 6–9 t · Yellow Master acima de 9 t). Sem valores de negociação — só volume.</p></div>
+  ${hero}
+  <section class="bloco"><h2 class="sec">Ranking geral (${rk.length} representantes)</h2>
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th><th class="val">Híbridos + Cynodon</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="precos-nota">${RANKING_FONTE}. Atualização manual por enquanto; na integração com o RD Station passa a atualizar sozinho.</p></section>`;
 }
 function vRCApresentacao(){
   const tier=RC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${x.prod}</td><td class="val">${x.canal}</td></tr>`).join("");
@@ -896,6 +938,7 @@ function vCriarAcesso(){
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    <div><label for="n_rccrm">Vínculo no ranking (nome no CRM) <span class="meta">— só para RC</span></label><select id="n_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}">${esc(x.nome)}</option>`).join("")}</select></div>
     ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
     <div><button class="btn" type="submit">Criar acesso</button></div>
   </form>
@@ -950,6 +993,7 @@ function vUsuarioAdmin(){
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    ${S.adminForm.perfil==="RC"?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Salvar alterações</button></div>
@@ -987,7 +1031,8 @@ function render(){
     return;
   }
   if(S.secao==="conecta-rc"){
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos}[S.pag]||vRCApresentacao;
+    if(S.pag==="rc-ranking"&&!vePainelRC())S.pag="rc-apresentacao";
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking}[S.pag]||vRCApresentacao;
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="conecta-revendas"){
@@ -1142,6 +1187,8 @@ document.addEventListener("submit",async ev=>{
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
+    const elRc=f.querySelector("#f_rccrm");
+    if(perfil==="RC"&&elRc){const rc=elRc.value||null;const {error:e2}=await sb.from("profiles").update({rc_crm:rc}).eq("id",S.adminUser.id);if(!e2)dados.rc_crm=rc;}
     Object.assign(S.adminUser,dados);S.equipe=null;S._erro=null;render();aviso("Dados atualizados.");
   }
   if(f.id==="f-criar"){
@@ -1149,6 +1196,7 @@ document.addEventListener("submit",async ev=>{
     const email=f.querySelector("#n_email").value.trim();
     const perfil=f.querySelector("#n_perfil").value;
     const acessos=[...f.querySelectorAll(".n_acesso:checked")].map(c=>c.value);
+    const rcCrm=perfil==="RC"?(f.querySelector("#n_rccrm").value||null):null;
     S._erroCriar=null;
     if(!acessos.length){S._erroCriar="Marque pelo menos uma seção de acesso.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Criando…";
@@ -1158,6 +1206,7 @@ document.addEventListener("submit",async ev=>{
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
     await sb.from("profiles").update({acessos}).eq("email",email);
+    if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
     return;
   }
