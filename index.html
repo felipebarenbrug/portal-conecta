@@ -49,7 +49,6 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .link{text-align:left;background:none;border:0;padding:0;color:var(--azul-escuro);text-decoration:underline;cursor:pointer}
 .carregando{min-height:70vh;display:grid;place-items:center;color:var(--apagado)}
 
-/* hub */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .card{text-align:left;background:var(--branco);border:0;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:8px;cursor:pointer;box-shadow:0 1px 0 var(--linha);min-height:150px}
 .card h3{font-size:20px;font-weight:800;color:var(--azul-escuro)}
@@ -64,14 +63,15 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .acesso-marca h1{font-size:clamp(30px,5vw,42px);font-weight:800;color:var(--preto)}
 .acesso-marca .logo{height:34px;align-self:flex-start}
 .acesso-form{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.acesso-form.rolavel{justify-content:flex-start}
 .acesso-form h2{color:var(--azul);font-weight:800;font-size:24px}
 label{font-weight:700;font-size:14px;display:block;margin-bottom:5px}
 input,select{width:100%;padding:12px;border:1.5px solid var(--linha);border-radius:6px;background:var(--branco);color:var(--preto)}
-input:disabled{background:var(--papel);color:var(--apagado)}
+input:disabled,select:disabled{background:var(--papel);color:var(--apagado)}
 .dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .erro{background:var(--amarelo-claro);padding:10px 12px;font-size:14px;border-left:4px solid var(--preto)}
 .dica{font-size:13px;color:var(--apagado)}
-.form-card{background:var(--branco);padding:18px;border-radius:6px;display:grid;gap:14px;max-width:520px}
+.form-card{background:var(--branco);padding:18px;border-radius:6px;display:grid;gap:14px;max-width:560px}
 
 .proximo{background:var(--amarelo);padding:22px;display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-radius:6px}
 .proximo>div{min-width:0;flex:1 1 260px}
@@ -210,11 +210,62 @@ const SECOES=[
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de relacionamento e acompanhamento das revendas.",ativo:false},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de relacionamento e ranking dos RCs.",ativo:false}
 ];
-const REQUIRED=["nome","telefone"];
 const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Administrador"];
+const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+const OPC={
+  formacao:["Agronomia","Zootecnia","Medicina Veterinária","Engenharia Agronômica","Técnico Agrícola/Agropecuária","Administração/Comercial","Outra"],
+  foco:["Pecuária de corte","Pecuária de leite","Agricultura"],
+  qtd_clientes:["0 a 5","6 a 10","11 a 20","21 a 50","Mais de 50"],
+  raio_atuacao:["Até 100 km","101 a 150 km","151 a 200 km","Mais de 200 km"],
+  tempo_revenda:["Menos de 1 ano","1 a 3 anos","3 a 5 anos","Mais de 5 anos"],
+  nivel_conhecimento:["Muito pouco","Pouco","Razoável","Bom","Muito bom"]
+};
+const BASE_CAMPOS=[
+  {k:"nome",l:"Nome completo",t:"text",req:true},
+  {k:"email",l:"E-mail",t:"email_fixo"},
+  {k:"telefone",l:"Celular / WhatsApp",t:"tel",req:true}
+];
+const SCHEMAS={
+  "RC":[...BASE_CAMPOS,
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
+    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"cnpj",l:"CNPJ",t:"text",req:true},
+    {k:"razao_social",l:"Razão social da empresa",t:"text",req:true},
+    {k:"empresa_uf",l:"Estado da sede da empresa",t:"uf",req:true},
+    {k:"empresa_cidade",l:"Cidade sede da empresa",t:"cidade",uf:"empresa_uf",req:true},
+    {k:"raio_atuacao",l:"Raio de atuação a partir da sede",t:"select",o:OPC.raio_atuacao,req:true},
+    {k:"marcas",l:"Marcas que representa além da Barenbrug",t:"text",req:false},
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
+    {k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
+    {k:"qtd_clientes",l:"Quantidade de clientes na carteira",t:"select",o:OPC.qtd_clientes,req:true},
+    {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
+  "Vendedor de Revenda":[...BASE_CAMPOS,
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
+    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"revenda",l:"Revenda onde trabalha",t:"text",req:true},
+    {k:"revenda_uf",l:"Estado da revenda",t:"uf",req:true},
+    {k:"revenda_cidade",l:"Cidade da revenda",t:"cidade",uf:"revenda_uf",req:true},
+    {k:"tempo_revenda",l:"Há quanto tempo está na revenda",t:"select",o:OPC.tempo_revenda,req:true},
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
+    {k:"foco",l:"Foco de atuação",t:"select",o:OPC.foco,req:true},
+    {k:"qtd_clientes",l:"Quantidade de clientes na carteira",t:"select",o:OPC.qtd_clientes,req:true},
+    {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
+  "Gestor de Revenda":[...BASE_CAMPOS,
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
+    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
+    {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}],
+  "Assessor de Vendas Digital":[...BASE_CAMPOS,
+    {k:"formacao",l:"Formação",t:"select",o:OPC.formacao,req:true},
+    {k:"uf",l:"Estado onde mora",t:"uf",req:true},
+    {k:"cidade",l:"Cidade onde mora",t:"cidade",uf:"uf",req:true},
+    {k:"nivel_conhecimento",l:"Nível de conhecimento dos híbridos Barenbrug",t:"select",o:OPC.nivel_conhecimento,req:true}]
+};
+const schemaDoPerfil=p=>SCHEMAS[p]||BASE_CAMPOS;
 
 let S={user:null, profile:null, perfil:null, feitas:[], notas:{}, secao:null, pag:"hub", etapa:null, video:0, vistos:{}, res:null,
-       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null};
+       fCult:"Todos", fTipo:"Todos", busca:"", equipe:null, _erro:null, novoAcesso:null, _erroCriar:null,
+       form:null, cidadesCache:{}};
 
 function aviso(t){document.querySelector(".aviso")?.remove();const d=document.createElement("div");d.className="aviso";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),3400);}
 const feitasOrdenadas=()=>ORDEM.filter(id=>S.feitas.includes(id));
@@ -222,8 +273,24 @@ const qtdFeitas=()=>feitasOrdenadas().length;
 const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORDEM[i]))return i;}return ORDEM.length;};
 const estado=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador";
-const cadastroCompleto=()=>REQUIRED.every(f=>S.profile&&(S.profile[f]||"").trim());
+const cadastroCompleto=()=>schemaDoPerfil(S.perfil).every(c=>!c.req||(S.profile&&(S.profile[c.k]||"").trim()));
 const primeiroNome=()=>String(S.profile&&S.profile.nome||S.user.email||"").trim().split(/\s+/)[0];
+
+async function carregarCidades(uf){
+  if(!uf||S.cidadesCache[uf]) return;
+  S.cidadesCache[uf]="__LOADING__";
+  try{
+    const r=await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const j=await r.json();
+    S.cidadesCache[uf]=j.map(x=>x.nome);
+  }catch(e){ S.cidadesCache[uf]="__ERRO__"; }
+}
+function preloadCidades(){
+  schemaDoPerfil(S.perfil).filter(c=>c.t==="cidade").forEach(c=>{
+    const uf=S.form&&S.form[c.uf];
+    if(uf&&!S.cidadesCache[uf]){ carregarCidades(uf).then(render); }
+  });
+}
 
 /* ---------- boot ---------- */
 async function boot(){
@@ -241,6 +308,7 @@ async function carregarUsuario(u){
   }
   S.profile=prof||{};
   S.perfil=(prof&&prof.perfil)||"RC";
+  S.form=null;
   const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
   S.feitas=(prog||[]).map(r=>r.etapa);
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
@@ -270,23 +338,38 @@ function vTrocaSenha(erro){
       <p class="dica">Pelo menos 8 caracteres.</p>
     </form></div>`;
 }
-function camposPerfil(){
-  const p=S.profile||{};
-  const campo=(id,lbl,val,req,tipo)=>`<div><label for="${id}">${lbl}${req?" *":""}</label><input id="${id}" type="${tipo||"text"}" value="${esc(val)}" ${req?"required":""}></div>`;
-  return campo("c_nome","Nome completo",p.nome,true)
-    +`<div><label for="c_email">E-mail</label><input id="c_email" value="${esc(S.user.email)}" disabled></div>`
-    +campo("c_tel","Telefone / WhatsApp",p.telefone,true,"tel")
-    +`<div class="dupla">${campo("c_cidade","Cidade",p.cidade,false)}${campo("c_uf","UF",p.uf,false)}</div>`
-    +campo("c_funcao","Função / cargo",p.funcao,false);
+function campoHTML(c){
+  const v=(S.form&&S.form[c.k])||"";
+  const lbl=`<label for="f_${c.k}">${c.l}${c.req?" *":""}</label>`;
+  if(c.t==="email_fixo") return `<div><label>${c.l}</label><input value="${esc(S.user.email)}" disabled></div>`;
+  if(c.t==="uf") return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" data-ufload="1" ${c.req?"required":""}><option value="">Selecione…</option>${UFS.map(u=>`<option value="${u}" ${v===u?"selected":""}>${u}</option>`).join("")}</select></div>`;
+  if(c.t==="cidade"){
+    const uf=(S.form&&S.form[c.uf])||"";const ci=S.cidadesCache[uf];
+    if(ci==="__ERRO__") return `<div>${lbl}<input id="f_${c.k}" data-fk="${c.k}" type="text" value="${esc(v)}" placeholder="Digite a cidade" ${c.req?"required":""}></div>`;
+    let inner,dis="";
+    if(!uf){inner=`<option value="">Selecione o estado primeiro</option>`;dis="disabled";}
+    else if(!ci||ci==="__LOADING__"){inner=`<option value="">Carregando cidades…</option>`;dis="disabled";}
+    else inner=`<option value="">Selecione…</option>`+ci.map(n=>`<option value="${esc(n)}" ${v===n?"selected":""}>${esc(n)}</option>`).join("");
+    return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" ${dis} ${c.req?"required":""}>${inner}</select></div>`;
+  }
+  if(c.t==="select") return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" ${c.req?"required":""}><option value="">Selecione…</option>${c.o.map(o=>`<option value="${esc(o)}" ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+  return `<div>${lbl}<input id="f_${c.k}" data-fk="${c.k}" type="${c.t==="tel"?"tel":"text"}" value="${esc(v)}" ${c.req?"required":""}></div>`;
 }
+function camposPerfil(){ return schemaDoPerfil(S.perfil).map(campoHTML).join(""); }
 function vCadastroObrig(){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
     <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Primeiro acesso: complete seu cadastro para continuar.</p></div></div>
-    <form class="acesso-form" id="f-cadastro"><h2>Complete seu cadastro</h2><p>Os campos com <strong>*</strong> são obrigatórios.</p>
+    <form class="acesso-form rolavel" id="f-cadastro"><h2>Complete seu cadastro</h2><p>Perfil: <strong>${esc(S.perfil)}</strong>. Os campos com <strong>*</strong> são obrigatórios.</p>
       ${camposPerfil()}
       ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
       <button class="btn" type="submit">Salvar e continuar</button>
     </form></div>`;
+}
+function vPerfil(){
+  return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
+  <form class="form-card" id="f-cadastro">${camposPerfil()}
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div><button class="btn" type="submit">Salvar</button></div></form>`;
 }
 
 /* ---------- shell ---------- */
@@ -300,8 +383,6 @@ function subnavAcademia(){
     <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
 }
-
-/* ---------- hub ---------- */
 function vHub(){
   return `<div><h1 class="titulo">Olá, ${esc(primeiroNome())}</h1><p class="sub">Bem-vindo ao Portal Conecta Barenbrug. Escolha uma área para começar.</p></div>
   <div class="cards">${SECOES.map(s=>s.ativo
@@ -350,6 +431,20 @@ function vBase(){
 function vCert(){
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu a trilha de Sabiá, Cayana e Carcará${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
 }
+function vCriarAcesso(){
+  const r=S.novoAcesso;
+  return `<section class="bloco"><h2 class="sec">Cadastrar pessoa</h2>
+  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória para você enviar à pessoa. No primeiro acesso ela troca a senha e completa o cadastro.</p>
+  <form class="form-card" id="f-criar">
+    <div><label for="n_nome">Nome completo *</label><input id="n_nome" required></div>
+    <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
+    <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
+    ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
+    <div><button class="btn" type="submit">Criar acesso</button></div>
+  </form>
+  ${r?`<div class="nota-admin"><strong>Acesso criado.</strong> Envie estes dados para a pessoa — a senha aparece só uma vez:<br>E-mail: <strong>${esc(r.email)}</strong><br>Senha provisória: <strong>${esc(r.senha)}</strong></div>`:""}
+  </section>`;
+}
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS[x.feitas]?ETAPAS[x.feitas].n:"—");
@@ -365,32 +460,14 @@ async function carregarEquipe(){
   S.equipe=(profs||[]).map(p=>{const rs=porUser[p.id]||[];const prova=rs.find(r=>r.etapa==="prova");return {nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,feitas:rs.length,prova:prova?prova.nota:null};})
     .sort((a,b)=>b.feitas-a.feitas);
 }
-function vCriarAcesso(){
-  const r=S.novoAcesso;
-  return `<section class="bloco"><h2 class="sec">Cadastrar pessoa</h2>
-  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória para você enviar à pessoa. No primeiro acesso ela troca a senha e completa o cadastro.</p>
-  <form class="form-card" id="f-criar">
-    <div><label for="n_nome">Nome completo *</label><input id="n_nome" required></div>
-    <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required></div>
-    <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("")}</select></div>
-    ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
-    <div><button class="btn" type="submit">Criar acesso</button></div>
-  </form>
-  ${r?`<div class="nota-admin"><strong>Acesso criado.</strong> Envie estes dados para a pessoa — a senha aparece só uma vez:<br>E-mail: <strong>${esc(r.email)}</strong><br>Senha provisória: <strong>${esc(r.senha)}</strong></div>`:""}
-  </section>`;
-}
-function vPerfil(){
-  return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
-  <form class="form-card" id="f-cadastro">${camposPerfil()}
-    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
-    <div><button class="btn" type="submit">Salvar</button></div></form>`;
-}
 
 /* ---------- render ---------- */
 function render(){
   const app=document.getElementById("app");
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
+  const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
+  if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades();}
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(!S.secao){app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
@@ -412,10 +489,10 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null};render();}
-  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,cidadesCache:{}};render();}
+  if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;render();window.scrollTo(0,0);}
   if(a==="secao"){S.secao=v;S.pag=ehAdmin()?"acomp":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
-  if(a==="perfil"){S.pag="perfil";S._erro=null;render();window.scrollTo(0,0);}
+  if(a==="perfil"){S.pag="perfil";S._erro=null;S.form={...S.profile};preloadCidades();render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
@@ -425,15 +502,25 @@ document.addEventListener("click",async ev=>{
   if(a==="fcult"){S.fCult=v;render();}
   if(a==="ftipo"){S.fTipo=v;render();}
 });
-document.addEventListener("change",ev=>{
-  const c=ev.target;if(c.dataset.a!=="visto")return;
-  const id=ETAPAS[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
-  S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
-  if(c.checked&&k+1<ETAPAS[S.etapa].v.length)S.video=k+1;render();
+document.addEventListener("change",async ev=>{
+  const c=ev.target;
+  if(c.dataset.a==="visto"){
+    const id=ETAPAS[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
+    S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
+    if(c.checked&&k+1<ETAPAS[S.etapa].v.length)S.video=k+1;render();return;
+  }
+  if(c.dataset.fk&&S.form){
+    S.form[c.dataset.fk]=c.value;
+    if(c.dataset.ufload){
+      const dep=schemaDoPerfil(S.perfil).find(x=>x.t==="cidade"&&x.uf===c.dataset.fk);
+      if(dep)S.form[dep.k]="";
+      await carregarCidades(c.value);render();
+    }
+  }
 });
 document.addEventListener("input",ev=>{
-  if(ev.target.id!=="busca")return;S.busca=ev.target.value;const pos=ev.target.selectionStart;render();
-  const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}
+  if(ev.target.id==="busca"){S.busca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
+  if(ev.target.dataset&&ev.target.dataset.fk&&S.form){S.form[ev.target.dataset.fk]=ev.target.value;}
 });
 document.addEventListener("submit",async ev=>{
   const f=ev.target;ev.preventDefault();
@@ -455,14 +542,15 @@ document.addEventListener("submit",async ev=>{
     S.profile.precisa_trocar_senha=false;render();
   }
   if(f.id==="f-cadastro"){
-    const g=id=>f.querySelector(id).value.trim();
-    const dados={nome:g("#c_nome"),telefone:g("#c_tel"),cidade:g("#c_cidade"),uf:g("#c_uf"),funcao:g("#c_funcao")};
-    if(!dados.nome||!dados.telefone){S._erro="Preencha os campos obrigatórios (*).";render();return;}
+    const schema=schemaDoPerfil(S.perfil);
+    const falta=schema.some(c=>c.req&&!((S.form[c.k]||"").trim()));
+    if(falta){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
+    const dados={};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.form[c.k]||"").trim();});
     const eraObrig=!cadastroCompleto();
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.user.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
-    Object.assign(S.profile,dados);S._erro=null;
+    Object.assign(S.profile,dados);S.form={...S.profile};S._erro=null;
     if(eraObrig){S.secao=null;S.pag="hub";render();aviso("Cadastro completo. Bem-vindo!");}
     else{render();aviso("Dados salvos.");}
   }
