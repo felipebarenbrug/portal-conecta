@@ -201,9 +201,18 @@ const ETAPAS=[
         q("Como falar de resultado com o produtor?",["Produção máxima garantida","Observado em ensaios; varia conforme manejo, solo e chuvas","Funciona igual em qualquer fazenda"],1)]},
  {id:"sabia",n:"Sabiá",d:`Híbrido de ${sci("Brachiaria")}. Resistência e Segurança.`,
   v:[{t:"Origem e Genética",yt:"llcJ7vpDTWw"},{t:"Atributos da Planta e Estrutura de Pastejo",yt:"yeOjr6ocbWk"},{t:"Produtividade na Seca e Sanidade",yt:"gbe-5Eqbws0"},{t:"Diferimento, Ganho Animal e Plantio",yt:"9lKse6Zmmbc"},{t:"Solo, Florescimento e Retorno (ROI)",yt:"0LKc47gERs4"}],mat:[{n:"Apostila de vendas — Sabiá",tipo:"Apostila",url:"materiais/apostila-vendas-sabia.pdf"},{n:"Base de conhecimento — Sabiá (60 perguntas)",tipo:"Apostila",url:"materiais/sabia-60-perguntas.pdf"},{n:"Podcast — Sabiá acaba com o boi sanfona",tipo:"Podcast",audio:"materiais/podcast-sabia.m4a"}],
-  quiz:[q("Qual é o cruzamento do Sabiá?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`${sci("Megathyrsus maximus")} × ${sci("B. ruziziensis")}`,`${sci("B. brizantha")} × ${sci("Megathyrsus maximus")}`],0),
-        q("Característica documentada do Sabiá frente à falta de água?",["Tolerância muito alta à seca","Exige irrigação","Só produz nas águas"],0),
-        q("Par de atributos que resume o Sabiá?",["Precocidade e Rusticidade","Resistência e Segurança","Volume e Preço"],1)]},
+  quiz:[
+   q("Qual é a origem genética do Sabiá?",[`${sci("B. brizantha")} × ${sci("Megathyrsus maximus")}`,`${sci("B. brizantha")} × ${sci("B. ruziziensis")}, selecionado na 4ª geração`,`${sci("B. decumbens")} × ${sci("B. ruziziensis")}`,`Seleção dentro de ${sci("B. brizantha")}, sem cruzamento`],1),
+   q("Qual a taxa de semeadura recomendada em condição adversa (via drone, avião ou área de morro)?",["10 kg/ha","12 kg/ha","15 kg/ha","8 kg/ha"],2),
+   q("Qual a profundidade correta de semeadura do Sabiá?",["1 a 2 cm","3 a 4 cm","5 a 6 cm","Lançada na superfície, sem cobrir"],0),
+   q("Na seca, em relação ao Marandu, o Sabiá acumula aproximadamente:",["10% a mais de forragem total","Mesma produção, porém com mais fibra","20% a mais de forragem e 30% a mais de folhas","42% a mais de forragem e 50% a mais de lâminas foliares"],3),
+   q("Qual a exigência química de solo do Sabiá?",[`V% 70–80%, P mínimo 15 mg/dm³ e K 8% da CTC`,`V% 50–60%, P mínimo 5 mg/dm³ e K de 3 a 5% da CTC`,`V% 30–40%, P mínimo 2 mg/dm³`,`Indiferente à fertilidade do solo`],1),
+   q("Qual destas áreas NÃO é recomendada para o Sabiá?",["Áreas de morro e terreno declivoso","Solos arenosos corrigidos e adubados","Várzea e solos alagados / sujeitos a encharcamento","Semiárido com ao menos 800 mm/ano"],2),
+   q("Qual teto produtivo de carne o Sabiá registrou em ensaios oficiais (Xinguara-PA)?",["38,5 arrobas/ha/ano","27,4 arrobas/ha/ano","45,0 arrobas/ha/ano","30,0 arrobas/ha/ano"],0),
+   q("Elevando a adubação nitrogenada de 50 para 200 kg de N/ha, o Sabiá responde com:",["Sem resposta significativa","+20% de produção total","Queda de produção por excesso de N","+45% de produção total, com as folhas praticamente dobrando (+77%)"],3),
+   q("Sobre o florescimento tardio do Sabiá, é correto afirmar que ele:",["Antecipa a maturação e reduz a proteína","Retarda a lignificação e mantém a qualidade da forragem por mais tempo","Impede a produção de sementes","Não influencia o valor nutricional"],1),
+   q("Qual o índice de pureza das sementes de Sabiá com tecnologia Yellow Jacket®?",["80%","85%","95%","99%"],2)
+  ]},
  {id:"cayana",n:"Cayana",d:`Híbrido de ${sci("Brachiaria")} para alto teto produtivo.`,
   v:[{t:"Origem e Genética",yt:"rJtlBXGWw-w"},{t:"Morfologia e Perfilhamento",yt:"b0qdzPHVCfY"},{t:"Massa, Nitrogênio e Sanidade",yt:"qeUgT2LH0kY"},{t:"Desempenho Animal, Manejo e Implantação",yt:"WEikH700-fI"},{t:"Posicionamento, Fertilidade e ROI",yt:"c_-4lhAc3r8"}],mat:[{n:"Podcast — Cayana e o ganho de peso",tipo:"Podcast",audio:"materiais/podcast-cayana.m4a"}],
   quiz:[q("Qual é o cruzamento do Cayana?",[`${sci("B. brizantha")} × ${sci("B. ruziziensis")}`,`Híbrido de ${sci("Panicum")}`,`${sci("B. ruziziensis")} pura`],0),
@@ -223,7 +232,12 @@ const ETAPAS=[
 ];
 const PROVA=[["boas",1],["hibrido",1],["sabia",0],["sabia",1],["cayana",1],["carcara",0],["carcara",1],["vender",0]]
   .map(([e,i])=>ETAPAS.find(x=>x.id===e).quiz[i]);
-const ORDEM=ETAPAS.map(e=>e.id);
+// Lançamento inicial: só Sabiá, Cayana e Carcará ativos. Os demais ficam ocultos
+// (definições preservadas) até ter material — basta incluir o id na lista abaixo.
+const ETAPAS_ATIVAS=["sabia","cayana","carcara"];
+ETAPAS.forEach(e=>e.on=ETAPAS_ATIVAS.includes(e.id));
+const ETAPAS_ON=ETAPAS.filter(e=>e.on);
+const ORDEM=ETAPAS_ON.map(e=>e.id);
 
 // Materiais reais (PDF / podcast / tabela) — ficam na base e como complemento dos cursos
 const MATERIAIS=[
@@ -458,12 +472,12 @@ function vHub(){
 
 /* ---------- Academia ---------- */
 function vTrilha(){
-  const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS[indiceAtual()];
+  const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
   return `<div><h1 class="titulo">Trilha de treinamento</h1><p class="sub">Siga as etapas na ordem. Cada questionário aprovado libera a próxima.</p></div>
   ${fim?`<section class="proximo"><div><span class="rot">Jornada concluída</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Sua próxima etapa · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
   <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} etapas concluídas</span></div>
-  <ol class="trilha">${ETAPAS.map((e,i)=>{const s=estadoEt(i),nota=S.notas[e.id];
+  <ol class="trilha">${ETAPAS_ON.map((e,i)=>{const s=estadoEt(i),nota=S.notas[e.id];
     const corpo=`<h3>${e.n}</h3><p>${e.d}</p><span class="est">${s==="feita"?`Concluída${nota!=null?" · "+nota+" acertos":""}`:s==="atual"?"Etapa atual":"Bloqueada"}</span>`;
     return `<li class="${s}"><span class="marco" aria-hidden="true">${s==="feita"?"✓":i+1}</span>${s==="bloq"?`<div class="etapa-b">${corpo}</div>`:`<button class="etapa-b" data-a="abrir" data-v="${i}">${corpo}</button>`}</li>`;}).join("")}</ol>`;
 }
@@ -474,7 +488,7 @@ function vQuiz(lista,id){
   ${r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length?"Ver certificado":"Ir para a trilha"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
 }
 function vEtapa(){
-  const i=S.etapa,e=ETAPAS[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
+  const i=S.etapa,e=ETAPAS_ON[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
   if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button><div><span class="rot">Etapa ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Trilha</button>
@@ -482,7 +496,7 @@ function vEtapa(){
   ${v.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${v.yt}?rel=0" title="${esc(v.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m?v.m+" min · ":""}O vídeo entra aqui no site final</p></div>`}
   <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button>${x.m?`<span class="meta"> · ${x.m} min</span>`:""}</div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div></section>
   ${e.mat.length?`<section class="bloco"><h2 class="sec">Materiais de apoio</h2><div class="lista">${e.mat.map(matHTML).join("")}</div></section>`:""}
-  <section class="bloco"><h2 class="sec">Questionário</h2>${s==="feita"&&!S.res?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar o questionário. Aprovação com 2 de 3 acertos.</div>`}</section>`;
+  <section class="bloco"><h2 class="sec">Questionário</h2>${s==="feita"&&!S.res?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar o questionário. Aprovação com 70% de acerto.</div>`}</section>`;
 }
 function matHTML(m){
   const meta=`${m.c?esc(m.c)+" · ":""}${esc(m.tipo)}`;
@@ -653,9 +667,9 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(c.dataset.a==="visto"){
-    const id=ETAPAS[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
+    const id=ETAPAS_ON[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
     S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
-    if(c.checked&&k+1<ETAPAS[S.etapa].v.length)S.video=k+1;render();return;
+    if(c.checked&&k+1<ETAPAS_ON[S.etapa].v.length)S.video=k+1;render();return;
   }
   if(c.dataset.fk){
     const F=formAtual();F[c.dataset.fk]=c.value;
@@ -727,7 +741,7 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-quiz"){
-    const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=id==="prova"?6:2;
+    const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=Math.ceil(lista.length*0.7);
     const fd=new FormData(f),resp=lista.map((_,i)=>+fd.get("p"+i)),ac=resp.filter((r,i)=>r===lista[i].c).length,ok=ac>=min;
     S.res={resp,ac,ok,min};if(ok)await concluir(id,ac);render();
     document.querySelector(".resultado")?.scrollIntoView({block:"center"});
