@@ -575,8 +575,7 @@ function heroHub(){
   return `<section class="hero"><div class="hero-txt"><span class="rot">Portal Conecta Barenbrug</span>
     <h1 class="titulo" style="color:var(--preto)">Olá, ${esc(primeiroNome())} 👋</h1>
     <p>Este é o seu ponto de partida na Barenbrug: treinamento dos híbridos, materiais de apoio à venda e os programas comerciais, reunidos em um só lugar. Escolha uma área abaixo para começar.</p>
-    <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div>
-    <img class="hero-logo" src="${LOGO}" alt="Barenbrug"></section>`;
+    <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div></section>`;
 }
 function vHub(){
   const secs=SECOES.filter(s=>!s.perfis||ehAdmin()||s.perfis.includes(S.perfil));
