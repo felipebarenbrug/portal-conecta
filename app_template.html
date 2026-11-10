@@ -836,9 +836,11 @@ function vPrecos(){
 }
 /* ---------- Conecta RC ---------- */
 const vePainelRC=()=>ehAdmin()||S.perfil==="RC"||S.perfil==="Assessor de Vendas Digital"||S.perfil==="Comercial Barenbrug";
+let RC_DEALS_CACHE=null;
+async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 function subnavRC(){
   const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["precos","Tabela de preços"]];
-  if(vePainelRC())abas.push(["rc-ranking","Ranking de vendas"]);
+  if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||S.perfil==="Comercial Barenbrug")?"Mapa de vendas":"Meu mapa"]);}
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
@@ -883,6 +885,30 @@ function vRCRanking(){
   <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div>
   ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, os volumes dos outros representantes aparecem só como posição relativa (barra). Você vê o seu número cheio no topo.</p>`}
   <p class="precos-nota">${RANKING_FONTE}. Atualização manual por enquanto; na integração com o RD Station passa a atualizar sozinho.</p></section>`;
+}
+function vRCMapa(){
+  if(!RC_DEALS_CACHE)return `<div class="carregando">Carregando os pedidos…</div>`;
+  const dados=RC_DEALS_CACHE;
+  const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
+  const meuCrm=S.profile&&S.profile.rc_crm;
+  const fmtKgN=n=>(Number(n)||0).toLocaleString("pt-BR");
+  const CULTS=["Todos","Sabiá","Cayana","Carcará","Mulato II","Cynodon"];
+  const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${esc(x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
+  if(!admin&&!meuCrm)return `<div><h1 class="titulo">Meu mapa de vendas</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a um representante no CRM. Peça ao administrador para fazer o vínculo e seus pedidos aparecem aqui.</p></section>`;
+  const fCult=S.mapaCult||"Todos";
+  const repsTodos=Object.keys(dados).sort((a,b)=>a.localeCompare(b));
+  const fRep=admin?(S.mapaRep||"Todos"):meuCrm;
+  const alvo=admin?(fRep==="Todos"?repsTodos:[fRep]):[meuCrm];
+  let linhas=[];
+  alvo.forEach(r=>{(dados[r]||[]).forEach(d=>{const its=d.it.filter(x=>fCult==="Todos"||x[0]===fCult);if(its.length)linhas.push({r,cli:d.cli,its,fma:d.fma,dt:d.dt});});});
+  const totalKg=linhas.reduce((s,l)=>s+l.its.reduce((a,x)=>a+x[1],0),0);
+  const rows=linhas.map(l=>`<tr>${admin?`<td>${esc(l.r)}</td>`:""}<td>${esc(l.cli)}</td><td>${l.its.map(x=>`${x[0]} · <strong>${fmtKgN(x[1])} kg</strong>`).join("<br>")}</td><td>${esc(l.fma)}</td><td>${esc(l.dt||"—")}</td></tr>`).join("");
+  return `<div><h1 class="titulo">${admin?"Mapa de vendas · Conecta RC":"Meu mapa de vendas"}</h1>
+    <p class="sub">${admin?"Todos os pedidos de híbridas na safra, por representante — filtre por cultivar e por representante.":"Seus pedidos de híbridas na safra: para quem você vendeu, o quê e quanto."} O valor por pedido entra junto com a integração ao vivo do RD Station.</p></div>
+  <div class="filtros">${chips(CULTS,fCult,"mapacult")}</div>
+  ${admin?`<div class="filtros">${chips(["Todos",...repsTodos],fRep,"maparep")}</div>`:""}
+  <section class="bloco"><p class="sub" style="margin:0 0 8px">${linhas.length} pedido(s) · <strong>${fmtKgN(totalKg)} kg</strong>${fCult!=="Todos"?" de "+fCult:" de híbridas"}.</p>
+  <div class="tab"><table><thead><tr>${admin?"<th>Representante</th>":""}<th>Cliente / Pedido</th><th>Cultivar · Quantidade</th><th>Forma</th><th>Faturamento</th></tr></thead><tbody>${rows||`<tr><td colspan="5" class="meta">Nenhum pedido encontrado para este filtro.</td></tr>`}</tbody></table></div></section>`;
 }
 function vRCApresentacao(){
   const tier=RC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${x.prod}</td><td class="val">${x.canal}</td></tr>`).join("");
@@ -1183,9 +1209,11 @@ function renderApp(){
     return;
   }
   if(S.secao==="conecta-rc"){
-    if(S.pag==="rc-ranking"&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking}[S.pag]||vRCApresentacao;
-    app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;return;
+    if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa}[S.pag]||vRCApresentacao;
+    app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;
+    if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
+    return;
   }
   if(S.secao==="conecta-revendas"){
     if(S.pag==="rv-canais"||S.pag==="rv-canal"){
@@ -1243,6 +1271,8 @@ document.addEventListener("click",async ev=>{
   if(a==="cert")irPag("cert");
   if(a==="fcult"){S.fCult=v;render();}
   if(a==="ftipo"){S.fTipo=v;render();}
+  if(a==="mapacult"){S.mapaCult=v;render();}
+  if(a==="maparep"){S.mapaRep=v;render();}
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="excluir"){S.confirmExcluir=true;render();}
   if(a==="excluir-cancela"){S.confirmExcluir=false;render();}
