@@ -1048,6 +1048,7 @@ async function imagemReduzida(file,max){
   const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);return await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.85));
 }
+const btExcluir=(tipo,id,rot)=>S.delConf===tipo+":"+id?`<span class="meta" style="color:#c0392b">Excluir de vez?</span> <button class="link" style="color:#c0392b" data-a="del-sim" data-v="${tipo}:${id}">Sim, excluir</button> <button class="link" data-a="del-nao">Cancelar</button>`:`<button class="link" data-a="del-pedir" data-v="${tipo}:${id}">${rot}</button>`;
 const postVisivel=p=>ehAdmin()||S.perfil==="Comercial Barenbrug"||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
 const dirDe=id=>(S.dir&&id&&S.dir[id])||null;
 const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";return t?` <span class="meta">· ${esc(t)}</span>`:"";};
@@ -1136,10 +1137,10 @@ function cartaoDuvida(d){
           <div class="mini">${r.validada?`<span class="selo-ok">Resposta validada pela Barenbrug</span>`:`<span class="selo-pend">Aguardando validação da Barenbrug</span>`}${r.oculto?`<span class="meta"><strong>oculta</strong></span>`:""}</div>
           <p>${esc(r.texto)}</p>
           <span class="meta autor" style="gap:6px">${avatar(r.autor,r.autor_nome,22)}<span><strong>${esc(r.autor_nome||"Participante")}</strong>${perfilTxt(r.autor,r.autor_perfil)} respondeu · ${fmtDataHora(r.criado_em)}${eNovo(r.criado_em)&&r.autor!==S.user.id?' <span class="tag-novo">Novo</span>':""}</span>${r.validada&&r.validada_por&&r.validada_por!==r.autor_nome?" · validada por "+esc(r.validada_por):""}</span></span>
-          ${staff?`<div class="mini">${r.validada?`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="0">Retirar validação</button>`:`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="1">Validar resposta</button>`}${adm?`<button class="link" data-a="resp-ocultar" data-v="${r.id}" data-on="${r.oculto?0:1}">${r.oculto?"Mostrar resposta":"Ocultar resposta"}</button>`:""}</div>`:""}
+          ${staff?`<div class="mini">${r.validada?`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="0">Retirar validação</button>`:`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="1">Validar resposta</button>`}${adm?`<button class="link" data-a="resp-ocultar" data-v="${r.id}" data-on="${r.oculto?0:1}">${r.oculto?"Mostrar resposta":"Ocultar resposta"}</button>${btExcluir("r",r.id,"Excluir resposta")}`:""}</div>`:""}
         </div>`).join(""):`<span class="meta">Ainda sem resposta.</span>`}
       ${aberto?`<form id="f-resposta" data-duv="${d.id}"><label for="r_txt">${staff?"Resposta oficial da Barenbrug":"Sua resposta (passa pela validação da Barenbrug)"}</label><textarea id="r_txt" rows="4" required minlength="2" maxlength="3000"></textarea><div class="acoes" style="margin-top:8px"><button class="btn" type="submit">Publicar resposta</button><button class="btn sec" type="button" data-a="duv-abrir" data-v="">Cancelar</button></div></form>`
-        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>`:""}</div>`}
+        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>${btExcluir("d",d.id,"Excluir pergunta")}`:""}</div>`}
     </article>`;}
 function cartaoPost(p){
   const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";const novoDesde=S.feedNovoDesde||0;
@@ -1153,7 +1154,7 @@ function cartaoPost(p){
       <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
       ${p.imagem_url?`<img src="${esc(p.imagem_url)}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
       ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
-      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · <button class="link" data-a="post-del" data-v="${p.id}">excluir</button>`:""}</div>
+      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>
     </section>`;
 }
 function vDuvidas(){
@@ -2520,6 +2521,14 @@ document.addEventListener("click",async ev=>{
   if(a==="leads-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{const e=document.getElementById("lead_prog");if(e)e.textContent=t;};const r=await atualizarLeads(prog);await carregarLeads();render();aviso("Leads atualizados: "+r.replace("leads: ",""));return;}
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
+  if(a==="del-pedir"){S.delConf=v;render();return;}
+  if(a==="del-nao"){S.delConf=null;render();return;}
+  if(a==="del-sim"){const [t,id]=v.split(":");S.delConf=null;
+    if(t==="p"){if(!(ehAdmin()||S.perfil==="Comercial Barenbrug"))return;const {error}=await sb.from("posts").delete().eq("id",id);if(error){aviso("Não foi possível excluir.");render();return;}await carregarPosts();render();aviso("Publicação excluída.");return;}
+    if(!ehAdmin())return;
+    if(t==="d"){await sb.from("duvida_respostas").delete().eq("duvida_id",id);const r=await sb.from("duvidas").delete().eq("id",id).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir a pergunta.");render();return;}await carregarDuvidas();render();aviso("Pergunta excluída com as respostas.");return;}
+    if(t==="r"){const r=await sb.from("duvida_respostas").delete().eq("id",id).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir a resposta.");render();return;}await carregarDuvidas();render();aviso("Resposta excluída.");return;}
+    return;}
   if(a==="post-del"){await sb.from("posts").delete().eq("id",v);S.posts=null;render();aviso("Publicação excluída.");return;}
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="acesso-modo"){S.acessoModo=v;S._erro=null;render();window.scrollTo(0,0);return;}
