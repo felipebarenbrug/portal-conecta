@@ -711,7 +711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111130137";
+const APP_VER="20261111130753";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1182,7 +1182,7 @@ const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(/^[A-Za-z]{2}$/.t
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s\b.*franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
 const REP_INTERNO=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;
-const IS_TIME=[["Laura","Laura Costa","Inside Sales"],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
+const IS_TIME=[["Laura","Laura Costa",null],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
 const META_IS_KG=60000;
 function linhasMapa(dono,deals,repPadrao){
   const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
@@ -1294,20 +1294,27 @@ async function atualizarCRM(prog){
   const todasLm=[];
   const gravaMapa=async(dono,lm)=>{todasLm.push(...lm);let em=(await sb.from("crm_mapa").delete().eq("dono",dono)).error;for(let i=0;i<lm.length&&!em;i+=400){em=(await sb.from("crm_mapa").insert(lm.slice(i,i+400))).error;}return em;};
   for(const dono of CRM_DONOS){
+    if(dono==="Inside Sales")continue;
     const L=await ler(dono,dono);if(!L){res.push(dono+": erro na leitura");continue;}
     cache[dono]=L;const todos=L.todos;
     const linha=montaPainelCRM(dono,todos,L.pm);
     const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
-    const em=await gravaMapa(dono,linhasMapa(dono,todos));
+    const em=dono==="Mayane Costa"?null:await gravaMapa(dono,linhasMapa(dono,todos));
     res.push(dono+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
   }
+  {const time=[];let pmT=0,okT=true;
   for(const [curto,nomeRep,jaLido] of IS_TIME){
     const L=(jaLido&&cache[jaLido])||await ler(curto==="Mayane"?"Mayane Costa":curto,"Inside Sales · "+curto);
-    if(!L){res.push("Inside Sales "+curto+": erro na leitura");continue;}
+    if(!L){res.push("Inside Sales "+curto+": erro na leitura");okT=false;continue;}
+    time.push(...L.todos);pmT+=L.pm;
     const linha=montaPainelCRM("IS: "+curto,L.todos,L.pm);linha.equipe="Inside Sales";
     const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
-    let em=null;if(!jaLido)em=await gravaMapa(nomeRep,linhasMapa(nomeRep,L.todos));
-    res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
+    res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`));
+  }
+  if(okT){const linha=montaPainelCRM("Inside Sales",time,pmT);linha.equipe="Inside Sales";const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
+    await sb.from("crm_mapa").delete().in("dono",["Maria Giulia","Thaís Franco","Maria Eduarda","Mayane Costa"]);
+    const em=await gravaMapa("Inside Sales",linhasMapa("Inside Sales",time));
+    res.push("Inside Sales (time): "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));}
   }
   if(todasLm.length){prog("Montando os rankings…");const INT=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;const R={};const hojeIso=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
     for(const r of todasLm){if(!r.rep||INT.test(r.rep))continue;const cy=+((r.cults||{})["Cynodon"])||0;const h=(+r.kg_h||0)+cy,c=Math.max(0,(+r.kg_c||0)-cy);const x=R[r.rep]||(R[r.rep]={crm:r.rep,nome:r.rep,fat:0,a_fat:0,kg:0,conv_fat:0,conv_afat:0,conv_kg:0});
@@ -1329,7 +1336,7 @@ function vMeuCRM(){
   return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button></div>`+(m?vMapaGeo("crm"):vMeuCRMPainel());
 }
 function vMeuCRMPainel(X){
-  const rows=X?[X.r]:(S.crm&&S.crm.filter(x=>!String(x.dono).startsWith("IS: ")));if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
+  const rows=X?[X.r]:(S.crm&&(ehAdmin()?S.crm.filter(x=>!String(x.dono).startsWith("IS: ")):S.crm));if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
   const adm=X?false:ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
   const fmtK=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
   const alvo=X?X.r.dono:adm?(S.crmSel||(rows[0]&&rows[0].dono)):(S.profile&&S.profile.crm_dono);
@@ -1343,7 +1350,7 @@ function vMeuCRMPainel(X){
   const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
-  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo):"Meu CRM"}</h1><p class="sub">Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
+  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: Laura, Maria Giulia, Thaís, Maria Eduarda e Mayane. ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
@@ -2154,7 +2161,7 @@ function vUsuarioAdmin(){
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${(S.adminForm.perfil==="Inside Sales"||ac.includes("inside-sales"))?`<div><label for="f_isv">Consultora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
-    ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador"||ac.includes("meu-crm"))?`<div><label for="f_crmdono">Responsável no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...CRM_DONOS,...COMERCIAIS_EXTRA,S.adminForm.crm_dono].filter(x=>x&&!String(x).startsWith("IS: ")))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(d)}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
+    ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador"||ac.includes("meu-crm"))?`<div><label for="f_crmdono">Responsável no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...CRM_DONOS,...COMERCIAIS_EXTRA,...IS_TIME.map(x=>"IS: "+x[0]),S.adminForm.crm_dono].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(String(d).replace(/^IS: /,"Inside Sales · ")+(d==="Inside Sales"?" (time inteiro)":""))}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
     ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_cresp">Responsável comercial (recebe as negociações deste RC)</label><select id="f_cresp"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA,S.adminForm.comercial_resp].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
