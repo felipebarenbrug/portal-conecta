@@ -731,7 +731,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111133710";
+const APP_VER="20261111134016";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -887,7 +887,7 @@ function cabecalho(){
     <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>`;
 }
 function subnavAcademia(){
-  const abas=[["trilha","Trilha"],["base","Base de conhecimento"]];
+  const abas=[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -1663,6 +1663,21 @@ function heroAcademia(){
     <h1 class="titulo" style="color:#fff">Venda com confiança Sabiá, Cayana e Carcará</h1>
     <p>Uma trilha de vídeos por cultivar, provas de certificação e uma base de conhecimento com apostilas, podcasts e vídeos de casos reais. Tudo para você dominar os híbridos Barenbrug no campo.</p></div></section>`;
 }
+function vFaq(){
+  if(S.faq===undefined)return `<div class="carregando">Carregando as perguntas…</div>`;
+  if(!S.faq)return `<section class="bloco"><div class="vazio">Não foi possível carregar as perguntas. Recarregue a página.</div></section>`;
+  const cults=Object.keys(S.faq);const c=cults.includes(S.faqCult)?S.faqCult:cults[0];const busca=(S.faqBusca||"").trim();
+  const nz=t=>String(t).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"");const b=nz(busca);
+  const alvo=b?cults:[c];let achadas=0;
+  const corpo=alvo.map(k=>{const blocos=S.faq[k].map(bl=>{const qs=bl.q.filter(([p,r])=>!b||nz(p).includes(b)||nz(r).includes(b));if(!qs.length)return "";achadas+=qs.length;
+      return `<section class="bloco"><div><h2 class="sec">${b?esc(k)+" · ":""}${esc(bl.t)}</h2>${bl.d?`<p class="sub" style="margin:4px 0 0">${esc(bl.d)}</p>`:""}</div>${qs.map(([p,r])=>`<details class="faq-item" ${b&&qs.length<=3?"open":""}><summary>${esc(p)}</summary><p style="white-space:pre-wrap;color:var(--preto)">${esc(r)}</p></details>`).join("")}</section>`;}).join("");return blocos;}).join("");
+  const total=cults.reduce((t,k)=>t+S.faq[k].reduce((x,bl)=>x+bl.q.length,0),0);
+  return `<div><h1 class="titulo">Perguntas e respostas</h1><p class="sub">A base de conhecimento oficial de Sabiá, Cayana e Carcará: ${total} perguntas com a resposta técnica da Barenbrug, separadas por cultivar e por bloco. Toque na pergunta para abrir a resposta.</p></div>
+  <div class="form-card" style="padding:12px"><input id="faq_busca" type="search" placeholder="Buscar em todas as cultivares (ex.: taxa de semeadura, cigarrinha, geada)" value="${esc(busca)}" aria-label="Buscar nas perguntas e respostas"></div>
+  ${b?`<p class="sub" style="margin:0">${achadas} ${achadas===1?"pergunta encontrada":"perguntas encontradas"} para "${esc(busca)}" nas três cultivares. <button class="link" data-a="faq-limpar">Limpar busca</button></p>`:`<div class="filtros">${cults.map(k=>`<button class="chip" data-a="faq-cult" data-v="${esc(k)}" aria-pressed="${c===k}">${esc(k)}</button>`).join("")}</div>`}
+  ${corpo||`<div class="vazio">Nenhuma pergunta encontrada. Tente outra palavra ou pergunte no início do portal.</div>`}
+  <p class="dica">Não achou o que precisava? Faça a sua pergunta no início do portal: a Barenbrug responde e valida.</p>`;
+}
 function vTrilha(){
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
   return `${heroAcademia()}
@@ -2358,7 +2373,7 @@ async function abrirUsuario(id){
 /* ---------- render ---------- */
 function render(){renderApp();paintTour();}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Trilha"],["base","Base de conhecimento"],["cert","Certificado"],["precos","Tabela de preços"]],
+const ABAS_REG={"academia":[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"],["precos","Tabela de preços"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["precos","Tabela de preços"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
@@ -2417,7 +2432,8 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,faq:vFaq,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
+    if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
@@ -2511,6 +2527,8 @@ document.addEventListener("click",async ev=>{
   if(a==="clima-uf"){S.climaUf=v;render();return;}
   if(a==="clima-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo a previsão…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_clima"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler a previsão agora.":`Previsão atualizada para ${r.data.gravadas} praças${(r.data.falhas||[]).length?" (sem dados: "+r.data.falhas.join(", ")+")":""}.`);return;}
   if(a==="boi-del"){const {error}=await sb.from("mercado_boi").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça excluída.");return;}
+  if(a==="faq-cult"){S.faqCult=v;render();window.scrollTo(0,0);return;}
+  if(a==="faq-limpar"){S.faqBusca="";render();return;}
   if(a==="feed-f"){S.feedF=v;S.feedLim=20;render();return;}
   if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
   if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
@@ -2609,6 +2627,7 @@ document.addEventListener("change",async ev=>{
 document.addEventListener("input",ev=>{
   if(ev.target.id==="busca"){S.busca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.dataset&&ev.target.dataset.calc){const el=ev.target,r=el.value.replace(/\D/g,"");el.value=r?(el.dataset.calc==="rs"?"R$ ":"")+parseInt(r).toLocaleString("pt-BR"):"";calcRC();return;}
+  if(ev.target.id==="faq_busca"){S.faqBusca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("faq_busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.id==="duv_busca"){S.duvBusca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("duv_busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.dataset&&ev.target.dataset.fk){formAtual()[ev.target.dataset.fk]=ev.target.value;}
 });
