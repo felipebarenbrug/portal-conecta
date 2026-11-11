@@ -1443,6 +1443,17 @@ async function carregarMercado(){try{
     sb.from("mercado_clima").select("*")]);
   S.mercado={noticias:a.data||[],boi:b.data||[],clima:c.data||[]};
 }catch(e){S.mercado={noticias:[],boi:[],clima:[]};}}
+function carregarCepea(){
+  if(S.cepea!==undefined||S.cepeaBusy)return;S.cepeaBusy=true;
+  const fr=document.createElement("iframe");fr.setAttribute("aria-hidden","true");fr.style.cssText="position:absolute;left:-9999px;top:0;width:500px;height:300px;border:0;visibility:hidden";
+  const src="https://www.cepea.org.br/br/widgetproduto.js.php?fonte=arial&tamanho=10&largura=400px&corfundo=ffffff&cortexto=333333&corlinha=ffffff&id_indicador%5B%5D=2&id_indicador%5B%5D=8&id_indicador%5B%5D=3";
+  let feito=false;const fim=()=>{if(feito)return;feito=true;let out=[];
+    try{const d=fr.contentDocument;out=[...d.querySelectorAll("tbody tr")].map(tr=>{const td=[...tr.querySelectorAll("td")];if(td.length<3)return null;const pr=td[1].innerText.split("\n").map(x=>x.trim()).filter(Boolean);return {data:td[0].innerText.trim(),produto:pr[0]||"",un:pr[1]||"",valor:td[2].innerText.trim()};}).filter(x=>x&&/\d/.test(x.valor));}catch(e){out=[];}
+    fr.remove();S.cepea=out;S.cepeaBusy=false;if(S.secao==="mercado"&&S.pag==="mercado-boi")render();};
+  fr.onload=()=>setTimeout(fim,300);setTimeout(fim,9000);
+  fr.srcdoc=`<!doctype html><html><head><meta charset="utf-8"></head><body><script src="${src}"><\/script></body></html>`;
+  document.body.appendChild(fr);
+}
 function vMercado(){
   const m=S.mercado;
   if(m==null)return `<div class="carregando">Carregando…</div>`;
@@ -1450,14 +1461,14 @@ function vMercado(){
   if(S.pag==="mercado-boi"){
     const b=(m.boi||[]).slice().sort((x,y)=>String(x.uf||"").localeCompare(String(y.uf||""))||String(x.praca||"").localeCompare(String(y.praca||"")));
     const ult=b.reduce((t,x)=>x.atualizado_em&&x.atualizado_em>t?x.atualizado_em:t,"");
-    const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça</th><th>UF</th><th class="val">R$/@</th><th class="val">Variação</th><th class="val">@ por ha de pasto*</th>${interno?"<th></th>":""}</tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||"")}</td><td>${esc(x.uf||"")}</td><td class="val"><strong>${x.preco?fmtR(x.preco):"—"}</strong></td><td class="val">${esc(x.variacao||"—")}</td><td class="val">${esc(x.rel_troca||"—")}</td>${interno?`<td><button class="link" data-a="boi-del" data-v="${x.id}">Excluir</button></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma praça informada ainda.</div>`;
-    const wsrc="https://www.cepea.org.br/br/widgetproduto.js.php?fonte=arial&tamanho=11&largura=100%25&corfundo=ffffff&cortexto=1e1e1e&corlinha=e3f5fc&id_indicador%5B%5D=2&id_indicador%5B%5D=8&id_indicador%5B%5D=3";
-    const doc=`<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:8px;font-family:Arial,Helvetica,sans-serif}table{width:100%!important}</style></head><body><script src="${wsrc}"><\/script></body></html>`;
-    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicadores oficiais do CEPEA/Esalq-USP, atualizados pelo próprio CEPEA a cada dia útil: boi gordo (CEPEA/B3) e bezerro em MS e SP.</p></div>
-    <section class="bloco"><iframe title="Indicadores do CEPEA: boi gordo e bezerro" srcdoc="${esc(doc)}" loading="lazy" style="width:100%;height:270px;border:0;background:var(--branco);border-radius:8px"></iframe>
-    <p class="precos-nota">Fonte: CEPEA/Esalq-USP, pelo quadro oficial de cotações que o CEPEA oferece para sites. Se o quadro não aparecer, veja direto em <a class="link" href="https://www.cepea.org.br/br/indicador/boi-gordo.aspx" target="_blank" rel="noopener">cepea.org.br</a>.</p></section>
-    ${b.length?`<section class="bloco"><h2 class="sec">Praças regionais</h2>${tbl}<p class="precos-nota">*Relação de troca: quantas arrobas de boi pagam 1 hectare de pasto Barenbrug. Valores informados pela equipe Barenbrug${ult?", atualizados em "+fmtDataHora(ult):""}.</p></section>`:""}
-    ${interno?`<details class="lote"><summary>Informar uma praça regional (opcional)</summary><form class="form-card" id="f-boi" style="margin-top:10px"><div class="neg-item"><div><label for="bo_praca">Praça *</label><input id="bo_praca" required placeholder="Ex.: Cuiabá"></div><div><label for="bo_uf">UF *</label><input id="bo_uf" required maxlength="2" placeholder="MT"></div><div><label for="bo_preco">R$ por arroba *</label><input id="bo_preco" required inputmode="decimal" placeholder="320,50"></div><div><label for="bo_var">Variação</label><input id="bo_var" placeholder="+0,8% na semana"></div><div><label for="bo_rel">@ por ha de pasto</label><input id="bo_rel" placeholder="1,2 @"></div></div><div class="acoes"><button class="btn" type="submit">Gravar praça</button></div><span class="meta">Só aparece para os usuários se alguma praça for informada.</span></form></details>`:""}`;
+    const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça</th><th>UF</th><th class="val">R$/@</th><th class="val">Variação</th>${interno?"<th></th>":""}</tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||"")}</td><td>${esc(x.uf||"")}</td><td class="val"><strong>${x.preco?fmtR(x.preco):"—"}</strong></td><td class="val">${esc(x.variacao||"—")}</td>${interno?`<td><button class="link" data-a="boi-del" data-v="${x.id}">Excluir</button></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma praça informada ainda.</div>`;
+    const C=S.cepea;
+    const quadro=C===undefined?`<div class="carregando">Buscando as cotações no CEPEA…</div>`:(C.length?`<div class="metrics">${C.map((x,k)=>`<div class="metric" ${k===0?'style="box-shadow:inset 0 0 0 2px var(--amarelo)"':""}><span>${esc(x.produto)}</span><strong style="font-size:26px">${esc(x.valor)}</strong><span class="meta">por ${esc(x.un==="@"?"arroba":x.un||"unidade")} · ${esc(x.data)}</span></div>`).join("")}</div>`:`<div class="vazio">Não foi possível carregar as cotações agora. Veja direto em <a class="link" href="https://www.cepea.org.br/br/indicador/boi-gordo.aspx" target="_blank" rel="noopener">cepea.org.br</a>.</div>`);
+    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicadores oficiais do CEPEA/Esalq-USP, atualizados pelo CEPEA a cada dia útil: boi gordo (CEPEA/B3) e bezerro em MS e SP.</p></div>
+    <section class="bloco">${quadro}
+    <p class="precos-nota">Fonte: <a class="link" href="https://www.cepea.org.br/br/indicador/boi-gordo.aspx" target="_blank" rel="noopener">CEPEA/Esalq-USP</a>, pelo serviço oficial de cotações para sites.</p></section>
+    ${b.length?`<section class="bloco"><h2 class="sec">Praças regionais</h2>${tbl}<p class="precos-nota">Valores informados pela equipe Barenbrug${ult?", atualizados em "+fmtDataHora(ult):""}.</p></section>`:""}
+    ${interno?`<details class="lote"><summary>Informar uma praça regional (opcional)</summary><form class="form-card" id="f-boi" style="margin-top:10px"><div class="neg-item"><div><label for="bo_praca">Praça *</label><input id="bo_praca" required placeholder="Ex.: Cuiabá"></div><div><label for="bo_uf">UF *</label><input id="bo_uf" required maxlength="2" placeholder="MT"></div><div><label for="bo_preco">R$ por arroba *</label><input id="bo_preco" required inputmode="decimal" placeholder="320,50"></div><div><label for="bo_var">Variação</label><input id="bo_var" placeholder="+0,8% na semana"></div></div><div class="acoes"><button class="btn" type="submit">Gravar praça</button></div><span class="meta">Só aparece para os usuários se alguma praça for informada.</span></form></details>`:""}`;
   }
   if(S.pag==="mercado-clima"){
     const c=m.clima||[];
@@ -2265,6 +2276,7 @@ function renderApp(){
   if(S.secao==="mercado"){
     app.innerHTML=cabecalho()+subnavMercado()+`<main>${vMercado()}</main>`;
     if(!S.mercado){carregarMercado().then(render);}
+    if(S.pag==="mercado-boi")carregarCepea();
     return;
   }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
@@ -2529,7 +2541,7 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-boi"){
     const praca=f.querySelector("#bo_praca").value.trim(),uf=f.querySelector("#bo_uf").value.trim().toUpperCase(),preco=parseFloat(f.querySelector("#bo_preco").value.replace(/[^\d,.]/g,"").replace(/\./g,"").replace(",","."));
     if(!praca||!/^[A-Z]{2}$/.test(uf)||!(preco>0)){aviso("Informe praça, UF com duas letras e o preço da arroba.");return;}
-    const linha={praca,uf,preco,variacao:f.querySelector("#bo_var").value.trim()||null,rel_troca:f.querySelector("#bo_rel").value.trim()||null,atualizado_em:new Date().toISOString()};
+    const linha={praca,uf,preco,variacao:f.querySelector("#bo_var").value.trim()||null,atualizado_em:new Date().toISOString()};
     const ex=((S.mercado&&S.mercado.boi)||[]).find(x=>String(x.praca||"").toLowerCase()===praca.toLowerCase()&&x.uf===uf);
     const {error}=ex?await sb.from("mercado_boi").update(linha).eq("id",ex.id):await sb.from("mercado_boi").insert(linha);
     if(error){aviso("Não foi possível gravar. Tente de novo.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça gravada.");return;
