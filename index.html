@@ -35,9 +35,11 @@ img{max-width:100%}
 .subnav{background:var(--amarelo);border-top:1px solid rgba(0,0,0,.08)}
 .subnav-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .voltar-inicio{background:none;border:0;padding:9px 0;color:var(--preto);font-weight:700;font-size:14px;cursor:pointer}
-.nav{display:flex;gap:4px;overflow-x:auto}
+.nav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 100%;order:2}
+.subnav .secao-nome{margin-left:auto}
 .nav button{background:none;border:0;padding:9px 12px;font-weight:700;font-size:15px;cursor:pointer;color:var(--preto);border-radius:6px 6px 0 0;white-space:nowrap}
 .nav button[aria-current=page]{background:var(--papel)}
+@media (max-width:640px){.nav button{border-radius:6px;margin-bottom:4px}}
 .secao-nome{margin-left:auto;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
 
 main{max-width:880px;margin:0 auto;padding:26px 16px 56px;display:grid;gap:24px}
@@ -690,7 +692,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111075611";
+const APP_VER="20261111081355";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 async function boot(){
   checarVersao();
@@ -828,7 +830,7 @@ function cabecalho(){
 function subnavAcademia(){
   const abas=[["trilha","Trilha"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Academia de Híbridos">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
 }
 function subnavEnxoval(){
@@ -878,7 +880,7 @@ function vEnxoval(){
 function subnavLeads(){
   const abas=[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="LeadsBaren">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="LeadsBaren">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">LeadsBaren</span></div></div>`;
 }
 async function carregarLeads(){try{const {data}=await sb.from("leads").select("*");S.leadsCache=data||[];}catch(e){S.leadsCache=[];}}
@@ -906,7 +908,7 @@ function subnavIS(){
   const abas=[["is-painel",veTimeIS()?"Painel":"Meu painel"]];
   if(veTimeIS())abas.push(["is-time","Time"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inside Sales">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
 }
 function vInsideSales(){
@@ -1065,6 +1067,15 @@ function vMeuCRM(){
   <section class="bloco"><h2 class="sec">Em aberto por mês de faturamento</h2>
     ${meses.length?meses.map(m=>`<div class="mesbar"><span>${nomeMes(m.m)}</span><span class="trilho"><i style="width:${Math.round(100*(m.rs||0)/maxM)}%"></i><b style="width:${Math.round(100*(m.pond||0)/maxM)}%"></b></span><span class="v"><strong>${fmtK(m.rs)}</strong> <span class="meta">· ponderado ${fmtK(m.pond)} · ${fmtN(m.n)} neg.</span></span></div>`).join("")+`<p class="dica" style="margin-top:8px">Barra azul: valor em aberto com faturamento previsto no mês. Barra amarela: o mesmo valor ponderado pela chance de fechar (estrelas da negociação).</p>`:`<div class="vazio">Nenhuma negociação em aberto com data de faturamento.</div>`}
   </section>
+  ${(()=>{const vc=r.vend_cult||{};const ks=Object.keys(vc);if(!ks.length)return "";const tt=ks.reduce((t,k)=>t+vc[k],0);const ton=k=>(k/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
+    return `<section class="bloco"><h2 class="sec">Híbridos vendidos na safra · ${ton(tt)}</h2><div class="metrics">${ks.map(k=>`<div class="metric"><span>${esc(k)}</span><strong>${ton(vc[k])}</strong><span class="meta">${Math.round(100*vc[k]/tt)}% do volume</span></div>`).join("")}</div><p class="dica" style="margin-top:8px">Toneladas de Sabiá, Cayana e Carcará em pedidos ganhos com faturamento na safra. As demais cultivares e o volume das negociações em aberto entram com a atualização automática do CRM.</p></section>`;})()}
+  ${(()=>{const A=Array.isArray(r.abertas)?r.abertas:[];if(!A.length)return "";const hoje=new Date();hoje.setHours(0,0,0,0);const dd=x=>x[2]?Math.round((new Date(x[2]+"T00:00:00")-hoje)/864e5):null;
+    const fx=[["Vencidas (data já passou)",x=>dd(x)!=null&&dd(x)<0],["Faturam em até 30 dias",x=>dd(x)!=null&&dd(x)>=0&&dd(x)<=30],["De 31 a 60 dias",x=>dd(x)>30&&dd(x)<=60],["De 61 a 90 dias",x=>dd(x)>60&&dd(x)<=90]];
+    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):`<span style="color:#c0392b">sem representante</span>`} · ${estr(x[4])}</span></div>`;
+    const bloco=(t,L,aberto)=>L.length?`<details class="lote" ${aberto?"open":""}><summary>${t} · ${L.length} negociações · ${fmtK(L.reduce((s,x)=>s+x[1],0))}</summary><div class="lista" style="margin-top:8px">${L.slice().sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9")||b[1]-a[1]).map(lin).join("")}</div></details>`:"";
+    const sr=A.filter(x=>!x[3]);
+    return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
+    ${sr.length?`<section class="bloco"><h2 class="sec">Sem representante no CRM (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com o campo Representante vazio. Preencha no CRM para elas contarem no RC certo.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
   ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">Meus representantes (${r.rcs.length})</h2>
     <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
     <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
@@ -1127,7 +1138,7 @@ function vMural(){
 function subnavMercado(){
   const abas=[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Mercado">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Mercado">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Mercado</span></div></div>`;
 }
 async function carregarMercado(){try{
@@ -1250,7 +1261,7 @@ function subnavRC(){
   const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["precos","Tabela de preços"]];
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||S.perfil==="Comercial Barenbrug")?"Mapa de vendas":"Meu mapa"]);}
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
 }
 function vRCRanking(){
@@ -1359,8 +1370,9 @@ function vRCMapa(){
   const rows=linhas.map(l=>`<tr>${admin?`<td>${esc(l.r)}</td>`:""}<td>${esc(l.cli)}</td><td>${l.its.map(x=>`${x[0]} · <strong>${fmtKgN(x[1])} kg</strong>`).join("<br>")}</td><td>${esc(l.fma)}</td><td>${esc(l.dt||"—")}</td></tr>`).join("");
   return `<div><h1 class="titulo">${admin?"Mapa de vendas · Conecta RC":"Meu mapa de vendas"}</h1>
     <p class="sub">${admin?"Todos os pedidos de híbridas na safra, por representante — filtre por cultivar e por representante.":"Seus pedidos de híbridas na safra: para quem você vendeu, o quê e quanto."} O valor por pedido entra junto com a integração ao vivo do RD Station.</p></div>
-  <div class="filtros">${chips(CULTS,fCult,"mapacult")}</div>
-  ${admin?`<div class="filtros">${chips(["Todos",...repsTodos],fRep,"maparep")}</div>`:""}
+  <details class="lote" ${(fCult!=="Todos"||(admin&&fRep!=="Todos"))?"open":""}><summary>Filtros${fCult!=="Todos"?" · "+esc(fCult):""}${admin&&fRep!=="Todos"?" · "+esc(fRep):""}</summary>
+  <p class="meta" style="margin:10px 0 4px">Cultivar</p><div class="filtros">${chips(CULTS,fCult,"mapacult")}</div>
+  ${admin?`<p class="meta" style="margin:10px 0 4px">Representante</p><div class="filtros">${chips(["Todos",...repsTodos],fRep,"maparep")}</div>`:""}</details>
   <section class="bloco"><p class="sub" style="margin:0 0 8px">${linhas.length} pedido(s) · <strong>${fmtKgN(totalKg)} kg</strong>${fCult!=="Todos"?" de "+fCult:" de híbridas"}.</p>
   <div class="tab"><table><thead><tr>${admin?"<th>Representante</th>":""}<th>Cliente / Pedido</th><th>Cultivar · Quantidade</th><th>Forma</th><th>Faturamento</th></tr></thead><tbody>${rows||`<tr><td colspan="5" class="meta">Nenhum pedido encontrado para este filtro.</td></tr>`}</tbody></table></div></section>`;
 }
@@ -1406,7 +1418,7 @@ function subnavRV(){
   if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
   else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta Revendas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
 }
 function vRVApresentacao(){
@@ -1798,6 +1810,7 @@ function vUsuarioAdmin(){
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    ${ac.filter(id=>ABAS_REG[id]).length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver.</span>${ac.filter(id=>ABAS_REG[id]).map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminUser.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}</label>`;}).join("")}</div>`).join("")}</div>`:""}
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${S.adminForm.perfil==="Inside Sales"?`<div><label for="f_isv">Vendedora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
@@ -1830,8 +1843,17 @@ async function abrirUsuario(id){
 
 /* ---------- render ---------- */
 function render(){renderApp();paintTour();}
+const ABAS_REG={"academia":[["trilha","Trilha"],["base","Base de conhecimento"],["cert","Certificado"],["precos","Tabela de preços"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["precos","Tabela de preços"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
+  "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
+  "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
+  "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]]};
+const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
+const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
+const semOcultas=abas=>{const o=abasOcultas();return abas.filter(([k])=>!o.includes(chaveAba(k)));};
 function renderApp(){
   const app=document.getElementById("app");
+  if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
   if(S.pag!=="usuario")S.formAlvo="form";
@@ -2150,6 +2172,7 @@ document.addEventListener("submit",async ev=>{
     const elCd=f.querySelector("#f_crmdono");if(elCd)dados.crm_dono=elCd.value||null;
     const elCn=f.querySelector("#f_canal");if(elCn)dados.canal_id=elCn.value||null;
     const elCr=f.querySelector("#f_cresp");if(elCr)dados.comercial_resp=elCr.value||null;
+    const elAb=[...f.querySelectorAll("[data-aba]")];if(elAb.length){const vis=new Set((S.adminUser.abas_ocultas||[]));elAb.forEach(c=>{if(c.checked)vis.delete(c.dataset.aba);else vis.add(c.dataset.aba);});dados.abas_ocultas=[...vis];}
     const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
