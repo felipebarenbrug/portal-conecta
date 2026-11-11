@@ -6,7 +6,7 @@
 <title>Portal Conecta Barenbrug</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 <style>
 :root{
   --amarelo:#FFDB00; --azul:#00A8E2; --azul-escuro:#00557A; --preto:#1E1E1E;
@@ -365,7 +365,8 @@ let sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true
 const sbReal = sb;
 
 const sci=s=>`<span class="sci">${s}</span>`;
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const urlOk=u=>{const t=String(u==null?"":u).trim();return /^https?:\/\//i.test(t)?t:"#";};
 const q=(p,ops,c)=>({p,ops,c});
 // Provas de certificação (20 questões, geradas no NotebookLM a partir das fontes Barenbrug; 70% = 14)
 const QUIZ_SABIA=[
@@ -539,25 +540,15 @@ const RV_CAL=[["1º trimestre","Jul–Set 2026","Out 2026"],["2º trimestre","Ou
 const RV_BONUS=[["100% ou mais da meta","100% do bônus do Tier"],["90% a 99,99%","70% do bônus do Tier"],["Abaixo de 90%","0% (o IGDB continua sendo pago)"]];
 const RV_PERM=["Dias de campo e eventos técnicos com produtores","Workshops e demonstrações a campo dos híbridos","Feiras agropecuárias regionais","Parcelas demonstrativas em propriedades","Mídia rural voltada ao produtor","Materiais técnicos de PDV e de genética"];
 const RV_VEDADO=["Campanhas promocionais internas do time do canal","Prêmios ou bonificação por cota para vendedores","Comissões ou incentivos para a equipe interna","Promoções ou descontos de preço ao produtor","Ações sem a participação do produtor"];
-const PRECOS_MESES=["out/26","nov/26","dez/26","jan/27","fev/27","mar/27","abr/27"];
-const PRECOS_MES_ATUAL=1; // nov/26
-const PRECOS=[
- {cat:"Urochloa (Brachiaria) híbrida", cod:"3519", cult:"Cayana", trat:"Yellow Jacket®", emb:"Sacaria 10 kg", v:["43,15","43,79","44,45","45,12","45,79","46,48","47,18"]},
- {cat:"Urochloa (Brachiaria) híbrida", cod:"3520", cult:"Sabiá", trat:"Yellow Jacket®", emb:"Sacaria 10 kg", v:["43,15","43,79","44,45","45,12","45,79","46,48","47,18"]},
- {cat:"Megathyrsus (Panicum) híbrido", cod:"4221", cult:"Carcará", trat:"Yellow Jacket®", emb:"Sacaria 10 kg", v:["32,50","32,98","33,48","33,98","34,49","35,01","35,53"]},
- {cat:"Cynodon", cod:"3015", cult:"Cynodon", trat:"Yellow Jacket®", emb:"Sacaria 5 kg", v:["93,90","95,31","96,74","98,19","99,66","101,16","102,67"]},
- {cat:"Urochloa (Brachiaria)", cod:"3427 / 6097", cult:"Ruziziensis", trat:"Yellow Jacket®", emb:"Sacaria 10 kg / Big bag", v:["11,70","11,88","12,05","12,23","12,42","12,60","12,79"]},
- {cat:"Urochloa (Brachiaria)", cod:"4476 / 6098", cult:"Ruziziensis", trat:"Graphite", emb:"Sacaria 10 kg / Big bag", v:["11,95","12,13","12,31","12,50","12,68","12,87","13,07"]}
-];
-const FRETE=[
- {uf:"SP", f:"0,80", frac:"3,90"},
- {uf:"RJ / MG", f:"0,90", frac:"3,90"},
- {uf:"Sul", f:"1,00", frac:"—"},
- {uf:"Centro-Oeste", f:"1,10", frac:"—"},
- {uf:"Norte / Nordeste", f:"1,35", frac:"—"},
- {uf:"Roraima", f:"2,00", frac:"—"}
-];
-
+let PRECOS_MESES=[],PRECOS_MES_ATUAL=0,PRECOS=[],FRETE=[],PRECOS_VER="";
+async function carregarPrecos(){
+  if(S.precosOk!==undefined||S.precosBusy)return;S.precosBusy=true;
+  try{const {data}=await sb.from("tabela_precos").select("versao,meses,precos,frete").eq("id",1).maybeSingle();
+    if(data&&Array.isArray(data.precos)){PRECOS_MESES=data.meses||[];PRECOS=data.precos;FRETE=data.frete||[];PRECOS_VER=data.versao||"";
+      const h=new Date(Date.now()-3*3600e3),k=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][h.getUTCMonth()]+"/"+String(h.getUTCFullYear()).slice(2);
+      PRECOS_MES_ATUAL=Math.max(0,PRECOS_MESES.indexOf(k));S.precosOk=true;}else S.precosOk=false;}catch(e){S.precosOk=false;}
+  S.precosBusy=false;
+}
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
@@ -768,7 +759,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111154728";
+const APP_VER="20261111162338";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -808,6 +799,7 @@ async function carregarUsuario(u){
     await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email});
     ({data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle());
   }
+  if(prof&&prof.ativo===false){try{await sbReal.auth.signOut();}catch(e){}S.user=null;S.profile=null;S._erro="Seu acesso está desativado. Fale com o administrador do portal.";render();return;}
   S.profile=prof||{};S.perfil=(prof&&prof.perfil)||"RC";S.form=null;S.formAlvo="form";
   if(S.profile.demo){
     try{
@@ -876,7 +868,8 @@ function caixaCred(c){
 async function redefinirSenha(u,telefone){
   const {data,error}=await sb.rpc("admin_redefinir_senha",{alvo:u.id});
   if(error||!data){aviso("Não foi possível redefinir a senha.");return false;}
-  S.senhaReset={k:"reset",id:u.id,nome:u.nome,email:u.email,telefone:telefone||u.telefone,senha:data,reset:true};return true;
+  const dg=t=>String(t||"").replace(/\D/g,"").slice(-11);const alerta=telefone&&dg(telefone)!==dg(u.telefone)?"Atenção: o telefone informado no pedido é diferente do telefone cadastrado desta pessoa. A senha vai somente para o telefone cadastrado. Confirme a identidade antes de enviar.":"";
+  S.senhaReset={k:"reset",id:u.id,nome:u.nome,email:u.email,telefone:u.telefone,senha:data,reset:true,alerta};return true;
 }
 function vTrocaSenha(erro){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
@@ -987,7 +980,7 @@ function subnavLeads(){
     <span class="secao-nome">LeadsBaren</span></div></div>`;
 }
 async function carregarLeads(){
-  try{const {data}=await sb.from("leads").select("*").order("entrou_em",{ascending:false});S.leadsCache=data||[];}catch(e){S.leadsCache=[];}
+  try{const {data}=await sb.from("leads").select("id,origem,nome,cidade,uf,cultura,volume,status,perfil,area,motivo,entrou_em,perdido_em,campanha,atendido_por,atendido_em,obs").order("entrou_em",{ascending:false});S.leadsCache=data||[];}catch(e){S.leadsCache=[];}
   try{const {data}=await sb.rpc("minhas_ufs");S.leadUfs=Array.isArray(data)?data:[];}catch(e){S.leadUfs=[];}
   if(ehAdmin()){try{const {data}=await sb.from("canais").select("id,nome,tier,recebe_leads,ufs_leads").order("nome");S.leadCanais=data||[];}catch(e){S.leadCanais=[];}}
 }
@@ -1020,7 +1013,7 @@ function vLeads(){
       ${ehAdmin()&&l.uf?`<span class="meta"><strong>Revendas que veem este lead:</strong> ${destino(l.uf).length?esc(destino(l.uf).join(", ")):"nenhuma habilitada para "+esc(l.uf)}</span>`:""}
       <span class="meta"><strong>Situação na Barenbrug:</strong> ${esc(motivo(l.motivo))}${l.perdido_em?" (encerrado em "+dia(l.perdido_em)+")":""}</span>
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${esc(l.atendido_por)} em ${dia(l.atendido_em)}${l.obs?" · "+esc(l.obs):""}</span>`:""}
-      ${visto?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${tel(l.telefone)} · <strong>E-mail:</strong> ${l.email?esc(l.email):"não informado"}</span>
+      ${visto?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${visto.telefone===undefined?"carregando…":tel(visto.telefone)} · <strong>E-mail:</strong> ${visto.email?esc(visto.email):visto.telefone===undefined?"":"não informado"}</span>
         <div style="display:grid;gap:6px;margin-top:6px"><input id="lead_obs_${l.id}" placeholder="Anotação do atendimento (opcional)" value="">
         <div class="filtros">${["Em atendimento","Virou negociação","Sem sucesso","Novo"].filter(x=>x!==st).map(x=>`<button class="chip" data-a="lead-status" data-v="${l.id}" data-st="${esc(x)}">${x==="Novo"?"Devolver para a fila":"Marcar: "+x}</button>`).join("")}</div></div>`
        :`<div><button class="btn sec" data-a="lead-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">Ver contato e atender</button></div>`}
@@ -1108,7 +1101,7 @@ const postVisivel=p=>ehAdmin()||S.perfil==="Comercial Barenbrug"||!p.publico||!p
 const dirDe=id=>(S.dir&&id&&S.dir[id])||null;
 const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";return t?` <span class="meta">· ${esc(t)}</span>`:"";};
 function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome||"?");const ini=n.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();const t=tam||40;
-  return d&&d.foto_url?`<img class="avatar" src="${esc(d.foto_url)}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px">`:`<span class="avatar ini" aria-hidden="true" style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px">${esc(ini)}</span>`;}
+  return d&&d.foto_url?`<img class="avatar" src="${esc(urlOk(d.foto_url))}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px">`:`<span class="avatar ini" aria-hidden="true" style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px">${esc(ini)}</span>`;}
 async function carregarFeed(){
   await Promise.all([carregarPosts(),carregarDuvidas(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
@@ -1201,14 +1194,14 @@ function cartaoPost(p){
   const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";const novoDesde=S.feedNovoDesde||0;
     const r=(S.postReac&&S.postReac[p.id])||{total:0,mine:null,tipos:{}};
     const bv=p.tipo==="boas-vindas";
-    const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(pubLabel).join(", ")}</span>`:"";
+    const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(k=>esc(pubLabel(k))).join(", ")}</span>`:"";
     const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}">${e} ${r.tipos[k]||0}</button>`).join("");
     return `<section class="bloco cx" ${p.fixado?'style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"':''}>
       ${p.fixado?'<span class="card-tag">Fixado</span> ':''}${bv?'<span class="card-tag">Novo integrante</span>':''}
       <div class="autor" style="margin-top:4px">${avatar(p.autor||p.ref_user,p.autor_nome||"Barenbrug",40)}<div><span><strong>${esc(p.autor_nome||"Barenbrug")}</strong>${perfilTxt(p.autor)} ${bv?"":"publicou"} ${novoDesde&&new Date(p.criado_em).getTime()>novoDesde&&p.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div></div>
       <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
-      ${p.imagem_url?`<img src="${esc(p.imagem_url)}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
-      ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
+      ${p.imagem_url?`<img src="${esc(urlOk(p.imagem_url))}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
+      ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(urlOk(p.anexo_url))}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
       <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>
     </section>`;
 }
@@ -1641,13 +1634,17 @@ async function carregarMercado(){try{
 }catch(e){S.mercado={noticias:[],boi:[],clima:[]};}}
 function carregarCepea(){
   if(S.cepea!==undefined||S.cepeaBusy)return;S.cepeaBusy=true;
-  const fr=document.createElement("iframe");fr.setAttribute("aria-hidden","true");fr.style.cssText="position:absolute;left:-9999px;top:0;width:500px;height:300px;border:0;visibility:hidden";
+  const fr=document.createElement("iframe");fr.setAttribute("aria-hidden","true");fr.setAttribute("sandbox","allow-scripts");fr.setAttribute("referrerpolicy","no-referrer");fr.style.cssText="position:absolute;left:-9999px;top:0;width:500px;height:300px;border:0";
   const src="https://www.cepea.org.br/br/widgetproduto.js.php?fonte=arial&tamanho=10&largura=400px&corfundo=ffffff&cortexto=333333&corlinha=ffffff&id_indicador%5B%5D=2&id_indicador%5B%5D=8&id_indicador%5B%5D=3";
-  let feito=false;const fim=()=>{if(feito)return;feito=true;let out=[];
-    try{const d=fr.contentDocument;out=[...d.querySelectorAll("tbody tr")].map(tr=>{const td=[...tr.querySelectorAll("td")];if(td.length<3)return null;const pr=td[1].innerText.split("\n").map(x=>x.trim()).filter(Boolean);return {data:td[0].innerText.trim(),produto:pr[0]||"",un:pr[1]||"",valor:td[2].innerText.trim()};}).filter(x=>x&&/\d/.test(x.valor));}catch(e){out=[];}
+  let feito=false;
+  const limpa=v=>String(v==null?"":v).replace(/\s+/g," ").trim().slice(0,80);
+  const fim=linhas=>{if(feito)return;feito=true;window.removeEventListener("message",ouve);
+    const out=(Array.isArray(linhas)?linhas:[]).slice(0,12).map(x=>x&&typeof x==="object"?{data:limpa(x.data),produto:limpa(x.produto),un:limpa(x.un),valor:limpa(x.valor)}:null).filter(x=>x&&/\d/.test(x.valor));
     fr.remove();S.cepea=out;S.cepeaBusy=false;if(S.secao==="mercado"&&S.pag==="mercado-boi")render();};
-  fr.onload=()=>setTimeout(fim,300);setTimeout(fim,9000);
-  fr.srcdoc=`<!doctype html><html><head><meta charset="utf-8"></head><body><script src="${src}"><\/script></body></html>`;
+  const ouve=e=>{if(e.source!==fr.contentWindow||!e.data||e.data.tipo!=="cepea")return;fim(e.data.linhas);};
+  window.addEventListener("message",ouve);setTimeout(()=>fim([]),9000);
+  const coleta=`window.addEventListener("load",function(){setTimeout(function(){var out=[];try{var rs=document.querySelectorAll("tbody tr");for(var i=0;i<rs.length;i++){var td=rs[i].querySelectorAll("td");if(td.length<3)continue;var pr=(td[1].innerText||td[1].textContent).split("\\n").map(function(x){return x.trim();}).filter(Boolean);out.push({data:(td[0].innerText||td[0].textContent).trim(),produto:pr[0]||"",un:pr[1]||"",valor:(td[2].innerText||td[2].textContent).trim()});}}catch(e){}parent.postMessage({tipo:"cepea",linhas:out},"*");},300);});`;
+  fr.srcdoc=`<!doctype html><html><head><meta charset="utf-8"></head><body><script src="${src}"><\/script><script>${coleta}<\/script></body></html>`;
   document.body.appendChild(fr);
 }
 function vMercado(){
@@ -1673,7 +1670,7 @@ function vMercado(){
     const ufs=[...new Set(c.map(x=>x.uf))];const fu=S.climaUf&&ufs.includes(S.climaUf)?S.climaUf:"Todos";
     const cards=c.filter(x=>fu==="Todos"||x.uf===fu).map(x=>{const D=Array.isArray(x.dias)?x.dias:[];
       return `<div class="cx"><div><span class="card-tag">${esc(x.uf||"")}</span><h3 style="font-size:18px;color:var(--azul-escuro)">${esc(x.regiao||"")}</h3></div><strong>${esc(x.condicao||"")}</strong><span class="meta">${esc(x.detalhe||"")}</span>
-        ${D.length?`<div style="display:grid;grid-template-columns:repeat(${D.length},minmax(0,1fr));gap:4px;text-align:center">${D.map(d=>{const dt=new Date(d.d+"T12:00:00");const ch=!SECO.includes(d.t);return `<div style="background:${ch?"var(--azul-claro)":"var(--amarelo-claro)"};border-radius:6px;padding:6px 2px;font-size:12px"><div style="font-weight:700">${sem[dt.getDay()]||""}</div><div>${ch?"chuva":"seco"}</div><div class="meta" style="font-size:11px">${d.mn}°/${d.mx}°</div></div>`;}).join("")}</div>`:""}</div>`;}).join("");
+        ${D.length?`<div style="display:grid;grid-template-columns:repeat(${D.length},minmax(0,1fr));gap:4px;text-align:center">${D.map(d=>{const dt=new Date(d.d+"T12:00:00");const ch=!SECO.includes(d.t);return `<div style="background:${ch?"var(--azul-claro)":"var(--amarelo-claro)"};border-radius:6px;padding:6px 2px;font-size:12px"><div style="font-weight:700">${sem[dt.getDay()]||""}</div><div>${ch?"chuva":"seco"}</div><div class="meta" style="font-size:11px">${esc(d.mn)}°/${esc(d.mx)}°</div></div>`;}).join("")}</div>`:""}</div>`;}).join("");
     return `<div><h1 class="titulo">Clima</h1><p class="sub">Previsão para os próximos 7 dias nas principais praças de pastagem: dias com chuva e faixa de temperatura.${ult?" Atualizado em "+fmtDataHora(ult)+".":""}</p></div>
     ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="clima-atualizar">Atualizar previsão agora</button></div>`:""}
     ${ufs.length>1?`<div class="filtros">${["Todos",...ufs].map(u=>`<button class="chip" data-a="clima-uf" data-v="${esc(u)}" aria-pressed="${fu===u}">${esc(u)}</button>`).join("")}</div>`:""}
@@ -1681,7 +1678,7 @@ function vMercado(){
   }
   const n=(m.noticias||[]).slice().sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
   const quando=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
-  const lista=n.length?`<div class="lista">${n.slice(0,40).map(x=>`<div class="neg"><div class="l1"><span>${x.url?`<a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titulo||"")}</a>`:esc(x.titulo||"")}</span></div><span class="meta">${esc(x.fonte||"")}${x.data?" · "+quando(x.data):""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhuma notícia carregada ainda.</div>`;
+  const lista=n.length?`<div class="lista">${n.slice(0,40).map(x=>`<div class="neg"><div class="l1"><span>${x.url?`<a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener">${esc(x.titulo||"")}</a>`:esc(x.titulo||"")}</span></div><span class="meta">${esc(x.fonte||"")}${x.data?" · "+quando(x.data):""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhuma notícia carregada ainda.</div>`;
   return `<div><h1 class="titulo">Notícias da pecuária</h1><p class="sub">Manchetes mais recentes dos portais do setor. O título abre a matéria no site de origem.</p></div>
   ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="noticias-atualizar">Atualizar notícias agora</button></div>`:""}
   <section class="bloco">${lista}<p class="dica">Fontes: Canal Rural (Pecuária) e BeefPoint, pelos canais públicos de notícias (RSS) de cada portal.</p></section>`;
@@ -1821,12 +1818,14 @@ function vSimPrecos(){
   </div><div id="simp_out" aria-live="polite"></div></div></section>`;
 }
 function vPrecos(){
+  if(S.precosOk===undefined){carregarPrecos().then(render);return `<div class="carregando">Carregando a tabela de preços…</div>`;}
+  if(!S.precosOk)return `<div><h1 class="titulo">Tabela de preços</h1></div><section class="bloco"><p class="sub" style="margin:0">A tabela de preços não está liberada para o seu acesso. Peça ao administrador do portal.</p></section>`;
   const voltar=S.secao==="tabela-precos"?"":S.secao==="conecta-rc"?`<button class="voltar" data-a="pag" data-v="rc-apresentacao">‹ Conecta RC</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
   const linhas=PRECOS.map(p=>`<tr><td class="cult">${p.cult}</td><td>${p.cod}</td><td>${esc(p.cat)}</td><td>${p.trat}</td><td>${p.emb}</td>${p.v.map((x,i)=>`<td class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${x}</td>`).join("")}</tr>`).join("");
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
   return `${voltar}
-  <div><span class="rot">Safra 26/27 · Out/26-01</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
+  <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
   ${vSimPrecos()}
   <section class="bloco"><h2 class="sec">Preços ao produtor (R$/kg)</h2>
     <div class="tab"><table class="precos"><thead><tr><th>Cultivar</th><th>Código</th><th>Gênero/Categoria</th><th>Tratamento</th><th>Embalagem</th>${th}</tr></thead><tbody>${linhas}</tbody></table></div>
@@ -1839,7 +1838,7 @@ function vPrecos(){
     <li>Descontos por canal de vendas seguem a política vigente — consulte o responsável comercial da região.</li>
     <li>Inadimplência: multa de 2,0% + juros de mora de 2,0% ao mês, pro rata die.</li>
     <li>Esta tabela cancela as versões anteriores e pode ser revogada a qualquer momento, sem aviso prévio.</li></ul></div></div>
-  <div class="acoes"><a class="btn sec" href="materiais/tabela-precos-out26.pdf" target="_blank" rel="noopener">Baixar PDF original ↗</a></div>`;
+  `;
 }
 /* ---------- Conecta RC ---------- */
 const vePainelRC=()=>ehAdmin()||S.perfil==="RC"||S.perfil==="Assessor de Vendas Digital"||S.perfil==="Comercial Barenbrug";
@@ -2051,7 +2050,7 @@ function vRCMapaLista(){
   let linhas=[];
   alvo.forEach(r=>{(dados[r]||[]).forEach(d=>{const its=d.it.filter(x=>fCult==="Todos"||x[0]===fCult);if(its.length)linhas.push({r,cli:d.cli,its,fma:d.fma,dt:d.dt});});});
   const totalKg=linhas.reduce((s,l)=>s+l.its.reduce((a,x)=>a+x[1],0),0);
-  const rows=linhas.map(l=>`<tr>${admin?`<td>${esc(l.r)}</td>`:""}<td>${esc(l.cli)}</td><td>${l.its.map(x=>`${x[0]} · <strong>${fmtKgN(x[1])} kg</strong>`).join("<br>")}</td><td>${esc(l.fma)}</td><td>${esc(l.dt||"—")}</td></tr>`).join("");
+  const rows=linhas.map(l=>`<tr>${admin?`<td>${esc(l.r)}</td>`:""}<td>${esc(l.cli)}</td><td>${l.its.map(x=>`${esc(x[0])} · <strong>${fmtKgN(x[1])} kg</strong>`).join("<br>")}</td><td>${esc(l.fma)}</td><td>${esc(l.dt||"—")}</td></tr>`).join("");
   return `<div><h2 class="sec">${admin?"Pedidos de híbridas por representante":"Meus pedidos de híbridas"}</h2>
     <p class="sub">${admin?"Todos os pedidos de híbridas na safra, por representante.":"Para quem você vendeu, o quê e quanto."}</p></div>
   <details class="lote" ${(fCult!=="Todos"||(admin&&fRep!=="Todos"))?"open":""}><summary>Filtros da lista${fCult!=="Todos"?" · "+esc(fCult):""}${admin&&fRep!=="Todos"?" · "+esc(fRep):""}</summary>
@@ -2264,7 +2263,7 @@ function vRVPainel(){
 }
 async function carregarMeuCanalVendedor(){
   try{const {data}=await sb.rpc("meu_canal_progresso");S.meuCanalProg=data||null;}catch(e){S.meuCanalProg=null;}
-  try{const {data:as}=await sb.from("acoes_pgd").select("tipo,cidade,data_acao,descricao,status").eq("status","Aprovado");S.meuCanalAcoes=as||[];}catch(e){S.meuCanalAcoes=[];}
+  try{const {data:as}=await sb.rpc("acoes_aprovadas_meu_canal");S.meuCanalAcoes=Array.isArray(as)?as:[];}catch(e){S.meuCanalAcoes=[];}
 }
 function vRVMeuCanal(){
   if(S.perfil==="Vendedor de Revenda"){
@@ -2323,7 +2322,7 @@ function vAcaoEditor(a){
     <div class="dupla"><div><label>Status (aprovação Barenbrug)</label><select id="a_status">${["Em Análise","Aprovado","Reprovado"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
       <div><label>Valor de IGDB da ação (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div></div>
     <div><label>Comentário de status (Barenbrug)</label><textarea id="a_coment" rows="2" placeholder="Observações sobre esta ação…">${esc(a.comentario||"")}</textarea></div>
-    <div><label>Anexos</label><div class="lista">${anexos.length?anexos.map((x,i)=>`<div class="anexo-item"><a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.nome||x.url)}</a><button type="button" class="link perigo" data-a="delanexo" data-v="${i}">remover</button></div>`).join(""):`<span class="meta">Nenhum anexo.</span>`}</div>
+    <div><label>Anexos</label><div class="lista">${anexos.length?anexos.map((x,i)=>`<div class="anexo-item"><a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener">${esc(x.nome||x.url)}</a><button type="button" class="link perigo" data-a="delanexo" data-v="${i}">remover</button></div>`).join(""):`<span class="meta">Nenhum anexo.</span>`}</div>
       <div class="dupla" style="margin-top:8px"><input id="a_anexo_nome" placeholder="Nome do anexo"><input id="a_anexo_url" placeholder="Link (https://…)"></div></div>
     <div class="acoes"><button class="btn" type="submit">Salvar ação</button><button class="btn sec" type="button" data-a="fecharacao">Fechar</button><button class="btn perigo" type="button" data-a="delacao" data-v="${a.id}">Excluir</button></div>
   </form>`;
@@ -2513,7 +2512,7 @@ function vAcomp(){
   const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
   return `<div><h1 class="titulo">Painel de gerenciamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram a trilha${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
   ${vSolic()}
-  ${S.senhaReset&&S.senhaReset.viaSolic?caixaCred(S.senhaReset):""}
+  ${S.senhaReset&&S.senhaReset.viaSolic?(S.senhaReset.alerta?`<div class="aviso-bloq">${esc(S.senhaReset.alerta)}</div>`:"")+caixaCred(S.senhaReset):""}
   ${vCriarAcesso()}
   ${(()=>{const L=S.canaisLista||[];const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";const por={};S.equipe.filter(x=>x.canal_id).forEach(x=>{(por[x.canal_id]=por[x.canal_id]||[]).push(x);});
     const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id);const com=L.filter(k=>por[k.id]),sem=L.filter(k=>!por[k.id]);
@@ -2764,7 +2763,7 @@ document.addEventListener("click",async ev=>{
   if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
   if(a==="lead-f"){const i=v.indexOf("|");S.leadF=S.leadF||{};S.leadF[v.slice(0,i)]=v.slice(i+1);render();return;}
-  if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]=true;render();sb.from("lead_views").insert({lead_id:+v,nome:(S.profile&&S.profile.nome)||null}).then(()=>{});return;}
+  if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_contato",{p_id:+v});if(error)throw error;S.leadVistos[v]=data||{telefone:null,email:null};}catch(e){delete S.leadVistos[v];aviso("Não foi possível abrir o contato deste lead.");}render();return;}
   if(a==="lead-status"){const obs=(document.getElementById("lead_obs_"+v)||{}).value||null;const {error}=await sb.rpc("lead_marcar",{p_id:+v,p_status:b.dataset.st,p_obs:obs});if(error){aviso("Não foi possível gravar. Tente de novo.");return;}await carregarLeads();render();aviso("Lead atualizado.");return;}
   if(a==="leads-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{const e=document.getElementById("lead_prog");if(e)e.textContent=t;};const r=await atualizarLeads(prog);await carregarLeads();render();aviso("Leads atualizados: "+r.replace("leads: ",""));return;}
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
@@ -2795,9 +2794,9 @@ document.addEventListener("click",async ev=>{
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="rv-vis"){S.rvVis=v;render();return;}
   if(a==="rv-cen"){S.rvCen=v;render();return;}
-  if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
+  if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");if(w)w.opener=null;const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e&&e.type!=="file"){if(e.type==="checkbox")e.checked=val;else e.value=val;}});const nx=document.getElementById("ng_extra"),nv0=document.getElementById("ng_novo");if(nx&&nv0)nx.hidden=!nv0.checked;return;}
-  if(a==="neg-anexo"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("negociacoes").createSignedUrl(v,600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o anexo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
+  if(a==="neg-anexo"){const w=window.open("about:blank","_blank");if(w)w.opener=null;const {data,error}=await sb.storage.from("negociacoes").createSignedUrl(v,600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o anexo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-crm"){b.disabled=true;b.textContent="Lançando…";let ok=false,msg="";try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:+v}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(_){}}}catch(e){}await carregarRCNeg();render();aviso(ok?"Negociação lançada no CRM.":"O CRM não aceitou o lançamento"+(msg?": "+msg:"."));return;}
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}

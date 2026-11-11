@@ -151,6 +151,8 @@
         if(n==="lead_marcar"){const l=leads.find(x=>x.id===a.p_id);if(l)Object.assign(l,{status:a.p_status,obs:a.p_obs||l.obs,atendido_por:S.profile.nome,atendido_em:new Date().toISOString()});return {data:null,error:null};}
         if(n==="meu_canal_progresso"){const k=canais.find(c=>c.id===S.profile.canal_id);const r=k&&canal_resultado.find(x=>x.canal_id===k.id);return {data:k?{nome:k.nome,tier:k.tier,meta_kg:k.meta_kg,kg_hib:r.kg_hib,fat_kg_hib:r.fat_kg_hib}:null,error:null};}
         if(n==="equipe_do_canal"){const id=(a&&a.c)||S.profile.canal_id;return {data:pessoas.filter(p=>p.canal_id===id).map(p=>({nome:p.nome,perfil:p.perfil,ultimo_acesso:p.ultimo_acesso,modulos:progresso.filter(x=>x.user_id===p.id).length})),error:null};}
+        if(n==="acoes_aprovadas_meu_canal")return {data:acoes_pgd.filter(x=>x.canal_id===S.profile.canal_id&&x.status==="Aprovado").map(x=>({tipo:x.tipo,cidade:x.cidade,data_acao:x.data_acao,descricao:x.descricao,status:x.status})),error:null};
+        if(n==="lead_contato"){const l=leads.find(x=>x.id===a.p_id);return {data:l?{telefone:l.telefone,email:l.email}:null,error:null};}
         if(n==="admin_redefinir_senha")return {data:"Demo-0000",error:null};
         return {data:null,error:null};
       },
