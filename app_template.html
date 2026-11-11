@@ -300,6 +300,9 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:760px){.calc-grid{grid-template-columns:minmax(0,1fr)}.calc-res{position:static}}
 .linha .meta{display:block}
 .neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
+.aviso-est{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-left:4px solid var(--amarelo);color:var(--preto);padding:12px 14px;border-radius:8px;margin:4px 0 14px;font-size:14px;line-height:1.5}
+.aviso-est strong{display:block;margin-bottom:2px}
+.aviso-est p{margin:0}
 .aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
 
 .tour-bg{position:fixed;inset:0;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
@@ -2221,8 +2224,9 @@ function vRVPainel(){
   const acoes=L.flatMap(x=>((S.acoesCanal||{})[x.c.id]||[]).map(a=>({a,c:x.c}))).filter(x=>fl==="Todas"||(x.a.status||"Em Análise")===fl);
   const semPgd=L.filter(x=>!x.m.n).map(x=>x.c.nome);
   const comAprov=L.filter(x=>x.m.nAprov>0);
-  return `<div><h1 class="titulo">${ehAdmin()?"Painel do programa":"Minhas revendas"} · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} ${ehAdmin()?"canais com contrato":(L.length===1?"canal sob sua responsabilidade":"canais sob sua responsabilidade")}. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores do programa são calculados aqui, pela regra oficial.</p></div>
-  <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar · estimativa</h2><p class="precos-nota" style="margin:0 0 10px">Valores estimados a partir dos pedidos do CRM, a confirmar pelo Financeiro. O valor efetivo depende da liquidação das notas.</p>
+  return `<div><h1 class="titulo">${ehAdmin()?"Painel do programa":"Minhas revendas"} · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} ${ehAdmin()?"canais com contrato":(L.length===1?"canal sob sua responsabilidade":"canais sob sua responsabilidade")}. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores em reais são estimativas.</p></div>
+  ${avisoValoresRV()}
+  <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar · estimativa</h2>
   <div class="metrics">
     <div class="metric"><span>IGDB sobre pedidos fechados</span><strong>${fmtK0(T("igdb"))}</strong><span class="meta">híbridos ${fmtK0(T("igdbH"))} · convencionais ${fmtK0(T("igdbC"))}</span></div>
     <div class="metric"><span>Bônus de Performance projetado</span><strong>${fmtK0(T("bonus"))}</strong><span class="meta">se a safra fechasse hoje</span></div>
@@ -2305,6 +2309,7 @@ function vRVMeuCanal(){
   if(!S.canais.length)return `<div><h1 class="titulo">Meu canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
   return vRVCanal();
 }
+const avisoValoresRV=()=>`<div class="aviso-est" role="note"><strong>Os valores em reais são estimativas</strong><p>Calculados a partir do faturamento registrado no CRM, podem divergir do valor final por frete, impostos, descontos, devoluções e outros parâmetros. A base oficial é o valor líquido efetivamente pago à Barenbrug, que será informado em comunicação oficial. Use este painel como parâmetro e para organizar o trabalho.</p></div>`;
 const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
 function vRVCanais(){
   if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
@@ -2320,6 +2325,7 @@ function vRVCanais(){
   const rows=L.map(({c,m})=>`<tr><td>${esc(c.nome)}${vis==="soma"&&(meta?m.mTeto:m.teto)?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}${meta&&m.semPreco?`<br><span class="meta" style="color:#c0392b">sem preço para estimar</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td>${col.map(([,f,forte])=>`<td class="val">${cel(f,forte,m)}</td>`).join("")}<td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("");
   const tit={igdb:"Só IGDB",bf:"Só BF",soma:"IGDB + BF"}[vis];
   return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB, Bônus de Performance (BF) e o PGD de cada canal. Abra um canal para ver o detalhe e o cadastro.</p></div>
+  ${avisoValoresRV()}
   <div class="filtros" style="margin-bottom:0">${[["igdb","Só IGDB"],["bf","Só BF"],["soma","IGDB + BF"]].map(([k,t])=>`<button class="chip" data-a="rv-vis" data-v="${k}" aria-pressed="${vis===k}">${t}</button>`).join("")}</div>
   <div class="filtros">${[["hoje","Hoje, pelo vendido"],["meta","Se bater a meta"]].map(([k,t])=>`<button class="chip" data-a="rv-cen" data-v="${k}" aria-pressed="${cen===k}">${t}</button>`).join("")}</div>
   <div class="metrics">
@@ -2416,6 +2422,7 @@ function vRVCanal(){
   return `${B?`<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>`:""}
   <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
     <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}${m.r.atualizado_em?` · vendas atualizadas em ${fmtDataHora(m.r.atualizado_em)}`:""}</p></div>
+  ${avisoValoresRV()}
   <div class="metrics">
     <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(m.meta)}</strong></div>
     <div class="metric"><span>Híbridos comprados</span><strong>${fmtKg(m.kgH)}</strong><span class="meta">${fmtK0(m.rsH)} · ${fmtKg(m.fatKgH)} já faturados</span></div>
