@@ -692,9 +692,9 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111095339";
+const APP_VER="20261111100157";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
-document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
+document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
   checarVersao();
   const {data:{session}}=await sb.auth.getSession();
@@ -1011,6 +1011,7 @@ function cartaoNeg(x,gestor){
     <span class="meta">${it.map(i=>`${esc(i.cultivar)} ${Number(i.kg||0).toLocaleString("pt-BR")} kg${i.preco?` a R$ ${Number(i.preco).toLocaleString("pt-BR",{minimumFractionDigits:2})}/kg`:""}`).join(" · ")}</span>
     <span class="meta">${x.data_faturamento?"Faturamento "+x.data_faturamento.split("-").reverse().join("/")+" · ":""}${esc(x.forma||"")}${x.cond_pagamento?" · "+esc(x.cond_pagamento):""}${x.frete?" · frete "+esc(x.frete):""}</span>
     ${x.anotacao?`<span class="meta">Anotação: ${esc(x.anotacao)}</span>`:""}
+    ${Array.isArray(x.anexos)&&x.anexos.length?`<span class="meta">Anexos: ${x.anexos.map(a=>`<button class="link" data-a="neg-anexo" data-v="${esc(a.path)}">${esc(a.nome)}</button>`).join(" · ")}</span>`:""}
     <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="${ST_NEG[x.status]||"selo-pend"}">${esc(x.status==="Enviado"?"Aguardando o comercial":x.status==="No CRM"?"Lançada no CRM":x.status)}</span>${x.crm_erro?`<span class="meta" style="color:#c0392b">${esc(x.crm_erro)}</span>`:""}
     ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-crm" data-v="${x.id}">Lançar no CRM agora</button><button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Já lancei à mão</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
 }
@@ -1024,6 +1025,12 @@ function vRCPedido(){
     <div><label for="ng_doc">CNPJ ou CPF *</label><input id="ng_doc" type="text" inputmode="numeric" required placeholder="Somente números"><span class="meta">É pelo documento que a Barenbrug confere se o cliente já está cadastrado.</span></div>
     <div><label for="ng_nome">Nome do cliente ou fazenda *</label><input id="ng_nome" required maxlength="120"></div>
     <div class="neg-item"><div><label for="ng_cid">Cidade *</label><input id="ng_cid" required></div><div><label for="ng_uf">UF *</label><input id="ng_uf" required maxlength="2" autocapitalize="characters" placeholder="MT"></div><div><label class="check" style="margin-top:22px"><input type="checkbox" id="ng_novo"> Cliente novo</label></div></div>
+    <div id="ng_extra" hidden>
+      <p class="meta" style="margin:0 0 6px">Cliente novo: preencha o cadastro para a Barenbrug abrir a empresa no CRM.</p>
+      <div class="neg-item"><div><label for="nx_razao">Razão social</label><input id="nx_razao" maxlength="120"></div><div><label for="nx_fantasia">Nome fantasia</label><input id="nx_fantasia" maxlength="120"></div><div><label for="nx_ie">Inscrição estadual</label><input id="nx_ie" maxlength="30"></div></div>
+      <div class="neg-item"><div><label for="nx_cep">CEP</label><input id="nx_cep" inputmode="numeric" maxlength="10"></div><div><label for="nx_endereco">Endereço</label><input id="nx_endereco" maxlength="120"></div><div><label for="nx_numero">Número</label><input id="nx_numero" maxlength="12"></div><div><label for="nx_bairro">Bairro</label><input id="nx_bairro" maxlength="60"></div></div>
+    </div>
+    <div class="neg-item"><div><label for="nx_contato">Contato no cliente</label><input id="nx_contato" maxlength="80" placeholder="Nome de quem decide"></div><div><label for="nx_telefone">Telefone do contato</label><input id="nx_telefone" type="tel" inputmode="tel" maxlength="20"></div><div><label for="nx_email">E-mail do contato</label><input id="nx_email" type="email" maxlength="80"></div></div>
     <h2 class="sec" style="margin:8px 0 0">Produtos</h2>
     ${linhas}
     <div><button class="link" type="button" data-a="neg-item" data-v="1">+ Adicionar produto</button>${n>1?` · <button class="link" type="button" data-a="neg-item" data-v="-1">Remover último</button>`:""}</div>
@@ -1031,6 +1038,7 @@ function vRCPedido(){
     <div class="neg-item"><div><label for="ng_fat">Data de entrega / faturamento *</label><input id="ng_fat" type="date" required></div><div><label for="ng_forma">Forma da negociação *</label><select id="ng_forma"><option>Representante ao produtor</option><option>Para Canal (Sell In)</option><option>Venda direta ao produtor</option></select></div></div>
     <div class="neg-item"><div><label for="ng_cond">Condição de pagamento *</label><input id="ng_cond" required placeholder="Ex: 30 / 60"></div><div><label for="ng_frete">Frete</label><input id="ng_frete" placeholder="Ex: CIF, R$ 1.800"></div></div>
     <div><label for="ng_obs">Anotação para o comercial</label><textarea id="ng_obs" rows="3" maxlength="1500" placeholder="Contexto da venda, contato do cliente, observações de entrega."></textarea><span class="meta">Vai registrada junto com a negociação no CRM.</span></div>
+    <div><label for="ng_anexos">Anexos (comprovantes, documentos, pedido assinado)</label><input id="ng_anexos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"><span class="meta">Até 8 arquivos de 15 MB cada. Só você, o seu responsável comercial e o administrador conseguem abrir.</span></div>
     ${S._erroNeg?`<div class="erro" role="alert">${esc(S._erroNeg)}</div>`:""}
     <div><button class="btn" type="submit">Enviar negociação</button></div>
   </form>
@@ -2034,7 +2042,8 @@ document.addEventListener("click",async ev=>{
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
-  if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e){if(e.type==="checkbox")e.checked=val;else e.value=val;}});return;}
+  if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e&&e.type!=="file"){if(e.type==="checkbox")e.checked=val;else e.value=val;}});const nx=document.getElementById("ng_extra"),nv0=document.getElementById("ng_novo");if(nx&&nv0)nx.hidden=!nv0.checked;return;}
+  if(a==="neg-anexo"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("negociacoes").createSignedUrl(v,600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o anexo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-crm"){b.disabled=true;b.textContent="Lançando…";let ok=false,msg="";try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:+v}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(_){}}}catch(e){}await carregarRCNeg();render();aviso(ok?"Negociação lançada no CRM.":"O CRM não aceitou o lançamento"+(msg?": "+msg:"."));return;}
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
@@ -2131,8 +2140,14 @@ document.addEventListener("submit",async ev=>{
     if(doc.length!==11&&doc.length!==14){S._erroNeg="Informe um CPF (11 números) ou CNPJ (14 números).";render();return;}
     const itens=[];for(let i=0;i<(S.negItens||1);i++){const kg=parseFloat(docLimpo(q("#ni_k"+i)))||0;const pr=parseFloat(q("#ni_p"+i).replace(/\./g,"").replace(",","."))||0;if(kg>0)itens.push({cultivar:q("#ni_c"+i),kg,preco:pr});}
     if(!itens.length){S._erroNeg="Informe pelo menos um produto com quantidade.";render();return;}
+    const arqs=[...(f.querySelector("#ng_anexos").files||[])];
+    if(arqs.length>8){S._erroNeg="Envie até 8 anexos.";render();return;}
+    if(arqs.some(a=>a.size>15*1024*1024)){S._erroNeg="Cada anexo pode ter até 15 MB.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
-    const {data:nv,error}=await sb.from("rc_negociacoes").insert({cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")}).select("id").single();
+    const anexos=[];const lote=Date.now();
+    for(let i=0;i<arqs.length;i++){btn.textContent=`Enviando anexo ${i+1} de ${arqs.length}…`;const a=arqs[i];const nomeSeg=a.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9._-]+/g,"_");const path=`${S.user.id}/${lote}_${i}_${nomeSeg}`;const up=await sb.storage.from("negociacoes").upload(path,a,{contentType:a.type||undefined});if(up.error){S._erroNeg="Não foi possível enviar o anexo "+a.name+". Tente de novo.";render();return;}anexos.push({nome:a.name,path});}
+    const cliente_extra={};["razao","fantasia","ie","cep","endereco","numero","bairro","contato","telefone","email"].forEach(k=>{const v=q("#nx_"+k);if(v)cliente_extra[k]=v;});
+    const {data:nv,error}=await sb.from("rc_negociacoes").insert({cliente_extra,anexos,cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")}).select("id").single();
     if(error){S._erroNeg="Não foi possível enviar. Tente de novo em instantes.";render();return;}
     btn.textContent="Lançando no CRM…";let noCrm=false;try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:nv.id}});noCrm=!!(r.data&&r.data.ok);}catch(e){}
     S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso(noCrm?"Negociação lançada no CRM para o seu responsável comercial.":"Negociação enviada. O lançamento no CRM fica com o seu responsável comercial.");return;
