@@ -300,6 +300,25 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:760px){.calc-grid{grid-template-columns:minmax(0,1fr)}.calc-res{position:static}}
 .linha .meta{display:block}
 .neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
+.acao-capa{margin:-14px -14px 4px;aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px 8px 0 0;overflow:hidden}
+.acao-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.pgd-arq{display:grid;gap:10px;min-width:0}
+.pgd-capa-box{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:12px;align-items:start}
+.pgd-capa{aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px;overflow:hidden;display:grid;place-items:center}
+.pgd-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.pgd-capa-acoes{display:grid;gap:6px;justify-items:start}
+.pgd-up{position:relative;overflow:hidden;cursor:pointer}
+.pgd-up input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.pgd-up:focus-within{outline:2px solid var(--azul);outline-offset:2px}
+.pgd-envio{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.pgd-doc{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center;min-width:0}
+.pgd-doc a{overflow-wrap:anywhere}
+.pgd-doc .meta{width:100%}
+.pgd-del{display:flex;gap:10px;flex-wrap:wrap}
+.pgd-h{margin:4px 0 0;font-size:15px}
+.fin-uso{display:grid;gap:4px;margin-top:12px;font-size:14px}
+.tab table.fin-t{min-width:760px}
+@media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
 .aviso-est{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-left:4px solid var(--amarelo);color:var(--preto);padding:12px 14px;border-radius:8px;margin:4px 0 14px;font-size:14px;line-height:1.5}
 .aviso-est strong{display:block;margin-bottom:2px}
 .aviso-est p{margin:0}
@@ -573,7 +592,8 @@ const SECOES=[
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
-  {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null}
+  {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
+  {id:"financeiro",nome:"Financeiro Barenbrug",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
@@ -616,7 +636,7 @@ const RC_FAQ=[
  ["O que a exclusividade cobre?","Híbridos forrageiros Barenbrug (Sabiá, Cayana, Carcará e Cynodon). É vedado representar cultivares híbridos forrageiros concorrentes dessas espécies."],
  ["Como o programa é formalizado?","Por um Contrato de Representação Comercial 26/27, apresentado pelo Responsável Comercial, que reúne a mecânica, as alíquotas e as regras de exclusividade."]
 ];
-const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Administrador"];
+const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Financeiro","Administrador"];
 const VENDEDORAS_IS=["Laura","Maria Giulia","Thaís","Maria Eduarda","Mayane"];
 const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 const OPC={
@@ -721,7 +741,7 @@ const PRAZO_CURSO_DIAS=90;
 const cursoFeito=()=>qtdFeitas()>=ORDEM.length;
 function diasDesdeAcesso(){const d=S.profile&&S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):NaN;return isNaN(d)?0:Math.floor((Date.now()-d)/86400000);}
 function bloqueadoCurso(){
-  if(ehAdmin())return false;
+  if(ehAdmin()||S.perfil==="Financeiro")return false;
   if(!S.profile||S.profile.exige_curso===false)return false;
   if(cursoFeito())return false;
   return diasDesdeAcesso()>PRAZO_CURSO_DIAS;
@@ -1717,7 +1737,7 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural");
+  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural");
   const bloq=bloqueadoCurso();
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
@@ -2346,8 +2366,8 @@ function vAcaoEditor(a){
     <div class="dupla"><div><label>Status (aprovação Barenbrug)</label><select id="a_status">${["Em Análise","Aprovado","Reprovado"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
       <div><label>Valor de IGDB da ação (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div></div>
     <div><label>Comentário de status (Barenbrug)</label><textarea id="a_coment" rows="2" placeholder="Observações sobre esta ação…">${esc(a.comentario||"")}</textarea></div>
-    <div><label>Anexos</label><div class="lista">${anexos.length?anexos.map((x,i)=>`<div class="anexo-item"><a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener">${esc(x.nome||x.url)}</a><button type="button" class="link perigo" data-a="delanexo" data-v="${i}">remover</button></div>`).join(""):`<span class="meta">Nenhum anexo.</span>`}</div>
-      <div class="dupla" style="margin-top:8px"><input id="a_anexo_nome" placeholder="Nome do anexo"><input id="a_anexo_url" placeholder="Link (https://…)"></div></div>
+    <div>${vAcaoArquivos(a,true)}
+      <div class="dupla" style="margin-top:8px"><input id="a_anexo_nome" placeholder="Nome do link (opcional)"><input id="a_anexo_url" placeholder="Ou cole um link (https://…)"></div></div>
     <div class="acoes"><button class="btn" type="submit">Salvar ação</button><button class="btn sec" type="button" data-a="fecharacao">Fechar</button><button class="btn perigo" type="button" data-a="delacao" data-v="${a.id}">Excluir</button></div>
   </form>`;
 }
@@ -2412,10 +2432,11 @@ function vRVCanal(){
   const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
   if(!c) return `<div class="carregando">Carregando…</div>`;
   const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
-  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}"><div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
+  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
-    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:""}</div></div>`;
+    ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
   const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
   const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
   const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
@@ -2442,13 +2463,13 @@ function vRVCanal(){
   ${S.editCanal?vCanalEditor(c):""}
   ${S.novaAcao&&S.novaAcao!=="bp"?vNovaAcao():""}
   ${acIG.length?`<div class="acoes-grid">${acIG.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma ação de IGDB cadastrada.</div>`}
-  ${sel&&adm&&!ehBP(sel)?vAcaoEditor(sel):""}
+  ${sel&&!ehBP(sel)?(adm?vAcaoEditor(sel):podePgdArq()?vAcaoArquivos(sel):""):""}
   </section>
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · campanhas do Bônus de Performance (${acBP.length})</h2>${adm||!B?`<button class="btn" data-a="novaacao" data-v="bp">${B?"+ Nova campanha":"Propor campanha"}</button>`:""}</div>
   <p class="sub" style="margin:0 0 8px">Como o canal vai usar o Bônus de Performance: premiações, viagens e incentivo por saco vendido. Estimativa disponível: <strong>${fmtK0(m.bonus)}</strong>${m.bonus<m.bonusCheio?` (com a meta batida: ${fmtK0(m.bonusCheio)})`:""} · já comprometido em campanhas aprovadas: ${fmtK0(m.aprovBP)} · saldo ${fmtK0(m.bonus-m.aprovBP)}.</p>
   ${S.novaAcao==="bp"?vNovaAcao("bp"):""}
   ${acBP.length?`<div class="acoes-grid">${acBP.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma campanha de Bônus de Performance cadastrada.</div>`}
-  ${sel&&adm&&ehBP(sel)?vAcaoEditor(sel):""}
+  ${sel&&ehBP(sel)?(adm?vAcaoEditor(sel):podePgdArq()?vAcaoArquivos(sel):""):""}
   </section>
   ${eq.length||!B?`<section class="bloco"><h2 class="sec">Equipe da revenda no portal (${eq.length})</h2>${eq.length?`<div class="lista">${eq.map(p=>`<div class="linha"><div><strong>${esc(p.nome||"—")}</strong><span class="meta">${esc(p.perfil||"")} · último acesso ${fmtDataHora(p.ultimo_acesso)}</span></div><span class="selo">${p.modulos||0} módulos do curso</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum vendedor da revenda com acesso ainda. Peça os acessos à Barenbrug.</div>`}</section>`:""}
   ${vCanalContatos(c)}
@@ -2621,6 +2642,253 @@ async function abrirUsuario(id){
   if(!S.canais){carregarCanais().then(render);}
 }
 
+/* ---------- Financeiro Barenbrug ---------- */
+const ehFin=()=>ehAdmin()||S.perfil==="Financeiro";
+const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-premissas","Premissas"]];
+function subnavFin(){
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Financeiro Barenbrug">${FIN_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Financeiro Barenbrug</span></div></div>`;
+}
+async function carregarFin(){
+  if(S.finBusy)return;S.finBusy=true;
+  try{const {data,error}=await sb.rpc("financeiro_dados");
+    S.fin=(!error&&data&&typeof data==="object"&&Array.isArray(data.mapa))?data:{erro:error?String(error.message||error):"sem dados"};}
+  catch(e){S.fin={erro:String(e)};}
+  S.finC=null;S.finBusy=false;
+}
+const finNorm=t=>String(t||"").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const finCat=n=>{const l=finNorm(n);
+  if(/cayana|sabia|convert 330|carcara|cynodon/.test(l))return "hib";
+  if(/azev|barjumbo|bar mx|bar hq|ribeye|santa adelaida|trifolium|trevo|barmix|aveia/.test(l))return "temp";
+  if(/\bnu[ao]s?\b|sem tratamento|in natura/.test(l))return "nua";
+  return "inc";};
+const FIN_CAT={hib:"Híbridos + Cynodon",inc:"Convencionais incrustadas ou grafitadas",nua:"Convencionais nuas",temp:"Temperadas (azevéns, trevos, Barmix)"};
+const FIN_RC_CONV={inc:[.08,.06],nua:[.06,.04],temp:[.06,.05]};
+const finNome=(lista,x)=>{const l=finNorm(x);if(!l)return "";for(const n of (lista||[])){const k=finNorm(n);if(k&&(l===k||l.startsWith(k+" ")))return n;}return "";};
+const FIN_INI="2026-07",FIN_MESES=(()=>{const a=[];for(let i=0;i<12;i++){const d=new Date(Date.UTC(2026,6+i,1));a.push(d.toISOString().slice(0,7));}return a;})();
+const finMesNome=k=>{if(!k)return "Sem data de faturamento";const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
+function finCalc(){
+  if(S.finC)return S.finC;const F=S.fin;const P=F.premissas||{};
+  const hoje=new Date(Date.now()-3*3600e3).toISOString().slice(0,10),mesHoje=hoje.slice(0,7);
+  const L=[];let semItens=0,semResp=0;
+  for(const r of F.mapa||[]){
+    if(r.st!=="V")continue;const rs=Number(r.rs)||0;
+    let it=Array.isArray(r.itens)&&r.itens.length?r.itens.map(x=>({n:x[0],kg:Number(x[1])||0,rs:Number(x[2])||0})):null,est=false;
+    if(!it||!it.reduce((t,x)=>t+x.rs,0)){const base=it||Object.entries(r.cults||{}).map(([n,kg])=>({n,kg:Number(kg)||0,rs:0}));const tk=base.reduce((t,x)=>t+x.kg,0);
+      it=base.length?base.map(x=>({...x,rs:tk?rs*x.kg/tk:rs/base.length})):[{n:"(sem itens)",kg:0,rs}];est=true;semItens++;}
+    if(r.resp==null)semResp++;
+    const cat={hib:0,inc:0,nua:0,temp:0};let kgHib=0;
+    for(const x of it){x.c=finCat(x.n);cat[x.c]+=x.rs;if(x.c==="hib")kgHib+=x.kg;}
+    const canal=r.seg==="B2B",exp=r.exp===true||r.uf==="EX";
+    const isN=finNome(P.is_nomes,r.resp)||finNome(P.is_nomes,r.rep);
+    const rcN=r.rep&&!finNome(P.is_nomes,r.rep)&&!finNome(P.sem_comissao,r.rep)?r.rep:"";
+    const mes=r.fat?String(r.fat).slice(0,7):"";
+    L.push({r,rs,it,est,cat,kgHib,canal,exp,isN,rcN,mes,fat:!!(r.fat&&String(r.fat).slice(0,10)<=hoje),comRC:0,comIS:0});
+  }
+  const RC={},IS={};
+  for(const x of L){
+    if(x.rcN){const a=RC[x.rcN]||(RC[x.rcN]={nome:x.rcN,n:0,rs:0,kgHib:0,hibP:0,hibC:0,conv:0,convCom:0,fatRs:0});
+      let cv=0;for(const k of ["inc","nua","temp"]){cv+=x.cat[k]*FIN_RC_CONV[k][x.canal?1:0];a.conv+=x.cat[k];}
+      a.n++;a.rs+=x.rs;a.kgHib+=x.kgHib;if(x.canal)a.hibC+=x.cat.hib;else a.hibP+=x.cat.hib;a.convCom+=cv;if(x.fat)a.fatRs+=x.rs;
+      x.comRC=x.cat.hib*(x.canal?.08:.10)+cv;}
+    if(x.isN){const a=IS[x.isN]||(IS[x.isN]={nome:x.isN,n:0,rs:0,hib:0,conv:0,com:0,fatCom:0});
+      const h=x.cat.hib,c=x.cat.inc+x.cat.nua+x.cat.temp;x.comIS=h*(Number(P.is_hib)||0)+c*(Number(P.is_conv)||0);
+      a.n++;a.rs+=x.rs;a.hib+=h;a.conv+=c;a.com+=x.comIS;if(x.fat)a.fatCom+=x.comIS;}
+  }
+  const rcs=Object.values(RC).map(a=>{const k=CALC_TIERS.findIndex(t=>a.kgHib<=t.ate),T=CALC_TIERS[k];const piso=a.hibP*.10+a.hibC*.08+a.convCom,final=a.hibP*T.rp+a.hibC*T.rc+a.convCom;
+    return {...a,tier:T.t,piso,final,exc:Math.max(0,final-piso)};}).sort((a,b)=>b.final-a.final);
+  const iss=Object.values(IS).sort((a,b)=>b.com-a.com);
+  const sum=(arr,f)=>arr.reduce((t,x)=>t+(Number(f(x))||0),0);
+  const tot=sum(L,x=>x.rs),totFat=sum(L.filter(x=>x.fat),x=>x.rs),exp=sum(L.filter(x=>x.exp),x=>x.rs),expFat=sum(L.filter(x=>x.exp&&x.fat),x=>x.rs);
+  const interno=tot-exp,internoFat=totFat-expFat;
+  const comRC=sum(rcs,x=>x.final),comIS=sum(iss,x=>x.com),com=comRC+comIS,exc=sum(rcs,x=>x.exc);
+  const comFat=sum(L.filter(x=>x.fat),x=>x.comRC+x.comIS);
+  const vendCom=sum(L.filter(x=>x.rcN||x.isN),x=>x.rs),dupla=L.filter(x=>x.rcN&&x.isN);
+  const expDono={};L.filter(x=>x.exp).forEach(x=>{const d=x.r.dono||"—";expDono[d]=(expDono[d]||0)+x.rs;});
+  const meses=[...FIN_MESES,""].map(k=>{const xs=L.filter(x=>x.mes===k||(k===""&&!FIN_MESES.includes(x.mes)));const v=sum(xs,x=>x.rs),e=sum(xs.filter(x=>x.exp),x=>x.rs);
+    return {k,v,exp:e,int:v-e,n:xs.length,poolRC:v*(Number(P.pool_rc)||0),poolRV:(v-e)*(Number(P.pool_rv)||0),com:sum(xs,x=>x.comRC+x.comIS),comRC:sum(xs,x=>x.comRC),comIS:sum(xs,x=>x.comIS),
+      st:!k?"":k<mesHoje?"faturado":k===mesHoje?"em curso":"a faturar"};}).filter(m=>m.k||m.n);
+  // Conecta Revendas
+  const resMap={},acMap={};(F.res||[]).forEach(r=>{resMap[r.canal_id]=r;});(F.acoes||[]).forEach(a=>{(acMap[a.canal_id]=acMap[a.canal_id]||[]).push(a);});
+  const a0=S.canalRes,b0=S.acoesCanal;S.canalRes=resMap;S.acoesCanal=acMap;
+  let canais;try{canais=(F.canais||[]).map(c=>({c,m:metricasCanal(c),ac:acMap[c.id]||[]}));}finally{S.canalRes=a0;S.acoesCanal=b0;}
+  canais.sort((a,b)=>b.m.total-a.m.total||String(a.c.nome).localeCompare(String(b.c.nome)));
+  const rv={total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
+  const pools={rc:tot*(Number(P.pool_rc)||0),rcFat:totFat*(Number(P.pool_rc)||0),rv:interno*(Number(P.pool_rv)||0),rvFat:internoFat*(Number(P.pool_rv)||0)};
+  const prods={};for(const x of L)for(const i of x.it){const k=i.n||"(sem nome)";const p=prods[k]||(prods[k]={n:k,c:i.c,kg:0,rs:0,est:false});p.kg+=i.kg;p.rs+=i.rs;if(x.est)p.est=true;}
+  S.finC={P,L,rcs,iss,tot,totFat,exp,interno,internoFat,comRC,comIS,com,exc,comFat,vendCom,dupla,expDono,meses,canais,rv,pools,semItens,semResp,prods:Object.values(prods).sort((a,b)=>b.rs-a.rs),hoje};
+  return S.finC;
+}
+const finPct=(a,b)=>b?pctTxt(a/b):"—";
+function finBarra(uso){const p=Math.max(0,Math.min(1,uso||0));const cor=uso>1?"var(--vermelho)":uso>.85?"#E6A800":"var(--azul)";
+  return `<div class="fin-uso"><div class="barra" style="height:12px"><i style="width:${(p*100).toFixed(1)}%;background:${cor}"></i></div><span>${uso==null?"—":pctTxt(uso)} do pool usado${uso>1?" · acima do pool":""}</span></div>`;}
+function finAvisoTopo(C){
+  const atual=S.fin.atualizado?` · CRM atualizado em ${fmtDataHora(S.fin.atualizado)}`:"";
+  return `<div class="aviso-est" role="note"><strong>Estimativa para provisão</strong><p>Calculada a partir dos pedidos ganhos no CRM, pela data de faturamento da safra 26/27 (jul/2026 a jun/2027)${atual}. O valor pago segue as notas liquidadas, os contratos e a comunicação oficial da Barenbrug.</p></div>
+  ${C.semItens?`<div class="aviso-bloq" style="margin-top:0">${C.semItens} pedidos ainda não têm o valor por produto: nesses, o valor foi dividido pelos quilos de cada cultivar. O detalhe completo entra na próxima atualização automática do CRM.</div>`:""}`;
+}
+function vFin(){
+  if(!ehFin())return `<div class="vazio">Esta área é restrita ao Financeiro.</div>`;
+  if(!S.fin)return `<div class="carregando">Carregando os números do Financeiro…</div>`;
+  if(S.fin.erro)return `<div><h1 class="titulo">Financeiro Barenbrug</h1></div><section class="bloco"><p class="sub" style="margin:0">Não foi possível carregar os dados agora. Se o painel acabou de ser criado, a ativação no banco ainda está pendente.</p><div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="fin-recarregar">Tentar de novo</button></div></section>`;
+  const C=finCalc();
+  const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-premissas"?vFinPremissas(C):vFinResumo(C);
+  return v;
+}
+function vFinResumo(C){
+  const P=C.P,usoRC=C.pools.rc?C.com/C.pools.rc:null,usoRV=C.pools.rv?C.rv.total/C.pools.rv:null,usoRVm=C.pools.rv?C.rv.mTotal/C.pools.rv:null;
+  const pp=x=>pctTxt(Number(x)||0);
+  const exp=Object.entries(C.expDono).sort((a,b)=>b[1]-a[1]);
+  return `<div><h1 class="titulo">Financeiro Barenbrug</h1><p class="sub">Quanto a Barenbrug precisa reservar para comissões e para o Conecta Revendas, e quanto isso representa das vendas, frente às premissas de ${pp(P.pool_rc)} e ${pp(P.pool_rv)}.</p></div>
+  ${finAvisoTopo(C)}
+  <section class="bloco"><h2 class="sec">Pool de comissões · ${pp(P.pool_rc)} sobre todas as vendas</h2>
+    <p class="sub" style="margin:0 0 10px">O pool é formado sobre todas as vendas da Barenbrug, inclusive exportação e vendas sem comissão. Dele saem as comissões dos representantes do Conecta RC e do Inside Sales.</p>
+    <div class="metrics">
+      <div class="metric"><span>Vendas da safra (base do pool)</span><strong>${fmtK0(C.tot)}</strong><span class="meta">faturado ${fmtK0(C.totFat)} · a faturar ${fmtK0(C.tot-C.totFat)}</span></div>
+      <div class="metric"><span>Pool formado (${pp(P.pool_rc)})</span><strong>${fmtK0(C.pools.rc)}</strong><span class="meta">já formado sobre o faturado: ${fmtK0(C.pools.rcFat)}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Comissões estimadas</span><strong>${fmtK0(C.com)}</strong><span class="meta">${finPct(C.com,C.tot)} das vendas · RC ${fmtK0(C.comRC)} · Inside Sales ${fmtK0(C.comIS)}</span></div>
+      <div class="metric" style="${C.pools.rc-C.com<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Saldo do pool</span><strong>${fmtK0(C.pools.rc-C.com)}</strong><span class="meta">${C.pools.rc-C.com<0?"comissões acima do pool":"sobra dentro do pool"}</span></div>
+    </div>
+    ${finBarra(usoRC)}
+    <p class="precos-nota">Vendas com comissão: ${fmtK0(C.vendCom)} (${finPct(C.vendCom,C.tot)} do total). As demais são vendas diretas do time interno: não pagam comissão, mas formam o pool. RC calculado no tier final da safra; o acerto de tier de ${fmtK0(C.exc)} sai no fechamento.</p>
+  </section>
+  <section class="bloco"><h2 class="sec">Pool do Conecta Revendas · ${pp(P.pool_rv)} sobre o mercado interno</h2>
+    <p class="sub" style="margin:0 0 10px">Base: vendas no Brasil, sem exportação. Dele saem o IGDB e o Bônus de Performance (BF) das revendas do programa.</p>
+    <div class="metrics">
+      <div class="metric"><span>Vendas no mercado interno</span><strong>${fmtK0(C.interno)}</strong><span class="meta">exportação fora da base: ${fmtK0(C.exp)}</span></div>
+      <div class="metric"><span>Pool formado (${pp(P.pool_rv)})</span><strong>${fmtK0(C.pools.rv)}</strong><span class="meta">já formado sobre o faturado: ${fmtK0(C.pools.rvFat)}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Custo estimado hoje (IGDB + BF)</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">${finPct(C.rv.total,C.interno)} das vendas internas · IGDB ${fmtK0(C.rv.igdb)} · BF ${fmtK0(C.rv.bonus)}</span></div>
+      <div class="metric" style="${C.pools.rv-C.rv.total<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Saldo do pool</span><strong>${fmtK0(C.pools.rv-C.rv.total)}</strong><span class="meta">se todos baterem a meta: custo ${fmtK0(C.rv.mTotal)} (${usoRVm==null?"—":pctTxt(usoRVm)} do pool)</span></div>
+    </div>
+    ${finBarra(usoRV)}
+  </section>
+  <section class="bloco"><h2 class="sec">Exportação identificada</h2>
+    <p class="sub" style="margin:0 0 10px">Pedidos com UF "EX" ou cliente marcado como exportação no CRM. Entram no pool de comissões e ficam fora do pool do Conecta Revendas.</p>
+    ${exp.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Responsável no CRM</th><th class="val">Vendas de exportação</th></tr></thead><tbody>${exp.map(([d,v])=>`<tr><td>${esc(d)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhum pedido de exportação identificado. Confira o cadastro dos clientes de exportação no CRM.</div>`}
+  </section>`;
+}
+function vFinMensal(C){
+  const P=C.P,T=k=>C.meses.reduce((t,m)=>t+(m[k]||0),0);
+  const rows=C.meses.map(m=>`<tr${m.st==="em curso"?' style="background:var(--amarelo-claro)"':""}><td><strong>${finMesNome(m.k)}</strong><br><span class="meta">${m.st||"—"}</span></td><td class="val">${fmtK0(m.v)}</td><td class="val">${fmtK0(m.exp)}</td><td class="val">${fmtK0(m.poolRC)}</td><td class="val">${fmtK0(m.com)}</td><td class="val" style="${m.poolRC-m.com<0?"color:var(--vermelho)":""}">${fmtK0(m.poolRC-m.com)}</td><td class="val">${fmtK0(m.poolRV)}</td></tr>`).join("");
+  return `<div><h1 class="titulo">Provisão mês a mês</h1><p class="sub">Pelo mês de faturamento dos pedidos. Use a coluna "Reservar" como fundo de reserva: o pool que cada mês forma, comparado com a comissão que o mesmo mês gera.</p></div>
+  ${finAvisoTopo(C)}
+  <section class="bloco"><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Vendas</th><th class="val">Exportação</th><th class="val">Reservar · pool comissões (${pctTxt(Number(P.pool_rc)||0)})</th><th class="val">Comissão do mês</th><th class="val">Saldo do mês</th><th class="val">Reservar · pool Conecta Revendas (${pctTxt(Number(P.pool_rv)||0)})</th></tr></thead>
+    <tbody>${rows}<tr><td><strong>Acerto de tier do Conecta RC</strong><br><span class="meta">no fechamento da safra</span></td><td class="val">—</td><td class="val">—</td><td class="val">—</td><td class="val">${fmtK0(C.exc)}</td><td class="val">${fmtK0(-C.exc)}</td><td class="val">—</td></tr>
+    <tr style="font-weight:700"><td>Total da safra</td><td class="val">${fmtK0(T("v"))}</td><td class="val">${fmtK0(T("exp"))}</td><td class="val">${fmtK0(T("poolRC"))}</td><td class="val">${fmtK0(T("com")+C.exc)}</td><td class="val">${fmtK0(T("poolRC")-T("com")-C.exc)}</td><td class="val">${fmtK0(T("poolRV"))}</td></tr></tbody></table></div>
+  <p class="precos-nota">Comissão do mês: Conecta RC pelo piso (10% ao produtor e 8% a canais nos híbridos e Cynodon, taxa fixa nas convencionais) mais Inside Sales (${pctTxt(Number(P.is_hib)||0)} híbridos e Cynodon, ${pctTxt(Number(P.is_conv)||0)} demais). A diferença até o tier final de cada representante entra na linha do acerto. O Conecta Revendas paga o IGDB por trimestre e o BF no fim da safra: a reserva mensal acumula o pool; o custo estimado por canal está na aba Conecta Revendas.</p></section>`;
+}
+function vFinComissoes(C){
+  const P=C.P;
+  const rc=C.rcs.map(a=>`<tr><td>${esc(a.nome)}<br><span class="meta">${a.n} pedidos</span></td><td><span class="selo">${esc(a.tier)}</span></td><td class="val">${fmtKg(Math.round(a.kgHib))}</td><td class="val">${fmtK0(a.hibP)}</td><td class="val">${fmtK0(a.hibC)}</td><td class="val">${fmtK0(a.conv)}</td><td class="val">${fmtK0(a.piso)}</td><td class="val">${fmtK0(a.exc)}</td><td class="val"><strong>${fmtK0(a.final)}</strong></td></tr>`).join("");
+  const is=C.iss.map(a=>`<tr><td>${esc(a.nome)}<br><span class="meta">${a.n} pedidos</span></td><td class="val">${fmtK0(a.hib)}</td><td class="val">${fmtK0(a.conv)}</td><td class="val">${fmtK0(a.fatCom)}</td><td class="val"><strong>${fmtK0(a.com)}</strong></td></tr>`).join("");
+  const S2=(arr,f)=>arr.reduce((t,x)=>t+(Number(f(x))||0),0);
+  return `<div><h1 class="titulo">Comissões estimadas</h1><p class="sub">Quem recebe: representantes comerciais do Conecta RC, nas vendas em que aparecem no CRM, e as vendedoras do Inside Sales (${esc((P.is_nomes||[]).join(", "))}). Venda direta do time interno não paga comissão.</p></div>
+  ${finAvisoTopo(C)}
+  ${C.dupla.length?`<div class="aviso-bloq">${C.dupla.length} pedidos têm representante e vendedora do Inside Sales ao mesmo tempo e entraram nas duas comissões. Confira no CRM.</div>`:""}
+  <section class="bloco"><h2 class="sec">Conecta RC · ${C.rcs.length} representantes · ${fmtK0(C.comRC)}</h2>
+    ${C.rcs.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Representante</th><th>Tier</th><th class="val">Híbridos + Cynodon</th><th class="val">R$ híbridos produtor</th><th class="val">R$ híbridos canal</th><th class="val">R$ convencionais</th><th class="val">Pelo piso (mensal)</th><th class="val">Acerto de tier</th><th class="val">Total estimado</th></tr></thead><tbody>${rc}
+    <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${fmtKg(Math.round(S2(C.rcs,x=>x.kgHib)))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibP))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibC))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.piso))}</td><td class="val">${fmtK0(C.exc)}</td><td class="val">${fmtK0(C.comRC)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda com representante na safra.</div>`}
+    <p class="precos-nota">Tier pelos quilos de híbridos e Cynodon da safra (produtor + canal): Blue até 3 t, Yellow até 6 t, Yellow Pro até 9 t, Yellow Master acima. Alíquota final aplicada sobre todo o volume. Convencionais: incrustadas e grafitadas 8% produtor e 6% canal, nuas 6% e 4%, temperadas 6% e 5%. Canal = cliente distribuidor, cooperativa ou venda para canal (sell-in).</p></section>
+  <section class="bloco"><h2 class="sec">Inside Sales · ${fmtK0(C.comIS)}</h2>
+    ${C.iss.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th><th class="val">R$ híbridos + Cynodon (${pctTxt(Number(P.is_hib)||0)})</th><th class="val">R$ demais (${pctTxt(Number(P.is_conv)||0)})</th><th class="val">Sobre o já faturado</th><th class="val">Total estimado</th></tr></thead><tbody>${is}
+    <tr style="font-weight:700"><td>Total</td><td class="val">${fmtK0(S2(C.iss,x=>x.hib))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.fatCom))}</td><td class="val">${fmtK0(C.comIS)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda do Inside Sales identificada ainda.${C.semResp?" A identificação por vendedora entra na próxima atualização do CRM.":""}</div>`}
+    <p class="precos-nota">Mesma taxa para produtor, B2B e canal.</p></section>`;
+}
+function vFinConecta(C){
+  const P=C.P;
+  const st=a=>(a.status||"Em Análise");
+  const rows=C.canais.map(({c,m,ac})=>{const apr=ac.filter(a=>st(a)==="Aprovado");const comp=apr.filter(a=>a.foto_path||(Array.isArray(a.anexos)&&a.anexos.length)).length;
+    return `<tr><td>${esc(c.nome)}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${fmtK0(m.aprovIG)}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.total)}</strong></td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
+  return `<div><h1 class="titulo">Conecta Revendas · visão financeira</h1><p class="sub">Quanto cada revenda tem a receber, frente ao pool de ${pctTxt(Number(P.pool_rv)||0)} das vendas no mercado interno (${fmtK0(C.pools.rv)}).</p></div>
+  ${finAvisoTopo(C)}
+  <div class="metrics">
+    <div class="metric"><span>IGDB gerado na safra</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">já faturado: ${fmtK0(C.rv.igdbFat)}</span></div>
+    <div class="metric"><span>PGD aprovado (a reembolsar)</span><strong>${fmtK0(C.rv.aprovIG)}</strong><span class="meta">campanhas de BF aprovadas: ${fmtK0(C.rv.aprovBP)}</span></div>
+    <div class="metric"><span>BF projetado</span><strong>${fmtK0(C.rv.bonus)}</strong><span class="meta">pelo atingimento de hoje</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total estimado (com teto)</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">${finPct(C.rv.total,C.pools.rv)} do pool · ${finPct(C.rv.total,C.interno)} das vendas internas</span></div>
+  </div>
+  ${finBarra(C.pools.rv?C.rv.total/C.pools.rv:null)}
+  <section class="bloco"><h2 class="sec">Por revenda</h2>
+  ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB</th><th class="val">IGDB já faturado</th><th class="val">PGD aprovado</th><th class="val">BF hoje</th><th class="val">Total a pagar (estimado)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
+  <p class="precos-nota">IGDB: percentual do tier sobre o sell-in de híbridos e convencionais, reembolsado pelas ações de PGD aprovadas e comprovadas, por trimestre. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section>`;
+}
+function vFinPremissas(C){
+  const P=C.P,adm=ehAdmin();
+  const n=(id,lbl,v,dica)=>`<div><label for="${id}">${lbl}</label><input id="${id}" type="text" inputmode="decimal" value="${esc(((Number(v)||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:3}))}" ${adm?"":"disabled"}><span class="meta">${dica}</span></div>`;
+  const pr=C.prods.slice(0,60).map(p=>`<tr><td>${esc(p.n)}${p.est?' <span class="meta">(valor rateado)</span>':""}</td><td>${esc(FIN_CAT[p.c])}</td><td class="val">${fmtKg(Math.round(p.kg))}</td><td class="val">${fmtK0(p.rs)}</td></tr>`).join("");
+  return `<div><h1 class="titulo">Premissas</h1><p class="sub">As regras que alimentam os cálculos do Financeiro. ${adm?"Só o administrador altera; cada alteração fica registrada.":"Para alterar, fale com o administrador do portal."}</p></div>
+  <form class="form-card" id="f-finprem">
+    <div class="dupla">${n("fp_rc","Pool de comissões (% sobre todas as vendas)",P.pool_rc,"Conecta RC + Inside Sales. Inclui exportação.")}${n("fp_rv","Pool do Conecta Revendas (% sobre o mercado interno)",P.pool_rv,"Exclui exportação.")}</div>
+    <div class="dupla">${n("fp_ish","Inside Sales: híbridos e Cynodon (%)",P.is_hib,"Produtor, B2B ou canal.")}${n("fp_isc","Inside Sales: demais cultivares (%)",P.is_conv,"Produtor, B2B ou canal.")}</div>
+    <div><label for="fp_nomes">Vendedoras do Inside Sales com comissão</label><input id="fp_nomes" value="${esc((P.is_nomes||[]).join(", "))}" ${adm?"":"disabled"}><span class="meta">Separadas por vírgula, como aparecem no CRM.</span></div>
+    <div><label for="fp_sem">Sem comissão (CLT ou interno)</label><input id="fp_sem" value="${esc((P.sem_comissao||[]).join(", "))}" ${adm?"":"disabled"}></div>
+    ${adm?`<div class="acoes"><button class="btn" type="submit">Salvar premissas</button></div>`:""}
+  </form>
+  <section class="bloco"><h2 class="sec">Como cada produto foi classificado</h2><p class="sub" style="margin:0 0 10px">Pelo nome do produto no CRM. Confira se a categoria de comissão está certa.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Produto no CRM</th><th>Categoria</th><th class="val">Quilos</th><th class="val">Valor</th></tr></thead><tbody>${pr||`<tr><td colspan="4">Sem pedidos.</td></tr>`}</tbody></table></div></section>`;
+}
+
+/* ---------- PGD: fotos e documentos das acoes ---------- */
+const PGD_TIPOS=["Nota fiscal","Contrato","Comprovante de pagamento","Foto da ação","Lista de presença","Outro"];
+const PGD_MIMES=["image/jpeg","image/png","image/webp","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/xml","text/xml"];
+const PGD_ACEITA=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.xml";
+const PGD_ON=false; // liga para comercial e gestor depois de criar o bucket pgd no banco
+const podePgdArq=()=>ehAdmin()||(PGD_ON&&(S.perfil==="Comercial Barenbrug"||S.perfil==="Gestor de Revenda"));
+const fmtTam=n=>{n=Number(n)||0;return n>=1048576?(n/1048576).toLocaleString("pt-BR",{maximumFractionDigits:1})+" MB":Math.max(1,Math.round(n/1024))+" KB";};
+const pgdUrl=p=>{if(!p)return "";S.pgdUrls=S.pgdUrls||{};const u=S.pgdUrls[p];if(u&&u.exp>Date.now())return u.url;
+  S.pgdFila=S.pgdFila||new Set();S.pgdFila.add(p);clearTimeout(S.pgdT);S.pgdT=setTimeout(pgdFlush,40);return "";};
+async function pgdFlush(){const f=[...(S.pgdFila||[])];S.pgdFila=new Set();if(!f.length)return;S.pgdUrls=S.pgdUrls||{};
+  f.forEach(p=>{S.pgdUrls[p]={url:"",exp:Date.now()+300e3};});
+  try{const {data}=await sb.storage.from("pgd").createSignedUrls(f,3600);(Array.isArray(data)?data:[]).forEach(x=>{if(x&&x.signedUrl&&x.path)S.pgdUrls[x.path]={url:x.signedUrl,exp:Date.now()+3300e3};});}catch(e){}
+  render();}
+function vAcaoArquivos(a,emb){
+  const docs=(Array.isArray(a.anexos)?a.anexos:[]).map((x,i)=>({...x,i}));
+  const arq=docs.filter(x=>x&&x.path),links=docs.filter(x=>x&&!x.path&&x.url);
+  const pode=podePgdArq(),adm=ehAdmin();
+  const capa=a.foto_path?pgdUrl(a.foto_path):"";
+  const del=p=>!pode||(a.status==="Aprovado"&&!veBarenbrugRV())?"":S.pgdDel===p?`<span class="pgd-del"><button type="button" class="link perigo" data-a="pgd-del" data-v="${esc(p)}">confirmar remoção</button><button type="button" class="link" data-a="pgd-del-cancela">cancelar</button></span>`:`<button type="button" class="link perigo" data-a="pgd-del-pede" data-v="${esc(p)}">remover</button>`;
+  return `<div class="pgd-arq${emb?"":" form-card"}"${emb?"":' style="box-shadow:inset 0 0 0 2px var(--azul)"'} data-acao="${esc(a.id)}">
+    ${emb?`<label>Fotos e documentos da ação</label>`:`<h3 class="sec">${esc(a.tipo||"Ação")} · fotos e documentos</h3><p class="meta" style="margin:0">${esc(a.cidade||"")}${a.data_acao?" · "+esc(a.data_acao):""} · ${stBadge(a.status)}</p>`}
+    <div class="pgd-capa-box">
+      <div class="pgd-capa">${a.foto_path?(capa?`<img src="${esc(capa)}" alt="Foto de capa da ação">`:`<span class="meta">Carregando a foto…</span>`):`<span class="meta">Sem foto de capa</span>`}</div>
+      ${pode?`<div class="pgd-capa-acoes"><label class="btn sec pgd-up">${a.foto_path?"Trocar foto de capa":"Enviar foto de capa"}<input type="file" accept="image/jpeg,image/png,image/webp" data-pgd="capa" data-v="${esc(a.id)}"></label>${a.foto_path?del(a.foto_path):""}<span class="meta">JPG, PNG ou WEBP. Aparece no cartão da ação.</span></div>`:""}
+    </div>
+    <h4 class="pgd-h">Documentos que comprovam a ação (${arq.length+links.length})</h4>
+    <div class="lista">${arq.length||links.length?arq.map(x=>{const u=pgdUrl(x.path);return `<div class="anexo-item"><div class="pgd-doc"><span class="selo">${esc(x.tipo||"Outro")}</span> ${u?`<a class="link" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(x.nome||"arquivo")}</a>`:`<span>${esc(x.nome||"arquivo")}</span>`}<span class="meta">${x.tam?fmtTam(x.tam):""}${x.em?" · "+fmtDataHora(x.em):""}${x.por_nome?" · "+esc(x.por_nome):""}</span></div>${del(x.path)}</div>`;}).join("")
+      +links.map(x=>`<div class="anexo-item"><div class="pgd-doc"><span class="selo">Link</span> <a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.nome||x.url)}</a></div>${adm?`<button type="button" class="link perigo" data-a="delanexo" data-v="${x.i}">remover</button>`:""}</div>`).join(""):`<span class="meta">Nenhum documento enviado.</span>`}</div>
+    ${pode?`<div class="pgd-envio"><div><label for="pgd_tipo_${esc(a.id)}">Tipo de documento</label><select id="pgd_tipo_${esc(a.id)}">${PGD_TIPOS.map(t=>`<option>${t}</option>`).join("")}</select></div><label class="btn pgd-up">Escolher arquivos<input type="file" multiple accept="${PGD_ACEITA}" data-pgd="doc" data-v="${esc(a.id)}"></label></div>
+    <span class="meta">Contratos, notas fiscais (PDF ou XML), comprovantes e fotos. Até 15 MB por arquivo.${a.status==="Aprovado"&&!veBarenbrugRV()?" Ação aprovada: para remover um documento, fale com a Barenbrug.":""}</span>`:""}
+    ${emb?"":`<div class="acoes"><button class="btn sec" type="button" data-a="fecharacao">Fechar</button></div>`}
+  </div>`;
+}
+const pgdAcao=id=>Object.values(S.acoesCanal||{}).flat().find(x=>String(x.id)===String(id));
+document.addEventListener("change",async ev=>{
+  const inp=ev.target&&ev.target.closest?ev.target.closest("input[data-pgd]"):null;if(!inp)return;
+  const files=[...(inp.files||[])];if(!files.length)return;
+  const a=pgdAcao(inp.dataset.v);if(!a){aviso("Ação não encontrada. Recarregue a página.");return;}
+  const capa=inp.dataset.pgd==="capa";const sel=document.getElementById("pgd_tipo_"+a.id);const tipo=capa?"Foto de capa":(sel?sel.value:"Outro");
+  inp.disabled=true;let ok=0;
+  for(const f of (capa?files.slice(0,1):files)){
+    const xml=/\.xml$/i.test(f.name),ct=f.type||(xml?"application/xml":"");
+    if(f.size>15*1048576){aviso(`"${f.name}" passa de 15 MB.`);continue;}
+    if(!PGD_MIMES.includes(ct)||(capa&&!/^image\//.test(ct))){aviso(`Tipo de arquivo não aceito: ${f.name}`);continue;}
+    const limpo=f.name.normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"-").slice(-80)||"arquivo";
+    const path=`${a.canal_id}/${a.id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}-${limpo}`;
+    aviso(`Enviando ${f.name}…`);
+    try{
+      const up=await sb.storage.from("pgd").upload(path,f,{contentType:ct,upsert:false});
+      if(up.error)throw up.error;
+      const r=await sb.rpc("pgd_anexar",{p_acao:String(a.id),p_path:path,p_nome:f.name.slice(0,120),p_tipo:tipo,p_tam:f.size,p_capa:capa});
+      if(r.error){await sb.storage.from("pgd").remove([path]);throw r.error;}
+      if(capa&&typeof r.data==="string"&&r.data)await sb.storage.from("pgd").remove([r.data]);
+      ok++;
+    }catch(e){aviso(`Não foi possível enviar ${f.name}.`);}
+  }
+  inp.value="";inp.disabled=false;
+  if(ok){S.canais=null;render();aviso(capa?"Foto de capa salva.":ok===1?"Documento salvo.":`${ok} documentos salvos.`);}
+});
+
 /* ---------- render ---------- */
 function render(){renderApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
@@ -2717,6 +2985,10 @@ function renderApp(){
     if(!S.posts){carregarPosts().then(render);}
     return;
   }
+  if(S.secao==="financeiro"){
+    if(ehFin()){app.innerHTML=cabecalho()+subnavFin()+`<main class="largo">${vFin()}</main>`;if(!S.fin)carregarFin().then(render);return;}
+    S.secao=null;S.pag="hub";
+  }
   if(S.secao==="mercado"){
     app.innerHTML=cabecalho()+subnavMercado()+`<main>${vMercado()}</main>`;
     if(!S.mercado){carregarMercado().then(render);}
@@ -2735,6 +3007,15 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
+  if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
+  if(a==="fin-recarregar"){S.fin=null;render();return;}
+  if(a==="pgd-del-pede"){S.pgdDel=v;render();return;}
+  if(a==="pgd-del-cancela"){S.pgdDel=null;render();return;}
+  if(a==="pgd-del"){const el=b.closest("[data-acao]");const ac=el&&pgdAcao(el.dataset.acao);if(!ac)return;b.disabled=true;
+    const r=await sb.rpc("pgd_remover",{p_acao:String(ac.id),p_path:v});
+    if(r.error){aviso(/aprovad/i.test(String(r.error.message||""))?"Ação aprovada: só a Barenbrug pode remover documentos.":"Não foi possível remover.");b.disabled=false;return;}
+    try{await sb.storage.from("pgd").remove([v]);}catch(e){}
+    S.pgdDel=null;S.canais=null;render();aviso("Removido.");return;}
   if(a==="tour-fechar"){const c=S.tour&&S.tour.ctx;if(c)marcarTour(c);S.tour=null;render();return;}
   if(a==="tour-next"){if(S.tour)S.tour.i++;render();return;}
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
@@ -2903,6 +3184,18 @@ document.addEventListener("input",ev=>{
 });
 document.addEventListener("submit",async ev=>{
   const f=ev.target;ev.preventDefault();
+  if(f.id==="f-finprem"){
+    if(!ehAdmin())return;const P0=(S.fin&&S.fin.premissas)||{};
+    const num=id=>{const v=parseFloat(String(f.querySelector("#"+id).value).trim().replace(/\./g,"").replace(",","."));return isFinite(v)?v/100:NaN;};
+    const vals={pool_rc:num("fp_rc"),pool_rv:num("fp_rv"),is_hib:num("fp_ish"),is_conv:num("fp_isc")};
+    if(Object.values(vals).some(x=>!(x>=0&&x<1))){aviso("Confira os percentuais (use números como 2,75).");return;}
+    const lista=id=>f.querySelector("#"+id).value.split(",").map(x=>x.trim()).filter(Boolean).slice(0,20);
+    const dados={...P0,...vals,is_nomes:lista("fp_nomes"),sem_comissao:lista("fp_sem")};
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+    const {error}=await sb.from("fin_premissas").update({dados}).eq("id",1);
+    if(error){aviso("Não foi possível salvar as premissas.");render();return;}
+    S.fin=null;render();aviso("Premissas salvas.");return;
+  }
   if(f.id==="f-acao"){
     const id=f.dataset.id;
     const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===id);
