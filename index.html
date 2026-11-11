@@ -234,6 +234,15 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .neg{display:grid;gap:2px;padding:12px 14px;border-bottom:1px solid var(--linha)}
 .neg .l1{display:flex;justify-content:space-between;gap:10px;font-weight:700}
 .neg .l1 span:last-child{white-space:nowrap}
+.noticias{display:grid;background:var(--branco);border-radius:6px;overflow:hidden}
+.noticia{display:grid;gap:6px;padding:14px 16px;border-bottom:1px solid var(--linha);color:inherit;text-decoration:none;min-width:0}
+.noticia:last-child{border-bottom:0}
+a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underline}
+.nt-tit{font-weight:700;font-size:1rem;line-height:1.35;color:var(--preto);overflow-wrap:anywhere;white-space:normal}
+.nt-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:.8rem;color:var(--apagado)}
+.nt-fonte{font-weight:700;font-size:.72rem;letter-spacing:.03em;text-transform:uppercase;color:var(--azul-escuro)}
+.nt-dia{font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--apagado);padding:14px 16px 6px;background:var(--papel)}
+@media (max-width:560px){.noticia{padding:12px 14px}.nt-tit{font-size:.97rem}}
 .estrelas{color:#c99700;letter-spacing:1px}
 @media (max-width:640px){
   .btn{padding:13px 16px}
@@ -759,7 +768,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111162338";
+const APP_VER="20261111181831";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1678,7 +1687,16 @@ function vMercado(){
   }
   const n=(m.noticias||[]).slice().sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
   const quando=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
-  const lista=n.length?`<div class="lista">${n.slice(0,40).map(x=>`<div class="neg"><div class="l1"><span>${x.url?`<a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener">${esc(x.titulo||"")}</a>`:esc(x.titulo||"")}</span></div><span class="meta">${esc(x.fonte||"")}${x.data?" · "+quando(x.data):""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhuma notícia carregada ainda.</div>`;
+  const diaK=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleDateString("pt-BR");};
+  const hojeK=new Date().toLocaleDateString("pt-BR"),ontemK=new Date(Date.now()-864e5).toLocaleDateString("pt-BR");
+  const rotDia=k=>k===hojeK?"Hoje":k===ontemK?"Ontem":k||"Sem data";
+  const hora=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
+  let ultDia=null;
+  const item=x=>{const k=x.data?diaK(x.data):"";const cab=k!==ultDia?`<div class="nt-dia">${esc(rotDia(k))}</div>`:"";ultDia=k;
+    const corpo=`<span class="nt-tit">${esc(x.titulo||"")}</span><span class="nt-meta"><span class="nt-fonte">${esc(x.fonte||"")}</span>${x.data?`<span>${esc(hora(x.data))}</span>`:""}</span>`;
+    const u=x.url&&urlOk(x.url)!=="#"?urlOk(x.url):"";
+    return cab+(u?`<a class="noticia" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${corpo}</a>`:`<div class="noticia">${corpo}</div>`);};
+  const lista=n.length?`<div class="noticias">${n.slice(0,40).map(item).join("")}</div>`:`<div class="vazio">Nenhuma notícia carregada ainda.</div>`;
   return `<div><h1 class="titulo">Notícias da pecuária</h1><p class="sub">Manchetes mais recentes dos portais do setor. O título abre a matéria no site de origem.</p></div>
   ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="noticias-atualizar">Atualizar notícias agora</button></div>`:""}
   <section class="bloco">${lista}<p class="dica">Fontes: Canal Rural (Pecuária) e BeefPoint, pelos canais públicos de notícias (RSS) de cada portal.</p></section>`;
