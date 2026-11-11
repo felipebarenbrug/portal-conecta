@@ -744,7 +744,7 @@ async function recarregarPermissoes(){
   if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
   try{const {data}=await sb.from("profiles").select("perfil,acessos,abas_ocultas,exige_curso,rc_crm,crm_dono,is_vendedora,ufs_atendidas,canal_id,comercial_resp").eq("id",S.user.id).maybeSingle();if(!data)return;
     const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
-    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
+    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
   }catch(e){}
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});

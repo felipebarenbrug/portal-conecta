@@ -731,7 +731,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111131937";
+const APP_VER="20261111132149";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -744,7 +744,7 @@ async function recarregarPermissoes(){
   if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
   try{const {data}=await sb.from("profiles").select("perfil,acessos,abas_ocultas,exige_curso,rc_crm,crm_dono,is_vendedora,ufs_atendidas,canal_id,comercial_resp").eq("id",S.user.id).maybeSingle();if(!data)return;
     const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
-    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
+    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
   }catch(e){}
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});
