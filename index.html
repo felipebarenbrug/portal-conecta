@@ -689,7 +689,10 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
+const APP_VER="20261110230414";
+async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 async function boot(){
+  checarVersao();
   const {data:{session}}=await sb.auth.getSession();
   if(!session){render();return;}
   const m=sessaoExpirada();
@@ -1352,7 +1355,8 @@ function vRCEtapa(){
 /* ---------- Conecta Revendas ---------- */
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
-  if(ehAdmin())abas.push(["rv-canais","Canais"]);
+  if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
+  else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
@@ -1406,6 +1410,8 @@ async function carregarCanais(){
   const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
   S.canais=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));
   S.acoesCanal=porCanal;
+  try{const {data:rs}=await sb.from("canal_resultado").select("*");S.canalRes={};(rs||[]).forEach(r=>{S.canalRes[r.canal_id]=r;});}catch(e){S.canalRes={};}
+  if(S.perfil==="Gestor de Revenda"&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
     const [co,fi,es,pr]=await Promise.all([
@@ -1416,18 +1422,101 @@ async function carregarCanais(){
     S.canalContatos=grp(co.data);S.canalFiliais=grp(fi.data);S.canalEstoque=grp(es.data);S.canalPrecos=grp(pr.data);
   }catch(e){S.canalContatos={};S.canalFiliais={};S.canalEstoque={};S.canalPrecos={};}
 }
+const veBarenbrugRV=()=>ehAdmin()||S.perfil==="Comercial Barenbrug";
+const ehRevenda=()=>S.perfil==="Gestor de Revenda"||S.perfil==="Vendedor de Revenda";
+const RV_REGRA={"Blue":{ih:.02,ic:.0075,b:.02},"Yellow":{ih:.025,ic:.01,b:.025},"Yellow Pro":{ih:.03,ic:.0125,b:.03},"Yellow Master":{ih:.035,ic:.015,b:.035}};
+const RV_TETO=300000,RV_PISO_KG=5000;
+const fmtK0=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
+const pctTxt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
 function metricasCanal(c){
-  const pot=(Number(c.meta_kg)||0)*(Number(c.valor_kg)||0)*(Number(c.pct_conecta)||0);
-  const ac=S.acoesCanal[c.id]||[];
-  const soma=ac.reduce((s,a)=>s+(Number(a.valor_igdb)||0),0);
-  return {pot,igdb:pot/2,bonus:pot/2,soma,saldo:pot/2-soma,n:ac.length};
+  const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r=(S.canalRes||{})[c.id]||{};
+  const N=k=>Number(r[k])||0;const meta=Number(c.meta_kg)||0;
+  const ating=meta?N("kg_hib")/meta:null;
+  const fator=ating==null?0:ating>=1?1:ating>=.9?.7:0;
+  const igdbH=N("rs_hib")*g.ih,igdbC=N("rs_conv")*g.ic,igdb=igdbH+igdbC;
+  const igdbFat=N("fat_rs_hib")*g.ih+N("fat_rs_conv")*g.ic;
+  const bonusCheio=N("rs_hib")*g.b,bonus=bonusCheio*fator;
+  const bruto=igdb+bonus,total=Math.min(RV_TETO,bruto);
+  const ac=(S.acoesCanal||{})[c.id]||[];
+  const som=st=>ac.filter(a=>(a.status||"Em Análise")===st).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);
+  const cnt=st=>ac.filter(a=>(a.status||"Em Análise")===st).length;
+  const aprov=som("Aprovado"),analise=som("Em Análise");
+  const faltaKg=meta?Math.max(0,meta-N("kg_hib")):0;
+  return {g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+    kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
+    aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,saldo:igdb-aprov,faltaKg,soma:aprov+analise};
+}
+const barraMeta=(m)=>{const p=m.ating==null?0:Math.min(1,m.ating);return `<div class="resumo"><div class="barra"><i style="width:${Math.round(p*100)}%"></i></div><span>${m.ating==null?"Meta não definida":`${pctTxt(m.ating)} da meta de híbridos`}</span></div>`;};
+const statusBonus=m=>m.ating==null?"Sem meta definida":m.fator===1?"Meta batida: bônus de 100% do tier":m.fator===.7?"Entre 90% e 99,99%: bônus de 70% do tier":`Abaixo de 90% da meta: sem bônus por enquanto (faltam ${fmtKg(Math.max(0,Math.ceil(m.meta*.9-m.kgH)))} para 90%)`;
+function vRVPainel(){
+  if(!S.canais) return `<div class="carregando">Carregando o programa…</div>`;
+  const L=S.canais.map(c=>({c,m:metricasCanal(c)}));
+  const T=k=>L.reduce((t,x)=>t+(x.m[k]||0),0);
+  const upd=Object.values(S.canalRes||{}).map(r=>r.atualizado_em).sort().pop();
+  const fl=S.pgdFiltro||"Todas";
+  const acoes=L.flatMap(x=>((S.acoesCanal||{})[x.c.id]||[]).map(a=>({a,c:x.c}))).filter(x=>fl==="Todas"||(x.a.status||"Em Análise")===fl);
+  const semPgd=L.filter(x=>!x.m.n).map(x=>x.c.nome);
+  const comAprov=L.filter(x=>x.m.nAprov>0);
+  return `<div><h1 class="titulo">Painel do programa · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} canais com contrato. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores do programa são calculados aqui, pela regra oficial.</p></div>
+  <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar</h2>
+  <div class="metrics">
+    <div class="metric"><span>IGDB sobre pedidos fechados</span><strong>${fmtK0(T("igdb"))}</strong><span class="meta">híbridos ${fmtK0(T("igdbH"))} · convencionais ${fmtK0(T("igdbC"))}</span></div>
+    <div class="metric"><span>Bônus de Performance projetado</span><strong>${fmtK0(T("bonus"))}</strong><span class="meta">se a safra fechasse hoje</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Total do programa (com teto)</span><strong>${fmtK0(T("total"))}</strong><span class="meta">teto de ${fmtK0(RV_TETO)} por canal</span></div>
+    <div class="metric"><span>IGDB já gerado (faturado até hoje)</span><strong>${fmtK0(T("igdbFat"))}</strong><span class="meta">o pagamento depende da liquidação das notas</span></div>
+  </div>
+  <div class="metrics" style="margin-top:10px">
+    <div class="metric"><span>Sell-in de híbridos</span><strong>${fmtK0(T("rsH"))}</strong><span class="meta">${fmtKg(T("kgH"))} · meta somada ${fmtKg(T("meta"))}</span></div>
+    <div class="metric"><span>Sell-in de convencionais</span><strong>${fmtK0(T("rsC"))}</strong></div>
+    <div class="metric"><span>PGD aprovado</span><strong>${fmtK0(T("aprov"))}</strong><span class="meta">${T("nAprov")} ações em ${comAprov.length} canais</span></div>
+    <div class="metric" style="${T("nAnalise")?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>PGD aguardando análise</span><strong>${T("nAnalise")} ações</strong><span class="meta">${fmtK0(T("analise"))} em valor informado</span></div>
+  </div></section>
+  <section class="bloco"><h2 class="sec">Canal a canal</h2>
+  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th class="val">Meta híb.</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th class="val">IGDB</th><th class="val">Bônus</th><th class="val">Total</th><th class="val">PGD aprovado</th><th>Ações</th><th></th></tr></thead><tbody>
+  ${L.map(({c,m})=>`<tr><td><strong>${esc(c.nome)}</strong>${m.teto?`<br><span class="meta" style="color:#c0392b">teto atingido</span>`:""}${!m.piso?`<br><span class="meta" style="color:#c0392b">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${fmtKg(m.meta)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":`<strong style="color:${m.fator===1?"#1e8449":m.fator?"#8a6d00":"#c0392b"}">${pctTxt(m.ating)}</strong>`}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.total)}</strong></td><td class="val">${fmtK0(m.aprov)}</td><td>${m.n?`${m.nAprov} aprov. · ${m.nAnalise} em análise${m.nReprov?` · ${m.nReprov} reprov.`:""}`:`<span class="meta">sem PGD</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("")}
+  <tr><td><strong>Total</strong></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("kgH"))}</td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td><td class="val">${fmtK0(T("igdb"))}</td><td class="val">${fmtK0(T("bonus"))}</td><td class="val"><strong>${fmtK0(T("total"))}</strong></td><td class="val">${fmtK0(T("aprov"))}</td><td>${T("n")} ações</td><td></td></tr>
+  </tbody></table></div>
+  ${semPgd.length?`<p class="precos-nota">Sem PGD cadastrado: ${semPgd.map(esc).join(", ")}.</p>`:""}</section>
+  <section class="bloco"><h2 class="sec">Plano de Geração de Demanda · ações</h2>
+  <div class="filtros" style="margin-bottom:10px">${["Todas","Em Análise","Aprovado","Reprovado"].map(t=>`<button class="chip" data-a="pgd-filtro" data-v="${t}" aria-pressed="${fl===t}">${t}</button>`).join("")}</div>
+  ${acoes.length?`<div class="tab"><table><thead><tr><th>Canal</th><th>Ação</th><th>Onde / quando</th><th>Status</th><th class="val">Valor</th><th></th></tr></thead><tbody>${acoes.map(({a,c})=>`<tr><td>${esc(c.nome)}</td><td><strong>${esc(a.tipo||"Ação")}</strong><br><span class="meta">${esc((a.descricao||"").slice(0,90))}</span></td><td>${esc(a.cidade||"—")}${a.data_acao?`<br><span class="meta">${esc(a.data_acao)}</span>`:""}</td><td>${stBadge(a.status)}</td><td class="val">${Number(a.valor_igdb)?fmtK0(a.valor_igdb):`<span class="meta">a definir</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir canal</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma ação com esse status.</div>`}
+  </section>
+  <section class="bloco"><h2 class="sec">Premissas do cálculo</h2>
+  <div class="tab"><table><thead><tr><th>Tier</th><th class="val">IGDB híbridos</th><th class="val">IGDB convencionais</th><th class="val">Bônus de Performance</th></tr></thead><tbody>${Object.entries(RV_REGRA).map(([t,g])=>`<tr><td><strong>${t}</strong></td><td class="val">${pctTxt(g.ih)}</td><td class="val">${pctTxt(g.ic)}</td><td class="val">+${pctTxt(g.b)} sobre híbridos</td></tr>`).join("")}</tbody></table></div>
+  <p class="precos-nota">IGDB: percentual do tier sobre o sell-in de híbridos e de convencionais. Bônus de Performance: só sobre híbridos, 100% com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. Teto de ${fmtK0(RV_TETO)} por canal (IGDB + bônus). Piso de entrada de 5 t de híbridos. Bonificações ficam fora. O pagamento efetivo depende da liquidação das notas, que o CRM não informa: aqui a base é o pedido ganho com data de faturamento na safra.</p></section>`;
+}
+async function carregarMeuCanalVendedor(){
+  try{const {data}=await sb.rpc("meu_canal_progresso");S.meuCanalProg=data||null;}catch(e){S.meuCanalProg=null;}
+  try{const {data:as}=await sb.from("acoes_pgd").select("tipo,cidade,data_acao,descricao,status").eq("status","Aprovado");S.meuCanalAcoes=as||[];}catch(e){S.meuCanalAcoes=[];}
+}
+function vRVMeuCanal(){
+  if(S.perfil==="Vendedor de Revenda"){
+    if(S.meuCanalProg===undefined)return `<div class="carregando">Carregando o seu canal…</div>`;
+    const p=S.meuCanalProg;
+    if(!p)return `<div><h1 class="titulo">Meu canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
+    const at=p.meta_kg?p.kg_hib/p.meta_kg:null;const ac=S.meuCanalAcoes||[];
+    return `<div><span class="rot">Conecta Revendas · ${esc(p.tier||"")}</span><h1 class="titulo">${esc(p.nome)}</h1><p class="sub">Como a sua revenda está na meta de híbridos da safra 26/27 e quais ações de geração de demanda estão aprovadas para você aproveitar na venda.</p></div>
+    <div class="metrics">
+      <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(p.meta_kg)}</strong></div>
+      <div class="metric"><span>Já comprado da Barenbrug</span><strong>${fmtKg(p.kg_hib)}</strong></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Atingimento</span><strong>${at==null?"—":pctTxt(at)}</strong></div>
+      <div class="metric"><span>Falta para a meta</span><strong>${p.meta_kg?fmtKg(Math.max(0,p.meta_kg-p.kg_hib)):"—"}</strong></div>
+    </div>
+    ${barraMeta({ating:at})}
+    <section class="bloco"><h2 class="sec">Ações aprovadas na sua região (${ac.length})</h2>
+    ${ac.length?`<div class="lista">${ac.map(a=>`<div class="linha"><div><strong>${esc(a.tipo||"Ação")}</strong><span class="meta">${esc(a.cidade||"")}${a.data_acao?" · "+esc(a.data_acao):""}</span><span class="meta">${esc((a.descricao||"").slice(0,160))}</span></div></div>`).join("")}</div>`:`<div class="vazio">Ainda não há ações aprovadas. Fale com o gestor da sua revenda.</div>`}</section>
+    <section class="bloco"><h2 class="sec">O que fazer agora</h2><div class="lista"><div class="linha"><div><strong>Conclua o curso dos híbridos</strong><span class="meta">Sabiá, Cayana e Carcará: argumento de venda e posicionamento.</span></div><button class="btn sec" data-a="secao" data-v="academia">Abrir a Academia</button></div><div class="linha"><div><strong>Tire dúvidas com o time técnico</strong><span class="meta">Pergunte e veja respostas validadas pela Barenbrug.</span></div><button class="btn sec" data-a="secao" data-v="duvidas">Tira-Dúvidas</button></div></div></section>`;
+  }
+  if(!S.canais)return `<div class="carregando">Carregando o seu canal…</div>`;
+  if(!S.canais.length)return `<div><h1 class="titulo">Meu canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
+  return vRVCanal();
 }
 const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
 function vRVCanais(){
   if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
-  const rows=S.canais.map(c=>{const m=metricasCanal(c);return `<tr><td>${esc(c.nome)}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td>${m.n}</td><td class="val">${c.valor_kg>0?fmtR(m.igdb):"a definir"}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`;}).join("");
-  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta de híbridos, verba de IGDB, bônus estimado e o PGD de cada canal.</p></div>
-  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th>Ações</th><th class="val">IGDB est.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const rows=S.canais.map(c=>{const m=metricasCanal(c);return `<tr><td>${esc(c.nome)}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td><td class="val">${fmtK0(m.igdb)}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`;}).join("");
+  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB e o PGD de cada canal. Abra um canal para ver o detalhe e o cadastro.</p></div>
+  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th>Ações</th><th class="val">IGDB</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function vAcaoEditor(a){
   const anexos=Array.isArray(a.anexos)?a.anexos:[];
@@ -1506,28 +1595,38 @@ function vRVCanal(){
   const cards=ac.map(a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}"><div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
-    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span><button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button></div></div>`).join("");
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:""}</div></div>`).join("");
   const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
-  return `<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>
+  const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
+  return `${B?`<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>`:""}
   <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
-    <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}</p></div>
+    <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}${m.r.atualizado_em?` · vendas atualizadas em ${fmtDataHora(m.r.atualizado_em)}`:""}</p></div>
   <div class="metrics">
-    <div class="metric"><span>Meta (híbridos)</span><strong>${fmtKg(c.meta_kg)}</strong></div>
-    <div class="metric"><span>Potencial Conecta (est.)</span><strong>${c.valor_kg>0?fmtR(m.pot):"—"}</strong></div>
-    <div class="metric"><span>Verba IGDB (est.)</span><strong>${c.valor_kg>0?fmtR(m.igdb):"—"}</strong></div>
-    <div class="metric"><span>Bônus performance (est.)</span><strong>${c.valor_kg>0?fmtR(m.bonus):"—"}</strong></div>
+    <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(m.meta)}</strong></div>
+    <div class="metric"><span>Híbridos comprados</span><strong>${fmtKg(m.kgH)}</strong><span class="meta">${fmtK0(m.rsH)} · ${fmtKg(m.fatKgH)} já faturados</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Atingimento da meta</span><strong>${m.ating==null?"—":pctTxt(m.ating)}</strong><span class="meta">${m.faltaKg?`faltam ${fmtKg(m.faltaKg)}`:m.ating!=null?"meta batida":""}</span></div>
+    <div class="metric"><span>Convencionais comprados</span><strong>${fmtK0(m.rsC)}</strong></div>
   </div>
-  <div class="precos-nota">PGD: soma das ações <strong>${fmtR(m.soma)}</strong>${c.valor_kg>0?` de ${fmtR(m.igdb)} de verba IGDB · Saldo <strong style="color:${m.saldo>=0?'var(--azul-escuro)':'var(--vermelho)'}">${fmtR(m.saldo)}</strong>${m.saldo<0?" — acima da verba!":""}`:" · defina o valor médio do kg (em Editar dados do canal) para estimar a verba"}</div>
-  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD — Plano de Geração de Demanda (${ac.length})</h2><div class="acoes"><button class="btn sec" data-a="editarcanal">Editar dados do canal</button><button class="btn" data-a="novaacao">+ Nova ação</button></div></div>
+  ${barraMeta(m)}
+  <div class="metrics" style="margin-top:10px">
+    <div class="metric"><span>IGDB gerado</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)}</span></div>
+    <div class="metric"><span>Bônus de Performance</span><strong>${fmtK0(m.bonus)}</strong><span class="meta">cheio: ${fmtK0(m.bonusCheio)}</span></div>
+    <div class="metric"><span>Total do programa</span><strong>${fmtK0(m.total)}</strong><span class="meta">${m.teto?"limitado ao teto de "+fmtK0(RV_TETO):"teto de "+fmtK0(RV_TETO)}</span></div>
+    <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprov)} · em análise ${fmtK0(m.analise)}</span></div>
+  </div>
+  <div class="precos-nota">${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD — Plano de Geração de Demanda (${ac.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
+  ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
   ${S.editCanal?vCanalEditor(c):""}
   ${S.novaAcao?vNovaAcao():""}
   ${ac.length?`<div class="acoes-grid">${cards}</div>`:`<div class="vazio">Nenhuma ação cadastrada.${c.nome==="Imperagro"?" (PGD com template diferente — importar depois.)":""}</div>`}
-  ${sel?vAcaoEditor(sel):""}
+  ${sel&&adm?vAcaoEditor(sel):""}
   </section>
+  ${eq.length||!B?`<section class="bloco"><h2 class="sec">Equipe da revenda no portal (${eq.length})</h2>${eq.length?`<div class="lista">${eq.map(p=>`<div class="linha"><div><strong>${esc(p.nome||"—")}</strong><span class="meta">${esc(p.perfil||"")} · último acesso ${fmtDataHora(p.ultimo_acesso)}</span></div><span class="selo">${p.modulos||0} módulos do curso</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum vendedor da revenda com acesso ainda. Peça os acessos à Barenbrug.</div>`}</section>`:""}
   ${vCanalContatos(c)}
   ${vCanalFiliais(c)}
   ${vCanalEstoque(c)}
-  ${vCanalPrecos(c)}`;
+  ${B?vCanalPrecos(c):""}`;
 }
 function vBase(){
   const b=S.busca.toLowerCase();
@@ -1655,6 +1754,7 @@ function vUsuarioAdmin(){
     ${S.adminForm.perfil==="Inside Sales"?`<div><label for="f_isv">Vendedora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
     ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador")?`<div><label for="f_crmdono">Nome no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),S.adminForm.crm_dono].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(d)}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
+    ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -1676,6 +1776,7 @@ async function abrirUsuario(id){
   const {data:prof}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();
   if(!prof){S._erro="Não foi possível abrir este usuário.";S.pag="gestao-home";render();return;}
   S.adminUser=prof;S.adminForm={...prof};S.formAlvo="adminForm";preloadCidades(prof.perfil);render();
+  if(!S.canais){carregarCanais().then(render);}
 }
 
 /* ---------- render ---------- */
@@ -1707,11 +1808,20 @@ function renderApp(){
     return;
   }
   if(S.secao==="conecta-revendas"){
-    if(S.pag==="rv-canais"||S.pag==="rv-canal"){
-      if(!ehAdmin()){S.pag="rv-apresentacao";}
+    if(S.pag==="rv-canais"||S.pag==="rv-canal"||S.pag==="rv-painel"){
+      if(!veBarenbrugRV()){S.pag=ehRevenda()?"rv-meucanal":"rv-apresentacao";}
       else{
-        app.innerHTML=cabecalho()+subnavRV()+`<main>${S.pag==="rv-canal"?vRVCanal():vRVCanais()}</main>`;
+        app.innerHTML=cabecalho()+subnavRV()+`<main>${S.pag==="rv-canal"?vRVCanal():S.pag==="rv-painel"?vRVPainel():vRVCanais()}</main>`;
         if(!S.canais){carregarCanais().then(render);}
+        return;
+      }
+    }
+    if(S.pag==="rv-meucanal"){
+      if(!ehRevenda()){S.pag="rv-apresentacao";}
+      else{
+        app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVMeuCanal()}</main>`;
+        if(S.perfil==="Gestor de Revenda"){if(!S.canais){carregarCanais().then(render);}}
+        else if(S.meuCanalProg===undefined){carregarMeuCanalVendedor().then(render);}
         return;
       }
     }
@@ -1772,7 +1882,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;S.novoContato=false;S.novaFilial=false;S.novoEstoque=false;S.novoPreco=false;irPag("rv-canal");}
@@ -1819,6 +1929,7 @@ document.addEventListener("click",async ev=>{
   if(a==="solic-recusar"){const {error}=await sb.from("solicitacoes_acesso").update({status:"Recusada"}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));render();aviso("Solicitação encerrada.");return;}
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
+  if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
   if(a==="duv-nova"){S.duvNova=v==="1";render();return;}
   if(a==="duv-filtro"){S.duvFiltro=v;render();return;}
@@ -1975,6 +2086,7 @@ document.addEventListener("submit",async ev=>{
     dados.exige_curso=!!(f.querySelector("[data-exige]")&&f.querySelector("[data-exige]").checked);
     const elIsv=f.querySelector("#f_isv");if(elIsv)dados.is_vendedora=elIsv.value||null;
     const elCd=f.querySelector("#f_crmdono");if(elCd)dados.crm_dono=elCd.value||null;
+    const elCn=f.querySelector("#f_canal");if(elCn)dados.canal_id=elCn.value||null;
     const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
