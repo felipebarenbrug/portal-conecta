@@ -1201,6 +1201,15 @@ async function carregarCanais(){
   const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
   S.canais=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));
   S.acoesCanal=porCanal;
+  const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
+  try{
+    const [co,fi,es,pr]=await Promise.all([
+      sb.from("canal_contatos").select("*"),
+      sb.from("canal_filiais").select("*"),
+      sb.from("canal_estoque").select("*"),
+      sb.from("canal_precos").select("*")]);
+    S.canalContatos=grp(co.data);S.canalFiliais=grp(fi.data);S.canalEstoque=grp(es.data);S.canalPrecos=grp(pr.data);
+  }catch(e){S.canalContatos={};S.canalFiliais={};S.canalEstoque={};S.canalPrecos={};}
 }
 function metricasCanal(c){
   const pot=(Number(c.meta_kg)||0)*(Number(c.valor_kg)||0)*(Number(c.pct_conecta)||0);
@@ -1246,6 +1255,45 @@ function vNovaAcao(){
     <div><label>Descrição</label><textarea id="na_descr" rows="2"></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Adicionar ação</button><button class="btn sec" type="button" data-a="novaacao">Cancelar</button></div></form>`;
 }
+const PAPEIS_CANAL=["Financeiro","Marketing","Gerente Comercial","Gestor/Responsável Legal"];
+function vCanalContatos(c){
+  const lst=(S.canalContatos&&S.canalContatos[c.id])||[];
+  const porPapel=PAPEIS_CANAL.map(p=>{const g=lst.filter(x=>x.papel===p);return `<div class="sub-vid">${esc(p)}</div>${g.length?`<div class="lista">${g.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"—")}</strong><span class="meta">${esc(x.telefone||"")}${x.email?" · "+esc(x.email):""}</span></div><button class="link" data-a="contato-del" data-v="${x.id}">excluir</button></div>`).join("")}</div>`:`<div class="vazio" style="padding:8px 12px">Sem contato.</div>`}`;}).join("");
+  const form=S.novoContato?`<form class="form-card" id="f-contato"><h3 class="sec">Novo contato</h3>
+    <div class="dupla"><div><label>Papel</label><select id="ct_papel">${PAPEIS_CANAL.map(p=>`<option>${p}</option>`).join("")}</select></div><div><label>Nome</label><input id="ct_nome" required></div></div>
+    <div class="dupla"><div><label>Telefone/WhatsApp</label><input id="ct_tel"></div><div><label>E-mail</label><input id="ct_email" type="email"></div></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="contato-novo" data-v="0">Cancelar</button></div></form>`:"";
+  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Quem responde pelo canal</h2><button class="btn sec" data-a="contato-novo" data-v="1">+ Contato</button></div>${form}${porPapel}</section>`;
+}
+function vCanalFiliais(c){
+  const lst=(S.canalFiliais&&S.canalFiliais[c.id])||[];
+  const rows=lst.length?`<div class="tab"><table><thead><tr><th>Filial</th><th>Cidade/UF</th><th>Responsável</th><th>Contato</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(x.nome||"—")}</td><td>${esc((x.cidade||"")+(x.uf?" / "+x.uf:""))}</td><td>${esc(x.responsavel||"—")}</td><td>${esc(x.contato||"—")}</td><td><button class="link" data-a="filial-del" data-v="${x.id}">excluir</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma filial cadastrada.</div>`;
+  const form=S.novaFilial?`<form class="form-card" id="f-filial"><h3 class="sec">Nova filial</h3>
+    <div class="dupla"><div><label>Nome/identificação</label><input id="fl_nome"></div><div><label>Cidade</label><input id="fl_cidade"></div></div>
+    <div class="dupla"><div><label>UF</label><input id="fl_uf" maxlength="2"></div><div><label>Responsável</label><input id="fl_resp"></div></div>
+    <div><label>Endereço</label><input id="fl_end"></div>
+    <div><label>Contato (telefone/e-mail)</label><input id="fl_contato"></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="filial-nova" data-v="0">Cancelar</button></div></form>`:"";
+  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Filiais</h2><button class="btn sec" data-a="filial-nova" data-v="1">+ Filial</button></div>${form}${rows}</section>`;
+}
+function vCanalEstoque(c){
+  const lst=(S.canalEstoque&&S.canalEstoque[c.id])||[];
+  const rows=lst.length?`<div class="tab"><table><thead><tr><th>Cultivar</th><th class="val">Estoque (kg)</th><th>Data</th><th>Obs.</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(x.cultivar||"—")}</td><td class="val">${fmtKg(x.quantidade_kg)}</td><td>${esc(x.data||"—")}</td><td>${esc(x.obs||"")}</td><td><button class="link" data-a="estoque-del" data-v="${x.id}">excluir</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Sem registro de estoque — ajuda a sentir o giro do canal.</div>`;
+  const form=S.novoEstoque?`<form class="form-card" id="f-estoque"><h3 class="sec">Registrar estoque</h3>
+    <div class="dupla"><div><label>Cultivar</label><input id="es_cult" placeholder="Sabiá, Cayana, Carcará…"></div><div><label>Quantidade (kg)</label><input id="es_qtd" type="number"></div></div>
+    <div class="dupla"><div><label>Data</label><input id="es_data" type="date"></div><div><label>Observação</label><input id="es_obs"></div></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="estoque-novo" data-v="0">Cancelar</button></div></form>`:"";
+  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Estoque da revenda</h2><button class="btn sec" data-a="estoque-novo" data-v="1">+ Registro</button></div>${form}${rows}</section>`;
+}
+function vCanalPrecos(c){
+  const lst=(S.canalPrecos&&S.canalPrecos[c.id])||[];
+  const rows=lst.length?`<div class="tab"><table><thead><tr><th>Cultivar</th><th class="val">Preço praticado</th><th>Data da pesquisa</th><th>Fonte</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(x.cultivar||"—")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td>${esc(x.data_pesquisa||"—")}</td><td>${esc(x.fonte||"Cliente oculto")}</td><td><button class="link" data-a="preco-del" data-v="${x.id}">excluir</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Sem preço registrado — alimente com a pesquisa de cliente oculto (4×/ano).</div>`;
+  const form=S.novoPreco?`<form class="form-card" id="f-preco"><h3 class="sec">Preço praticado (cliente oculto)</h3>
+    <div class="dupla"><div><label>Cultivar</label><input id="pr_cult"></div><div><label>Preço (R$)</label><input id="pr_preco" type="number" step="0.01"></div></div>
+    <div class="dupla"><div><label>Data da pesquisa</label><input id="pr_data" type="date"></div><div><label>Fonte</label><input id="pr_fonte" value="Cliente oculto"></div></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="preco-novo" data-v="0">Cancelar</button></div></form>`:"";
+  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Preço praticado pelo canal</h2><button class="btn sec" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>${form}${rows}</section>`;
+}
 function vRVCanal(){
   const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
   if(!c) return `<div class="carregando">Carregando…</div>`;
@@ -1270,7 +1318,11 @@ function vRVCanal(){
   ${S.novaAcao?vNovaAcao():""}
   ${ac.length?`<div class="acoes-grid">${cards}</div>`:`<div class="vazio">Nenhuma ação cadastrada.${c.nome==="Imperagro"?" (PGD com template diferente — importar depois.)":""}</div>`}
   ${sel?vAcaoEditor(sel):""}
-  </section>`;
+  </section>
+  ${vCanalContatos(c)}
+  ${vCanalFiliais(c)}
+  ${vCanalEstoque(c)}
+  ${vCanalPrecos(c)}`;
 }
 function vBase(){
   const b=S.busca.toLowerCase();
@@ -1472,7 +1524,15 @@ document.addEventListener("click",async ev=>{
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="mural"?"mural":v==="mercado"?"mercado-noticias":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
-  if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
+  if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;S.novoContato=false;S.novaFilial=false;S.novoEstoque=false;S.novoPreco=false;irPag("rv-canal");}
+  if(a==="contato-novo"){S.novoContato=v==="1";render();return;}
+  if(a==="filial-nova"){S.novaFilial=v==="1";render();return;}
+  if(a==="estoque-novo"){S.novoEstoque=v==="1";render();return;}
+  if(a==="preco-novo"){S.novoPreco=v==="1";render();return;}
+  if(a==="contato-del"){await sb.from("canal_contatos").delete().eq("id",v);S.canais=null;render();return;}
+  if(a==="filial-del"){await sb.from("canal_filiais").delete().eq("id",v);S.canais=null;render();return;}
+  if(a==="estoque-del"){await sb.from("canal_estoque").delete().eq("id",v);S.canais=null;render();return;}
+  if(a==="preco-del"){await sb.from("canal_precos").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="veracao"){S.acaoSel=S.acaoSel===v?null:v;render();}
   if(a==="editarcanal"){S.editCanal=!S.editCanal;S.novaAcao=false;render();}
   if(a==="novaacao"){S.novaAcao=!S.novaAcao;S.editCanal=false;render();}
@@ -1625,6 +1685,10 @@ document.addEventListener("submit",async ev=>{
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
     return;
   }
+  if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
+  if(f.id==="f-filial"){const r={canal_id:S.canalSel,nome:f.querySelector("#fl_nome").value.trim(),cidade:f.querySelector("#fl_cidade").value.trim(),uf:f.querySelector("#fl_uf").value.trim().toUpperCase(),endereco:f.querySelector("#fl_end").value.trim(),responsavel:f.querySelector("#fl_resp").value.trim(),contato:f.querySelector("#fl_contato").value.trim()};const {error}=await sb.from("canal_filiais").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novaFilial=false;S.canais=null;render();aviso("Filial adicionada.");return;}
+  if(f.id==="f-estoque"){const r={canal_id:S.canalSel,cultivar:f.querySelector("#es_cult").value.trim(),quantidade_kg:+f.querySelector("#es_qtd").value||0,data:f.querySelector("#es_data").value||null,obs:f.querySelector("#es_obs").value.trim()};const {error}=await sb.from("canal_estoque").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoEstoque=false;S.canais=null;render();aviso("Estoque registrado.");return;}
+  if(f.id==="f-preco"){const r={canal_id:S.canalSel,cultivar:f.querySelector("#pr_cult").value.trim(),preco:+f.querySelector("#pr_preco").value||0,data_pesquisa:f.querySelector("#pr_data").value||null,fonte:f.querySelector("#pr_fonte").value.trim()||"Cliente oculto"};const {error}=await sb.from("canal_precos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoPreco=false;S.canais=null;render();aviso("Preço registrado.");return;}
   if(f.id==="f-calc"){
     const kg=+f.querySelector("#calc_kg").value||0;const rs=+f.querySelector("#calc_rs").value||0;
     const faixa=TIERS_RC.find(x=>kg>=x.min&&kg<=x.max)||TIERS_RC[0];
