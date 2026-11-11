@@ -1144,7 +1144,7 @@ function montaPainelCRM(dono,deals,perdMes){
   const hoje=new Date();hoje.setHours(0,0,0,0);const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
   const dt=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
   const iso=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:null;
-  const repN=v=>{const r=String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim();return r?r.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()).slice(0,38):"";};
+  const repN=v=>{const r=String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim();if(REP_INTERNO.test(r))return "";return r?r.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()).slice(0,38):"";};
   const R={dono,equipe:dono==="Inside Sales"?"Inside Sales":"Campo",vendido_n:0,vendido_kg:0,vendido_rs:0,aberto_n:0,aberto_rs:0,ponderado_rs:0,pausadas_n:0,sem_att_n:0,atrasadas_n:0,sem_data_n:0};
   const q={vh:0,vc:0,ah:0,ac:0,vcult:{},acult:{},mes:{n:0,kgh:0,kg:0,rs:0,perd:Number(perdMes)||0},pkgh:0,pkg:0,prs:0,pondh:0};const mesK=new Date(Date.now()-3*3600e3).toISOString().slice(0,7);
   const kgs=d=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const v=Number(kg)||0;if(ehHibrida(cultivarDe(n)))h+=v;else c+=v;});return [h,c];};const meses={},rcs={},ab=[];
@@ -1181,6 +1181,7 @@ const UF_LISTA=Object.values(UF_NOMES);
 const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(/^[A-Za-z]{2}$/.test(s))return UF_LISTA.includes(s.toUpperCase())?s.toUpperCase():"";const n=UF_NOMES[normGeo(s)];if(n)return n;const m=/(^|[^A-Za-z])([A-Z]{2})\s*$/.exec(s);return m&&UF_LISTA.includes(m[2])?m[2]:"";};
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s\b.*franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
+const REP_INTERNO=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;
 const IS_TIME=[["Laura","Laura Costa","Inside Sales"],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
 const META_IS_KG=60000;
 function linhasMapa(dono,deals,repPadrao){
@@ -1194,7 +1195,7 @@ function linhasMapa(dono,deals,repPadrao){
     let h=0,c=0;const cu={};(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(!v)return;if(ehHibrida(k))h+=v;else c+=v;cu[k]=(cu[k]||0)+v;});
     const o=Array.isArray(d.o)?d.o:[];const uf=ufDe(o[0])||ufDe(d.mu);const cid=String(o[1]||d.mc||"").trim().slice(0,60);
     const seg=(/DISTRIBUIDOR|COOPERATIVA|EXPORTA|KEY ACCOUNT/i.test(String(o[2]||""))||d.forma==="Para Canal (Sell In)")?"B2B":"B2C";
-    let rp=repTitulo(d.rep);const al=REP_ALIAS.find(x=>x[0].test(rp));if(al)rp=al[1];
+    let rp=repTitulo(d.rep);const al=REP_ALIAS.find(x=>x[0].test(rp));if(al)rp=al[1];if(REP_INTERNO.test(rp))rp="";
     out.push({dono,rep:rp,nome:String(d.n||"").slice(0,90),uf:uf||null,cidade:cid||null,st,seg,kg_h:h,kg_c:c,rs:Math.round(Number(d.tot)||0),fat:iso(b),cults:cu});
   }
   return out;
@@ -1256,7 +1257,7 @@ function vMapaGeo(ctx){
   const pin=S.mapaPin&&cid[S.mapaPin];
   const linNeg=r=>`<div class="neg"><div class="l1"><span>${esc(r.nome)}</span><span>${fmtKg((+r.kg_h||0)+(+r.kg_c||0))}</span></div><span class="meta">${r.st==="V"?"Vendida":"Em aberto"} · ${r.seg==="B2B"?"canal":"produtor"} · ${r.rep?esc(r.rep):"venda direta"}${interno&&ctx==="crm"&&adm?" · "+esc(r.dono):""}${r.fat?" · faturamento "+r.fat.split("-").reverse().join("/"):""} · ${fmtK(r.rs)}</span>${(+r.kg_h||+r.kg_c)?`<span class="meta">${Object.entries(r.cults||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>esc(k)+" "+fmtN(v)+" kg").join(" · ")}</span>`:`<span class="meta">sem produto lançado no CRM</span>`}</div>`;
   const titulo=ctx==="rc"?(interno?"Mapa de vendas · Conecta RC":"Meu mapa de vendas"):"Mapa das negociações";
-  const sub=ctx==="rc"?(interno?"Onde estão as negociações que passam por representantes: um ponto por cidade, do tamanho do volume em quilos.":"Onde estão as suas negociações na safra 26/27: um ponto por cidade, do tamanho do volume em quilos."):"Safra 26/27 no funil de vendas do CRM: um ponto por cidade, do tamanho do volume em quilos.";
+  const sub=ctx==="rc"?(interno?"Só as negociações com representante comercial (RC) no campo Representante. Vendas diretas e as conduzidas pelo próprio comercial da Barenbrug ficam fora daqui e aparecem no mapa do Meu CRM.":"Onde estão as suas negociações na safra 26/27: um ponto por cidade, do tamanho do volume em quilos."):"Safra 26/27 no funil de vendas do CRM: um ponto por cidade, do tamanho do volume em quilos.";
   return `<div><h1 class="titulo">${titulo}</h1><p class="sub">${sub}</p></div>
   <details class="lote" ${ativos.length?"open":""}><summary>Filtros${ativos.length?" · "+ativos.map(esc).join(" · "):""}</summary>
     <p class="meta" style="margin:10px 0 4px">Situação</p><div class="filtros">${chips("st",["Todas","Vendidas","Em aberto"],F.st)}</div>
