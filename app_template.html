@@ -1536,13 +1536,14 @@ function metricasCanal(c){
   const bonusCheio=N("rs_hib")*g.b,bonus=bonusCheio*fator;
   const bruto=igdb+bonus,total=Math.min(RV_TETO,bruto);
   const ac=(S.acoesCanal||{})[c.id]||[];
-  const som=st=>ac.filter(a=>(a.status||"Em Análise")===st).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);
+  const ehBPa=a=>(a.verba||"IGDB")==="Bônus de Performance";
+  const som=(st,bp)=>ac.filter(a=>(a.status||"Em Análise")===st&&(bp==null||ehBPa(a)===bp)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);
   const cnt=st=>ac.filter(a=>(a.status||"Em Análise")===st).length;
   const aprov=som("Aprovado"),analise=som("Em Análise");
   const faltaKg=meta?Math.max(0,meta-N("kg_hib")):0;
   return {g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
-    aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,saldo:igdb-aprov,faltaKg,soma:aprov+analise};
+    aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,aprovIG:som("Aprovado",false),aprovBP:som("Aprovado",true),analiseIG:som("Em Análise",false),saldo:igdb-som("Aprovado",false),faltaKg,soma:aprov+analise};
 }
 const barraMeta=(m)=>{const p=m.ating==null?0:Math.min(1,m.ating);return `<div class="resumo"><div class="barra"><i style="width:${Math.round(p*100)}%"></i></div><span>${m.ating==null?"Meta não definida":`${pctTxt(m.ating)} da meta de híbridos`}</span></div>`;};
 const statusBonus=m=>m.ating==null?"Sem meta definida":m.fator===1?"Meta batida: bônus de 100% do tier":m.fator===.7?"Entre 90% e 99,99%: bônus de 70% do tier":`Abaixo de 90% da meta: sem bônus por enquanto (faltam ${fmtKg(Math.max(0,Math.ceil(m.meta*.9-m.kgH)))} para 90%)`;
@@ -1577,7 +1578,7 @@ function vRVPainel(){
   ${semPgd.length?`<p class="precos-nota">Sem PGD cadastrado: ${semPgd.map(esc).join(", ")}.</p>`:""}</section>
   <section class="bloco"><h2 class="sec">Plano de Geração de Demanda · ações</h2>
   <div class="filtros" style="margin-bottom:10px">${["Todas","Em Análise","Aprovado","Reprovado"].map(t=>`<button class="chip" data-a="pgd-filtro" data-v="${t}" aria-pressed="${fl===t}">${t}</button>`).join("")}</div>
-  ${acoes.length?`<div class="tab"><table><thead><tr><th>Canal</th><th>Ação</th><th>Onde / quando</th><th>Status</th><th class="val">Valor</th><th></th></tr></thead><tbody>${acoes.map(({a,c})=>`<tr><td>${esc(c.nome)}</td><td><strong>${esc(a.tipo||"Ação")}</strong><br><span class="meta">${esc((a.descricao||"").slice(0,90))}</span></td><td>${esc(a.cidade||"—")}${a.data_acao?`<br><span class="meta">${esc(a.data_acao)}</span>`:""}</td><td>${stBadge(a.status)}</td><td class="val">${Number(a.valor_igdb)?fmtK0(a.valor_igdb):`<span class="meta">a definir</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir canal</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma ação com esse status.</div>`}
+  ${acoes.length?`<div class="tab"><table><thead><tr><th>Canal</th><th>Ação</th><th>Onde / quando</th><th>Status</th><th class="val">Valor</th><th></th></tr></thead><tbody>${acoes.map(({a,c})=>`<tr><td>${esc(c.nome)}</td><td><strong>${esc(a.tipo||"Ação")}</strong><br><span class="meta">${esc(a.verba||"IGDB")} · ${esc((a.descricao||"").slice(0,90))}</span></td><td>${esc(a.cidade||"—")}${a.data_acao?`<br><span class="meta">${esc(a.data_acao)}</span>`:""}</td><td>${stBadge(a.status)}</td><td class="val">${Number(a.valor_igdb)?fmtK0(a.valor_igdb):`<span class="meta">a definir</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir canal</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma ação com esse status.</div>`}
   </section>
   <section class="bloco"><h2 class="sec">Premissas do cálculo</h2>
   <div class="tab"><table><thead><tr><th>Tier</th><th class="val">IGDB híbridos</th><th class="val">IGDB convencionais</th><th class="val">Bônus de Performance</th></tr></thead><tbody>${Object.entries(RV_REGRA).map(([t,g])=>`<tr><td><strong>${t}</strong></td><td class="val">${pctTxt(g.ih)}</td><td class="val">${pctTxt(g.ic)}</td><td class="val">+${pctTxt(g.b)} sobre híbridos</td></tr>`).join("")}</tbody></table></div>
@@ -1639,13 +1640,14 @@ function vCanalEditor(c){
       <div><label>Valor médio do kg (R$)</label><input id="c_valor" type="number" step="0.01" value="${Number(c.valor_kg)||0}"></div></div>
     <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="editarcanal">Cancelar</button></div></form>`;
 }
-function vNovaAcao(){
-  const tipos=["Ação em Loja","AT - Assistente Técnico","Bonificação / Campo Demonstrativo","Campanha Digital","Dia de Campo","Encontro de Produtores","Evento/Feira","Incentivo de Vendas / Rebate","Incentivo de Vendas / Viagem","Leilão/Patrocínio","Material POS/PDV","Palestra Técnica","Treinamento Canal","Visita Técnica","Webinar/Live","Outros"];
-  return `<form class="form-card" id="f-novaacao"><h3 class="sec">Nova ação</h3>
-    <div><label>Tipo (Geração de demanda)</label><select id="na_tipo">${tipos.map(t=>`<option>${t}</option>`).join("")}</select></div>
-    <div class="dupla"><div><label>Cidade</label><input id="na_cidade"></div><div><label>Valor de IGDB (R$)</label><input id="na_valor" type="number" step="0.01" value="0"></div></div>
-    <div><label>Descrição</label><textarea id="na_descr" rows="2"></textarea></div>
-    <div class="acoes"><button class="btn" type="submit">Adicionar ação</button><button class="btn sec" type="button" data-a="novaacao">Cancelar</button></div></form>`;
+function vNovaAcao(modo){
+  const bp=modo==="bp";
+  const tipos=bp?["Incentivo por saco vendido","Premiação / Viagem","Premiação em dinheiro ou vale","Campanha de vendas da equipe","Outros"]:["Ação em Loja","AT - Assistente Técnico","Bonificação / Campo Demonstrativo","Campanha Digital","Dia de Campo","Encontro de Produtores","Evento/Feira","Leilão/Patrocínio","Material POS/PDV","Palestra Técnica","Treinamento Canal","Visita Técnica","Webinar/Live","Outros"];
+  return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"><h3 class="sec">${bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
+    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(t=>`<option>${t}</option>`).join("")}</select></div>
+    <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':""}></div><div><label for="na_valor">${bp?"Custo estimado (R$)":"Valor de IGDB (R$)"}</label><input id="na_valor" type="number" step="0.01" value="0"></div></div>
+    <div><label for="na_descr">${bp?"Regra da campanha":"Descrição"}</label><textarea id="na_descr" rows="3" ${bp?'placeholder="Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos."':""}></textarea></div>
+    <div class="acoes"><button class="btn" type="submit">${bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="novaacao" data-v="fechar">Cancelar</button></div></form>`;
 }
 const PAPEIS_CANAL=["Financeiro","Marketing","Gerente Comercial","Gestor/Responsável Legal"];
 function vCanalContatos(c){
@@ -1690,10 +1692,11 @@ function vRVCanal(){
   const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
   if(!c) return `<div class="carregando">Carregando…</div>`;
   const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
-  const cards=ac.map(a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}"><div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
+  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}"><div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
-    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:""}</div></div>`).join("");
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:""}</div></div>`;
+  const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
   const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
   const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
   return `${B?`<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>`:""}
@@ -1710,15 +1713,21 @@ function vRVCanal(){
     <div class="metric"><span>IGDB estimado</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)}</span></div>
     <div class="metric"><span>Bônus de Performance</span><strong>${fmtK0(m.bonus)}</strong><span class="meta">cheio: ${fmtK0(m.bonusCheio)}</span></div>
     <div class="metric"><span>Total estimado do programa</span><strong>${fmtK0(m.total)}</strong><span class="meta">${m.teto?"limitado ao teto de "+fmtK0(RV_TETO):"teto de "+fmtK0(RV_TETO)}</span></div>
-    <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprov)} · em análise ${fmtK0(m.analise)}</span></div>
+    <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprovIG)} · em análise ${fmtK0(m.analiseIG)}</span></div>
   </div>
   <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
-  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD — Plano de Geração de Demanda (${ac.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
   ${S.editCanal?vCanalEditor(c):""}
-  ${S.novaAcao?vNovaAcao():""}
-  ${ac.length?`<div class="acoes-grid">${cards}</div>`:`<div class="vazio">Nenhuma ação cadastrada.${c.nome==="Imperagro"?" (PGD com template diferente — importar depois.)":""}</div>`}
-  ${sel&&adm?vAcaoEditor(sel):""}
+  ${S.novaAcao&&S.novaAcao!=="bp"?vNovaAcao():""}
+  ${acIG.length?`<div class="acoes-grid">${acIG.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma ação de IGDB cadastrada.</div>`}
+  ${sel&&adm&&!ehBP(sel)?vAcaoEditor(sel):""}
+  </section>
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · campanhas do Bônus de Performance (${acBP.length})</h2>${adm||!B?`<button class="btn" data-a="novaacao" data-v="bp">${B?"+ Nova campanha":"Propor campanha"}</button>`:""}</div>
+  <p class="sub" style="margin:0 0 8px">Como o canal vai usar o Bônus de Performance: premiações, viagens e incentivo por saco vendido. Estimativa disponível: <strong>${fmtK0(m.bonus)}</strong>${m.bonus<m.bonusCheio?` (com a meta batida: ${fmtK0(m.bonusCheio)})`:""} · já comprometido em campanhas aprovadas: ${fmtK0(m.aprovBP)} · saldo ${fmtK0(m.bonus-m.aprovBP)}.</p>
+  ${S.novaAcao==="bp"?vNovaAcao("bp"):""}
+  ${acBP.length?`<div class="acoes-grid">${acBP.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma campanha de Bônus de Performance cadastrada.</div>`}
+  ${sel&&adm&&ehBP(sel)?vAcaoEditor(sel):""}
   </section>
   ${eq.length||!B?`<section class="bloco"><h2 class="sec">Equipe da revenda no portal (${eq.length})</h2>${eq.length?`<div class="lista">${eq.map(p=>`<div class="linha"><div><strong>${esc(p.nome||"—")}</strong><span class="meta">${esc(p.perfil||"")} · último acesso ${fmtDataHora(p.ultimo_acesso)}</span></div><span class="selo">${p.modulos||0} módulos do curso</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum vendedor da revenda com acesso ainda. Peça os acessos à Barenbrug.</div>`}</section>`:""}
   ${vCanalContatos(c)}
@@ -2007,7 +2016,7 @@ document.addEventListener("click",async ev=>{
   if(a==="preco-del"){await sb.from("canal_precos").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="veracao"){S.acaoSel=S.acaoSel===v?null:v;render();}
   if(a==="editarcanal"){S.editCanal=!S.editCanal;S.novaAcao=false;render();}
-  if(a==="novaacao"){S.novaAcao=!S.novaAcao;S.editCanal=false;render();}
+  if(a==="novaacao"){S.novaAcao=v==="fechar"?false:v==="bp"?(S.novaAcao==="bp"?false:"bp"):(S.novaAcao===true?false:true);S.editCanal=false;render();}
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
@@ -2112,7 +2121,7 @@ document.addEventListener("submit",async ev=>{
     S.canais=null;S.editCanal=false;render();aviso("Canal atualizado.");return;
   }
   if(f.id==="f-novaacao"){
-    const dados={canal_id:S.canalSel,tipo:f.querySelector("#na_tipo").value,cidade:f.querySelector("#na_cidade").value.trim(),valor_igdb:+f.querySelector("#na_valor").value||0,descricao:f.querySelector("#na_descr").value.trim(),status:"Em Análise"};
+    const dados={canal_id:S.canalSel,tipo:f.querySelector("#na_tipo").value,cidade:f.querySelector("#na_cidade").value.trim(),valor_igdb:+f.querySelector("#na_valor").value||0,descricao:f.querySelector("#na_descr").value.trim(),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
