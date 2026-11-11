@@ -25,21 +25,31 @@ img{max-width:100%}
 .sci{font-style:italic}
 
 .topo{background:var(--amarelo)}
-.topo-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.logo-b{background:none;border:0;padding:0;cursor:pointer;line-height:0}
+.topo-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px}
+.topo-acoes{display:flex;align-items:center;gap:8px;min-width:0}
+.topo-ic{position:relative;flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.07);color:var(--preto);display:grid;place-items:center;cursor:pointer;padding:0;font-weight:800;font-size:16px;line-height:1}
+.topo-ic:hover{background:rgba(0,0,0,.14)}
+.topo-ic b{position:absolute;top:-3px;right:-5px;background:var(--vermelho);color:#fff;font-size:11px;line-height:1;padding:3px 5px;border-radius:999px;font-weight:700}
+.logo-b{background:none;border:0;padding:0;cursor:pointer;line-height:0;flex:0 0 auto}
 /* Manual da marca: logo sempre sobre amarelo Barenbrug, com respiro >= 1x a altura do logotipo em todos os lados */
 .logo{height:20px;width:auto;display:block;margin:20px 20px 20px 6px}
-.quem{font-size:13px;text-align:right}
+.quem{font-size:13px;text-align:right;min-width:0;line-height:1.35;margin-right:4px;overflow:hidden}
+.quem .q1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quem .q2{display:block;white-space:nowrap}
+@media (max-width:560px){.quem .qp{display:none}.quem{font-size:12.5px}.topo-ic{width:36px;height:36px}.topo-acoes{gap:6px}}
+@media (max-width:370px){.topo .logo{height:13px;margin:18px 4px 18px 0}.topo-in{gap:8px}}
+
 .quem button{background:none;border:0;padding:0;color:var(--preto);text-decoration:underline;cursor:pointer;font-size:13px}
 
 .subnav{background:var(--amarelo);border-top:1px solid rgba(0,0,0,.08)}
-.subnav-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.subnav-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:0 10px;flex-wrap:wrap}
 .voltar-inicio{background:none;border:0;padding:9px 0;color:var(--preto);font-weight:700;font-size:14px;cursor:pointer}
-.nav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 100%;order:2}
+.nav{display:flex;gap:4px;flex:1 1 100%;order:2;min-width:0;flex-wrap:wrap}
+.nav::-webkit-scrollbar{display:none}
 .subnav .secao-nome{margin-left:auto}
-.nav button{background:none;border:0;padding:9px 12px;font-weight:700;font-size:15px;cursor:pointer;color:var(--preto);border-radius:6px 6px 0 0;white-space:nowrap}
+.nav button{flex:0 0 auto;background:none;border:0;padding:9px 10px;font-weight:700;font-size:14px;cursor:pointer;color:var(--preto);border-radius:6px 6px 0 0;white-space:nowrap}
 .nav button[aria-current=page]{background:var(--papel)}
-@media (max-width:640px){.nav button{border-radius:6px;margin-bottom:4px}}
+@media (max-width:640px){.nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}}
 .secao-nome{margin-left:auto;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
 
 main{max-width:880px;margin:0 auto;padding:26px 16px 56px;display:grid;gap:24px}
@@ -206,7 +216,7 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
 
 @media (max-width:640px){
   .acesso{grid-template-columns:1fr;min-height:0}
-  .logo{height:16px;margin:16px 16px 16px 2px}
+  .logo{height:16px;margin:16px 8px 16px 2px}
   .acesso-marca .logo{height:20px;margin:0}
   .nav button{padding:9px 8px;font-size:14px}
   .secao-nome{display:none}
@@ -274,7 +284,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .linha .meta{display:block}
 .neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
 .aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
-.ajuda-b{background:none;border:1px solid rgba(0,0,0,.18);color:inherit;width:26px;height:26px;border-radius:50%;font-weight:700;cursor:pointer;line-height:1;margin-left:8px;flex:0 0 auto}
+
 .tour-bg{position:fixed;inset:0;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
 .tour-card{background:#fff;color:#1a1a1a;max-width:420px;width:100%;border-radius:14px;padding:22px 20px 18px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
 .tour-rot{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro,#0a3)}
@@ -331,8 +341,7 @@ main.largo{max-width:1120px}
 .autor{display:flex;gap:10px;align-items:center;min-width:0}.autor>div{min-width:0;display:grid;gap:1px}
 .avatar{border-radius:50%;object-fit:cover;flex:0 0 auto;display:inline-grid;place-items:center}
 .avatar.ini{background:var(--azul-claro);color:var(--azul-escuro);font-weight:800}
-.sino{position:relative;background:none;border:0;cursor:pointer;padding:4px;color:var(--preto);line-height:0;flex:0 0 auto}
-.sino b{position:absolute;top:-4px;right:-7px;background:var(--vermelho);color:#fff;font-size:11px;line-height:1;padding:3px 5px;border-radius:999px;font-weight:700}
+
 .tag-novo{background:var(--amarelo);color:var(--preto);font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px}
 .pergunta-tx{margin:0;font-size:17px;line-height:1.35;font-weight:700}
 </style>
@@ -751,7 +760,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111141959";
+const APP_VER="20261111145747";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -910,7 +919,7 @@ function vPerfil(){
 /* ---------- shell ---------- */
 function cabecalho(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
-    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
+    <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.perfil)}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
 }
 function subnavAcademia(){
   const abas=[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
@@ -2492,7 +2501,7 @@ async function abrirUsuario(id){
 }
 
 /* ---------- render ---------- */
-function render(){renderApp();paintTour();}
+function render(){renderApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
