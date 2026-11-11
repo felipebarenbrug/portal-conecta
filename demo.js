@@ -179,14 +179,14 @@
     S.perfil=antes;S.crm=null;S.mapa=undefined;S.leadsCache=null;S.mercado=null;S.crmProg="";
   };
 
-  const TODAS=["academia","conecta-rc","tabela-precos","conecta-revendas","enxoval","leads","inside-sales","meu-crm","duvidas","mural","mercado"];
+  const TODAS=["academia","conecta-rc","tabela-precos","calculadora","conecta-revendas","enxoval","leads","inside-sales","meu-crm","duvidas","mural","mercado"];
   const VISOES={
     "Administrador":{acessos:TODAS},
-    "Comercial Barenbrug":{acessos:["academia","conecta-rc","tabela-precos","conecta-revendas","enxoval","leads","meu-crm","mercado"],crm_dono:"Carlos Menezes"},
-    "RC":{acessos:["academia","conecta-rc","tabela-precos","enxoval","mercado"],rc_crm:"Horizonte Representacoes Ltda"},
-    "Gestor de Revenda":{acessos:["academia","conecta-revendas","tabela-precos","leads","enxoval","mercado"],canal:0},
-    "Vendedor de Revenda":{acessos:["academia","conecta-revendas","leads","enxoval","mercado"],canal:0},
-    "Inside Sales":{acessos:["academia","inside-sales","meu-crm","tabela-precos","enxoval","mercado"],is_vendedora:"Bianca",crm_dono:"IS: Bianca"}
+    "Comercial Barenbrug":{acessos:["academia","conecta-rc","tabela-precos","calculadora","conecta-revendas","enxoval","leads","meu-crm","mercado"],crm_dono:"Carlos Menezes"},
+    "RC":{acessos:["academia","conecta-rc","tabela-precos","calculadora","enxoval","mercado"],rc_crm:"Horizonte Representacoes Ltda"},
+    "Gestor de Revenda":{acessos:["academia","conecta-revendas","tabela-precos","calculadora","leads","enxoval","mercado"],canal:0},
+    "Vendedor de Revenda":{acessos:["academia","calculadora","conecta-revendas","leads","enxoval","mercado"],canal:0},
+    "Inside Sales":{acessos:["academia","inside-sales","meu-crm","tabela-precos","calculadora","enxoval","mercado"],is_vendedora:"Bianca",crm_dono:"IS: Bianca"}
   };
   window.demoVisoes=Object.keys(VISOES);
   window.demoVer=function(S,v){
