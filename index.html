@@ -711,7 +711,14 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111113446";
+const APP_VER="20261111114128";
+async function sessaoConfere(){
+  try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
+    if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
+    if(!id){aviso("Sua sessão expirou. Entre de novo.");setTimeout(()=>location.reload(),2000);return false;}
+  }catch(e){}
+  return true;
+}
 let _perfilChk=0;
 async function recarregarPermissoes(){
   if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
@@ -720,7 +727,7 @@ async function recarregarPermissoes(){
     if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
   }catch(e){}
 }
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)recarregarPermissoes();});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});
 setInterval(()=>{if(!document.hidden)recarregarPermissoes();},180000);
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
@@ -1565,6 +1572,7 @@ function vRCRanking(){
   const eu=minhaPos>=0?rk[minhaPos]:null;
   const medal=i=>`${i+1}º`;
   const fmt=n=>(Number(n)||0).toLocaleString("pt-BR")+" kg";
+  const rkC=rk.filter(x=>x.cKg>0).sort((a,b)=>b.cKg-a.cKg);const lidC=rkC.length?Math.max(1,rkC[0].cKg):1;const posC=meuCrm?rkC.findIndex(x=>x.crm===meuCrm):-1;
   let hero="";
   if((S.perfil==="RC"||S.perfil==="Assessor de Vendas Digital")&&!meuCrm){
     hero=`<section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a um representante no CRM, então não dá para mostrar seu volume pessoal. Peça ao administrador para fazer o vínculo no seu cadastro.</p></section>`;
@@ -1579,7 +1587,7 @@ function vRCRanking(){
       <h1 class="titulo" style="color:var(--preto);margin:.1em 0">${esc(eu.nome)}</h1>
       <div class="metrics" style="margin:12px 0">
         <div class="metric"><span>Já faturou</span><strong>${fmt(eu.fat)}</strong></div>
-        <div class="metric"><span>Vai faturar (em aberto)</span><strong>${fmt(eu.aFat)}</strong></div>
+        <div class="metric"><span>Vai faturar</span><strong>${fmt(eu.aFat)}</strong></div>
         <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total na safra</span><strong>${fmt(kg)}</strong></div>
         <div class="metric"><span>Seu tier · posição em híbridos</span><strong>${t} · ${minhaPos+1}º</strong></div>
         ${eu.cKg?`<div class="metric"><span>Convencionais (fora do tier)</span><strong>${fmt(eu.cKg)}</strong><span class="meta">${posC>=0?(posC+1)+"º no ranking de convencionais":""}</span></div>`:""}
@@ -1589,7 +1597,6 @@ function vRCRanking(){
   const verTudo=ehAdmin()||S.perfil==="Comercial Barenbrug";
   const lider=rk.length?Math.max(1,rk[0].kg):1;
   const linhaC=(x,i,lid)=>{const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.cKg/lid*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.cFat)}</td><td class="val">${x.cAFat?fmt(x.cAFat):"—"}</td><td class="val"><strong>${fmt(x.cKg)}</strong></td>`}</tr>`;};
-  const rkC=rk.filter(x=>x.cKg>0).sort((a,b)=>b.cKg-a.cKg);const lidC=rkC.length?Math.max(1,rkC[0].cKg):1;const posC=meuCrm?rkC.findIndex(x=>x.crm===meuCrm):-1;
   let rowsC=rkC.slice(0,10).map((x,i)=>linhaC(x,i,lidC)).join("");if(posC>=10)rowsC+=`<tr><td colspan="5" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linhaC(rkC[posC],posC,lidC);
   const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.kg/lider*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td>`}</tr>`;};
   const top=rk.slice(0,10);
@@ -2362,13 +2369,14 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige"))){
-    if(!ehAdmin())return;const up={};
+    if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}const up={};
     if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
     else if(c.dataset.aba){const z=new Set(S.adminForm.abas_ocultas||[]);c.checked?z.delete(c.dataset.aba):z.add(c.dataset.aba);up.abas_ocultas=[...z];}
     else up.exige_curso=c.checked;
     Object.assign(S.adminForm,up);
-    const {error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id);
-    if(error){aviso("Não foi possível gravar esta alteração. Tente de novo.");}else{Object.assign(S.adminUser,up);S.equipe=null;aviso("Alteração gravada.");}
+    const {data:volta,error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id).select("acessos,abas_ocultas,exige_curso").maybeSingle();
+    const k=Object.keys(up)[0];const igual=volta&&JSON.stringify(volta[k]??null)===JSON.stringify(up[k]??null);
+    if(error||!igual){if(volta)Object.assign(S.adminForm,volta);aviso("Esta alteração NÃO foi gravada. Recarregue a página, entre como administrador e tente de novo.");}else{Object.assign(S.adminUser,up);S.equipe=null;aviso("Alteração gravada.");}
     const y=window.scrollY;render();window.scrollTo(0,y);return;
   }
   if(c.dataset.a==="visto"){
@@ -2534,9 +2542,11 @@ document.addEventListener("submit",async ev=>{
     const elCr=f.querySelector("#f_cresp");if(elCr)dados.comercial_resp=elCr.value||null;
     const elAb=[...f.querySelectorAll("[data-aba]")];if(elAb.length){const vis=new Set((S.adminForm.abas_ocultas||[]));elAb.forEach(c=>{if(c.checked)vis.delete(c.dataset.aba);else vis.add(c.dataset.aba);});dados.abas_ocultas=[...vis];}
     const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
+    if(!(await sessaoConfere()))return;
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
-    const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
-    if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
+    const {data:volta,error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id).select("perfil,acessos,abas_ocultas").maybeSingle();
+    if(error||!volta){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
+    if(volta.perfil!==dados.perfil||JSON.stringify(volta.acessos||[])!==JSON.stringify(dados.acessos||[])||(dados.abas_ocultas&&JSON.stringify(volta.abas_ocultas||[])!==JSON.stringify(dados.abas_ocultas))){S._erro="Os acessos NÃO foram gravados: esta aba não está com permissão de administrador. Recarregue a página, entre como administrador e tente de novo.";render();window.scrollTo(0,0);return;}
     const elRc=f.querySelector("#f_rccrm");
     if((perfil==="RC"||perfil==="Assessor de Vendas Digital")&&elRc){const rc=elRc.value||null;const {error:e2}=await sb.from("profiles").update({rc_crm:rc}).eq("id",S.adminUser.id);if(!e2)dados.rc_crm=rc;}
     Object.assign(S.adminUser,dados);S.equipe=null;S._erro=null;render();aviso("Dados atualizados.");
