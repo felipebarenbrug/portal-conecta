@@ -1012,7 +1012,7 @@ function cartaoNeg(x,gestor){
     <span class="meta">${x.data_faturamento?"Faturamento "+x.data_faturamento.split("-").reverse().join("/")+" · ":""}${esc(x.forma||"")}${x.cond_pagamento?" · "+esc(x.cond_pagamento):""}${x.frete?" · frete "+esc(x.frete):""}</span>
     ${x.anotacao?`<span class="meta">Anotação: ${esc(x.anotacao)}</span>`:""}
     <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="${ST_NEG[x.status]||"selo-pend"}">${esc(x.status==="Enviado"?"Aguardando o comercial":x.status==="No CRM"?"Lançada no CRM":x.status)}</span>${x.crm_erro?`<span class="meta" style="color:#c0392b">${esc(x.crm_erro)}</span>`:""}
-    ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Marcar como lançada no CRM</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
+    ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-crm" data-v="${x.id}">Lançar no CRM agora</button><button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Já lancei à mão</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
 }
 function vRCPedido(){
   const L=S.rcNeg;const n=S.negItens||1;const p=S.profile||{};
@@ -1028,7 +1028,7 @@ function vRCPedido(){
     ${linhas}
     <div><button class="link" type="button" data-a="neg-item" data-v="1">+ Adicionar produto</button>${n>1?` · <button class="link" type="button" data-a="neg-item" data-v="-1">Remover último</button>`:""}</div>
     <h2 class="sec" style="margin:8px 0 0">Condições</h2>
-    <div class="neg-item"><div><label for="ng_fat">Data de entrega / faturamento *</label><input id="ng_fat" type="date" required></div><div><label for="ng_forma">Forma da negociação *</label><select id="ng_forma"><option>Venda direta ao produtor</option><option>Para Canal (Sell In)</option></select></div></div>
+    <div class="neg-item"><div><label for="ng_fat">Data de entrega / faturamento *</label><input id="ng_fat" type="date" required></div><div><label for="ng_forma">Forma da negociação *</label><select id="ng_forma"><option>Representante ao produtor</option><option>Para Canal (Sell In)</option><option>Venda direta ao produtor</option></select></div></div>
     <div class="neg-item"><div><label for="ng_cond">Condição de pagamento *</label><input id="ng_cond" required placeholder="Ex: 30 / 60"></div><div><label for="ng_frete">Frete</label><input id="ng_frete" placeholder="Ex: CIF, R$ 1.800"></div></div>
     <div><label for="ng_obs">Anotação para o comercial</label><textarea id="ng_obs" rows="3" maxlength="1500" placeholder="Contexto da venda, contato do cliente, observações de entrega."></textarea><span class="meta">Vai registrada junto com a negociação no CRM.</span></div>
     ${S._erroNeg?`<div class="erro" role="alert">${esc(S._erroNeg)}</div>`:""}
@@ -2035,6 +2035,7 @@ document.addEventListener("click",async ev=>{
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e){if(e.type==="checkbox")e.checked=val;else e.value=val;}});return;}
+  if(a==="neg-crm"){b.disabled=true;b.textContent="Lançando…";let ok=false,msg="";try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:+v}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(_){}}}catch(e){}await carregarRCNeg();render();aviso(ok?"Negociação lançada no CRM.":"O CRM não aceitou o lançamento"+(msg?": "+msg:"."));return;}
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
   if(a==="duv-nova"){S.duvNova=v==="1";render();return;}
@@ -2131,9 +2132,10 @@ document.addEventListener("submit",async ev=>{
     const itens=[];for(let i=0;i<(S.negItens||1);i++){const kg=parseFloat(docLimpo(q("#ni_k"+i)))||0;const pr=parseFloat(q("#ni_p"+i).replace(/\./g,"").replace(",","."))||0;if(kg>0)itens.push({cultivar:q("#ni_c"+i),kg,preco:pr});}
     if(!itens.length){S._erroNeg="Informe pelo menos um produto com quantidade.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
-    const {error}=await sb.from("rc_negociacoes").insert({cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")});
+    const {data:nv,error}=await sb.from("rc_negociacoes").insert({cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")}).select("id").single();
     if(error){S._erroNeg="Não foi possível enviar. Tente de novo em instantes.";render();return;}
-    S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso("Negociação enviada ao seu responsável comercial.");return;
+    btn.textContent="Lançando no CRM…";let noCrm=false;try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:nv.id}});noCrm=!!(r.data&&r.data.ok);}catch(e){}
+    S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso(noCrm?"Negociação lançada no CRM para o seu responsável comercial.":"Negociação enviada. O lançamento no CRM fica com o seu responsável comercial.");return;
   }
   if(f.id==="f-duvida"){
     const pergunta=f.querySelector("#d_txt").value.trim();const tema=f.querySelector("#d_tema").value;
