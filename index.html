@@ -731,7 +731,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111132254";
+const APP_VER="20261111132640";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1466,6 +1466,7 @@ async function atualizarCRM(prog){
     if(L.length){const d=await sb.from("rc_ranking").delete().neq("crm","");const i=d.error?d:await sb.from("rc_ranking").insert(L);res.push(d.error||i.error?"ranking: erro ao gravar":`ranking: ${L.length} representantes`);await carregarRanking();}}
   res.push(await atualizarLeads(prog));
   try{prog("Lendo as notícias da pecuária…");const rn=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});res.push(rn.error||!rn.data||rn.data.error?"notícias: erro na leitura":`notícias: ${rn.data.gravadas}`);S.mercado=null;}catch(e){}
+  try{prog("Lendo a previsão do tempo…");const rc=await sb.functions.invoke("rd-crm",{body:{acao:"sync_clima"}});res.push(rc.error||!rc.data||rc.data.error?"clima: erro na leitura":`clima: ${rc.data.gravadas} praças`);}catch(e){}
   return res;
 }
 async function atualizarLeads(prog){
@@ -1602,9 +1603,17 @@ function vMercado(){
     ${interno?`<details class="lote"><summary>Informar uma praça regional (opcional)</summary><form class="form-card" id="f-boi" style="margin-top:10px"><div class="neg-item"><div><label for="bo_praca">Praça *</label><input id="bo_praca" required placeholder="Ex.: Cuiabá"></div><div><label for="bo_uf">UF *</label><input id="bo_uf" required maxlength="2" placeholder="MT"></div><div><label for="bo_preco">R$ por arroba *</label><input id="bo_preco" required inputmode="decimal" placeholder="320,50"></div><div><label for="bo_var">Variação</label><input id="bo_var" placeholder="+0,8% na semana"></div></div><div class="acoes"><button class="btn" type="submit">Gravar praça</button></div><span class="meta">Só aparece para os usuários se alguma praça for informada.</span></form></details>`:""}`;
   }
   if(S.pag==="mercado-clima"){
-    const c=m.clima||[];
-    const cards=c.length?`<div class="cards">${c.map(x=>`<div class="card off" style="cursor:default"><span class="card-tag">${esc(x.uf||x.regiao||"")}</span><h3>${esc(x.condicao||"—")}</h3><p>${esc(x.detalhe||"")}</p></div>`).join("")}</div>`:`<div class="vazio">Previsão por região em breve.</div>`;
-    return `<div><h1 class="titulo">Clima</h1><p class="sub">Condições e previsão por região: o que pesa na decisão de plantar pasto.</p></div><div class="aviso-bloq">Em construção. Falta definir a fonte de previsão do tempo.</div>${cards}`;
+    const c=(m.clima||[]).slice().sort((x,y)=>String(x.uf).localeCompare(String(y.uf))||String(x.regiao).localeCompare(String(y.regiao)));
+    const ult=c.reduce((t,x)=>x.atualizado_em&&x.atualizado_em>t?x.atualizado_em:t,"");
+    const SECO=["pn","ps","e","n","cl","nv","g","ne","nd","vn"];const sem=["dom","seg","ter","qua","qui","sex","sáb"];
+    const ufs=[...new Set(c.map(x=>x.uf))];const fu=S.climaUf&&ufs.includes(S.climaUf)?S.climaUf:"Todos";
+    const cards=c.filter(x=>fu==="Todos"||x.uf===fu).map(x=>{const D=Array.isArray(x.dias)?x.dias:[];
+      return `<div class="cx"><div><span class="card-tag">${esc(x.uf||"")}</span><h3 style="font-size:18px;color:var(--azul-escuro)">${esc(x.regiao||"")}</h3></div><strong>${esc(x.condicao||"")}</strong><span class="meta">${esc(x.detalhe||"")}</span>
+        ${D.length?`<div style="display:grid;grid-template-columns:repeat(${D.length},minmax(0,1fr));gap:4px;text-align:center">${D.map(d=>{const dt=new Date(d.d+"T12:00:00");const ch=!SECO.includes(d.t);return `<div style="background:${ch?"var(--azul-claro)":"var(--amarelo-claro)"};border-radius:6px;padding:6px 2px;font-size:12px"><div style="font-weight:700">${sem[dt.getDay()]||""}</div><div>${ch?"chuva":"seco"}</div><div class="meta" style="font-size:11px">${d.mn}°/${d.mx}°</div></div>`;}).join("")}</div>`:""}</div>`;}).join("");
+    return `<div><h1 class="titulo">Clima</h1><p class="sub">Previsão para os próximos 7 dias nas principais praças de pastagem: dias com chuva e faixa de temperatura.${ult?" Atualizado em "+fmtDataHora(ult)+".":""}</p></div>
+    ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="clima-atualizar">Atualizar previsão agora</button></div>`:""}
+    ${ufs.length>1?`<div class="filtros">${["Todos",...ufs].map(u=>`<button class="chip" data-a="clima-uf" data-v="${esc(u)}" aria-pressed="${fu===u}">${esc(u)}</button>`).join("")}</div>`:""}
+    ${c.length?`<div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">${cards}</div><p class="precos-nota">Fonte: CPTEC/INPE, previsão por município. Azul: dia com chuva prevista. Amarelo: dia sem chuva.</p>`:`<div class="vazio">A previsão ainda não foi carregada.</div>`}`;
   }
   const n=(m.noticias||[]).slice().sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
   const quando=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
@@ -2209,6 +2218,7 @@ function vCriarAcesso(){
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required value="${esc(p.email||"")}"></div>
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(x=>`<option value="${esc(x)}" ${x===perfilSel?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    <div><label for="n_canal">Revenda do Conecta <span class="meta">— obrigatório para Gestor de Revenda e Vendedor de Revenda</span></label><select id="n_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}${k.tier?" · "+esc(k.tier):""}</option>`).join("")}</select><span class="meta">Só entram no portal pessoas de revendas que estão no programa Conecta. Se a revenda não está na lista, cadastre-a antes em Conecta Revendas.</span></div>
     <div><label for="n_rccrm">Vínculo no ranking (nome no CRM) <span class="meta">— para RC e Assessor de Vendas Digital</span></label><select id="n_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}">${esc(x.nome)}</option>`).join("")}</select></div>
     <div><label for="n_crmdono">Nome no CRM (painel Meu CRM) <span class="meta">— para Comercial Barenbrug</span></label><select id="n_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA])].map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select></div>
     <div><label class="check"><input type="checkbox" id="n_exige_curso" checked> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa fazer o curso (ex.: dono de revenda). Quem precisa e não concluir no prazo fica bloqueado nas demais áreas.</span></div>
@@ -2219,6 +2229,7 @@ function vCriarAcesso(){
   <details class="lote" ${S.loteAberto?"open":""}><summary>Cadastrar várias pessoas de uma vez</summary>
   <form class="form-card" id="f-lote" style="margin-top:10px">
     <div><label for="l_txt">Uma pessoa por linha: Nome; e-mail; perfil</label><textarea id="l_txt" rows="6" placeholder="Maria Souza; maria@revenda.com.br; Vendedor de Revenda&#10;João Lima; joao@revenda.com.br"></textarea><span class="meta">Pode colar direto do Excel (colunas Nome, E-mail, Perfil). Sem perfil na linha, vale o perfil padrão abaixo. Até 50 por vez.</span></div>
+    <div><label for="l_canal">Revenda do Conecta <span class="meta">— vale para todos os gestores e vendedores de revenda do lote</span></label><select id="l_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}</option>`).join("")}</select></div>
     <div><label for="l_perfil">Perfil padrão</label><select id="l_perfil">${PERFIS.filter(x=>x!=="Administrador").map(x=>`<option>${esc(x)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções (vale para todos do lote)</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="l_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
     <div><label class="check"><input type="checkbox" id="l_exige" checked> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label></div>
@@ -2243,13 +2254,21 @@ function vAcomp(){
   ${vSolic()}
   ${S.senhaReset&&S.senhaReset.viaSolic?caixaCred(S.senhaReset):""}
   ${vCriarAcesso()}
+  ${(()=>{const L=S.canaisLista||[];const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";const por={};S.equipe.filter(x=>x.canal_id).forEach(x=>{(por[x.canal_id]=por[x.canal_id]||[]).push(x);});
+    const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id);const com=L.filter(k=>por[k.id]),sem=L.filter(k=>!por[k.id]);
+    const pessoa=x=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.perfil)} · ${esc(x.email||"")} · ${x.feitas} de ${ORDEM.length} módulos · último acesso ${fmtDataHora(x.ultimo_acesso)}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`;
+    return `<section class="bloco"><h2 class="sec">Pessoas por revenda</h2><p class="sub" style="margin:0">A equipe de cada revenda do Conecta que já tem acesso ao portal. Toque na revenda para ver as pessoas.</p>
+    ${soltos.length?`<div class="aviso-bloq" style="margin:0"><strong>${soltos.length} ${soltos.length===1?"pessoa de revenda está":"pessoas de revenda estão"} sem revenda vinculada:</strong> ${soltos.map(x=>`<button class="link" data-a="verusuario" data-v="${x.id}">${esc(x.nome)}</button>`).join(" · ")}. Abra cada uma e escolha a revenda.</div>`:""}
+    ${com.length?com.map(k=>{const P=por[k.id].slice().sort((a,b)=>(a.perfil==="Gestor de Revenda"?0:1)-(b.perfil==="Gestor de Revenda"?0:1)||a.nome.localeCompare(b.nome));const g=P.filter(x=>x.perfil==="Gestor de Revenda").length;return `<details class="lote"><summary>${esc(k.nome)} · ${P.length} ${P.length===1?"pessoa":"pessoas"}${g?` (${g} ${g===1?"gestor":"gestores"})`:" (sem gestor)"}</summary><div class="lista" style="margin-top:8px">${P.map(pessoa).join("")}</div></details>`;}).join(""):`<div class="vazio">Nenhuma revenda tem pessoas cadastradas ainda. No cadastro acima, escolha o perfil Gestor ou Vendedor de Revenda e a revenda.</div>`}
+    ${sem.length?`<p class="dica">Revendas do Conecta ainda sem ninguém no portal: ${sem.map(k=>esc(k.nome)).join(" · ")}.</p>`:""}</section>`;})()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
-  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th><th>Sabiá</th><th>Cayana</th><th>Carcará</th><th>Geral</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}</td><td>${x.feitas} de ${ORDEM.length}</td><td>${cel("sabia")}</td><td>${cel("cayana")}</td><td>${cel("carcara")}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
+  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th><th>Sabiá</th><th>Cayana</th><th>Carcará</th><th>Geral</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td><td>${cel("sabia")}</td><td>${cel("cayana")}</td><td>${cel("carcara")}</td><td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
 }
 const totalQ=id=>{const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
 async function carregarEquipe(){
-  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone,ultimo_acesso");
+  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone,ultimo_acesso,canal_id");
+  try{const {data:cl}=await sb.from("canais").select("id,nome,tier").order("nome");S.canaisLista=cl||[];}catch(e){S.canaisLista=[];}
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota");
   const porUser={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||{})[r.etapa]=r.nota;});
   S.progPorUser=porUser;
@@ -2261,7 +2280,7 @@ async function carregarEquipe(){
     let soma=0; feitasAtivas.forEach(id=>soma+=(rs[id]/totalQ(id))*100);
     const conhecimento=feitasAtivas.length?Math.round(soma/feitasAtivas.length):null;
     const cult={};ETAPAS_ATIVAS.forEach(id=>{cult[id]=rs[id]!=null?Math.round(rs[id]/totalQ(id)*100):null;});
-    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,ultimo_acesso:p.ultimo_acesso,
+    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,ultimo_acesso:p.ultimo_acesso,canal_id:p.canal_id||null,
             feitas:feitasAtivas.length, conhecimento, cult};
   }).sort((a,b)=> (b.feitas-a.feitas) || ((b.conhecimento||0)-(a.conhecimento||0)) || a.nome.localeCompare(b.nome));
 }
@@ -2289,7 +2308,7 @@ function vUsuarioAdmin(){
     ${(S.adminForm.perfil==="Inside Sales"||ac.includes("inside-sales"))?`<div><label for="f_isv">Consultora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
     ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador"||ac.includes("meu-crm"))?`<div><label for="f_crmdono">Responsável no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...CRM_DONOS,...COMERCIAIS_EXTRA,...IS_TIME.map(x=>"IS: "+x[0]),S.adminForm.crm_dono].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(String(d).replace(/^IS: /,"Inside Sales · ")+(d==="Inside Sales"?" (time inteiro)":""))}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
-    ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
+    ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais&&S.canais.length?S.canais:(S.canaisLista||[])).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_cresp">Responsável comercial (recebe as negociações deste RC)</label><select id="f_cresp"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA,S.adminForm.comercial_resp].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
@@ -2468,6 +2487,8 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="is-sel"){S.isSel=v;render();}
   if(a==="noticias-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo os portais…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler as notícias agora.":`Notícias atualizadas (${r.data.gravadas} lidas${(r.data.falhas||[]).length?", com falha em: "+r.data.falhas.join(", "):""}).`);return;}
+  if(a==="clima-uf"){S.climaUf=v;render();return;}
+  if(a==="clima-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo a previsão…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_clima"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler a previsão agora.":`Previsão atualizada para ${r.data.gravadas} praças${(r.data.falhas||[]).length?" (sem dados: "+r.data.falhas.join(", ")+")":""}.`);return;}
   if(a==="boi-del"){const {error}=await sb.from("mercado_boi").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça excluída.");return;}
   if(a==="feed-f"){S.feedF=v;S.feedLim=20;render();return;}
   if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
@@ -2642,15 +2663,16 @@ document.addEventListener("submit",async ev=>{
     if(!linhas.length){S._erroLote="Cole pelo menos uma linha.";render();return;}
     if(linhas.length>50){S._erroLote="Envie até 50 pessoas por vez.";render();return;}
     if(!acessos.length){S._erroLote="Marque pelo menos uma seção de acesso.";render();return;}
+    const canalLote=f.querySelector("#l_canal").value||null;const revP=x=>x==="Gestor de Revenda"||x==="Vendedor de Revenda";
     const itens=linhas.map(l=>{const p=l.split(/[;\t]/).map(x=>x.trim());const pf=PERFIS.find(x=>x.toLowerCase()===(p[2]||"").toLowerCase());
-      return {nome:p[0]||"",email:(p[1]||"").toLowerCase(),perfil:pf||perfilPad,erro:(!p[0]||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p[1]||""))?"Linha inválida: use Nome; e-mail; perfil":((p[2]&&!pf)?"Perfil não reconhecido: "+p[2]:(pf==="Administrador"?"Administrador não pode ser criado em lote":null))};});
+      return {nome:p[0]||"",email:(p[1]||"").toLowerCase(),perfil:pf||perfilPad,erro:(!p[0]||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p[1]||""))?"Linha inválida: use Nome; e-mail; perfil":((p[2]&&!pf)?"Perfil não reconhecido: "+p[2]:(pf==="Administrador"?"Administrador não pode ser criado em lote":(revP(pf||perfilPad)&&!canalLote?"Escolha a revenda do Conecta para criar gestores e vendedores de revenda":null)))};});
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;
     for(let k=0;k<itens.length;k++){const it=itens[k];if(it.erro)continue;
       btn.textContent=`Criando ${k+1} de ${itens.length}…`;
       try{const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome:it.nome,email:it.email,perfil:it.perfil}});
         if(error){try{const bd=await error.context.json();it.erro=bd.error||"Não foi possível criar.";}catch(_){it.erro="Não foi possível criar.";}}
         else if(data&&data.error){it.erro=data.error;}
-        else{it.senha=data.senha;await sb.from("profiles").update({acessos,exige_curso:exige}).eq("email",it.email);}
+        else{it.senha=data.senha;await sb.from("profiles").update({acessos,exige_curso:exige}).eq("email",it.email);if(canalLote&&revP(it.perfil))await sb.from("profiles").update({canal_id:canalLote}).eq("email",it.email);}
       }catch(e){it.erro="Não foi possível criar.";}
     }
     S.loteRes=itens;S.equipe=null;render();return;
@@ -2714,6 +2736,8 @@ document.addEventListener("submit",async ev=>{
     const rcCrm=(perfil==="RC"||perfil==="Assessor de Vendas Digital")?(f.querySelector("#n_rccrm").value||null):null;
     const exigeCurso=!!(f.querySelector("#n_exige_curso")&&f.querySelector("#n_exige_curso").checked);
     S._erroCriar=null;
+    const ehRev=perfil==="Gestor de Revenda"||perfil==="Vendedor de Revenda";const canalId=ehRev?(f.querySelector("#n_canal").value||null):null;
+    if(ehRev&&!canalId){S._erroCriar="Escolha a revenda do Conecta desta pessoa. Só entram no portal pessoas de revendas do programa.";render();return;}
     if(!acessos.length){S._erroCriar="Marque pelo menos uma seção de acesso.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Criando…";
     const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome,email,perfil}});
@@ -2722,6 +2746,7 @@ document.addEventListener("submit",async ev=>{
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
     await sb.from("profiles").update({acessos,exige_curso:exigeCurso}).eq("email",email);
+    if(canalId){const rc=await sb.from("profiles").update({canal_id:canalId}).eq("email",email).select("canal_id").maybeSingle();if(rc.error||!rc.data||rc.data.canal_id!==canalId)aviso("Acesso criado, mas a revenda não foi vinculada. Abra a pessoa e escolha a revenda.");}
     const elCdN=f.querySelector("#n_crmdono");if(perfil==="Comercial Barenbrug"&&elCdN&&elCdN.value){await sb.from("profiles").update({crm_dono:elCdN.value}).eq("email",email);}
     if(S.prefill&&S.prefill.solicId){await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",S.prefill.solicId);}
     if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
