@@ -731,7 +731,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111132640";
+const APP_VER="20261111133527";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1282,7 +1282,7 @@ function montaPainelCRM(dono,deals,perdMes){
     if(fech){if(d.st==="V"?(b&&b>=ini&&b<=fim):((b&&b>=ini&&b<=fim)||!b)){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
     const rt=d.rt||1,w=CRM_PESO[rt]||.05,dias=Math.round((hoje-new Date(String(d.upd).slice(0,10)+"T00:00:00"))/864e5),venc=!!(b&&b<hoje);
     const [h,c]=soma(d,"ah","ac",q.acult);
-    q.pondh+=h*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
+    q.pondh+=h*w;q.pondc=(q.pondc||0)+c*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
     if(b&&b>=new Date(hoje.getFullYear(),hoje.getMonth(),1)){const k=iso(b).slice(0,7);const m=meses[k]||(meses[k]={m:k,rs:0,pond:0,n:0});m.rs+=tp;m.pond+=tp*w;m.n++;}
     const x=rc(rp);x.an++;x.ars+=tp;if(dias>15)x.sem++;if(venc)x.venc++;if(b&&(b-hoje)/864e5>=0&&(b-hoje)/864e5<=30){x.b30++;x.b30rs+=tp;}
     ab.push({n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
@@ -1306,7 +1306,7 @@ const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(s.toUpperCase()==
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s\b.*franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
 const REP_INTERNO=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;
-const IS_TIME=[["Laura","Laura Costa",null],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
+const IS_TIME=[["Laura","Laura Costa",null],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"],["Felipe","Felipe Piccoli","Felipe Piccoli"]];
 const META_IS_KG=60000;
 function linhasMapa(dono,deals,repPadrao){
   const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
@@ -1440,6 +1440,7 @@ async function atualizarCRM(prog){
     if(dono==="Inside Sales")continue;
     const L=await ler(dono,dono);if(!L){res.push(dono+": erro na leitura");continue;}
     cache[dono]=L;const todos=L.todos;
+    if(dono==="Felipe Piccoli"){await sb.from("crm_painel").delete().eq("dono","Felipe Piccoli");continue;}
     const linha=montaPainelCRM(dono,todos,L.pm);
     const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
     const em=dono==="Mayane Costa"?null:await gravaMapa(dono,linhasMapa(dono,todos));
@@ -1447,7 +1448,7 @@ async function atualizarCRM(prog){
   }
   {const time=[];let pmT=0,okT=true;
   for(const [curto,nomeRep,jaLido] of IS_TIME){
-    const L=(jaLido&&cache[jaLido])||await ler(curto==="Mayane"?"Mayane Costa":curto,"Inside Sales · "+curto);
+    const L=(jaLido&&cache[jaLido])||await ler(jaLido||curto,"Inside Sales · "+curto);
     if(!L){res.push("Inside Sales "+curto+": erro na leitura");okT=false;continue;}
     time.push(...L.todos);pmT+=L.pm;
     const linha=montaPainelCRM("IS: "+curto,L.todos,L.pm);linha.equipe="Inside Sales";
@@ -1455,7 +1456,7 @@ async function atualizarCRM(prog){
     res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`));
   }
   if(okT){const linha=montaPainelCRM("Inside Sales",time,pmT);linha.equipe="Inside Sales";const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
-    await sb.from("crm_mapa").delete().in("dono",["Maria Giulia","Thaís Franco","Maria Eduarda","Mayane Costa"]);
+    await sb.from("crm_mapa").delete().in("dono",["Maria Giulia","Thaís Franco","Maria Eduarda","Mayane Costa","Felipe Piccoli"]);
     const em=await gravaMapa("Inside Sales",linhasMapa("Inside Sales",time));
     res.push("Inside Sales (time): "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));}
   }
@@ -1494,7 +1495,7 @@ function vMeuCRMPainel(X){
   const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
-  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: Laura, Maria Giulia, Thaís, Maria Eduarda e Mayane. ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
+  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: Laura, Maria Giulia, Thaís, Maria Eduarda, Mayane e Felipe. ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
@@ -1503,6 +1504,9 @@ function vMeuCRMPainel(X){
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção ponderada</span><strong>${fmtK(r.ponderado_rs)}</strong><span class="meta">em aberto × chance de fechar</span></div>
     <div class="metric"><span>Pausadas</span><strong>${fmtN(r.pausadas_n)}</strong></div>
   </div>
+  ${Q?(()=>{const kg=n=>Math.round(Number(n)||0).toLocaleString("pt-BR")+" kg";const ph=+Q.pondh||0,pc=+Q.pondc||0;const temP=("pondh" in Q);
+    const cartao=(t,tot,h,c,sub)=>`<div class="metric"><span>${t}</span><strong>${kg(tot)}</strong><span class="meta">híbridos ${kg(h)}</span><span class="meta">convencionais ${kg(c)}</span>${sub?`<span class="meta">${sub}</span>`:""}</div>`;
+    return `<section class="bloco"><h2 class="sec">Volume em quilos</h2><div class="metrics">${cartao("Vendido na safra",Q.vh+Q.vc,Q.vh,Q.vc)}${cartao("Em aberto",Q.ah+Q.ac,Q.ah,Q.ac)}${temP?cartao("Ponderado",ph+pc,ph,pc,"em aberto × chance de fechar"):""}${temP?cartao("Vendido + ponderado",Q.vh+Q.vc+ph+pc,Q.vh+ph,Q.vc+pc,"projeção da safra"):""}</div></section>`;})():""}
   <div class="metrics" style="margin-top:10px">
     <div class="metric" style="${r.sem_att_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Sem atualização há +15 dias</span><strong>${fmtN(r.sem_att_n)}</strong></div>
     <div class="metric" style="${r.atrasadas_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Faturamento vencido</span><strong>${fmtN(r.atrasadas_n)}</strong></div>
@@ -1977,7 +1981,9 @@ function metricasCanal(c){
   const cnt=st=>ac.filter(a=>(a.status||"Em Análise")===st).length;
   const aprov=som("Aprovado"),analise=som("Em Análise");
   const faltaKg=meta?Math.max(0,meta-N("kg_hib")):0;
-  return {g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+  const pxH=N("kg_hib")>0?N("rs_hib")/N("kg_hib"):(Number(c.valor_kg)||0);
+  const rsHMeta=Math.max(N("rs_hib"),meta*pxH);const mIgdb=rsHMeta*g.ih+N("rs_conv")*g.ic,mBonus=rsHMeta*g.b,mTotal=Math.min(RV_TETO,mIgdb+mBonus);
+  return {pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,aprovIG:som("Aprovado",false),aprovBP:som("Aprovado",true),analiseIG:som("Em Análise",false),saldo:igdb-som("Aprovado",false),faltaKg,soma:aprov+analise};
 }
@@ -1992,7 +1998,7 @@ function vRVPainel(){
   const acoes=L.flatMap(x=>((S.acoesCanal||{})[x.c.id]||[]).map(a=>({a,c:x.c}))).filter(x=>fl==="Todas"||(x.a.status||"Em Análise")===fl);
   const semPgd=L.filter(x=>!x.m.n).map(x=>x.c.nome);
   const comAprov=L.filter(x=>x.m.nAprov>0);
-  return `<div><h1 class="titulo">Painel do programa · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} canais com contrato. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores do programa são calculados aqui, pela regra oficial.</p></div>
+  return `<div><h1 class="titulo">${ehAdmin()?"Painel do programa":"Minhas revendas"} · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} ${ehAdmin()?"canais com contrato":(L.length===1?"canal sob sua responsabilidade":"canais sob sua responsabilidade")}. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores do programa são calculados aqui, pela regra oficial.</p></div>
   <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar · estimativa</h2><p class="precos-nota" style="margin:0 0 10px">Valores estimados a partir dos pedidos do CRM, a confirmar pelo Financeiro. O valor efetivo depende da liquidação das notas.</p>
   <div class="metrics">
     <div class="metric"><span>IGDB sobre pedidos fechados</span><strong>${fmtK0(T("igdb"))}</strong><span class="meta">híbridos ${fmtK0(T("igdbH"))} · convencionais ${fmtK0(T("igdbC"))}</span></div>
@@ -2006,7 +2012,20 @@ function vRVPainel(){
     <div class="metric"><span>PGD aprovado</span><strong>${fmtK0(T("aprov"))}</strong><span class="meta">${T("nAprov")} ações em ${comAprov.length} canais</span></div>
     <div class="metric" style="${T("nAnalise")?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>PGD aguardando análise</span><strong>${T("nAnalise")} ações</strong><span class="meta">${fmtK0(T("analise"))} em valor informado</span></div>
   </div></section>
-  <section class="bloco"><h2 class="sec">Canal a canal</h2>
+  <section class="bloco"><h2 class="sec">Se cada canal bater a meta</h2>
+  <p class="sub" style="margin:0">Quanto o programa custa com 100% da meta de híbridos de cada canal: o volume da meta ao preço médio que o canal já pratica (ou o valor por kg do contrato, quando ainda não há pedido), mais os convencionais já fechados. Com a meta batida, o Bônus de Performance entra em 100% do tier.</p>
+  <div class="metrics">
+    <div class="metric"><span>IGDB na meta</span><strong>${fmtK0(T("mIgdb"))}</strong><span class="meta">híbridos e convencionais</span></div>
+    <div class="metric"><span>Bônus de Performance na meta</span><strong>${fmtK0(T("mBonus"))}</strong><span class="meta">100% do tier sobre híbridos</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>IGDB + Bônus na meta</span><strong>${fmtK0(T("mTotal"))}</strong><span class="meta">após o teto de ${fmtK0(RV_TETO)} por canal</span></div>
+    <div class="metric"><span>Hoje, pelo que já foi vendido</span><strong>${fmtK0(T("total"))}</strong><span class="meta">IGDB ${fmtK0(T("igdb"))} · bônus ${fmtK0(T("bonus"))}</span></div>
+  </div>
+  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th class="val">Meta híb.</th><th class="val">Falta vender</th><th class="val">Preço médio</th><th class="val">IGDB na meta</th><th class="val">Bônus na meta</th><th class="val">IGDB + Bônus</th></tr></thead><tbody>
+  ${L.map(({c,m})=>`<tr><td><strong>${esc(c.nome)}</strong>${m.mTeto?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}${m.semPreco?`<br><span class="meta" style="color:#c0392b">sem pedido e sem valor por kg no contrato</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${fmtKg(m.meta)}</td><td class="val">${m.faltaKg?fmtKg(m.faltaKg):`<strong style="color:#1e8449">meta batida</strong>`}</td><td class="val">${m.pxH?"R$ "+m.pxH.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"/kg":"—"}</td><td class="val">${fmtK0(m.mIgdb)}</td><td class="val">${fmtK0(m.mBonus)}</td><td class="val"><strong>${fmtK0(m.mTotal)}</strong></td></tr>`).join("")}
+  <tr><td><strong>Total</strong></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("faltaKg"))}</td><td></td><td class="val">${fmtK0(T("mIgdb"))}</td><td class="val">${fmtK0(T("mBonus"))}</td><td class="val"><strong>${fmtK0(T("mTotal"))}</strong></td></tr>
+  </tbody></table></div>
+  ${L.some(x=>x.m.semPreco)?`<p class="precos-nota">Canais sem pedido de híbridos e sem valor por kg no contrato entram com zero neste cenário. Informe o valor por kg no cadastro do canal para estimar.</p>`:""}</section>
+  <section class="bloco"><h2 class="sec">Canal a canal · situação de hoje</h2>
   <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th class="val">Meta híb.</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th class="val">IGDB</th><th class="val">Bônus</th><th class="val">Total</th><th class="val">PGD aprovado</th><th>Ações</th><th></th></tr></thead><tbody>
   ${L.map(({c,m})=>`<tr><td><strong>${esc(c.nome)}</strong>${m.teto?`<br><span class="meta" style="color:#c0392b">teto atingido</span>`:""}${!m.piso?`<br><span class="meta" style="color:#c0392b">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${fmtKg(m.meta)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":`<strong style="color:${m.fator===1?"#1e8449":m.fator?"#8a6d00":"#c0392b"}">${pctTxt(m.ating)}</strong>`}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.total)}</strong></td><td class="val">${fmtK0(m.aprov)}</td><td>${m.n?`${m.nAprov} aprov. · ${m.nAnalise} em análise${m.nReprov?` · ${m.nReprov} reprov.`:""}`:`<span class="meta">sem PGD</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("")}
   <tr><td><strong>Total</strong></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("kgH"))}</td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td><td class="val">${fmtK0(T("igdb"))}</td><td class="val">${fmtK0(T("bonus"))}</td><td class="val"><strong>${fmtK0(T("total"))}</strong></td><td class="val">${fmtK0(T("aprov"))}</td><td>${T("n")} ações</td><td></td></tr>
@@ -2304,6 +2323,7 @@ function vUsuarioAdmin(){
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
     ${ac.filter(id=>ABAS_REG[id]).length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver. Cada marcação é gravada na hora.</span>${ac.filter(id=>ABAS_REG[id]).map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminForm.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}</label>`;}).join("")}</div>`).join("")}</div>`:""}
+    ${S.adminForm.perfil==="Comercial Barenbrug"?`<div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">No Conecta Revendas ele vê só as revendas marcadas aqui. Cada marcação é gravada na hora. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canais||[]).map(k=>{const meu=k.comercial_id===u.id;const outro=k.comercial_id&&!meu;return `<label class="check"><input type="checkbox" data-rev="${esc(k.id)}" ${meu?"checked":""}> ${esc(k.nome)}${outro?' <span class="meta">(hoje com outro comercial)</span>':""}</label>`;}).join("")||'<span class="meta">Carregando as revendas…</span>'}</div></div>`:""}
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${(S.adminForm.perfil==="Inside Sales"||ac.includes("inside-sales"))?`<div><label for="f_isv">Consultora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
@@ -2336,7 +2356,7 @@ async function abrirUsuario(id){
 
 /* ---------- render ---------- */
 function render(){renderApp();paintTour();}
-const COMERCIAIS_EXTRA=["Mayane Costa","Felipe Piccoli"];
+const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Trilha"],["base","Base de conhecimento"],["cert","Certificado"],["precos","Tabela de preços"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["precos","Tabela de preços"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
@@ -2544,6 +2564,12 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(c.id==="foto_arq"&&c.files&&c.files[0]){await enviarFoto(c.files[0]);return;}
+  if(S.pag==="usuario"&&S.adminUser&&c.dataset&&c.dataset.rev&&c.closest&&c.closest("#f-usuario")){
+    if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}
+    const novo=c.checked?S.adminUser.id:null;const {data:volta,error}=await sb.from("canais").update({comercial_id:novo}).eq("id",c.dataset.rev).select("id,comercial_id").maybeSingle();
+    if(error||!volta||(volta.comercial_id||null)!==novo){aviso("Esta alteração NÃO foi gravada. Recarregue a página e tente de novo.");}else{const k=(S.canais||[]).find(x=>x.id===c.dataset.rev);if(k)k.comercial_id=novo;aviso(novo?"Revenda vinculada a este comercial.":"Revenda desvinculada.");}
+    const y=window.scrollY;render();window.scrollTo(0,y);return;
+  }
   if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige"))){
     if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}const up={};
     if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
