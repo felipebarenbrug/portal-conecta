@@ -731,7 +731,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111132149";
+const APP_VER="20261111132254";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1042,6 +1042,12 @@ async function carregarDuvidas(){
 }
 
 /* ===== Feed da pagina inicial: mural + tira-duvidas ===== */
+const ytDe=u=>{const m=/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/.exec(String(u||""));return m?m[1]:"";};
+async function imagemReduzida(file,max){
+  const img=await new Promise((ok,er)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=er;i.src=URL.createObjectURL(file);});
+  const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
+  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);return await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.85));
+}
 const postVisivel=p=>ehAdmin()||S.perfil==="Comercial Barenbrug"||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
 const dirDe=id=>(S.dir&&id&&S.dir[id])||null;
 const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";return t?` <span class="meta">· ${esc(t)}</span>`:"";};
@@ -1066,7 +1072,8 @@ function marcarFeedVisto(){
 }
 function formPost(){return `<form class="form-card" id="f-post">
       <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…"></textarea></div>
-      <div><label for="p_anexo">Link / anexo (opcional)</label><input id="p_anexo" type="url" placeholder="https://…"></div>
+      <div><label for="p_img">Foto (opcional)</label><input id="p_img" type="file" accept="image/*"><span class="meta">A imagem é reduzida automaticamente antes de subir.</span></div>
+      <div><label for="p_anexo">Vídeo do YouTube ou link (opcional)</label><input id="p_anexo" type="url" placeholder="https://www.youtube.com/watch?v=… ou outro link"><span class="meta">Link do YouTube aparece como vídeo dentro do comunicado. Outros links viram um botão.</span></div>
       <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${k==="todos"?"checked":""}> ${l}</label>`).join("")}</div></div>
       <div><label class="check"><input type="checkbox" id="p_fix"> Fixar no topo</label></div>
       ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -1144,7 +1151,8 @@ function cartaoPost(p){
       ${p.fixado?'<span class="card-tag">Fixado</span> ':''}${bv?'<span class="card-tag">Novo integrante</span>':''}
       <div class="autor" style="margin-top:4px">${avatar(p.autor||p.ref_user,p.autor_nome||"Barenbrug",40)}<div><span><strong>${esc(p.autor_nome||"Barenbrug")}</strong>${perfilTxt(p.autor)} ${bv?"":"publicou"} ${novoDesde&&new Date(p.criado_em).getTime()>novoDesde&&p.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div></div>
       <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
-      ${p.anexo_url&&!/youtu/.test(p.anexo_url)?`<p><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Ver anexo ↗</a></p>`:""}
+      ${p.imagem_url?`<img src="${esc(p.imagem_url)}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
+      ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
       <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · <button class="link" data-a="post-del" data-v="${p.id}">excluir</button>`:""}</div>
     </section>`;
 }
@@ -2742,7 +2750,13 @@ document.addEventListener("submit",async ev=>{
     if(!texto){S._erro="Escreva a mensagem.";render();return;}
     if(!publico.length){S._erro="Escolha ao menos um público.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Publicando…";
-    const {error}=await sb.from("posts").insert({autor_nome:S.profile.nome||"Barenbrug",texto,anexo_url:anexo||null,publico,fixado,tipo:"comunicado"});
+    let imagem_url=null;const arq=f.querySelector("#p_img");
+    if(arq&&arq.files&&arq.files[0]){
+      if(!/^image\//.test(arq.files[0].type)){S._erro="A foto precisa ser um arquivo de imagem.";render();return;}
+      try{const blob=await imagemReduzida(arq.files[0],1400);const caminho="post-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+".jpg";const up=await sb.storage.from("mural").upload(caminho,blob,{contentType:"image/jpeg"});if(up.error)throw up.error;imagem_url=sb.storage.from("mural").getPublicUrl(caminho).data.publicUrl;}
+      catch(e){S._erro="Não foi possível enviar a foto. Tente outra imagem.";render();return;}
+    }
+    const {error}=await sb.from("posts").insert({autor_nome:S.profile.nome||"Barenbrug",texto,anexo_url:anexo||null,imagem_url,publico,fixado,tipo:"comunicado"});
     if(error){S._erro="Não foi possível publicar. Verifique se você é administrador.";render();return;}
     S._erro=null;S.postNovo=false;S.posts=null;render();if(!S.secao)pedirFeed();aviso("Comunicado publicado.");return;
   }
