@@ -257,6 +257,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .calc-total strong{font-size:22px;white-space:nowrap}
 @media (max-width:760px){.calc-grid{grid-template-columns:1fr}.calc-res{position:static}}
 .linha .meta{display:block}
+.neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
 .aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
 .ajuda-b{background:none;border:1px solid rgba(0,0,0,.18);color:inherit;width:26px;height:26px;border-radius:50%;font-weight:700;cursor:pointer;line-height:1;margin-left:8px;flex:0 0 auto}
 .tour-bg{position:fixed;inset:0;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
@@ -689,7 +690,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261110233350";
+const APP_VER="20261111075611";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 async function boot(){
   checarVersao();
@@ -994,7 +995,46 @@ function vDuvidas(){
     ${L.length?`<div style="display:grid;gap:12px">${L.map(item).join("")}</div>`:`<div class="vazio">${S.duvidas.length?"Nenhuma pergunta com esse filtro.":"Ainda não há perguntas. Faça a primeira."}</div>`}
   </section>`;
 }
-async function carregarCRM(){try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
+const CULT_PEDIDO=["Sabiá","Cayana","Carcará","Mulato II","Marandu","Piatã","Xaraés","Mombaça","Massai","Ruziziensis","Cynodon","Azevém","Trevo","Outro"];
+const ST_NEG={"Enviado":"selo-pend","No CRM":"selo-ok","Devolvido":"selo-pend"};
+async function carregarRCNeg(){try{const {data}=await sb.from("rc_negociacoes").select("*").order("criado_em",{ascending:false}).limit(200);S.rcNeg=data||[];}catch(e){S.rcNeg=[];}}
+const docLimpo=v=>String(v||"").replace(/\D/g,"");
+const docFmt=v=>{const d=docLimpo(v);return d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,"$1.$2.$3/$4-$5"):d.length===11?d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4"):v||"";};
+function cartaoNeg(x,gestor){
+  const it=Array.isArray(x.itens)?x.itens:[];
+  return `<div class="neg"><div class="l1"><span>${esc(x.cliente_nome)}</span><span>${x.valor_total?"R$ "+Math.round(x.valor_total).toLocaleString("pt-BR"):""}</span></div>
+    <span class="meta">${gestor?esc(x.rc_nome||"")+" · ":""}${esc(docFmt(x.cliente_doc))}${x.cliente_cidade?" · "+esc(x.cliente_cidade):""}${x.cliente_uf?"/"+esc(x.cliente_uf):""} · enviada em ${fmtDataHora(x.criado_em)}</span>
+    <span class="meta">${it.map(i=>`${esc(i.cultivar)} ${Number(i.kg||0).toLocaleString("pt-BR")} kg${i.preco?` a R$ ${Number(i.preco).toLocaleString("pt-BR",{minimumFractionDigits:2})}/kg`:""}`).join(" · ")}</span>
+    <span class="meta">${x.data_faturamento?"Faturamento "+x.data_faturamento.split("-").reverse().join("/")+" · ":""}${esc(x.forma||"")}${x.cond_pagamento?" · "+esc(x.cond_pagamento):""}${x.frete?" · frete "+esc(x.frete):""}</span>
+    ${x.anotacao?`<span class="meta">Anotação: ${esc(x.anotacao)}</span>`:""}
+    <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="${ST_NEG[x.status]||"selo-pend"}">${esc(x.status==="Enviado"?"Aguardando o comercial":x.status==="No CRM"?"Lançada no CRM":x.status)}</span>${x.crm_erro?`<span class="meta" style="color:#c0392b">${esc(x.crm_erro)}</span>`:""}
+    ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Marcar como lançada no CRM</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
+}
+function vRCPedido(){
+  const L=S.rcNeg;const n=S.negItens||1;const p=S.profile||{};
+  const linhas=Array.from({length:n},(_,i)=>`<div class="neg-item"><div><label for="ni_c${i}">Cultivar</label><select id="ni_c${i}">${CULT_PEDIDO.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="ni_k${i}">Quantidade (kg)</label><input id="ni_k${i}" type="text" inputmode="numeric" ${i===0?"required":""} placeholder="Ex: 500"></div><div><label for="ni_p${i}">Preço por kg (R$)</label><input id="ni_p${i}" type="text" inputmode="decimal" placeholder="Ex: 32,50"></div></div>`).join("");
+  return `<div><h1 class="titulo">Enviar negociação</h1><p class="sub">Preencha os dados da venda. Ela vai para ${p.comercial_resp?`<strong>${esc(p.comercial_resp)}</strong>, seu responsável comercial`:"o seu responsável comercial na Barenbrug"}, que revisa e lança no CRM. Você acompanha o andamento aqui embaixo.</p></div>
+  ${!p.comercial_resp?`<div class="nota-admin">Seu acesso ainda não tem um responsável comercial vinculado. Você pode enviar; a Barenbrug direciona a negociação.</div>`:""}
+  <form class="form-card" id="f-negrc">
+    <h2 class="sec" style="margin:0">Cliente</h2>
+    <div><label for="ng_doc">CNPJ ou CPF *</label><input id="ng_doc" type="text" inputmode="numeric" required placeholder="Somente números"><span class="meta">É pelo documento que a Barenbrug confere se o cliente já está cadastrado.</span></div>
+    <div><label for="ng_nome">Nome do cliente ou fazenda *</label><input id="ng_nome" required maxlength="120"></div>
+    <div class="neg-item"><div><label for="ng_cid">Cidade *</label><input id="ng_cid" required></div><div><label for="ng_uf">UF *</label><input id="ng_uf" required maxlength="2" autocapitalize="characters" placeholder="MT"></div><div><label class="check" style="margin-top:22px"><input type="checkbox" id="ng_novo"> Cliente novo</label></div></div>
+    <h2 class="sec" style="margin:8px 0 0">Produtos</h2>
+    ${linhas}
+    <div><button class="link" type="button" data-a="neg-item" data-v="1">+ Adicionar produto</button>${n>1?` · <button class="link" type="button" data-a="neg-item" data-v="-1">Remover último</button>`:""}</div>
+    <h2 class="sec" style="margin:8px 0 0">Condições</h2>
+    <div class="neg-item"><div><label for="ng_fat">Data de entrega / faturamento *</label><input id="ng_fat" type="date" required></div><div><label for="ng_forma">Forma da negociação *</label><select id="ng_forma"><option>Venda direta ao produtor</option><option>Para Canal (Sell In)</option></select></div></div>
+    <div class="neg-item"><div><label for="ng_cond">Condição de pagamento *</label><input id="ng_cond" required placeholder="Ex: 30 / 60"></div><div><label for="ng_frete">Frete</label><input id="ng_frete" placeholder="Ex: CIF, R$ 1.800"></div></div>
+    <div><label for="ng_obs">Anotação para o comercial</label><textarea id="ng_obs" rows="3" maxlength="1500" placeholder="Contexto da venda, contato do cliente, observações de entrega."></textarea><span class="meta">Vai registrada junto com a negociação no CRM.</span></div>
+    ${S._erroNeg?`<div class="erro" role="alert">${esc(S._erroNeg)}</div>`:""}
+    <div><button class="btn" type="submit">Enviar negociação</button></div>
+  </form>
+  <section class="bloco"><h2 class="sec">Minhas negociações enviadas${L?` (${L.length})`:""}</h2>
+  ${L==null?`<div class="carregando">Carregando…</div>`:L.length?`<div class="lista">${L.map(x=>cartaoNeg(x,false)).join("")}</div>`:`<div class="vazio">Você ainda não enviou negociações por aqui.</div>`}</section>`;
+}
+async function carregarCRM(){
+  if(S.perfil==="Comercial Barenbrug"||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
 function vMeuCRM(){
   const rows=S.crm;if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
   const adm=ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
@@ -1032,6 +1072,7 @@ function vMeuCRM(){
       ${al?`<span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span>`:(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
     ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" são negociações em aberto com o campo Representante vazio no CRM. Preencha o campo para elas aparecerem no RC certo.</p>`:""}
   </section>`:""}
+  ${(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
   <section class="bloco"><h2 class="sec">Principais negociações em aberto</h2>
     ${top.length?`<div class="lista">${top.map(x=>neg(x)).join("")}</div>`:`<div class="vazio">Nenhuma negociação em aberto.</div>`}
   </section>
@@ -1206,7 +1247,7 @@ const vePainelRC=()=>ehAdmin()||S.perfil==="RC"||S.perfil==="Assessor de Vendas 
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 function subnavRC(){
-  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-calc","Calculadora"],["precos","Tabela de preços"]];
+  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["precos","Tabela de preços"]];
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||S.perfil==="Comercial Barenbrug")?"Mapa de vendas":"Meu mapa"]);}
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -1762,6 +1803,7 @@ function vUsuarioAdmin(){
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
     ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador")?`<div><label for="f_crmdono">Nome no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),S.adminForm.crm_dono].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(d)}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
     ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
+    ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_cresp">Responsável comercial (recebe as negociações deste RC)</label><select id="f_cresp"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),S.adminForm.comercial_resp].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -1809,7 +1851,8 @@ function renderApp(){
   }
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc,"rc-pedido":vRCPedido}[S.pag]||vRCApresentacao;
+    if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     return;
@@ -1937,6 +1980,8 @@ document.addEventListener("click",async ev=>{
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
+  if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e){if(e.type==="checkbox")e.checked=val;else e.value=val;}});return;}
+  if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
   if(a==="duv-nova"){S.duvNova=v==="1";render();return;}
   if(a==="duv-filtro"){S.duvFiltro=v;render();return;}
@@ -2026,6 +2071,16 @@ document.addEventListener("submit",async ev=>{
     S.acessoMsg=senha?"Se este e-mail tiver acesso ao portal, a equipe Barenbrug envia uma senha provisória para você em breve.":"Recebemos o seu pedido. A equipe Barenbrug analisa e envia o seu acesso por WhatsApp ou e-mail.";
     S.acessoModo="ok";S._erro=null;render();return;
   }
+  if(f.id==="f-negrc"){
+    const q=id=>(f.querySelector(id)?f.querySelector(id).value.trim():"");const doc=docLimpo(q("#ng_doc"));
+    if(doc.length!==11&&doc.length!==14){S._erroNeg="Informe um CPF (11 números) ou CNPJ (14 números).";render();return;}
+    const itens=[];for(let i=0;i<(S.negItens||1);i++){const kg=parseFloat(docLimpo(q("#ni_k"+i)))||0;const pr=parseFloat(q("#ni_p"+i).replace(/\./g,"").replace(",","."))||0;if(kg>0)itens.push({cultivar:q("#ni_c"+i),kg,preco:pr});}
+    if(!itens.length){S._erroNeg="Informe pelo menos um produto com quantidade.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
+    const {error}=await sb.from("rc_negociacoes").insert({cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")});
+    if(error){S._erroNeg="Não foi possível enviar. Tente de novo em instantes.";render();return;}
+    S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso("Negociação enviada ao seu responsável comercial.");return;
+  }
   if(f.id==="f-duvida"){
     const pergunta=f.querySelector("#d_txt").value.trim();const tema=f.querySelector("#d_tema").value;
     if(pergunta.length<5){aviso("Escreva a pergunta com um pouco mais de detalhe.");return;}
@@ -2094,6 +2149,7 @@ document.addEventListener("submit",async ev=>{
     const elIsv=f.querySelector("#f_isv");if(elIsv)dados.is_vendedora=elIsv.value||null;
     const elCd=f.querySelector("#f_crmdono");if(elCd)dados.crm_dono=elCd.value||null;
     const elCn=f.querySelector("#f_canal");if(elCn)dados.canal_id=elCn.value||null;
+    const elCr=f.querySelector("#f_cresp");if(elCr)dados.comercial_resp=elCr.value||null;
     const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
