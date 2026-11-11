@@ -224,7 +224,8 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
 .card-caso.ativa{outline:2px solid var(--amarelo,#ffdb00)}
 .card-caso img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}
 .card-caso span{display:block;padding:8px 10px;font-size:12.5px;font-weight:600;line-height:1.3}
-@media(prefers-color-scheme:dark){.tour-card{background:#15202b;color:#eef}.tour-card p{color:#cdd}.card-caso{background:#15202b;border-color:#2a3b4a}}
+.form-card textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid var(--linha,#ccc);border-radius:8px;resize:vertical}
+@media(prefers-color-scheme:dark){.tour-card{background:#15202b;color:#eef}.tour-card p{color:#cdd}.card-caso{background:#15202b;border-color:#2a3b4a}.form-card textarea{background:#15202b;color:#eef;border-color:#2a3b4a}}
 </style>
 </head>
 <body>
@@ -436,9 +437,12 @@ const SECOES=[
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens, vídeo institucional e brindes — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
   {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null},
-  {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null}
+  {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null},
+  {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
+  {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["mural","Mural"],["mercado","Mercado"]];
+const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
  {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Sabiá","Cayana","Carcará"],link:""},
@@ -847,6 +851,80 @@ function vInsideSales(){
   <section class="bloco"><h2 class="sec">Faturamento por mês</h2>
     ${meses.length?meses.map(m=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:72px;font-size:13px;font-weight:600">${esc(m.mes)}</span><span style="flex:1;height:14px;background:var(--linha,#eee);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(100*(m.rs||0)/maxM)}%;background:var(--azul-escuro,#0a5)"></i></span><span style="width:90px;text-align:right;font-weight:700">${fmtR(m.rs)}</span></div>`).join(""):`<div class="vazio">Sem dados mensais ainda.</div>`}</section>`;
 }
+function subnavSimples(nome){
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <span class="secao-nome">${esc(nome)}</span></div></div>`;
+}
+const pubLabel=k=>{const f=PUBLICOS.find(y=>y[0]===k);return f?f[1]:k;};
+async function carregarPosts(){try{
+  const {data}=await sb.from("posts").select("*").order("fixado",{ascending:false}).order("criado_em",{ascending:false});
+  S.posts=data||[];
+  const rc={};const {data:rs}=await sb.from("post_reacoes").select("post_id,tipo,user_id");
+  (rs||[]).forEach(r=>{const o=(rc[r.post_id]=rc[r.post_id]||{total:0,mine:null,tipos:{}});o.total++;o.tipos[r.tipo]=(o.tipos[r.tipo]||0)+1;if(r.user_id===S.user.id)o.mine=r.tipo;});
+  S.postReac=rc;
+}catch(e){S.posts=[];S.postReac={};}}
+const REACOES=[["like","👍"],["amei","❤️"],["aplauso","👏"]];
+function vMural(){
+  const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
+  if(S.posts==null)return `<div class="carregando">Carregando o mural…</div>`;
+  const vis=p=>admin||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
+  const lista=(S.posts||[]).filter(vis);
+  const card=p=>{
+    const r=(S.postReac&&S.postReac[p.id])||{total:0,mine:null,tipos:{}};
+    const bv=p.tipo==="boas-vindas";
+    const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(pubLabel).join(", ")}</span>`:"";
+    const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}">${e} ${r.tipos[k]||0}</button>`).join("");
+    return `<section class="bloco" ${p.fixado?'style="border:1px solid var(--amarelo,#ffdb00)"':''}>
+      ${p.fixado?'<span class="card-tag">📌 Fixado</span> ':''}${bv?'<span class="card-tag">👋 Novo integrante</span>':''}
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:4px"><strong>${esc(p.autor_nome||"Barenbrug")}</strong><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div>
+      <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
+      ${p.anexo_url&&!/youtu/.test(p.anexo_url)?`<p><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Ver anexo ↗</a></p>`:""}
+      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · <button class="link" data-a="post-del" data-v="${p.id}">excluir</button>`:""}</div>
+    </section>`;
+  };
+  const composer=admin?`<section class="bloco"><h2 class="sec">Publicar comunicado</h2>
+    <form class="form-card" id="f-post">
+      <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…"></textarea></div>
+      <div><label for="p_anexo">Link / anexo (opcional)</label><input id="p_anexo" type="url" placeholder="https://…"></div>
+      <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${k==="todos"?"checked":""}> ${l}</label>`).join("")}</div></div>
+      <div><label class="check"><input type="checkbox" id="p_fix"> Fixar no topo</label></div>
+      ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+      <div class="acoes"><button class="btn" type="submit">Publicar</button></div>
+    </form></section>`:"";
+  return `<div><h1 class="titulo">Mural do Conecta</h1><p class="sub">Comunicados da Barenbrug, novidades e quem acabou de chegar. Reaja no que achar bom.</p></div>
+    ${composer}${lista.map(card).join("")}${lista.length?"":`<div class="vazio">Ainda não há publicações no mural.</div>`}`;
+}
+function subnavMercado(){
+  const abas=[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Mercado">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Mercado</span></div></div>`;
+}
+async function carregarMercado(){try{
+  const [a,b,c]=await Promise.all([
+    sb.from("mercado_noticias").select("*").order("data",{ascending:false}),
+    sb.from("mercado_boi").select("*"),
+    sb.from("mercado_clima").select("*")]);
+  S.mercado={noticias:a.data||[],boi:b.data||[],clima:c.data||[]};
+}catch(e){S.mercado={noticias:[],boi:[],clima:[]};}}
+function vMercado(){
+  const m=S.mercado;
+  if(m==null)return `<div class="carregando">Carregando…</div>`;
+  const aviso=`<div class="aviso-bloq">🔧 Em construção. Um robô vai atualizar estas informações todo dia a partir de fontes públicas (portais de pecuária, CEPEA/ESALQ e clima). A estrutura abaixo já é a visão final.</div>`;
+  if(S.pag==="mercado-boi"){
+    const b=m.boi||[];
+    const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça / UF</th><th class="val">R$/@</th><th class="val">Variação</th><th class="val">@ por ha de pasto*</th></tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||x.uf||"")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td class="val">${esc(x.variacao||"—")}</td><td class="val">${esc(x.rel_troca||"—")}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Dados de arroba em breve.</div>`;
+    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicador do boi gordo por praça e a relação de troca com a semente de pasto — seu argumento de venda.</p></div>${aviso}<section class="bloco">${tbl}<p class="precos-nota">*Relação de troca: quantas arrobas de boi pagam 1 hectare de pasto Barenbrug. Fonte do indicador: CEPEA/ESALQ e praças de referência.</p></section>`;
+  }
+  if(S.pag==="mercado-clima"){
+    const c=m.clima||[];
+    const cards=c.length?`<div class="cards">${c.map(x=>`<div class="card off" style="cursor:default"><span class="card-tag">${esc(x.uf||x.regiao||"")}</span><h3>${esc(x.condicao||"—")}</h3><p>${esc(x.detalhe||"")}</p></div>`).join("")}</div>`:`<div class="vazio">Previsão por região em breve.</div>`;
+    return `<div><h1 class="titulo">Clima</h1><p class="sub">Condições e previsão por região — o que pesa na decisão de plantar pasto.</p></div>${aviso}${cards}`;
+  }
+  const n=m.noticias||[];
+  const lista=n.length?`<div class="lista">${n.map(x=>`<div class="linha"><div><strong>${esc(x.titulo||"")}</strong><span class="meta">${esc(x.fonte||"")}${x.data?" · "+esc(x.data):""}</span></div>${x.url?`<a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">Ler ↗</a>`:""}</div>`).join("")}</div>`:`<div class="vazio">Notícias em breve.</div>`;
+  return `<div><h1 class="titulo">Notícias da pecuária</h1><p class="sub">Manchetes fresquinhas dos principais portais do setor.</p></div>${aviso}<section class="bloco">${lista}</section>`;
+}
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Painel de gerenciamento"><button data-a="pag" data-v="gestao-home" ${S.pag==="gestao-home"||S.pag==="usuario"?'aria-current="page"':""}>Pessoas</button></nav>
@@ -939,7 +1017,7 @@ const vePainelRC=()=>ehAdmin()||S.perfil==="RC"||S.perfil==="Assessor de Vendas 
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 function subnavRC(){
-  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["precos","Tabela de preços"]];
+  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-calc","Calculadora"],["precos","Tabela de preços"]];
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||S.perfil==="Comercial Barenbrug")?"Mapa de vendas":"Meu mapa"]);}
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -985,6 +1063,26 @@ function vRCRanking(){
   <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div>
   ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, os volumes dos outros representantes aparecem só como posição relativa (barra). Você vê o seu número cheio no topo.</p>`}
   <p class="precos-nota">${RANKING_FONTE}. Atualização manual por enquanto; na integração com o RD Station passa a atualizar sozinho.</p></section>`;
+}
+function vRCCalc(){
+  const res=S.calcRes;
+  const tbl=RC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${x.prod}</td><td class="val">${x.canal}</td></tr>`).join("");
+  return `<div><h1 class="titulo">Calculadora de comissão · Conecta RC</h1><p class="sub">Simule em que tier você cai pelo volume de híbridas na safra e quanto isso representa de comissão.</p></div>
+  <form class="form-card" id="f-calc">
+    <div><label for="calc_kg">Volume de híbridas na safra (kg) *</label><input id="calc_kg" type="number" min="0" step="1" required value="${res?esc(res.kg):""}"></div>
+    <div><label for="calc_rs">Faturamento desse volume (R$) — opcional, para ver a comissão em reais</label><input id="calc_rs" type="number" min="0" step="0.01" value="${res&&res.rs?esc(res.rs):""}"></div>
+    <div class="acoes"><button class="btn" type="submit">Calcular</button></div>
+  </form>
+  ${res?`<section class="hero-rc" style="margin:14px 0"><span class="rot">Resultado · ${esc(Number(res.kg).toLocaleString("pt-BR"))} kg</span>
+    <div class="metrics" style="margin:12px 0">
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Seu tier</span><strong>${esc(res.tier)}</strong></div>
+      <div class="metric"><span>Comissão produtor</span><strong>${esc(res.prod)}</strong></div>
+      <div class="metric"><span>Comissão canal</span><strong>${esc(res.canal)}</strong></div>
+      ${res.comissao?`<div class="metric"><span>Comissão estimada (produtor)</span><strong>${esc(res.comissao)}</strong></div>`:""}
+    </div>
+    ${res.falta?`<div class="resumo"><span>Faltam <strong>${esc(res.falta)}</strong> para subir de ${esc(res.tier)} para ${esc(res.prox)}.</span></div>`:`<p class="precos-cap">Você está no tier máximo do Conecta RC. 👏</p>`}</section>`:""}
+  <section class="bloco"><h2 class="sec">Tabela de comissão</h2><div class="tab"><table><thead><tr><th>Tier</th><th>Volume</th><th class="val">Produtor</th><th class="val">Canal</th></tr></thead><tbody>${tbl}</tbody></table></div>
+  <p class="precos-nota">Simulação informativa. O contrato e a tabela oficial do Conecta RC prevalecem.</p></section>`;
 }
 function vRCMapa(){
   if(!RC_DEALS_CACHE)return `<div class="carregando">Carregando os pedidos…</div>`;
@@ -1310,7 +1408,7 @@ function renderApp(){
   }
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc}[S.pag]||vRCApresentacao;
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     return;
@@ -1343,6 +1441,16 @@ function renderApp(){
     if(!S.isMetr){carregarIS().then(render);}
     return;
   }
+  if(S.secao==="mural"){
+    app.innerHTML=cabecalho()+subnavSimples("Mural")+`<main>${vMural()}</main>`;
+    if(!S.posts){carregarPosts().then(render);}
+    return;
+  }
+  if(S.secao==="mercado"){
+    app.innerHTML=cabecalho()+subnavMercado()+`<main>${vMercado()}</main>`;
+    if(!S.mercado){carregarMercado().then(render);}
+    return;
+  }
   app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
 }
 const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
@@ -1361,7 +1469,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?"rv-apresentacao":v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="mural"?"mural":v==="mercado"?"mercado-noticias":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");}
@@ -1388,6 +1496,9 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="is-sel"){S.isSel=v;render();}
+  if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
+  if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
+  if(a==="post-del"){await sb.from("posts").delete().eq("id",v);S.posts=null;render();aviso("Publicação excluída.");return;}
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="excluir"){S.confirmExcluir=true;render();}
   if(a==="excluir-cancela"){S.confirmExcluir=false;render();}
@@ -1513,6 +1624,28 @@ document.addEventListener("submit",async ev=>{
     if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
     S.novoAcesso={email:data.email,senha:data.senha};S._erroCriar=null;S.equipe=null;render();
     return;
+  }
+  if(f.id==="f-calc"){
+    const kg=+f.querySelector("#calc_kg").value||0;const rs=+f.querySelector("#calc_rs").value||0;
+    const faixa=TIERS_RC.find(x=>kg>=x.min&&kg<=x.max)||TIERS_RC[0];
+    const ti=RC_TIERS.find(x=>x.t===faixa.t)||RC_TIERS[0];
+    const prox=TIERS_RC.find(x=>x.min>kg);
+    const pctProd=(parseFloat(String(ti.prod).replace("%","").replace(",","."))||0)/100;
+    const fmtRl=n=>"R$ "+(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+    S.calcRes={kg,rs,tier:faixa.t,prod:ti.prod,canal:ti.canal,comissao:rs?fmtRl(rs*pctProd):null,falta:prox?(prox.min-kg).toLocaleString("pt-BR")+" kg":null,prox:prox?prox.t:null};
+    render();window.scrollTo(0,0);return;
+  }
+  if(f.id==="f-post"){
+    const texto=f.querySelector("#p_texto").value.trim();
+    const anexo=f.querySelector("#p_anexo").value.trim();
+    const publico=[...f.querySelectorAll(".p_pub:checked")].map(c=>c.value);
+    const fixado=f.querySelector("#p_fix").checked;
+    if(!texto){S._erro="Escreva a mensagem.";render();return;}
+    if(!publico.length){S._erro="Escolha ao menos um público.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Publicando…";
+    const {error}=await sb.from("posts").insert({autor_nome:S.profile.nome||"Barenbrug",texto,anexo_url:anexo||null,publico,fixado,tipo:"comunicado"});
+    if(error){S._erro="Não foi possível publicar. Verifique se você é administrador.";render();return;}
+    S._erro=null;S.posts=null;render();aviso("Comunicado publicado.");return;
   }
   if(f.id==="f-mkt"){
     const titulo=f.querySelector("#m_tit").value.trim();
