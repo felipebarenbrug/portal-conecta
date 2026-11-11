@@ -500,7 +500,7 @@ const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
- {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Sabiá","Cayana","Carcará"],link:""},
+ {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Híbridos","Campanhas de Vendas","Sabiá","Cayana","Carcará","Yellow Jacket"],link:""},
  {id:"banners",n:"Banners",d:"Banners para eventos, feiras e ponto de venda.",link:""},
  {id:"folders",n:"Folders",d:"Folders e materiais impressos dos híbridos.",link:""},
  {id:"imagens",n:"Banco de imagens",d:"Todas as fotos em alta resolução, organizadas por cultivar e campanha.",link:"",drive:true},
@@ -692,8 +692,9 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111081355";
+const APP_VER="20261111090159";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
+document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
   checarVersao();
   const {data:{session}}=await sb.auth.getSession();
@@ -856,14 +857,14 @@ function vEnxoval(){
   const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
   const its=S.mkt;
   const porSec=(sec,tema)=>(its||[]).filter(m=>m.secao===sec&&(!tema||m.tema===tema));
-  const abrir=m=>{const lbl=m.tipo==="drive"?"Abrir no Google Drive ↗":m.tipo==="video"?"Assistir ↗":"Abrir ↗";return m.url?`<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener">${lbl}</a>`:"";};
+  const abrir=m=>{if((m.url||"").startsWith("storage:"))return `<button class="link" data-a="mkt-abrir" data-v="${esc(m.url.slice(8))}">Abrir</button>`;const lbl=m.tipo==="drive"?"Abrir no Google Drive ↗":m.tipo==="video"?"Assistir ↗":"Abrir ↗";return m.url?`<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener">${lbl}</a>`:"";};
   const item=m=>`<div class="linha"><div><strong>${esc(m.titulo||"Material")}</strong>${m.descricao?`<span class="meta">${esc(m.descricao)}</span>`:""}</div><div style="display:flex;gap:10px;align-items:center">${abrir(m)}${admin?`<button class="link" data-a="mkt-del" data-v="${m.id}">excluir</button>`:""}</div></div>`;
   const bloco=s=>{
     const temas=s.sub||[null];
     const inner=temas.map(t=>{
       const list=porSec(s.id,t);
       const head=t?`<div class="sub-vid">${esc(t)}</div>`:"";
-      const body=list.length?`<div class="lista">${list.map(item).join("")}</div>`:`<div class="vazio" style="padding:10px 12px">Sem material ainda.</div>`;
+      const body=list.length>8?`<details class="lote"><summary>${list.length} materiais</summary><div class="lista" style="margin-top:8px">${list.map(item).join("")}</div></details>`:list.length?`<div class="lista">${list.map(item).join("")}</div>`:`<div class="vazio" style="padding:10px 12px">Sem material ainda.</div>`;
       return head+body;
     }).join("");
     const add=admin?`<div style="margin-top:10px"><button class="btn sec" data-a="mkt-add" data-v="${s.id}">+ Adicionar em ${esc(s.n)}</button></div>`:"";
@@ -874,6 +875,7 @@ function vEnxoval(){
     <h1 class="titulo" style="color:#fff">Tudo para divulgar os híbridos Barenbrug</h1>
     <p>Marca, artes para redes sociais, banners, folders, banco de imagens, vídeo institucional e brindes — reunidos para você usar no dia a dia comercial.</p></div></section>
   ${admin?`<p class="precos-nota" style="margin:12px 0">Você é administrador: use "+ Adicionar" em cada bloco para publicar os links e materiais. Eles aparecem para todos que têm acesso a esta seção.</p>`:""}
+  ${ehAdmin()?`<section class="bloco"><h2 class="sec">Importar uma pasta inteira</h2><p class="sub" style="margin:0 0 8px">Escolha a pasta "Enxoval de Marketing" do seu computador. O portal envia os arquivos e organiza cada um na seção certa pelo nome da subpasta. Arquivos de edição (.psd) e maiores que 50 MB ficam de fora.</p><input type="file" id="mkt_pasta" webkitdirectory multiple><p class="meta" id="mkt_prog" style="margin-top:8px">${esc(S.mktImp||"")}</p></section>`:""}
   ${S.mktNovo!=null?vMktForm():""}
   ${carregando||ENXOVAL.map(bloco).join("")}`;
 }
@@ -1035,6 +1037,34 @@ function vRCPedido(){
   <section class="bloco"><h2 class="sec">Minhas negociações enviadas${L?` (${L.length})`:""}</h2>
   ${L==null?`<div class="carregando">Carregando…</div>`:L.length?`<div class="lista">${L.map(x=>cartaoNeg(x,false)).join("")}</div>`:`<div class="vazio">Você ainda não enviou negociações por aqui.</div>`}</section>`;
 }
+function classificaMkt(rel){
+  const p=rel.split("/");const topo=(p[0]||"").toLowerCase();const resto=p.slice(1);const nome=(resto.pop()||p[0]).replace(/\.[a-z0-9]+$/i,"");
+  const sem=t=>t.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();const t=sem(topo);const caminho=sem(rel);
+  let secao="posts",tema="Institucional";
+  if(t==="branding"){secao=/manual/.test(caminho)?"guia":"branding";tema=null;}
+  else if(t==="banners"||t==="placa de campo"||/banner roll up|outdoor/.test(caminho)){secao="banners";tema=null;}
+  else if(t==="sabia")tema="Sabiá";else if(t==="cayana")tema="Cayana";else if(t==="carcara")tema="Carcará";
+  else if(t==="hibrido")tema="Híbridos";else if(t==="campanhas de vendas")tema="Campanhas de Vendas";else if(t==="yellow jacket")tema="Yellow Jacket";
+  return {secao,tema,titulo:nome,descricao:(secao==="posts"?resto:[p[0],...resto]).map(x=>x.replace(/^\d+\s*-\s*/,"")).join(" · ")};
+}
+async function importarPastaMkt(files){
+  const prog=t=>{S.mktImp=t;const e=document.getElementById("mkt_prog");if(e)e.textContent=t;};
+  const L=[...files].map(f=>({f,rel:(f.webkitRelativePath||f.name).split("/").slice(1).join("/")||f.name})).filter(x=>x.rel&&!/(^|\/)\./.test(x.rel)&&!/thumbs\.db$|desktop\.ini$/i.test(x.rel));
+  const fora=L.filter(x=>/\.psd$/i.test(x.rel)||x.f.size>50*1024*1024);const ok=L.filter(x=>!fora.includes(x));
+  const {data:ex}=await sb.from("materiais_mkt").select("url");const ja=new Set((ex||[]).map(x=>x.url));
+  let feitos=0,erros=0,pulados=0;
+  for(const x of ok){
+    const chave=x.rel.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._\/-]+/g,"_");
+    prog(`Enviando ${feitos+erros+pulados+1} de ${ok.length}: ${x.rel}`);
+    if(ja.has("storage:"+chave)){pulados++;continue;}
+    const up=await sb.storage.from("enxoval").upload(chave,x.f,{upsert:true,contentType:x.f.type||undefined});
+    if(up.error){erros++;continue;}
+    const c=classificaMkt(x.rel);
+    const ins=await sb.from("materiais_mkt").insert({secao:c.secao,tema:c.tema,titulo:c.titulo,descricao:c.descricao,url:"storage:"+chave,tipo:"arquivo",ordem:feitos+pulados+erros});
+    if(ins.error)erros++;else feitos++;
+  }
+  S.mkt=null;S.mktImp=`Importação concluída: ${feitos} enviados, ${pulados} já existiam, ${erros} com erro, ${fora.length} fora (edição ou acima de 50 MB)${fora.length?": "+fora.slice(0,12).map(x=>x.rel.split("/").pop()).join(", "):""}.`;render();
+}
 async function carregarCRM(){
   if(S.perfil==="Comercial Barenbrug"||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
 function vMeuCRM(){
@@ -1071,17 +1101,17 @@ function vMeuCRM(){
     return `<section class="bloco"><h2 class="sec">Híbridos vendidos na safra · ${ton(tt)}</h2><div class="metrics">${ks.map(k=>`<div class="metric"><span>${esc(k)}</span><strong>${ton(vc[k])}</strong><span class="meta">${Math.round(100*vc[k]/tt)}% do volume</span></div>`).join("")}</div><p class="dica" style="margin-top:8px">Toneladas de Sabiá, Cayana e Carcará em pedidos ganhos com faturamento na safra. As demais cultivares e o volume das negociações em aberto entram com a atualização automática do CRM.</p></section>`;})()}
   ${(()=>{const A=Array.isArray(r.abertas)?r.abertas:[];if(!A.length)return "";const hoje=new Date();hoje.setHours(0,0,0,0);const dd=x=>x[2]?Math.round((new Date(x[2]+"T00:00:00")-hoje)/864e5):null;
     const fx=[["Vencidas (data já passou)",x=>dd(x)!=null&&dd(x)<0],["Faturam em até 30 dias",x=>dd(x)!=null&&dd(x)>=0&&dd(x)<=30],["De 31 a 60 dias",x=>dd(x)>30&&dd(x)<=60],["De 61 a 90 dias",x=>dd(x)>60&&dd(x)<=90]];
-    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):`<span style="color:#c0392b">sem representante</span>`} · ${estr(x[4])}</span></div>`;
+    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):"venda direta"} · ${estr(x[4])}</span></div>`;
     const bloco=(t,L,aberto)=>L.length?`<details class="lote" ${aberto?"open":""}><summary>${t} · ${L.length} negociações · ${fmtK(L.reduce((s,x)=>s+x[1],0))}</summary><div class="lista" style="margin-top:8px">${L.slice().sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9")||b[1]-a[1]).map(lin).join("")}</div></details>`:"";
     const sr=A.filter(x=>!x[3]);
     return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
-    ${sr.length?`<section class="bloco"><h2 class="sec">Sem representante no CRM (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com o campo Representante vazio. Preencha no CRM para elas contarem no RC certo.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
+    ${sr.length?`<section class="bloco"><h2 class="sec">Venda direta, sem representante (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto fechadas direto entre a Barenbrug e o cliente ou o canal, sem RC no campo Representante.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
   ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">Meus representantes (${r.rcs.length})</h2>
     <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
-    <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
+    <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc==="(sem representante)"?"Venda direta (sem RC)":x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
       <span class="meta">${fmtN(x.an)} em aberto · vendido ${fmtK(x.vrs)} em ${fmtN(x.vn)} pedidos${x.b30?` · fatura em 30 dias: ${fmtN(x.b30)} (${fmtK(x.b30rs)})`:""}</span>
       ${al?`<span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span>`:(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
-    ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" são negociações em aberto com o campo Representante vazio no CRM. Preencha o campo para elas aparecerem no RC certo.</p>`:""}
+    ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" reúne as vendas diretas da Barenbrug ao cliente ou ao canal, sem RC.</p>`:""}
   </section>`:""}
   ${(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
   <section class="bloco"><h2 class="sec">Principais negociações em aberto</h2>
@@ -1518,7 +1548,7 @@ function vRVPainel(){
   const semPgd=L.filter(x=>!x.m.n).map(x=>x.c.nome);
   const comAprov=L.filter(x=>x.m.nAprov>0);
   return `<div><h1 class="titulo">Painel do programa · Conecta Revendas</h1><p class="sub">Safra 26/27 · ${L.length} canais com contrato. Vendas do CRM (pedidos ganhos de sell-in com data de faturamento na safra)${upd?`, atualizadas em ${fmtDataHora(upd)}`:""}. Os valores do programa são calculados aqui, pela regra oficial.</p></div>
-  <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar</h2>
+  <section class="bloco"><h2 class="sec">Quanto a Barenbrug vai pagar · estimativa</h2><p class="precos-nota" style="margin:0 0 10px">Valores estimados a partir dos pedidos do CRM, a confirmar pelo Financeiro. O valor efetivo depende da liquidação das notas.</p>
   <div class="metrics">
     <div class="metric"><span>IGDB sobre pedidos fechados</span><strong>${fmtK0(T("igdb"))}</strong><span class="meta">híbridos ${fmtK0(T("igdbH"))} · convencionais ${fmtK0(T("igdbC"))}</span></div>
     <div class="metric"><span>Bônus de Performance projetado</span><strong>${fmtK0(T("bonus"))}</strong><span class="meta">se a safra fechasse hoje</span></div>
@@ -1669,12 +1699,12 @@ function vRVCanal(){
   </div>
   ${barraMeta(m)}
   <div class="metrics" style="margin-top:10px">
-    <div class="metric"><span>IGDB gerado</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)}</span></div>
+    <div class="metric"><span>IGDB estimado</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)}</span></div>
     <div class="metric"><span>Bônus de Performance</span><strong>${fmtK0(m.bonus)}</strong><span class="meta">cheio: ${fmtK0(m.bonusCheio)}</span></div>
-    <div class="metric"><span>Total do programa</span><strong>${fmtK0(m.total)}</strong><span class="meta">${m.teto?"limitado ao teto de "+fmtK0(RV_TETO):"teto de "+fmtK0(RV_TETO)}</span></div>
+    <div class="metric"><span>Total estimado do programa</span><strong>${fmtK0(m.total)}</strong><span class="meta">${m.teto?"limitado ao teto de "+fmtK0(RV_TETO):"teto de "+fmtK0(RV_TETO)}</span></div>
     <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprov)} · em análise ${fmtK0(m.analise)}</span></div>
   </div>
-  <div class="precos-nota">${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
+  <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD — Plano de Geração de Demanda (${ac.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
   ${S.editCanal?vCanalEditor(c):""}
@@ -2002,6 +2032,7 @@ document.addEventListener("click",async ev=>{
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
+  if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e){if(e.type==="checkbox")e.checked=val;else e.value=val;}});return;}
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
