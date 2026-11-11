@@ -292,6 +292,10 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mp-pin.ufc{stroke-dasharray:.25 .25}.mp-pin.on{stroke:var(--preto);stroke-width:.38;opacity:1}
 .mp-wc{fill:#dfe5ea;stroke:#fff;stroke-width:.3}.mp-wc.on{fill:var(--azul);fill-opacity:.4}.mp-wc.br{fill:var(--amarelo);fill-opacity:.6}
 .mp-wl{font-size:3.3px;font-weight:700;fill:#33414d;text-anchor:middle;pointer-events:none}
+.demo-b{background:var(--preto);color:#fff;font-size:13px}
+.demo-in{max-width:1120px;margin:0 auto;padding:8px 16px;display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}
+.demo-b .chip{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.45);font-size:13px;padding:4px 10px}
+.demo-b .chip[aria-pressed=true]{background:var(--amarelo);color:var(--preto);box-shadow:none;font-weight:700}
 .mp-lado{display:grid;gap:12px}
 .mp-box{background:var(--branco);border-radius:8px;padding:14px;display:grid;gap:6px}
 .mp-box h3{font-size:15px;font-weight:800;color:var(--azul-escuro)}
@@ -327,7 +331,8 @@ main.largo{max-width:1120px}
 const SB_URL="https://czebmkqbapltmjuhywkd.supabase.co";
 const SB_KEY="__KEY__";
 const LOGO="__LOGO__";
-const sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true,autoRefreshToken:true}});
+let sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true,autoRefreshToken:true}});
+const sbReal = sb;
 
 const sci=s=>`<span class="sci">${s}</span>`;
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
@@ -742,7 +747,7 @@ async function sessaoConfere(){
 }
 let _perfilChk=0;
 async function recarregarPermissoes(){
-  if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
+  if(!S.user||!S.profile||S.demo||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
   try{const {data}=await sb.from("profiles").select("perfil,acessos,abas_ocultas,exige_curso,rc_crm,crm_dono,is_vendedora,ufs_atendidas,canal_id,comercial_resp").eq("id",S.user.id).maybeSingle();if(!data)return;
     const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
     if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
@@ -766,13 +771,19 @@ async function boot(){
 }
 async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});RC_RANKING=(data||[]).map(r=>({crm:r.crm,nome:r.nome,fat:+r.fat||0,aFat:+r.a_fat||0,kg:+r.kg||0,cFat:+r.conv_fat||0,cAFat:+r.conv_afat||0,cKg:+r.conv_kg||0,em:r.atualizado_em||null}));}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
-  S.user=u;
+  S.user=u;sb=sbReal;S.demo=false;
   let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
   if(!prof){
     await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email});
     ({data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle());
   }
   S.profile=prof||{};S.perfil=(prof&&prof.perfil)||"RC";S.form=null;S.formAlvo="form";
+  if(S.profile.demo){
+    try{
+      if(!window.demoIniciar)await new Promise((ok,er)=>{const sc=document.createElement("script");sc.src="demo.js?v="+APP_VER;sc.onload=ok;sc.onerror=er;document.head.appendChild(sc);});
+      sb=await window.demoIniciar(sbReal,S);S.demo=true;window.demoVer(S,"Administrador");await window.demoCarregar(S);
+    }catch(e){sb=sbReal;S.demo=false;S.demoFalhou=true;}
+  }
   const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
   S.feitas=(prog||[]).map(r=>r.etapa);
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
@@ -885,7 +896,7 @@ function vPerfil(){
 /* ---------- shell ---------- */
 function cabecalho(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
-    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>`;
+    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
 }
 function subnavAcademia(){
   const abas=[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
@@ -1509,7 +1520,7 @@ function vMeuCRMPainel(X){
   const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
-  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: Laura, Maria Giulia, Thaís, Maria Eduarda, Mayane e Felipe. ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
+  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: "+IS_TIME.map(x=>x[0]).join(", ")+". ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
@@ -2353,6 +2364,7 @@ function vUsuarioAdmin(){
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
     ${ac.filter(id=>ABAS_REG[id]).length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver. Cada marcação é gravada na hora.</span>${ac.filter(id=>ABAS_REG[id]).map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminForm.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}</label>`;}).join("")}</div>`).join("")}</div>`:""}
     ${S.adminForm.perfil==="Comercial Barenbrug"?`<div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">No Conecta Revendas ele vê só as revendas marcadas aqui. Cada marcação é gravada na hora. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canais||[]).map(k=>{const meu=k.comercial_id===u.id;const outro=k.comercial_id&&!meu;return `<label class="check"><input type="checkbox" data-rev="${esc(k.id)}" ${meu?"checked":""}> ${esc(k.nome)}${outro?' <span class="meta">(hoje com outro comercial)</span>':""}</label>`;}).join("")||'<span class="meta">Carregando as revendas…</span>'}</div></div>`:""}
+    <div><label class="check"><input type="checkbox" data-demo ${S.adminForm.demo?"checked":""}> Usuário de demonstração</label><span class="meta">Marcado, este acesso vê o portal inteiro só com nomes e números fictícios e pode alternar entre as visões (administrador, comercial, RC, revenda, Inside Sales). Não lê nem grava nenhum dado real. Use para apresentações e vídeos.</span></div>
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${(S.adminForm.perfil==="Inside Sales"||ac.includes("inside-sales"))?`<div><label for="f_isv">Consultora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
 
@@ -2500,7 +2512,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-next"){if(S.tour)S.tour.i++;render();return;}
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
-  if(a==="sair"){await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
+  if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
@@ -2543,6 +2555,7 @@ document.addEventListener("click",async ev=>{
   if(a==="boi-del"){const {error}=await sb.from("mercado_boi").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça excluída.");return;}
   if(a==="faq-cult"){S.faqCult=v;render();window.scrollTo(0,0);return;}
   if(a==="faq-limpar"){S.faqBusca="";render();return;}
+  if(a==="demo-ver"){if(!S.demo)return;window.demoVer(S,v);render();window.scrollTo(0,0);return;}
   if(a==="feed-f"){S.feedF=v;S.feedLim=20;render();return;}
   if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
   if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
@@ -2618,13 +2631,14 @@ document.addEventListener("change",async ev=>{
     if(error||!volta||(volta.comercial_id||null)!==novo){aviso("Esta alteração NÃO foi gravada. Recarregue a página e tente de novo.");}else{const k=(S.canais||[]).find(x=>x.id===c.dataset.rev);if(k)k.comercial_id=novo;aviso(novo?"Revenda vinculada a este comercial.":"Revenda desvinculada.");}
     const y=window.scrollY;render();window.scrollTo(0,y);return;
   }
-  if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige"))){
+  if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige")||c.hasAttribute("data-demo"))){
     if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}const up={};
     if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
     else if(c.dataset.aba){const z=new Set(S.adminForm.abas_ocultas||[]);c.checked?z.delete(c.dataset.aba):z.add(c.dataset.aba);up.abas_ocultas=[...z];}
+    else if(c.hasAttribute("data-demo"))up.demo=c.checked;
     else up.exige_curso=c.checked;
     Object.assign(S.adminForm,up);
-    const {data:volta,error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id).select("acessos,abas_ocultas,exige_curso").maybeSingle();
+    const {data:volta,error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id).select("acessos,abas_ocultas,exige_curso,demo").maybeSingle();
     const k=Object.keys(up)[0];const igual=volta&&JSON.stringify(volta[k]??null)===JSON.stringify(up[k]??null);
     if(error||!igual){if(volta)Object.assign(S.adminForm,volta);aviso("Esta alteração NÃO foi gravada. Recarregue a página, entre como administrador e tente de novo.");}else{Object.assign(S.adminUser,up);S.equipe=null;aviso("Alteração gravada.");}
     const y=window.scrollY;render();window.scrollTo(0,y);return;
