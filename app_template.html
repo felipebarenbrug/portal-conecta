@@ -2291,9 +2291,28 @@ function vRVMeuCanal(){
 const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
 function vRVCanais(){
   if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
-  const rows=S.canais.map(c=>{const m=metricasCanal(c);return `<tr><td>${esc(c.nome)}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td><td class="val">${fmtK0(m.igdb)}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`;}).join("");
-  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB e o PGD de cada canal. Abra um canal para ver o detalhe e o cadastro.</p></div>
-  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th>Ações</th><th class="val">IGDB</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const vis=S.rvVis||"soma",cen=S.rvCen||"hoje",meta=cen==="meta";
+  const L=S.canais.map(c=>({c,m:metricasCanal(c)}));
+  const fat=m=>meta?"100%":m.ating==null?"—":m.fator===1?"100%":m.fator===.7?"70%":"0%";
+  const col=vis==="igdb"?[["IGDB híbridos",m=>meta?m.mIgdb-(m.igdbC||0):m.igdbH],["IGDB conv.",m=>m.igdbC],["IGDB",m=>meta?m.mIgdb:m.igdb,1]]
+    :vis==="bf"?[["BF cheio (100%)",m=>meta?m.mBonus:m.bonusCheio],["Fator",null],["BF",m=>meta?m.mBonus:m.bonus,1]]
+    :[["IGDB",m=>meta?m.mIgdb:m.igdb],["BF",m=>meta?m.mBonus:m.bonus],["IGDB + BF",m=>meta?m.mTotal:m.total,1]];
+  const soma=f=>L.reduce((t,x)=>t+(Number(f(x.m))||0),0);
+  const T=k=>L.reduce((t,x)=>t+(Number(x.m[k])||0),0);
+  const cel=(f,forte,m)=>f?(forte?`<strong>${fmtK0(f(m))}</strong>`:fmtK0(f(m))):fat(m);
+  const rows=L.map(({c,m})=>`<tr><td>${esc(c.nome)}${vis==="soma"&&(meta?m.mTeto:m.teto)?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}${meta&&m.semPreco?`<br><span class="meta" style="color:#c0392b">sem preço para estimar</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td>${col.map(([,f,forte])=>`<td class="val">${cel(f,forte,m)}</td>`).join("")}<td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("");
+  const tit={igdb:"Só IGDB",bf:"Só BF",soma:"IGDB + BF"}[vis];
+  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB, Bônus de Performance (BF) e o PGD de cada canal. Abra um canal para ver o detalhe e o cadastro.</p></div>
+  <div class="filtros" style="margin-bottom:0">${[["igdb","Só IGDB"],["bf","Só BF"],["soma","IGDB + BF"]].map(([k,t])=>`<button class="chip" data-a="rv-vis" data-v="${k}" aria-pressed="${vis===k}">${t}</button>`).join("")}</div>
+  <div class="filtros">${[["hoje","Hoje, pelo vendido"],["meta","Se bater a meta"]].map(([k,t])=>`<button class="chip" data-a="rv-cen" data-v="${k}" aria-pressed="${cen===k}">${t}</button>`).join("")}</div>
+  <div class="metrics">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>${tit} · ${meta?"se todos baterem a meta":"hoje"}</span><strong>${fmtK0(soma(col[2][1]))}</strong><span class="meta">${L.length} canais${vis==="soma"?` · teto de ${fmtK0(RV_TETO)} por canal`:""}</span></div>
+    <div class="metric"><span>IGDB</span><strong>${fmtK0(soma(m=>meta?m.mIgdb:m.igdb))}</strong></div>
+    <div class="metric"><span>BF</span><strong>${fmtK0(soma(m=>meta?m.mBonus:m.bonus))}</strong><span class="meta">${meta?"100% do tier":"pelo atingimento de hoje"}</span></div>
+  </div>
+  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th>Ações</th>${col.map(([t,,f])=>`<th class="val">${t}</th>`).join("")}<th></th></tr></thead><tbody>${rows}
+  <tr><td><strong>Total</strong></td><td></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("kgH"))}</td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td><td>${T("n")}</td>${col.map(([,f,forte])=>`<td class="val">${f?`<strong>${fmtK0(soma(f))}</strong>`:""}</td>`).join("")}<td></td></tr></tbody></table></div>
+  <p class="precos-nota">IGDB: percentual do tier sobre o sell-in de híbridos e de convencionais. BF: só sobre híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. Teto de ${fmtK0(RV_TETO)} por canal (IGDB + BF). ${meta?"Se bater a meta: a meta de híbridos ao preço médio que o canal já pratica (ou ao valor por kg do contrato), mais os convencionais já vendidos.":"Hoje: pedidos ganhos de sell-in com faturamento na safra."} Valores estimados, a confirmar pelo Financeiro.</p>`;
 }
 function vAcaoEditor(a){
   const anexos=Array.isArray(a.anexos)?a.anexos:[];
