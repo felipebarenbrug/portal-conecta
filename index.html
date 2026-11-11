@@ -711,7 +711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111112914";
+const APP_VER="20261111113446";
 let _perfilChk=0;
 async function recarregarPermissoes(){
   if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
@@ -735,7 +735,7 @@ async function boot(){
   iniciarWatchdog();
   render();
 }
-async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("crm,nome,fat,a_fat,kg").order("kg",{ascending:false});RC_RANKING=(data||[]).map(r=>({crm:r.crm,nome:r.nome,fat:+r.fat||0,aFat:+r.a_fat||0,kg:+r.kg||0}));}catch(e){RC_RANKING=[];}}
+async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});RC_RANKING=(data||[]).map(r=>({crm:r.crm,nome:r.nome,fat:+r.fat||0,aFat:+r.a_fat||0,kg:+r.kg||0,cFat:+r.conv_fat||0,cAFat:+r.conv_afat||0,cKg:+r.conv_kg||0,em:r.atualizado_em||null}));}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
   S.user=u;
   let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
@@ -1283,7 +1283,8 @@ async function atualizarCRM(prog){
   if(Date.now()-ult>20*3600e3){let pg=1,n=0;let okOrg=true;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");okOrg=false;break;}pg=r.data.proxima;n++;}if(okOrg){try{localStorage.setItem("pc_orgsync",String(Date.now()));}catch(e){}}}
   const cache={};
   const ler=async(chave,rot)=>{let page=1,mais=true,todos=[],pm=0;while(mais&&page<=40){prog(`Lendo o CRM: ${rot}, página ${page}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"deals",dono:chave,page}});if(r.error||!r.data||r.data.error)return null;todos=todos.concat(r.data.itens||[]);pm+=Number(r.data.pm)||0;mais=!!r.data.mais;page++;}return {todos,pm};};
-  const gravaMapa=async(dono,lm)=>{let em=(await sb.from("crm_mapa").delete().eq("dono",dono)).error;for(let i=0;i<lm.length&&!em;i+=400){em=(await sb.from("crm_mapa").insert(lm.slice(i,i+400))).error;}return em;};
+  const todasLm=[];
+  const gravaMapa=async(dono,lm)=>{todasLm.push(...lm);let em=(await sb.from("crm_mapa").delete().eq("dono",dono)).error;for(let i=0;i<lm.length&&!em;i+=400){em=(await sb.from("crm_mapa").insert(lm.slice(i,i+400))).error;}return em;};
   for(const dono of CRM_DONOS){
     const L=await ler(dono,dono);if(!L){res.push(dono+": erro na leitura");continue;}
     cache[dono]=L;const todos=L.todos;
@@ -1300,6 +1301,11 @@ async function atualizarCRM(prog){
     let em=null;if(!jaLido)em=await gravaMapa(nomeRep,linhasMapa(nomeRep,L.todos));
     res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
   }
+  if(todasLm.length){prog("Montando os rankings…");const INT=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;const R={};const hojeIso=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+    for(const r of todasLm){if(!r.rep||INT.test(r.rep))continue;const cy=+((r.cults||{})["Cynodon"])||0;const h=(+r.kg_h||0)+cy,c=Math.max(0,(+r.kg_c||0)-cy);const x=R[r.rep]||(R[r.rep]={crm:r.rep,nome:r.rep,fat:0,a_fat:0,kg:0,conv_fat:0,conv_afat:0,conv_kg:0});
+      if(r.st!=="V")continue;if(r.fat&&r.fat<=hojeIso){x.fat+=h;x.conv_fat+=c;}else{x.a_fat+=h;x.conv_afat+=c;}x.kg+=h;x.conv_kg+=c;}
+    const L=Object.values(R).filter(x=>x.kg>0||x.conv_kg>0).map(x=>({...x,atualizado_em:new Date().toISOString()}));
+    if(L.length){const d=await sb.from("rc_ranking").delete().neq("crm","");const i=d.error?d:await sb.from("rc_ranking").insert(L);res.push(d.error||i.error?"ranking: erro ao gravar":`ranking: ${L.length} representantes`);await carregarRanking();}}
   res.push(await atualizarLeads(prog));
   try{prog("Lendo as notícias da pecuária…");const rn=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});res.push(rn.error||!rn.data||rn.data.error?"notícias: erro na leitura":`notícias: ${rn.data.gravadas}`);S.mercado=null;}catch(e){}
   return res;
@@ -1569,29 +1575,38 @@ function vRCRanking(){
     const faixa=TIERS_RC[TIERS_RC.findIndex(x=>x.t===t)];
     const base=faixa.min;
     const pct=Math.max(4,Math.min(100,Math.round((kg-base)/((prox?prox.min:kg)-base||1)*100)));
-    hero=`<section class="hero-rc" style="margin-bottom:14px"><span class="rot">Seu desempenho na safra · híbridos + Cynodon</span>
+    hero=`<section class="hero-rc" style="margin-bottom:14px"><span class="rot">Seu desempenho na safra · só híbridos + Cynodon</span>
       <h1 class="titulo" style="color:var(--preto);margin:.1em 0">${esc(eu.nome)}</h1>
       <div class="metrics" style="margin:12px 0">
         <div class="metric"><span>Já faturou</span><strong>${fmt(eu.fat)}</strong></div>
         <div class="metric"><span>Vai faturar (em aberto)</span><strong>${fmt(eu.aFat)}</strong></div>
         <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total na safra</span><strong>${fmt(kg)}</strong></div>
-        <div class="metric"><span>Seu tier · posição</span><strong>${t} · ${minhaPos+1}º</strong></div>
+        <div class="metric"><span>Seu tier · posição em híbridos</span><strong>${t} · ${minhaPos+1}º</strong></div>
+        ${eu.cKg?`<div class="metric"><span>Convencionais (fora do tier)</span><strong>${fmt(eu.cKg)}</strong><span class="meta">${posC>=0?(posC+1)+"º no ranking de convencionais":""}</span></div>`:""}
       </div>
       ${prox?`<div class="resumo"><div class="barra"><i style="width:${pct}%"></i></div><span>Faltam <strong>${fmt(falta)}</strong> para subir de ${t} para ${prox.t}</span></div>`:`<p class="precos-cap">Você já está no tier máximo do Conecta RC.</p>`}</section>`;
   }
   const verTudo=ehAdmin()||S.perfil==="Comercial Barenbrug";
   const lider=rk.length?Math.max(1,rk[0].kg):1;
+  const linhaC=(x,i,lid)=>{const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.cKg/lid*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.cFat)}</td><td class="val">${x.cAFat?fmt(x.cAFat):"—"}</td><td class="val"><strong>${fmt(x.cKg)}</strong></td>`}</tr>`;};
+  const rkC=rk.filter(x=>x.cKg>0).sort((a,b)=>b.cKg-a.cKg);const lidC=rkC.length?Math.max(1,rkC[0].cKg):1;const posC=meuCrm?rkC.findIndex(x=>x.crm===meuCrm):-1;
+  let rowsC=rkC.slice(0,10).map((x,i)=>linhaC(x,i,lidC)).join("");if(posC>=10)rowsC+=`<tr><td colspan="5" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linhaC(rkC[posC],posC,lidC);
   const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.kg/lider*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td>`}</tr>`;};
   const top=rk.slice(0,10);
   let rows=top.map((x,i)=>linha(x,i)).join("");
   if(minhaPos>=10){rows+=`<tr><td colspan="6" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linha(rk[minhaPos],minhaPos);}
+  const em=rk.reduce((t,x)=>x.em&&x.em>t?x.em:t,"");
   return `<div><h1 class="titulo">Ranking de vendas · Conecta RC</h1>
-    <p class="sub">Top 10 representantes por <strong>híbridos + Cynodon</strong> na safra 26/27: o que já faturou + o que vai faturar (negociações em aberto) = total. O tier segue a tabela de comissão (Blue até 3 t · Yellow 3–6 t · Yellow Pro 6–9 t · Yellow Master acima de 9 t). Sem valores de negociação — só volume.</p></div>
+    <p class="sub">Dois rankings da safra 26/27, sempre em quilos e só com pedidos fechados: o que já faturou + o que vai faturar = total. Negociação em aberto não conta. Sem valores, só volume.</p></div>
   ${hero}
-  <section class="bloco"><h2 class="sec">Ranking geral · Top 10</h2>
-  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div>
+  <section class="bloco"><h2 class="sec">Ranking de híbridos · Top 10</h2>
+  <div class="aviso-bloq" style="margin:0"><strong>Este ranking conta só os híbridos</strong> (Sabiá, Cayana e Carcará) mais Cynodon. Não é o volume total do representante: as sementes convencionais ficam no ranking de baixo. O tier segue a tabela de comissão dos híbridos (Blue até 3 t · Yellow 3 a 6 t · Yellow Pro 6 a 9 t · Yellow Master acima de 9 t).</div>
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de híbridos</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Ranking de convencionais · Top 10</h2>
+  <p class="sub" style="margin:0">Todas as demais sementes (Marandu, Mulato II, Ruziziensis, Mombaça, temperadas e outras). Não tem tier: o volume de convencionais não entra na classificação do Conecta RC.</p>
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de convencionais</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rowsC||`<tr><td colspan="5" class="meta">O ranking de convencionais aparece depois da próxima atualização do CRM.</td></tr>`}</tbody></table></div>
   ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, os volumes dos outros representantes aparecem só como posição relativa (barra). Você vê o seu número cheio no topo.</p>`}
-  <p class="precos-nota">${RANKING_FONTE}. Atualização manual por enquanto; na integração com o RD Station passa a atualizar sozinho.</p></section>`;
+  <p class="precos-nota">Fonte: funil de vendas do CRM, pedidos fechados com faturamento na safra, pelo campo Representante${em?", atualizado em "+fmtDataHora(em):""}.</p></section>`;
 }
 const CALC_TIERS=[{t:"Blue",ate:3000,rp:.10,rc:.08,bg:"#00A8E2",cor:"#fff",vol:"Até 3.000 kg"},{t:"Yellow",ate:6000,rp:.115,rc:.09,bg:"#FEDC00",cor:"#1E1E1E",vol:"3.001 a 6.000 kg"},{t:"Yellow Pro",ate:9000,rp:.13,rc:.10,bg:"#E6A800",cor:"#fff",vol:"6.001 a 9.000 kg"},{t:"Yellow Master",ate:Infinity,rp:.15,rc:.11,bg:"#003D5B",cor:"#fff",vol:"Acima de 9.000 kg"}];
 function calcRC(){
