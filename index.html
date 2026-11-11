@@ -268,6 +268,14 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .calc-total{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:14px;padding:14px;border-radius:8px;background:var(--amarelo,#ffdb00);color:#1e1e1e;font-weight:700}
 .calc-total strong{font-size:22px;white-space:nowrap}
 .rent-tw{overflow-x:auto}
+.calc-grupo select{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--linha,#ccc);border-radius:8px;background:var(--branco)}
+.calc-grupo input[type=date]{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--linha,#ccc);border-radius:8px}
+.sim-res{background:var(--branco);border-radius:8px;padding:16px}
+.calc-grid>*{min-width:0}
+@media (max-width:560px){.sim-t td{white-space:normal}}
+.tab table.sim-t,.sim-t{width:100%;min-width:0;border-collapse:collapse;font-size:14px}.sim-t th,.sim-t td{padding:7px 8px;border-bottom:1px solid var(--linha);text-align:left;white-space:nowrap}.sim-t .val{text-align:right}
+@media (max-width:560px){.sim-t{font-size:13px}.sim-t th,.sim-t td{padding:6px 5px}.sim-res{padding:12px}}
+.sim-t tr.sim-on td{background:var(--amarelo-claro);font-weight:700}
 .rent-t{width:100%;border-collapse:collapse;font-size:15px}
 .rent-t th,.rent-t td{padding:7px 6px;border-bottom:1px solid var(--linha);text-align:right;white-space:nowrap}
 .rent-t th[scope=row]{text-align:left;font-weight:400;white-space:normal}
@@ -760,7 +768,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111145747";
+const APP_VER="20261111152819";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1477,6 +1485,10 @@ function vMapaGeo(ctx){
   :`<section class="bloco"><div class="vazio">${S.mapa.length?"Nenhuma negociação para este filtro.":(adm?"O mapa ainda não foi carregado. Abra Meu CRM e use o botão Atualizar do CRM agora.":"Ainda não há negociações suas no mapa. Ele é atualizado a partir do CRM.")}</div></section>`}`;
 }
 async function atualizarCRM(prog){
+  if(!S.demo){const res=[];
+    for(const [et,rot] of [["crm","Lendo o CRM e montando painéis, mapa e ranking (cerca de 1 minuto)…"],["extras","Lendo leads, notícias e clima…"]]){prog(rot);
+      try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"agenda",etapa:et,origem:"botao"}});if(r.error||!r.data||r.data.error)res.push(et+": erro na atualização");else res.push(...(r.data.resultado||[]));}catch(e){res.push(et+": erro na atualização");}}
+    S.mercado=null;S.leadsCache=null;try{await carregarRanking();}catch(e){}return res;}
   const res=[];
   let ult=0;try{ult=+localStorage.getItem("pc_orgsync")||0;}catch(e){}
   if(Date.now()-ult>20*3600e3){let pg=1,n=0;let okOrg=true;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");okOrg=false;break;}pg=r.data.proxima;n++;}if(okOrg){try{localStorage.setItem("pc_orgsync",String(Date.now()));}catch(e){}}}
@@ -1760,6 +1772,54 @@ function matHTML(m){
   if(m.url) return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><a class="link" href="${m.url}" target="_blank" rel="noopener">Abrir ↗</a></div>`;
   return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><button class="link" data-a="mat">Abrir</button></div>`;
 }
+const SIMP_CONDS=["À vista","30","30/60","30/60/90","30/60/90/120","30/60/90/120/150"];
+const SIMP_MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+function simpEstado(){if(!S.simP){const h=new Date(Date.now()-3*3600e3);const y=h.getUTCFullYear(),m=h.getUTCMonth()+1;const f=new Date(Date.UTC(y,m,15)).toISOString().slice(0,10);S.simP={cult:0,fat:f,cond:"30/60/90/120",kg:"",frete:""};}return S.simP;}
+const simpNum=v=>{const x=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",","."));return isFinite(x)?x:0;};
+function simpDias(cond){if(/vista/i.test(cond))return [0];const d=String(cond||"").split(/[^0-9]+/).filter(Boolean).map(Number).filter(x=>x>=0&&x<=720);return d.length?d.slice(0,24):[];}
+function simpPreco(p,ano,mes){const k=SIMP_MES[mes]+"/"+String(ano).slice(2);const i=PRECOS_MESES.indexOf(k);const v=p.v.map(simpNum);
+  if(i>=0)return {k,preco:v[i],est:false};
+  const [m0,a0]=PRECOS_MESES[0].split("/");const ini=(2000+ +a0)*12+SIMP_MES.indexOf(m0),alvo=ano*12+mes;const off=alvo-ini;
+  if(off<0)return {k,preco:v[0],est:true,antes:true};
+  const n=v.length-1,taxa=Math.pow(v[n]/v[0],1/n)-1;return {k,preco:v[n]*Math.pow(1+taxa,off-n),est:true,taxa};}
+function simpConta(p,st){const dias=simpDias(st.cond);const f=new Date(String(st.fat||"")+"T12:00:00Z");if(!dias.length||isNaN(f))return null;
+  const parc=dias.map(d=>{const v=new Date(f.getTime()+d*864e5);const r=simpPreco(p,v.getUTCFullYear(),v.getUTCMonth());return {d,venc:v,...r};});
+  const media=parc.reduce((t,x)=>t+x.preco,0)/parc.length;const prazo=dias.reduce((t,x)=>t+x,0)/dias.length;return {parc,media,prazo,est:parc.some(x=>x.est)};}
+function calcSimP(){
+  const out=document.getElementById("simp_out");if(!out)return;const st=simpEstado();const p=PRECOS[st.cult]||PRECOS[0];
+  const R=simpConta(p,st);if(!R){out.innerHTML=`<div class="vazio">Informe a data de faturamento e a condição de pagamento (ex.: 30/60/90/120).</div>`;return;}
+  const f2=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),f0=n=>Math.round(n).toLocaleString("pt-BR");
+  const kg=simpNum(st.kg),fr=FRETE.find(x=>x.uf===st.frete),vf=fr?simpNum(fr.f):0;
+  const dt=d=>d.toISOString().slice(0,10).split("-").reverse().join("/");
+  const atual=simpPreco(p,...(()=>{const h=new Date(Date.now()-3*3600e3);return [h.getUTCFullYear(),h.getUTCMonth()];})());
+  const todos=PRECOS.map((q,i)=>{const r=simpConta(q,st);return `<tr${i===st.cult?' class="sim-on"':""}><td>${q.cult}<br><span class="meta">${q.trat}</span></td><td class="val">R$ ${r?f2(r.media):"—"}</td>${vf?`<td class="val">R$ ${r?f2(r.media+vf):"—"}</td>`:""}</tr>`;}).join("");
+  out.innerHTML=`<div class="sim-res">
+    <div class="calc-total"><span>Preço médio do kg · ${p.cult}${p.cult==="Ruziziensis"?" "+p.trat:""}</span><strong>R$ ${f2(R.media)}</strong></div>
+    <p class="meta" style="margin:8px 0 0">${R.parc.length===1?"Pagamento único":R.parc.length+" parcelas iguais"} · prazo médio de ${f0(R.prazo)} dias após o faturamento${atual?` · à vista hoje: R$ ${f2(atual.preco)}`:""}${vf?` · com frete ${fr.uf}: <strong>R$ ${f2(R.media+vf)}/kg</strong>`:""}</p>
+    ${kg?`<div class="calc-lin forte"><span>Valor do pedido (${f0(kg)} kg${vf?", com frete":""})</span><strong>R$ ${f2(kg*(R.media+vf))}</strong></div>`:""}
+    <div class="tab" style="margin-top:10px"><table class="sim-t"><thead><tr><th>Parcela</th><th>Vence</th><th>Mês</th><th class="val">R$/kg</th>${kg?`<th class="val">Valor</th>`:""}</tr></thead><tbody>
+    ${R.parc.map((x,i)=>`<tr><td>${x.d===0?"No faturamento":i+1+"ª · "+x.d+"d"}</td><td>${dt(x.venc)}</td><td>${x.k}${x.est?` <span class="meta">${x.antes?"(antes da tabela)":"(estimado)"}</span>`:""}</td><td class="val">${f2(x.preco)}</td>${kg?`<td class="val">R$ ${f2(kg/R.parc.length*(x.preco+vf))}</td>`:""}</tr>`).join("")}
+    </tbody></table></div>
+    ${R.est?`<p class="precos-nota" style="margin-top:10px">Algum vencimento cai fora dos meses da tabela (${PRECOS_MESES[0]} a ${PRECOS_MESES[PRECOS_MESES.length-1]}). Para esses meses o preço foi estimado mantendo o reajuste mensal médio da própria tabela. Confirme com o comercial antes de fechar.</p>`:""}
+    <h3 style="margin:14px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--apagado)">Todas as cultivares nesta condição</h3>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Cultivar</th><th class="val">Preço médio</th>${vf?`<th class="val">Com frete</th>`:""}</tr></thead><tbody>${todos}</tbody></table></div>
+  </div>`;
+}
+function vSimPrecos(){
+  const st=simpEstado();setTimeout(calcSimP,0);
+  return `<section class="bloco"><h2 class="sec">Simulador de preço por condição de pagamento</h2>
+  <p class="sub" style="margin:0 0 10px">O preço de cada parcela é o da tabela no mês em que ela vence. O preço médio do kg é a média das parcelas, que são iguais. O mês em que o pedido é fechado não muda o preço: vale a data de faturamento e os prazos.</p>
+  <div class="calc-grid"><div class="calc-form">
+    <div class="calc-grupo"><label for="sp_cult">Cultivar</label><select id="sp_cult" data-simp="cult">${PRECOS.map((q,i)=>`<option value="${i}"${i===st.cult?" selected":""}>${q.cult}${q.cult==="Ruziziensis"?" · "+q.trat:""}</option>`).join("")}</select>
+      <label for="sp_fat">Data de faturamento</label><input id="sp_fat" type="date" data-simp="fat" value="${esc(st.fat)}">
+      <label for="sp_cond">Condição de pagamento (dias após o faturamento)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${SIMP_CONDS.map(c=>`<button class="chip" type="button" data-a="simp-cond" data-v="${c}" aria-pressed="${st.cond===c}">${c}</button>`).join("")}</div>
+      <input id="sp_cond" type="text" inputmode="numeric" data-simp="cond" value="${esc(st.cond)}" placeholder="Ex.: 30/60/90/120" autocomplete="off"></div>
+    <div class="calc-grupo"><h4>Opcional</h4>
+      <label for="sp_kg">Quantidade (kg)</label><input id="sp_kg" type="text" inputmode="numeric" data-simp="kg" value="${esc(st.kg)}" placeholder="Ex.: 2.000" autocomplete="off">
+      <label for="sp_fr">Frete (volumes abaixo de 15 t, FOB Guaíra)</label><select id="sp_fr" data-simp="frete"><option value="">Sem frete (CIF, carga fechada)</option>${FRETE.map(x=>`<option value="${x.uf}"${st.frete===x.uf?" selected":""}>${x.uf} · R$ ${x.f}/kg</option>`).join("")}</select></div>
+  </div><div id="simp_out" aria-live="polite"></div></div></section>`;
+}
 function vPrecos(){
   const voltar=S.secao==="tabela-precos"?"":S.secao==="conecta-rc"?`<button class="voltar" data-a="pag" data-v="rc-apresentacao">‹ Conecta RC</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
@@ -1767,6 +1827,7 @@ function vPrecos(){
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
   return `${voltar}
   <div><span class="rot">Safra 26/27 · Out/26-01</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
+  ${vSimPrecos()}
   <section class="bloco"><h2 class="sec">Preços ao produtor (R$/kg)</h2>
     <div class="tab"><table class="precos"><thead><tr><th>Cultivar</th><th>Código</th><th>Gênero/Categoria</th><th>Tratamento</th><th>Embalagem</th>${th}</tr></thead><tbody>${linhas}</tbody></table></div>
     <p class="precos-cap">Tratamento da ruziziensis inclui nematicida biológico (Yellow Jacket®).</p></section>
@@ -2157,6 +2218,23 @@ function vRVPainel(){
     <div class="metric"><span>PGD aprovado</span><strong>${fmtK0(T("aprov"))}</strong><span class="meta">${T("nAprov")} ações em ${comAprov.length} canais</span></div>
     <div class="metric" style="${T("nAnalise")?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>PGD aguardando análise</span><strong>${T("nAnalise")} ações</strong><span class="meta">${fmtK0(T("analise"))} em valor informado</span></div>
   </div></section>
+  ${(()=>{const vis=S.rvVis||"soma",cen=S.rvCen||"hoje",meta=cen==="meta";
+    const col=vis==="igdb"?[["IGDB híbridos",m=>meta?m.mIgdb-(m.igdbC||0):m.igdbH],["IGDB convencionais",m=>m.igdbC],["IGDB",m=>meta?m.mIgdb:m.igdb,1]]
+      :vis==="bf"?[["Bônus cheio (100%)",m=>meta?m.mBonus:m.bonusCheio],["Fator hoje",null],["BF",m=>meta?m.mBonus:m.bonus,1]]
+      :[["IGDB",m=>meta?m.mIgdb:m.igdb],["BF",m=>meta?m.mBonus:m.bonus],["IGDB + BF",m=>meta?m.mTotal:m.total,1]];
+    const soma=f=>L.reduce((t,x)=>t+(Number(f(x.m))||0),0);
+    const fat=m=>m.ating==null?"—":m.fator===1?"100%":m.fator===.7?"70%":"0%";
+    const tit={igdb:"IGDB",bf:"Bônus de Performance (BF)",soma:"IGDB + BF"}[vis];
+    return `<section class="bloco"><h2 class="sec">Investimento por canal · ${tit}</h2>
+    <div class="filtros" style="margin-bottom:6px">${[["igdb","Só IGDB"],["bf","Só BF"],["soma","IGDB + BF"]].map(([k,t])=>`<button class="chip" data-a="rv-vis" data-v="${k}" aria-pressed="${vis===k}">${t}</button>`).join("")}</div>
+    <div class="filtros" style="margin-bottom:10px">${[["hoje","Hoje, pelo vendido"],["meta","Se bater a meta"]].map(([k,t])=>`<button class="chip" data-a="rv-cen" data-v="${k}" aria-pressed="${cen===k}">${t}</button>`).join("")}</div>
+    <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>${tit} · ${meta?"na meta":"hoje"}</span><strong>${fmtK0(soma(col[2][1]))}</strong><span class="meta">${L.length} canais${vis==="soma"?` · teto de ${fmtK0(RV_TETO)} por canal`:""}</span></div>
+      ${vis!=="bf"?`<div class="metric"><span>IGDB</span><strong>${fmtK0(soma(m=>meta?m.mIgdb:m.igdb))}</strong></div>`:""}${vis!=="igdb"?`<div class="metric"><span>BF</span><strong>${fmtK0(soma(m=>meta?m.mBonus:m.bonus))}</strong><span class="meta">${meta?"100% do tier":"pelo atingimento de hoje"}</span></div>`:""}</div>
+    <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th class="val">Ating.</th>${col.map(([t,,f])=>`<th class="val">${f?`<strong>${t}</strong>`:t}</th>`).join("")}</tr></thead><tbody>
+    ${L.map(({c,m})=>`<tr><td><strong>${esc(c.nome)}</strong>${(meta?m.mTeto:m.teto)&&vis==="soma"?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td>${col.map(([,f,forte])=>`<td class="val">${f?(forte?`<strong>${fmtK0(f(m))}</strong>`:fmtK0(f(m))):(meta?"100%":fat(m))}</td>`).join("")}</tr>`).join("")}
+    <tr><td><strong>Total</strong></td><td></td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td>${col.map(([,f,forte])=>`<td class="val">${f?(forte?`<strong>${fmtK0(soma(f))}</strong>`:fmtK0(soma(f))):""}</td>`).join("")}</tr>
+    </tbody></table></div>
+    <p class="precos-nota" style="margin-top:8px">IGDB: percentual do tier sobre o sell-in de híbridos e de convencionais. BF: só sobre híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. ${meta?"No cenário da meta, a meta de híbridos entra ao preço médio que o canal já pratica (ou ao valor por kg do contrato).":"Hoje: calculado sobre os pedidos ganhos de sell-in com faturamento na safra."}</p></section>`;})()}
   <section class="bloco"><h2 class="sec">Se cada canal bater a meta</h2>
   <p class="sub" style="margin:0">Quanto o programa custa com 100% da meta de híbridos de cada canal: o volume da meta ao preço médio que o canal já pratica (ou o valor por kg do contrato, quando ainda não há pedido), mais os convencionais já fechados. Com a meta batida, o Bônus de Performance entra em 100% do tier.</p>
   <div class="metrics">
@@ -2696,6 +2774,8 @@ document.addEventListener("click",async ev=>{
   if(a==="mapa-pin"){S.mapaPin=S.mapaPin===v?null:(v||null);render();if(S.mapaPin){const e=document.getElementById("mapa_pin");if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"});}return;}
   if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.mapa=undefined;S.leadsCache=null;S.crmDonos=null;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
+  if(a==="rv-vis"){S.rvVis=v;render();return;}
+  if(a==="rv-cen"){S.rvCen=v;render();return;}
   if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e&&e.type!=="file"){if(e.type==="checkbox")e.checked=val;else e.value=val;}});const nx=document.getElementById("ng_extra"),nv0=document.getElementById("ng_novo");if(nx&&nv0)nx.hidden=!nv0.checked;return;}
   if(a==="neg-anexo"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("negociacoes").createSignedUrl(v,600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o anexo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
@@ -2703,6 +2783,7 @@ document.addEventListener("click",async ev=>{
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
   if(a==="rent-cult"){const R=rentEstado();const ant=RENT_CULT[R.c],nv=RENT_CULT[v];if(!nv)return;R.c=v;if(ant.base!==nv.base){R.v.ph=String(nv.ph);R.v.pc=String(nv.pc);}render();return;}
+  if(a==="simp-cond"){const st=simpEstado();st.cond=v;const i=document.getElementById("sp_cond");if(i)i.value=v;document.querySelectorAll('[data-a="simp-cond"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===v)));calcSimP();return;}
   if(a==="rent-padrao"){S.rent=null;render();return;}
   if(a==="rent-copiar"){const t=(document.getElementById("rent_arg")||{}).innerText||"";if(navigator.clipboard&&t)navigator.clipboard.writeText(t).then(()=>aviso("Argumento copiado."),()=>aviso("Selecione o texto e copie."));return;}
   if(a==="duv-nova"){S.duvNova=v==="1";render();return;}
@@ -2770,6 +2851,7 @@ document.addEventListener("change",async ev=>{
 });
 document.addEventListener("input",ev=>{
   if(ev.target.id==="busca"){S.busca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
+  if(ev.target.dataset&&ev.target.dataset.simp){const st=simpEstado(),k=ev.target.dataset.simp;st[k]=k==="cult"?+ev.target.value:ev.target.value;if(k==="cond")document.querySelectorAll('[data-a="simp-cond"]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===st.cond)));calcSimP();return;}
   if(ev.target.dataset&&ev.target.dataset.rent){rentEstado().v[ev.target.dataset.rent]=ev.target.value;calcRent();return;}
   if(ev.target.dataset&&ev.target.dataset.calc){const el=ev.target,r=el.value.replace(/\D/g,"");el.value=r?(el.dataset.calc==="rs"?"R$ ":"")+parseInt(r).toLocaleString("pt-BR"):"";calcRC();return;}
   if(ev.target.id==="faq_busca"){S.faqBusca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("faq_busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
