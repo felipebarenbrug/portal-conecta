@@ -290,6 +290,8 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mp-pin.b2b{fill:var(--azul-escuro);stroke:#fff}.mp-pin.b2c{fill:var(--amarelo);stroke:#7a6500}
 .mp-pin.mix{fill:var(--azul-escuro);stroke:var(--amarelo);stroke-width:.28}
 .mp-pin.ufc{stroke-dasharray:.25 .25}.mp-pin.on{stroke:var(--preto);stroke-width:.38;opacity:1}
+.mp-wc{fill:#dfe5ea;stroke:#fff;stroke-width:.3}.mp-wc.on{fill:var(--azul);fill-opacity:.4}.mp-wc.br{fill:var(--amarelo);fill-opacity:.6}
+.mp-wl{font-size:3.3px;font-weight:700;fill:#33414d;text-anchor:middle;pointer-events:none}
 .mp-lado{display:grid;gap:12px}
 .mp-box{background:var(--branco);border-radius:8px;padding:14px;display:grid;gap:6px}
 .mp-box h3{font-size:15px;font-weight:800;color:var(--azul-escuro)}
@@ -1178,7 +1180,7 @@ let GEO=null;
 const normGeo=t=>String(t||"").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g,"").trim();
 const UF_NOMES={acre:"AC",alagoas:"AL",amapa:"AP",amazonas:"AM",bahia:"BA",ceara:"CE","distrito federal":"DF","espirito santo":"ES",goias:"GO",maranhao:"MA","mato grosso":"MT","mato grosso do sul":"MS","minas gerais":"MG",para:"PA",paraiba:"PB",parana:"PR",pernambuco:"PE",piaui:"PI","rio de janeiro":"RJ","rio grande do norte":"RN","rio grande do sul":"RS",rondonia:"RO",roraima:"RR","santa catarina":"SC","sao paulo":"SP",sergipe:"SE",tocantins:"TO"};
 const UF_LISTA=Object.values(UF_NOMES);
-const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(/^[A-Za-z]{2}$/.test(s))return UF_LISTA.includes(s.toUpperCase())?s.toUpperCase():"";const n=UF_NOMES[normGeo(s)];if(n)return n;const m=/(^|[^A-Za-z])([A-Z]{2})\s*$/.exec(s);return m&&UF_LISTA.includes(m[2])?m[2]:"";};
+const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(s.toUpperCase()==="EX")return "EX";if(/^[A-Za-z]{2}$/.test(s))return UF_LISTA.includes(s.toUpperCase())?s.toUpperCase():"";const n=UF_NOMES[normGeo(s)];if(n)return n;const m=/(^|[^A-Za-z])([A-Z]{2})\s*$/.exec(s);return m&&UF_LISTA.includes(m[2])?m[2]:"";};
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s\b.*franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
 const REP_INTERNO=/^(brunno vasconcelos|gustavo adolpho|emerson ferrari|julielson|hygor luis|joaquim jose|mario sergio perassoli|teste|venda direta)/i;
@@ -1211,6 +1213,8 @@ async function carregarGeo(){
 async function carregarMapa(){
   try{await carregarGeo();}catch(e){GEO=null;}
   try{let todos=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("dono,rep,nome,uf,cidade,st,seg,kg_h,kg_c,rs,fat,cults").order("id").range(de,de+999);if(error||!data)break;todos=todos.concat(data);if(data.length<1000)break;de+=1000;}S.mapa=todos;}catch(e){S.mapa=[];}
+  try{if(GEO&&!GEO.wp&&(S.mapa||[]).some(r=>r.uf==="EX")){const j=await (await fetch("mundo.json?v="+APP_VER)).json();const wx=lon=>lon+130,wy=lat=>62-lat;
+    GEO.wx=wx;GEO.wy=wy;GEO.exp=j.exp;GEO.wp=j.world.map(c=>({n:c.n,d:c.c.map(ring=>"M"+ring.map(([x,y])=>wx(x).toFixed(1)+" "+wy(y).toFixed(1)).join("L")+"Z").join("")}));}}catch(e){}
 }
 function pedirMapa(){if(S.mapa===undefined&&!S.mapaBusy){S.mapaBusy=true;carregarMapa().then(()=>{S.mapaBusy=false;if(S.mapa===undefined)S.mapa=[];render();});}}
 function localMapa(r){
@@ -1223,6 +1227,7 @@ function vMapaGeo(ctx){
   if(!GEO)return `<section class="bloco"><div class="vazio">Não foi possível carregar o desenho do mapa. Recarregue a página.</div></section>`;
   const adm=ehAdmin(),com=S.perfil==="Comercial Barenbrug",interno=adm||com;
   const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});
+  if(!F.geo)F.geo="auto";
   let base=S.mapa;if(ctx==="rc"&&interno)base=base.filter(r=>r.rep);
   const donos=[...new Set(base.map(r=>r.dono))].sort((a,b)=>a.localeCompare(b));
   if(F.dono!=="Todos"&&!donos.includes(F.dono))F.dono="Todos";
@@ -1234,24 +1239,39 @@ function vMapaGeo(ctx){
   const fmtN=n=>Math.round(Number(n)||0).toLocaleString("pt-BR"),fmtKg=n=>fmtN(n)+" kg",fmtK=n=>"R$ "+fmtN(n);
   const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const ufs={},cid={};let semLocal=0,semKg=0;
-  for(const r of rows){const kg=kgDe(r);const L=localMapa(r);if(!L){semLocal++;semKg+=kg;continue;}
+  const exRows=rows.filter(r=>r.uf==="EX");const exKg=exRows.reduce((t,r)=>t+kgDe(r),0);
+  for(const r of rows){if(r.uf==="EX")continue;const kg=kgDe(r);const L=localMapa(r);if(!L){semLocal++;semKg+=kg;continue;}
     const u=ufs[r.uf]||(ufs[r.uf]={uf:r.uf,kg:0,n:0,nV:0,nA:0});u.kg+=kg;u.n++;r.st==="V"?u.nV++:u.nA++;
     const c=cid[L.k]||(cid[L.k]={...L,uf:r.uf,kg:0,b2b:0,n:0,nV:0,nA:0,rows:[]});c.kg+=kg;if(r.seg==="B2B")c.b2b+=kg;c.n++;r.st==="V"?c.nV++:c.nA++;c.rows.push(r);}
-  const noMapa=rows.filter(r=>r.uf&&GEO.cen[r.uf]);const vis=F.uf?noMapa.filter(r=>r.uf===F.uf):noMapa;
-  const cidades=Object.values(cid).filter(c=>!F.uf||c.uf===F.uf).sort((a,b)=>b.kg-a.kg);
+  const temBR=Object.keys(cid).length>0;const mundo=!!(GEO.wp&&exRows.length&&(F.geo==="mundo"||(F.geo==="auto"&&!temBR)));
+  const paises={};let exSem=0;
+  if(mundo){for(const k in cid)delete cid[k];
+    for(const r of exRows){const kg=kgDe(r);const nk=normGeo(r.cidade);const e=GEO.exp[nk];if(!e){exSem++;continue;}const k="EX|"+nk;
+      const c=cid[k]||(cid[k]={k,nome:String(r.cidade||"").trim().toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase())+" · "+e[0],pais:e[0],x:GEO.wx(e[2]),y:GEO.wy(e[1]),ex:true,uf:"EX",kg:0,b2b:0,n:0,nV:0,nA:0,rows:[]});c.kg+=kg;if(r.seg==="B2B")c.b2b+=kg;c.n++;r.st==="V"?c.nV++:c.nA++;c.rows.push(r);
+      const pz=paises[e[0]]||(paises[e[0]]={uf:e[0],kg:0,n:0});pz.kg+=kg;pz.n++;}}
+  const noMapa=mundo?exRows:rows.filter(r=>r.uf&&GEO.cen[r.uf]);const vis=(!mundo&&F.uf)?noMapa.filter(r=>r.uf===F.uf):noMapa;
+  const cidades=Object.values(cid).filter(c=>mundo||!F.uf||c.uf===F.uf).sort((a,b)=>b.kg-a.kg);
   const vmax=Math.max(1,...cidades.map(c=>c.kg)),ufmax=Math.max(1,...Object.values(ufs).map(u=>u.kg));
+  const vmaxDe=L=>Math.max(1,...L.map(c=>c.kg));
   const FIX={RJ:[0,1.5],ES:[1.2,0],SE:[1.2,0],AL:[1.3,0],PB:[1.5,0],RN:[1.3,-.5],DF:[0,-1],SC:[0,.5]};
   let svg=`<svg class="mp-svg" viewBox="0 0 ${GEO.W.toFixed(1)} ${GEO.H.toFixed(1)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa do Brasil com as negociações por cidade">`;
-  for(const e of GEO.st){const u=ufs[e.uf];const al=u?(0.14+0.6*Math.sqrt(u.kg/ufmax)):0;
+  if(mundo){const EN={"África do Sul":"South Africa","Colômbia":"Colombia","Paraguai":"Paraguay","República Dominicana":"Dominican Republic","México":"Mexico","Equador":"Ecuador","Peru":"Peru","Panamá":"Panama","Argentina":"Argentina","Guatemala":"Guatemala","Honduras":"Honduras","Estados Unidos":"United States of America","Austrália":"Australia"};
+    const on=new Set(Object.keys(paises).map(x=>EN[x]||x));
+    svg=`<svg class="mp-svg" viewBox="0 0 290 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa-múndi das exportações">`;
+    for(const c of GEO.wp)svg+=`<path class="mp-wc ${c.n==="Brazil"?"br":on.has(c.n)?"on":""}" d="${c.d}"><title>${esc(c.n==="Brazil"?"Brasil · origem":c.n)}</title></path>`;
+    for(const c of cidades.slice().reverse()){const r=1.6+4*Math.sqrt(c.kg/vmaxDe(cidades));svg+=`<circle class="mp-pin b2b ${S.mapaPin===c.k?"on":""}" style="stroke-width:.5" data-a="mapa-pin" data-v="${esc(c.k)}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${r.toFixed(1)}"><title>${esc(c.nome)}: ${fmtKg(c.kg)} em ${c.n} negociações (${c.nV} vendidas, ${c.nA} em aberto)</title></circle>`;}
+    for(const c of cidades)svg+=`<text class="mp-wl" x="${c.x.toFixed(1)}" y="${(c.y-2.6-4*Math.sqrt(c.kg/vmaxDe(cidades))).toFixed(1)}">${esc(c.pais)}</text>`;
+  }
+  if(!mundo)for(const e of GEO.st){const u=ufs[e.uf];const al=u?(0.14+0.6*Math.sqrt(u.kg/ufmax)):0;
     svg+=`<path class="mp-st ${u?"":"zero"} ${F.uf===e.uf?"on":""}" data-a="mapa-uf" data-v="${e.uf}" d="${e.d}" ${u?`style="fill-opacity:${al.toFixed(2)}"`:""}><title>${e.uf}: ${u?`${fmtKg(u.kg)} em ${u.n} negociações (${u.nV} vendidas, ${u.nA} em aberto)`:"sem negociação"}</title></path>`;}
-  for(const e of GEO.st){const f=FIX[e.uf]||[0,0];svg+=`<text class="mp-stl" x="${(e.cx+f[0]).toFixed(1)}" y="${(e.cy+f[1]+.4).toFixed(1)}">${e.uf}</text>`;}
-  for(const c of cidades.slice().reverse()){const r=.18+1.32*Math.sqrt(c.kg/vmax);const sh=c.kg?c.b2b/c.kg:(c.rows.every(x=>x.seg==="B2B")?1:0);const cls=sh>=.999?"b2b":sh<=.001?"b2c":"mix";
+  if(!mundo)for(const e of GEO.st){const f=FIX[e.uf]||[0,0];svg+=`<text class="mp-stl" x="${(e.cx+f[0]).toFixed(1)}" y="${(e.cy+f[1]+.4).toFixed(1)}">${e.uf}</text>`;}
+  if(!mundo)for(const c of cidades.slice().reverse()){const r=.18+1.32*Math.sqrt(c.kg/vmax);const sh=c.kg?c.b2b/c.kg:(c.rows.every(x=>x.seg==="B2B")?1:0);const cls=sh>=.999?"b2b":sh<=.001?"b2c":"mix";
     svg+=`<circle class="mp-pin ${cls} ${c.ex?"":"ufc"} ${S.mapaPin===c.k?"on":""}" data-a="mapa-pin" data-v="${esc(c.k)}" cx="${c.x.toFixed(2)}" cy="${c.y.toFixed(2)}" r="${r.toFixed(2)}"><title>${esc(c.nome)}: ${fmtKg(c.kg)} em ${c.n} negociações (${c.nV} vendidas, ${c.nA} em aberto) · ${Math.round(sh*100)}% canal</title></circle>`;}
   svg+=`</svg>`;
   const totKg=vis.reduce((t,r)=>t+kgDe(r),0),b2bKg=vis.filter(r=>r.seg==="B2B").reduce((t,r)=>t+kgDe(r),0),b2bN=vis.filter(r=>r.seg==="B2B").length;
   const pB=totKg?Math.round(100*b2bKg/totKg):0;
   const vend=vis.filter(r=>r.st==="V"),abe=vis.filter(r=>r.st==="A");const sk=L=>L.reduce((t,r)=>t+kgDe(r),0);
-  const ufList=Object.values(ufs).sort((a,b)=>b.kg-a.kg);const zero=GEO.st.map(e=>e.uf).filter(u=>!ufs[u]).sort();
+  const ufList=Object.values(mundo?paises:ufs).sort((a,b)=>b.kg-a.kg);const zero=GEO.st.map(e=>e.uf).filter(u=>!ufs[u]).sort();
   const chips=(campo,ops,sel)=>ops.map(x=>`<button class="chip" data-a="mapa-f" data-v="${esc(campo+"|"+x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
   const ativos=[F.st!=="Todas"?F.st:"",F.grp!=="Todos"?F.grp:"",F.rep!=="Todos"?F.rep:"",F.dono!=="Todos"?F.dono:"",F.uf?F.uf:""].filter(Boolean);
   const pin=S.mapaPin&&cid[S.mapaPin];
@@ -1267,20 +1287,21 @@ function vMapaGeo(ctx){
     ${F.uf?`<p class="meta" style="margin:10px 0 4px">Estado</p><div class="filtros"><button class="chip" data-a="mapa-uf" data-v="${F.uf}" aria-pressed="true">${F.uf} · tirar filtro</button></div>`:""}
   </details>
   <div class="metrics">
-    <div class="metric"><span>Volume${F.uf?" em "+F.uf:" no mapa"}</span><strong>${ton(totKg)}</strong><span class="meta">${fmtN(vis.length)} negociações</span></div>
+    <div class="metric"><span>${mundo?"Exportação":"Volume"+(F.uf?" em "+F.uf:" no mapa")}</span><strong>${ton(totKg)}</strong><span class="meta">${fmtN(vis.length)} negociações</span></div>
     <div class="metric"><span>Vendido</span><strong>${ton(sk(vend))}</strong><span class="meta">${fmtN(vend.length)} pedidos</span></div>
     <div class="metric"><span>Em aberto</span><strong>${ton(sk(abe))}</strong><span class="meta">${fmtN(abe.length)} negociações</span></div>
-    <div class="metric"><span>Cobertura</span><strong>${fmtN(cidades.length)} cidades</strong><span class="meta">${ufList.length} estados</span></div>
+    <div class="metric"><span>Cobertura</span><strong>${fmtN(cidades.length)} cidades</strong><span class="meta">${ufList.length} ${mundo?"países":"estados"}</span></div>
   </div>
+  ${GEO.wp&&exRows.length?`<div class="filtros"><button class="chip" data-a="mapa-f" data-v="geo|br" aria-pressed="${!mundo}">Brasil</button><button class="chip" data-a="mapa-f" data-v="geo|mundo" aria-pressed="${mundo}">Mundo · exportação (${fmtN(exRows.length)})</button></div>`:""}
   ${rows.length?`<div class="mp-grid"><div style="display:grid;gap:8px">${svg}
-    <div class="mp-leg"><span><i style="background:var(--azul-escuro)"></i>Canal (B2B)</span><span><i style="background:var(--amarelo);box-shadow:inset 0 0 0 1px #7a6500"></i>Produtor (B2C)</span><span><i style="background:var(--azul-escuro);box-shadow:0 0 0 2px var(--amarelo)"></i>Os dois na mesma cidade</span><span>Contorno tracejado: só o estado é conhecido</span></div>
-    <p class="dica">Toque em um ponto para ver as negociações da cidade, ou em um estado para filtrar.${semLocal?` Fora do mapa: ${fmtN(semLocal)} negociações (${fmtKg(semKg)}) sem cidade e estado no cadastro da empresa no CRM.`:""}</p></div>
+    <div class="mp-leg" ${mundo?'style="display:none"':""}><span><i style="background:var(--azul-escuro)"></i>Canal (B2B)</span><span><i style="background:var(--amarelo);box-shadow:inset 0 0 0 1px #7a6500"></i>Produtor (B2C)</span><span><i style="background:var(--azul-escuro);box-shadow:0 0 0 2px var(--amarelo)"></i>Os dois na mesma cidade</span><span>Contorno tracejado: só o estado é conhecido</span></div>
+    <p class="dica">${mundo?`Exportações por cidade de destino. Toque em um ponto para ver as negociações.${exSem?` ${fmtN(exSem)} sem cidade reconhecida.`:""}`:`Toque em um ponto para ver as negociações da cidade, ou em um estado para filtrar.${exRows.length?` Exportação: ${fmtN(exRows.length)} negociações (${fmtKg(exKg)}) no mapa-múndi.`:""}`}${!mundo&&semLocal?` Fora do mapa: ${fmtN(semLocal)} negociações (${fmtKg(semKg)}) sem cidade e estado no cadastro da empresa no CRM.`:""}</p></div>
    <div class="mp-lado">
     <div class="mp-box"><h3>Canal × produtor</h3><div class="mp-split"><i class="a" style="width:${pB}%"></i><i class="b" style="width:${totKg?100-pB:0}%"></i></div>
       <div class="mp-row"><span>Canal (B2B)</span><span><strong>${pB}%</strong> · ${fmtKg(b2bKg)} · ${fmtN(b2bN)} neg.</span></div>
       <div class="mp-row"><span>Produtor (B2C)</span><span><strong>${totKg?100-pB:0}%</strong> · ${fmtKg(totKg-b2bKg)} · ${fmtN(vis.length-b2bN)} neg.</span></div></div>
-    <div class="mp-box"><h3>Estados por quilos</h3>${ufList.slice(0,12).map(u=>`<div class="mp-row"><button class="link" data-a="mapa-uf" data-v="${u.uf}">${u.uf}</button><span><strong>${fmtKg(u.kg)}</strong> <span class="meta">${u.n} neg.</span></span></div>`).join("")}${ufList.length>12?`<span class="meta">+${ufList.length-12} estados</span>`:""}</div>
-    <div class="mp-box"><h3>Descobertos · ${zero.length} ${zero.length===1?"estado":"estados"} sem negociação</h3><p class="meta" style="margin:0">${zero.length?zero.join(" · "):"Todos os estados têm negociação."}</p></div>
+    <div class="mp-box"><h3>${mundo?"Países":"Estados"} por quilos</h3>${ufList.slice(0,12).map(u=>`<div class="mp-row">${mundo?`<span>${esc(u.uf)}</span>`:`<button class="link" data-a="mapa-uf" data-v="${u.uf}">${u.uf}</button>`}<span><strong>${fmtKg(u.kg)}</strong> <span class="meta">${u.n} neg.</span></span></div>`).join("")}${ufList.length>12?`<span class="meta">+${ufList.length-12} estados</span>`:""}</div>
+    ${mundo?"":`<div class="mp-box"><h3>Descobertos · ${zero.length} ${zero.length===1?"estado":"estados"} sem negociação</h3><p class="meta" style="margin:0">${zero.length?zero.join(" · "):"Todos os estados têm negociação."}</p></div>`}
    </div></div>
    ${pin?`<section class="bloco" id="mapa_pin"><h2 class="sec">${esc(pin.nome)}</h2><p class="sub" style="margin:0">${fmtKg(pin.kg)} em ${pin.n} negociações · ${pin.nV} vendidas, ${pin.nA} em aberto. <button class="link" data-a="mapa-pin" data-v="">Fechar</button></p><div class="lista">${pin.rows.slice().sort((a,b)=>((+b.kg_h||0)+(+b.kg_c||0))-((+a.kg_h||0)+(+a.kg_c||0))).slice(0,60).map(linNeg).join("")}</div></section>`:`<section class="bloco"><h2 class="sec">Principais cidades</h2><div class="lista">${cidades.slice(0,10).map(c=>`<div class="neg"><div class="l1"><button class="link" data-a="mapa-pin" data-v="${esc(c.k)}">${esc(c.nome)}</button><span>${fmtKg(c.kg)}</span></div><span class="meta">${c.n} negociações · ${c.nV} vendidas, ${c.nA} em aberto · ${c.kg?Math.round(100*c.b2b/c.kg):0}% canal</span></div>`).join("")}</div></section>`}`
   :`<section class="bloco"><div class="vazio">${S.mapa.length?"Nenhuma negociação para este filtro.":(adm?"O mapa ainda não foi carregado. Abra Meu CRM e use o botão Atualizar do CRM agora.":"Ainda não há negociações suas no mapa. Ele é atualizado a partir do CRM.")}</div></section>`}`;
