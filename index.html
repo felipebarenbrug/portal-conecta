@@ -558,7 +558,7 @@ const RC_FAQ=[
  ["Como o programa é formalizado?","Por um Contrato de Representação Comercial 26/27, apresentado pelo Responsável Comercial, que reúne a mecânica, as alíquotas e as regras de exclusividade."]
 ];
 const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Administrador"];
-const VENDEDORAS_IS=["Laura","Maria Giulia","Thaís","Maria Eduarda"];
+const VENDEDORAS_IS=["Laura","Maria Giulia","Thaís","Maria Eduarda","Mayane"];
 const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 const OPC={
   formacao:["Agronomia","Zootecnia","Medicina Veterinária","Engenharia Agronômica","Técnico Agrícola/Agropecuária","Administração/Comercial","Outra"],
@@ -711,7 +711,17 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111110424";
+const APP_VER="20261111112002";
+let _perfilChk=0;
+async function recarregarPermissoes(){
+  if(!S.user||!S.profile||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
+  try{const {data}=await sb.from("profiles").select("perfil,acessos,abas_ocultas,exige_curso,rc_crm,crm_dono,is_vendedora,ufs_atendidas,canal_id,comercial_resp").eq("id",S.user.id).maybeSingle();if(!data)return;
+    const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
+    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
+  }catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)recarregarPermissoes();});
+setInterval(()=>{if(!document.hidden)recarregarPermissoes();},180000);
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
@@ -904,24 +914,45 @@ function subnavLeads(){
     <nav class="nav" aria-label="LeadsBaren">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">LeadsBaren</span></div></div>`;
 }
-async function carregarLeads(){try{const {data}=await sb.from("leads").select("*");S.leadsCache=data||[];}catch(e){S.leadsCache=[];}}
+async function carregarLeads(){try{const {data}=await sb.from("leads").select("*").order("entrou_em",{ascending:false});S.leadsCache=data||[];}catch(e){S.leadsCache=[];}}
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
-  const origem=inbound?"inbound":"outbound";
-  const minhaUf=(S.profile&&(S.profile.uf||S.profile.estado))||"";
-  const rows=(S.leadsCache||[]).filter(l=>(l.origem||"inbound")===origem);
-  const fmtTel=t=>t?`<a class="link" href="https://wa.me/55${String(t).replace(/\D/g,"")}" target="_blank" rel="noopener">${esc(t)}</a>`:"—";
-  const corpo=rows.length
-    ? `<div class="tab"><table><thead><tr><th>Produtor</th><th>Cidade/UF</th><th>Cultura/Interesse</th><th>Volume</th><th>WhatsApp</th><th>Status</th></tr></thead><tbody>${rows.map(l=>`<tr><td>${esc(l.nome||"—")}</td><td>${esc((l.cidade||"—")+(l.uf?" / "+l.uf:""))}</td><td>${esc(l.cultura||l.interesse||"—")}</td><td>${esc(l.volume||"—")}</td><td>${fmtTel(l.telefone||l.whatsapp)}</td><td><span class="selo">${esc(l.status||"Novo")}</span></td></tr>`).join("")}</tbody></table></div>`
-    : `<div class="vazio">${S.leadsCache?`Nenhum lead ${inbound?"de cotação":"de prospecção"} disponível para a sua região${minhaUf?" ("+esc(minhaUf)+")":""} por enquanto.`:"Carregando leads…"}</div>`;
-  return `<div><h1 class="titulo">LeadsBaren${minhaUf?` · ${esc(minhaUf)}`:""}</h1>
-    <p class="sub">${inbound
-      ? "Produtores que pediram cotação e caíram no funil do CRM, do(s) estado(s) que você atende. Atenda rápido — lead inbound esfria em horas."
-      : "Base de produtores do RD Marketing da sua região para você prospectar ativamente. Pegue o lead e registre o contato para não duplicar com outro canal."}</p></div>
-  <section class="bloco">
-    <div class="aviso-bloq">Em construção. A base de leads será conectada ao RD Station (Marketing + funil MQL do CRM) com acesso restrito por estado (LGPD). Esta tela já mostra como o canal/RC vai ver e atender os leads da região dele.</div>
-    ${corpo}
-  </section>`;
+  if(!inbound)return `<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Base de produtores do RD Marketing da sua região para prospecção ativa.</p></div><section class="bloco"><div class="aviso-bloq">Em construção. Esta aba será ligada à base do RD Station Marketing, com acesso restrito por estado.</div></section>`;
+  if(S.leadsCache==null)return `<div class="carregando">Carregando leads…</div>`;
+  const interno=ehAdmin()||S.perfil==="Comercial Barenbrug";const minhas=(S.profile&&S.profile.ufs_atendidas)||[];
+  const F=S.leadF||(S.leadF={uf:"Todos",st:"Em aberto"});
+  let rows=S.leadsCache.filter(l=>(l.origem||"inbound")==="inbound");
+  const ufs=[...new Set(rows.map(l=>l.uf||"Sem UF"))].sort();
+  if(F.uf!=="Todos"&&!ufs.includes(F.uf))F.uf="Todos";
+  const total=rows.length;
+  rows=rows.filter(l=>(F.uf==="Todos"||(l.uf||"Sem UF")===F.uf)&&(F.st==="Todos"||(F.st==="Em aberto"?(!l.status||l.status==="Novo"||l.status==="Em atendimento"):l.status===F.st)));
+  const chips=(campo,ops,sel)=>ops.map(x=>`<button class="chip" data-a="lead-f" data-v="${esc(campo+"|"+x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
+  const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
+  const motivo=m=>/antes/i.test(m||"")?"A Barenbrug não conseguiu falar com o produtor":/ap[oó]s 1/i.test(m||"")?"Sem retorno depois do primeiro contato da Barenbrug":(m||"");
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  const card=l=>{const visto=(S.leadVistos||{})[l.id];const st=l.status||"Novo";
+    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Produtor")}</span><span><span class="selo">${esc(st)}</span></span></div>
+      <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · pediu atendimento em ${dia(l.entrou_em)}</span>
+      <span class="meta"><strong>Interesse:</strong> ${esc(l.cultura||"não informado")}${l.volume?" · <strong>Área:</strong> "+esc(l.volume):""}${l.perfil?" · <strong>Perfil:</strong> "+esc(l.perfil):""}</span>
+      ${l.campanha?`<span class="meta"><strong>Origem do pedido:</strong> ${esc(l.campanha)}</span>`:""}
+      <span class="meta"><strong>Situação na Barenbrug:</strong> ${esc(motivo(l.motivo))}${l.perdido_em?" (encerrado em "+dia(l.perdido_em)+")":""}</span>
+      ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${esc(l.atendido_por)} em ${dia(l.atendido_em)}${l.obs?" · "+esc(l.obs):""}</span>`:""}
+      ${visto?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${tel(l.telefone)} · <strong>E-mail:</strong> ${l.email?esc(l.email):"não informado"}</span>
+        <div style="display:grid;gap:6px;margin-top:6px"><input id="lead_obs_${l.id}" placeholder="Anotação do atendimento (opcional)" value="">
+        <div class="filtros">${["Em atendimento","Virou negociação","Sem sucesso","Novo"].filter(x=>x!==st).map(x=>`<button class="chip" data-a="lead-status" data-v="${l.id}" data-st="${esc(x)}">${x==="Novo"?"Devolver para a fila":"Marcar: "+x}</button>`).join("")}</div></div>`
+       :`<div><button class="btn sec" data-a="lead-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">Ver contato e atender</button></div>`}
+    </div>`;};
+  return `<div><h1 class="titulo">LeadsBaren · Cotações</h1>
+    <p class="sub">Produtores que pediram atendimento comercial à Barenbrug nos últimos 60 dias e com quem o contato não se completou. ${interno?"":"Você vê os leads dos estados que atende"+(minhas.length?" ("+esc(minhas.join(", "))+")":"")+"."}</p></div>
+  <div class="aviso-bloq"><strong>Antes de ligar, leia.</strong> Este produtor entrou em contato direto pelo site da Barenbrug. Nós enviamos a ele a lista de revendas próximas do CEP informado, e mesmo assim ele preferiu seguir o atendimento com a Barenbrug. Por isso, pode ser que ele já esteja em tratativa com alguém da Barenbrug: pergunte e respeite a conversa em andamento. O que rege o atendimento é a política de preço da Barenbrug.</div>
+  ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="leads-atualizar">Atualizar leads do CRM</button><span class="meta" id="lead_prog"></span></div>`:""}
+  ${!interno&&!minhas.length?`<section class="bloco"><div class="vazio">Seu acesso ainda não tem estados de atendimento definidos. Peça ao administrador para informar as UFs que você atende e os leads aparecem aqui.</div></section>`:`
+  <details class="lote" ${(F.uf!=="Todos"||F.st!=="Em aberto")?"open":""}><summary>Filtros · ${esc(F.st)}${F.uf!=="Todos"?" · "+esc(F.uf):""}</summary>
+    <p class="meta" style="margin:10px 0 4px">Situação</p><div class="filtros">${chips("st",["Em aberto","Novo","Em atendimento","Virou negociação","Sem sucesso","Todos"],F.st)}</div>
+    ${ufs.length>1?`<p class="meta" style="margin:10px 0 4px">Estado</p><div class="filtros">${chips("uf",["Todos",...ufs],F.uf)}</div>`:""}</details>
+  <section class="bloco"><p class="sub" style="margin:0">${rows.length} de ${total} leads.</p>
+    ${rows.length?`<div class="lista">${rows.slice(0,150).map(card).join("")}</div>${rows.length>150?`<p class="dica">Mostrando os 150 mais recentes. Use os filtros para ver os demais.</p>`:""}`:`<div class="vazio">Nenhum lead para este filtro${total?"":" por enquanto"}.</div>`}
+    <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados apenas para o atendimento comercial deste pedido.</p></section>`}`;
 }
 const veTimeIS=()=>ehAdmin();
 async function carregarIS(){try{const {data}=await sb.from("is_metricas").select("*");S.isMetr=data||[];}catch(e){S.isMetr=[];}}
@@ -933,42 +964,46 @@ function subnavIS(){
     <span class="secao-nome">Inside Sales</span></div></div>`;
 }
 function vInsideSales(){
-  const rows=S.isMetr,manager=veTimeIS();
-  const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
-  if(rows==null)return `<div class="carregando">Carregando indicadores…</div>`;
-  const aviso=`<div class="aviso-bloq">Em construção. Os indicadores serão alimentados pela integração ao vivo do RD Station (funil de vendas + funil MQL). A estrutura abaixo já é a visão final de cada vendedora e do time.</div>`;
+  const all=S.crm,manager=veTimeIS();
+  if(all==null)return `<div class="carregando">Carregando indicadores…</div>`;
+  const rows=all.filter(x=>String(x.dono).startsWith("IS: "));const nm=x=>String(x.dono).slice(4);
+  const fmtN=n=>Math.round(Number(n)||0).toLocaleString("pt-BR"),fmtK=n=>"R$ "+fmtN(n);
+  const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
+  const Qd=r=>{const q=(r&&r.qtd)||{};return {vh:+q.vh||0,ah:+q.ah||0,pondh:+q.pondh||0,pkgh:+q.pkgh||0,mes:q.mes||{n:0,kgh:0,rs:0,perd:0}};};
+  const taxa=m=>{const t=(+m.n||0)+(+m.perd||0);return t?Math.round(100*(+m.n||0)/t)+"%":"—";};
+  const atualiza=manager?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:"";
+  if(!rows.length)return `<div><h1 class="titulo">Inside Sales</h1></div>${atualiza}<section class="bloco"><div class="vazio">${manager?"Ainda não há dados do time. Use o botão acima para ler o CRM.":"Seu painel ainda não foi carregado ou o seu acesso não está vinculado a uma consultora. Fale com o administrador."}</div></section>`;
   if(S.pag==="is-time"&&manager){
-    const r=(rows||[]).slice().sort((a,b)=>(b.vendas_rs||0)-(a.vendas_rs||0));
-    const tbl=r.length?`<div class="tab"><table><thead><tr><th>Vendedora</th><th class="val">Funil</th><th class="val">Pausadas</th><th class="val">MQL</th><th class="val">SQL</th><th class="val">Conv.</th><th class="val">Vendas</th><th class="val">R$ vendas</th><th class="val">Atrasadas</th><th class="val">Sem att.</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.vendedora)}</td><td class="val">${fmtN(x.funil_n)}</td><td class="val">${fmtN(x.pausadas_n)}</td><td class="val">${fmtN(x.mql)}</td><td class="val">${fmtN(x.sql_n)}</td><td class="val">${x.mql?Math.round(100*(x.sql_n||0)/x.mql):0}%</td><td class="val">${fmtN(x.vendas_n)}</td><td class="val">${fmtR(x.vendas_rs)}</td><td class="val">${x.atrasadas_n?`<strong style="color:#c0392b">${fmtN(x.atrasadas_n)}</strong>`:"0"}</td><td class="val">${x.sem_att_n?`<strong style="color:#c0392b">${fmtN(x.sem_att_n)}</strong>`:"0"}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Sem dados ainda.</div>`;
-    return `<div><h1 class="titulo">Inside Sales · Time</h1><p class="sub">Comparativo das vendedoras: funil, conversão MQL→SQL, vendas e alertas.</p></div>${aviso}<section class="bloco"><h2 class="sec">Visão do time</h2>${tbl}</section>`;
+    const T=rows.map(r=>({r,q:Qd(r)}));const vh=T.reduce((t,x)=>t+x.q.vh,0),pond=T.reduce((t,x)=>t+x.q.pondh,0),ah=T.reduce((t,x)=>t+x.q.ah,0),pk=T.reduce((t,x)=>t+x.q.pkgh,0);
+    const mes={n:T.reduce((t,x)=>t+(+x.q.mes.n||0),0),kgh:T.reduce((t,x)=>t+(+x.q.mes.kgh||0),0),rs:T.reduce((t,x)=>t+(+x.q.mes.rs||0),0),perd:T.reduce((t,x)=>t+(+x.q.mes.perd||0),0)};
+    const pV=Math.min(100,100*vh/META_IS_KG),pP=Math.min(100-pV,100*pond/META_IS_KG);const falta=Math.max(0,META_IS_KG-vh);
+    const lin=x=>`<tr><td><button class="link" data-a="is-abrir" data-v="${esc(nm(x.r))}">${esc(nm(x.r))}</button></td><td class="val">${fmtN(x.r.vendido_n)}</td><td class="val"><strong>${ton(x.q.vh)}</strong></td><td class="val">${fmtK(x.r.vendido_rs)}</td><td class="val">${fmtN(x.q.mes.n)} · ${ton(x.q.mes.kgh)}</td><td class="val">${taxa(x.q.mes)}</td><td class="val">${fmtN(x.r.aberto_n)} · ${ton(x.q.ah)}</td><td class="val">${ton(x.q.pondh)}</td><td class="val">${fmtN(x.r.pausadas_n)} · ${ton(x.q.pkgh)}</td><td class="val">${(x.r.sem_att_n||x.r.atrasadas_n)?`<strong style="color:#c0392b">${fmtN(x.r.sem_att_n)} / ${fmtN(x.r.atrasadas_n)}</strong>`:"0 / 0"}</td></tr>`;
+    return `<div><h1 class="titulo">Inside Sales · Time</h1><p class="sub">Safra 26/27 por data de faturamento, direto do funil de vendas do CRM. Volume em toneladas de híbridos (Sabiá, Cayana e Carcará). Atualizado em ${fmtDataHora(rows[0].atualizado_em)}.</p></div>
+    ${atualiza}
+    <section class="bloco"><h2 class="sec">Meta de híbridos da safra · ${ton(META_IS_KG)}</h2>
+      <div class="mp-split" style="height:18px"><i class="a" style="width:${pV.toFixed(1)}%"></i><i class="b" style="width:${pP.toFixed(1)}%"></i></div>
+      <p class="sub" style="margin:0"><strong>${ton(vh)}</strong> vendidas (${Math.round(100*vh/META_IS_KG)}% da meta) · mais <strong>${ton(pond)}</strong> na régua de probabilidade do que está em aberto = projeção de <strong>${ton(vh+pond)}</strong> (${Math.round(100*(vh+pond)/META_IS_KG)}%). ${falta?(falta<=ah?`Faltam ${ton(falta)}: é preciso converter ${Math.round(100*falta/ah)}% das ${ton(ah)} em aberto.`:`Faltam ${ton(falta)}, mais do que as ${ton(ah)} hoje em aberto: é preciso abrir novas negociações ou retomar as pausadas.`):"Meta batida."}</p></section>
+    <div class="metrics">
+      <div class="metric"><span>Vendas no mês</span><strong>${fmtN(mes.n)} · ${ton(mes.kgh)}</strong><span class="meta">${fmtK(mes.rs)}</span></div>
+      <div class="metric"><span>Fechamento no mês</span><strong>${taxa(mes)}</strong><span class="meta">${fmtN(mes.n)} ganhas · ${fmtN(mes.perd)} perdidas</span></div>
+      <div class="metric"><span>Em aberto</span><strong>${ton(ah)}</strong><span class="meta">${fmtN(T.reduce((t,x)=>t+(+x.r.aberto_n||0),0))} negociações</span></div>
+      <div class="metric"><span>Pausadas</span><strong>${ton(pk)}</strong><span class="meta">${fmtN(T.reduce((t,x)=>t+(+x.r.pausadas_n||0),0))} negociações, fora da projeção</span></div>
+    </div>
+    <section class="bloco"><h2 class="sec">Por consultora</h2><div class="tab"><table><thead><tr><th>Consultora</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Valor</th><th class="val">No mês</th><th class="val">Fecham. mês</th><th class="val">Em aberto</th><th class="val">Na régua</th><th class="val">Pausadas</th><th class="val">Sem atualizar / vencidas</th></tr></thead><tbody>${T.sort((a,b)=>b.q.vh-a.q.vh).map(lin).join("")}</tbody></table></div>
+    <p class="dica">Vendas: negociações ganhas ou em etapa de fechamento com faturamento na safra. No mês: ganhas no CRM no mês corrente. Fechamento no mês: ganhas ÷ (ganhas + perdidas) no mês. Na régua: híbridos em aberto × chance de fechar pelas estrelas (5%, 15%, 35%, 70%, 90%). Toque no nome para abrir o painel da consultora.</p></section>`;
   }
-  const alvo=manager?(S.isSel||(rows[0]&&rows[0].vendedora)||VENDEDORAS_IS[0]):(S.profile&&S.profile.is_vendedora);
-  const seletor=manager?`<div class="filtros">${VENDEDORAS_IS.map(v=>`<button class="chip" data-a="is-sel" data-v="${esc(v)}" aria-pressed="${alvo===v}">${esc(v)}</button>`).join("")}</div>`:"";
-  if(!manager&&!alvo)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma vendedora. Peça ao administrador para fazer o vínculo e seu painel aparece aqui.</p></section>`;
-  const row=(rows||[]).find(x=>x.vendedora===alvo);
-  const funilMax=Math.max(1,(row&&row.mql)||0);
-  const bar=(lbl,val,cor)=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:62px;font-size:13px;font-weight:600">${lbl}</span><span style="flex:1;height:14px;background:var(--linha,#eee);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(100*(val||0)/funilMax)}%;background:${cor}"></i></span><span style="width:70px;text-align:right;font-weight:700">${fmtN(val)}</span></div>`;
-  if(!row)return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1></div>${seletor}<section class="bloco">${aviso}<div class="vazio">Sem dados para ${esc(alvo||"")} ainda.</div></section>`;
-  const meses=Array.isArray(row.fat_meses)?row.fat_meses:[];
-  const maxM=Math.max(1,...meses.map(m=>m.rs||0));
-  return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1><p class="sub">Performance na safra: funil, faturamento e alertas. Atualizado pela integração do RD Station.</p></div>
-  ${seletor}${aviso}
-  <div class="metrics">
-    <div class="metric"><span>No funil (ativas)</span><strong>${fmtN(row.funil_n)}</strong></div>
-    <div class="metric"><span>Pausadas</span><strong>${fmtN(row.pausadas_n)}</strong></div>
-    <div class="metric"><span>Faturar no mês</span><strong>${fmtR(row.fat_mes_rs)}</strong></div>
-    <div class="metric"><span>Próximos meses</span><strong>${fmtR(row.fat_prox_rs)}</strong></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Forecast ponderado</span><strong>${fmtR(row.ponderado_rs)}</strong></div>
-  </div>
-  <div class="metrics" style="margin-top:10px">
-    <div class="metric" style="${row.atrasadas_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Atrasadas</span><strong>${fmtN(row.atrasadas_n)}</strong></div>
-    <div class="metric" style="${row.sem_att_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Sem atualização (+15d)</span><strong>${fmtN(row.sem_att_n)}</strong></div>
-  </div>
-  <section class="bloco"><h2 class="sec">Funil MQL → SQL → Venda</h2>
-    ${bar("MQL",row.mql,"#86b3c4")}${bar("SQL",row.sql_n,"#4e9a6b")}${bar("Venda",row.vendas_n,"var(--amarelo,#ffdb00)")}
-    <p class="sub" style="margin:8px 0 0">Conversão MQL→SQL ${row.mql?Math.round(100*(row.sql_n||0)/row.mql):0}% · venda ${row.mql?Math.round(100*(row.vendas_n||0)/row.mql):0}% · R$ ${fmtR(row.vendas_rs)}.</p></section>
-  <section class="bloco"><h2 class="sec">Faturamento por mês</h2>
-    ${meses.length?meses.map(m=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:72px;font-size:13px;font-weight:600">${esc(m.mes)}</span><span style="flex:1;height:14px;background:var(--linha,#eee);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(100*(m.rs||0)/maxM)}%;background:var(--azul-escuro,#0a5)"></i></span><span style="width:90px;text-align:right;font-weight:700">${fmtR(m.rs)}</span></div>`).join(""):`<div class="vazio">Sem dados mensais ainda.</div>`}</section>`;
+  const alvo=manager?(S.isSel||nm(rows[0])):(S.profile&&S.profile.is_vendedora);
+  const row=rows.find(x=>nm(x)===alvo)||(!manager&&rows.length===1?rows[0]:null);
+  const seletor=manager?`<div class="filtros">${rows.map(x=>`<button class="chip" data-a="is-sel" data-v="${esc(nm(x))}" aria-pressed="${alvo===nm(x)}">${esc(nm(x))}</button>`).join("")}</div>`:"";
+  if(!row)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div>${seletor}<section class="bloco"><div class="vazio">Sem dados para ${esc(alvo||"este acesso")} ainda.</div></section>`;
+  const q=Qd(row);
+  const topo=`${seletor}${manager?atualiza:""}<div class="metrics" style="margin-bottom:10px">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Híbridos vendidos na safra</span><strong>${ton(q.vh)}</strong><span class="meta">${Math.round(100*q.vh/META_IS_KG)}% da meta do time (${ton(META_IS_KG)})</span></div>
+    <div class="metric"><span>Vendas no mês</span><strong>${fmtN(q.mes.n)} · ${ton(q.mes.kgh)}</strong><span class="meta">${fmtK(q.mes.rs)}</span></div>
+    <div class="metric"><span>Fechamento no mês</span><strong>${taxa(q.mes)}</strong><span class="meta">${fmtN(q.mes.n)} ganhas · ${fmtN(q.mes.perd)} perdidas</span></div>
+    <div class="metric"><span>Híbridos na régua</span><strong>${ton(q.pondh)}</strong><span class="meta">de ${ton(q.ah)} em aberto</span></div>
+    <div class="metric"><span>Híbridos pausados</span><strong>${ton(q.pkgh)}</strong><span class="meta">${fmtN(row.pausadas_n)} negociações, fora da projeção</span></div></div>`;
+  return vMeuCRMPainel({r:row,titulo:(manager?nm(row):"Meu painel")+" · Inside Sales",topo});
 }
 const TEMAS_DUV=["Sabiá","Cayana","Carcará","Manejo e plantio","Comercial e preços","Programas Conecta","Geral"];
 const ehBarenbrug=()=>ehAdmin()||S.perfil==="Comercial Barenbrug";
@@ -1098,23 +1133,25 @@ const CRM_ETAPA={"61eea2f980f7d4001007111c":"Forecast","61eea2f980f7d4001007111d
 const CRM_PESO={1:.05,2:.15,3:.35,4:.70,5:.90};
 function cultivarDe(nome){const l=String(nome||"").toLowerCase();const M=[["cayana","Cayana"],["convert 330","Sabiá"],["sabi","Sabiá"],["carcar","Carcará"],["mulato","Mulato II"],["marandu","Marandu"],["piat","Piatã"],["xara","Xaraés"],["basilisk","Basilisk"],["llanero","Humidícola"],["momba","Mombaça"],["massai","Massai"],["tanz","Tanzânia"],["sabanera","Sabanera"],["ruzi","Ruziziensis"],["cynodon","Cynodon"],["trifolium","Trevo"],["trevo","Trevo"],["azev","Azevém"],["barjumbo","Azevém"],["bar mx","Azevém"],["bar hq","Azevém"],["ribeye","Azevém"],["santa adelaida","Azevém"],["barmix","BARMIX"],["pennisetum","Milheto"]];for(const [k,v] of M)if(l.includes(k))return v;return "Outros";}
 const ehHibrida=c=>c==="Sabiá"||c==="Cayana"||c==="Carcará";
-function montaPainelCRM(dono,deals){
+function montaPainelCRM(dono,deals,perdMes){
   const hoje=new Date();hoje.setHours(0,0,0,0);const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
   const dt=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
   const iso=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:null;
   const repN=v=>{const r=String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim();return r?r.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()).slice(0,38):"";};
   const R={dono,equipe:dono==="Inside Sales"?"Inside Sales":"Campo",vendido_n:0,vendido_kg:0,vendido_rs:0,aberto_n:0,aberto_rs:0,ponderado_rs:0,pausadas_n:0,sem_att_n:0,atrasadas_n:0,sem_data_n:0};
-  const q={vh:0,vc:0,ah:0,ac:0,vcult:{},acult:{}};const meses={},rcs={},ab=[];
+  const q={vh:0,vc:0,ah:0,ac:0,vcult:{},acult:{},mes:{n:0,kgh:0,kg:0,rs:0,perd:Number(perdMes)||0},pkgh:0,pkg:0,prs:0,pondh:0};const mesK=new Date(Date.now()-3*3600e3).toISOString().slice(0,7);
+  const kgs=d=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const v=Number(kg)||0;if(ehHibrida(cultivarDe(n)))h+=v;else c+=v;});return [h,c];};const meses={},rcs={},ab=[];
   const rc=k=>rcs[k]||(rcs[k]={rc:k||"(sem representante)",vn:0,vrs:0,an:0,ars:0,sem:0,venc:0,b30:0,b30rs:0});
   const soma=(d,alvoH,alvoC,cult)=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(ehHibrida(k))h+=v;else c+=v;cult[k]=(cult[k]||0)+v;});q[alvoH]+=h;q[alvoC]+=c;return [h,c];};
   for(const d of deals){
     const b=dt(d.fat),tp=Number(d.tot)||0,rp=repN(d.rep);
-    if(d.st==="P"){R.pausadas_n++;continue;}
+    if(d.st==="P"){R.pausadas_n++;const [h,c]=kgs(d);q.pkgh+=h;q.pkg+=h+c;q.prs+=tp;continue;}
+    if(d.st==="V"&&String(d.cl||"").slice(0,7)===mesK&&!/bonif/i.test(d.n)){const [h,c]=kgs(d);q.mes.n++;q.mes.kgh+=h;q.mes.kg+=h+c;q.mes.rs+=tp;}
     const fech=d.st==="V"||CRM_FECH.includes(d.stg);
     if(fech){if(d.st==="V"?(b&&b>=ini&&b<=fim):((b&&b>=ini&&b<=fim)||!b)){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
     const rt=d.rt||1,w=CRM_PESO[rt]||.05,dias=Math.round((hoje-new Date(String(d.upd).slice(0,10)+"T00:00:00"))/864e5),venc=!!(b&&b<hoje);
     const [h,c]=soma(d,"ah","ac",q.acult);
-    R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
+    q.pondh+=h*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
     if(b&&b>=new Date(hoje.getFullYear(),hoje.getMonth(),1)){const k=iso(b).slice(0,7);const m=meses[k]||(meses[k]={m:k,rs:0,pond:0,n:0});m.rs+=tp;m.pond+=tp*w;m.n++;}
     const x=rc(rp);x.an++;x.ars+=tp;if(dias>15)x.sem++;if(venc)x.venc++;if(b&&(b-hoje)/864e5>=0&&(b-hoje)/864e5<=30){x.b30++;x.b30rs+=tp;}
     ab.push({n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
@@ -1136,7 +1173,10 @@ const UF_NOMES={acre:"AC",alagoas:"AL",amapa:"AP",amazonas:"AM",bahia:"BA",ceara
 const UF_LISTA=Object.values(UF_NOMES);
 const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(/^[A-Za-z]{2}$/.test(s))return UF_LISTA.includes(s.toUpperCase())?s.toUpperCase():"";const n=UF_NOMES[normGeo(s)];if(n)return n;const m=/(^|[^A-Za-z])([A-Z]{2})\s*$/.exec(s);return m&&UF_LISTA.includes(m[2])?m[2]:"";};
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
-function linhasMapa(dono,deals){
+const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
+const IS_TIME=[["Laura","Laura Costa","Inside Sales"],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
+const META_IS_KG=60000;
+function linhasMapa(dono,deals,repPadrao){
   const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
   const dt=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
   const iso=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:null;
@@ -1147,15 +1187,18 @@ function linhasMapa(dono,deals){
     let h=0,c=0;const cu={};(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(!v)return;if(ehHibrida(k))h+=v;else c+=v;cu[k]=(cu[k]||0)+v;});
     const o=Array.isArray(d.o)?d.o:[];const uf=ufDe(o[0])||ufDe(d.mu);const cid=String(o[1]||d.mc||"").trim().slice(0,60);
     const seg=(/DISTRIBUIDOR|COOPERATIVA|EXPORTA|KEY ACCOUNT/i.test(String(o[2]||""))||d.forma==="Para Canal (Sell In)")?"B2B":"B2C";
-    out.push({dono,rep:repTitulo(d.rep),nome:String(d.n||"").slice(0,90),uf:uf||null,cidade:cid||null,st,seg,kg_h:h,kg_c:c,rs:Math.round(Number(d.tot)||0),fat:iso(b),cults:cu});
+    let rp=repTitulo(d.rep);const al=REP_ALIAS.find(x=>x[0].test(rp));if(al)rp=al[1];
+    out.push({dono,rep:rp,nome:String(d.n||"").slice(0,90),uf:uf||null,cidade:cid||null,st,seg,kg_h:h,kg_c:c,rs:Math.round(Number(d.tot)||0),fat:iso(b),cults:cu});
   }
   return out;
 }
+const semPrep=t=>t.split(" ").filter(w=>!["de","do","da","dos","das","d","e"].includes(w)).join("").replace(/^d(?=oeste|agua|arco)/,"").replace(/doeste$/,"oeste");
 async function carregarGeo(){
   if(GEO)return GEO;const r=await fetch("geo.json?v="+APP_VER);const j=await r.json();
   const LON0=-74.2,LON1=-34.5,LAT0=5.6,LAT1=-34,KY=Math.cos(15*Math.PI/180);const px=lon=>lon-LON0,py=lat=>(LAT0-lat)*KY;
   const st=j.states.map(e=>{let n=0,sx=0,sy=0;for(const ring of e.c){if(ring.length<8)continue;for(const [x,y] of ring){sx+=px(x);sy+=py(y);n++;}}return {uf:e.uf,d:e.c.map(ring=>"M"+ring.map(([x,y])=>px(x).toFixed(2)+" "+py(y).toFixed(2)).join("L")+"Z").join(""),cx:n?sx/n:0,cy:n?sy/n:0};});
-  GEO={W:LON1-LON0,H:(LAT0-LAT1)*KY,px,py,st,mun:j.mun,cen:Object.fromEntries(st.map(e=>[e.uf,e]))};return GEO;
+  const mun2={};for(const k in j.mun){const i=k.indexOf("|");mun2[k.slice(0,i+1)+semPrep(k.slice(i+1))]=j.mun[k];}
+  GEO={W:LON1-LON0,H:(LAT0-LAT1)*KY,px,py,st,mun:j.mun,mun2,cen:Object.fromEntries(st.map(e=>[e.uf,e]))};return GEO;
 }
 async function carregarMapa(){
   try{await carregarGeo();}catch(e){GEO=null;}
@@ -1164,7 +1207,7 @@ async function carregarMapa(){
 function pedirMapa(){if(S.mapa===undefined&&!S.mapaBusy){S.mapaBusy=true;carregarMapa().then(()=>{S.mapaBusy=false;if(S.mapa===undefined)S.mapa=[];render();});}}
 function localMapa(r){
   if(!r.uf||!GEO.cen[r.uf])return null;const bruto=String(r.cidade||"");const cands=[bruto,bruto.split(/[-\/,(]/)[0]];
-  for(const c of cands){const k=normGeo(c);const ll=k&&GEO.mun[r.uf+"|"+k];if(ll)return {k:r.uf+"|"+k,nome:c.trim().toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase())+" · "+r.uf,x:GEO.px(ll[1]),y:GEO.py(ll[0]),ex:true};}
+  for(const c of cands){const k=normGeo(c);const ll=k&&(GEO.mun[r.uf+"|"+k]||GEO.mun2[r.uf+"|"+semPrep(k)]);if(ll)return {k:r.uf+"|"+k,nome:c.trim().toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase())+" · "+r.uf,x:GEO.px(ll[1]),y:GEO.py(ll[0]),ex:true};}
   const e=GEO.cen[r.uf];return {k:r.uf+"|*",nome:r.uf+" · cidade não informada",x:e.cx,y:e.cy,ex:false};
 }
 function vMapaGeo(ctx){
@@ -1236,18 +1279,33 @@ function vMapaGeo(ctx){
 }
 async function atualizarCRM(prog){
   const res=[];
-  {let pg=1,n=0;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");break;}pg=r.data.proxima;n++;}}
+  let ult=0;try{ult=+localStorage.getItem("pc_orgsync")||0;}catch(e){}
+  if(Date.now()-ult>20*3600e3){let pg=1,n=0;let okOrg=true;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");okOrg=false;break;}pg=r.data.proxima;n++;}if(okOrg){try{localStorage.setItem("pc_orgsync",String(Date.now()));}catch(e){}}}
+  const cache={};
+  const ler=async(chave,rot)=>{let page=1,mais=true,todos=[],pm=0;while(mais&&page<=40){prog(`Lendo o CRM: ${rot}, página ${page}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"deals",dono:chave,page}});if(r.error||!r.data||r.data.error)return null;todos=todos.concat(r.data.itens||[]);pm+=Number(r.data.pm)||0;mais=!!r.data.mais;page++;}return {todos,pm};};
+  const gravaMapa=async(dono,lm)=>{let em=(await sb.from("crm_mapa").delete().eq("dono",dono)).error;for(let i=0;i<lm.length&&!em;i+=400){em=(await sb.from("crm_mapa").insert(lm.slice(i,i+400))).error;}return em;};
   for(const dono of CRM_DONOS){
-    let page=1,mais=true,todos=[];
-    while(mais&&page<=40){prog(`Lendo o CRM: ${dono}, página ${page}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"deals",dono,page}});if(r.error||!r.data||r.data.error){res.push(dono+": erro na leitura");todos=null;break;}todos=todos.concat(r.data.itens||[]);mais=!!r.data.mais;page++;}
-    if(!todos)continue;
-    const linha=montaPainelCRM(dono,todos);
+    const L=await ler(dono,dono);if(!L){res.push(dono+": erro na leitura");continue;}
+    cache[dono]=L;const todos=L.todos;
+    const linha=montaPainelCRM(dono,todos,L.pm);
     const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
-    const lm=linhasMapa(dono,todos);let em=(await sb.from("crm_mapa").delete().eq("dono",dono)).error;
-    for(let i=0;i<lm.length&&!em;i+=400){em=(await sb.from("crm_mapa").insert(lm.slice(i,i+400))).error;}
+    const em=await gravaMapa(dono,linhasMapa(dono,todos));
     res.push(dono+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
   }
+  for(const [curto,nomeRep,jaLido] of IS_TIME){
+    const L=(jaLido&&cache[jaLido])||await ler(curto==="Mayane"?"Mayane Costa":curto,"Inside Sales · "+curto);
+    if(!L){res.push("Inside Sales "+curto+": erro na leitura");continue;}
+    const linha=montaPainelCRM("IS: "+curto,L.todos,L.pm);linha.equipe="Inside Sales";
+    const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
+    let em=null;if(!jaLido)em=await gravaMapa(nomeRep,linhasMapa(nomeRep,L.todos));
+    res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
+  }
+  res.push(await atualizarLeads(prog));
   return res;
+}
+async function atualizarLeads(prog){
+  let pg=1,n=0,tot=0;while(pg&&n<30){prog(`Lendo os leads do funil MQL, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_leads",page:pg}});if(r.error||!r.data||r.data.error)return "leads: erro na leitura";tot+=Number(r.data.gravadas)||0;pg=r.data.proxima;n++;}
+  S.leadsCache=null;return `leads: ${tot} para repasse`;
 }
 async function carregarCRM(){
   if(S.perfil==="Comercial Barenbrug"||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
@@ -1255,11 +1313,11 @@ function vMeuCRM(){
   const m=S.crmVista==="mapa";
   return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button></div>`+(m?vMapaGeo("crm"):vMeuCRMPainel());
 }
-function vMeuCRMPainel(){
-  const rows=S.crm;if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
-  const adm=ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
+function vMeuCRMPainel(X){
+  const rows=X?[X.r]:(S.crm&&S.crm.filter(x=>!String(x.dono).startsWith("IS: ")));if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
+  const adm=X?false:ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
   const fmtK=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
-  const alvo=adm?(S.crmSel||(rows[0]&&rows[0].dono)):(S.profile&&S.profile.crm_dono);
+  const alvo=X?X.r.dono:adm?(S.crmSel||(rows[0]&&rows[0].dono)):(S.profile&&S.profile.crm_dono);
   const seletor=adm&&rows.length?`<div class="filtros">${rows.map(x=>`<button class="chip" data-a="crm-sel" data-v="${esc(x.dono)}" aria-pressed="${alvo===x.dono}">${esc(x.dono)}</button>`).join("")}</div>`:"";
   if(!adm&&!alvo)return `<div><h1 class="titulo">Meu CRM</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado ao seu nome no CRM. Peça ao administrador para fazer o vínculo e o seu painel aparece aqui.</p></section>`;
   const r=rows.find(x=>x.dono===alvo);
@@ -1270,8 +1328,8 @@ function vMeuCRMPainel(){
   const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
-  return `<div><h1 class="titulo">${adm?esc(alvo):"Meu CRM"}</h1><p class="sub">Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
-  ${seletor}
+  return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo):"Meu CRM"}</h1><p class="sub">Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
+  ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
     <div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?`<span class="meta">híbridos ${ton(Q.vh)} · convencionais ${ton(Q.vc)}</span>`:""}</div>
@@ -1299,14 +1357,14 @@ function vMeuCRMPainel(){
     const sr=A.filter(x=>!x[3]);
     return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
     ${sr.length?`<section class="bloco"><h2 class="sec">Venda direta, sem representante (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto fechadas direto entre a Barenbrug e o cliente ou o canal, sem RC no campo Representante.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
-  ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">Meus representantes (${r.rcs.length})</h2>
+  ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">${X?"Por representante":"Meus representantes"} (${r.rcs.length})</h2>
     <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
     <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc==="(sem representante)"?"Venda direta (sem RC)":x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
       <span class="meta">${fmtN(x.an)} em aberto · vendido ${fmtK(x.vrs)} em ${fmtN(x.vn)} pedidos${x.b30?` · fatura em 30 dias: ${fmtN(x.b30)} (${fmtK(x.b30rs)})`:""}</span>
       ${al?`<span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span>`:(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
     ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" reúne as vendas diretas da Barenbrug ao cliente ou ao canal, sem RC.</p>`:""}
   </section>`:""}
-  ${(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
+  ${X?"":(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
   <section class="bloco"><h2 class="sec">Principais negociações em aberto</h2>
     ${top.length?`<div class="lista">${top.map(x=>neg(x)).join("")}</div>`:`<div class="vazio">Nenhuma negociação em aberto.</div>`}
   </section>
@@ -2047,7 +2105,7 @@ function vUsuarioAdmin(){
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
-    ${ac.filter(id=>ABAS_REG[id]).length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver.</span>${ac.filter(id=>ABAS_REG[id]).map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminUser.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}</label>`;}).join("")}</div>`).join("")}</div>`:""}
+    ${ac.filter(id=>ABAS_REG[id]).length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver. Cada marcação é gravada na hora.</span>${ac.filter(id=>ABAS_REG[id]).map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminForm.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}</label>`;}).join("")}</div>`).join("")}</div>`:""}
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${S.adminForm.perfil==="Inside Sales"?`<div><label for="f_isv">Vendedora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
     <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
@@ -2152,7 +2210,7 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(S.pag==="is-time"&&!veTimeIS())S.pag="is-painel";
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
-    if(!S.isMetr){carregarIS().then(render);}
+    if(!S.crm){carregarCRM().then(render);}
     return;
   }
   if(S.secao==="duvidas"){
@@ -2229,6 +2287,11 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="is-sel"){S.isSel=v;render();}
+  if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
+  if(a==="lead-f"){const i=v.indexOf("|");S.leadF=S.leadF||{};S.leadF[v.slice(0,i)]=v.slice(i+1);render();return;}
+  if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]=true;render();sb.from("lead_views").insert({lead_id:+v,nome:(S.profile&&S.profile.nome)||null}).then(()=>{});return;}
+  if(a==="lead-status"){const obs=(document.getElementById("lead_obs_"+v)||{}).value||null;const {error}=await sb.rpc("lead_marcar",{p_id:+v,p_status:b.dataset.st,p_obs:obs});if(error){aviso("Não foi possível gravar. Tente de novo.");return;}await carregarLeads();render();aviso("Lead atualizado.");return;}
+  if(a==="leads-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{const e=document.getElementById("lead_prog");if(e)e.textContent=t;};const r=await atualizarLeads(prog);await carregarLeads();render();aviso("Leads atualizados: "+r.replace("leads: ",""));return;}
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
   if(a==="post-del"){await sb.from("posts").delete().eq("id",v);S.posts=null;render();aviso("Publicação excluída.");return;}
@@ -2245,7 +2308,7 @@ document.addEventListener("click",async ev=>{
   if(a==="mapa-f"){const i=v.indexOf("|");const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F[v.slice(0,i)]=v.slice(i+1);S.mapaPin=null;render();return;}
   if(a==="mapa-uf"){const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F.uf=F.uf===v?"":v;S.mapaPin=null;render();return;}
   if(a==="mapa-pin"){S.mapaPin=S.mapaPin===v?null:(v||null);render();if(S.mapaPin){const e=document.getElementById("mapa_pin");if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"});}return;}
-  if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.mapa=undefined;S.crmDonos=null;render();return;}
+  if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.mapa=undefined;S.leadsCache=null;S.crmDonos=null;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e&&e.type!=="file"){if(e.type==="checkbox")e.checked=val;else e.value=val;}});const nx=document.getElementById("ng_extra"),nv0=document.getElementById("ng_novo");if(nx&&nv0)nx.hidden=!nv0.checked;return;}
@@ -2274,6 +2337,16 @@ document.addEventListener("click",async ev=>{
 });
 document.addEventListener("change",async ev=>{
   const c=ev.target;
+  if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige"))){
+    if(!ehAdmin())return;const up={};
+    if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
+    else if(c.dataset.aba){const z=new Set(S.adminForm.abas_ocultas||[]);c.checked?z.delete(c.dataset.aba):z.add(c.dataset.aba);up.abas_ocultas=[...z];}
+    else up.exige_curso=c.checked;
+    Object.assign(S.adminForm,up);
+    const {error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id);
+    if(error){aviso("Não foi possível gravar esta alteração. Tente de novo.");}else{Object.assign(S.adminUser,up);S.equipe=null;aviso("Alteração gravada.");}
+    const y=window.scrollY;render();window.scrollTo(0,y);return;
+  }
   if(c.dataset.a==="visto"){
     const id=ETAPAS_ON[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
     S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
@@ -2427,7 +2500,7 @@ document.addEventListener("submit",async ev=>{
     const elCd=f.querySelector("#f_crmdono");if(elCd)dados.crm_dono=elCd.value||null;
     const elCn=f.querySelector("#f_canal");if(elCn)dados.canal_id=elCn.value||null;
     const elCr=f.querySelector("#f_cresp");if(elCr)dados.comercial_resp=elCr.value||null;
-    const elAb=[...f.querySelectorAll("[data-aba]")];if(elAb.length){const vis=new Set((S.adminUser.abas_ocultas||[]));elAb.forEach(c=>{if(c.checked)vis.delete(c.dataset.aba);else vis.add(c.dataset.aba);});dados.abas_ocultas=[...vis];}
+    const elAb=[...f.querySelectorAll("[data-aba]")];if(elAb.length){const vis=new Set((S.adminForm.abas_ocultas||[]));elAb.forEach(c=>{if(c.checked)vis.delete(c.dataset.aba);else vis.add(c.dataset.aba);});dados.abas_ocultas=[...vis];}
     const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
