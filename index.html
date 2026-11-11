@@ -692,7 +692,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111100534";
+const APP_VER="20261111102541";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
@@ -1073,6 +1073,54 @@ async function importarPastaMkt(files){
   }
   S.mkt=null;S.mktImp=`Importação concluída: ${feitos} enviados, ${pulados} já existiam, ${erros} com erro, ${fora.length} fora (edição ou acima de 50 MB)${fora.length?": "+fora.slice(0,12).map(x=>x.rel.split("/").pop()).join(", "):""}.`;render();
 }
+const CRM_DONOS=["Brunno Vasconcelos","Emerson Netto","Gustavo Aguiar","Hygor Fátima","Julielson Tuppan","Mário Perassoli","Mayane Costa","Felipe Piccoli","Inside Sales","Joaquim de Paula"];
+const CRM_FECH=["63c82769b8abbd0012ee29a6","693b03190af15d001d0d79a1","693b037e4c227c0013525d70"];
+const CRM_ETAPA={"61eea2f980f7d4001007111c":"Forecast","61eea2f980f7d4001007111d":"Prospecção","61eea2f980f7d4001007111e":"Qualificação","61eea2fa80f7d4001007111f":"Influenciadores & Proposta","61eea2fa80f7d40010071120":"Negociação e Fechamento","680fb93dd9499c0023b70617":"Cadastro de novo cliente","680fb98fb37343001453834e":"Análise de Crédito"};
+const CRM_PESO={1:.05,2:.15,3:.35,4:.70,5:.90};
+function cultivarDe(nome){const l=String(nome||"").toLowerCase();const M=[["cayana","Cayana"],["convert 330","Sabiá"],["sabi","Sabiá"],["carcar","Carcará"],["mulato","Mulato II"],["marandu","Marandu"],["piat","Piatã"],["xara","Xaraés"],["basilisk","Basilisk"],["llanero","Humidícola"],["momba","Mombaça"],["massai","Massai"],["tanz","Tanzânia"],["sabanera","Sabanera"],["ruzi","Ruziziensis"],["cynodon","Cynodon"],["trifolium","Trevo"],["trevo","Trevo"],["azev","Azevém"],["barjumbo","Azevém"],["bar mx","Azevém"],["bar hq","Azevém"],["ribeye","Azevém"],["santa adelaida","Azevém"],["barmix","BARMIX"],["pennisetum","Milheto"]];for(const [k,v] of M)if(l.includes(k))return v;return "Outros";}
+const ehHibrida=c=>c==="Sabiá"||c==="Cayana"||c==="Carcará";
+function montaPainelCRM(dono,deals){
+  const hoje=new Date();hoje.setHours(0,0,0,0);const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
+  const dt=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
+  const iso=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:null;
+  const repN=v=>{const r=String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim();return r?r.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()).slice(0,38):"";};
+  const R={dono,equipe:dono==="Inside Sales"?"Inside Sales":"Campo",vendido_n:0,vendido_kg:0,vendido_rs:0,aberto_n:0,aberto_rs:0,ponderado_rs:0,pausadas_n:0,sem_att_n:0,atrasadas_n:0,sem_data_n:0};
+  const q={vh:0,vc:0,ah:0,ac:0,vcult:{},acult:{}};const meses={},rcs={},ab=[];
+  const rc=k=>rcs[k]||(rcs[k]={rc:k||"(sem representante)",vn:0,vrs:0,an:0,ars:0,sem:0,venc:0,b30:0,b30rs:0});
+  const soma=(d,alvoH,alvoC,cult)=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(ehHibrida(k))h+=v;else c+=v;cult[k]=(cult[k]||0)+v;});q[alvoH]+=h;q[alvoC]+=c;return [h,c];};
+  for(const d of deals){
+    const b=dt(d.fat),tp=Number(d.tot)||0,rp=repN(d.rep);
+    if(d.st==="P"){R.pausadas_n++;continue;}
+    const fech=d.st==="V"||CRM_FECH.includes(d.stg);
+    if(fech){if(d.st==="V"?(b&&b>=ini&&b<=fim):((b&&b>=ini&&b<=fim)||!b)){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
+    const rt=d.rt||1,w=CRM_PESO[rt]||.05,dias=Math.round((hoje-new Date(String(d.upd).slice(0,10)+"T00:00:00"))/864e5),venc=!!(b&&b<hoje);
+    const [h,c]=soma(d,"ah","ac",q.acult);
+    R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
+    if(b&&b>=new Date(hoje.getFullYear(),hoje.getMonth(),1)){const k=iso(b).slice(0,7);const m=meses[k]||(meses[k]={m:k,rs:0,pond:0,n:0});m.rs+=tp;m.pond+=tp*w;m.n++;}
+    const x=rc(rp);x.an++;x.ars+=tp;if(dias>15)x.sem++;if(venc)x.venc++;if(b&&(b-hoje)/864e5>=0&&(b-hoje)/864e5<=30){x.b30++;x.b30rs+=tp;}
+    ab.push({n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
+  }
+  const br=x=>x.dt?iso(x.dt).split("-").reverse().join("/"):null;
+  R.fat_meses=Object.values(meses).sort((a,b)=>a.m.localeCompare(b.m)).slice(0,9).map(m=>({...m,rs:Math.round(m.rs),pond:Math.round(m.pond)}));
+  R.top=ab.slice().sort((a,b)=>b.rs-a.rs).slice(0,8).map(x=>({n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg}));
+  R.desat=ab.filter(x=>x.dias>15).sort((a,b)=>b.dias-a.dias).slice(0,10).map(x=>({n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg,dias:x.dias,venc:x.venc}));
+  R.rcs=Object.values(rcs).sort((a,b)=>(b.ars+b.vrs)-(a.ars+a.vrs)).slice(0,16).map(x=>({...x,vrs:Math.round(x.vrs),ars:Math.round(x.ars),b30rs:Math.round(x.b30rs)}));
+  R.abertas=ab.map(x=>[x.n,x.rs,iso(x.dt),x.rep,x.rt,x.h,x.c]);
+  R.vend_cult=q.vcult;R.qtd=q;["vendido_rs","aberto_rs","ponderado_rs"].forEach(k=>{R[k]=Math.round(R[k]);});R.atualizado_em=new Date().toISOString();
+  return R;
+}
+async function atualizarCRM(prog){
+  const res=[];
+  for(const dono of CRM_DONOS){
+    let page=1,mais=true,todos=[];
+    while(mais&&page<=40){prog(`Lendo o CRM: ${dono}, página ${page}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"deals",dono,page}});if(r.error||!r.data||r.data.error){res.push(dono+": erro na leitura");todos=null;break;}todos=todos.concat(r.data.itens||[]);mais=!!r.data.mais;page++;}
+    if(!todos)continue;
+    const linha=montaPainelCRM(dono,todos);
+    const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
+    res.push(dono+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`));
+  }
+  return res;
+}
 async function carregarCRM(){
   if(S.perfil==="Comercial Barenbrug"||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
 function vMeuCRM(){
@@ -1087,13 +1135,15 @@ function vMeuCRM(){
   const meses=Array.isArray(r.fat_meses)?r.fat_meses:[];const maxM=Math.max(1,...meses.map(m=>m.rs||0));
   const nomeMes=m=>{const [a,b]=String(m).split("-");return (["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(+b||1)-1]||"")+"/"+String(a).slice(2);};
   const top=Array.isArray(r.top)?r.top:[];const des=Array.isArray(r.desat)?r.desat:[];
+  const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
   return `<div><h1 class="titulo">${adm?esc(alvo):"Meu CRM"}</h1><p class="sub">Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${seletor}
+  ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
-    <div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${r.vendido_kg?` · ${fmtN(r.vendido_kg)} kg`:""}</span></div>
-    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações</span></div>
+    <div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?`<span class="meta">híbridos ${ton(Q.vh)} · convencionais ${ton(Q.vc)}</span>`:""}</div>
+    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações${Q?` · ${ton(Q.ah+Q.ac)}`:""}</span>${Q?`<span class="meta">híbridos ${ton(Q.ah)} · convencionais ${ton(Q.ac)}</span>`:""}</div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção ponderada</span><strong>${fmtK(r.ponderado_rs)}</strong><span class="meta">em aberto × chance de fechar</span></div>
     <div class="metric"><span>Pausadas</span><strong>${fmtN(r.pausadas_n)}</strong></div>
   </div>
@@ -1105,12 +1155,15 @@ function vMeuCRM(){
   <section class="bloco"><h2 class="sec">Em aberto por mês de faturamento</h2>
     ${meses.length?meses.map(m=>`<div class="mesbar"><span>${nomeMes(m.m)}</span><span class="trilho"><i style="width:${Math.round(100*(m.rs||0)/maxM)}%"></i><b style="width:${Math.round(100*(m.pond||0)/maxM)}%"></b></span><span class="v"><strong>${fmtK(m.rs)}</strong> <span class="meta">· ponderado ${fmtK(m.pond)} · ${fmtN(m.n)} neg.</span></span></div>`).join("")+`<p class="dica" style="margin-top:8px">Barra azul: valor em aberto com faturamento previsto no mês. Barra amarela: o mesmo valor ponderado pela chance de fechar (estrelas da negociação).</p>`:`<div class="vazio">Nenhuma negociação em aberto com data de faturamento.</div>`}
   </section>
-  ${(()=>{const vc=r.vend_cult||{};const ks=Object.keys(vc);if(!ks.length)return "";const tt=ks.reduce((t,k)=>t+vc[k],0);const ton=k=>(k/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
+  ${Q?(()=>{const ks=[...new Set([...Object.keys(Q.vcult||{}),...Object.keys(Q.acult||{})])].filter(k=>(Q.vcult[k]||0)+(Q.acult[k]||0)>0).sort((a,b)=>(ehHibrida(b)-ehHibrida(a))||((Q.vcult[b]||0)+(Q.acult[b]||0))-((Q.vcult[a]||0)+(Q.acult[a]||0)));if(!ks.length)return "";
+    const lin=k=>`<tr><td><strong>${esc(k)}</strong></td><td>${ehHibrida(k)?"Híbrido":"Convencional"}</td><td class="val">${ton(Q.vcult[k]||0)}</td><td class="val">${ton(Q.acult[k]||0)}</td></tr>`;
+    return `<section class="bloco"><h2 class="sec">Volume por cultivar</h2><div class="tab"><table><thead><tr><th>Cultivar</th><th>Grupo</th><th class="val">Vendido</th><th class="val">Em aberto</th></tr></thead><tbody>${ks.map(lin).join("")}<tr><td><strong>Híbridos</strong></td><td></td><td class="val"><strong>${ton(Q.vh)}</strong></td><td class="val"><strong>${ton(Q.ah)}</strong></td></tr><tr><td><strong>Convencionais</strong></td><td></td><td class="val"><strong>${ton(Q.vc)}</strong></td><td class="val"><strong>${ton(Q.ac)}</strong></td></tr></tbody></table></div><p class="dica" style="margin-top:8px">Quilos dos produtos de cada negociação no CRM. Híbridos: Sabiá, Cayana e Carcará. Negociação sem produto lançado entra no valor, mas não no volume.</p></section>`;})():""}
+  ${Q?"":(()=>{const vc=r.vend_cult||{};const ks=Object.keys(vc);if(!ks.length)return "";const tt=ks.reduce((t,k)=>t+vc[k],0);const ton=k=>(k/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
     return `<section class="bloco"><h2 class="sec">Híbridos vendidos na safra · ${ton(tt)}</h2><div class="metrics">${ks.map(k=>`<div class="metric"><span>${esc(k)}</span><strong>${ton(vc[k])}</strong><span class="meta">${Math.round(100*vc[k]/tt)}% do volume</span></div>`).join("")}</div><p class="dica" style="margin-top:8px">Toneladas de Sabiá, Cayana e Carcará em pedidos ganhos com faturamento na safra. As demais cultivares e o volume das negociações em aberto entram com a atualização automática do CRM.</p></section>`;})()}
   ${(()=>{const A=Array.isArray(r.abertas)?r.abertas:[];if(!A.length)return "";const hoje=new Date();hoje.setHours(0,0,0,0);const dd=x=>x[2]?Math.round((new Date(x[2]+"T00:00:00")-hoje)/864e5):null;
     const fx=[["Vencidas (data já passou)",x=>dd(x)!=null&&dd(x)<0],["Faturam em até 30 dias",x=>dd(x)!=null&&dd(x)>=0&&dd(x)<=30],["De 31 a 60 dias",x=>dd(x)>30&&dd(x)<=60],["De 61 a 90 dias",x=>dd(x)>60&&dd(x)<=90]];
-    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):"venda direta"} · ${estr(x[4])}</span></div>`;
-    const bloco=(t,L,aberto)=>L.length?`<details class="lote" ${aberto?"open":""}><summary>${t} · ${L.length} negociações · ${fmtK(L.reduce((s,x)=>s+x[1],0))}</summary><div class="lista" style="margin-top:8px">${L.slice().sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9")||b[1]-a[1]).map(lin).join("")}</div></details>`:"";
+    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):"venda direta"} · ${estr(x[4])}</span>${(x[5]||x[6])?`<span class="meta">${x[5]?"híbridos "+fmtN(x[5])+" kg":""}${x[5]&&x[6]?" · ":""}${x[6]?"convencionais "+fmtN(x[6])+" kg":""}</span>`:""}</div>`;
+    const bloco=(t,L,aberto)=>L.length?`<details class="lote" ${aberto?"open":""}><summary>${t} · ${L.length} negociações · ${fmtK(L.reduce((s,x)=>s+x[1],0))}${Q?` · ${ton(L.reduce((s,x)=>s+(x[5]||0)+(x[6]||0),0))}`:""}</summary><div class="lista" style="margin-top:8px">${L.slice().sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9")||b[1]-a[1]).map(lin).join("")}</div></details>`:"";
     const sr=A.filter(x=>!x[3]);
     return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
     ${sr.length?`<section class="bloco"><h2 class="sec">Venda direta, sem representante (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto fechadas direto entre a Barenbrug e o cliente ou o canal, sem RC no campo Representante.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
@@ -2049,6 +2102,7 @@ document.addEventListener("click",async ev=>{
   if(a==="solic-recusar"){const {error}=await sb.from("solicitacoes_acesso").update({status:"Recusada"}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));render();aviso("Solicitação encerrada.");return;}
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
+  if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.crmDonos=null;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="mkt-abrir"){const w=window.open("about:blank","_blank");const {data,error}=await sb.storage.from("enxoval").createSignedUrl(v,3600);if(error||!data){if(w)w.close();aviso("Não foi possível abrir o arquivo.");return;}if(w)w.location=data.signedUrl;else location.href=data.signedUrl;return;}
   if(a==="neg-item"){const vals={};document.querySelectorAll("#f-negrc input,#f-negrc select,#f-negrc textarea").forEach(e=>{if(e.id)vals[e.id]=e.type==="checkbox"?e.checked:e.value;});S.negItens=Math.max(1,Math.min(8,(S.negItens||1)+(+v)));render();Object.entries(vals).forEach(([k,val])=>{const e=document.getElementById(k);if(e&&e.type!=="file"){if(e.type==="checkbox")e.checked=val;else e.value=val;}});const nx=document.getElementById("ng_extra"),nv0=document.getElementById("ng_novo");if(nx&&nv0)nx.hidden=!nv0.checked;return;}
