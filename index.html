@@ -732,7 +732,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111134141";
+const APP_VER="20261111135206";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -944,12 +944,22 @@ function subnavLeads(){
     <nav class="nav" aria-label="LeadsBaren">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">LeadsBaren</span></div></div>`;
 }
-async function carregarLeads(){try{const {data}=await sb.from("leads").select("*").order("entrou_em",{ascending:false});S.leadsCache=data||[];}catch(e){S.leadsCache=[];}}
+async function carregarLeads(){
+  try{const {data}=await sb.from("leads").select("*").order("entrou_em",{ascending:false});S.leadsCache=data||[];}catch(e){S.leadsCache=[];}
+  try{const {data}=await sb.rpc("minhas_ufs");S.leadUfs=Array.isArray(data)?data:[];}catch(e){S.leadUfs=[];}
+  if(ehAdmin()){try{const {data}=await sb.from("canais").select("id,nome,tier,recebe_leads,ufs_leads").order("nome");S.leadCanais=data||[];}catch(e){S.leadCanais=[];}}
+}
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
   if(!inbound)return `<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Base de produtores do RD Marketing da sua região para prospecção ativa.</p></div><section class="bloco"><div class="aviso-bloq">Em construção. Esta aba será ligada à base do RD Station Marketing, com acesso restrito por estado.</div></section>`;
   if(S.leadsCache==null)return `<div class="carregando">Carregando leads…</div>`;
-  const interno=ehAdmin()||S.perfil==="Comercial Barenbrug";const minhas=(S.profile&&S.profile.ufs_atendidas)||[];
+  const interno=ehAdmin()||S.perfil==="Comercial Barenbrug";const minhas=S.leadUfs||[];const daRevenda=S.perfil==="Gestor de Revenda"||S.perfil==="Vendedor de Revenda";
+  const LC=S.leadCanais||[];const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
+  const destino=uf=>LC.filter(k=>k.recebe_leads&&(k.ufs_leads||[]).includes(uf)).map(k=>k.nome);
+  const config=ehAdmin()?`<details class="lote" ${S.leadCfgAberto?"open":""}><summary>Quais revendas recebem leads · ${LC.filter(k=>k.recebe_leads).length} de ${LC.length} habilitadas</summary>
+    <p class="sub" style="margin:10px 0 6px">Marque as revendas que recebem leads e informe os estados de cada uma, separados por vírgula. A equipe da revenda (gestor e vendedores) vê todos os leads desses estados. Representantes comerciais não recebem leads. Cada alteração é gravada na hora.</p>
+    <div class="lista">${LC.slice().sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome)).map(k=>{const n=(S.leadsCache||[]).filter(l=>(k.ufs_leads||[]).includes(l.uf)).length;return `<div class="neg"><div class="l1"><label class="check" style="font-weight:700"><input type="checkbox" data-leadcanal="${esc(k.id)}" ${k.recebe_leads?"checked":""}> ${esc(k.nome)}</label><span class="selo">${esc(k.tier||"sem categoria")}</span></div>
+      <div style="display:grid;gap:4px"><label for="lu_${esc(k.id)}" class="meta">Estados que esta revenda atende</label><input id="lu_${esc(k.id)}" data-leadufs="${esc(k.id)}" value="${esc((k.ufs_leads||[]).join(", "))}" placeholder="Ex.: MT, MS, GO" style="max-width:320px"><span class="meta">${k.recebe_leads?((k.ufs_leads||[]).length?`${n} ${n===1?"lead disponível":"leads disponíveis"} hoje nesses estados`:"Habilitada, mas sem estado informado: ainda não recebe nada"):"Não recebe leads"}</span></div></div>`;}).join("")||`<div class="vazio">Nenhuma revenda cadastrada no Conecta.</div>`}</div></details>`:"";
   const F=S.leadF||(S.leadF={uf:"Todos",st:"Em aberto"});
   let rows=S.leadsCache.filter(l=>(l.origem||"inbound")==="inbound");
   const ufs=[...new Set(rows.map(l=>l.uf||"Sem UF"))].sort();
@@ -965,6 +975,7 @@ function vLeads(){
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · pediu atendimento em ${dia(l.entrou_em)}</span>
       <span class="meta"><strong>Interesse:</strong> ${esc(l.cultura||"não informado")}${l.volume?" · <strong>Área:</strong> "+esc(l.volume):""}${l.perfil?" · <strong>Perfil:</strong> "+esc(l.perfil):""}</span>
       ${l.campanha?`<span class="meta"><strong>Origem do pedido:</strong> ${esc(l.campanha)}</span>`:""}
+      ${ehAdmin()&&l.uf?`<span class="meta"><strong>Revendas que veem este lead:</strong> ${destino(l.uf).length?esc(destino(l.uf).join(", ")):"nenhuma habilitada para "+esc(l.uf)}</span>`:""}
       <span class="meta"><strong>Situação na Barenbrug:</strong> ${esc(motivo(l.motivo))}${l.perdido_em?" (encerrado em "+dia(l.perdido_em)+")":""}</span>
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${esc(l.atendido_por)} em ${dia(l.atendido_em)}${l.obs?" · "+esc(l.obs):""}</span>`:""}
       ${visto?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${tel(l.telefone)} · <strong>E-mail:</strong> ${l.email?esc(l.email):"não informado"}</span>
@@ -973,10 +984,11 @@ function vLeads(){
        :`<div><button class="btn sec" data-a="lead-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">Ver contato e atender</button></div>`}
     </div>`;};
   return `<div><h1 class="titulo">LeadsBaren · Cotações</h1>
-    <p class="sub">Produtores que pediram atendimento comercial à Barenbrug nos últimos 60 dias e com quem o contato não se completou. ${interno?"":"Você vê os leads dos estados que atende"+(minhas.length?" ("+esc(minhas.join(", "))+")":"")+"."}</p></div>
+    <p class="sub">Produtores que pediram atendimento comercial à Barenbrug nos últimos 60 dias e com quem o contato não se completou. ${interno?"":"Sua revenda recebe os leads dos estados que atende"+(minhas.length?" ("+esc(minhas.join(", "))+")":"")+"."}</p></div>
   <div class="aviso-bloq"><strong>Antes de ligar, leia.</strong> Este produtor entrou em contato direto pelo site da Barenbrug. Nós enviamos a ele a lista de revendas próximas do CEP informado, e mesmo assim ele preferiu seguir o atendimento com a Barenbrug. Por isso, pode ser que ele já esteja em tratativa com alguém da Barenbrug: pergunte e respeite a conversa em andamento. O que rege o atendimento é a política de preço da Barenbrug.</div>
   ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="leads-atualizar">Atualizar leads do CRM</button><span class="meta" id="lead_prog"></span></div>`:""}
-  ${!interno&&!minhas.length?`<section class="bloco"><div class="vazio">Seu acesso ainda não tem estados de atendimento definidos. Peça ao administrador para informar as UFs que você atende e os leads aparecem aqui.</div></section>`:`
+  ${config}
+  ${!interno&&!minhas.length?`<section class="bloco"><div class="vazio">${daRevenda?"Sua revenda ainda não está habilitada para receber leads, ou não tem estados de atendimento definidos. Fale com a Barenbrug.":"Os leads do LeadsBaren são distribuídos às revendas do programa Conecta, por estado. Este perfil não recebe leads."}</div></section>`:`
   <details class="lote" ${(F.uf!=="Todos"||F.st!=="Em aberto")?"open":""}><summary>Filtros · ${esc(F.st)}${F.uf!=="Todos"?" · "+esc(F.uf):""}</summary>
     <p class="meta" style="margin:10px 0 4px">Situação</p><div class="filtros">${chips("st",["Em aberto","Novo","Em atendimento","Virou negociação","Sem sucesso","Todos"],F.st)}</div>
     ${ufs.length>1?`<p class="meta" style="margin:10px 0 4px">Estado</p><div class="filtros">${chips("uf",["Todos",...ufs],F.uf)}</div>`:""}</details>
@@ -2343,7 +2355,7 @@ function vUsuarioAdmin(){
     ${S.adminForm.perfil==="Comercial Barenbrug"?`<div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">No Conecta Revendas ele vê só as revendas marcadas aqui. Cada marcação é gravada na hora. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canais||[]).map(k=>{const meu=k.comercial_id===u.id;const outro=k.comercial_id&&!meu;return `<label class="check"><input type="checkbox" data-rev="${esc(k.id)}" ${meu?"checked":""}> ${esc(k.nome)}${outro?' <span class="meta">(hoje com outro comercial)</span>':""}</label>`;}).join("")||'<span class="meta">Carregando as revendas…</span>'}</div></div>`:""}
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
     ${(S.adminForm.perfil==="Inside Sales"||ac.includes("inside-sales"))?`<div><label for="f_isv">Consultora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
-    <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
+
     ${(S.adminForm.perfil==="Comercial Barenbrug"||S.adminForm.perfil==="Administrador"||ac.includes("meu-crm"))?`<div><label for="f_crmdono">Responsável no CRM (painel Meu CRM)</label><select id="f_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...CRM_DONOS,...COMERCIAIS_EXTRA,...IS_TIME.map(x=>"IS: "+x[0]),S.adminForm.crm_dono].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.crm_dono===d?"selected":""}>${esc(String(d).replace(/^IS: /,"Inside Sales · ")+(d==="Inside Sales"?" (time inteiro)":""))}</option>`).join("")}</select><span class="meta">Liga este acesso ao responsável no CRM. A pessoa vê só as negociações dela.</span></div>`:""}
     ${(S.adminForm.perfil==="Gestor de Revenda"||S.adminForm.perfil==="Vendedor de Revenda")?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais&&S.canais.length?S.canais:(S.canaisLista||[])).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_cresp">Responsável comercial (recebe as negociações deste RC)</label><select id="f_cresp"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA,S.adminForm.comercial_resp].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select></div>`:""}
@@ -2593,6 +2605,13 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(c.id==="foto_arq"&&c.files&&c.files[0]){await enviarFoto(c.files[0]);return;}
+  if(c.dataset&&(c.dataset.leadcanal||c.dataset.leadufs)){
+    if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}
+    const id=c.dataset.leadcanal||c.dataset.leadufs;const up=c.dataset.leadcanal?{recebe_leads:c.checked}:{ufs_leads:[...new Set(c.value.split(/[,;\s]+/).map(x=>x.trim().toUpperCase()).filter(x=>UF_LISTA.includes(x)))]};
+    const {data:volta,error}=await sb.from("canais").update(up).eq("id",id).select("id,recebe_leads,ufs_leads").maybeSingle();
+    if(error||!volta){aviso("Esta alteração NÃO foi gravada. Recarregue a página e tente de novo.");}else{const k=(S.leadCanais||[]).find(x=>x.id===id);if(k)Object.assign(k,volta);aviso(c.dataset.leadcanal?(volta.recebe_leads?"Revenda habilitada para receber leads.":"Revenda deixou de receber leads."):"Estados gravados: "+((volta.ufs_leads||[]).join(", ")||"nenhum")+".");}
+    S.leadCfgAberto=true;const y=window.scrollY;render();window.scrollTo(0,y);return;
+  }
   if(S.pag==="usuario"&&S.adminUser&&c.dataset&&c.dataset.rev&&c.closest&&c.closest("#f-usuario")){
     if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}
     const novo=c.checked?S.adminUser.id:null;const {data:volta,error}=await sb.from("canais").update({comercial_id:novo}).eq("id",c.dataset.rev).select("id,comercial_id").maybeSingle();
