@@ -25,9 +25,10 @@ img{max-width:100%}
 .sci{font-style:italic}
 
 .topo{background:var(--amarelo)}
-.topo-in{max-width:880px;margin:0 auto;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.topo-in{max-width:880px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .logo-b{background:none;border:0;padding:0;cursor:pointer;line-height:0}
-.logo{height:34px;width:auto;display:block}
+/* Manual da marca: logo sempre sobre amarelo Barenbrug, com respiro >= 1x a altura do logotipo em todos os lados */
+.logo{height:26px;width:auto;display:block;margin:26px 26px 26px 10px}
 .quem{font-size:13px;text-align:right}
 .quem button{background:none;border:0;padding:0;color:var(--preto);text-decoration:underline;cursor:pointer;font-size:13px}
 
@@ -67,7 +68,7 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .acesso{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;background:var(--branco)}
 .acesso-marca{background:var(--amarelo);padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
 .acesso-marca h1{font-size:clamp(30px,5vw,42px);font-weight:800;color:var(--preto)}
-.acesso-marca .logo{height:34px;align-self:flex-start}
+.acesso-marca .logo{height:30px;margin:0;align-self:flex-start}
 .acesso-form{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px}
 .acesso-form.rolavel{justify-content:flex-start}
 .acesso-form h2{color:var(--azul);font-weight:800;font-size:24px}
@@ -203,7 +204,8 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
 
 @media (max-width:640px){
   .acesso{grid-template-columns:1fr;min-height:0}
-  .logo{height:28px}
+  .logo{height:20px;margin:20px 20px 20px 4px}
+  .acesso-marca .logo{height:26px;margin:0}
   .nav button{padding:9px 8px;font-size:14px}
   .secao-nome{display:none}
 }
@@ -465,7 +467,7 @@ const RC_TIERS=[
  {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13,0%",canal:"10,0%"},
  {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15,0%",canal:"11,0%"}
 ];
-const RC_RANKING=[{"crm": "Faturando Sementes Ltda", "nome": "Faturando Sementes Ltda", "fat": 0, "aFat": 25000, "kg": 25000}, {"crm": "Laura Costa", "nome": "Laura Costa", "fat": 10310, "aFat": 3600, "kg": 13910}, {"crm": "Maria Giulia", "nome": "Maria Giulia", "fat": 11605, "aFat": 720, "kg": 12325}, {"crm": "J V Dalmagro Representacoes Ltda", "nome": "J V Dalmagro Representacoes Ltda", "fat": 8720, "aFat": 0, "kg": 8720}, {"crm": "Leite E Tobias Consultoria E Representacao Ltda", "nome": "Leite E Tobias Consultoria E Representacao Ltda", "fat": 8000, "aFat": 0, "kg": 8000}, {"crm": "Thaís Franco", "nome": "Thaís Franco", "fat": 3985, "aFat": 1580, "kg": 5565}, {"crm": "Produza Corretora De Cereais Ltda", "nome": "Produza Corretora De Cereais Ltda", "fat": 4900, "aFat": 0, "kg": 4900}, {"crm": "Abate Representacoes Ltda", "nome": "Abate Representacoes Ltda", "fat": 4530, "aFat": 0, "kg": 4530}, {"crm": "Jc Agro Representacoes Comerciais Eireli", "nome": "Jc Agro Representacoes Comerciais Eireli", "fat": 4520, "aFat": 0, "kg": 4520}, {"crm": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "nome": "Boiadeiro Comercio E Representacoes Aracatuba Ltda", "fat": 4460, "aFat": 0, "kg": 4460}, {"crm": "Construsul Ltda", "nome": "Construsul Ltda", "fat": 2690, "aFat": 0, "kg": 2690}, {"crm": "Global Pec Representacoes  Servicos Ltda", "nome": "Global Pec Representacoes  Servicos Ltda", "fat": 1200, "aFat": 0, "kg": 1200}, {"crm": "Luiz Curci Junior", "nome": "Luiz Curci Junior", "fat": 1120, "aFat": 0, "kg": 1120}, {"crm": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "nome": "Nutriprev Representacoes E Consultoria Agropecuaria Ltda", "fat": 1050, "aFat": 0, "kg": 1050}, {"crm": "Capelli E Carvalho Representacoes Eireli", "nome": "Capelli E Carvalho Representacoes Eireli", "fat": 890, "aFat": 0, "kg": 890}, {"crm": "M. Gomes Representacoes Ltda", "nome": "M. Gomes Representacoes Ltda", "fat": 800, "aFat": 0, "kg": 800}, {"crm": "M Gomes Representacoes Ltda", "nome": "M Gomes Representacoes Ltda", "fat": 320, "aFat": 400, "kg": 720}, {"crm": "Agroserv Amazonia Ltda", "nome": "Agroserv Amazonia Ltda", "fat": 0, "aFat": 710, "kg": 710}, {"crm": "Pagano Sementes Representacoes Comerciais Ltda", "nome": "Pagano Sementes Representacoes Comerciais Ltda", "fat": 650, "aFat": 0, "kg": 650}, {"crm": "Alex Sandro Clinica Veterinaria Ltda", "nome": "Alex Sandro Clinica Veterinaria Ltda", "fat": 480, "aFat": 60, "kg": 540}, {"crm": "Ativa Agro Representacao Comercial Ltda", "nome": "Ativa Agro Representacao Comercial Ltda", "fat": 400, "aFat": 0, "kg": 400}, {"crm": "Maria Eduarda", "nome": "Maria Eduarda", "fat": 90, "aFat": 240, "kg": 330}, {"crm": "Stm Comercio E Representacoes Ltda", "nome": "Stm Comercio E Representacoes Ltda", "fat": 300, "aFat": 0, "kg": 300}, {"crm": "Fg2 Representacoes Comerciais Ltda", "nome": "Fg2 Representacoes Comerciais Ltda", "fat": 280, "aFat": 0, "kg": 280}, {"crm": "M D Costa", "nome": "M D Costa", "fat": 250, "aFat": 0, "kg": 250}, {"crm": "Solido Agronegocios Representacoes Ltda", "nome": "Solido Agronegocios Representacoes Ltda", "fat": 240, "aFat": 0, "kg": 240}, {"crm": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "nome": "Rotha Farms Agrobusiness Com. Consultoria E Representacoes Ltda", "fat": 210, "aFat": 0, "kg": 210}, {"crm": "Inova Solucoes Em Agropecuaria Ltda", "nome": "Inova Solucoes Em Agropecuaria Ltda", "fat": 120, "aFat": 0, "kg": 120}, {"crm": "Terra Forte Agropecuaria Posse Ltda", "nome": "Terra Forte Agropecuaria Posse Ltda", "fat": 60, "aFat": 0, "kg": 60}, {"crm": "Sulreal Solucoes E Negocios Ltda", "nome": "Sulreal Solucoes E Negocios Ltda", "fat": 50, "aFat": 0, "kg": 50}];
+let RC_RANKING=[]; // carregado do Supabase (rc_ranking) apos o login - nenhum dado de CRM no arquivo publico
 const TIERS_RC=[{t:"Blue",min:0,max:3000},{t:"Yellow",min:3001,max:6000},{t:"Yellow Pro",min:6001,max:9000},{t:"Yellow Master",min:9001,max:Infinity}];
 const RANKING_FONTE="RD Station CRM · Funil de Vendas Barenbrug · híbridas (Sabiá, Cayana, Carcará, Mulato II) + Cynodon. Todos os pedidos ganhos com data de faturamento entre 01/jul/2026 e 30/jun/2027. Já faturou = data de faturamento até hoje; Vai faturar = faturamento futuro. Puxado do CRM em 10/nov/2026";
 const tierDoKg=kg=>{for(const x of TIERS_RC)if(kg>=x.min&&kg<=x.max)return x.t;return "Blue";};
@@ -647,6 +649,7 @@ async function boot(){
   iniciarWatchdog();
   render();
 }
+async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("crm,nome,fat,a_fat,kg").order("kg",{ascending:false});RC_RANKING=(data||[]).map(r=>({crm:r.crm,nome:r.nome,fat:+r.fat||0,aFat:+r.a_fat||0,kg:+r.kg||0}));}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
   S.user=u;
   let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
@@ -661,9 +664,10 @@ async function carregarUsuario(u){
   try{
     const agora=new Date().toISOString();const patch={ultimo_acesso:agora};
     if(!S.profile.acesso_desde){patch.acesso_desde=agora;S.profile.acesso_desde=agora;}
-    sb.from("profiles").update(patch).eq("id",u.id);
+    sb.from("profiles").update(patch).eq("id",u.id).then(()=>{},()=>{});
     S.profile.ultimo_acesso=agora;
   }catch(e){}
+  await carregarRanking();
   S.secao=null;S.pag="hub";
 }
 
@@ -1418,6 +1422,8 @@ function vUsuarioAdmin(){
     <div><label for="f_perfil">Perfil de acesso *</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)?"checked":""}> ${nome}</label>`).join("")}</div></div>
     <div><label class="check"><input type="checkbox" data-exige ${S.adminForm.exige_curso===false?"":"checked"}> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label><span class="meta">Desmarque para quem não precisa (ex.: dono de revenda).</span></div>
+    ${S.adminForm.perfil==="Inside Sales"?`<div><label for="f_isv">Vendedora (painel Inside Sales)</label><select id="f_isv"><option value="">— não vincular —</option>${VENDEDORAS_IS.map(v=>`<option value="${esc(v)}" ${S.adminForm.is_vendedora===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div>`:""}
+    <div><label for="f_ufs">UFs atendidas (LeadsBaren)</label><input id="f_ufs" value="${esc((S.adminForm.ufs_atendidas||[]).join(", "))}" placeholder="Ex.: MT, MS, GO"><span class="meta">Estados cujos leads esta pessoa pode ver, separados por vírgula.</span></div>
     ${(S.adminForm.perfil==="RC"||S.adminForm.perfil==="Assessor de Vendas Digital")?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
     ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -1658,6 +1664,8 @@ document.addEventListener("submit",async ev=>{
     const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.adminForm[c.k]||"").trim();});
     dados.acessos=[...f.querySelectorAll("[data-acesso]:checked")].map(c=>c.getAttribute("data-acesso"));
     dados.exige_curso=!!(f.querySelector("[data-exige]")&&f.querySelector("[data-exige]").checked);
+    const elIsv=f.querySelector("#f_isv");if(elIsv)dados.is_vendedora=elIsv.value||null;
+    const elUfs=f.querySelector("#f_ufs");if(elUfs)dados.ufs_atendidas=elUfs.value.split(",").map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x));
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
