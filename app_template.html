@@ -1110,7 +1110,7 @@ async function enviarFoto(file){
     cv.getContext("2d").drawImage(img,(img.naturalWidth-L)/2,(img.naturalHeight-L)/2,L,L,0,0,320,320);
     const blob=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.85));
     const caminho=S.user.id+"/foto-"+Date.now()+".jpg";
-    const up=await sb.storage.from("avatares").upload(caminho,blob,{contentType:"image/jpeg",upsert:true});
+    const up=await sb.storage.from("avatares").upload(caminho,blob,{contentType:"image/jpeg"});
     if(up.error){aviso("Não foi possível enviar a foto.");return;}
     const url=sb.storage.from("avatares").getPublicUrl(caminho).data.publicUrl;
     const {error}=await sb.from("profiles").update({foto_url:url}).eq("id",S.user.id);
