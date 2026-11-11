@@ -1173,7 +1173,7 @@ const UF_NOMES={acre:"AC",alagoas:"AL",amapa:"AP",amazonas:"AM",bahia:"BA",ceara
 const UF_LISTA=Object.values(UF_NOMES);
 const ufDe=v=>{const s=String(v||"").trim();if(!s)return "";if(/^[A-Za-z]{2}$/.test(s))return UF_LISTA.includes(s.toUpperCase())?s.toUpperCase():"";const n=UF_NOMES[normGeo(s)];if(n)return n;const m=/(^|[^A-Za-z])([A-Z]{2})\s*$/.exec(s);return m&&UF_LISTA.includes(m[2])?m[2]:"";};
 const repTitulo=v=>String(v||"").replace(/^\d+\s*-\s*(\d+\s+)?/,"").trim().toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
-const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
+const REP_ALIAS=[[/^laura alteia/i,"Laura Costa"],[/^mayane/i,"Mayane Costa"],[/^maria giulia/i,"Maria Giulia"],[/^tha[ií]s\b.*franco/i,"Thaís Franco"],[/^maria eduarda/i,"Maria Eduarda"]];
 const IS_TIME=[["Laura","Laura Costa","Inside Sales"],["Maria Giulia","Maria Giulia",null],["Thaís","Thaís Franco",null],["Maria Eduarda","Maria Eduarda",null],["Mayane","Mayane Costa","Mayane Costa"]];
 const META_IS_KG=60000;
 function linhasMapa(dono,deals,repPadrao){
@@ -1301,6 +1301,7 @@ async function atualizarCRM(prog){
     res.push("Inside Sales "+curto+": "+(up.error?"erro ao gravar":`${linha.vendido_n} vendidas, ${linha.aberto_n} em aberto`)+(em?" (erro no mapa)":""));
   }
   res.push(await atualizarLeads(prog));
+  try{prog("Lendo as notícias da pecuária…");const rn=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});res.push(rn.error||!rn.data||rn.data.error?"notícias: erro na leitura":`notícias: ${rn.data.gravadas}`);S.mercado=null;}catch(e){}
   return res;
 }
 async function atualizarLeads(prog){
@@ -1432,20 +1433,26 @@ async function carregarMercado(){try{
 function vMercado(){
   const m=S.mercado;
   if(m==null)return `<div class="carregando">Carregando…</div>`;
-  const aviso=`<div class="aviso-bloq">Em construção. Um robô vai atualizar estas informações todo dia a partir de fontes públicas (portais de pecuária, CEPEA/ESALQ e clima). A estrutura abaixo já é a visão final.</div>`;
+  const interno=ehAdmin()||S.perfil==="Comercial Barenbrug";
   if(S.pag==="mercado-boi"){
-    const b=m.boi||[];
-    const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça / UF</th><th class="val">R$/@</th><th class="val">Variação</th><th class="val">@ por ha de pasto*</th></tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||x.uf||"")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td class="val">${esc(x.variacao||"—")}</td><td class="val">${esc(x.rel_troca||"—")}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Dados de arroba em breve.</div>`;
-    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicador do boi gordo por praça e a relação de troca com a semente de pasto — seu argumento de venda.</p></div>${aviso}<section class="bloco">${tbl}<p class="precos-nota">*Relação de troca: quantas arrobas de boi pagam 1 hectare de pasto Barenbrug. Fonte do indicador: CEPEA/ESALQ e praças de referência.</p></section>`;
+    const b=(m.boi||[]).slice().sort((x,y)=>String(x.uf||"").localeCompare(String(y.uf||""))||String(x.praca||"").localeCompare(String(y.praca||"")));
+    const ult=b.reduce((t,x)=>x.atualizado_em&&x.atualizado_em>t?x.atualizado_em:t,"");
+    const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça</th><th>UF</th><th class="val">R$/@</th><th class="val">Variação</th><th class="val">@ por ha de pasto*</th>${interno?"<th></th>":""}</tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||"")}</td><td>${esc(x.uf||"")}</td><td class="val"><strong>${x.preco?fmtR(x.preco):"—"}</strong></td><td class="val">${esc(x.variacao||"—")}</td><td class="val">${esc(x.rel_troca||"—")}</td>${interno?`<td><button class="link" data-a="boi-del" data-v="${x.id}">Excluir</button></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma praça informada ainda.</div>`;
+    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Preço do boi gordo por praça e a relação de troca com a semente de pasto, para usar como argumento de venda.${ult?" Atualizado em "+fmtDataHora(ult)+".":""}</p></div>
+    <section class="bloco">${tbl}<p class="precos-nota">*Relação de troca: quantas arrobas de boi pagam 1 hectare de pasto Barenbrug. Os valores são informados pela equipe Barenbrug a partir do indicador CEPEA/B3 e das praças de referência.</p></section>
+    ${interno?`<section class="bloco"><h2 class="sec">Informar ou atualizar uma praça</h2><form class="form-card" id="f-boi"><div class="neg-item"><div><label for="bo_praca">Praça *</label><input id="bo_praca" required placeholder="Ex.: Cuiabá"></div><div><label for="bo_uf">UF *</label><input id="bo_uf" required maxlength="2" placeholder="MT"></div><div><label for="bo_preco">R$ por arroba *</label><input id="bo_preco" required inputmode="decimal" placeholder="320,50"></div><div><label for="bo_var">Variação</label><input id="bo_var" placeholder="+0,8% na semana"></div><div><label for="bo_rel">@ por ha de pasto</label><input id="bo_rel" placeholder="1,2 @"></div></div><div class="acoes"><button class="btn" type="submit">Gravar praça</button></div><span class="meta">Se a praça já existir no mesmo estado, o valor é substituído.</span></form></section>`:""}`;
   }
   if(S.pag==="mercado-clima"){
     const c=m.clima||[];
     const cards=c.length?`<div class="cards">${c.map(x=>`<div class="card off" style="cursor:default"><span class="card-tag">${esc(x.uf||x.regiao||"")}</span><h3>${esc(x.condicao||"—")}</h3><p>${esc(x.detalhe||"")}</p></div>`).join("")}</div>`:`<div class="vazio">Previsão por região em breve.</div>`;
-    return `<div><h1 class="titulo">Clima</h1><p class="sub">Condições e previsão por região — o que pesa na decisão de plantar pasto.</p></div>${aviso}${cards}`;
+    return `<div><h1 class="titulo">Clima</h1><p class="sub">Condições e previsão por região: o que pesa na decisão de plantar pasto.</p></div><div class="aviso-bloq">Em construção. Falta definir a fonte de previsão do tempo.</div>${cards}`;
   }
-  const n=m.noticias||[];
-  const lista=n.length?`<div class="lista">${n.map(x=>`<div class="linha"><div><strong>${esc(x.titulo||"")}</strong><span class="meta">${esc(x.fonte||"")}${x.data?" · "+esc(x.data):""}</span></div>${x.url?`<a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">Ler ↗</a>`:""}</div>`).join("")}</div>`:`<div class="vazio">Notícias em breve.</div>`;
-  return `<div><h1 class="titulo">Notícias da pecuária</h1><p class="sub">Manchetes fresquinhas dos principais portais do setor.</p></div>${aviso}<section class="bloco">${lista}</section>`;
+  const n=(m.noticias||[]).slice().sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  const quando=d=>{const t=new Date(d);return isNaN(t.getTime())?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
+  const lista=n.length?`<div class="lista">${n.slice(0,40).map(x=>`<div class="neg"><div class="l1"><span>${x.url?`<a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titulo||"")}</a>`:esc(x.titulo||"")}</span></div><span class="meta">${esc(x.fonte||"")}${x.data?" · "+quando(x.data):""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhuma notícia carregada ainda.</div>`;
+  return `<div><h1 class="titulo">Notícias da pecuária</h1><p class="sub">Manchetes mais recentes dos portais do setor. O título abre a matéria no site de origem.</p></div>
+  ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="noticias-atualizar">Atualizar notícias agora</button></div>`:""}
+  <section class="bloco">${lista}<p class="dica">Fontes: Canal Rural (Pecuária) e BeefPoint, pelos canais públicos de notícias (RSS) de cada portal.</p></section>`;
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -2287,6 +2294,8 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="is-sel"){S.isSel=v;render();}
+  if(a==="noticias-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo os portais…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler as notícias agora.":`Notícias atualizadas (${r.data.gravadas} lidas${(r.data.falhas||[]).length?", com falha em: "+r.data.falhas.join(", "):""}).`);return;}
+  if(a==="boi-del"){const {error}=await sb.from("mercado_boi").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça excluída.");return;}
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
   if(a==="lead-f"){const i=v.indexOf("|");S.leadF=S.leadF||{};S.leadF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]=true;render();sb.from("lead_views").insert({lead_id:+v,nome:(S.profile&&S.profile.nome)||null}).then(()=>{});return;}
@@ -2489,6 +2498,14 @@ document.addEventListener("submit",async ev=>{
     Object.assign(S.profile,dados);S.form={...S.profile};S._erro=null;
     if(eraObrig){S.secao=null;S.pag="hub";render();aviso("Cadastro completo. Bem-vindo!");}
     else{render();aviso("Dados salvos.");}
+  }
+  if(f.id==="f-boi"){
+    const praca=f.querySelector("#bo_praca").value.trim(),uf=f.querySelector("#bo_uf").value.trim().toUpperCase(),preco=parseFloat(f.querySelector("#bo_preco").value.replace(/[^\d,.]/g,"").replace(/\./g,"").replace(",","."));
+    if(!praca||!/^[A-Z]{2}$/.test(uf)||!(preco>0)){aviso("Informe praça, UF com duas letras e o preço da arroba.");return;}
+    const linha={praca,uf,preco,variacao:f.querySelector("#bo_var").value.trim()||null,rel_troca:f.querySelector("#bo_rel").value.trim()||null,atualizado_em:new Date().toISOString()};
+    const ex=((S.mercado&&S.mercado.boi)||[]).find(x=>String(x.praca||"").toLowerCase()===praca.toLowerCase()&&x.uf===uf);
+    const {error}=ex?await sb.from("mercado_boi").update(linha).eq("id",ex.id):await sb.from("mercado_boi").insert(linha);
+    if(error){aviso("Não foi possível gravar. Tente de novo.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça gravada.");return;
   }
   if(f.id==="f-usuario"){
     const perfil=S.adminForm.perfil;const schema=schemaDoPerfil(perfil);
