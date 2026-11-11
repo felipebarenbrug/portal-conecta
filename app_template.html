@@ -301,6 +301,23 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mp-row:last-child{border-bottom:0}
 .mp-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--apagado)}
 .mp-leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+main.largo{max-width:1120px}
+.home{display:grid;grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
+.home-lado{display:grid;gap:12px;position:sticky;top:12px}
+.home-feed{display:grid;gap:14px;min-width:0}
+.cx{background:var(--branco);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
+.cx h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado);font-weight:700}
+.areas{display:grid}
+.area-b{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--linha);padding:11px 2px;font:inherit;font-weight:700;color:var(--azul-escuro);cursor:pointer}
+.area-b:first-child{border-top:0}.area-b[disabled]{color:var(--apagado);cursor:default;font-weight:400}
+@media(max-width:860px){.home{grid-template-columns:minmax(0,1fr)}.home-lado{position:static}.areas{grid-template-columns:1fr 1fr;gap:8px}.area-b,.area-b:first-child{border:0;box-shadow:inset 0 0 0 1.5px var(--linha);border-radius:8px;padding:10px 12px;font-size:14px}}
+.autor{display:flex;gap:10px;align-items:center;min-width:0}.autor>div{min-width:0;display:grid;gap:1px}
+.avatar{border-radius:50%;object-fit:cover;flex:0 0 auto;display:inline-grid;place-items:center}
+.avatar.ini{background:var(--azul-claro);color:var(--azul-escuro);font-weight:800}
+.sino{position:relative;background:none;border:0;cursor:pointer;padding:4px;color:var(--preto);line-height:0;flex:0 0 auto}
+.sino b{position:absolute;top:-4px;right:-7px;background:var(--vermelho);color:#fff;font-size:11px;line-height:1;padding:3px 5px;border-radius:999px;font-weight:700}
+.tag-novo{background:var(--amarelo);color:var(--preto);font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px}
+.pergunta-tx{margin:0;font-size:17px;line-height:1.35;font-weight:700}
 </style>
 </head>
 <body>
@@ -675,7 +692,8 @@ function fmtDataHora(s){if(!s)return"nunca acessou";const d=new Date(s);if(isNaN
 const TOURS={
   portal:{t:"Bem-vindo ao Portal Conecta Barenbrug",p:[
     ["O que é este portal","Um só lugar para treinar os híbridos, achar materiais de apoio à venda e acompanhar os programas comerciais da Barenbrug."],
-    ["Suas áreas","No início aparecem os cards das áreas que você tem acesso: Academia de Híbridos, Conecta RC e Conecta Revendas. Clique em uma para entrar."],
+    ["Início","A página inicial reúne os comunicados da Barenbrug e as perguntas e respostas de todos. Faça a sua pergunta ali mesmo. O sino no topo mostra quantas novidades chegaram desde a sua última visita."],
+    ["Suas áreas","Ao lado do início ficam as áreas a que você tem acesso, como Academia de Híbridos e Conecta RC. Clique em uma para entrar."],
     ["Academia de Híbridos","A trilha de vídeos e provas de Sabiá, Cayana e Carcará. Concluindo as três, você ganha o certificado."],
     ["Seu perfil e sessão","No topo, em 'Meu perfil', você completa seus dados e troca a senha. Por segurança, a sessão expira após um tempo sem uso — é só entrar de novo. Toque no '?' a qualquer momento para rever este tour."]
   ]},
@@ -731,6 +749,7 @@ async function recarregarPermissoes(){
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});
 setInterval(()=>{if(!document.hidden)recarregarPermissoes();},180000);
+setInterval(async()=>{if(document.hidden||!S.user||S.feedBusy||S.posts==null)return;if(document.querySelector("form textarea:focus,form input:focus"))return;try{await carregarFeed();if(!S.secao&&S.pag==="hub"&&!S.duvNova&&!S.postNovo&&!S.duvAberta)render();else{const q=document.querySelector(".sino");if(q){const n=novidades().total;const bq=q.querySelector("b");if(n&&!bq)q.insertAdjacentHTML("beforeend","<b>"+(n>99?"99+":n)+"</b>");else if(n&&bq)bq.textContent=n>99?"99+":n;}}}catch(e){}},240000);
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
@@ -856,6 +875,7 @@ function vCadastroObrig(){
 }
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
+  <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div><button class="btn" type="submit">Salvar</button></div></form>`;
@@ -864,7 +884,7 @@ function vPerfil(){
 /* ---------- shell ---------- */
 function cabecalho(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
-    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div><button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>`;
+    <div class="quem"><strong>${esc(S.profile.nome||S.user.email)}</strong> · ${esc(S.perfil)}<br><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></header>`;
 }
 function subnavAcademia(){
   const abas=[["trilha","Trilha"],["base","Base de conhecimento"]];
@@ -1020,6 +1040,114 @@ async function carregarDuvidas(){
   try{const [a,b]=await Promise.all([sb.from("duvidas").select("*").order("criado_em",{ascending:false}),sb.from("duvida_respostas").select("*").order("criado_em",{ascending:true})]);
     S.duvidas=a.data||[];S.duvResp=b.data||[];}catch(e){S.duvidas=[];S.duvResp=[];}
 }
+
+/* ===== Feed da pagina inicial: mural + tira-duvidas ===== */
+const postVisivel=p=>ehAdmin()||S.perfil==="Comercial Barenbrug"||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
+const dirDe=id=>(S.dir&&id&&S.dir[id])||null;
+const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";return t?` <span class="meta">· ${esc(t)}</span>`:"";};
+function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome||"?");const ini=n.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();const t=tam||40;
+  return d&&d.foto_url?`<img class="avatar" src="${esc(d.foto_url)}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px">`:`<span class="avatar ini" aria-hidden="true" style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px">${esc(ini)}</span>`;}
+async function carregarFeed(){
+  await Promise.all([carregarPosts(),carregarDuvidas(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
+  if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
+}
+function pedirFeed(){if(S.feedBusy)return;if(S.posts!=null&&S.duvidas!=null&&S.dir)return;S.feedBusy=true;carregarFeed().then(()=>{S.feedBusy=false;render();}).catch(()=>{S.feedBusy=false;});}
+function novidades(){
+  const eu=S.user&&S.user.id;const v=S.profile&&S.profile.feed_visto_em;const vv=v?new Date(v).getTime():Date.now()-7*864e5;const d=x=>new Date(x).getTime();
+  const posts=(S.posts||[]).filter(p=>p.autor!==eu&&p.ref_user!==eu&&d(p.criado_em)>vv&&postVisivel(p));
+  const perg=(S.duvidas||[]).filter(q=>q.autor!==eu&&!q.oculto&&d(q.criado_em)>vv);
+  const resp=(S.duvResp||[]).filter(r=>r.autor!==eu&&!r.oculto&&d(r.criado_em)>vv);
+  const minhas=new Set((S.duvidas||[]).filter(q=>q.autor===eu).map(q=>q.id));
+  return {posts:posts.length,perg:perg.length,resp:resp.length,respMinhas:resp.filter(r=>minhas.has(r.duvida_id)).length,total:posts.length+perg.length+resp.length,vv};
+}
+function marcarFeedVisto(){
+  if(S.feedVistoT||!S.user)return;const N=novidades();if(S.feedNovoDesde==null)S.feedNovoDesde=N.vv;if(!N.total&&S.profile.feed_visto_em)return;
+  S.feedVistoT=setTimeout(async()=>{S.feedVistoT=null;if(S.secao||S.pag!=="hub")return;const agora=new Date().toISOString();try{await sb.from("profiles").update({feed_visto_em:agora}).eq("id",S.user.id);S.profile.feed_visto_em=agora;const e=document.querySelector(".sino b");if(e)e.remove();}catch(e){}},6000);
+}
+function formPost(){return `<form class="form-card" id="f-post">
+      <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…"></textarea></div>
+      <div><label for="p_anexo">Link / anexo (opcional)</label><input id="p_anexo" type="url" placeholder="https://…"></div>
+      <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${k==="todos"?"checked":""}> ${l}</label>`).join("")}</div></div>
+      <div><label class="check"><input type="checkbox" id="p_fix"> Fixar no topo</label></div>
+      ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+      <div class="acoes"><button class="btn" type="submit">Publicar</button></div>
+    </form>`;}
+function vFeed(){
+  if(S.posts==null||S.duvidas==null||!S.dir)return `<div class="carregando">Carregando as novidades…</div>`;
+  const staff=ehBarenbrug(),eu=S.user.id,N=novidades(),f=S.feedF||"tudo";
+  const respDe=id=>(S.duvResp||[]).filter(r=>r.duvida_id===id);
+  const ult=q=>respDe(q.id).reduce((t,r)=>r.criado_em>t?r.criado_em:t,q.criado_em);
+  let itens=[...S.posts.filter(postVisivel).map(p=>({t:"p",x:p,d:p.criado_em,fix:!!p.fixado})),...S.duvidas.map(q=>({t:"d",x:q,d:ult(q),fix:false}))];
+  const semResp=S.duvidas.filter(q=>!q.oculto&&!respDe(q.id).length).length,aValidar=S.duvidas.filter(q=>respDe(q.id).some(r=>!r.validada)&&!respDe(q.id).some(r=>r.validada)).length;
+  if(f==="comunicados")itens=itens.filter(i=>i.t==="p");
+  if(f==="perguntas")itens=itens.filter(i=>i.t==="d");
+  if(f==="sem")itens=itens.filter(i=>i.t==="d"&&!respDe(i.x.id).length);
+  if(f==="minhas")itens=itens.filter(i=>i.t==="d"&&i.x.autor===eu);
+  if(f==="validar")itens=itens.filter(i=>i.t==="d"&&respDe(i.x.id).some(r=>!r.validada)&&!respDe(i.x.id).some(r=>r.validada));
+  itens.sort((a,b)=>(b.fix-a.fix)||String(b.d).localeCompare(String(a.d)));
+  const lim=S.feedLim||20;
+  const chips=[["tudo","Tudo"],["comunicados","Comunicados"],["perguntas","Perguntas"],["sem","Sem resposta"+(semResp?" ("+semResp+")":"")],["minhas","Minhas perguntas"]];if(staff)chips.push(["validar","Aguardando validação"+(aValidar?" ("+aValidar+")":"")]);
+  const partes=[];if(N.posts)partes.push(N.posts+(N.posts===1?" comunicado novo":" comunicados novos"));if(N.perg)partes.push(N.perg+(N.perg===1?" pergunta nova":" perguntas novas"));if(N.resp)partes.push(N.resp+(N.resp===1?" resposta nova":" respostas novas")+(N.respMinhas?` (${N.respMinhas} em pergunta sua)`:""));
+  return `<div class="cx">
+      <div class="autor">${avatar(eu,S.profile.nome,40)}<div><strong>Tem uma dúvida ou um recado?</strong><span class="meta">Pergunte sobre os híbridos, o manejo e os programas. Todos veem e podem responder; a Barenbrug valida.</span></div></div>
+      ${S.duvNova?`<form class="duv-form" id="f-duvida" style="display:grid;gap:10px">
+        <div><label for="d_tema">Assunto</label><select id="d_tema">${TEMAS_DUV.map(t=>`<option>${esc(t)}</option>`).join("")}</select></div>
+        <div><label for="d_txt">Sua pergunta</label><textarea id="d_txt" rows="3" required minlength="5" maxlength="1000" placeholder="Ex.: Qual a taxa de semeadura do Sabiá em plantio a lanço?"></textarea></div>
+        <div class="acoes"><button class="btn" type="submit">Enviar pergunta</button><button class="btn sec" type="button" data-a="duv-nova" data-v="0">Cancelar</button></div></form>`
+      :S.postNovo&&staff?`${formPost()}<div><button class="link" data-a="feed-post" data-v="0">Cancelar</button></div>`
+      :`<div class="acoes"><button class="btn" data-a="duv-nova" data-v="1">Fazer uma pergunta</button>${staff?`<button class="btn sec" data-a="feed-post" data-v="1">Publicar comunicado</button>`:""}</div>`}
+    </div>
+    ${partes.length?`<div class="aviso-bloq" style="margin:0"><strong>Desde a sua última visita:</strong> ${partes.join(" · ")}.</div>`:""}
+    <div class="filtros">${chips.map(([k,t])=>`<button class="chip" data-a="feed-f" data-v="${k}" aria-pressed="${f===k}">${t}</button>`).join("")}<button class="chip" data-a="secao" data-v="duvidas">Buscar nas perguntas</button></div>
+    ${itens.length?itens.slice(0,lim).map(i=>i.t==="p"?cartaoPost(i.x):cartaoDuvida(i.x)).join(""):`<div class="vazio">${f==="tudo"?"Ainda não há publicações nem perguntas. Faça a primeira pergunta.":"Nada por aqui com este filtro."}</div>`}
+    ${itens.length>lim?`<div><button class="btn sec" data-a="feed-mais">Ver mais antigas</button></div>`:""}`;
+}
+async function enviarFoto(file){
+  if(!file||!/^image\//.test(file.type)){aviso("Escolha um arquivo de imagem.");return;}
+  try{
+    const img=await new Promise((ok,er)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=er;i.src=URL.createObjectURL(file);});
+    const L=Math.min(img.naturalWidth,img.naturalHeight),cv=document.createElement("canvas");cv.width=cv.height=320;
+    cv.getContext("2d").drawImage(img,(img.naturalWidth-L)/2,(img.naturalHeight-L)/2,L,L,0,0,320,320);
+    const blob=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.85));
+    const caminho=S.user.id+"/foto-"+Date.now()+".jpg";
+    const up=await sb.storage.from("avatares").upload(caminho,blob,{contentType:"image/jpeg",upsert:true});
+    if(up.error){aviso("Não foi possível enviar a foto.");return;}
+    const url=sb.storage.from("avatares").getPublicUrl(caminho).data.publicUrl;
+    const {error}=await sb.from("profiles").update({foto_url:url}).eq("id",S.user.id);
+    if(error){aviso("A foto subiu, mas não foi possível gravar no seu perfil.");return;}
+    S.profile.foto_url=url;S.dir=S.dir||{};S.dir[S.user.id]={...(S.dir[S.user.id]||{id:S.user.id,nome:S.profile.nome,perfil:S.perfil}),foto_url:url};render();aviso("Foto atualizada.");
+  }catch(e){aviso("Não foi possível ler esta imagem.");}
+}
+function cartaoDuvida(d){
+  const staff=ehBarenbrug(),adm=ehAdmin();const respDe=id=>(S.duvResp||[]).filter(r=>r.duvida_id===id);const novoDesde=S.feedNovoDesde||0;const eNovo=t=>novoDesde&&new Date(t).getTime()>novoDesde;
+    const rs=respDe(d.id).sort((x,y)=>(y.validada?1:0)-(x.validada?1:0));
+    const aberto=S.duvAberta===d.id;
+    return `<article class="duv" ${d.oculto?'style="opacity:.6"':""}>
+      <div class="autor">${avatar(d.autor,d.autor_nome,40)}<div><span><strong>${esc(d.autor_nome||"Participante")}</strong>${perfilTxt(d.autor,d.autor_perfil)} perguntou ${eNovo(d.criado_em)&&d.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${esc(d.tema)} · ${fmtDataHora(d.criado_em)}${d.oculto?" · <strong>oculta para os usuários</strong>":""}</span></div></div>
+      <p class="pergunta-tx">${esc(d.pergunta)}</p>
+      ${rs.length?rs.map(r=>`<div class="resp ${r.validada?"ok":""}" ${r.oculto?'style="opacity:.6"':""}>
+          <div class="mini">${r.validada?`<span class="selo-ok">Resposta validada pela Barenbrug</span>`:`<span class="selo-pend">Aguardando validação da Barenbrug</span>`}${r.oculto?`<span class="meta"><strong>oculta</strong></span>`:""}</div>
+          <p>${esc(r.texto)}</p>
+          <span class="meta autor" style="gap:6px">${avatar(r.autor,r.autor_nome,22)}<span><strong>${esc(r.autor_nome||"Participante")}</strong>${perfilTxt(r.autor,r.autor_perfil)} respondeu · ${fmtDataHora(r.criado_em)}${eNovo(r.criado_em)&&r.autor!==S.user.id?' <span class="tag-novo">Novo</span>':""}</span>${r.validada&&r.validada_por&&r.validada_por!==r.autor_nome?" · validada por "+esc(r.validada_por):""}</span></span>
+          ${staff?`<div class="mini">${r.validada?`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="0">Retirar validação</button>`:`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="1">Validar resposta</button>`}${adm?`<button class="link" data-a="resp-ocultar" data-v="${r.id}" data-on="${r.oculto?0:1}">${r.oculto?"Mostrar resposta":"Ocultar resposta"}</button>`:""}</div>`:""}
+        </div>`).join(""):`<span class="meta">Ainda sem resposta.</span>`}
+      ${aberto?`<form id="f-resposta" data-duv="${d.id}"><label for="r_txt">${staff?"Resposta oficial da Barenbrug":"Sua resposta (passa pela validação da Barenbrug)"}</label><textarea id="r_txt" rows="4" required minlength="2" maxlength="3000"></textarea><div class="acoes" style="margin-top:8px"><button class="btn" type="submit">Publicar resposta</button><button class="btn sec" type="button" data-a="duv-abrir" data-v="">Cancelar</button></div></form>`
+        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>`:""}</div>`}
+    </article>`;}
+function cartaoPost(p){
+  const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";const novoDesde=S.feedNovoDesde||0;
+    const r=(S.postReac&&S.postReac[p.id])||{total:0,mine:null,tipos:{}};
+    const bv=p.tipo==="boas-vindas";
+    const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(pubLabel).join(", ")}</span>`:"";
+    const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}">${e} ${r.tipos[k]||0}</button>`).join("");
+    return `<section class="bloco cx" ${p.fixado?'style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"':''}>
+      ${p.fixado?'<span class="card-tag">Fixado</span> ':''}${bv?'<span class="card-tag">Novo integrante</span>':''}
+      <div class="autor" style="margin-top:4px">${avatar(p.autor||p.ref_user,p.autor_nome||"Barenbrug",40)}<div><span><strong>${esc(p.autor_nome||"Barenbrug")}</strong>${perfilTxt(p.autor)} ${bv?"":"publicou"} ${novoDesde&&new Date(p.criado_em).getTime()>novoDesde&&p.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div></div>
+      <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
+      ${p.anexo_url&&!/youtu/.test(p.anexo_url)?`<p><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Ver anexo ↗</a></p>`:""}
+      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · <button class="link" data-a="post-del" data-v="${p.id}">excluir</button>`:""}</div>
+    </section>`;
+}
 function vDuvidas(){
   if(S.duvidas==null)return `<div class="carregando">Carregando perguntas…</div>`;
   const staff=ehBarenbrug(),adm=ehAdmin();
@@ -1032,21 +1160,7 @@ function vDuvidas(){
   if(filtro==="validar")L=L.filter(d=>respDe(d.id).some(r=>!r.validada)&&!respDe(d.id).some(r=>r.validada));
   if(filtro==="minhas")L=L.filter(d=>d.autor===S.user.id);
   const chips=[["todas","Todas"],["sem","Sem resposta"],["minhas","Minhas perguntas"]];if(staff)chips.splice(2,0,["validar","Aguardando validação"]);
-  const item=d=>{
-    const rs=respDe(d.id).sort((x,y)=>(y.validada?1:0)-(x.validada?1:0));
-    const aberto=S.duvAberta===d.id;
-    return `<article class="duv" ${d.oculto?'style="opacity:.6"':""}>
-      <span class="meta">${esc(d.tema)} · ${esc(d.autor_nome||"Participante")} · ${fmtDataHora(d.criado_em)}${d.oculto?" · <strong>oculta para os usuários</strong>":""}</span>
-      <h3>${esc(d.pergunta)}</h3>
-      ${rs.length?rs.map(r=>`<div class="resp ${r.validada?"ok":""}" ${r.oculto?'style="opacity:.6"':""}>
-          <div class="mini">${r.validada?`<span class="selo-ok">Resposta validada pela Barenbrug</span>`:`<span class="selo-pend">Aguardando validação da Barenbrug</span>`}${r.oculto?`<span class="meta"><strong>oculta</strong></span>`:""}</div>
-          <p>${esc(r.texto)}</p>
-          <span class="meta">${esc(r.autor_nome||"Participante")}${r.autor_perfil?" · "+esc(r.autor_perfil):""} · ${fmtDataHora(r.criado_em)}${r.validada&&r.validada_por&&r.validada_por!==r.autor_nome?" · validada por "+esc(r.validada_por):""}</span>
-          ${staff?`<div class="mini">${r.validada?`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="0">Retirar validação</button>`:`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="1">Validar resposta</button>`}${adm?`<button class="link" data-a="resp-ocultar" data-v="${r.id}" data-on="${r.oculto?0:1}">${r.oculto?"Mostrar resposta":"Ocultar resposta"}</button>`:""}</div>`:""}
-        </div>`).join(""):`<span class="meta">Ainda sem resposta.</span>`}
-      ${aberto?`<form id="f-resposta" data-duv="${d.id}"><label for="r_txt">${staff?"Resposta oficial da Barenbrug":"Sua resposta (passa pela validação da Barenbrug)"}</label><textarea id="r_txt" rows="4" required minlength="2" maxlength="3000"></textarea><div class="acoes" style="margin-top:8px"><button class="btn" type="submit">Publicar resposta</button><button class="btn sec" type="button" data-a="duv-abrir" data-v="">Cancelar</button></div></form>`
-        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>`:""}</div>`}
-    </article>`;};
+  const item=cartaoDuvida;
   return `<div><h1 class="titulo">Tira-Dúvidas</h1><p class="sub">Pergunte o que precisar sobre os híbridos, o manejo e os programas. Qualquer participante pode responder; o time técnico-comercial da Barenbrug valida a resposta, que fica disponível para todos.</p></div>
   <section class="bloco">
     ${S.duvNova?`<form class="form-card duv-form" id="f-duvida">
@@ -1243,7 +1357,7 @@ function vMapaGeo(ctx){
   for(const r of rows){if(r.uf==="EX")continue;const kg=kgDe(r);const L=localMapa(r);if(!L){semLocal++;semKg+=kg;continue;}
     const u=ufs[r.uf]||(ufs[r.uf]={uf:r.uf,kg:0,n:0,nV:0,nA:0});u.kg+=kg;u.n++;r.st==="V"?u.nV++:u.nA++;
     const c=cid[L.k]||(cid[L.k]={...L,uf:r.uf,kg:0,b2b:0,n:0,nV:0,nA:0,rows:[]});c.kg+=kg;if(r.seg==="B2B")c.b2b+=kg;c.n++;r.st==="V"?c.nV++:c.nA++;c.rows.push(r);}
-  const temBR=Object.keys(cid).length>0;const mundo=!!(GEO.wp&&exRows.length&&(F.geo==="mundo"||(F.geo==="auto"&&!temBR)));
+  const temBR=Object.keys(cid).length>0;const mundo=!!(GEO.wp&&exRows.length&&(F.geo==="mundo"||(F.geo==="auto"&&(!temBR||exKg>Object.values(ufs).reduce((t,u)=>t+u.kg,0)))));
   const paises={};let exSem=0;
   if(mundo){for(const k in cid)delete cid[k];
     for(const r of exRows){const kg=kgDe(r);const nk=normGeo(r.cidade);const e=GEO.exp[nk];if(!e){exSem++;continue;}const k="EX|"+nk;
@@ -1432,30 +1546,10 @@ const REACOES=[["like","Curti"],["amei","Gostei muito"],["aplauso","Parabéns"]]
 function vMural(){
   const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
   if(S.posts==null)return `<div class="carregando">Carregando o mural…</div>`;
-  const vis=p=>admin||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
-  const lista=(S.posts||[]).filter(vis);
-  const card=p=>{
-    const r=(S.postReac&&S.postReac[p.id])||{total:0,mine:null,tipos:{}};
-    const bv=p.tipo==="boas-vindas";
-    const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(pubLabel).join(", ")}</span>`:"";
-    const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}">${e} ${r.tipos[k]||0}</button>`).join("");
-    return `<section class="bloco" ${p.fixado?'style="border:1px solid var(--amarelo,#ffdb00)"':''}>
-      ${p.fixado?'<span class="card-tag">Fixado</span> ':''}${bv?'<span class="card-tag">Novo integrante</span>':''}
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:4px"><strong>${esc(p.autor_nome||"Barenbrug")}</strong><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div>
-      <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
-      ${p.anexo_url&&!/youtu/.test(p.anexo_url)?`<p><a class="link" href="${esc(p.anexo_url)}" target="_blank" rel="noopener">Ver anexo ↗</a></p>`:""}
-      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · <button class="link" data-a="post-del" data-v="${p.id}">excluir</button>`:""}</div>
-    </section>`;
-  };
+  const lista=(S.posts||[]).filter(postVisivel);
+  const card=cartaoPost;
   const composer=admin?`<section class="bloco"><h2 class="sec">Publicar comunicado</h2>
-    <form class="form-card" id="f-post">
-      <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…"></textarea></div>
-      <div><label for="p_anexo">Link / anexo (opcional)</label><input id="p_anexo" type="url" placeholder="https://…"></div>
-      <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${k==="todos"?"checked":""}> ${l}</label>`).join("")}</div></div>
-      <div><label class="check"><input type="checkbox" id="p_fix"> Fixar no topo</label></div>
-      ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
-      <div class="acoes"><button class="btn" type="submit">Publicar</button></div>
-    </form></section>`:"";
+    ${formPost()}</section>`:"";
   return `<div><h1 class="titulo">Mural do Conecta</h1><p class="sub">Comunicados da Barenbrug, novidades e quem acabou de chegar. Reaja no que achar bom.</p></div>
     ${composer}${lista.map(card).join("")}${lista.length?"":`<div class="vazio">Ainda não há publicações no mural.</div>`}`;
 }
@@ -1524,17 +1618,21 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(s=>ehAdmin()||acessos.includes(s.id));
+  const secs=SECOES.filter(x=>(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural");
   const bloq=bloqueadoCurso();
-  const banner=bloq?`<div class="aviso-bloq">⏳ Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
-  const gestao=ehAdmin()?`<button class="card" data-a="secao" data-v="gestao"><span class="card-tag">Administração</span><h3>Painel de gerenciamento</h3><p>Cadastre pessoas, defina perfil e acessos, acompanhe o ranking e edite ou exclua usuários.</p><span class="card-cta">Abrir →</span></button>`:"";
-  return `${heroHub()}${banner}
-  <div><h2 class="sec">Suas áreas</h2></div>
-  <div class="cards">${gestao}${secs.map(s=>{
-    if(!s.ativo)return `<div class="card off"><span class="card-tag">Em breve</span><h3>${s.nome}</h3><p>${s.desc}</p></div>`;
-    if(bloq&&s.id!=="academia")return `<div class="card off"><span class="card-tag">Bloqueado</span><h3>${s.nome}</h3><p>Conclua o curso de híbridos para liberar esta área.</p></div>`;
-    return `<button class="card" data-a="secao" data-v="${s.id}"><span class="card-tag">Disponível</span><h3>${s.nome}</h3><p>${s.desc}</p><span class="card-cta">Entrar →</span></button>`;
-  }).join("")}</div>`;
+  const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
+  const seta=`<span aria-hidden="true">›</span>`;
+  const areas=(ehAdmin()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
+    if(!x.ativo)return `<button class="area-b" disabled><span>${x.nome}</span><span class="meta">em breve</span></button>`;
+    if(bloq&&x.id!=="academia")return `<button class="area-b" disabled title="Conclua o curso de híbridos para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
+    return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
+  return `${banner}<div class="home">
+    <aside class="home-lado">
+      <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div></div>
+      <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
+    </aside>
+    <div class="home-feed">${vFeed()}</div>
+  </div>`;
 }
 
 /* ---------- Academia ---------- */
@@ -1640,9 +1738,9 @@ function vRCRanking(){
   }
   const verTudo=ehAdmin()||S.perfil==="Comercial Barenbrug";
   const lider=rk.length?Math.max(1,rk[0].kg):1;
-  const linhaC=(x,i,lid)=>{const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.cKg/lid*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.cFat)}</td><td class="val">${x.cAFat?fmt(x.cAFat):"—"}</td><td class="val"><strong>${fmt(x.cKg)}</strong></td>`}</tr>`;};
+  const linhaC=(x,i,lid)=>{const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.cKg/lid*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td>${mask?`<td colspan="3"></td>`:`<td class="val">${fmt(x.cFat)}</td><td class="val">${x.cAFat?fmt(x.cAFat):"—"}</td><td class="val"><strong>${fmt(x.cKg)}</strong></td>`}</tr>`;};
   let rowsC=rkC.slice(0,10).map((x,i)=>linhaC(x,i,lidC)).join("");if(posC>=10)rowsC+=`<tr><td colspan="5" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linhaC(rkC[posC],posC,lidC);
-  const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.kg/lider*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td>${mask?`<td colspan="3"><div class="barra" style="margin:0"><i style="width:${pct}%"></i></div></td>`:`<td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td>`}</tr>`;};
+  const linha=(x,i)=>{const t=tierDoKg(x.kg);const eh=meuCrm&&x.crm===meuCrm;const mask=!verTudo&&!eh;const pct=Math.max(3,Math.round(x.kg/lider*100));return `<tr${eh?' style="background:rgba(255,219,0,.18);font-weight:600"':''}><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}${eh?' <span class="selo">você</span>':''}</td><td><span class="selo">${t}</span></td>${mask?`<td colspan="3"></td>`:`<td class="val">${fmt(x.fat)}</td><td class="val">${x.aFat?fmt(x.aFat):"—"}</td><td class="val"><strong>${fmt(x.kg)}</strong></td>`}</tr>`;};
   const top=rk.slice(0,10);
   let rows=top.map((x,i)=>linha(x,i)).join("");
   if(minhaPos>=10){rows+=`<tr><td colspan="6" style="text-align:center;color:var(--cinza)">⋯</td></tr>`+linha(rk[minhaPos],minhaPos);}
@@ -1652,11 +1750,11 @@ function vRCRanking(){
   ${hero}
   <section class="bloco"><h2 class="sec">Ranking de híbridos · Top 10</h2>
   <div class="aviso-bloq" style="margin:0"><strong>Este ranking conta só os híbridos</strong> (Sabiá, Cayana e Carcará) mais Cynodon. Não é o volume total do representante: as sementes convencionais ficam no ranking de baixo. O tier segue a tabela de comissão dos híbridos (Blue até 3 t · Yellow 3 a 6 t · Yellow Pro 6 a 9 t · Yellow Master acima de 9 t).</div>
-  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de híbridos</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rows}</tbody></table></div></section>
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th><th>Tier</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de híbridos</th>':'<th class="val" colspan="3">Seu volume</th>'}</tr></thead><tbody>${rows}</tbody></table></div></section>
   <section class="bloco"><h2 class="sec">Ranking de convencionais · Top 10</h2>
   <p class="sub" style="margin:0">Todas as demais sementes (Marandu, Mulato II, Ruziziensis, Mombaça, temperadas e outras). Não tem tier: o volume de convencionais não entra na classificação do Conecta RC.</p>
-  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de convencionais</th>':'<th class="val" colspan="3">Posição relativa</th>'}</tr></thead><tbody>${rowsC||`<tr><td colspan="5" class="meta">O ranking de convencionais aparece depois da próxima atualização do CRM.</td></tr>`}</tbody></table></div>
-  ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, os volumes dos outros representantes aparecem só como posição relativa (barra). Você vê o seu número cheio no topo.</p>`}
+  <div class="tab"><table><thead><tr><th>#</th><th>Representante</th>${verTudo?'<th class="val">Já faturou</th><th class="val">Vai faturar</th><th class="val">Total de convencionais</th>':'<th class="val" colspan="3">Seu volume</th>'}</tr></thead><tbody>${rowsC||`<tr><td colspan="5" class="meta">O ranking de convencionais aparece depois da próxima atualização do CRM.</td></tr>`}</tbody></table></div>
+  ${verTudo?"":`<p class="precos-nota">Para preservar o dado comercial da Barenbrug, o ranking mostra só a posição de cada representante. O volume aparece apenas na sua linha e no seu cartão, no topo.</p>`}
   <p class="precos-nota">Fonte: funil de vendas do CRM, pedidos fechados com faturamento na safra, pelo campo Representante${em?", atualizado em "+fmtDataHora(em):""}.</p></section>`;
 }
 const CALC_TIERS=[{t:"Blue",ate:3000,rp:.10,rc:.08,bg:"#00A8E2",cor:"#fff",vol:"Até 3.000 kg"},{t:"Yellow",ate:6000,rp:.115,rc:.09,bg:"#FEDC00",cor:"#1E1E1E",vol:"3.001 a 6.000 kg"},{t:"Yellow Pro",ate:9000,rp:.13,rc:.10,bg:"#E6A800",cor:"#fff",vol:"6.001 a 9.000 kg"},{t:"Yellow Master",ate:Infinity,rp:.15,rc:.11,bg:"#003D5B",cor:"#fff",vol:"Acima de 9.000 kg"}];
@@ -2231,10 +2329,10 @@ function renderApp(){
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"){S.secao="academia";S.pag="trilha";}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
-  if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+  if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
   talvezTour(S.secao);
   if(S.secao==="gestao"){
-    if(!ehAdmin()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;return;}
+    if(!ehAdmin()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();return;}
     if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
     app.innerHTML=cabecalho()+subnavGestao()+`<main>${vAcomp()}</main>`;
     if(!S.equipe){carregarEquipe().then(render);}
@@ -2308,7 +2406,7 @@ function renderApp(){
     if(S.pag==="mercado-boi")carregarCepea();
     return;
   }
-  app.innerHTML=cabecalho()+`<main>${vHub()}</main>`;
+  app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();
 }
 const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
 async function concluir(id,nota){
@@ -2363,6 +2461,9 @@ document.addEventListener("click",async ev=>{
   if(a==="is-sel"){S.isSel=v;render();}
   if(a==="noticias-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo os portais…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler as notícias agora.":`Notícias atualizadas (${r.data.gravadas} lidas${(r.data.falhas||[]).length?", com falha em: "+r.data.falhas.join(", "):""}).`);return;}
   if(a==="boi-del"){const {error}=await sb.from("mercado_boi").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.mercado=null;await carregarMercado();render();aviso("Praça excluída.");return;}
+  if(a==="feed-f"){S.feedF=v;S.feedLim=20;render();return;}
+  if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
+  if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
   if(a==="lead-f"){const i=v.indexOf("|");S.leadF=S.leadF||{};S.leadF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]=true;render();sb.from("lead_views").insert({lead_id:+v,nome:(S.profile&&S.profile.nome)||null}).then(()=>{});return;}
@@ -2413,6 +2514,7 @@ document.addEventListener("click",async ev=>{
 });
 document.addEventListener("change",async ev=>{
   const c=ev.target;
+  if(c.id==="foto_arq"&&c.files&&c.files[0]){await enviarFoto(c.files[0]);return;}
   if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.hasAttribute("data-exige"))){
     if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}const up={};
     if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
@@ -2642,7 +2744,7 @@ document.addEventListener("submit",async ev=>{
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Publicando…";
     const {error}=await sb.from("posts").insert({autor_nome:S.profile.nome||"Barenbrug",texto,anexo_url:anexo||null,publico,fixado,tipo:"comunicado"});
     if(error){S._erro="Não foi possível publicar. Verifique se você é administrador.";render();return;}
-    S._erro=null;S.posts=null;render();aviso("Comunicado publicado.");return;
+    S._erro=null;S.postNovo=false;S.posts=null;render();if(!S.secao)pedirFeed();aviso("Comunicado publicado.");return;
   }
   if(f.id==="f-mkt"){
     const titulo=f.querySelector("#m_tit").value.trim();
