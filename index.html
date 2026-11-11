@@ -689,7 +689,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261110230414";
+const APP_VER="20261110233350";
 async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
 async function boot(){
   checarVersao();
@@ -1025,6 +1025,13 @@ function vMeuCRM(){
   <section class="bloco"><h2 class="sec">Em aberto por mês de faturamento</h2>
     ${meses.length?meses.map(m=>`<div class="mesbar"><span>${nomeMes(m.m)}</span><span class="trilho"><i style="width:${Math.round(100*(m.rs||0)/maxM)}%"></i><b style="width:${Math.round(100*(m.pond||0)/maxM)}%"></b></span><span class="v"><strong>${fmtK(m.rs)}</strong> <span class="meta">· ponderado ${fmtK(m.pond)} · ${fmtN(m.n)} neg.</span></span></div>`).join("")+`<p class="dica" style="margin-top:8px">Barra azul: valor em aberto com faturamento previsto no mês. Barra amarela: o mesmo valor ponderado pela chance de fechar (estrelas da negociação).</p>`:`<div class="vazio">Nenhuma negociação em aberto com data de faturamento.</div>`}
   </section>
+  ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">Meus representantes (${r.rcs.length})</h2>
+    <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
+    <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
+      <span class="meta">${fmtN(x.an)} em aberto · vendido ${fmtK(x.vrs)} em ${fmtN(x.vn)} pedidos${x.b30?` · fatura em 30 dias: ${fmtN(x.b30)} (${fmtK(x.b30rs)})`:""}</span>
+      ${al?`<span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span>`:(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
+    ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" são negociações em aberto com o campo Representante vazio no CRM. Preencha o campo para elas aparecerem no RC certo.</p>`:""}
+  </section>`:""}
   <section class="bloco"><h2 class="sec">Principais negociações em aberto</h2>
     ${top.length?`<div class="lista">${top.map(x=>neg(x)).join("")}</div>`:`<div class="vazio">Nenhuma negociação em aberto.</div>`}
   </section>
