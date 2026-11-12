@@ -396,6 +396,14 @@ main.largo{max-width:1120px}
 .home-lado{display:grid;gap:12px;position:sticky;top:12px}
 .home-feed{display:grid;gap:14px;min-width:0}
 .cx{background:var(--branco);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
+.mkt-cx{box-shadow:inset 4px 0 0 var(--amarelo)}
+.mkt-cx p{font-size:14px;line-height:1.5;margin:0}
+.mkt-lista{display:grid;gap:4px;font-size:14px}
+.mkt-c{overflow-wrap:anywhere}
+.rodape-mkt{border-top:1px solid var(--linha);margin-top:32px;background:var(--branco)}
+.rodape-in{max-width:1100px;margin:0 auto;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:6px;font-size:13px;color:var(--apagado);line-height:1.5}
+.rodape-in p{margin:0}
+.rodape-in .mkt-c+.mkt-c::before{content:" · "}
 .cx h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado);font-weight:700}
 .areas{display:grid}
 .area-b{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--linha);padding:11px 2px;font:inherit;font-weight:700;color:var(--azul-escuro);cursor:pointer}
@@ -882,7 +890,7 @@ const PORTAL_URL="https://felipebarenbrug.github.io/portal-conecta/";
 function vLogin(erro){
   const m=S.acessoModo||"login";
   const marca=`<div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
-    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Treinamento e apoio à venda, em um só lugar.</p></div></div>`;
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Plataforma de marketing da Barenbrug para revendas, RCs e o time comercial: treinamento, programas, materiais e apoio à venda em um só lugar.</p><p class="meta" style="margin-top:8px;color:var(--preto)">Uma iniciativa do Marketing Barenbrug.</p></div></div>`;
   const err=erro?`<div class="erro" role="alert">${esc(erro)}</div>`:"";
   const voltar=`<p class="dica"><button type="button" class="link" data-a="acesso-modo" data-v="login">‹ Voltar para o login</button></p>`;
   let form;
@@ -1774,6 +1782,8 @@ function vHub(){
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div></div>
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
+      <div class="cx mkt-cx"><h2>Plataforma de marketing</h2><p>O Portal Conecta é uma iniciativa do Marketing Barenbrug para apoiar revendas, RCs e o time comercial com treinamento, programas de relacionamento, materiais e ferramentas de venda.</p>
+        <div class="mkt-lista"><span class="meta">Fale com o Marketing</span>${mktContatosHTML()}</div></div>
     </aside>
     <div class="home-feed">${vFeed()}</div>
   </div>`;
@@ -2995,7 +3005,16 @@ document.addEventListener("change",async ev=>{
 });
 
 /* ---------- render ---------- */
-function render(){renderApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+const MKT_CONTATOS=[{nome:"Felipe Piccoli",email:"felipe@barenbrug.com.br"},{nome:"Thaís Mendonça",email:""}];
+const PORTAL_TOM="Plataforma de marketing da Barenbrug para apoiar revendas, representantes comerciais (RCs) e o time comercial";
+const mktContatosHTML=()=>MKT_CONTATOS.map(c=>`<span class="mkt-c"><strong>${esc(c.nome)}</strong>${c.email?` · <a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}</span>`).join("");
+function rodapeMkt(){
+  const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
+  const f=document.createElement("footer");f.className="rodape-mkt";
+  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p></div>`;
+  app.append(f);
+}
+function render(){renderApp();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Trilha"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
