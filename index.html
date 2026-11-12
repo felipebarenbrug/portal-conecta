@@ -521,6 +521,7 @@ main.largo{max-width:1120px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
+.pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}
 </style>
 </head>
 <body>
@@ -1028,7 +1029,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112141047";
+const APP_VER="20261112142159";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1426,7 +1427,9 @@ const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";retu
 function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome||"?");const ini=n.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();const t=tam||40;
   return d&&d.foto_url?`<img class="avatar" src="${esc(urlOk(d.foto_url))}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px">`:`<span class="avatar ini" aria-hidden="true" style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px">${esc(ini)}</span>`;}
 async function carregarFeed(){
-  await Promise.all([carregarPosts(),carregarDuvidas(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
+  await Promise.all([carregarPosts(),carregarDuvidas(),
+    (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
+    (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
 }
 function pedirFeed(){if(S.feedBusy)return;if(S.posts!=null&&S.duvidas!=null&&S.dir)return;S.feedBusy=true;carregarFeed().then(()=>{S.feedBusy=false;render();}).catch(()=>{S.feedBusy=false;});}
@@ -1436,7 +1439,8 @@ function novidades(){
   const perg=(S.duvidas||[]).filter(q=>q.autor!==eu&&!q.oculto&&d(q.criado_em)>vv);
   const resp=(S.duvResp||[]).filter(r=>r.autor!==eu&&!r.oculto&&d(r.criado_em)>vv);
   const minhas=new Set((S.duvidas||[]).filter(q=>q.autor===eu).map(q=>q.id));
-  return {posts:posts.length,perg:perg.length,resp:resp.length,respMinhas:resp.filter(r=>minhas.has(r.duvida_id)).length,total:posts.length+perg.length+resp.length,vv};
+  const aModerar=moderaDuv()?(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto).length:0,solic=ehAdmin()?(S.solic||[]).length:0;
+  return {posts:posts.length,perg:perg.length,resp:resp.length,respMinhas:resp.filter(r=>minhas.has(r.duvida_id)).length,aModerar,solic,total:posts.length+perg.length+resp.length+aModerar+solic,vv};
 }
 function marcarFeedVisto(){
   if(S.feedVistoT||!S.user)return;const N=novidades();if(S.feedNovoDesde==null)S.feedNovoDesde=N.vv;if(!N.total&&S.profile.feed_visto_em)return;
@@ -1468,7 +1472,7 @@ function vFeed(){
   const chips=[["tudo","Tudo"],["comunicados","Comunicados"],["perguntas","Perguntas"],["sem","Sem resposta"+(semResp?" ("+semResp+")":"")],["minhas","Minhas perguntas"]];if(staff)chips.push(["validar","Aguardando validação"+(aValidar?" ("+aValidar+")":"")]);
   const partes=[];if(N.posts)partes.push(N.posts+(N.posts===1?" comunicado novo":" comunicados novos"));if(N.perg)partes.push(N.perg+(N.perg===1?" pergunta nova":" perguntas novas"));if(N.resp)partes.push(N.resp+(N.resp===1?" resposta nova":" respostas novas")+(N.respMinhas?` (${N.respMinhas} em pergunta sua)`:""));
   return `<div class="cx">
-      <div class="autor">${avatar(eu,S.profile.nome,40)}<div><strong>Tem uma dúvida ou um recado?</strong><span class="meta">Pergunte sobre os híbridos, o manejo e os programas. Todos veem e podem responder; a Barenbrug valida.</span></div></div>
+      <div class="autor">${avatar(eu,S.profile.nome,40)}<div><strong>Tem uma dúvida ou um recado?</strong><span class="meta">Pergunte sobre os híbridos, o manejo e os programas. A pergunta vai primeiro para o embaixador técnico, ${esc(EMBAIXADOR.nome)}, que responde e libera para todos.</span></div></div>
       ${S.duvNova?`<form class="duv-form" id="f-duvida" style="display:grid;gap:10px">
         <div><label for="d_tema">Assunto</label><select id="d_tema">${TEMAS_DUV.map(t=>`<option>${esc(t)}</option>`).join("")}</select></div>
         <div><label for="d_txt">Sua pergunta</label><textarea id="d_txt" rows="3" required minlength="5" maxlength="1000" placeholder="Ex.: Qual a taxa de semeadura do Sabiá em plantio a lanço?"></textarea></div>
@@ -1503,6 +1507,7 @@ function cartaoDuvida(d){
     const aberto=S.duvAberta===d.id;
     return `<article class="duv" ${d.oculto?'style="opacity:.6"':""}>
       <div class="autor">${avatar(d.autor,d.autor_nome,40)}<div><span><strong>${esc(d.autor_nome||"Participante")}</strong>${perfilTxt(d.autor,d.autor_perfil)} perguntou ${eNovo(d.criado_em)&&d.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${esc(d.tema)} · ${fmtDataHora(d.criado_em)}${d.oculto?" · <strong>oculta para os usuários</strong>":""}</span></div></div>
+      ${d.publicada===false?`<div class="nota-admin" style="margin:6px 0">${moderaDuv()?`<strong>Ainda não aparece para todos.</strong> Responda e clique em "Exibir a todos" para publicar no Tira-Dúvidas e no mural.`:`<strong>Pergunta enviada ao embaixador técnico, ${esc(EMBAIXADOR.nome)}.</strong> Só você e a Barenbrug veem por enquanto. Ela aparece para todos depois de respondida e liberada.`}</div>`:""}
       <p class="pergunta-tx">${esc(d.pergunta)}</p>
       ${rs.length?rs.map(r=>`<div class="resp ${r.validada?"ok":""}" ${r.oculto?'style="opacity:.6"':""}>
           <div class="mini">${r.validada?`<span class="selo-ok">Resposta validada pela Barenbrug</span>`:`<span class="selo-pend">Aguardando validação da Barenbrug</span>`}${r.oculto?`<span class="meta"><strong>oculta</strong></span>`:""}</div>
@@ -1511,7 +1516,7 @@ function cartaoDuvida(d){
           ${staff?`<div class="mini">${r.validada?`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="0">Retirar validação</button>`:`<button class="link" data-a="resp-validar" data-v="${r.id}" data-on="1">Validar resposta</button>`}${adm?`<button class="link" data-a="resp-ocultar" data-v="${r.id}" data-on="${r.oculto?0:1}">${r.oculto?"Mostrar resposta":"Ocultar resposta"}</button>${btExcluir("r",r.id,"Excluir resposta")}`:""}</div>`:""}
         </div>`).join(""):`<span class="meta">Ainda sem resposta.</span>`}
       ${aberto?`<form id="f-resposta" data-duv="${d.id}"><label for="r_txt">${staff?"Resposta oficial da Barenbrug":"Sua resposta (passa pela validação da Barenbrug)"}</label><textarea id="r_txt" rows="4" required minlength="2" maxlength="3000"></textarea><div class="acoes" style="margin-top:8px"><button class="btn" type="submit">Publicar resposta</button><button class="btn sec" type="button" data-a="duv-abrir" data-v="">Cancelar</button></div></form>`
-        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>${btExcluir("d",d.id,"Excluir pergunta")}`:""}</div>`}
+        :`<div class="mini"><button class="link" data-a="duv-abrir" data-v="${d.id}">Responder</button>${moderaDuv()?(d.publicada===false?`<button class="btn" style="padding:6px 12px" data-a="duv-publicar" data-v="${d.id}" data-on="1">Exibir a todos</button>`:`<button class="link" data-a="duv-publicar" data-v="${d.id}" data-on="0">Tirar da visão de todos</button>`):""}${adm?`<button class="link" data-a="duv-ocultar" data-v="${d.id}" data-on="${d.oculto?0:1}">${d.oculto?"Mostrar pergunta":"Ocultar pergunta"}</button>${btExcluir("d",d.id,"Excluir pergunta")}`:""}</div>`}
     </article>`;}
 function cartaoPost(p){
   const admin=ehAdmin()||temPerfil("Comercial Barenbrug");const novoDesde=S.feedNovoDesde||0;
@@ -1548,9 +1553,11 @@ function vDuvidas(){
   if(filtro==="sem")L=L.filter(d=>!respDe(d.id).length);
   if(filtro==="validar")L=L.filter(d=>respDe(d.id).some(r=>!r.validada)&&!respDe(d.id).some(r=>r.validada));
   if(filtro==="minhas")L=L.filter(d=>d.autor===S.user.id);
+  if(filtro==="moderar")L=L.filter(d=>d.publicada===false&&!d.oculto);
   const chips=[["todas","Todas"],["sem","Sem resposta"],["minhas","Minhas perguntas"]];if(staff)chips.splice(2,0,["validar","Aguardando validação"]);
+  if(moderaDuv()){const n=S.duvidas.filter(d=>d.publicada===false&&!d.oculto).length;chips.unshift(["moderar",`Aguardando exibição${n?" ("+n+")":""}`]);}
   const item=cartaoDuvida;
-  return `<div><h1 class="titulo">Tira-Dúvidas</h1><p class="sub">Pergunte o que precisar sobre os híbridos, o manejo e os programas. Qualquer participante pode responder; o time técnico-comercial da Barenbrug valida a resposta, que fica disponível para todos.</p></div>
+  return `<div><h1 class="titulo">Tira-Dúvidas</h1><p class="sub">Pergunte o que precisar sobre os híbridos, o manejo e os programas. Cada pergunta vai primeiro para o embaixador técnico, ${esc(EMBAIXADOR.nome)}, que responde e libera para todos. Qualquer participante pode responder; o time técnico-comercial da Barenbrug valida a resposta.</p></div>
   <section class="bloco">
     ${S.duvNova?`<form class="form-card duv-form" id="f-duvida">
       <div><label for="d_tema">Assunto</label><select id="d_tema">${TEMAS_DUV.map(t=>`<option>${esc(t)}</option>`).join("")}</select></div>
@@ -2055,8 +2062,20 @@ function vHub(){
       <div class="cx mkt-cx"><h2>Plataforma de marketing</h2><p>O Portal Conecta é uma iniciativa do Marketing Barenbrug para apoiar revendas, RCs e o time comercial com treinamento, programas de relacionamento, materiais e ferramentas de venda.</p>
         <div class="mkt-lista"><span class="meta">Fale com o Marketing</span>${mktContatosHTML()}</div></div>
     </aside>
-    <div class="home-feed">${vFeed()}</div>
+    <div class="home-feed">${vPendenciasHome()}${vFeed()}</div>
   </div>`;
+}
+function vPendenciasHome(){
+  const out=[];
+  if(ehAdmin()&&(S.solic||[]).length){const L=S.solic;const nS=L.filter(x=>x.tipo==="senha").length,nA=L.length-nS;
+    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações pendentes (${L.length})</strong><button class="btn" data-a="secao" data-v="gestao">Atender no painel</button></div>
+      <p class="meta" style="margin:0">${[nS?`${nS} ${nS===1?"pedido":"pedidos"} de nova senha`:"",nA?`${nA} ${nA===1?"pedido":"pedidos"} de acesso`:""].filter(Boolean).join(" · ")}</p>
+      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></section>`);}
+  if(moderaDuv()){const P=(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto);if(P.length)
+    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Perguntas aguardando o embaixador técnico (${P.length})</strong><button class="btn" data-a="secao" data-v="duvidas">Responder</button></div>
+      <p class="meta" style="margin:0">Só você, o autor e os administradores veem estas perguntas até alguém clicar em "Exibir a todos".</p>
+      <div class="lista">${P.slice(0,5).map(q=>`<div class="linha"><div><strong>${esc((q.pergunta||"").slice(0,120))}${(q.pergunta||"").length>120?"…":""}</strong><span class="meta">${esc(q.autor_nome||"")} · ${esc(q.tema||"")} · ${fmtDataHora(q.criado_em)}</span></div></div>`).join("")}</div></section>`);}
+  return out.join("");
 }
 
 /* ---------- Academia ---------- */
@@ -4329,11 +4348,14 @@ document.addEventListener("change",async ev=>{
 /* ---------- render ---------- */
 const MKT_CONTATOS=[{nome:"Felipe Piccoli",email:"felipe@barenbrug.com.br"},{nome:"Thaís Mendonça",email:""}];
 const PORTAL_TOM="Plataforma de marketing da Barenbrug para apoiar revendas, representantes comerciais (RCs) e o time comercial";
+const EMBAIXADOR={nome:"Augusto Nascimento",email:"anascimento@barenbrug.com.br"};
+const ehEmb=()=>!!S.souEmb;
+const moderaDuv=()=>ehAdmin()||ehEmb();
 const mktContatosHTML=()=>MKT_CONTATOS.map(c=>`<span class="mkt-c"><strong>${esc(c.nome)}</strong>${c.email?` · <a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}</span>`).join("");
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
-  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p></div>`;
+  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p></div>`;
   app.append(f);
 }
 function render(){renderApp();injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
@@ -4564,6 +4586,7 @@ document.addEventListener("click",async ev=>{
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
   if(a==="post-com-abrir"){S.postComAberto=v;render();return;}
   if(a==="post-com-del"){const r=await sb.from("post_comentarios").delete().eq("id",v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o comentário.");return;}await carregarPosts();render();aviso("Comentário excluído.");return;}
+  if(a==="duv-publicar"){if(!moderaDuv())return;b.disabled=true;const {error}=await sb.rpc("duvida_publicar",{p_id:+v,p_pub:b.dataset.on==="1"});if(error){aviso("Não foi possível atualizar a pergunta.");render();return;}await carregarDuvidas();render();aviso(b.dataset.on==="1"?"Pergunta exibida para todos.":"Pergunta tirada da visão de todos.");return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
   if(a==="del-pedir"){S.delConf=v;render();return;}
   if(a==="del-nao"){S.delConf=null;render();return;}
@@ -4787,7 +4810,7 @@ document.addEventListener("submit",async ev=>{
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
     const {error}=await sb.from("duvidas").insert({pergunta,tema});
     if(error){aviso("Não foi possível enviar a pergunta.");render();return;}
-    S.duvNova=false;await carregarDuvidas();render();aviso("Pergunta enviada. Você verá a resposta aqui.");return;
+    S.duvNova=false;await carregarDuvidas();render();aviso(moderaDuv()?"Pergunta publicada.":`Pergunta enviada ao embaixador técnico, ${EMBAIXADOR.nome}. Você verá a resposta aqui.`);return;
   }
   if(f.id==="f-post-com"){
     const pid=+f.dataset.p,ta=f.querySelector("textarea"),texto=(ta.value||"").trim();if(!texto)return;
