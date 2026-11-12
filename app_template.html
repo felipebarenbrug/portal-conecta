@@ -231,6 +231,11 @@ details.lote{background:var(--branco);border-radius:8px;padding:12px 14px;margin
 details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .linha .acoes .btn{padding:9px 14px}
 .acesso-links{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.is-ajuda{margin-top:8px;font-size:13px;color:var(--cinza,#5b6b7b)}.is-ajuda summary{cursor:pointer;color:var(--azul-escuro);font-weight:600}.is-ajuda p{margin:6px 0 0;line-height:1.5;max-width:80ch}
+.is-peq{color:var(--cinza,#7a7a7a);font-weight:400}
+.is-passos{margin:0;padding-left:22px;display:grid;gap:4px}.is-passos li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--linha,#e3e8ee)}.is-passos li:nth-child(4){font-weight:700}
+.is-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:10px}.is-grid2>*{min-width:0}
+.is-tot td{border-top:2px solid var(--azul-escuro);font-weight:700}.is-tab td,.is-tab th{white-space:nowrap}
 .mesbar{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:14px}
 .mesbar .trilho{height:16px;background:var(--linha,#eee);border-radius:8px;overflow:hidden;position:relative}
 .mesbar .trilho i{display:block;height:100%;background:var(--azul-escuro)}
@@ -1366,16 +1371,156 @@ function vLeads(){
     ${rows.length?`<div class="lista">${rows.slice(0,150).map(card).join("")}</div>${rows.length>150?`<p class="dica">Mostrando os 150 mais recentes. Use os filtros para ver os demais.</p>`:""}`:`<div class="vazio">Nenhum lead para este filtro${total?"":" por enquanto"}.</div>`}
     <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados apenas para o atendimento comercial deste pedido.</p></section>`}`;
 }
-const veTimeIS=()=>ehAdmin();
-async function carregarIS(){try{const {data}=await sb.from("is_metricas").select("*");S.isMetr=data||[];}catch(e){S.isMetr=[];}}
+/* ===== Painel de performance do Inside Sales (dados de is_painel, calculados na rotina do servidor) ===== */
+const veTimeIS=()=>ehAdmin()||S.isTime===true;
+async function carregarISP(){
+  try{const [a,b]=await Promise.all([sb.from("is_painel").select("*"),S.demo?Promise.resolve({data:false}):sb.rpc("is_ve_time")]);S.isTime=!!b.data;S.isp={};(a.data||[]).forEach(r=>{S.isp[r.pessoa]=r;});}catch(e){S.isp={};}
+  if(!Object.keys(S.isp).length&&!S.crm)await carregarCRM();
+}
 function subnavIS(){
-  const abas=[["is-painel",veTimeIS()?"Painel":"Meu painel"]];
-  if(veTimeIS())abas.push(["is-time","Time"]);
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
 }
+const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",outros:"Fila de qualificação",time:"Time"};
+const IS_ETAPAS=["Forecast","Prospecção","Qualificação","Influenciadores & Proposta de Valor","Influenciadores & Proposta","Negociação e Fechamento","Cadastro de novo cliente","Análise de Crédito","Pedido Finalizado","Solicitação de alteração","Pedidos Finalizados Alterados"];
+const IS_NMES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const isNomeMes=k=>{const [a,b]=String(k).split("-");return (IS_NMES[(+b||1)-1]||"")+"/"+String(a).slice(2);};
+const isT=kg=>((Number(kg)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+" t";
+const isR=v=>"R$ "+Math.round(Number(v)||0).toLocaleString("pt-BR");
+const isN=v=>Math.round(Number(v)||0).toLocaleString("pt-BR");
+const isPct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
+const isMesAtual=()=>new Date(Date.now()-3*3600e3).toISOString().slice(0,7);
+function isMeses(cfg){const ini=(cfg&&cfg.safra&&cfg.safra[0]||"2026-07-01").slice(0,7),fim=(cfg&&cfg.safra&&cfg.safra[1]||"2027-06-30").slice(0,7),at=isMesAtual();const out=[];let [y,m]=ini.split("-").map(Number);for(let i=0;i<12;i++){const k=`${y}-${String(m).padStart(2,"0")}`;if(k>at||k>fim)break;out.push(k);m++;if(m>12){m=1;y++;}}return out;}
+function isPeriodo(cfg){const ms=isMeses(cfg);const p=S.isPer||"safra";return p==="safra"?ms:p==="3m"?ms.slice(-3):ms.includes(p)?[p]:ms;}
+function isSoma(obj,meses){const r={};for(const m of meses){const x=obj&&obj[m];if(!x)continue;for(const [k,v] of Object.entries(x))if(typeof v==="number")r[k]=(r[k]||0)+v;}return r;}
+const isLista=(obj,meses)=>meses.flatMap(m=>(obj&&obj[m])||[]);
+function isEst(a){const v=a.slice().sort((x,y)=>x-y);if(!v.length)return null;const med=v.length%2?v[(v.length-1)/2]:(v[v.length/2-1]+v[v.length/2])/2;const media=v.reduce((s,x)=>s+x,0)/v.length;return {n:v.length,med,media,ate4:v.filter(x=>x<=4).length/v.length,ate1d:v.filter(x=>x<=10).length/v.length,mais3d:v.filter(x=>x>30).length/v.length};}
+const isH=h=>h==null?"—":(Math.round(h*10)/10).toLocaleString("pt-BR")+" h";
+const isTaxa=(a,b,min)=>{if(!b)return `<span class="meta">sem casos</span>`;const t=Math.round(100*a/b);return b<(min||10)?`<span class="is-peq" title="amostra pequena">${t}%</span>`:`${t}%`;};
+const isAjuda=t=>`<details class="is-ajuda"><summary>Como é calculado</summary><p>${t}</p></details>`;
+function isPerSel(cfg){const ms=isMeses(cfg);const p=S.isPer||"safra";const ops=[["safra","Safra "+String((cfg&&cfg.safra&&cfg.safra[0])||"2026").slice(2,4)+"/"+String((cfg&&cfg.safra&&cfg.safra[1])||"2027").slice(2,4)],["3m","Últimos 3 meses"],...ms.slice().reverse().map(m=>[m,isNomeMes(m)])];
+  return `<div class="filtros" aria-label="Período">${ops.map(([k,t])=>`<button class="chip" data-a="is-per" data-v="${k}" aria-pressed="${p===k}">${esc(t)}</button>`).join("")}</div>`;}
+function isMat(meses){const at=isMesAtual();return meses.includes(at)?`<span class="selo" title="Leads e negociações recentes ainda podem avançar">coorte em maturação</span>`:"";}
+function isCabecalho(cfg,row){return `<p class="precos-nota" style="margin:0 0 8px">Fonte: CRM RD Station · atualizado em ${fmtDataHora(row.atualizado_em)} · safra ${esc((cfg.safra||[]).map(d=>d.split("-").reverse().join("/")).join(" a "))} pela data de faturamento · híbridos: ${esc((cfg.cesta||[]).join(", "))}</p>`;}
+
+function vISBloco(nome,row,cfg,ehTime){
+  const A=row.dados||{};const meta=+cfg.meta_kg||60000;const ms=isPeriodo(cfg);const pessoa=(cfg.pessoas||[]).find(p=>p.p===nome)||{};
+  const real=A.real||{},ab=A.ab||{},al=A.alerta||{},fx=A.faixa||{};
+  const proj=(+real.kgh||0)+(+ab.pond||0),gap=Math.max(0,meta-proj),falta=Math.max(0,meta-(+real.kgh||0));
+  const selo=pessoa.papel==="rampagem"&&pessoa.ton_desde?`<span class="selo">rampagem · tonelada entra na cobrança a partir de ${isNomeMes(pessoa.ton_desde.slice(0,7))}</span>`:pessoa.papel==="fora_cobranca"?`<span class="selo">nos números do time, fora das listas de cobrança</span>`:pessoa.papel==="supervisao"||pessoa.papel==="carteira_rc"||nome==="Carteira com RC"?`<span class="selo">supervisão e carteira · fora da cobrança das vendedoras</span>`:"";
+  const contrib=ehTime?"":" para o time";
+  const cards=`<div class="metrics">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Realizado da safra</span><strong>${isT(real.kgh)}</strong><span class="meta">híbridos · ${isN(real.n)} vendas · ${isR(real.rs)}</span></div>
+    <div class="metric"><span>${ehTime?"% da meta":"Contribuição para a meta"}</span><strong>${isPct(real.kgh,meta)}</strong><span class="meta">de ${isT(meta)}${contrib}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção</span><strong>${isT(proj)}</strong><span class="meta">${isPct(proj,meta)} da meta · realizado + ponderado</span></div>
+    ${ehTime?`<div class="metric"><span>Gap da projeção</span><strong>${gap?isT(gap):"meta coberta"}</strong><span class="meta">meta − projeção</span></div>`:""}
+    <div class="metric"><span>Em andamento</span><strong>${isN(ab.n)} negociações</strong><span class="meta">${isT(ab.kgh)} bruto · ${isT(ab.pond)} ponderado · ${isR(ab.rs)}</span></div></div>`;
+  const passos=ehTime?`<section class="bloco"><h2 class="sec">Conta da projeção</h2><ol class="is-passos">
+    <li><span>Realizado da safra</span><strong>${isT(real.kgh)}</strong></li>
+    <li><span>Funil bruto em andamento</span><strong>${isT(ab.kgh)}</strong></li>
+    <li><span>Funil ponderado pelas estrelas</span><strong>${isT(ab.pond)}</strong></li>
+    <li><span>Projeção = realizado + ponderado</span><strong>${isT(proj)}</strong></li>
+    <li><span>% da meta projetada</span><strong>${isPct(proj,meta)}</strong></li>
+    <li><span>Gap = meta − projeção</span><strong>${gap?isT(gap):"0,00 t"}</strong></li>
+    <li><span>Conversão necessária do que está em andamento</span><strong>${falta?(ab.kgh?isPct(falta,ab.kgh):"sem funil"):"meta batida"}</strong></li></ol>
+    ${isAjuda(`Régua de estrelas: 5★ ${Math.round(100*(cfg.regua||{})[5])}%, 4★ ${Math.round(100*(cfg.regua||{})[4])}%, 3★ ${Math.round(100*(cfg.regua||{})[3])}%, 2★ ${Math.round(100*(cfg.regua||{})[2])}%, 1★ ${Math.round(100*(cfg.regua||{})[1])}%, aplicada a cada negociação sobre os quilos de híbrido dela. Ficam fora: pausadas, negociações com faturamento depois do fim da safra (${isT((fx.fora||{}).kgh)} em ${isN((fx.fora||{}).n)}) e vendas sem status ganho. Conversão necessária = (meta − realizado) ÷ funil bruto.`)}</section>`:"";
+  // curva mensal
+  const msS=isMeses(cfg);const fut=Object.keys(A.abmes||{}).filter(k=>k>=isMesAtual()).sort().slice(0,6);const todos=[...new Set([...msS,...fut])].sort();
+  const maxV=Math.max(1,...todos.map(m=>Math.max(+((A.vend_mes||{})[m]||{}).kgh||0,(+((A.fat_mes||{})[m]||{}).kgh||0)+(+((A.abmes||{})[m]||{}).pond||0))));
+  const curva=`<section class="bloco"><h2 class="sec">Vendido no CRM × faturado, mês a mês</h2><div class="tab"><table><thead><tr><th>Mês</th><th class="val">Vendido no CRM</th><th class="val">Faturado (já vendido)</th><th class="val">Em andamento com faturamento no mês</th><th class="val">Faturado + ponderado</th></tr></thead><tbody>${todos.map(m=>{const v=(A.vend_mes||{})[m]||{},f=(A.fat_mes||{})[m]||{},a=(A.abmes||{})[m]||{};return `<tr><td>${isNomeMes(m)}</td><td class="val">${v.n?`${isT(v.kgh)} <span class="meta">· ${isN(v.n)}</span>`:"—"}</td><td class="val">${f.n?`${isT(f.kgh)} <span class="meta">· ${isN(f.n)}</span>`:"—"}</td><td class="val">${a.n?`${isT(a.bruto)} <span class="meta">bruto · ${isT(a.pond)} pond. · ${isN(a.n)}</span>`:"—"}</td><td class="val"><strong>${isT((+f.kgh||0)+(+a.pond||0))}</strong></td></tr>`;}).join("")}</tbody></table></div>
+    ${isAjuda("Vendido no CRM: vendas ganhas no mês em que foram fechadas no CRM. Faturado: as mesmas vendas pelo mês da data de entrega/faturamento. As duas colunas respondem perguntas diferentes e não se somam. Faturado + ponderado mostra o que o mês deve faturar somando o que já está vendido e o funil em andamento pesado pelas estrelas.")}</section>`;
+  // conversoes do periodo
+  const mq=isSoma(A.mql,ms),dc=isSoma(A.dec,ms);const fam=f=>[+dc[f+"_g"]||0,+dc[f+"_p"]||0];
+  const fams=[["mql","Vindas de MQL"],["time","Forecast trabalhado pelo time"],["repasse","Repasse de carteira"],["outras","Outras origens"],["sem_origem","Sem origem identificada"]];
+  const g=fams.reduce((s,[f])=>s+fam(f)[0],0),p=fams.reduce((s,[f])=>s+fam(f)[1],0);
+  const [gm,pm]=fam("mql");const tq=(+mq.rec||0)?(+mq.qual||0)/(+mq.rec):0,tv=(gm+pm)?gm/(gm+pm):0;
+  const conv=`<section class="bloco"><h2 class="sec">Conversão ${isMat(ms)}</h2>
+    <div class="metrics">
+      <div class="metric"><span>MQL → SQL</span><strong>${isTaxa(+mq.qual||0,+mq.rec||0,10)}</strong><span class="meta">${isN(mq.qual)} qualificados de ${isN(mq.rec)} MQL recebidos · ${isN(mq.perd)} perdidos · ${isN(mq.enc)} encaminhados para canal · ${isN(mq.and)} em andamento</span></div>
+      <div class="metric"><span>SQL → Venda (decididas)</span><strong>${isTaxa(g,g+p,10)}</strong><span class="meta">${isN(g)} ganhas · ${isN(p)} perdidas = ${isN(g+p)} decididas</span></div>
+      <div class="metric"><span>MQL → Venda (encadeada)</span><strong>${(+mq.rec&&gm+pm)?(Math.round(1000*tq*tv)/10).toLocaleString("pt-BR")+"%":"—"}</strong><span class="meta">MQL → SQL ${Math.round(100*tq)}% × SQL do MQL → venda ${isTaxa(gm,gm+pm,10)}</span></div>
+      <div class="metric"><span>Lead → venda da coorte</span><strong>${isTaxa(+mq.venda||0,+mq.rec||0,10)}</strong><span class="meta">${isN(mq.venda)} vendas · ${isT(mq.vkg)} · ${isR(mq.vrs)}${+mq.rec?" · "+isR((+mq.vrs||0)/(+mq.rec))+" por MQL recebido":""}</span></div>
+    </div>
+    <div class="tab" style="margin-top:10px"><table><thead><tr><th>SQL por origem (decididas no período)</th><th class="val">Ganhas</th><th class="val">Perdidas</th><th class="val">Conversão</th></tr></thead><tbody>${fams.map(([f,t])=>{const [a,b]=fam(f);return a+b?`<tr><td>${t}</td><td class="val">${isN(a)}</td><td class="val">${isN(b)}</td><td class="val">${isTaxa(a,a+b,10)}</td></tr>`:"";}).join("")}<tr><td><strong>Total</strong></td><td class="val"><strong>${isN(g)}</strong></td><td class="val"><strong>${isN(p)}</strong></td><td class="val"><strong>${isTaxa(g,g+p,10)}</strong></td></tr></tbody></table></div>
+    ${isAjuda("MQL → SQL: MQL qualificados (ganhos no funil MQL) ÷ MQL recebidos, pelo mês em que o lead entrou. Encaminhado para canal aparece à parte e não é perda do time. SQL → Venda: ganhas ÷ (ganhas + perdidas), só negociações decididas, pelo mês do fechamento; em andamento e pausadas não contam. MQL → Venda encadeada: as duas etapas multiplicadas, só com as vendas que vieram de MQL. Lead → venda da coorte: MQL do período cujo contato (e-mail ou telefone) tem venda ganha na safra. A ligação venda ↔ MQL é pelo contato e, sem contato, pelo nome com o mesmo dono em até 10 dias. Taxa em cinza: menos de 10 casos.")}</section>`;
+  // tempo de atribuicao
+  const at=isEst(isLista(A.atrib,ms));const cob=A.cob||{};
+  const atrib=`<section class="bloco"><h2 class="sec">Tempo de atribuição ${isMat(ms)}</h2>${at?`<div class="metrics">
+      <div class="metric"><span>Mediana</span><strong>${isH(at.med)}</strong><span class="meta">${isN(at.n)} leads ligados à negociação</span></div>
+      <div class="metric"><span>Média</span><strong>${isH(at.media)}</strong><span class="meta">puxada pelos casos longos</span></div>
+      <div class="metric"><span>Atendidos em até 4 h úteis</span><strong>${Math.round(100*at.ate4)}%</strong><span class="meta">até 1 dia útil: ${Math.round(100*at.ate1d)}%</span></div>
+      <div class="metric" ${at.mais3d>=.15?'style="box-shadow:inset 0 0 0 2px #c0392b"':""}><span>Acima de 3 dias úteis</span><strong>${Math.round(100*at.mais3d)}%</strong><span class="meta">a cauda é onde está o problema</span></div></div>`:`<div class="vazio">Sem leads qualificados ligados a negociação no período.</div>`}
+    ${isAjuda(`Do momento em que o lead entra no funil MQL até a vendedora abrir a negociação no Funil de Vendas, em horas úteis (segunda a sexta, 8h às 18h, sem feriados). O CRM não grava o instante da atribuição, então a medida mistura a espera pela vendedora com o tempo até abrir a negociação. Cobertura: ${isN(cob.lig)} de ${isN(cob.qual)} MQL qualificados da safra ligados a uma negociação.`)}</section>`;
+  // a faturar, estrelas, etapas, origem
+  const fxl=[["venc","Data já passou"],["d30","0 a 30 dias"],["d60","31 a 60 dias"],["d90","61 a 90 dias"],["mais","Acima de 90 dias"],["sem","Sem data de faturamento"]];
+  const funil=`<section class="bloco"><h2 class="sec">Funil em andamento</h2>
+    <div class="is-grid2"><div class="tab"><table><thead><tr><th>A faturar</th><th class="val">Neg.</th><th class="val">Bruto</th><th class="val">Ponderado</th></tr></thead><tbody>${fxl.map(([k,t])=>{const x=fx[k]||{};return x.n?`<tr><td>${t}</td><td class="val">${isN(x.n)}</td><td class="val">${isT(x.kgh)}</td><td class="val">${isT(x.pond)}</td></tr>`:"";}).join("")}${(fx.fora||{}).n?`<tr><td class="meta">Depois da safra (fora da projeção)</td><td class="val">${isN(fx.fora.n)}</td><td class="val">${isT(fx.fora.kgh)}</td><td class="val">—</td></tr>`:""}</tbody></table></div>
+    <div class="tab"><table><thead><tr><th>Estrelas</th><th class="val">Neg.</th><th class="val">Bruto</th><th class="val">Ponderado</th></tr></thead><tbody>${[5,4,3,2,1].map(r=>{const x=(A.est||{})[r]||{};return `<tr><td><span class="estrelas" style="color:${["","#C7373C","#D96D00","#B88700","#5C9A1B","#1F8A4C"][r]}">${"★".repeat(r)}${"☆".repeat(5-r)}</span> <span class="meta">${Math.round(100*((cfg.regua||{})[r]||0))}%</span></td><td class="val">${isN(x.n)}</td><td class="val">${isT(x.kgh)}</td><td class="val">${isT(x.pond)}</td></tr>`;}).join("")}</tbody></table></div></div>
+    <div class="is-grid2" style="margin-top:10px"><div class="tab"><table><thead><tr><th>Etapa (ordem da jornada)</th><th class="val">Neg.</th><th class="val">Bruto</th></tr></thead><tbody>${[...IS_ETAPAS,...Object.keys(A.etapa||{}).filter(k=>!IS_ETAPAS.includes(k))].map(k=>{const x=(A.etapa||{})[k];return x&&x.n?`<tr><td>${esc(k)}</td><td class="val">${isN(x.n)}</td><td class="val">${isT(x.kgh)}</td></tr>`:"";}).join("")}</tbody></table></div>
+    <div class="tab"><table><thead><tr><th>Origem</th><th class="val">Neg.</th><th class="val">Bruto</th><th class="val">Ponderado</th></tr></thead><tbody>${[["carteira","Carteira Forecast (repasse)"],["proprio","Funil próprio"]].map(([k,t])=>{const x=(A.orig||{})[k]||{};return `<tr><td>${t}</td><td class="val">${isN(x.n)}</td><td class="val">${isT(x.kgh)}</td><td class="val">${isT(x.pond)}</td></tr>`;}).join("")}</tbody></table></div></div>
+    ${isAjuda("Só negociações em andamento e não pausadas, com os quilos de híbrido de cada uma. Faixas contadas a partir de hoje pela data de faturamento. Carteira Forecast: negociação com a campanha Forecast FY2627 que não veio da fonte de trabalho do próprio time; funil próprio é o resto.")}</section>`;
+  // higiene
+  const hg=[["sem_tarefa","Sem próximo passo","em andamento sem tarefa pendente no CRM"],["est_data","Estrela × data","fatura em até 30 dias com 1 ou 2 estrelas"],["vencida","Data de faturamento vencida","a data já passou e não foi ganha"],["parada",`Parada há mais de ${cfg.parada_dias||15} dias`,"sem nenhuma alteração no CRM"],["sem_data","Sem data de faturamento","campo vazio"],["fech","Pedido finalizado sem ganho","em etapa de fechamento, sem status ganho"]];
+  const higiene=`<section class="bloco"><h2 class="sec">Higiene do funil</h2><div class="metrics">${hg.map(([k,t,d])=>{const x=al[k]||{};return `<div class="metric" ${x.n?'style="box-shadow:inset 0 0 0 2px #c0392b"':""}><span>${t}</span><strong>${isN(x.n)}</strong><span class="meta">${x.n?isT(x.kgh)+" · "+isR(x.rs):d}</span></div>`;}).join("")}</div>${ehTime?`<p class="dica">A lista nominal para cobrança fica na aba Negociações, só com as vendedoras.</p>`:""}</section>`;
+  // pausadas e perdas
+  const pa=A.paus||{};const pr=isSoma(A.perd,ms);const mot={};ms.forEach(m=>Object.entries(((A.motivos||{})[m])||{}).forEach(([k,v])=>{const o=mot[k]||(mot[k]={n:0,rs:0});o.n+=v.n||0;o.rs+=v.rs||0;}));
+  const radar=`<section class="bloco"><h2 class="sec">Radar de pausadas e perdas</h2><div class="metrics">
+    <div class="metric"><span>Pausadas (fora dos totais)</span><strong>${isN(pa.n)}</strong><span class="meta">${isT(pa.kgh)} · ${isR(pa.rs)} · ponderado hipotético ${isT(pa.pond)}</span></div>
+    <div class="metric"><span>Perdas no período</span><strong>${isN(pr.n)}</strong><span class="meta">${isR(pr.rs)} · ${isT(pr.kgh)}</span></div></div>
+    ${Object.keys(mot).length?`<div class="tab" style="margin-top:10px"><table><thead><tr><th>Motivo da perda</th><th class="val">Neg.</th><th class="val">Valor</th></tr></thead><tbody>${Object.entries(mot).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="val">${isN(v.n)}</td><td class="val">${isR(v.rs)}</td></tr>`).join("")}</tbody></table></div>`:""}
+    ${isAjuda("Pausada é lembrete do time, não temperatura: fica fora do realizado, do funil, da projeção e das taxas. O ponderado hipotético mostra quanto valeria se voltasse ao funil com a estrela atual. Perdas pelo mês do fechamento.")}</section>`;
+  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${conv}${atrib}${funil}${curva}${higiene}${radar}`;
+}
+const IS_AL={sem_tarefa:"sem próximo passo",parada:"parada",vencida:"data vencida",sem_data:"sem data",est_data:"estrela × data",fech:"pedido finalizado sem ganho"};
+function isListaHTML(L,mostraDono){
+  const F=S.isNegF||"alerta";const rows=L.filter(x=>F==="todas"||(F==="alerta"?(x.al||[]).length:(x.al||[]).includes(F)));
+  const chips=[["alerta","Com alerta"],["todas","Todas"],...Object.entries(IS_AL)].map(([k,t])=>`<button class="chip" data-a="is-negf" data-v="${k}" aria-pressed="${F===k}">${esc(t)} (${k==="todas"?L.length:k==="alerta"?L.filter(x=>(x.al||[]).length).length:L.filter(x=>(x.al||[]).includes(k)).length})</button>`).join("");
+  const est=r=>`<span class="estrelas" aria-label="${r} de 5 estrelas">${"★".repeat(r||0)}${"☆".repeat(5-(r||0))}</span>`;
+  return `<div class="filtros">${chips}</div>${rows.length?`<div class="lista">${rows.slice(0,200).map(x=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${isR(x.rs)}</span></div>
+    <span class="meta">${mostraDono?esc(x.p)+" · ":""}${esc(x.etapa)} · ${est(x.r)} · ${x.fat?"faturamento "+x.fat.split("-").reverse().join("/"):"sem data de faturamento"} · ${x.kgh?isT(x.kgh)+" de híbrido":"sem híbrido"}${x.kgc?" · "+isN(x.kgc)+" kg convencional":""}</span>
+    <span class="meta">${x.orig==="carteira"?"carteira Forecast":"funil próprio"} · ${x.tarefa?"próxima tarefa "+x.tarefa.split("-").reverse().join("/"):"sem tarefa"} · atualizada há ${isN(x.upd)} dias${x.fora?" · fatura depois da safra":""}</span>
+    ${(x.al||[]).length?`<span class="meta" style="color:#c0392b">${(x.al||[]).map(k=>IS_AL[k]||k).join(" · ")}</span>`:""}</div>`).join("")}</div>${rows.length>200?`<p class="dica">Mostrando 200 de ${rows.length}.</p>`:""}`:`<div class="vazio">Nenhuma negociação neste filtro.</div>`}`;
+}
+function vISVend(cfg){
+  const ms=isPeriodo(cfg);const meta=+cfg.meta_kg||60000;const P=cfg.pessoas||[];
+  const linha=(nome,rot,extra)=>{const r=S.isp[nome];if(!r)return "";const A=r.dados||{};const re=A.real||{},ab=A.ab||{};const mq=isSoma(A.mql,ms),dc=isSoma(A.dec,ms);let g=0,p=0;Object.entries(dc).forEach(([k,v])=>{if(k.endsWith("_g"))g+=v;else if(k.endsWith("_p"))p+=v;});const at=isEst(isLista(A.atrib,ms));
+    const clic=nome!=="Time"?`<button class="link" data-a="is-abrir" data-v="${esc(nome)}">${esc(rot||nome)}</button>`:`<strong>${esc(rot||nome)}</strong>`;
+    return `<tr${nome==="Time"?' class="is-tot"':""}><td>${clic}${extra?`<br><span class="meta">${extra}</span>`:""}</td><td class="val">${isN(re.n)}</td><td class="val"><strong>${isT(re.kgh)}</strong></td><td class="val">${isR(re.rs)}</td><td class="val">${re.n?isR(re.rs/re.n):"—"}</td><td class="val">${isPct(re.kgh,meta)}</td><td class="val">${isN(ab.n)} · ${isT(ab.kgh)}</td><td class="val">${isT(ab.pond)}</td><td class="val">${isN(mq.rec)}</td><td class="val">${isTaxa(+mq.qual||0,+mq.rec||0)}</td><td class="val">${isTaxa(g,g+p)}<br><span class="meta">${isN(g)}×${isN(p)}</span></td><td class="val">${isTaxa(+mq.venda||0,+mq.rec||0)}</td><td class="val">${at?isH(at.med):"—"}</td><td class="val">${at?Math.round(100*at.mais3d)+"%":"—"}</td><td class="val">${nome==="Time"||["supervisao","fora_cobranca"].includes(r.papel)||nome==="Carteira com RC"?"—":isN(((A.alerta||{}).sem_tarefa||{}).n)}</td></tr>`;};
+  const vend=P.filter(p=>p.papel==="vendedora"||p.papel==="rampagem");
+  const outros=[...P.filter(p=>p.papel==="supervisao").map(p=>[p.p,p.p+" · supervisão/carteira",""]),["Carteira com RC","Carteira com RC","negociações da supervisão com RC no campo Representante"],...P.filter(p=>p.papel==="fora_cobranca").map(p=>[p.p,p.p,"nos números, fora da cobrança"]),["Pré-Vendas","Pré-Vendas","fila de qualificação, só MQL"]];
+  return `<section class="bloco"><h2 class="sec">Por vendedora ${isMat(ms)}</h2><div class="tab"><table class="is-tab"><thead><tr><th>Pessoa</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Valor</th><th class="val">Ticket médio</th><th class="val">% da meta</th><th class="val">Em andamento</th><th class="val">Ponderado</th><th class="val">MQL recebidos</th><th class="val">MQL → SQL</th><th class="val">SQL → Venda</th><th class="val">Lead → venda</th><th class="val">Atribuição (mediana)</th><th class="val">Acima de 3 dias</th><th class="val">Sem próximo passo</th></tr></thead><tbody>
+    ${vend.map(p=>linha(p.p,p.p,p.papel==="rampagem"&&p.ton_desde?"rampagem · tonelada a partir de "+isNomeMes(p.ton_desde.slice(0,7)):"")).join("")}
+    <tr><td colspan="15" class="meta" style="padding-top:12px">Supervisão, carteira e fila (fora da cobrança)</td></tr>
+    ${outros.map(([n,r,e])=>linha(n,r,e)).join("")}
+    ${linha("Time","Time")}</tbody></table></div>
+    <p class="dica">Vendas, híbridos, valor e % da meta: safra inteira (contribuição de cada pessoa para as ${isT(meta)} do time). MQL, SQL → Venda, lead → venda e atribuição: período escolhido acima. SQL → Venda mostra ganhas × perdidas. Taxa em cinza: menos de 10 casos, não serve para ranquear. Toque no nome para abrir o painel da pessoa.</p></section>`;
+}
 function vInsideSales(){
+  if(S.isp==null)return `<div class="carregando">Carregando indicadores…</div>`;
+  const T=S.isp["Time"];const cfg=(T&&T.dados&&T.dados.cfg)||{};const manager=veTimeIS();
+  const atualiza=ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:"";
+  const linhasP=Object.keys(S.isp).filter(k=>k!=="Time");
+  if(!linhasP.length&&!T)return vInsideSalesAntigo();
+  if(manager&&!T)return `<div><h1 class="titulo">Inside Sales</h1></div>${atualiza}<section class="bloco"><div class="vazio">O painel ainda não foi calculado. Use o botão acima.</div></section>`;
+  const rodape=`<p class="precos-nota" style="margin-top:12px">Regras: só vendas com status ganho e data de faturamento na safra; itens com preço zero e negociações de bonificação ficam fora; pausadas ficam fora de todos os totais${cfg.exclusoes?`; ${cfg.exclusoes} ${cfg.exclusoes===1?"exclusão manual ativa":"exclusões manuais ativas"} (pedido reemitido)`:""}. Concorrentes não são identificados nesta área.</p>`;
+  if(manager&&S.pag==="is-time")return `<div><h1 class="titulo">Inside Sales · Time</h1></div>${isCabecalho(cfg,T)}${atualiza}${isPerSel(cfg)}${vISBloco("Time",T,cfg,true)}${rodape}`;
+  if(manager&&S.pag==="is-vend")return `<div><h1 class="titulo">Inside Sales · Por vendedora</h1></div>${isCabecalho(cfg,T)}${isPerSel(cfg)}${vISVend(cfg)}${rodape}`;
+  if(manager&&S.pag==="is-neg"){const L=(cfg.pessoas||[]).filter(p=>p.papel==="vendedora"||p.papel==="rampagem").flatMap(p=>((S.isp[p.p]||{}).dados||{}).lista||[]);
+    return `<div><h1 class="titulo">Inside Sales · Negociações</h1><p class="sub">Negociações em andamento das vendedoras, com os alertas que pedem ação. Supervisão, carteira com RC e a negociação conduzida pelo Felipe ficam fora desta lista.</p></div>${isCabecalho(cfg,T)}<section class="bloco">${isListaHTML(L,true)}</section>${rodape}`;}
+  // painel individual
+  const nomes=linhasP.filter(n=>n!=="Pré-Vendas");const alvo=manager?(S.isSel&&S.isp[S.isSel]?S.isSel:(nomes[0]||"")):(S.profile&&S.profile.is_vendedora);
+  const row=S.isp[alvo];
+  const seletor=manager?`<div class="filtros">${nomes.map(n=>`<button class="chip" data-a="is-sel" data-v="${esc(n)}" aria-pressed="${alvo===n}">${esc(n)}</button>`).join("")}</div>`:"";
+  if(!row)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div>${seletor}<section class="bloco"><div class="vazio">${manager?"Sem dados para esta pessoa.":"Seu acesso ainda não está vinculado a uma consultora do Inside Sales ou o painel ainda não foi calculado. Fale com o administrador."}</div></section>`;
+  const cfgP=cfg.safra?cfg:{meta_kg:60000,safra:["2026-07-01","2027-06-30"],cesta:["Sabiá","Cayana","Carcará","Carcará 3 kg"],regua:{1:.05,2:.15,3:.35,4:.7,5:.9},pessoas:[]};
+  const L=(row.dados||{}).lista||[];const semCobr=["supervisao","fora_cobranca","carteira_rc"].includes(row.papel);
+  return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1></div>${seletor}${isCabecalho(cfgP,row)}${isPerSel(cfgP)}${vISBloco(alvo,row,cfgP,false)}
+    <section class="bloco"><h2 class="sec">${manager?"Negociações em andamento":"Minhas negociações em andamento"}</h2>${semCobr?`<p class="sub" style="margin:0 0 6px">Lista para acompanhamento: esta carteira não entra na cobrança das vendedoras.</p>`:""}${isListaHTML(L,false)}</section>${rodape}`;
+}
+
+function vInsideSalesAntigo(){
   const all=S.crm,manager=veTimeIS();
   if(all==null)return `<div class="carregando">Carregando indicadores…</div>`;
   const rows=all.filter(x=>String(x.dono).startsWith("IS: "));const nm=x=>String(x.dono).slice(4);
@@ -1402,7 +1547,7 @@ function vInsideSales(){
       <div class="metric"><span>Pausadas</span><strong>${ton(pk)}</strong><span class="meta">${fmtN(T.reduce((t,x)=>t+(+x.r.pausadas_n||0),0))} negociações, fora da projeção</span></div>
     </div>
     <section class="bloco"><h2 class="sec">Por consultora</h2><div class="tab"><table><thead><tr><th>Consultora</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Valor</th><th class="val">No mês</th><th class="val">Fecham. mês</th><th class="val">Em aberto</th><th class="val">Na régua</th><th class="val">Pausadas</th><th class="val">Sem atualizar / vencidas</th></tr></thead><tbody>${T.sort((a,b)=>b.q.vh-a.q.vh).map(lin).join("")}</tbody></table></div>
-    <p class="dica">Vendas: negociações ganhas ou em etapa de fechamento com faturamento na safra. No mês: ganhas no CRM no mês corrente. Fechamento no mês: ganhas ÷ (ganhas + perdidas) no mês. Na régua: híbridos em aberto × chance de fechar pelas estrelas (5%, 15%, 35%, 70%, 90%). Toque no nome para abrir o painel da consultora.</p></section>`;
+    <p class="dica">Vendas: negociações ganhas com faturamento na safra. No mês: ganhas no CRM no mês corrente. Fechamento no mês: ganhas ÷ (ganhas + perdidas) no mês. Na régua: híbridos em aberto × chance de fechar pelas estrelas (5%, 15%, 35%, 70%, 90%). Toque no nome para abrir o painel da consultora.</p></section>`;
   }
   const alvo=manager?(S.isSel||nm(rows[0])):(S.profile&&S.profile.is_vendedora);
   const row=rows.find(x=>nm(x)===alvo)||(!manager&&rows.length===1?rows[0]:null);
@@ -1679,8 +1824,9 @@ function montaPainelCRM(dono,deals,perdMes){
     const b=dt(d.fat),tp=Number(d.tot)||0,rp=repN(d.rep);
     if(d.st==="P"){R.pausadas_n++;const [h,c]=kgs(d);q.pkgh+=h;q.pkg+=h+c;q.prs+=tp;continue;}
     if(d.st==="V"&&String(d.cl||"").slice(0,7)===mesK&&!/bonif/i.test(d.n)){const [h,c]=kgs(d);q.mes.n++;q.mes.kgh+=h;q.mes.kg+=h+c;q.mes.rs+=tp;}
-    const fech=d.st==="V"||CRM_FECH.includes(d.stg);
-    if(fech){if(d.st==="V"?(b&&b>=ini&&b<=fim):((b&&b>=ini&&b<=fim)||!b)){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
+    if(CRM_FECH.includes(d.stg)&&d.st!=="V"){q.fech_n=(q.fech_n||0)+1;q.fech_rs=Math.round((q.fech_rs||0)+tp);}
+    const fech=d.st==="V";
+    if(fech){if(b&&b>=ini&&b<=fim){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
     const rt=d.rt||1,w=CRM_PESO[rt]||.05,dias=Math.round((hoje-new Date(String(d.upd).slice(0,10)+"T00:00:00"))/864e5),venc=!!(b&&b<hoje);
     const [h,c]=soma(d,"ah","ac",q.acult);
     q.pondh+=h*w;q.pondc=(q.pondc||0)+c*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
@@ -1716,7 +1862,7 @@ function linhasMapa(dono,deals,repPadrao){
   const out=[];
   for(const d of deals){
     if(d.st==="P")continue;const b=dt(d.fat);let st="A";
-    if(d.st==="V"||CRM_FECH.includes(d.stg)){const ok=d.st==="V"?(b&&b>=ini&&b<=fim):((b&&b>=ini&&b<=fim)||!b);if(!ok||/bonif/i.test(d.n))continue;st="V";}
+    if(d.st==="V"){const ok=!!(b&&b>=ini&&b<=fim);if(!ok||/bonif/i.test(d.n))continue;st="V";}
     let h=0,c=0;const cu={};(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(!v)return;if(ehHibrida(k))h+=v;else c+=v;cu[k]=(cu[k]||0)+v;});
     const o=Array.isArray(d.o)?d.o:[];const uf=ufDe(o[0])||ufDe(d.mu);const cid=String(o[1]||d.mc||"").trim().slice(0,60);
     const seg=(/DISTRIBUIDOR|COOPERATIVA|EXPORTA|KEY ACCOUNT/i.test(String(o[2]||""))||d.forma==="Para Canal (Sell In)")?"B2B":"B2C";
@@ -1831,9 +1977,9 @@ function vMapaGeo(ctx){
 }
 async function atualizarCRM(prog){
   if(!S.demo){const res=[];
-    for(const [et,rot] of [["crm","Lendo o CRM e montando painéis, mapa e ranking (cerca de 1 minuto)…"],["extras","Lendo leads e notícias…"],["diario","Lendo clima e arroba do boi…"]]){prog(rot);
+    for(const [et,rot] of [["crm","Lendo o CRM e montando painéis, mapa e ranking (cerca de 1 minuto)…"],["is","Calculando o painel do Inside Sales…"],["extras","Lendo leads e notícias…"],["diario","Lendo clima e arroba do boi…"]]){prog(rot);
       try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"agenda",etapa:et,origem:"botao"}});if(r.error||!r.data||r.data.error)res.push(et+": erro na atualização");else res.push(...(r.data.resultado||[]));}catch(e){res.push(et+": erro na atualização");}}
-    S.mercado=null;S.leadsCache=null;S.cepea=undefined;try{await carregarRanking();}catch(e){}return res;}
+    S.mercado=null;S.leadsCache=null;S.cepea=undefined;S.isp=null;try{await carregarRanking();}catch(e){}return res;}
   const res=[];
   let ult=0;try{ult=+localStorage.getItem("pc_orgsync")||0;}catch(e){}
   if(Date.now()-ult>20*3600e3){let pg=1,n=0;let okOrg=true;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");okOrg=false;break;}pg=r.data.proxima;n++;}if(okOrg){try{localStorage.setItem("pc_orgsync",String(Date.now()));}catch(e){}}}
@@ -4537,9 +4683,9 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
-    if(S.pag==="is-time"&&!veTimeIS())S.pag="is-painel";
+    if(["is-time","is-vend","is-neg"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
-    if(!S.crm){carregarCRM().then(render);}
+    if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
   if(S.secao==="duvidas"){
@@ -4669,6 +4815,8 @@ document.addEventListener("click",async ev=>{
   if(a==="mkt-cancel"){S.mktNovo=null;S._erro=null;render();}
   if(a==="mkt-del"){await sb.from("materiais_mkt").delete().eq("id",v);S.mkt=null;render();aviso("Material removido.");}
   if(a==="is-sel"){S.isSel=v;render();}
+  if(a==="is-per"){S.isPer=v;render();return;}
+  if(a==="is-negf"){S.isNegF=v;render();return;}
   if(a==="noticias-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo os portais…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler as notícias agora.":`Notícias atualizadas (${r.data.gravadas} lidas${(r.data.falhas||[]).length?", com falha em: "+r.data.falhas.join(", "):""}).`);return;}
   if(a==="clima-uf"){S.climaUf=v;render();return;}
   if(a==="clima-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo a previsão…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_clima"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler a previsão agora.":`Previsão atualizada para ${r.data.gravadas} praças${(r.data.falhas||[]).length?" (sem dados: "+r.data.falhas.join(", ")+")":""}.`);return;}
