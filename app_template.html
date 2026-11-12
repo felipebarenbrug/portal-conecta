@@ -665,6 +665,9 @@ const RC_TIERS=[
  {t:"Yellow Pro",vol:"6.001 a 9.000 kg",prod:"13,0%",canal:"10,0%"},
  {t:"Yellow Master",vol:"Acima de 9.000 kg",prod:"15,0%",canal:"11,0%"}
 ];
+// Representantes que aparecem com mais de um nome no CRM: tudo consolida no nome da direita.
+const REP_UNIR=[[/berrante|^\s*r\.?\s*l\.?\s*c\.?\s*agropecu/i,"Berrante (R.L.C. Agropecuária)"]];
+const repCanon=x=>{const t=String(x||"").trim();if(!t)return t;for(const [re,n] of REP_UNIR)if(re.test(t))return n;return t;};
 let RC_RANKING=[]; // carregado do Supabase (rc_ranking) apos o login - nenhum dado de CRM no arquivo publico
 const TIERS_RC=[{t:"Blue",min:0,max:3000},{t:"Yellow",min:3001,max:6000},{t:"Yellow Pro",min:6001,max:9000},{t:"Yellow Master",min:9001,max:Infinity}];
 const RANKING_FONTE="RD Station CRM · Funil de Vendas Barenbrug · híbridas (Sabiá, Cayana, Carcará, Mulato II) + Cynodon. Todos os pedidos ganhos com data de faturamento entre 01/jul/2026 e 30/jun/2027. Já faturou = data de faturamento até hoje; Vai faturar = faturamento futuro. Puxado do CRM em 10/nov/2026";
@@ -870,7 +873,9 @@ async function boot(){
   iniciarWatchdog();
   render();
 }
-async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});RC_RANKING=(data||[]).map(r=>({crm:r.crm,nome:r.nome,fat:+r.fat||0,aFat:+r.a_fat||0,kg:+r.kg||0,cFat:+r.conv_fat||0,cAFat:+r.conv_afat||0,cKg:+r.conv_kg||0,em:r.atualizado_em||null}));}catch(e){RC_RANKING=[];}}
+async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});const M={};(data||[]).forEach(r=>{const k=repCanon(r.crm);const x=M[k]||(M[k]={crm:k,nome:repCanon(r.nome)||k,fat:0,aFat:0,kg:0,cFat:0,cAFat:0,cKg:0,em:null});
+      x.fat+=+r.fat||0;x.aFat+=+r.a_fat||0;x.kg+=+r.kg||0;x.cFat+=+r.conv_fat||0;x.cAFat+=+r.conv_afat||0;x.cKg+=+r.conv_kg||0;if(r.atualizado_em&&(!x.em||r.atualizado_em>x.em))x.em=r.atualizado_em;});
+    RC_RANKING=Object.values(M).sort((a,b)=>b.kg-a.kg);}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
   S.user=u;sb=sbReal;S.demo=false;
   let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
@@ -1465,7 +1470,7 @@ async function carregarGeo(){
 }
 async function carregarMapa(){
   try{await carregarGeo();}catch(e){GEO=null;}
-  try{let todos=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("dono,rep,nome,uf,cidade,st,seg,kg_h,kg_c,rs,fat,cults").order("id").range(de,de+999);if(error||!data)break;todos=todos.concat(data);if(data.length<1000)break;de+=1000;}S.mapa=todos;}catch(e){S.mapa=[];}
+  try{let todos=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("dono,rep,nome,uf,cidade,st,seg,kg_h,kg_c,rs,fat,cults").order("id").range(de,de+999);if(error||!data)break;todos=todos.concat(data);if(data.length<1000)break;de+=1000;}todos.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});S.mapa=todos;}catch(e){S.mapa=[];}
   try{if(GEO&&!GEO.wp&&(S.mapa||[]).some(r=>r.uf==="EX")){const j=await (await fetch("mundo.json?v="+APP_VER)).json();const wx=lon=>lon+130,wy=lat=>62-lat;
     GEO.wx=wx;GEO.wy=wy;GEO.exp=j.exp;GEO.wp=j.world.map(c=>({n:c.n,d:c.c.map(ring=>"M"+ring.map(([x,y])=>wx(x).toFixed(1)+" "+wy(y).toFixed(1)).join("L")+"Z").join("")}));}}catch(e){}
 }
@@ -1947,7 +1952,7 @@ function subnavRC(){
 }
 function vRCRanking(){
   const rk=RC_RANKING;
-  const meuCrm=S.profile&&S.profile.rc_crm;
+  const meuCrm=S.profile&&S.profile.rc_crm?repCanon(S.profile.rc_crm):null;
   const minhaPos=meuCrm?rk.findIndex(x=>x.crm===meuCrm):-1;
   const eu=minhaPos>=0?rk[minhaPos]:null;
   const medal=i=>`${i+1}º`;
@@ -2132,7 +2137,7 @@ function vRCMapaLista(){
   if(!RC_DEALS_CACHE)return `<div class="carregando">Carregando os pedidos…</div>`;
   const dados=RC_DEALS_CACHE;
   const admin=ehAdmin()||S.perfil==="Comercial Barenbrug";
-  const meuCrm=S.profile&&S.profile.rc_crm;
+  const meuCrm=S.profile&&S.profile.rc_crm?repCanon(S.profile.rc_crm):null;
   const fmtKgN=n=>(Number(n)||0).toLocaleString("pt-BR");
   const CULTS=["Todos","Sabiá","Cayana","Carcará","Mulato II","Cynodon"];
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${esc(x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
@@ -2835,9 +2840,9 @@ function vIntConcorrentes(){
 /* ---------- Inteligência de Mercado: análises de venda ---------- */
 async function carregarIntMapa(){
   if(S.intBusy)return;S.intBusy=true;
-  try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.intMapa=t;}catch(e){S.intMapa=[];}
+  try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}t.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});S.intMapa=t;}catch(e){S.intMapa=[];}
   try{const {data}=await sb.from("profiles").select("nome,rc_crm,empresa_uf,empresa_cidade,raio_atuacao").eq("perfil","RC");S.rcSede={};S.rcRaio={};
-    (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).forEach(k=>{const n=finNorm(k);if(x.empresa_uf){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
+    (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).map(repCanon).forEach(k=>{const n=finNorm(k);if(x.empresa_uf){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
   S.intC=null;S.intBusy=false;
 }
 const INT_IS=/^(inside sales|is:)/i,INT_IS_REP=/^(laura|maria giulia|tha[ií]s|maria eduarda|mayane|felipe piccoli)/i;
@@ -2946,7 +2951,8 @@ function subnavFin(){
 async function carregarFin(){
   if(S.finBusy)return;S.finBusy=true;
   try{const {data,error}=await sb.rpc("financeiro_dados");
-    S.fin=(!error&&data&&typeof data==="object"&&Array.isArray(data.mapa))?data:{erro:error?String(error.message||error):"sem dados"};}
+    S.fin=(!error&&data&&typeof data==="object"&&Array.isArray(data.mapa))?data:{erro:error?String(error.message||error):"sem dados"};
+    if(Array.isArray(S.fin.mapa))S.fin.mapa.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});}
   catch(e){S.fin={erro:String(e)};}
   S.finC=null;S.finBusy=false;
 }
