@@ -300,6 +300,18 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:760px){.calc-grid{grid-template-columns:minmax(0,1fr)}.calc-res{position:static}}
 .linha .meta{display:block}
 .neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
+.fila-cont{display:flex;gap:12px;align-items:baseline;background:var(--azul-escuro);color:var(--branco);border-radius:10px;padding:14px 18px}
+.fila-cont strong{font-size:34px;line-height:1}
+.fila-atual,.fila-prox{background:var(--branco);border-radius:10px;padding:16px;display:grid;gap:6px;box-shadow:inset 0 0 0 2px var(--amarelo)}
+.fila-atual h2{font-size:22px;margin:0}.fila-prox h3{font-size:18px;margin:0}
+.fila-atual .l1,.fila-prox .l1{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.fila-atual .rot,.fila-prox .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado);font-weight:700}
+.fila-atual p,.fila-prox p{margin:0}
+.fila-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.fila-prox{box-shadow:inset 0 0 0 1.5px var(--linha)}
+.fila-prox.travado{opacity:.8;background:repeating-linear-gradient(135deg,var(--branco),var(--branco) 12px,var(--papel) 12px,var(--papel) 24px)}
+.fila-prox .btn{justify-self:start}
+.fila-trava{font-weight:700;color:var(--azul-escuro)}
 .rk-eu{display:grid;gap:2px;background:var(--azul-escuro);color:var(--branco);border-radius:10px;padding:16px 18px}
 .rk-eu .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
 .rk-eu strong{font-size:26px;line-height:1.15}
@@ -826,7 +838,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111230531";
+const APP_VER="20261111231527";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1054,12 +1066,13 @@ async function carregarLeads(){
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
   if(!inbound)return `<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Base de produtores do RD Marketing da sua região para prospecção ativa.</p></div><section class="bloco"><div class="aviso-bloq">Em construção. Esta aba será ligada à base do RD Station Marketing, com acesso restrito por estado.</div></section>`;
+  if(S.perfil==="RC")return vLeadsRC();
   if(S.leadsCache==null)return `<div class="carregando">Carregando leads…</div>`;
   const interno=ehAdmin()||S.perfil==="Comercial Barenbrug";const minhas=S.leadUfs||[];const daRevenda=S.perfil==="Gestor de Revenda"||S.perfil==="Vendedor de Revenda";
   const LC=S.leadCanais||[];const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
   const destino=uf=>LC.filter(k=>k.recebe_leads&&(k.ufs_leads||[]).includes(uf)).map(k=>k.nome);
   const config=ehAdmin()?`<details class="lote" ${S.leadCfgAberto?"open":""}><summary>Quais revendas recebem leads · ${LC.filter(k=>k.recebe_leads).length} de ${LC.length} habilitadas</summary>
-    <p class="sub" style="margin:10px 0 6px">Marque as revendas que recebem leads e informe os estados de cada uma, separados por vírgula. A equipe da revenda (gestor e vendedores) vê todos os leads desses estados. Representantes comerciais não recebem leads. Cada alteração é gravada na hora.</p>
+    <p class="sub" style="margin:10px 0 6px">Marque as revendas que recebem leads e informe os estados de cada uma, separados por vírgula. A equipe da revenda (gestor e vendedores) vê todos os leads desses estados. Os RCs com acesso ao LeadsBaren recebem os leads pela fila, um por vez, do estado da sede informado no cadastro. Cada alteração é gravada na hora.</p>
     <div class="lista">${LC.slice().sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome)).map(k=>{const n=(S.leadsCache||[]).filter(l=>(k.ufs_leads||[]).includes(l.uf)).length;return `<div class="neg"><div class="l1"><label class="check" style="font-weight:700"><input type="checkbox" data-leadcanal="${esc(k.id)}" ${k.recebe_leads?"checked":""}> ${esc(k.nome)}</label><span class="selo">${esc(k.tier||"sem categoria")}</span></div>
       <div style="display:grid;gap:4px"><label for="lu_${esc(k.id)}" class="meta">Estados que esta revenda atende</label><input id="lu_${esc(k.id)}" data-leadufs="${esc(k.id)}" value="${esc((k.ufs_leads||[]).join(", "))}" placeholder="Ex.: MT, MS, GO" style="max-width:320px"><span class="meta">${k.recebe_leads?((k.ufs_leads||[]).length?`${n} ${n===1?"lead disponível":"leads disponíveis"} hoje nesses estados`:"Habilitada, mas sem estado informado: ainda não recebe nada"):"Não recebe leads"}</span></div></div>`;}).join("")||`<div class="vazio">Nenhuma revenda cadastrada no Conecta.</div>`}</div></details>`:"";
   const F=S.leadF||(S.leadF={uf:"Todos",st:"Em aberto"});
@@ -1090,6 +1103,7 @@ function vLeads(){
   <div class="aviso-bloq"><strong>Antes de ligar, leia.</strong> Este produtor entrou em contato direto pelo site da Barenbrug. Nós enviamos a ele a lista de revendas próximas do CEP informado, e mesmo assim ele preferiu seguir o atendimento com a Barenbrug. Por isso, pode ser que ele já esteja em tratativa com alguém da Barenbrug: pergunte e respeite a conversa em andamento. O que rege o atendimento é a política de preço da Barenbrug.</div>
   ${ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="leads-atualizar">Atualizar leads do CRM</button><span class="meta" id="lead_prog"></span></div>`:""}
   ${config}
+  ${interno?vFilaPainel():""}
   ${!interno&&!minhas.length?`<section class="bloco"><div class="vazio">${daRevenda?"Sua revenda ainda não está habilitada para receber leads, ou não tem estados de atendimento definidos. Fale com a Barenbrug.":"Os leads do LeadsBaren são distribuídos às revendas do programa Conecta, por estado. Este perfil não recebe leads."}</div></section>`:`
   <details class="lote" ${(F.uf!=="Todos"||F.st!=="Em aberto")?"open":""}><summary>Filtros · ${esc(F.st)}${F.uf!=="Todos"?" · "+esc(F.uf):""}</summary>
     <p class="meta" style="margin:10px 0 4px">Situação</p><div class="filtros">${chips("st",["Em aberto","Novo","Em atendimento","Virou negociação","Sem sucesso","Todos"],F.st)}</div>
@@ -1320,6 +1334,7 @@ function vRCPedido(){
   const L=S.rcNeg;const n=S.negItens||1;const p=S.profile||{};
   const linhas=Array.from({length:n},(_,i)=>`<div class="neg-item"><div><label for="ni_c${i}">Cultivar</label><select id="ni_c${i}">${CULT_PEDIDO.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="ni_k${i}">Quantidade (kg)</label><input id="ni_k${i}" type="text" inputmode="numeric" ${i===0?"required":""} placeholder="Ex: 500"></div><div><label for="ni_p${i}">Preço por kg (R$)</label><input id="ni_p${i}" type="text" inputmode="decimal" placeholder="Ex: 32,50"></div></div>`).join("");
   return `<div><h1 class="titulo">Enviar negociação</h1><p class="sub">Preencha os dados da venda. Ela vai para ${p.comercial_resp?`<strong>${esc(p.comercial_resp)}</strong>, seu responsável comercial`:"o seu responsável comercial na Barenbrug"}, que revisa e lança no CRM. Você acompanha o andamento aqui embaixo.</p></div>
+  ${S.leadNeg?`<div class="aviso-est" role="note"><strong>Negociação do lead ${esc(S.leadNeg.nome||"do LeadsBaren")}</strong><p>Ao enviar, a negociação vai para o seu responsável comercial lançar no CRM, o lead fica como "${S.leadNeg.st==="Vendido"?"Vendido":"Em negociação"}" e o próximo da fila é liberado. <button type="button" class="link" data-a="lead-neg-cancela">Voltar para o lead</button></p></div>`:""}
   ${!p.comercial_resp?`<div class="nota-admin">Seu acesso ainda não tem um responsável comercial vinculado. Você pode enviar; a Barenbrug direciona a negociação.</div>`:""}
   <form class="form-card" id="f-negrc">
     <h2 class="sec" style="margin:0">Cliente</h2>
@@ -2722,6 +2737,64 @@ function rankMini(){
   return `<section class="rk-mini"><div><span class="rot">Ranking da Academia</span><strong>${eu&&eu.pos?`Você está em ${eu.pos}º de ${R.total}`:"Você ainda não pontuou"}</strong><span class="meta">${eu&&eu.pos?(Number(eu.pontos)||0).toLocaleString("pt-BR")+" pontos":"Cada acerto nas provas vale pontos."}</span></div><button class="btn sec" data-a="pag" data-v="ranking">Ver ranking</button></section>`;
 }
 
+/* ---------- LeadsBaren: fila do RC ---------- */
+const FILA_MOTIVOS=["Não consegui contato","Número errado ou inexistente","Sem interesse no momento","Já comprou de outro fornecedor","Preço","Fora da minha região","Outro"];
+async function carregarFila(){
+  if(S.filaBusy)return;S.filaBusy=true;
+  try{const {data,error}=await sb.rpc("rc_fila");
+    if(error){S.fila={erro:true,falta:RANK_FALTA(error)};}
+    else if(data&&typeof data==="object"&&"na_fila" in data)S.fila=data;else S.fila={erro:true,falta:true};
+  }catch(e){S.fila={erro:true};}
+  S.filaBusy=false;
+}
+const filaDias=t=>{if(!t)return "";const d=Math.floor((Date.now()-new Date(t).getTime())/864e5);return d<=0?"hoje":d===1?"há 1 dia":"há "+d+" dias";};
+function vLeadsRC(){
+  const F=S.fila;
+  if(!F){carregarFila().then(render);return `<div class="carregando">Carregando a sua fila…</div>`;}
+  if(F.erro)return `<div><h1 class="titulo">LeadsBaren · Sua fila</h1></div><section class="bloco"><div class="vazio">${F.falta?"A fila de leads para RCs abre em breve.":"Não foi possível carregar a fila agora. Tente de novo em instantes."}</div></section>`;
+  const a=F.atual,p=F.proximo,n=Number(F.na_fila)||0,ufs=(F.ufs||[]).join(", ");
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  let atual="";
+  if(a){
+    const ct=(S.leadVistos||{})[a.id];const h=a.prazo?Math.round((new Date(a.prazo).getTime()-Date.now())/36e5):null;
+    const fim=S.filaFim||null;
+    atual=`<section class="fila-atual"><div class="l1"><span class="rot">Seu lead em atendimento</span>${h!=null?`<span class="selo ${h<=12?"selo-pend":""}">${h>0?"faltam "+h+" h":"prazo vencido"}</span>`:""}</div>
+      <h2>${esc(a.nome||"Produtor")}</h2>
+      <p class="meta">${esc(a.cidade||"cidade não informada")}${a.uf?" · "+esc(a.uf):""} · pediu atendimento ${filaDias(a.entrou_em)}</p>
+      <p class="meta"><strong>Interesse:</strong> ${esc(a.cultura||"não informado")}${a.volume?" · <strong>Área:</strong> "+esc(a.volume):""}${a.perfil?" · <strong>Perfil:</strong> "+esc(a.perfil):""}</p>
+      ${a.campanha?`<p class="meta"><strong>Origem:</strong> ${esc(a.campanha)}</p>`:""}
+      <p class="meta"><strong>Telefone / WhatsApp:</strong> ${ct?(ct.telefone===undefined?"carregando…":tel(ct.telefone)):`<button class="link" data-a="lead-ver" data-v="${a.id}">mostrar contato</button>`}${ct&&ct.email?" · <strong>E-mail:</strong> "+esc(ct.email):""}</p>
+      <div class="fila-acoes">
+        <button class="btn" data-a="fila-neg" data-v="Virou negociação">Em negociação</button>
+        <button class="btn sec" data-a="fila-neg" data-v="Vendido">Vendido</button>
+        <button class="btn sec" data-a="fila-ss">Sem sucesso</button>
+      </div>
+      ${fim==="ss"?`<form class="form-card" id="f-fila-ss" style="margin-top:10px"><div><label for="fs_mot">Motivo *</label><select id="fs_mot" required><option value="">Selecione…</option>${FILA_MOTIVOS.map(m=>`<option>${m}</option>`).join("")}</select><span class="meta">"Não consegui contato" devolve o lead para a fila em 3 dias, para outra tentativa.</span></div>
+        <div><label for="fs_obs">O que aconteceu *</label><textarea id="fs_obs" required minlength="5" placeholder="Ex.: liguei 3 vezes, caixa postal."></textarea></div>
+        <div class="acoes"><button class="btn" type="submit">Encerrar e liberar o próximo</button><button class="btn sec" type="button" data-a="fila-cancela">Cancelar</button></div></form>`:""}
+      <p class="meta" style="margin-top:8px">Em negociação e Vendido abrem o registro da negociação, que vai para o seu responsável comercial lançar no CRM. O lead só é encerrado depois que a negociação é enviada.</p>
+    </section>`;
+  }
+  const prox=p?`<section class="fila-prox${a?" travado":""}"><div class="l1"><span class="rot">Próximo lead da fila</span><span class="selo">${esc(p.uf||"")}</span></div>
+      <h3>${esc(p.cidade||"Cidade não informada")}${p.uf?" · "+esc(p.uf):""}</h3>
+      <p class="meta"><strong>Interesse:</strong> ${esc(p.cultura||"não informado")}${p.volume?" · <strong>Área:</strong> "+esc(p.volume):""} · pediu atendimento ${filaDias(p.entrou_em)}</p>
+      ${a?`<p class="fila-trava">Finalize o lead atual para liberar este. Nome e contato aparecem quando você pegar.</p>`:`<button class="btn" data-a="fila-pegar">Pegar este lead</button><p class="meta">Ao pegar, você tem ${Number(F.prazo_horas)||48} horas para dar um destino. Sem destino, o lead volta para a fila.</p>`}
+    </section>`:`<section class="bloco"><div class="vazio">Nenhum lead esperando na sua região agora.${a?"":" Assim que entrar um, ele aparece aqui."}</div></section>`;
+  const meus=(F.meus||[]).slice(0,20);
+  return `<div><h1 class="titulo">LeadsBaren · Sua fila</h1><p class="sub">Produtores que pediram atendimento à Barenbrug na sua região${ufs?" ("+esc(ufs)+")":""}. Um lead por vez: finalize o atual para pegar o próximo.</p></div>
+  <div class="fila-cont"><strong>${n}</strong><span>${n===1?"produtor esperando":"produtores esperando"} atendimento na sua região</span></div>
+  <div class="aviso-bloq"><strong>Antes de ligar, leia.</strong> Este produtor entrou em contato direto pelo site da Barenbrug e pode já estar em conversa com alguém da Barenbrug: pergunte e respeite a conversa em andamento. O que rege o atendimento é a política de preço da Barenbrug.</div>
+  ${atual}${prox}
+  ${meus.length?`<section class="bloco"><h2 class="sec">Meus leads finalizados</h2><div class="lista">${meus.map(m=>`<div class="neg"><div class="l1"><span>${esc(m.nome||"Produtor")}</span><span class="selo">${esc(m.evento==="Virou negociação"?"Em negociação":m.evento)}</span></div><span class="meta">${esc(m.cidade||"")}${m.uf?" · "+esc(m.uf):""} · ${fmtDataHora(m.quando)}${m.motivo?" · "+esc(m.motivo):""}</span></div>`).join("")}</div></section>`:""}`;
+}
+async function filaPainelCarregar(){if(S.filaPainelBusy)return;S.filaPainelBusy=true;try{const {data,error}=await sb.rpc("fila_painel");S.filaPainel=!error&&Array.isArray(data)?data:[];}catch(e){S.filaPainel=[];}S.filaPainelBusy=false;}
+function vFilaPainel(){
+  if(S.filaPainel===undefined){filaPainelCarregar().then(render);return "";}
+  if(!S.filaPainel.length)return "";
+  return `<details class="lote"><summary>Fila dos RCs · ${S.filaPainel.length} RCs atendendo leads</summary><div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>RC</th><th class="val">Pegou</th><th class="val">Em aberto</th><th class="val">Em negociação</th><th class="val">Vendido</th><th class="val">Sem sucesso</th><th class="val">Expirou</th><th class="val">Horas até o destino</th><th>Última ação</th></tr></thead><tbody>
+    ${S.filaPainel.map(x=>`<tr><td>${esc(x.nome||"—")}</td><td class="val">${x.pegos||0}</td><td class="val">${x.aberto||0}</td><td class="val">${x.negociacao||0}</td><td class="val">${x.vendido||0}</td><td class="val">${x.sem_sucesso||0}</td><td class="val" style="${x.expirou?"color:var(--vermelho)":""}">${x.expirou||0}</td><td class="val">${x.horas_media==null?"—":Number(x.horas_media).toLocaleString("pt-BR")}</td><td>${x.ultimo?fmtDataHora(x.ultimo):"—"}</td></tr>`).join("")}</tbody></table></div></details>`;
+}
+
 /* ---------- Inteligência de Mercado ---------- */
 const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs"],["int-seg","B2C e B2B"]];
 function subnavInt(){
@@ -2763,10 +2836,12 @@ function vIntConcorrentes(){
 async function carregarIntMapa(){
   if(S.intBusy)return;S.intBusy=true;
   try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.intMapa=t;}catch(e){S.intMapa=[];}
+  try{const {data}=await sb.from("profiles").select("nome,rc_crm,empresa_uf,empresa_cidade,raio_atuacao").eq("perfil","RC");S.rcSede={};S.rcRaio={};
+    (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).forEach(k=>{const n=finNorm(k);if(x.empresa_uf){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
   S.intC=null;S.intBusy=false;
 }
 const INT_IS=/^(inside sales|is:)/i,INT_IS_REP=/^(laura|maria giulia|tha[ií]s|maria eduarda|mayane|felipe piccoli)/i;
-const intVia=r=>INT_IS.test(String(r.dono||""))||INT_IS_REP.test(String(r.rep||""))?"Inside Sales":r.rep?"RC":"Comercial Barenbrug";
+const intVia=r=>INT_IS.test(String(r.dono||""))||INT_IS_REP.test(String(r.rep||""))||INT_IS_REP.test(String(r.resp||""))||INT_IS_REP.test(String(r.dono||""))?"Inside Sales":r.rep?"RC":"Comercial Barenbrug";
 const intCli=r=>finNorm(String(r.org||"")||String(r.nome||"").split(" - ")[0]);
 const intNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const t=String(v).replace(/[^\d,.-]/g,"");if(!t)return null;const n=parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t);return isFinite(n)?n:null;};
 const intDias=(a,b)=>{if(!a||!b)return null;const d=(new Date(String(b).slice(0,10)+"T00:00:00Z")-new Date(String(a).slice(0,10)+"T00:00:00Z"))/864e5;return isFinite(d)?Math.round(d):null;};
@@ -2815,10 +2890,10 @@ function vIntRC(C){
     <div class="metric"><span>Ticket médio por pedido</span><strong>${ped?fmtK0(rs/ped):"—"}</strong><span class="meta">só o valor dos híbridos</span></div>
     <div class="metric"><span>Kg de híbridos por RC</span><strong>${n?fmtKg(Math.round(kg/n)):"—"}</strong><span class="meta">${fmtKg(Math.round(kg))} no total</span></div>
   </div>
-  <section class="bloco"><h2 class="sec">Raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada RC vendeu híbridos. A UF da sede, que vem do contrato dos RCs, entra na comparação quando o contrato for carregado.</p>
+  <section class="bloco"><h2 class="sec">Raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada RC vendeu híbridos, comparados com a UF da sede da empresa que o RC informou no cadastro do portal (o raio declarado aparece embaixo). RC sem cadastro no portal fica sem sede até o contrato ser carregado.</p>
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>RC</th><th>Sede (contrato)</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Ticket médio</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
   ${R.map(a=>{const u=Object.entries(ufsRC[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=sede[finNorm(a.k)]||"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
-    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="8">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="8">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
 }
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
@@ -3142,6 +3217,8 @@ function renderApp(){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc,"rc-pedido":vRCPedido}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
+    if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
+      put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
     app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
@@ -3176,7 +3253,7 @@ function renderApp(){
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
     app.innerHTML=cabecalho()+subnavLeads()+`<main>${vLeads()}</main>`;
-    if(!S.leadsCache){carregarLeads().then(render);}
+    if(!S.leadsCache&&S.perfil!=="RC"){carregarLeads().then(render);}
     return;
   }
   if(S.secao==="inside-sales"){
@@ -3238,6 +3315,16 @@ document.addEventListener("click",async ev=>{
   if(a==="secao"&&v==="inteligencia"){if(!veBarenbrugRV())return;S.secao=v;S.pag="int-canais";S.novoPreco=false;render();window.scrollTo(0,0);return;}
   if(a==="int-cult"){S.intCult=v;render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
+  if(a==="fila-pegar"){b.disabled=true;b.textContent="Pegando…";const {data,error}=await sb.rpc("rc_pegar");
+    if(error){aviso(/finalize/i.test(String(error.message||""))?"Finalize o lead atual antes de pegar outro.":/vazia/i.test(String(error.message||""))?"A fila ficou vazia agora.":"Não foi possível pegar o lead. Tente de novo.");}
+    else if(data&&data.id){S.leadVistos=S.leadVistos||{};S.leadVistos[data.id]={telefone:data.telefone||null,email:data.email||null};aviso("Lead é seu. Você tem "+((S.fila&&S.fila.prazo_horas)||48)+" horas para dar um destino.");}
+    S.fila=null;S.filaFim=null;render();window.scrollTo(0,0);return;}
+  if(a==="fila-ss"){S.filaFim="ss";render();return;}
+  if(a==="fila-cancela"){S.filaFim=null;render();return;}
+  if(a==="fila-neg"){const at=S.fila&&S.fila.atual;if(!at)return;const ct=(S.leadVistos||{})[at.id]||{};
+    S.leadNeg={id:at.id,st:v,nome:at.nome||"",cidade:at.cidade||"",uf:at.uf||"",telefone:ct.telefone||"",email:ct.email||""};
+    S.secao="conecta-rc";S.pag="rc-pedido";S.negItens=1;S._erroNeg=null;render();window.scrollTo(0,0);return;}
+  if(a==="lead-neg-cancela"){S.leadNeg=null;S.secao="leads";S.pag="leads-inbound";S.fila=null;render();return;}
   if(a==="rank-f"){S.rankF=v;render();return;}
   if(a==="fin-recarregar"){S.fin=null;render();return;}
   if(a==="pgd-del-pede"){S.pgdDel=v;render();return;}
@@ -3415,6 +3502,12 @@ document.addEventListener("input",ev=>{
 });
 document.addEventListener("submit",async ev=>{
   const f=ev.target;ev.preventDefault();
+  if(f.id==="f-fila-ss"){const at=S.fila&&S.fila.atual;if(!at)return;const mot=f.querySelector("#fs_mot").value,obs=f.querySelector("#fs_obs").value.trim();
+    if(!mot||obs.length<5){aviso("Informe o motivo e o que aconteceu.");return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;
+    const {error}=await sb.rpc("rc_lead_finalizar",{p_id:at.id,p_status:"Sem sucesso",p_motivo:mot,p_obs:obs,p_neg:null});
+    if(error){btn.disabled=false;aviso("Não foi possível encerrar. Tente de novo.");return;}
+    S.fila=null;S.filaFim=null;render();aviso("Lead encerrado. O próximo da fila está liberado.");return;}
   if(f.id==="f-finprem"){
     if(!ehAdmin())return;const P0=(S.fin&&S.fin.premissas)||{};
     const num=id=>{const v=parseFloat(String(f.querySelector("#"+id).value).trim().replace(/\./g,"").replace(",","."));return isFinite(v)?v/100:NaN;};
@@ -3485,7 +3578,11 @@ document.addEventListener("submit",async ev=>{
     const {data:nv,error}=await sb.from("rc_negociacoes").insert({cliente_extra,anexos,cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")}).select("id").single();
     if(error){S._erroNeg="Não foi possível enviar. Tente de novo em instantes.";render();return;}
     btn.textContent="Lançando no CRM…";let noCrm=false;try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:nv.id}});noCrm=!!(r.data&&r.data.ok);}catch(e){}
-    S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso(noCrm?"Negociação lançada no CRM para o seu responsável comercial.":"Negociação enviada. O lançamento no CRM fica com o seu responsável comercial.");return;
+    S._erroNeg=null;S.negItens=1;await carregarRCNeg();
+    if(S.leadNeg){const ln=S.leadNeg;const r=await sb.rpc("rc_lead_finalizar",{p_id:ln.id,p_status:ln.st,p_motivo:null,p_obs:null,p_neg:String(nv.id)});S.leadNeg=null;S.fila=null;
+      if(r.error){aviso("Negociação enviada, mas o lead não foi encerrado. Abra o LeadsBaren e tente de novo.");render();return;}
+      S.secao="leads";S.pag="leads-inbound";render();window.scrollTo(0,0);aviso("Negociação enviada e lead encerrado. O próximo da fila está liberado.");return;}
+    render();window.scrollTo(0,0);aviso(noCrm?"Negociação lançada no CRM para o seu responsável comercial.":"Negociação enviada. O lançamento no CRM fica com o seu responsável comercial.");return;
   }
   if(f.id==="f-duvida"){
     const pergunta=f.querySelector("#d_txt").value.trim();const tema=f.querySelector("#d_tema").value;
