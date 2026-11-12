@@ -515,6 +515,8 @@ main.largo{max-width:1120px}
 .rv-cen-t{font-size:15px}.rv-cen-tot{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.rv-cen-tot b{font-size:22px;color:var(--azul,#005a7d)}.rv-cen-tot span{font-size:13px;color:var(--cinza,#5b6b7b)}
 .rv-cen-c dl{margin:0;display:grid;gap:2px}.rv-cen-c dl div{display:flex;justify-content:space-between;gap:8px;font-size:13px}.rv-cen-c dt{color:var(--cinza,#5b6b7b)}.rv-cen-c dd{margin:0;font-weight:700}
 .rv-plano-dl{margin:0;display:grid;gap:4px}.rv-plano-dl div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 10px;font-size:14px;border-bottom:1px solid var(--linha,#e3e8ee);padding:4px 0}.rv-plano-dl dt{color:var(--cinza,#5b6b7b)}.rv-plano-dl dd{margin:0;font-weight:700}
+.calc-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.calc-2>*{min-width:0}
+@media (max-width:420px){.calc-2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -1022,7 +1024,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112131657";
+const APP_VER="20261112140432";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2205,30 +2207,33 @@ function vRCRanking(){
   <p class="precos-nota">Fonte: funil de vendas do CRM, pedidos fechados com faturamento na safra, pelo campo Representante${em?", atualizado em "+fmtDataHora(em):""}.</p></section>`;
 }
 const CALC_TIERS=[{t:"Blue",ate:3000,rp:.10,rc:.08,bg:"#00A8E2",cor:"#fff",vol:"Até 3.000 kg"},{t:"Yellow",ate:6000,rp:.115,rc:.09,bg:"#FEDC00",cor:"#1E1E1E",vol:"3.001 a 6.000 kg"},{t:"Yellow Pro",ate:9000,rp:.13,rc:.10,bg:"#E6A800",cor:"#fff",vol:"6.001 a 9.000 kg"},{t:"Yellow Master",ate:Infinity,rp:.15,rc:.11,bg:"#003D5B",cor:"#fff",vol:"Acima de 9.000 kg"}];
+const RC_LINHAS=[["h","Híbridos + Cynodon","Sabiá, Cayana, Carcará e Cynodon · comissão pelo tier",null],["cv","Convencional","Incrustadas e grafitadas · 8% ao produtor, 6% a canais",[.08,.06]],["nu","Sementes nuas","6% ao produtor, 4% a canais",[.06,.04]],["tp","Azevéns e trevos","Temperadas · 6% ao produtor, 5% a canais",[.06,.05]]];
+const calcNum=v=>{const t=String(v==null?"":v).replace(/[^\d,]/g,"").replace(",",".");const n=parseFloat(t);return isFinite(n)?n:0;};
 function calcRC(){
   const out=document.getElementById("calc_out");if(!out)return;
-  const g=id=>{const e=document.getElementById(id);return e?parseFloat(e.value.replace(/\D/g,""))||0:0;};
-  const f=n=>n?"R$ "+Math.round(n).toLocaleString("pt-BR"):"—";
+  const g=id=>{const e=document.getElementById(id);return e?calcNum(e.dataset.calc==="kg"?e.value.replace(/\D/g,""):e.value):0;};
+  const f=n=>n?"R$ "+Math.round(n).toLocaleString("pt-BR"):"—",f2=n=>"R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
   const pct=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
-  const kg=g("ck_kg"),hp=g("ck_hp"),hc=g("ck_hc"),cvp=g("ck_cvp"),cvc=g("ck_cvc"),tp=g("ck_tp"),tc=g("ck_tc");
-  S.calcV={ck_kg:kg,ck_hp:hp,ck_hc:hc,ck_cvp:cvp,ck_cvc:cvc,ck_tp:tp,ck_tc:tc};
-  if(!kg&&!hp&&!hc&&!cvp&&!cvc&&!tp&&!tc){out.innerHTML=`<div class="vazio">Informe o volume e o faturamento para ver a simulação.</div>`;return;}
-  const k=CALC_TIERS.findIndex(x=>kg<=x.ate),T=CALC_TIERS[k],prox=CALC_TIERS[k+1];
-  const pp=hp*.10,fp=hp*T.rp,ep=Math.max(0,fp-pp),pc=hc*.08,fc=hc*T.rc,ec=Math.max(0,fc-pc);
-  const conv=cvp*.08+cvc*.06,temp=tp*.06+tc*.05,grand=fp+fc+conv+temp;
-  const seConv=hp*.08+hc*.06;
+  const V={};S.calcV=V;const L={};
+  RC_LINHAS.forEach(([k])=>{const o={};["kp","pp","kc","pc"].forEach(c=>{o[c]=g("ck_"+k+"_"+c);V["ck_"+k+"_"+c]=o[c];});o.rp=o.kp*o.pp;o.rc=o.kc*o.pc;L[k]=o;});
+  const tot=Object.values(L).reduce((t,o)=>t+o.kp+o.kc,0);
+  if(!tot){out.innerHTML=`<div class="calc-res"><div class="vazio">Informe os quilos e o preço médio por kg de cada linha para ver a comissão.</div></div>`;return;}
+  const H=L.h,kg=H.kp+H.kc;
+  const k=CALC_TIERS.findIndex(x=>kg<=x.ate),T=CALC_TIERS[k],prox=CALC_TIERS[k+1],B=CALC_TIERS[0];
+  const pp=H.rp*B.rp,fp=H.rp*T.rp,ep=Math.max(0,fp-pp),pc=H.rc*B.rc,fc=H.rc*T.rc,ec=Math.max(0,fc-pc);
   const lin=(a,b,forte)=>`<div class="calc-lin${forte?" forte":""}"><span>${a}</span><strong>${b}</strong></div>`;
+  let demais=0;const dem=RC_LINHAS.filter(x=>x[3]).map(([k2,n,,tx])=>{const o=L[k2];const c=o.rp*tx[0]+o.rc*tx[1];demais+=c;return (o.kp||o.kc)?lin(`${n} · ${(o.kp+o.kc).toLocaleString("pt-BR")} kg · ${f(o.rp+o.rc)}`,f(c)):"";}).join("");
+  const grand=fp+fc+demais,seConv=H.rp*.08+H.rc*.06;
   out.innerHTML=`<div class="calc-res">
     <span class="calc-badge" style="background:${T.bg};color:${T.cor}">Categoria: ${T.t}</span>
-    <p class="meta" style="margin:6px 0 0">${kg?kg.toLocaleString("pt-BR")+" kg na safra":"Sem volume informado: simulação no piso Blue"} · ${pct(T.rp)} ao produtor · ${pct(T.rc)} a canais${prox&&kg?` · faltam <strong>${(T.ate+1-kg).toLocaleString("pt-BR")} kg</strong> para ${prox.t}`:""}</p>
-    <h3>Híbridos + Cynodon · ao produtor</h3>
-    ${lin("Piso mensal (10%)",f(pp))}${lin(ep>0?`Excedente no fechamento (${T.t})`:"Sem excedente (já no piso)",ep>0?f(ep):"—")}${lin("Total ao produtor",f(fp),1)}
+    <p class="meta" style="margin:6px 0 0">${kg?kg.toLocaleString("pt-BR")+" kg de híbridos + Cynodon":"Sem híbridos: simulação no piso Blue"} · ${pct(T.rp)} ao produtor · ${pct(T.rc)} a canais${prox&&kg?` · faltam <strong>${(T.ate+1-kg).toLocaleString("pt-BR")} kg</strong> para ${prox.t}`:""}</p>
+    ${H.kp||H.kc?`<h3>Híbridos + Cynodon · ao produtor</h3>
+    ${H.kp?lin(`${H.kp.toLocaleString("pt-BR")} kg × ${f2(H.pp)}`,f(H.rp)):""}${lin(`Piso mensal (${pct(B.rp)})`,f(pp))}${lin(ep>0?`Excedente no fechamento (${T.t})`:"Sem excedente (já no piso)",ep>0?f(ep):"—")}${lin("Total ao produtor",f(fp),1)}
     <h3>Híbridos + Cynodon · a canais e revendas</h3>
-    ${lin("Piso mensal (8%)",f(pc))}${lin(ec>0?`Excedente no fechamento (${T.t})`:"Sem excedente (já no piso)",ec>0?f(ec):"—")}${lin("Total a canais",f(fc),1)}
-    <h3>Demais linhas</h3>
-    ${lin("Convencional (incrustadas e grafitadas · 8%/6%)",f(conv))}${lin("Azevéns e trevos (6%/5%)",f(temp))}
+    ${H.kc?lin(`${H.kc.toLocaleString("pt-BR")} kg × ${f2(H.pc)}`,f(H.rc)):""}${lin(`Piso mensal (${pct(B.rc)})`,f(pc))}${lin(ec>0?`Excedente no fechamento (${T.t})`:"Sem excedente (já no piso)",ec>0?f(ec):"—")}${lin("Total a canais",f(fc),1)}`:""}
+    ${dem?`<h3>Demais linhas · taxa fixa</h3>${dem}`:""}
     <div class="calc-total"><span>Total estimado na safra</span><strong>${f(grand)}</strong></div>
-    ${(hp||hc)?`<p class="meta" style="margin:10px 0 0">Comparação: o mesmo faturamento em convencional (8%/6%) renderia ${f(seConv)}. Em híbridos você ganha <strong>${f(fp+fc-seConv)} a mais</strong>.</p>`:""}
+    ${(H.rp||H.rc)?`<p class="meta" style="margin:10px 0 0">Comparação: o mesmo faturamento em convencional (8%/6%) renderia ${f(seConv)}. Em híbridos você ganha <strong>${f(fp+fc-seConv)} a mais</strong>.</p>`:""}
   </div>`;
 }
 const RENT_CULT={
@@ -2315,23 +2320,23 @@ function vRent(){
     <p class="meta" style="margin:8px 0 0">Mesma lógica da calculadora pública da campanha "A lógica do custo da arroba". A semente é diluída em ${RENT_SAFRAS} safras de uso do pasto.</p></div>`;
 }
 function vRCCalc(){
-  const v=S.calcV||{};const kgv=x=>v[x]?Number(v[x]).toLocaleString("pt-BR"):"";const rsv=x=>v[x]?"R$ "+Number(v[x]).toLocaleString("pt-BR"):"";
-  const campo=(id,lbl,ph)=>`<div><label for="${id}">${lbl}</label><input id="${id}" type="text" inputmode="numeric" data-calc="rs" placeholder="${ph}" value="${rsv(id)}" autocomplete="off"></div>`;
+  const v=S.calcV||{};
+  const val=(id,tipo)=>{const x=v[id];if(!x)return "";return tipo==="kg"?Number(x).toLocaleString("pt-BR"):"R$ "+Number(x).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const inp=(id,lbl,tipo,ph)=>`<div><label for="${id}">${lbl}</label><input id="${id}" type="text" inputmode="${tipo==="kg"?"numeric":"decimal"}" data-calc="${tipo}" placeholder="${ph}" value="${val(id,tipo)}" autocomplete="off"></div>`;
+  const PH={h:["5.000","R$ 35,00","3.000","R$ 27,00"],cv:["2.000","R$ 20,00","1.000","R$ 17,00"],nu:["1.000","R$ 12,00","500","R$ 10,00"],tp:["1.000","R$ 14,00","1.000","R$ 12,00"]};
   setTimeout(calcRC,0);
-  return `<div><h1 class="titulo">Calculadora de comissão · Conecta RC</h1><p class="sub">Informe o volume em kg para definir o tier — depois informe o faturamento em R$ para calcular a comissão. O resultado aparece conforme você digita.</p></div>
+  return `<div><h1 class="titulo">Calculadora de comissão · Conecta RC</h1><p class="sub">Informe os quilos e o preço médio por kg de cada linha, ao produtor e a canais. A calculadora soma o faturamento, define o tier pelos quilos de híbridos + Cynodon e calcula a comissão.</p></div>
   <div class="calc-grid">
   <div class="calc-form">
-    <div class="calc-kg"><label for="ck_kg">Volume total de híbrido + Cynodon na safra (kg) — define o tier</label><span class="meta">Sabiá + Cayana + Carcará + Cynodon · produtores + canais somados</span>
-      <input id="ck_kg" type="text" inputmode="numeric" data-calc="kg" placeholder="Ex: 7.500" value="${kgv("ck_kg")}" autocomplete="off"></div>
-    <div class="calc-grupo"><h4>Híbridos + Cynodon</h4><span class="meta">Faturamento para cálculo da comissão</span>${campo("ck_hp","Ao produtor (R$)","Ex: R$ 300.000")}${campo("ck_hc","A canais (R$)","Ex: R$ 150.000")}</div>
-    <div class="calc-grupo"><h4>Convencional</h4><span class="meta">Incrustadas e grafitadas · 8%/6%</span>${campo("ck_cvp","Ao produtor (R$)","Ex: R$ 80.000")}${campo("ck_cvc","A canais (R$)","Ex: R$ 40.000")}</div>
-    <div class="calc-grupo"><h4>Azevéns e Trevos</h4><span class="meta">Temperadas · 6%/5%</span>${campo("ck_tp","Ao produtor (R$)","Ex: R$ 20.000")}${campo("ck_tc","A canais (R$)","Ex: R$ 10.000")}</div>
+    ${RC_LINHAS.map(([k,n,d])=>`<div class="calc-grupo${k==="h"?" calc-kg":""}"><h4>${n}</h4><span class="meta">${d}</span>
+      <div class="calc-2">${inp(`ck_${k}_kp`,"Ao produtor (kg)","kg",PH[k][0])}${inp(`ck_${k}_pp`,"Preço médio ao produtor (R$/kg)","px",PH[k][1])}</div>
+      <div class="calc-2">${inp(`ck_${k}_kc`,"A canais (kg)","kg",PH[k][2])}${inp(`ck_${k}_pc`,"Preço médio a canais (R$/kg)","px",PH[k][3])}</div></div>`).join("")}
     <div><button class="btn sec" type="button" data-a="calc-limpar">Limpar</button></div>
   </div>
   <div id="calc_out" aria-live="polite"></div>
   </div>
   <section class="bloco"><h2 class="sec">Tabela de comissão · híbridos + Cynodon</h2><div class="tab"><table><thead><tr><th>Tier</th><th>Volume na safra</th><th class="val">Produtor</th><th class="val">Canal</th></tr></thead><tbody>${CALC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${(x.rp*100).toLocaleString("pt-BR")}%</td><td class="val">${(x.rc*100).toLocaleString("pt-BR")}%</td></tr>`).join("")}</tbody></table></div>
-  <p class="precos-nota">Os pagamentos mensais usam o piso Blue. No fechamento da safra, a alíquota do tier final vale sobre o total e o excedente é pago de uma vez. Sementes nuas: 6% ao produtor e 4% a canais. Valores estimados: o contrato assinado com a Barenbrug prevalece.</p></section>`;
+  <p class="precos-nota">O tier é definido pelos quilos de híbridos + Cynodon da safra, ao produtor e a canais somados. Os pagamentos mensais usam o piso Blue. No fechamento da safra, a alíquota do tier final vale sobre o total e o excedente é pago de uma vez. Convencionais, nuas e temperadas têm taxa fixa. A comissão é calculada sobre o faturamento (kg × preço). Valores estimados: o contrato assinado com a Barenbrug prevalece.</p></section>`;
 }
 function vRCMapa(){
   const interno=ehAdmin()||temPerfil("Comercial Barenbrug");
@@ -4617,7 +4622,7 @@ document.addEventListener("input",ev=>{
   if(ev.target.id==="busca"){S.busca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.dataset&&ev.target.dataset.simp){const st=simpEstado(),k=ev.target.dataset.simp;st[k]=k==="cult"?+ev.target.value:ev.target.value;if(k==="cond")document.querySelectorAll('[data-a="simp-cond"]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===st.cond)));calcSimP();return;}
   if(ev.target.dataset&&ev.target.dataset.rent){rentEstado().v[ev.target.dataset.rent]=ev.target.value;calcRent();return;}
-  if(ev.target.dataset&&ev.target.dataset.calc){const el=ev.target,r=el.value.replace(/\D/g,"");el.value=r?(el.dataset.calc==="rs"?"R$ ":"")+parseInt(r).toLocaleString("pt-BR"):"";calcRC();return;}
+  if(ev.target.dataset&&ev.target.dataset.calc){const el=ev.target;if(el.dataset.calc==="px"){let t=el.value.replace(/[^\d,]/g,"");const i=t.indexOf(",");if(i>=0)t=t.slice(0,i+1)+t.slice(i+1).replace(/,/g,"").slice(0,2);el.value=t?"R$ "+t:"";}else{const r=el.value.replace(/\D/g,"");el.value=r?parseInt(r).toLocaleString("pt-BR"):"";}calcRC();return;}
   if(ev.target.id==="faq_busca"){S.faqBusca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("faq_busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.id==="duv_busca"){S.duvBusca=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("duv_busca");if(i){i.focus();i.setSelectionRange(pos,pos);}return;}
   if(ev.target.dataset&&ev.target.dataset.fk){formAtual()[ev.target.dataset.fk]=ev.target.value;}
