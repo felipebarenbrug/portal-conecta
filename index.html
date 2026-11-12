@@ -577,6 +577,36 @@ const QUIZ_QUALCAPIM=[
   q(`Cenário de Venda / Estudo de Caso: Um cliente pecuarista afirma: 'Vou comprar o capim híbrido porque o vendedor da concorrência disse que capim bom não precisa de adubo nunca mais depois que nasce.' Como o vendedor deve reeducar o cliente sobre a necessidade de adubação de manutenção para sustentar a longevidade e o investimento da pastagem?`,[`Afirmar que o nitrogênio prejudica o perfilhamento das braquiárias híbridas, devendo ser totalmente excluído da fazenda.`,`Orientar que adubação de manutenção só é necessária se o pasto for irrigado com água salobra.`,`Esclarecer que a margem da pecuária estreitou e pasto sem reposição tende a declinar em produção; para qualquer forrageira (Marandu, Sabiá ou Cayana), preconiza-se uma adubação anual de manutenção de 50 a 80 kg de N/ha/ano para manter a produtividade. Já para pânicos de alta extração como Carcará, a adubação é de produção (150 a 200 kg de N/ha/ano no mínimo).`,`Concordar com o cliente, pois as forrageiras modernas extraem nutrientes do ar e dispensam adubação por 20 anos consecutivos.`]),
   q(`Cenário de Venda / Estudo de Caso: Em uma dinâmica de encerramento do treinamento, o gerente comercial apresenta 3 perfis de clientes para o vendedor posicionar a cultivar correta: • Cliente 1: Pecuária de ciclo completo, solo de fertilidade média (V%=45-50%, P=6 ppm), busca estabilidade na seca, diferimento e segurança contra quebras forrageiras. • Cliente 2: Fazenda de grãos integrando boi safrinha ('terra de cultura', V% &gt; 60%, P &gt; 8 ppm), foco em máxima produção de arrobas e alta resposta na recria. • Cliente 3: Módulo rotacionado intensivo de águas, alta adubação nitrogenada (&gt;150 kg N/ha), busca substituir um piquete de Mombaça por uma opção mais produtiva. Qual é a combinação de posicionamento comercial PERFEITA e tecnicamente recomendada pelo treinamento para os Clientes 1, 2 e 3, respectivamente?`,[`Cliente 1: Carcará | Cliente 2: Marandu | Cliente 3: Sabiá`,`Cliente 1: Sabiá | Cliente 2: Cayana | Cliente 3: Carcará`,`Cliente 1: Cayana | Cliente 2: Carcará | Cliente 3: Brachiaria decumbens`,`Cliente 1: Marandu | Cliente 2: Sabiá | Cliente 3: Cayana`])
  ];
+// Provas dos cursos dos programas (sem perguntas de prazo; gabarito só no banco; fora do ranking da Academia)
+const QUIZ_CONECTA_RC=[
+  q(`O que é o Conecta RC?`,[`Um programa de bonificação em sementes para o produtor rural que compra da Barenbrug.`,`Um programa de incentivo para representantes comerciais de campo, em que a comissão sobre híbridos sobe conforme o volume acumulado na safra.`,`Um sistema de salário fixo mensal para quem vende sementes Barenbrug.`,`Uma plataforma online em que o produtor compra direto da Barenbrug, sem representante.`]),
+  q(`Quais produtos contam para definir o seu tier (faixa)?`,[`Todos os produtos da linha, convencionais e híbridos.`,`Apenas Sabiá e Cayana.`,`Sabiá, Cayana, Carcará e Cynodon.`,`Ruziziensis, azevéns e trevos.`]),
+  q(`Como o tier é medido?`,[`Pelo volume em kg de híbridos acumulado na safra, somando vendas a produtor e a canal.`,`Pelo faturamento em R$ de todos os produtos no mês.`,`Pelo número de clientes ativos na carteira.`,`Pelo número de pedidos emitidos na safra.`]),
+  q(`Um RC acumulou 7.200 kg de híbridos na safra. Em qual tier ele está?`,[`Blue (até 3.000 kg).`,`Yellow (3.001 a 6.000 kg).`,`Yellow Pro (6.001 a 9.000 kg).`,`Yellow Master (acima de 9.000 kg).`]),
+  q(`Durante a safra, o que o RC recebe todo mês sobre as vendas de híbridos?`,[`A taxa do tier em que está naquele momento.`,`Nada: tudo é pago só no fechamento da safra.`,`A taxa do Yellow Master, adiantada.`,`O piso do Blue (10% produtor / 8% canal) sobre as notas pagas pelo cliente no mês, em qualquer tier.`]),
+  q(`No fechamento da safra, a taxa do tier final é aplicada:`,[`Somente sobre os kg que passaram do limite da faixa, como no imposto de renda.`,`Sobre 100% do acumulado da safra, retroativamente (taxa "flat").`,`Somente sobre o último trimestre.`,`Somente sobre as vendas a produtor.`]),
+  q(`Caso: um RC vendeu R$ 600 mil a produtores e R$ 400 mil a canais em híbridos e fechou em Yellow Master (15% produtor / 11% canal). Ele já recebeu R$ 92.000 no piso mensal. Quanto recebe de excedente no fechamento?`,[`R$ 42.000.`,`R$ 134.000.`,`R$ 92.000.`,`R$ 30.000.`]),
+  q(`Um RC fecha a safra com 2.600 kg de híbridos. O que acontece?`,[`Ele devolve parte do que recebeu no piso.`,`Ele recebe o excedente do Yellow mesmo assim.`,`Ele perde a comissão do último mês.`,`Ele mantém o que recebeu no piso mensal e não há excedente; o RC nunca recebe menos que o piso.`]),
+  q(`Sobre os produtos convencionais (incrustadas, grafitadas, azevéns, trevos, nuas), está correto afirmar:`,[`Contam kg para o tier, com peso menor.`,`São pagos só no fechamento da safra.`,`Não entram no tier e são pagos na própria nota, sem acerto no fim da safra.`,`Não geram comissão.`]),
+  q(`Um RC vendeu R$ 50.000 de azevém a um produtor. Qual a comissão? (azevéns e trevos: 6% produtor / 5% canal)`,[`R$ 2.500.`,`R$ 3.000.`,`R$ 4.000.`,`R$ 5.000.`]),
+  q(`O que a regra de exclusividade veda ao RC?`,[`Representar híbridos concorrentes das mesmas espécies (Sabiá, Cayana, Carcará, Cynodon) de marcas concorrentes.`,`Vender qualquer produto de outra marca.`,`Atender mais de um cliente na mesma cidade.`,`Vender híbridos para canais e distribuidores.`]),
+  q(`Dois RCs Barenbrug atendem clientes na mesma cidade. Isso, por si só, é conflito de canal?`,[`Sim: quem cadastrou a cidade primeiro tem exclusividade.`,`Sim: sempre decide o Gerente Comercial.`,`Sim: vale quem tem o maior tier.`,`Não. Não há exclusividade territorial; a lista de municípios do contrato é descritiva, e a sobreposição não é conflito.`]),
+  q(`Então, quando existe conflito de canal de fato?`,[`Quando outro RC já atendeu o mesmo cliente alguma vez.`,`Quando alguém vende em área dos distribuidores Yellow Master (Supera Agro, Duagro, Imperagro, Agrosanta, Juparanã).`,`Quando dois RCs estão no mesmo estado.`,`Quando o município tem mais de um RC cadastrado.`]),
+  q(`Qual é o cadastro esperado de um RC novo para fechar contrato?`,[`Pessoa jurídica ME/EPP (não MEI), CNAE principal 4611-7/00 (secundário 4618-4/99), Simples Nacional Anexo III e registro ativo no CORE.`,`MEI, sem necessidade de CORE.`,`Pessoa física com vínculo CLT.`,`Qualquer CNPJ, sem exigência de CNAE ou CORE.`])
+ ];
+const QUIZ_CONECTA_RV=[
+  q(`Qual é o volume mínimo para o Conecta Revendas ser ativado para a sua revenda na safra 26/27?`,[`5.000 kg de híbridos Barenbrug na safra`,`5.000 kg somando híbridos e convencionais`,`10.000 kg de híbridos na safra`,`Depende da categoria: Blue não tem volume mínimo`]),
+  q(`Uma revenda que aderiu ao programa pela primeira vez em 26/27 comprou 40.000 kg de híbridos. Em qual categoria ela entra?`,[`Yellow Master, pelo volume`,`Yellow Pro, com no máximo 15.000 kg considerados`,`Blue, independentemente do volume`,`A categoria é negociada com o Responsável Comercial`]),
+  q(`Uma revenda era Yellow Master em 25/26 e comprou apenas 5.000 kg de híbridos em 26/27. O que acontece?`,[`Recebe os percentuais Blue já em 26/27`,`Recebe os percentuais Master em 26/27 e será reclassificada como Blue em 27/28`,`Perde o direito ao programa, por não manter o volume Master`,`Continua Master em 27/28, pois a categoria é vitalícia`]),
+  q(`Um pedido de R$ 10.000 foi pago com 3% de desconto por antecipação. Sobre qual valor o IGDB é calculado?`,[`R$ 10.000, valor da nota fiscal`,`R$ 10.300`,`R$ 9.700, valor efetivamente pago`,`R$ 9.000`]),
+  q(`O que é o IGDB (Investimento em Geração de Demanda Barenbrug) e para que ele pode ser usado?`,[`Um desconto automático para abater boletos da safra`,`Um crédito livre, pago todo trimestre direto na conta da revenda`,`Uma verba para premiar os vendedores da revenda`,`Uma verba de reembolso de ações de geração de demanda previamente aprovadas, executadas e comprovadas`]),
+  q(`Uma revenda Yellow Pro (bônus de 3,0%) pagou R$ 2.000.000 em híbridos na safra e atingiu 92% da meta de híbridos. Qual Bônus de Performance ela recebe? (Considere cumpridas as demais condições e o teto de R$ 300.000.)`,[`R$ 60.000, o bônus cheio`,`R$ 0, porque não atingiu 100%`,`R$ 30.000`,`R$ 42.000`]),
+  q(`Sobre as sementes convencionais no programa, qual afirmação está correta?`,[`Têm meta própria e bônus, assim como os híbridos`,`Geram IGDB com percentual menor, mas não têm meta nem bônus`,`Não geram nenhum benefício`,`Substituem o piso de 5.000 kg de híbridos`]),
+  q(`Quantas ações de valorização do híbrido com produtores uma revenda Yellow Master precisa executar e comprovar na safra para liberar o bônus?`,[`1 ação`,`2 ações`,`3 ações`,`5 ações`]),
+  q(`Qual é o teto de benefício por revenda em uma safra?`,[`R$ 300.000, somando IGDB e Bônus`,`R$ 300.000 só de IGDB, mais o bônus sem limite`,`R$ 300.000 de bônus, mais o IGDB sem limite`,`Não existe teto para quem atinge 100% da meta`]),
+  q(`A revenda quer premiar os vendedores com o bônus recebido. Como funciona o pagamento e o repasse?`,[`A Barenbrug paga o bônus direto aos vendedores por cartão pré-pago`,`A Barenbrug paga somente ao CNPJ da revenda, via NF e transferência; o repasse aos vendedores é decisão e responsabilidade da revenda`,`O IGDB pode ser usado para pagar comissões e premiações internas`,`A Barenbrug define a regra de repasse e os valores por vendedor`])
+ ];
+const PROVAS_EXTRA={conecta_rc:{quiz:QUIZ_CONECTA_RC,n:"Prova do Conecta RC",min:11,volta:"rc-curso"},conecta_rv:{quiz:QUIZ_CONECTA_RV,n:"Prova do Conecta Revendas",min:7,volta:"rv-curso"}};
 const ETAPAS=[
  {id:"boas",n:"Boas-vindas",d:"A Barenbrug, a marca e o seu papel na venda de híbridos.",
   v:[{t:"Quem é a Barenbrug",m:4},{t:"Cultive Confiança: o que a marca promete",m:3},{t:"Seu papel na venda",m:5}],mat:[],
@@ -914,7 +944,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112094108";
+const APP_VER="20261112094301";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1926,8 +1956,8 @@ function vTrilha(){
 function vQuiz(lista,id){
   const r=S.res;
   return `<form id="f-quiz" class="bloco" data-id="${id}">${lista.map((x,i)=>`<fieldset class="perg"><legend>${i+1}. ${x.p}</legend>${x.ops.map((o,j)=>`<label class="op"><input type="radio" name="p${i}" value="${j}" required ${r&&r.resp[i]===j?"checked":""}><span>${o}</span></label>`).join("")}${r&&!r.ok?`<div class="mark">${(r.cor?r.cor[i]:r.resp[i]===x.c)?"Correta":"Revise esta resposta"}</div>`:""}</fieldset>`).join("")}
-  ${r?`<div class="resultado ${r.ok?"ok":"nao"}" role="status">${r.ok?`<h3>Aprovado: <b>${r.ac} de ${lista.length}</b></h3><p>O próximo módulo foi liberado.</p>`:`<h3>${r.ac} de ${lista.length} acertos</h3><p>Você precisa de ${r.min}. Revise os vídeos e tente de novo.</p>`}</div>`:""}
-  ${r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"Ver certificado":"Ir para os cursos"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
+  ${r?`<div class="resultado ${r.ok?"ok":"nao"}" role="status">${r.ok?`<h3>Aprovado: <b>${r.ac} de ${lista.length}</b></h3><p>${PROVAS_EXTRA[id]?"Prova concluída.":"O próximo módulo foi liberado."}</p>`:`<h3>${r.ac} de ${lista.length} acertos</h3><p>Você precisa de ${r.min}. Revise os vídeos e tente de novo.</p>`}</div>`:""}
+  ${r&&r.ok&&PROVAS_EXTRA[id]?`<button type="button" class="btn" data-a="pag" data-v="${PROVAS_EXTRA[id].volta}">Voltar ao curso</button>`:r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"Ver certificado":"Ir para os cursos"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
 }
 function vEtapa(){
   const i=S.etapa,e=ETAPAS_ON[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
@@ -2264,7 +2294,8 @@ function vRCApresentacao(){
 }
 function vRCCurso(){
   return `<div><h1 class="titulo">Curso de integração</h1><p class="sub">Quatro vídeos para você entender o Conecta RC de ponta a ponta. Assista na ordem que preferir — não é obrigatório.</p></div>
-  <div class="cards">${RC_CURSO.map((e,i)=>`<button class="card" data-a="rc-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RC_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>`;
+  <div class="cards">${RC_CURSO.map((e,i)=>`<button class="card" data-a="rc-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RC_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>
+  ${vProvaExtra("conecta_rc")}`;
 }
 function vRCEtapa(){
   const i=S.rcEtapa,e=RC_CURSO[i]||RC_CURSO[0];
@@ -2312,7 +2343,8 @@ function vRVApresentacao(){
 }
 function vRVCurso(){
   return `<div><h1 class="titulo">Curso</h1><p class="sub">Dois vídeos para entender e operar o Conecta Revendas.</p></div>
-  <div class="cards">${RV_CURSO.map((e,i)=>`<button class="card" data-a="rv-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RV_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>`;
+  <div class="cards">${RV_CURSO.map((e,i)=>`<button class="card" data-a="rv-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RV_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>
+  ${vProvaExtra("conecta_rv")}`;
 }
 function vRVEtapa(){
   const i=S.rvEtapa,e=RV_CURSO[i]||RV_CURSO[0];
@@ -2708,7 +2740,11 @@ function vAcomp(){
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
   <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th>${ETAPAS_ATIVAS.map(id=>`<th>${esc(({melhoramento:"Melhoramento",qualcapim:"Qual capim"})[id]||ETAPAS.find(e=>e.id===id).n)}</th>`).join("")}<th>Geral</th><th>Pontos</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td>${ETAPAS_ATIVAS.map(id=>`<td>${cel(id)}</td>`).join("")}<td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td>${x.pontos?`<strong>${x.pontos}</strong>`:'<span class="meta">—</span>'}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
 }
-const totalQ=id=>{const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
+const totalQ=id=>{if(PROVAS_EXTRA[id])return PROVAS_EXTRA[id].quiz.length;const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
+function vProvaExtra(id){const P=PROVAS_EXTRA[id],nota=S.notas[id],feita=S.feitas.includes(id);
+  if(S.quizExtra!==id&&!feita)return `<section class="bloco"><h2 class="sec">${P.n}</h2><p class="sub" style="margin:0 0 10px">${P.quiz.length} questões de múltipla escolha sobre as regras do programa. Aprovação com ${P.min} acertos. Assista aos vídeos antes.</p><button class="btn" data-a="quiz-extra" data-v="${id}">Fazer a prova</button></section>`;
+  if(feita&&!(S.res&&S.quizExtra===id))return `<section class="bloco"><h2 class="sec">${P.n}</h2><div class="vazio">Você foi aprovado${nota!=null?" com "+nota+" de "+P.quiz.length+" acertos":""}.</div></section>`;
+  return `<section class="bloco"><h2 class="sec">${P.n}</h2><p class="sub" style="margin:0 0 10px">Aprovação com ${P.min} de ${P.quiz.length} acertos.</p>${vQuiz(P.quiz,id)}</section>`;}
 async function carregarEquipe(){
   const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,telefone,ultimo_acesso,canal_id");
   try{const {data:cl}=await sb.from("canais").select("id,nome,tier").order("nome");S.canaisLista=cl||[];}catch(e){S.canaisLista=[];}
@@ -2737,9 +2773,10 @@ function evolucaoHTML(uid){
   const linhas=ETAPAS_ATIVAS.map(id=>{const e=ETAPAS.find(x=>x.id===id);const nota=rs[id];const tot=totalQ(id);const feito=nota!=null;
     const pt=((S.pontosPorUser||{})[uid]||{})[id];
     return `<div class="linha"><div><strong>${e.n}</strong><span class="meta">${feito?`Aprovado · ${nota} de ${tot} acertos (${Math.round(nota/tot*100)}%)${pt!=null?" · "+pt+" pontos no ranking":""}`:"Pendente"}</span></div><span class="selo">${feito?"✓ concluído":"—"}</span></div>`;}).join("");
+  const extra=Object.keys(PROVAS_EXTRA).filter(id=>rs[id]!=null).map(id=>`<div class="linha"><div><strong>${PROVAS_EXTRA[id].n}</strong><span class="meta">Aprovado · ${rs[id]} de ${totalQ(id)} acertos (${Math.round(rs[id]/totalQ(id)*100)}%)</span></div><span class="selo">✓ concluído</span></div>`).join("");
   return `<section class="bloco"><h2 class="sec">Evolução</h2>
     <div class="resumo"><div class="barra"><i style="width:${done/ETAPAS_ATIVAS.length*100}%"></i></div><span>${done} de ${ETAPAS_ATIVAS.length} módulos concluídos</span></div>
-    <div class="lista">${linhas}</div></section>`;
+    <div class="lista">${linhas}${extra}</div></section>`;
 }
 const afTem=x=>!!S.adminForm&&(S.adminForm.perfil===x||(Array.isArray(S.adminForm.perfis)&&S.adminForm.perfis.includes(x)));
 function vUsuarioAdmin(){
@@ -3627,6 +3664,7 @@ document.addEventListener("click",async ev=>{
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
+  if(a==="quiz-extra"){S.quizExtra=v;S.res=null;render();return;}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;S.novoContato=false;S.novaFilial=false;S.novoEstoque=false;S.novoPreco=false;irPag("rv-canal");}
   if(a==="contato-novo"){S.novoContato=v==="1";render();return;}
@@ -4041,7 +4079,7 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-quiz"){
-    const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=Math.ceil(lista.length*0.7);
+    const id=f.dataset.id,lista=id==="prova"?PROVA:PROVAS_EXTRA[id]?PROVAS_EXTRA[id].quiz:ETAPAS.find(e=>e.id===id).quiz,min=PROVAS_EXTRA[id]?PROVAS_EXTRA[id].min:Math.ceil(lista.length*0.7);
     const fd=new FormData(f),resp=lista.map((_,i)=>+fd.get("p"+i));
     const btn=f.querySelector("button[type=submit]");if(btn){btn.disabled=true;btn.textContent="Corrigindo…";}
     let srv=null;
