@@ -2602,7 +2602,22 @@ function vRVMeuCanal(){
   if(!S.canais.length)return `<div><h1 class="titulo">Meu canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
   return vRVCanal();
 }
-const avisoValoresRV=()=>`<div class="aviso-est" role="note"><strong>Os valores em reais são estimativas</strong><p>Calculados a partir do faturamento registrado no CRM, podem divergir do valor final por frete, impostos, descontos, devoluções e outros parâmetros. A base oficial é o valor líquido efetivamente pago à Barenbrug, que será informado em comunicação oficial. Use este painel como parâmetro e para organizar o trabalho.</p></div>`;
+const avisoValoresRV=()=>"";
+const AVISO_CRM_TXT=`<strong>Dados estimados, puxados do CRM</strong><p>As quantidades e os valores desta tela vêm do CRM da Barenbrug e servem como estimativa. Não são dados confirmados pelo Financeiro nem pela Logística, e podem mudar por frete, impostos, descontos, devoluções e outros parâmetros. Para dados oficiais, consulte seu responsável comercial. Eles também serão informados dentro da política da Barenbrug.</p>`;
+function avisoCRMPag(){
+  const sc=S.secao,pg=S.pag||"";
+  if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa";
+  if(sc==="conecta-revendas")return /^rv-(painel|canais|canal|meucanal)$/.test(pg);
+  if(sc==="inside-sales"||sc==="meu-crm")return true;
+  if(sc==="financeiro")return pg!=="fin-premissas";
+  if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
+  return false;
+}
+function injetarAvisoCRM(){
+  try{if(!S.user||!avisoCRMPag())return;const m=document.querySelector("#app main");if(!m||m.querySelector(".aviso-crm"))return;
+    const d=document.createElement("div");d.className="aviso-est aviso-crm";d.setAttribute("role","note");d.innerHTML=AVISO_CRM_TXT;
+    const h=m.querySelector(":scope > div:first-child");if(h&&h.querySelector("h1"))h.after(d);else m.prepend(d);}catch(e){}
+}
 const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
 function vRVCanais(){
   if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
@@ -4204,7 +4219,7 @@ function rodapeMkt(){
   f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p></div>`;
   app.append(f);
 }
-function render(){renderApp();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
