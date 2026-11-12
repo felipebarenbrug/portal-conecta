@@ -1040,7 +1040,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112162621";
+const APP_VER="20261112173909";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1831,9 +1831,9 @@ function vMapaGeo(ctx){
 }
 async function atualizarCRM(prog){
   if(!S.demo){const res=[];
-    for(const [et,rot] of [["crm","Lendo o CRM e montando painéis, mapa e ranking (cerca de 1 minuto)…"],["extras","Lendo leads, notícias e clima…"]]){prog(rot);
+    for(const [et,rot] of [["crm","Lendo o CRM e montando painéis, mapa e ranking (cerca de 1 minuto)…"],["extras","Lendo leads e notícias…"],["diario","Lendo clima e arroba do boi…"]]){prog(rot);
       try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"agenda",etapa:et,origem:"botao"}});if(r.error||!r.data||r.data.error)res.push(et+": erro na atualização");else res.push(...(r.data.resultado||[]));}catch(e){res.push(et+": erro na atualização");}}
-    S.mercado=null;S.leadsCache=null;try{await carregarRanking();}catch(e){}return res;}
+    S.mercado=null;S.leadsCache=null;S.cepea=undefined;try{await carregarRanking();}catch(e){}return res;}
   const res=[];
   let ult=0;try{ult=+localStorage.getItem("pc_orgsync")||0;}catch(e){}
   if(Date.now()-ult>20*3600e3){let pg=1,n=0;let okOrg=true;while(pg&&n<60){prog(`Lendo o cadastro de empresas do CRM, parte ${n+1}…`);const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_orgs",page:pg}});if(r.error||!r.data||r.data.error){res.push("empresas: erro na leitura");okOrg=false;break;}pg=r.data.proxima;n++;}if(okOrg){try{localStorage.setItem("pc_orgsync",String(Date.now()));}catch(e){}}}
@@ -1988,6 +1988,10 @@ async function carregarMercado(){try{
 }catch(e){S.mercado={noticias:[],boi:[],clima:[]};}}
 function carregarCepea(){
   if(S.cepea!==undefined||S.cepeaBusy)return;S.cepeaBusy=true;
+  const reRender=()=>{if((S.secao==="mercado"&&S.pag==="mercado-boi")||(!S.secao&&S.pag==="hub"))render();};
+  (async()=>{try{const {data}=await sb.from("mercado_cepea").select("*").order("ordem");if(Array.isArray(data)&&data.length&&data.some(x=>/\d/.test(x.valor||""))){S.cepea=data.map(x=>({data:x.data||"",produto:x.produto||"",un:x.un||"",valor:x.valor||""}));S.cepeaEm=data[0].atualizado_em||null;S.cepeaBusy=false;reRender();return;}}catch(e){}carregarCepeaWidget();})();
+}
+function carregarCepeaWidget(){
   const fr=document.createElement("iframe");fr.setAttribute("aria-hidden","true");fr.setAttribute("sandbox","allow-scripts");fr.setAttribute("referrerpolicy","no-referrer");fr.style.cssText="position:absolute;left:-9999px;top:0;width:500px;height:300px;border:0";
   const src="https://www.cepea.org.br/br/widgetproduto.js.php?fonte=arial&tamanho=10&largura=400px&corfundo=ffffff&cortexto=333333&corlinha=ffffff&id_indicador%5B%5D=2&id_indicador%5B%5D=8&id_indicador%5B%5D=3";
   let feito=false;
@@ -2011,7 +2015,7 @@ function vMercado(){
     const tbl=b.length?`<div class="tab"><table><thead><tr><th>Praça</th><th>UF</th><th class="val">R$/@</th><th class="val">Variação</th>${interno?"<th></th>":""}</tr></thead><tbody>${b.map(x=>`<tr><td>${esc(x.praca||"")}</td><td>${esc(x.uf||"")}</td><td class="val"><strong>${x.preco?fmtR(x.preco):"—"}</strong></td><td class="val">${esc(x.variacao||"—")}</td>${interno?`<td><button class="link" data-a="boi-del" data-v="${x.id}">Excluir</button></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma praça informada ainda.</div>`;
     const C=S.cepea;
     const quadro=C===undefined?`<div class="carregando">Buscando as cotações no CEPEA…</div>`:(C.length?`<div class="metrics">${C.map((x,k)=>`<div class="metric" ${k===0?'style="box-shadow:inset 0 0 0 2px var(--amarelo)"':""}><span>${esc(x.produto)}</span><strong style="font-size:26px">${esc(x.valor)}</strong><span class="meta">por ${esc(x.un==="@"?"arroba":x.un||"unidade")} · ${esc(x.data)}</span></div>`).join("")}</div>`:`<div class="vazio">Não foi possível carregar as cotações agora. Veja direto em <a class="link" href="https://www.cepea.org.br/br/indicador/boi-gordo.aspx" target="_blank" rel="noopener">cepea.org.br</a>.</div>`);
-    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicadores oficiais do CEPEA/Esalq-USP, atualizados pelo CEPEA a cada dia útil: boi gordo (CEPEA/B3) e bezerro em MS e SP.</p></div>
+    return `<div><h1 class="titulo">Arroba do boi</h1><p class="sub">Indicadores oficiais do CEPEA/Esalq-USP, publicados pelo CEPEA a cada dia útil: boi gordo (CEPEA/B3) e bezerro em MS e SP. O portal lê os valores uma vez por dia, de manhã${S.cepeaEm?" (última leitura em "+fmtDataHora(S.cepeaEm)+")":""}.</p></div>
     <section class="bloco">${quadro}
     <p class="precos-nota">Fonte: <a class="link" href="https://www.cepea.org.br/br/indicador/boi-gordo.aspx" target="_blank" rel="noopener">CEPEA/Esalq-USP</a>, pelo serviço oficial de cotações para sites.</p></section>
     ${b.length?`<section class="bloco"><h2 class="sec">Praças regionais</h2>${tbl}<p class="precos-nota">Valores informados pela equipe Barenbrug${ult?", atualizados em "+fmtDataHora(ult):""}.</p></section>`:""}
