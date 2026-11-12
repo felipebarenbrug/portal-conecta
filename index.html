@@ -1022,7 +1022,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112124553";
+const APP_VER="20261112125115";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3490,18 +3490,17 @@ function vFinResumo(C){
     ${finBarra(usoRC)}
     <p class="precos-nota">Vendas com comissão: ${fmtK0(C.vendCom)} (${finPct(C.vendCom,C.tot)} do total). As demais são vendas diretas do time interno: não pagam comissão, mas formam o pool. RC calculado no tier final da safra: o total já inclui o acerto de tier de ${fmtK0(C.exc)}, pago no fechamento. O Inside Sales tem taxa fixa e não recebe acerto.</p>
   </section>
-  <section class="bloco"><h2 class="sec">Pool do Conecta Revendas · ${pp(P.pool_rv)} sobre todas as vendas</h2>
-    <p class="sub" style="margin:0 0 10px">Base: todas as vendas da safra, incluindo exportação. Dele saem o IGDB aprovado e o Bônus de Performance (BF) das revendas do programa. IGDB sem PGD aprovado não é devido; BF abaixo de 90% da meta é zero.</p>
+  <section class="bloco"><h2 class="sec">Conecta Revendas · quanto provisionar</h2>
+    <p class="sub" style="margin:0 0 10px">Valor a programar: todo o IGDB gerado pelas compras dos canais, mais o Bônus de Performance dos canais que já atingiram a meta (100% do tier com a meta batida, 70% entre 90% e 99,99%). Teto de ${fmtK0(RV_TETO)} por canal. Sai do pool de ${pp(P.pool_rv)} sobre todas as vendas, com exportação.</p>
     <div class="metrics">
-      <div class="metric"><span>Vendas totais (com exportação)</span><strong>${fmtK0(C.tot)}</strong><span class="meta">exportação: ${fmtK0(C.exp)} · mercado interno: ${fmtK0(C.interno)}</span></div>
-      <div class="metric"><span>Pool formado até hoje (${pp(P.pool_rv)})</span><strong>${fmtK0(C.pools.rv)}</strong><span class="meta">já formado sobre o faturado: ${fmtK0(C.pools.rvFat)}${C.plano?` · previsto na safra: ${fmtK0(C.plano.pool)}`:""}</span></div>
-      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>A pagar hoje (IGDB aprovado + BF)</span><strong>${fmtK0(C.rv.aPagar)}</strong><span class="meta">${finPct(C.rv.aPagar,C.tot)} das vendas · IGDB aprovado ${fmtK0(C.rv.igdbAprov)} de ${fmtK0(C.rv.igdb)} gerados · BF ${fmtK0(C.rv.bonus)}</span></div>
-      <div class="metric" style="${(C.plano?C.plano.pool:C.pools.rv)-C.rv.aPagar<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>${C.plano?"Saldo do pool previsto na safra":"Saldo do pool"}</span><strong>${fmtK0((C.plano?C.plano.pool:C.pools.rv)-C.rv.aPagar)}</strong><span class="meta">potencial hoje com todo o IGDB aprovado: ${fmtK0(C.rv.total)} · se todos baterem a meta: ${fmtK0(C.rv.mTotal)} (${usoRVm==null?"—":pctTxt(usoRVm)} do pool)</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Provisionar hoje</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">IGDB ${fmtK0(C.rv.igdb)} + Bônus de Performance ${fmtK0(C.rv.bonus)}</span></div>
+      <div class="metric"><span>IGDB gerado</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">pago por trimestre, sobre as notas liquidadas</span></div>
+      <div class="metric"><span>Bônus de Performance</span><strong>${fmtK0(C.rv.bonus)}</strong><span class="meta">${C.rv.nMeta} ${C.rv.nMeta===1?"canal já atingiu":"canais já atingiram"} 90% ou mais da meta · pago no fim da safra</span></div>
+      <div class="metric" style="${rvPool-C.rv.total<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>${C.plano?"Pool previsto na safra":"Pool formado até hoje"}</span><strong>${fmtK0(rvPool)}</strong><span class="meta">saldo após a provisão: ${fmtK0(rvPool-C.rv.total)}${C.plano?` · formado até hoje: ${fmtK0(C.pools.rv)}`:""}</span></div>
     </div>
-    ${finBarra(usoRV,C.plano?"do pool previsto na safra":"")}
-    ${C.plano?`<p class="meta" style="margin:6px 0 0">Pool formado até hoje: ${fmtK0(C.pools.rv)}, com ${pctTxt(C.dSafra)} da safra decorrida. A comparação com o plano de junho de 2026 está na aba Conecta Revendas.</p>`:""}
+    ${finBarra(rvPool?C.rv.total/rvPool:null,C.plano?"do pool previsto na safra":"")}
+    <p class="meta" style="margin:6px 0 0">${C.plano?`Pelo plano de junho de 2026, o máximo da safra era ${fmtK0(C.plano.full)} com 60% dos canais na meta e ${fmtK0(C.plano.todos_meta)} com todos na meta. `:""}O detalhe por canal, os cenários e o acompanhamento do plano estão na aba Conecta Revendas.</p>
   </section>
-  ${rvCenariosHTML(C)}
   <section class="bloco"><h2 class="sec">Exportação identificada</h2>
     <p class="sub" style="margin:0 0 10px">Pedidos com UF "EX" ou cliente marcado como exportação no CRM. Entram no pool de comissões e no pool do Conecta Revendas.</p>
     ${exp.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Responsável no CRM</th><th class="val">Vendas de exportação</th></tr></thead><tbody>${exp.map(([d,v])=>`<tr><td>${esc(d)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhum pedido de exportação identificado. Confira o cadastro dos clientes de exportação no CRM.</div>`}
@@ -3579,11 +3578,11 @@ function rvPlanoHTML(C){
 }
 function rvCenariosHTML(C){
   const PL=C.plano,pool=PL?PL.pool:C.pools.rv,cen=[
-    ["A pagar hoje","IGDB aprovado no PGD + BF de quem já atingiu a meta",C.rv.igdbAprov,C.rv.bonus,C.rv.aPagar],
-    ["Todo o IGDB + BF de quem já atingiu","como se todo o IGDB gerado fosse aprovado, mais o BF "+(C.rv.nMeta===1?"da revenda":"das "+C.rv.nMeta+" revendas")+" com 90% ou mais da meta hoje",C.rv.igdb,C.rv.bonus,C.rv.total],
+    ["Só o PGD aprovado até hoje","IGDB das ações de PGD já aprovadas + BF de quem já atingiu a meta",C.rv.igdbAprov,C.rv.bonus,C.rv.aPagar],
+    ["Provisionar: todo o IGDB + BF de quem já atingiu","o que o Financeiro deve programar: todo o IGDB gerado, mais o BF "+(C.rv.nMeta===1?"da revenda":"das "+C.rv.nMeta+" revendas")+" com 90% ou mais da meta hoje",C.rv.igdb,C.rv.bonus,C.rv.total],
     ["Cenário full de atingimento","todo o IGDB e o BF de 100% do tier, com todas as revendas batendo a meta: o máximo a pagar na safra",C.rv.mIgdb,C.rv.mBonus,C.rv.mTotal]];
   return `<section class="bloco"><h2 class="sec">Cenários de pagamento do Conecta Revendas</h2>
-  <div class="rv-cen">${cen.map(([t,d,ig,bf,tot],k)=>`<div class="rv-cen-c${k===2?" full":""}"><strong class="rv-cen-t">${t}</strong><span class="meta">${d}</span>
+  <div class="rv-cen">${cen.map(([t,d,ig,bf,tot],k)=>`<div class="rv-cen-c${k===1?" full":""}"><strong class="rv-cen-t">${t}</strong><span class="meta">${d}</span>
     <div class="rv-cen-tot"><b>${fmtK0(tot)}</b><span>${finPct(tot,pool)} do pool ${PL?"previsto na safra":""}</span></div>
     <dl><div><dt>IGDB</dt><dd>${fmtK0(ig)}</dd></div><div><dt>BF</dt><dd>${fmtK0(bf)}</dd></div><div><dt>Saldo do pool ${PL?"previsto":""}</dt><dd style="${pool-tot<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(pool-tot)}</dd></div>${PL&&C.canalRs?`<div><dt>Sobre o sell-in dos canais</dt><dd>${pctTxt(tot/C.canalRs)}</dd></div>`:""}
     ${PL&&k===2?`<div><dt>Plano jun/26 · todos na meta</dt><dd>${fmtK0(PL.todos_meta)}</dd></div><div><dt>Plano jun/26 · 60% na meta</dt><dd>${fmtK0(PL.full)}</dd></div>`:""}</dl></div>`).join("")}</div>
@@ -3600,9 +3599,9 @@ function vFinConecta(C){
     <div class="metric"><span>IGDB total gerado na safra</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">já faturado: ${fmtK0(C.rv.igdbFat)} · não é obrigação sem PGD aprovado</span></div>
     <div class="metric"><span>IGDB aprovado (a reembolsar)</span><strong>${fmtK0(C.rv.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(C.rv.aprovIG)}, limitado ao IGDB gerado · campanhas de BF: ${fmtK0(C.rv.aprovBP)}</span></div>
     <div class="metric"><span>BF projetado</span><strong>${fmtK0(C.rv.bonus)}</strong><span class="meta">pelo atingimento de hoje; abaixo de 90% é zero</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>A pagar (IGDB aprovado + BF)</span><strong>${fmtK0(C.rv.aPagar)}</strong><span class="meta">${C.plano?finPct(C.rv.aPagar,C.plano.pool)+" do pool previsto na safra":finPct(C.rv.aPagar,C.pools.rv)+" do pool"} · potencial com todo o IGDB aprovado: ${fmtK0(C.rv.total)}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Provisionar (todo o IGDB + BF de quem atingiu)</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">${C.plano?finPct(C.rv.total,C.plano.pool)+" do pool previsto na safra":finPct(C.rv.total,C.pools.rv)+" do pool"} · com o PGD aprovado até hoje: ${fmtK0(C.rv.aPagar)}</span></div>
   </div>
-  ${finBarra(C.plano?C.rv.aPagar/C.plano.pool:C.pools.rv?C.rv.aPagar/C.pools.rv:null,C.plano?"do pool previsto na safra":"")}
+  ${finBarra(C.plano?C.rv.total/C.plano.pool:C.pools.rv?C.rv.total/C.pools.rv:null,C.plano?"do pool previsto na safra":"")}
   ${rvCenariosHTML(C)}
   ${rvPlanoHTML(C)}
   <section class="bloco"><h2 class="sec">Por revenda</h2>
