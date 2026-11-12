@@ -300,6 +300,30 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:760px){.calc-grid{grid-template-columns:minmax(0,1fr)}.calc-res{position:static}}
 .linha .meta{display:block}
 .neg-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:start}
+.rk-eu{display:grid;gap:2px;background:var(--azul-escuro);color:var(--branco);border-radius:10px;padding:16px 18px}
+.rk-eu .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.rk-eu strong{font-size:26px;line-height:1.15}
+.rk-selos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rk-lista{list-style:none;margin:0;padding:0;display:grid;background:var(--branco);border-radius:10px;overflow:hidden}
+.rk-l{display:grid;grid-template-columns:44px 38px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--linha)}
+.rk-l:last-child{border-bottom:0}
+.rk-l.eu{background:var(--amarelo-claro)}
+.rk-pos{font-weight:800;font-size:17px;color:var(--azul-escuro);text-align:center}
+.rk-pos.med1,.rk-pos.med2,.rk-pos.med3{border-radius:999px;width:36px;height:36px;display:grid;place-items:center;font-size:15px}
+.rk-pos.med1{background:var(--amarelo);color:var(--preto)}
+.rk-pos.med2{background:#d9dde2;color:var(--preto)}
+.rk-pos.med3{background:#e9c7a3;color:var(--preto)}
+.rk-av{width:38px;height:38px;border-radius:999px;background:var(--azul-claro);color:var(--azul-escuro);display:grid;place-items:center;font-weight:700;font-size:14px}
+.rk-nome{display:grid;min-width:0}
+.rk-nome strong,.rk-nome .meta{overflow-wrap:anywhere}
+.rk-pts{display:grid;text-align:right}
+.rk-pts strong{font-size:18px;color:var(--azul-escuro)}
+.rk-sep{text-align:center;color:var(--apagado);padding:4px;border-bottom:1px solid var(--linha)}
+.rk-mini{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--branco);border-radius:10px;padding:14px 16px;box-shadow:inset 0 0 0 1.5px var(--linha)}
+.rk-mini>div{display:grid;gap:2px}
+.rk-mini .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado)}
+.rk-mini strong{font-size:17px;color:var(--azul-escuro)}
+@media (max-width:420px){.rk-l{grid-template-columns:36px minmax(0,1fr) auto}.rk-av{display:none}}
 .acao-capa{margin:-14px -14px 4px;aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px 8px 0 0;overflow:hidden}
 .acao-capa img{width:100%;height:100%;object-fit:cover;display:block}
 .pgd-arq{display:grid;gap:10px;min-width:0}
@@ -955,7 +979,7 @@ function cabecalho(){
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.perfil)}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
 }
 function subnavAcademia(){
-  const abas=[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
+  const abas=[["trilha","Trilha"],...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -1782,13 +1806,14 @@ function vTrilha(){
   ${fim?`<section class="proximo"><div><span class="rot">Jornada concluída</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Sua próxima etapa · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
   <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} etapas concluídas</span></div>
+  ${rankMini()}
   <ol class="trilha">${ETAPAS_ON.map((e,i)=>{const s=estadoEt(i),nota=S.notas[e.id];
     const corpo=`<h3>${e.n}</h3><p>${e.d}</p><span class="est">${s==="feita"?`Concluída${nota!=null?" · "+nota+" acertos":""}`:s==="atual"?"Etapa atual":"Bloqueada"}</span>`;
     return `<li class="${s}"><span class="marco" aria-hidden="true">${s==="feita"?"✓":i+1}</span>${s==="bloq"?`<div class="etapa-b">${corpo}</div>`:`<button class="etapa-b" data-a="abrir" data-v="${i}">${corpo}</button>`}</li>`;}).join("")}</ol>`;
 }
 function vQuiz(lista,id){
   const r=S.res;
-  return `<form id="f-quiz" class="bloco" data-id="${id}">${lista.map((x,i)=>`<fieldset class="perg"><legend>${i+1}. ${x.p}</legend>${x.ops.map((o,j)=>`<label class="op"><input type="radio" name="p${i}" value="${j}" required ${r&&r.resp[i]===j?"checked":""}><span>${o}</span></label>`).join("")}${r&&!r.ok?`<div class="mark">${r.resp[i]===x.c?"Correta":"Revise esta resposta"}</div>`:""}</fieldset>`).join("")}
+  return `<form id="f-quiz" class="bloco" data-id="${id}">${lista.map((x,i)=>`<fieldset class="perg"><legend>${i+1}. ${x.p}</legend>${x.ops.map((o,j)=>`<label class="op"><input type="radio" name="p${i}" value="${j}" required ${r&&r.resp[i]===j?"checked":""}><span>${o}</span></label>`).join("")}${r&&!r.ok?`<div class="mark">${(r.cor?r.cor[i]:r.resp[i]===x.c)?"Correta":"Revise esta resposta"}</div>`:""}</fieldset>`).join("")}
   ${r?`<div class="resultado ${r.ok?"ok":"nao"}" role="status">${r.ok?`<h3>Aprovado: <b>${r.ac} de ${lista.length}</b></h3><p>A próxima etapa foi liberada.</p>`:`<h3>${r.ac} de ${lista.length} acertos</h3><p>Você precisa de ${r.min}. Revise os vídeos e tente de novo.</p>`}</div>`:""}
   ${r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length?"Ver certificado":"Ir para a trilha"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
 }
@@ -2642,6 +2667,48 @@ async function abrirUsuario(id){
   if(!S.canais){carregarCanais().then(render);}
 }
 
+/* ---------- Ranking da Academia ---------- */
+const RANK_FALTA=e=>/PGRST202|Could not find the function|does not exist/i.test(String((e&&(e.code+" "+e.message))||e||""));
+async function carregarRanking(f){
+  S.rank=S.rank||{};if(S.rank["_busy_"+f])return;S.rank["_busy_"+f]=true;
+  try{const {data,error}=await sb.rpc("ranking_academia",{p_filtro:f});
+    if(error){if(RANK_FALTA(error))S.rankOff=true;S.rank[f]={erro:true};}
+    else if(data&&typeof data==="object"&&Array.isArray(data.top)){S.rank[f]=data;S.rankOff=false;}
+    else{S.rankOff=true;S.rank[f]={erro:true};}
+  }catch(e){S.rank[f]={erro:true};}
+  S.rank["_busy_"+f]=false;
+}
+const rankFiltro=()=>S.rankF||"geral";
+const rankIni=n=>String(n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+function rankLinha(x,eu){
+  const med=x.pos<=3?` med${x.pos}`:"";
+  return `<li class="rk-l${eu?" eu":""}"><span class="rk-pos${med}" aria-label="Posição ${x.pos}">${x.pos}º</span><span class="rk-av" aria-hidden="true">${esc(rankIni(x.nome))}</span>
+    <span class="rk-nome"><strong>${esc(x.nome||"Participante")}${eu?" · você":""}</strong><span class="meta">${esc([x.perfil,x.uf].filter(Boolean).join(" · "))}${x.selos&&x.selos.length?" · "+esc(x.selos.join(", ")):""}</span></span>
+    <span class="rk-pts"><strong>${(Number(x.pontos)||0).toLocaleString("pt-BR")}</strong><span class="meta">pontos</span></span></li>`;
+}
+function vRanking(){
+  const f=rankFiltro(),R=S.rank&&S.rank[f];
+  if(!R){carregarRanking(f).then(render);return `<div class="carregando">Carregando o ranking…</div>`;}
+  if(R.erro)return `<div><h2 class="sec">Ranking da Academia</h2></div><div class="vazio">${S.rankOff?"O ranking abre em breve.":"Não foi possível carregar o ranking agora."}</div>`;
+  const provas=Array.isArray(R.provas)?R.provas:[];
+  const chips=[["geral",R.grupo_nome?"Geral · "+R.grupo_nome:"Geral"],...provas.map(p=>[p.id,p.titulo||("Especialista em "+p.nome)])];
+  const eu=R.eu||null,top=R.top||[];const naLista=eu&&top.some(x=>x.eu);
+  const regra=R.regra||"10 pontos por acerto em cada prova aprovada, mais um bônus para quem é aprovado na primeira tentativa.";
+  return `<div><h2 class="sec">Ranking da Academia</h2><p class="sub">${esc(regra)} Empate: vence quem concluiu antes.</p></div>
+  <div class="filtros" role="group" aria-label="Escolha o ranking">${chips.map(([k,t])=>`<button class="chip" data-a="rank-f" data-v="${esc(k)}" aria-pressed="${k===f}">${esc(t)}</button>`).join("")}</div>
+  <section class="rk-eu">${eu&&eu.pos?`<span class="rot">Sua posição</span><strong>${eu.pos}º de ${R.total}</strong><span>${(Number(eu.pontos)||0).toLocaleString("pt-BR")} pontos${eu.provas!=null?" · "+eu.provas+(eu.provas===1?" prova":" provas"):""}</span>`
+    :`<span class="rot">Sua posição</span><strong>Ainda sem pontos</strong><span>${f==="geral"?"Conclua uma prova da trilha para entrar no ranking.":"Conclua esta prova para entrar neste ranking."}</span>`}
+    ${R.meus_selos&&R.meus_selos.length?`<div class="rk-selos">${R.meus_selos.map(s=>`<span class="selo">${esc(s)}</span>`).join("")}</div>`:""}</section>
+  ${top.length?`<ol class="rk-lista" aria-label="Top 10">${top.map(x=>rankLinha(x,!!x.eu)).join("")}${eu&&eu.pos&&!naLista?`<li class="rk-sep" aria-hidden="true">…</li>${rankLinha({...eu,nome:eu.nome||(S.profile&&S.profile.nome)},true)}`:""}</ol>`
+    :`<div class="vazio">Ninguém pontuou ainda. Seja o primeiro.</div>`}`;
+}
+function rankMini(){
+  if(S.rankOff)return "";const R=S.rank&&S.rank.geral;
+  if(!R){carregarRanking("geral").then(()=>{if(S.pag==="trilha")render();});return "";}
+  if(R.erro)return "";const eu=R.eu;
+  return `<section class="rk-mini"><div><span class="rot">Ranking da Academia</span><strong>${eu&&eu.pos?`Você está em ${eu.pos}º de ${R.total}`:"Você ainda não pontuou"}</strong><span class="meta">${eu&&eu.pos?(Number(eu.pontos)||0).toLocaleString("pt-BR")+" pontos":"Cada acerto nas provas vale pontos."}</span></div><button class="btn sec" data-a="pag" data-v="ranking">Ver ranking</button></section>`;
+}
+
 /* ---------- Financeiro Barenbrug ---------- */
 const ehFin=()=>ehAdmin()||S.perfil==="Financeiro";
 const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-premissas","Premissas"]];
@@ -2892,7 +2959,7 @@ document.addEventListener("change",async ev=>{
 /* ---------- render ---------- */
 function render(){renderApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Trilha"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Trilha"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
@@ -2951,7 +3018,7 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,faq:vFaq,cert:vCert,precos:vPrecos}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
@@ -3008,6 +3075,7 @@ document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
+  if(a==="rank-f"){S.rankF=v;render();return;}
   if(a==="fin-recarregar"){S.fin=null;render();return;}
   if(a==="pgd-del-pede"){S.pgdDel=v;render();return;}
   if(a==="pgd-del-cancela"){S.pgdDel=null;render();return;}
@@ -3418,8 +3486,17 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-quiz"){
     const id=f.dataset.id,lista=id==="prova"?PROVA:ETAPAS.find(e=>e.id===id).quiz,min=Math.ceil(lista.length*0.7);
-    const fd=new FormData(f),resp=lista.map((_,i)=>+fd.get("p"+i)),ac=resp.filter((r,i)=>r===lista[i].c).length,ok=ac>=min;
-    S.res={resp,ac,ok,min};if(ok)await concluir(id,ac);render();
+    const fd=new FormData(f),resp=lista.map((_,i)=>+fd.get("p"+i));
+    const btn=f.querySelector("button[type=submit]");if(btn){btn.disabled=true;btn.textContent="Corrigindo…";}
+    let srv=null;
+    try{const {data,error}=await sb.rpc("prova_responder",{p_prova:id,p_respostas:resp});
+      if(!error&&data&&typeof data==="object"&&"acertos" in data)srv=data;
+      else if(error&&!RANK_FALTA(error)){aviso(/muitas/i.test(String(error.message||""))?"Muitas tentativas seguidas. Revise os vídeos e tente de novo daqui a pouco.":"Não foi possível corrigir agora. Tente de novo.");render();return;}
+    }catch(e){}
+    if(srv){const ok=!!srv.ok,ac=Number(srv.acertos)||0;S.res={resp,ac,ok,min:Number(srv.min)||min,cor:Array.isArray(srv.corretas)?srv.corretas:null};
+      if(ok&&!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=ac;}S.rank=null;}
+    else{const ac=resp.filter((r,i)=>r===lista[i].c).length,ok=ac>=min;S.res={resp,ac,ok,min};if(ok){await concluir(id,ac);S.rank=null;}}
+    render();
     document.querySelector(".resultado")?.scrollIntoView({block:"center"});
   }
 });
