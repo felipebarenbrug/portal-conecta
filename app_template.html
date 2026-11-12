@@ -517,6 +517,10 @@ main.largo{max-width:1120px}
 .rv-plano-dl{margin:0;display:grid;gap:4px}.rv-plano-dl div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 10px;font-size:14px;border-bottom:1px solid var(--linha,#e3e8ee);padding:4px 0}.rv-plano-dl dt{color:var(--cinza,#5b6b7b)}.rv-plano-dl dd{margin:0;font-weight:700}
 .calc-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.calc-2>*{min-width:0}
 @media (max-width:420px){.calc-2{grid-template-columns:minmax(0,1fr)}}
+.mfa-ol{margin:0 0 6px;padding-left:20px;display:grid;gap:6px;font-size:15px}
+.mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
+.mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
+#mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
 </style>
 </head>
 <body>
@@ -1062,7 +1066,46 @@ const RANK_FORA=/^\s*mayane\b/i;
 async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});const M={};(data||[]).filter(r=>!RANK_FORA.test(r.crm||"")&&!RANK_FORA.test(r.nome||"")).forEach(r=>{const k=repCanon(r.crm);const x=M[k]||(M[k]={crm:k,nome:repCanon(r.nome)||k,fat:0,aFat:0,kg:0,cFat:0,cAFat:0,cKg:0,em:null});
       x.fat+=+r.fat||0;x.aFat+=+r.a_fat||0;x.kg+=+r.kg||0;x.cFat+=+r.conv_fat||0;x.cAFat+=+r.conv_afat||0;x.cKg+=+r.conv_kg||0;if(r.atualizado_em&&(!x.em||r.atualizado_em>x.em))x.em=r.atualizado_em;});
     RC_RANKING=Object.values(M).sort((a,b)=>b.kg-a.kg);}catch(e){RC_RANKING=[];}}
+/* ---------- verificação em duas etapas (app autenticador, TOTP) ---------- */
+async function carregarMfaInfo(id){S.mfaInfo=S.mfaInfo||{};if(S.mfaInfo[id]!==undefined||S.mfaBusy)return;S.mfaBusy=true;
+  try{const {data}=await sb.rpc("mfa_info",{p_user:id});S.mfaInfo[id]=data||{n:0};}catch(e){S.mfaInfo[id]={n:0};}S.mfaBusy=false;render();}
+async function mfaPrecisa(){
+  try{const {data,error}=await sbReal.auth.mfa.getAuthenticatorAssuranceLevel();if(error||!data)return "erro";if(data.currentLevel==="aal2")return null;
+    const {data:f}=await sbReal.auth.mfa.listFactors();const ver=((f&&f.totp)||[]).filter(x=>x.status==="verified");return ver.length?{modo:"verify",fator:ver[0].id}:{modo:"enroll"};}catch(e){return "erro";}
+}
+async function mfaIniciarCadastro(){
+  if(!S.mfa||S.mfa.modo!=="enroll"||S.mfa.qr||S.mfa.busy)return;S.mfa.busy=true;
+  try{const {data:f}=await sbReal.auth.mfa.listFactors();for(const x of ((f&&f.all)||[]).filter(x=>x.status!=="verified")){try{await sbReal.auth.mfa.unenroll({factorId:x.id});}catch(e){}}
+    const {data,error}=await sbReal.auth.mfa.enroll({factorType:"totp",friendlyName:"Portal Conecta "+new Date().toISOString().slice(0,16),issuer:"Portal Conecta Barenbrug"});
+    if(error||!data)throw error||new Error("sem dados");S.mfa.fator=data.id;S.mfa.qr=(q=>{q=String(q||"");const i=q.indexOf("<svg");return i>=0?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(q.slice(i)):q;})(data.totp.qr_code);S.mfa.secret=data.totp.secret;}
+  catch(e){S.mfa.erro="Não foi possível gerar o QR Code agora. Saia e entre de novo.";}
+  S.mfa.busy=false;render();
+}
+function vMFA(){
+  const M=S.mfa,cad=M.modo==="enroll";
+  if(cad&&!M.qr&&!M.erro)setTimeout(mfaIniciarCadastro,0);
+  const sec=M.secret?M.secret.replace(/(.{4})/g,"$1 ").trim():"";
+  return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">${cad?"Por segurança, o acesso ao portal usa verificação em duas etapas: sua senha e um código do celular.":"Verificação em duas etapas."}</p></div></div>
+    <form class="acesso-form" id="f-mfa"><h2>${cad?"Ative a verificação em duas etapas":"Digite o código do autenticador"}</h2>
+      ${cad?`<ol class="mfa-ol"><li>Instale no celular um aplicativo autenticador gratuito: <strong>Google Authenticator</strong> ou <strong>Microsoft Authenticator</strong>.</li>
+        <li>No aplicativo, toque em adicionar conta e escolha ler QR Code.</li><li>Aponte a câmera para o código abaixo e digite os 6 números que aparecerem.</li></ol>
+        <div class="mfa-qr">${M.qr?`<img src="${esc(M.qr)}" alt="QR Code para o aplicativo autenticador" width="200" height="200">`:M.erro?"":`<span class="meta">Gerando o QR Code…</span>`}</div>
+        ${sec?`<p class="meta">Não consegue ler o QR Code? No aplicativo, escolha digitar a chave e use: <strong class="mfa-sec">${esc(sec)}</strong></p>`:""}`
+      :`<p>Abra o aplicativo autenticador no seu celular e digite o código de 6 números do Portal Conecta Barenbrug.</p>`}
+      <div><label for="mfa_cod">Código de 6 números</label><input id="mfa_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="000000"></div>
+      ${M.erro?`<div class="erro" role="alert">${esc(M.erro)}</div>`:""}
+      <button class="btn" type="submit" ${cad&&!M.qr?"disabled":""}>${cad?"Ativar e entrar":"Entrar"}</button>
+      <p class="dica">${cad?"O código muda a cada 30 segundos. Se trocar ou perder o celular, peça ao Marketing Barenbrug para resetar o autenticador.":"Trocou ou perdeu o celular? Peça ao Marketing Barenbrug para resetar o seu autenticador."}</p>
+      <p class="dica"><button type="button" class="link" data-a="sair">Sair</button></p>
+    </form></div>`;
+}
 async function carregarUsuario(u){
+  const mf=await mfaPrecisa();
+  if(mf){S.user=null;S.profile=null;
+    if(mf==="erro"){try{await sbReal.auth.signOut();}catch(e){}S._erro="Não foi possível confirmar a verificação em duas etapas. Entre de novo.";render();return;}
+    S.mfa={...mf,u};render();return;}
+  S.mfa=null;
   S.user=u;sb=sbReal;S.demo=false;
   let prof=null,profErr=null;
   for(let t=0;t<4;t++){
@@ -2953,6 +2996,11 @@ function vUsuarioAdmin(){
   ${ehEu?`<div class="nota-admin">Para trocar a sua própria senha, use "Meu perfil".</div>`
     :`<div class="nota-admin">Gera uma senha provisória nova, encerra as sessões abertas da pessoa e obriga a criar uma senha própria no próximo acesso. Use quando alguém esquecer a senha.<div class="acoes" style="margin-top:8px"><button class="btn" data-a="reset-senha">Redefinir senha</button></div></div>${S.senhaReset&&S.senhaReset.id===u.id&&!S.senhaReset.viaSolic?caixaCred(S.senhaReset):""}`}
   </section>
+  <section class="bloco"><h2 class="sec">Verificação em duas etapas</h2>
+  ${(()=>{const I=(S.mfaInfo||{})[u.id];if(I===undefined){carregarMfaInfo(u.id);return `<div class="carregando">Verificando…</div>`;}
+    const ativo=I&&I.n>0;return `<div class="nota-admin">${ativo?`Autenticador ativo desde ${fmtDataHora(I.desde)}.`:"Autenticador ainda não configurado. A pessoa vai configurar no próximo login."} Resetar apaga o autenticador cadastrado: no próximo login a pessoa lê um QR Code novo. Use quando alguém trocar ou perder o celular, depois de confirmar a identidade.
+    ${ativo&&!ehEu?`<div class="acoes" style="margin-top:8px">${S.mfaReset===u.id?`<button class="btn perigo" data-a="mfa-reset-ok">Confirmar reset do autenticador</button><button class="btn sec" data-a="mfa-reset" data-v="">Cancelar</button>`:`<button class="btn sec" data-a="mfa-reset" data-v="${u.id}">Resetar autenticador</button>`}</div>`:""}</div>`;})()}
+  </section>
   <section class="bloco"><h2 class="sec">Excluir acesso</h2>
   ${ehEu?`<div class="nota-admin">Você não pode excluir o seu próprio acesso.</div>`
   :S.confirmExcluir
@@ -4303,6 +4351,7 @@ const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
 const semOcultas=abas=>{const o=abasOcultas();return abas.filter(([k])=>!o.includes(chaveAba(k)));};
 function renderApp(){
   const app=document.getElementById("app");
+  if(S.mfa){app.innerHTML=vMFA();const c=document.getElementById("mfa_cod");if(c&&!c.value)c.focus();return;}
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
@@ -4458,6 +4507,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-next"){if(S.tour)S.tour.i++;render();return;}
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
+  if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
@@ -4527,6 +4577,8 @@ document.addEventListener("click",async ev=>{
   if(a==="verusuario"){abrirUsuario(v);}
   if(a==="acesso-modo"){S.acessoModo=v;S._erro=null;render();window.scrollTo(0,0);return;}
   if(a==="copiar"){const t=(S.copias||{})[v]||"";try{await navigator.clipboard.writeText(t);aviso("Mensagem copiada.");}catch(e){aviso("Não deu para copiar automaticamente. Selecione o texto e copie.");}return;}
+  if(a==="mfa-reset"){S.mfaReset=v||null;render();return;}
+  if(a==="mfa-reset-ok"){if(!ehAdmin()||!S.adminUser)return;b.disabled=true;const id=S.adminUser.id;const {error}=await sb.rpc("mfa_resetar",{p_user:id});S.mfaReset=null;if(error){aviso("Não foi possível resetar o autenticador.");render();return;}S.mfaInfo=S.mfaInfo||{};delete S.mfaInfo[id];render();aviso("Autenticador resetado. No próximo login a pessoa cadastra um novo.");return;}
   if(a==="reset-senha"){if(!ehAdmin()||!S.adminUser)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(S.adminUser);render();if(ok)aviso("Senha redefinida.");return;}
   if(a==="prefill-limpar"){S.prefill=null;render();return;}
   if(a==="solic-cadastrar"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;S.prefill={solicId:x.id,nome:x.nome,email:x.email,perfil:x.perfil,telefone:x.telefone};S.novoAcesso=null;S._erroCriar=null;render();const b=document.getElementById("bloco-criar");if(b)b.scrollIntoView({behavior:"smooth",block:"start"});return;}
@@ -4683,6 +4735,13 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
     S.canais=null;S.novaAcao=false;render();aviso("Ação adicionada.");return;
+  }
+  if(f.id==="f-mfa"){
+    const cod=(f.querySelector("#mfa_cod").value||"").replace(/\D/g,"");if(cod.length!==6){S.mfa.erro="Digite os 6 números do aplicativo.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Verificando…";
+    const {error}=await sbReal.auth.mfa.challengeAndVerify({factorId:S.mfa.fator,code:cod});
+    if(error){S.mfa.erro="Código inválido ou expirado. Confira o horário do celular e digite o código atual.";render();return;}
+    const {data:{session}}=await sbReal.auth.getSession();S.mfa=null;iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();return;
   }
   if(f.id==="f-login"){
     const email=f.querySelector("#email").value.trim();const senha=f.querySelector("#senha").value;
