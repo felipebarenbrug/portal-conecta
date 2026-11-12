@@ -1022,7 +1022,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112130745";
+const APP_VER="20261112131614";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3174,10 +3174,12 @@ const intMed=a=>{const x=a.filter(v=>v!=null).sort((p,q)=>p-q);if(!x.length)retu
 function intCalc(){
   if(S.intC)return S.intC;
   const L=(S.intMapa||[]).map(r=>{
-    const kgH=Number(r.kg_h)||0,kgC=Number(r.kg_c)||0,rs=Number(r.rs)||0;let rsH;
-    if(Array.isArray(r.itens)&&r.itens.some(x=>Number(x[2])>0))rsH=r.itens.filter(x=>/cayana|sabia|convert 330|carcara/.test(finNorm(x[0]))).reduce((t,x)=>t+(Number(x[2])||0),0);
+    /* visao geral: Mulato II conta como hibrido (como no BI). Nos programas Conecta ele segue como convencional (kg_h do CRM). */
+    const mul=Array.isArray(r.itens)?r.itens.filter(x=>/mulato/.test(finNorm(x[0]))):[],kgMul=mul.reduce((t,x)=>t+(Number(x[1])||0),0);
+    const kgH=(Number(r.kg_h)||0)+kgMul,kgC=Math.max(0,(Number(r.kg_c)||0)-kgMul),rs=Number(r.rs)||0;let rsH;
+    if(Array.isArray(r.itens)&&r.itens.some(x=>Number(x[2])>0))rsH=r.itens.filter(x=>/cayana|sabia|convert 330|carcara|mulato/.test(finNorm(x[0]))).reduce((t,x)=>t+(Number(x[2])||0),0);
     else rsH=kgH+kgC?rs*kgH/(kgH+kgC):0;
-    return {r,kgH,kgC,kg:kgH+kgC,rs,rsH,hib:kgH>0,seg:r.seg==="B2B"?"B2B":"B2C",via:intVia(r),cli:intCli(r),uf:r.uf||"",cid:r.cidade||"",
+    return {r,kgH,kgC,kgMul,kg:kgH+kgC,rs,rsH,hib:kgH>0,seg:r.seg==="B2B"?"B2B":"B2C",via:intVia(r),cli:intCli(r),uf:r.uf||"",cid:r.cidade||"",
       frete:intNum(r.frete),pag:r.pag?String(r.pag).trim():"",ciclo:intDias(r.cl,r.fat)};});
   const temFrete=L.some(x=>x.frete!=null),temPag=L.some(x=>x.pag),temCiclo=L.some(x=>x.ciclo!=null);
   const H=L.filter(x=>x.hib);
@@ -3215,7 +3217,7 @@ function vIntVendas(C){
   const [rC,kC,nC]=sg(C.H,"B2C"),[rB,kB,nB]=sg(C.H,"B2B");
   const porUf={},porCid={};C.H.forEach(x=>{(porUf[x.uf||"—"]=porUf[x.uf||"—"]||[]).push(x);if(x.cid&&x.uf)(porCid[x.cid+"/"+x.uf]=porCid[x.cid+"/"+x.uf]||[]).push(x);});
   const frUf=C.ag(fr,x=>x.uf).sort((a,b)=>b.frKg-a.frKg);
-  return `<div><h1 class="titulo">Preço e frete por região</h1><p class="sub">Pedidos ganhos da safra 26/27 no CRM. Preço médio dos híbridos (Sabiá, Cayana e Carcará) em R$ por kg e frete médio por kg.</p></div>
+  return `<div><h1 class="titulo">Preço e frete por região</h1><p class="sub">Pedidos ganhos da safra 26/27 no CRM. Preço médio dos híbridos em R$ por kg e frete médio por kg.${INT_HIB_NOTA}</p></div>
   <div class="metrics">
     <div class="metric"><span>Preço médio dos híbridos</span><strong>${intPk(totRsH,totH)}/kg</strong><span class="meta">${fmtKg(Math.round(totH))} em ${C.H.length} ${C.H.length===1?"pedido":"pedidos"}</span></div>
     <div class="metric"><span>B2C · produtor</span><strong>${intPk(rC,kC)}/kg</strong><span class="meta">${fmtKg(Math.round(kC))} em ${nC} ${nC===1?"pedido":"pedidos"}</span></div>
@@ -3267,7 +3269,7 @@ function vIntRC(C){
     const sedeTx=perfil==="RC"?((S.rcRaio||{})[finNorm(a.k)]?esc(S.rcRaio[finNorm(a.k)].split(" · ")[0]):"sede "+esc(sd||"não informada")):`venda digital`;
     return `<tr><td class="nome-rc"><strong>${esc(a.k)}</strong><br>${sel}<span class="meta" style="display:block">${sedeTx}</span></td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;};
   const fP=S.intPerfil||"Todos",lista=[...(fP!=="Inside Sales"?R.map(a=>[a,"RC"]):[]),...(fP!=="RC"?I.map(a=>[a,"Inside Sales"]):[])].sort((p,q)=>q[0].kgH-p[0].kgH);
-  return `<div><h1 class="titulo">RCs e Inside Sales</h1><p class="sub">Venda de híbridos da safra 26/27 no CRM, separada entre representante comercial (RC) e Assessoras de Vendas Digitais do Inside Sales. Pedido com representante no CRM conta para o RC; pedido sem representante, ou com o nome de alguém do Inside Sales nesse campo, conta para o Inside Sales.</p></div>
+  return `<div><h1 class="titulo">RCs e Inside Sales</h1><p class="sub">Venda de híbridos da safra 26/27 no CRM, separada entre representante comercial (RC) e Assessoras de Vendas Digitais do Inside Sales. Pedido com representante no CRM conta para o RC; pedido sem representante, ou com o nome de alguém do Inside Sales nesse campo, conta para o Inside Sales.${INT_HIB_NOTA}</p></div>
   <div class="metrics">
     <div class="metric"><span>RCs com venda</span><strong>${A.np}</strong><span class="meta">${A.ped} pedidos · ${fmtKg(Math.round(A.kg))}</span></div>
     <div class="metric"><span>Inside Sales com venda</span><strong>${B.np}</strong><span class="meta">${B.ped} pedidos · ${fmtKg(Math.round(B.kg))}</span></div>
@@ -3338,12 +3340,13 @@ function vIntSeg(C){
   const cliN={};b2c.forEach(x=>{cliN[x.cli]=(cliN[x.cli]||0)+1;});const nCli=Object.keys(cliN).length,rec=Object.values(cliN).filter(v=>v>1).length;
   const ufB=C.ag(b2c,x=>x.uf).sort((a,b)=>b.kgH-a.kgH).slice(0,8),totB=b2c.reduce((a,x)=>a+x.kgH,0)||1;
   const cu={};b2c.forEach(x=>{const c=x.r.cults&&Object.keys(x.r.cults).length?Object.entries(x.r.cults):(Array.isArray(x.r.itens)?x.r.itens.map(i=>{const l=finNorm(i[0]);return [/cayana/.test(l)?"Cayana":/sabia|convert 330/.test(l)?"Sabiá":/carcara/.test(l)?"Carcará":"",i[1]];}):[]);
+    if(x.kgMul&&!c.some(([k])=>k==="Mulato II"))c.push(["Mulato II",x.kgMul]);
     c.forEach(([k,v])=>{if(agHibF(k))cu[k]=(cu[k]||0)+(Number(v)||0);});});
   // ciclo e pagamento
   const cic=(xs)=>{const d=xs.map(x=>x.ciclo).filter(v=>v!=null&&v>=0&&v<400);return d.length?`${Math.round(intMed(d))} dias (média ${Math.round(d.reduce((a,v)=>a+v,0)/d.length)}, ${d.length} ${d.length===1?"pedido":"pedidos"})`:"—";};
   const pagT=s=>{const xs=C.L.filter(x=>x.seg===s&&x.pag);const o={};xs.forEach(x=>{const k=x.pag;const a=o[k]||(o[k]={k,n:0,v:{}});a.n++;a.v[x.via]=(a.v[x.via]||0)+1;});const top=Object.values(o).sort((a,b)=>b.n-a.n).slice(0,8);
     return top.length?`<table class="sim-t fin-t"><thead><tr><th>Forma de pagamento</th><th class="val">Pedidos</th><th class="val">Participação</th>${vias.map(v=>`<th class="val">${v}</th>`).join("")}</tr></thead><tbody>${top.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${pctTxt(a.n/xs.length)}</td>${vias.map(v=>`<td class="val">${a.v[v]||0}</td>`).join("")}</tr>`).join("")}</tbody></table>`:`<div class="vazio">Sem forma de pagamento registrada.</div>`;};
-  return `<div><h1 class="titulo">B2C e B2B</h1><p class="sub">B2B: distribuidores, cooperativas e venda para canal (sell-in). B2C: venda ao produtor. Só pedidos de híbridos ganhos (vendidos) no CRM na safra 26/27, já faturados ou com faturamento programado. Negociações em andamento ficam fora.</p></div>
+  return `<div><h1 class="titulo">B2C e B2B</h1><p class="sub">B2B: distribuidores, cooperativas e venda para canal (sell-in). B2C: venda ao produtor. Só pedidos de híbridos ganhos (vendidos) no CRM na safra 26/27, já faturados ou com faturamento programado. Negociações em andamento ficam fora.${INT_HIB_NOTA}</p></div>
   <section class="bloco"><h2 class="sec">Híbridos: B2C x B2B</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Segmento</th><th class="val">Pedidos</th><th class="val">Clientes</th><th class="val">Kg</th><th class="val">Valor</th><th class="val">Preço médio (R$/kg)</th><th class="val">Ticket médio</th></tr></thead><tbody>${lin(seg("B2C"),"B2C · produtor")}${lin(seg("B2B"),"B2B · canal")}</tbody></table></div></section>
   <section class="bloco"><h2 class="sec">Por onde vendemos</h2><div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${viaT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${viaT("B2B")}</div></div></div></section>
   <section class="bloco"><h2 class="sec">Perfil do cliente B2C de híbridos</h2>
@@ -3356,7 +3359,8 @@ function vIntSeg(C){
     <tr><td><strong>Demais cultivares</strong></td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2C"))}</td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2B"))}</td></tr></tbody></table></div><p class="precos-nota">Mediana de dias entre a data em que o pedido foi marcado como vendido no CRM e a data de faturamento.</p>`:intPend("A data em que o pedido foi marcado como vendido")}</section>
   <section class="bloco"><h2 class="sec">Formas de pagamento</h2>${C.temPag?`<div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${pagT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${pagT("B2B")}</div></div></div>`:intPend("A forma de pagamento")}</section>`;
 }
-const agHibF=k=>/^(Sabiá|Cayana|Carcará)$/.test(k);
+const agHibF=k=>/^(Sabiá|Cayana|Carcará|Mulato II)$/.test(k);
+const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará e Mulato II, como no BI. Nos programas Conecta RC e Conecta Revendas o Mulato II conta como convencional.";
 
 /* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||temPerfil("Financeiro")||temAcessoExtra("financeiro");
