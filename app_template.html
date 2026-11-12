@@ -489,6 +489,23 @@ main.largo{max-width:1120px}
 .pc-form{display:flex;gap:8px;align-items:flex-end}.pc-form textarea{flex:1;min-width:0;resize:vertical;font:inherit;font-size:15px;padding:10px 12px;min-height:44px;border:1px solid var(--linha,#cfd8e3);border-radius:10px;background:var(--branco,#fff);color:inherit}.pc-form .btn{padding:8px 14px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .btn.perigo-t{color:var(--vermelho,#c0392b);border-color:var(--vermelho,#c0392b)}
+.mk-cal{border:1px solid var(--linha,#e3e8ee);border-radius:12px;overflow:hidden;background:var(--branco,#fff)}
+.mk-sem,.mk-grade{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.mk-sem span{padding:6px 8px;font-size:12px;font-weight:700;color:var(--cinza,#5b6b7b);background:var(--azul-claro,#eef5fb)}
+.mk-dia{min-height:96px;border-top:1px solid var(--linha,#e3e8ee);border-left:1px solid var(--linha,#e3e8ee);padding:4px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.mk-dia.hoje{background:var(--amarelo-claro,#fff8d6)}.mk-dia.vazio-d{background:var(--fundo,#f6f8fa)}
+.mk-dn{font-size:12px;font-weight:700}
+.mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
+.mk-ev.atr{box-shadow:inset 0 0 0 2px var(--vermelho,#c0392b)}
+.mk-linha{align-items:flex-start}.mk-linha .bd-tags{margin-top:4px}
+.mk-chk{display:grid;gap:6px}.mk-chk-i{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:8px 10px;border:1px solid var(--linha,#e3e8ee);border-radius:10px}
+.mk-chk-i.feito span:first-of-type{text-decoration:line-through;opacity:.7}.mk-chk-i .meta{flex:1 1 200px}
+.mk-chk-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.mk-chk-form input{flex:1 1 160px;min-width:0}.mk-chk-form #mkc_t{flex:3 1 260px}
+@media (max-width:640px){.mk-cal{display:none}}
+.rv-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.rv-chip{font:inherit;text-align:left;display:grid;gap:2px;padding:8px 12px;border-radius:10px;border:1px solid var(--linha,#e3e8ee);background:var(--branco,#fff);cursor:pointer;min-width:0;max-width:100%}
+.rv-chip:hover{border-color:var(--azul,#005a7d)}.rv-chip span{font-size:12px;color:var(--cinza,#5b6b7b)}
+.rv-nome{text-align:left}
 </style>
 </head>
 <body>
@@ -2536,10 +2553,11 @@ function vRVPainel(){
   </tbody></table></div>
   ${L.some(x=>x.m.semPreco)?`<p class="precos-nota">Canais sem pedido de híbridos e sem valor por kg no contrato entram com zero neste cenário. Informe o valor por kg no cadastro do canal para estimar.</p>`:""}</section>
   <section class="bloco"><h2 class="sec">Canal a canal · situação de hoje</h2>
-  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th class="val">Meta híb.</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th class="val">IGDB total</th><th class="val">IGDB aprovado</th><th class="val">Bônus</th><th class="val">A pagar</th><th>Ações</th><th></th></tr></thead><tbody>
-  ${L.map(({c,m})=>`<tr><td><strong>${esc(c.nome)}</strong>${m.teto?`<br><span class="meta" style="color:#c0392b">teto atingido</span>`:""}${!m.piso?`<br><span class="meta" style="color:#c0392b">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${fmtKg(m.meta)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":`<strong style="color:${m.fator===1?"#1e8449":m.fator?"#8a6d00":"#c0392b"}">${pctTxt(m.ating)}</strong>`}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbAprov)}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td>${m.n?`${m.nAprov} aprov. · ${m.nAnalise} em análise${m.nReprov?` · ${m.nReprov} reprov.`:""}`:`<span class="meta">sem PGD</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("")}
+  <div class="tab"><table class="fin-t"><thead><tr><th>Canal</th><th>Tier</th><th class="val">Meta híb.</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th class="val">IGDB total</th><th class="val">IGDB aprovado</th><th class="val">Bônus</th><th class="val">A pagar</th><th>Ações</th><th></th></tr></thead><tbody>
+  ${L.map(({c,m})=>`<tr><td class="nome-rc"><button class="link rv-nome" data-a="vercanal" data-v="${c.id}"><strong>${esc(c.nome)}</strong></button>${m.teto?`<br><span class="meta" style="color:#c0392b">teto atingido</span>`:""}${!m.piso?`<br><span class="meta" style="color:#c0392b">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${fmtKg(m.meta)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":`<strong style="color:${m.fator===1?"#1e8449":m.fator?"#8a6d00":"#c0392b"}">${pctTxt(m.ating)}</strong>`}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbAprov)}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td>${m.n?`${m.nAprov} aprov. · ${m.nAnalise} em análise${m.nReprov?` · ${m.nReprov} reprov.`:""}`:`<span class="meta">sem PGD</span>`}</td><td></td></tr>`).join("")}
   <tr><td><strong>Total</strong></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("kgH"))}</td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td><td class="val">${fmtK0(T("igdb"))}</td><td class="val">${fmtK0(T("igdbAprov"))}</td><td class="val">${fmtK0(T("bonus"))}</td><td class="val"><strong>${fmtK0(T("aPagar"))}</strong></td><td>${T("n")} ações</td><td></td></tr>
   </tbody></table></div>
+  <p class="meta">Clique no nome do canal para abrir.</p>
   ${semPgd.length?`<p class="precos-nota">Sem PGD cadastrado: ${semPgd.map(esc).join(", ")}.</p>`:""}</section>
   <section class="bloco"><h2 class="sec">Plano de Geração de Demanda · ações</h2>
   <div class="filtros" style="margin-bottom:10px">${["Todas","Em Análise","Aprovado","Reprovado"].map(t=>`<button class="chip" data-a="pgd-filtro" data-v="${t}" aria-pressed="${fl===t}">${t}</button>`).join("")}</div>
@@ -2589,9 +2607,12 @@ function vRVCanais(){
   const soma=f=>L.reduce((t,x)=>t+(Number(f(x.m))||0),0);
   const T=k=>L.reduce((t,x)=>t+(Number(x.m[k])||0),0);
   const cel=(f,forte,m)=>f?(forte?`<strong>${fmtK0(f(m))}</strong>`:fmtK0(f(m))):fat(m);
-  const rows=L.map(({c,m})=>`<tr><td>${esc(c.nome)}${vis==="soma"&&(meta?m.mTeto:m.teto)?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}${meta&&m.semPreco?`<br><span class="meta" style="color:#c0392b">sem preço para estimar</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td>${col.map(([,f,forte])=>`<td class="val">${cel(f,forte,m)}</td>`).join("")}<td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir</button></td></tr>`).join("");
+  const bq=finNorm(S.rvBusca||"");const LL=bq?L.filter(({c})=>finNorm([c.nome,c.responsavel,c.tier].join(" ")).includes(bq)):L;
+  const rows=LL.map(({c,m})=>`<tr><td class="nome-rc"><button class="link rv-nome" data-a="vercanal" data-v="${c.id}"><strong>${esc(c.nome)}</strong></button>${vis==="soma"&&(meta?m.mTeto:m.teto)?`<br><span class="meta" style="color:#c0392b">limitado pelo teto</span>`:""}${meta&&m.semPreco?`<br><span class="meta" style="color:#c0392b">sem preço para estimar</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td>${esc(c.responsavel||"—")}</td><td class="val">${fmtKg(c.meta_kg)}</td><td class="val">${fmtKg(m.kgH)}</td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td>${m.n}</td>${col.map(([,f,forte])=>`<td class="val">${cel(f,forte,m)}</td>`).join("")}<td></td></tr>`).join("");
   const tit={igdb:"Só IGDB",bf:"Só BF",soma:"IGDB + BF"}[vis];
-  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB, Bônus de Performance (BF) e o PGD de cada canal. Abra um canal para ver o detalhe e o cadastro.</p></div>
+  return `<div><h1 class="titulo">Canais — Conecta Revendas</h1><p class="sub">${S.canais.length} canais com contrato assinado. Meta, vendas de híbridos, IGDB, Bônus de Performance (BF) e o PGD de cada canal. Clique no canal para ver o detalhe e o cadastro.</p></div>
+  <div class="mk-barra"><input type="search" id="rv_busca" placeholder="Buscar canal, responsável ou tier" value="${esc(S.rvBusca||"")}" aria-label="Buscar canal"></div>
+  <div class="rv-chips">${LL.map(({c,m})=>`<button class="rv-chip" data-a="vercanal" data-v="${c.id}"><strong>${esc(c.nome)}</strong><span>${esc(c.tier||"—")} · ${m.ating==null?"sem meta":pctTxt(m.ating)+" da meta"}</span></button>`).join("")}</div>
   ${avisoValoresRV()}
   <div class="filtros" style="margin-bottom:0">${[["igdb","Só IGDB"],["bf","Só BF"],["soma","IGDB + BF"]].map(([k,t])=>`<button class="chip" data-a="rv-vis" data-v="${k}" aria-pressed="${vis===k}">${t}</button>`).join("")}</div>
   <div class="filtros">${[["hoje","Hoje, pelo vendido"],["meta","Se bater a meta"]].map(([k,t])=>`<button class="chip" data-a="rv-cen" data-v="${k}" aria-pressed="${cen===k}">${t}</button>`).join("")}</div>
@@ -2601,7 +2622,7 @@ function vRVCanais(){
     <div class="metric"><span>IGDB aprovado</span><strong>${fmtK0(soma(m=>meta?m.mIgdbAprov:m.igdbAprov))}</strong><span class="meta">PGD aprovado, limitado ao IGDB gerado</span></div>
     <div class="metric"><span>BF</span><strong>${fmtK0(soma(m=>meta?m.mBonus:m.bonus))}</strong><span class="meta">${meta?"100% do tier":"pelo atingimento de hoje"}</span></div>
   </div>
-  <div class="tab"><table><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th>Ações</th>${col.map(([t,,f])=>`<th class="val">${t}</th>`).join("")}<th></th></tr></thead><tbody>${rows}
+  <div class="tab"><table class="fin-t"><thead><tr><th>Canal</th><th>Tier</th><th>Responsável</th><th class="val">Meta</th><th class="val">Vendido híb.</th><th class="val">Ating.</th><th>Ações</th>${col.map(([t,,f])=>`<th class="val">${t}</th>`).join("")}<th></th></tr></thead><tbody>${rows}
   <tr><td><strong>Total</strong></td><td></td><td></td><td class="val">${fmtKg(T("meta"))}</td><td class="val">${fmtKg(T("kgH"))}</td><td class="val">${T("meta")?pctTxt(T("kgH")/T("meta")):"—"}</td><td>${T("n")}</td>${col.map(([,f,forte])=>`<td class="val">${f?`<strong>${fmtK0(soma(f))}</strong>`:""}</td>`).join("")}<td></td></tr></tbody></table></div>
   <p class="precos-nota">IGDB total: percentual do tier sobre o sell-in de híbridos e de convencionais. IGDB aprovado: o PGD aprovado pela Barenbrug, até o limite do IGDB gerado; sem PGD submetido e aprovado, a Barenbrug não paga. A pagar = IGDB aprovado + BF. BF: só sobre híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. Teto de ${fmtK0(RV_TETO)} por canal (IGDB + BF). ${meta?"Se bater a meta: a meta de híbridos ao preço médio que o canal já pratica (ou ao valor por kg do contrato), mais os convencionais já vendidos.":"Hoje: pedidos ganhos de sell-in com faturamento na safra."} Valores estimados, a confirmar pelo Financeiro.</p>`;
 }
@@ -2619,10 +2640,16 @@ function vAcaoEditor(a){
     <div class="acoes"><button class="btn" type="submit">Salvar ação</button><button class="btn sec" type="button" data-a="fecharacao">Fechar</button><button class="btn perigo" type="button" data-a="delacao" data-v="${a.id}">Excluir</button></div>
   </form>`;
 }
+async function carregarRVComerciais(){if(S.rvComBusy)return;S.rvComBusy=true;
+  try{const {data}=await sb.from("profiles").select("id,nome,email,perfil,perfis,ativo").eq("ativo",true).order("nome");
+    S.rvComerciais=(data||[]).filter(p=>p.perfil==="Comercial Barenbrug"||(Array.isArray(p.perfis)&&p.perfis.includes("Comercial Barenbrug"))).map(p=>({id:p.id,nome:(p.nome||"").trim()||p.email}));}catch(e){S.rvComerciais=[];}
+  S.rvComBusy=false;render();}
+const rvComNome=c=>{const p=(S.rvComerciais||[]).find(x=>x.id===c.comercial_id);return p?p.nome:(c.responsavel||"");};
 function vCanalEditor(c){
   return `<form class="form-card" id="f-canal"><h3 class="sec">Editar dados do canal</h3>
     <div class="dupla"><div><label>Tier</label><select id="c_tier">${["Blue","Yellow","Yellow Pro","Yellow Master"].map(t=>`<option ${c.tier===t?"selected":""}>${t}</option>`).join("")}</select></div>
-      <div><label>Responsável Barenbrug</label><input id="c_resp" value="${esc(c.responsavel||"")}"></div></div>
+      <div><label for="c_com">Comercial Barenbrug responsável</label>${S.rvComerciais==null?(carregarRVComerciais(),`<select id="c_com" disabled><option>Carregando…</option></select>`):`<select id="c_com"><option value="">— sem comercial vinculado —</option>${S.rvComerciais.map(p=>`<option value="${esc(p.id)}" ${c.comercial_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select>`}<span class="meta">Quem for escolhido vê esta revenda em Conecta Revendas. Uma revenda tem um comercial por vez.</span></div></div>
+    <div><label for="c_resp">Nome do responsável exibido</label><input id="c_resp" value="${esc(c.responsavel||"")}" placeholder="Preenchido com o comercial escolhido"></div>
     <div><label>Responsável legal (contrato)</label><input id="c_legal" value="${esc(c.responsavel_legal||"")}"></div>
     <div class="dupla"><div><label>Meta de híbridos (kg)</label><input id="c_meta" type="number" value="${Number(c.meta_kg)||0}"></div>
       <div><label>Valor médio do kg (R$)</label><input id="c_valor" type="number" step="0.01" value="${Number(c.valor_kg)||0}"></div></div>
@@ -3400,8 +3427,8 @@ function finCalc(){
   return S.finC;
 }
 const finPct=(a,b)=>b?pctTxt(a/b):"—";
-function finBarra(uso){const p=Math.max(0,Math.min(1,uso||0));const cor=uso>1?"var(--vermelho)":uso>.85?"#E6A800":"var(--azul)";
-  return `<div class="fin-uso"><div class="barra" style="height:12px"><i style="width:${(p*100).toFixed(1)}%;background:${cor}"></i></div><span>${uso==null?"—":pctTxt(uso)} do pool usado${uso>1?" · acima do pool":""}</span></div>`;}
+function finBarra(uso,rot){const p=Math.max(0,Math.min(1,uso||0));const cor=uso>1?"var(--vermelho)":uso>.85?"#E6A800":"var(--azul)";
+  return `<div class="fin-uso"><div class="barra" style="height:12px"><i style="width:${(p*100).toFixed(1)}%;background:${cor}"></i></div><span>${uso==null?"—":pctTxt(uso)} ${rot||"do pool usado"}${uso>1?" · acima "+(rot?"da verba":"do pool"):""}</span></div>`;}
 function finAvisoTopo(C){
   const atual=S.fin.atualizado?` · CRM atualizado em ${fmtDataHora(S.fin.atualizado)}`:"";
   return `<div class="aviso-est" role="note"><strong>Estimativa para provisão</strong><p>Calculada a partir dos pedidos ganhos no CRM, pela data de faturamento da safra 26/27 (jul/2026 a jun/2027)${atual}. O valor pago segue as notas liquidadas, os contratos e a comunicação oficial da Barenbrug.</p></div>
@@ -3531,7 +3558,15 @@ const bdEmprestado=id=>(S.bdEmp||[]).filter(e=>e.brinde_id===id&&!e.encerrado).r
 const bdValor=b=>(Number(b.qtd_total)||0)*(Number(b.valor_unit)||0);
 const bdDias=d=>d?Math.floor((Date.now()-new Date(d+"T12:00:00").getTime())/864e5):0;
 const BD_STATUS_COR={"Pendente":"amarelo","Aprovada":"azul","Entregue":"verde","Recusada":"vermelho","Cancelada":"cinza","Histórico":"cinza"};
-const mkCusto=a=>(Number(a.valor_real)||0)>0?Number(a.valor_real):(Number(a.valor_prev)||0);
+const mkCusto=a=>a.fin==="Sem custo"?0:(Number(a.valor_real)||0)>0?Number(a.valor_real):(Number(a.valor_prev)||0);
+const MK_FIN=["Provisionada","Aprovada","Paga","Sem custo"];
+const MK_FIN_COR={"Provisionada":"amarelo","Aprovada":"azul","Paga":"verde","Sem custo":"cinza"};
+const MK_FIN_TXT={"Provisionada":"reservada na verba, ainda não aprovada","Aprovada":"aprovada, ainda não paga","Paga":"já debitada da verba","Sem custo":"não usa verba"};
+const mkHoje=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+const mkFin=a=>a.fin||"Provisionada";
+const mkAberta=a=>a.status==="A fazer"||a.status==="Em andamento";
+const mkAtrasada=a=>{const f=a.fim||a.inicio;return mkAberta(a)&&!!f&&f<mkHoje();};
+const mkChk=a=>{const L=Array.isArray(a.checklist)?a.checklist:[],h=mkHoje();return {L,n:L.length,f:L.filter(i=>i.feito).length,atr:L.filter(i=>!i.feito&&i.prazo&&i.prazo<h)};};
 const mkData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
 const mkLimpo=n=>String(n||"arquivo").normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"-").slice(-80)||"arquivo";
 const mkSafra="26/27";
@@ -3545,7 +3580,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
-  const abas=[["acoes-quadro","Quadro"],...(ehMkt()?[["acoes-painel","Verba e saldo"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)/.test(S.pag))?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -3570,6 +3605,7 @@ function mkCardHTML(a){
     <span class="mk-tipo">${esc(a.tipo||"Ação")}</span><strong>${esc(a.titulo)}</strong>
     ${a.inicio||a.local?`<span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</span>`:""}
     <span class="mk-val">${fmtK0(mkCusto(a))}${Number(a.valor_real)>0?' <span class="meta">realizado</span>':' <span class="meta">previsto</span>'}</span>
+    <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${(()=>{const c=mkChk(a);return c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):"";})()}</span>
     <span class="mk-rod">${(a.envolvidos_nomes||[]).slice(0,3).map(x=>`<span class="mk-pessoa" title="${esc(x)}">${esc(String(x).split(" ")[0])}</span>`).join("")}${(a.envolvidos_nomes||[]).length>3?`<span class="meta">+${a.envolvidos_nomes.length-3}</span>`:""}${n?`<span class="meta">${n} ${n===1?"anexo":"anexos"}</span>`:""}</span></button>`;
 }
 function vAcoesQuadro(){
@@ -3599,6 +3635,8 @@ function mkFormHTML(a){
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim">Data de fim</label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
     <div><label for="mk_loc">Local</label><input id="mk_loc" maxlength="160" value="${esc(a.local||"")}" placeholder="Cidade/UF, fazenda, revenda…"></div>
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
+    <div class="dupla"><div><label for="mk_fin">Situação financeira</label><select id="mk_fin">${MK_FIN.map(t=>`<option ${t===mkFin(a)?"selected":""}>${t}</option>`).join("")}</select><span class="meta">Provisionada: reservada · Aprovada: a pagar · Paga: já debitada da verba</span></div>
+      <div><label for="mk_pg">Pago em</label><input id="mk_pg" type="date" value="${esc(a.pago_em||"")}"></div></div>
     <div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
       <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
     <div><label for="mk_resp">Responsável</label><select id="mk_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)} · ${esc(p.perfil||"")}</option>`).join("")}</select></div>
@@ -3622,6 +3660,7 @@ function vAcoesCard(){
   <div><span class="rot">${esc(a.tipo||"Ação")} · ${esc(a.status)}</span><h1 class="titulo">${esc(a.titulo)}</h1>
     <p class="sub">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</p></div>
   ${g?`<div class="acoes" style="margin:0">${idx>0&&a.status!=="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="${MK_STATUS[idx-1]}">← ${MK_STATUS[idx-1]}</button>`:""}${idx<2?`<button class="btn" data-a="mk-mover" data-v="${MK_STATUS[idx+1]}">${MK_STATUS[idx+1]} →</button>`:""}${a.status==="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="A fazer">Reabrir</button>`:`<button class="btn sec" data-a="mk-mover" data-v="Cancelada">Cancelar ação</button>`}<button class="btn sec" data-a="mk-editar">Editar</button>${S.mkDel?`<button class="btn perigo" data-a="mk-excluir">Confirmar exclusão</button><button class="link" data-a="mk-del-n">não excluir</button>`:`<button class="link perigo" data-a="mk-del">Excluir</button>`}</div>`:""}
+  <div class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}<span class="meta">${MK_FIN_TXT[mkFin(a)]}${a.pago_em?" · paga em "+mkData(a.pago_em):""}</span>${mkAtrasada(a)?stTag("Atrasada: a data já passou e a ação não foi concluída","vermelho"):""}</div>
   <div class="metrics">
     <div class="metric"><span>Valor previsto</span><strong>${fmtK0(a.valor_prev)}</strong></div>
     <div class="metric"><span>Valor realizado</span><strong>${Number(a.valor_real)>0?fmtK0(a.valor_real):"—"}</strong></div>
@@ -3629,6 +3668,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
+  ${mkChecklistHTML(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
@@ -3642,14 +3682,87 @@ function vAcoesCard(){
     <form id="f-mk-com" class="form-card" style="margin-top:8px"><label for="mk_com">Novo comentário</label><textarea id="mk_com" rows="3" maxlength="4000" required></textarea><div class="acoes"><button class="btn" type="submit">Comentar</button></div></form></section>
   ${S.mkEv&&S.mkEv.length?`<section class="bloco"><h2 class="sec">Histórico</h2><div class="lista">${S.mkEv.map(e=>`<div class="linha"><div><strong>${esc(e.evento)}</strong><span class="meta">${esc(e.detalhe||"")} · ${esc(e.quem_nome||"")} · ${fmtDataHora(e.em)}</span></div></div>`).join("")}</div></section>`:""}`;
 }
+function mkChecklistHTML(a){
+  const c=mkChk(a),h=mkHoje(),dono=ehMkt()||a.responsavel===S.user.id;
+  return `<section class="bloco"><h2 class="sec">Checklist${c.n?` · ${c.f} de ${c.n}`:""}</h2>
+    ${c.n?`<div class="resumo" style="margin-bottom:8px"><div class="barra"><i style="width:${Math.round(c.f/c.n*100)}%"></i></div><span>${Math.round(c.f/c.n*100)}% feito${c.atr.length?` · <strong style="color:var(--vermelho)">${c.atr.length} atrasadas</strong>`:""}</span></div>`:""}
+    <div class="mk-chk">${c.L.map(i=>{const atr=!i.feito&&i.prazo&&i.prazo<h;return `<div class="mk-chk-i${i.feito?" feito":""}"><label class="check"><input type="checkbox" data-a="mk-chk" data-v="${esc(i.id)}" ${i.feito?"checked":""}> <span>${esc(i.t)}</span></label>
+      <span class="meta">${i.resp?esc(i.resp):""}${i.prazo?`${i.resp?" · ":""}${atr?`<strong style="color:var(--vermelho)">prazo ${mkData(i.prazo)} vencido</strong>`:"prazo "+mkData(i.prazo)}`:""}${i.feito&&i.feito_nome?`${i.resp||i.prazo?" · ":""}feito por ${esc(i.feito_nome)}${i.feito_em?" em "+fmtDataHora(i.feito_em):""}`:""}</span>
+      ${dono?`<button class="link perigo" data-a="mk-chk-del" data-v="${esc(i.id)}">remover</button>`:""}</div>`;}).join("")||`<div class="vazio">Nenhuma tarefa ainda.</div>`}</div>
+    ${dono?`<form id="f-mk-chk" class="mk-chk-form"><input id="mkc_t" maxlength="300" placeholder="Nova tarefa: ex. contratar som, enviar convite, aprovar arte" aria-label="Nova tarefa" required><input id="mkc_r" maxlength="120" placeholder="Responsável" aria-label="Responsável" list="mkc_rl"><datalist id="mkc_rl">${[...(a.envolvidos_nomes||[]),a.responsavel_nome].filter(Boolean).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><input id="mkc_p" type="date" aria-label="Prazo"><button class="btn sec" type="submit">Adicionar</button></form>`:""}
+  </section>`;
+}
+function mkCal(){const m=S.mkMes||mkHoje().slice(0,7);return m;}
+function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&i<=d&&d<=f;}
+function vAcoesCal(){
+  if(!S.mk)return `<div class="carregando">Carregando…</div>`;
+  const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
+  const A=S.mk.filter(a=>a.status!=="Cancelada"&&(ff==="Todas"||(ff==="Atrasadas"?mkAtrasada(a):mkFin(a)===ff)));
+  const nomeMes=(t=>t.charAt(0).toUpperCase()+t.slice(1))(new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}));
+  const prim=new Date(y,mo-1,1).getDay(),dias=new Date(y,mo,0).getDate(),h=mkHoje();
+  const cel=[];for(let i=0;i<prim;i++)cel.push(`<div class="mk-dia vazio-d"></div>`);
+  for(let d=1;d<=dias;d++){const ds=`${m}-${String(d).padStart(2,"0")}`;const xs=A.filter(a=>mkNoDia(a,ds));
+    cel.push(`<div class="mk-dia${ds===h?" hoje":""}"><span class="mk-dn">${d}</span>${xs.slice(0,4).map(a=>`<button class="mk-ev st-${MK_FIN_COR[mkFin(a)]}${mkAtrasada(a)?" atr":""}" data-a="mk-abrir" data-v="${a.id}" title="${esc(a.titulo)}">${esc(a.titulo)}</button>`).join("")}${xs.length>4?`<span class="meta">+${xs.length-4}</span>`:""}</div>`);}
+  const mesI=`${m}-01`,mesF=`${m}-${String(dias).padStart(2,"0")}`;
+  const doMes=A.filter(a=>a.inicio&&a.inicio<=mesF&&(a.fim||a.inicio)>=mesI).sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));
+  const semData=A.filter(a=>!a.inicio&&mkAberta(a));
+  const mv=k=>{const d=new Date(y,mo-1+k,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
+  return `<div><h1 class="titulo">Calendário de ações</h1><p class="sub">As ações pela data. A cor mostra a situação financeira: amarelo provisionada, azul aprovada, verde paga, cinza sem custo. Borda vermelha: atrasada.</p></div>
+  <div class="mk-barra"><button class="btn sec" data-a="mk-mes" data-v="${mv(-1)}" aria-label="Mês anterior">‹</button><strong style="align-self:center;min-width:150px;text-align:center">${esc(nomeMes)}</strong><button class="btn sec" data-a="mk-mes" data-v="${mv(1)}" aria-label="Próximo mês">›</button><button class="link" data-a="mk-mes" data-v="${h.slice(0,7)}">hoje</button>
+    <div class="filtros" style="margin:0">${["Todas",...MK_FIN,"Atrasadas"].map(t=>`<button class="chip" data-a="mk-calf" data-v="${t}" aria-pressed="${t===ff}">${t}</button>`).join("")}</div>${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}</div>
+  <div class="mk-cal"><div class="mk-sem">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(x=>`<span>${x}</span>`).join("")}</div><div class="mk-grade">${cel.join("")}</div></div>
+  <section class="bloco"><h2 class="sec">No mês · ${doMes.length} ${doMes.length===1?"ação":"ações"}${g?" · "+fmtK0(doMes.reduce((t,a)=>t+mkCusto(a),0)):""}</h2>
+    ${doMes.length?`<div class="lista">${doMes.map(mkLinhaHTML).join("")}</div>`:`<div class="vazio">Nenhuma ação neste mês.</div>`}</section>
+  ${semData.length?`<section class="bloco"><h2 class="sec">Sem data definida</h2><div class="lista">${semData.map(mkLinhaHTML).join("")}</div></section>`:""}`;
+}
+function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
+  return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>
+    <span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"sem data",a.local||"",a.responsavel_nome?"resp. "+a.responsavel_nome:"",a.status].filter(Boolean).join(" · "))}</span>
+    <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):""}</span></div>
+    ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
+function vAcoesGestao(){
+  if(!S.mk)return `<div class="carregando">Carregando…</div>`;
+  const h=mkHoje(),A=S.mk.filter(a=>a.status!=="Cancelada"),V=Number((S.mkVerba||{}).valor)||0;
+  const sumV=xs=>xs.reduce((t,a)=>t+mkCusto(a),0);
+  const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
+  const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
+  const prox=A.filter(a=>a.status==="A fazer"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
+  const tAtr=A.flatMap(a=>mkChk(a).atr.map(i=>({a,i})));const tAbertas=A.reduce((t,a)=>{const c=mkChk(a);return t+c.n-c.f;},0);
+  const pag=A.filter(a=>mkFin(a)==="Paga"),apr=A.filter(a=>mkFin(a)==="Aprovada"),prov=A.filter(a=>mkFin(a)==="Provisionada");
+  const feitaNaoPaga=feitas.filter(a=>mkFin(a)!=="Paga"&&mkFin(a)!=="Sem custo");
+  const resp={};A.forEach(a=>{const k=a.responsavel_nome||"Sem responsável";const r=resp[k]||(resp[k]={k,n:0,feitas:0,atr:0,v:0,tf:0,tn:0,tatr:0});const c=mkChk(a);r.n++;r.v+=mkCusto(a);if(a.status==="Concluída")r.feitas++;if(mkAtrasada(a))r.atr++;r.tf+=c.f;r.tn+=c.n;r.tatr+=c.atr.length;});
+  const bloco=(t,xs,vazio,nota)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}${xs.length?" · "+fmtK0(sumV(xs)):""}</h2>${nota?`<p class="sub" style="margin:0 0 8px">${nota}</p>`:""}${xs.length?`<div class="lista">${xs.slice(0,40).map(mkLinhaHTML).join("")}</div>`:`<div class="vazio">${vazio}</div>`}</section>`;
+  return `<div><h1 class="titulo">Gestão das ações · safra ${mkSafra}</h1><p class="sub">O que foi feito, o que vem, o que já saiu da verba e o que está atrasado. Atrasada: a data da ação já passou e ela não foi concluída.</p></div>
+  <div class="metrics">
+    <div class="metric"><span>Realizadas</span><strong>${feitas.length}</strong><span class="meta">${fmtK0(sumV(feitas))}${feitaNaoPaga.length?` · ${feitaNaoPaga.length} ainda sem pagamento`:""}</span></div>
+    <div class="metric"><span>Em andamento</span><strong>${andam.length}</strong><span class="meta">${fmtK0(sumV(andam))}</span></div>
+    <div class="metric"><span>Próximas</span><strong>${prox.length}</strong><span class="meta">${fmtK0(sumV(prox))}</span></div>
+    <div class="metric" style="${atr.length?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Atrasadas</span><strong>${atr.length}</strong><span class="meta">${tAtr.length} tarefas de checklist vencidas · ${tAbertas} em aberto</span></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Verba · o que já debitou e o que não</h2>
+  <div class="metrics">
+    <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong><span class="meta"><button class="link" data-a="pag" data-v="acoes-painel">editar e ver cenários</button></span></div>
+    <div class="metric"><span>Pago (já debitado)</span><strong>${fmtK0(sumV(pag))}</strong><span class="meta">${pag.length} ações · saldo ${fmtK0(V-sumV(pag))}</span></div>
+    <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(sumV(apr))}</strong><span class="meta">${apr.length} ações</span></div>
+    <div class="metric"><span>Provisionado</span><strong>${fmtK0(sumV(prov))}</strong><span class="meta">${prov.length} ações ainda não aprovadas</span></div>
+  </div></section>
+  ${atr.length?bloco("Atrasadas",atr,"",""):""}
+  ${tAtr.length?`<section class="bloco"><h2 class="sec">Tarefas de checklist vencidas · ${tAtr.length}</h2><div class="lista">${tAtr.sort((x,y)=>String(x.i.prazo).localeCompare(String(y.i.prazo))).slice(0,60).map(({a,i})=>`<div class="linha"><div style="min-width:0"><strong>${esc(i.t)}</strong><span class="meta">${esc(i.resp||"sem responsável")} · prazo ${mkData(i.prazo)} · ${esc(a.titulo)}</span></div><button class="link" data-a="mk-abrir" data-v="${a.id}">Abrir ação</button></div>`).join("")}</div></section>`:""}
+  ${bloco("Em andamento",andam,"Nada em andamento.")}
+  ${bloco("Próximas",prox,"Nada programado.")}
+  ${bloco("Realizadas",feitas,"Nenhuma ação concluída ainda.",feitaNaoPaga.length?`${feitaNaoPaga.length} realizadas ainda não estão como pagas: ${fmtK0(sumV(feitaNaoPaga))} que devem sair da verba.`:"")}
+  <section class="bloco"><h2 class="sec">Por responsável</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Responsável</th><th class="val">Ações</th><th class="val">Realizadas</th><th class="val">Atrasadas</th><th class="val">Tarefas feitas</th><th class="val">Tarefas vencidas</th><th class="val">Valor</th></tr></thead><tbody>${Object.values(resp).sort((a,b)=>b.v-a.v).map(r=>`<tr><td>${esc(r.k)}</td><td class="val">${r.n}</td><td class="val">${r.feitas}</td><td class="val" style="${r.atr?"color:var(--vermelho);font-weight:700":""}">${r.atr}</td><td class="val">${r.tn?r.tf+" de "+r.tn:"—"}</td><td class="val" style="${r.tatr?"color:var(--vermelho);font-weight:700":""}">${r.tatr}</td><td class="val">${fmtK0(r.v)}</td></tr>`).join("")||`<tr><td colspan="7">Nenhuma ação.</td></tr>`}</tbody></table></div></section>`;
+}
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(a=>a.status!=="Cancelada");
   const prev=A.reduce((t,a)=>t+(Number(a.valor_prev)||0),0),real=A.reduce((t,a)=>t+(Number(a.valor_real)||0),0),comp=A.reduce((t,a)=>t+mkCusto(a),0),saldo=V-comp;
   const brv=Object.values(S.mkBrAcao||{}).reduce((t,v)=>t+v,0);
+  const sf=f=>A.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0),vPag=sf("Paga"),vApr=sf("Aprovada"),vProv=sf("Provisionada");
+  const cen=[["Só o que já foi pago",vPag,"o que já saiu da verba"],["Pago + aprovado",vPag+vApr,"o que a Barenbrug já se comprometeu a pagar"],["Pago + aprovado + provisionado",vPag+vApr+vProv,"se tudo o que está planejado acontecer"]];
   const por=k=>{const o={};A.forEach(a=>{const c=a[k]||"—";const x=o[c]||(o[c]={k:c,n:0,v:0});x.n++;x.v+=mkCusto(a);});return Object.values(o).sort((a,b)=>b.v-a.v);};
   const tab=(t,xs)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Ações</th><th class="val">Valor</th><th class="val">% da verba</th></tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.k)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.v)}</td><td class="val">${V?pctTxt(x.v/V):"—"}</td></tr>`).join("")}</tbody></table></div></div>`;
-  return `<div><h1 class="titulo">Verba e saldo · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
+  return `<div><h1 class="titulo">Verba e cenários · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
   <form class="form-card" id="f-mk-verba" style="max-width:520px"><label for="mk_verba">Verba disponível na safra (R$)</label><div class="mk-link"><input id="mk_verba" inputmode="decimal" value="${V?esc(String(V).replace(".",",")):""}"><button class="btn" type="submit">Salvar verba</button></div>${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
   <div class="metrics">
     <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong></div>
@@ -3657,15 +3770,21 @@ function vAcoesPainel(){
     <div class="metric" style="${saldo<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Saldo</span><strong>${fmtK0(saldo)}</strong><span class="meta">${saldo<0?"acima da verba":"disponível"}</span></div>
     <div class="metric"><span>Previsto · realizado</span><strong style="font-size:17px">${fmtK0(prev)} · ${fmtK0(real)}</strong><span class="meta">${A.length} ações ativas</span></div>
   </div>
-  ${finBarra(V?comp/V:null)}
+  ${finBarra(V?comp/V:null,"da verba comprometida")}
+  <section class="bloco"><h2 class="sec">Cenários da verba</h2><p class="sub" style="margin:0 0 8px">Paga: já debitada · Aprovada: a pagar · Provisionada: reservada, ainda não aprovada. Ações "Sem custo" não entram.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cenário</th><th class="val">Usado</th><th class="val">% da verba</th><th class="val">Saldo</th></tr></thead><tbody>${cen.map(([t,v,d])=>`<tr><td><strong>${t}</strong><br><span class="meta">${d}</span></td><td class="val">${fmtK0(v)}</td><td class="val">${V?pctTxt(v/V):"—"}</td><td class="val" style="${V-v<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(V-v)}</td></tr>`).join("")}</tbody></table></div>
+  <div class="metrics" style="margin-top:10px"><div class="metric"><span>Pago</span><strong>${fmtK0(vPag)}</strong></div><div class="metric"><span>Aprovado</span><strong>${fmtK0(vApr)}</strong></div><div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong></div></div></section>
   ${brv?`<p class="meta">Brindes do estoque vinculados às ações: ${fmtK0(brv)} (requisições aprovadas). Não entram no comprometido, porque o estoque já foi comprado.</p>`:""}
   <section class="bloco"><div class="int-2">${tab("Por status",por("status"))}${tab("Por tipo",por("tipo"))}</div></section>
-  <section class="bloco"><h2 class="sec">Ações por valor</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Status</th><th class="val">Previsto</th><th class="val">Realizado</th><th class="val">Conta</th></tr></thead><tbody>${A.slice().sort((a,b)=>mkCusto(b)-mkCusto(a)).map(a=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${a.id}">${esc(a.titulo)}</button><br><span class="meta">${esc(a.tipo||"")}</span></td><td>${esc(a.status)}</td><td class="val">${fmtK0(a.valor_prev)}</td><td class="val">${Number(a.valor_real)>0?fmtK0(a.valor_real):"—"}</td><td class="val"><strong>${fmtK0(mkCusto(a))}</strong></td></tr>`).join("")||`<tr><td colspan="5">Nenhuma ação.</td></tr>`}</tbody></table></div></section>`;
+  <section class="bloco"><h2 class="sec">Ações por valor</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Status</th><th>Financeiro</th><th class="val">Previsto</th><th class="val">Realizado</th><th class="val">Conta</th></tr></thead><tbody>${A.slice().sort((a,b)=>mkCusto(b)-mkCusto(a)).map(a=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${a.id}">${esc(a.titulo)}</button><br><span class="meta">${esc(a.tipo||"")}</span></td><td>${esc(a.status)}</td><td>${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}</td><td class="val">${fmtK0(a.valor_prev)}</td><td class="val">${Number(a.valor_real)>0?fmtK0(a.valor_real):"—"}</td><td class="val"><strong>${fmtK0(mkCusto(a))}</strong></td></tr>`).join("")||`<tr><td colspan="6">Nenhuma ação.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><div class="int-2">${tab("Por situação financeira",por("fin"))}</div></section>`;
 }
 function vAcoesMkt(){
   if(S.pag==="acoes-nova"&&ehMkt())return vAcoesNova();
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
+  if(S.pag==="acoes-cal")return vAcoesCal();
+  if(S.pag==="acoes-gestao"&&ehMkt())return vAcoesGestao();
   return vAcoesQuadro();
 }
 
@@ -3892,6 +4011,9 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-del"){S.mkDel=true;render();return;}
   if(a==="mk-del-n"){S.mkDel=false;render();return;}
   if(a==="mk-excluir"){if(!ehMkt())return;const {error}=await sb.from("mkt_acoes").delete().eq("id",S.mkSel);if(error){aviso("Não foi possível excluir.");return;}S.mk=(S.mk||[]).filter(x=>x.id!==S.mkSel);S.pag="acoes-quadro";render();aviso("Ação excluída.");return;}
+  if(a==="mk-mes"){S.mkMes=v;render();return;}
+  if(a==="mk-calf"){S.mkCalF=v;render();return;}
+  if(a==="mk-chk"||a==="mk-chk-del"){const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:a==="mk-chk"?"toggle":"del",p_id:v});if(error){aviso("Não foi possível atualizar o checklist.");render();return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();return;}
   if(a==="mk-mover"){if(!ehMkt())return;const {data,error}=await sb.from("mkt_acoes").update({status:v}).eq("id",S.mkSel).select().maybeSingle();if(error||!data){aviso("Não foi possível mudar o status.");return;}S.mk=S.mk.map(x=>x.id===data.id?data:x);render();carregarMkCard(data.id);return;}
   if(a==="mk-capa"){if(!ehMkt())return;const {data,error}=await sb.from("mkt_acoes").update({capa_path:v}).eq("id",S.mkSel).select().maybeSingle();if(!error&&data){S.mk=S.mk.map(x=>x.id===data.id?data:x);render();}return;}
   if(a==="mk-rem"){const {error}=await sb.rpc("mkt_remover_anexo",{p_acao:S.mkSel,p_chave:v});if(error){aviso("Não foi possível remover.");return;}if(!/^https?:/.test(v)){try{await sb.storage.from("mkt").remove([v]);}catch(e){}}S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);return;}
@@ -3914,6 +4036,7 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("input",ev=>{
   const t=ev.target;if(!t)return;
   if(t.id==="mk_busca"){S.mkBusca=t.value;clearTimeout(S.mkBT);S.mkBT=setTimeout(()=>{render();const e=document.getElementById("mk_busca");if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250);}
+  if(t.id==="rv_busca"){S.rvBusca=t.value;clearTimeout(S.mkBT);S.mkBT=setTimeout(()=>{render();const e=document.getElementById("rv_busca");if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250);}
   if(t.id==="bd_busca"){S.bdBusca=t.value;clearTimeout(S.mkBT);S.mkBT=setTimeout(()=>{render();const e=document.getElementById("bd_busca");if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250);}
   if(t.id==="bd_reqb"){S.bdReqB=t.value;clearTimeout(S.mkBT);S.mkBT=setTimeout(()=>{render();const e=document.getElementById("bd_reqb");if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250);}
   if(t.id==="mk_penv"){const q=finNorm(t.value);document.querySelectorAll(".mk-pessoas [data-nome]").forEach(l=>{l.hidden=!!q&&!l.dataset.nome.includes(q);});}
@@ -3943,12 +4066,14 @@ document.addEventListener("submit",async ev=>{
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
     const d={titulo:val("mk_tit"),tipo:val("mk_tp"),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
-      responsavel:val("mk_resp")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
-    if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
+      fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
+    if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.fin==="Paga"&&!d.pago_em)d.pago_em=mkHoje();if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
     if(btn)btn.disabled=true;const id=f.dataset.id?+f.dataset.id:null;
     const q=id?sb.from("mkt_acoes").update(d).eq("id",id).select().maybeSingle():sb.from("mkt_acoes").insert(d).select().maybeSingle();
     const {data,error}=await q;if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a ação.");return;}
     S.mk=id?S.mk.map(x=>x.id===id?data:x):[...(S.mk||[]),data];S.mkSel=data.id;S.mkEdit=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(data.id);aviso(id?"Ação salva.":"Ação criada.");return;}
+  if(f.id==="f-mk-chk"){const t=val("mkc_t");if(!t)return;if(btn)btn.disabled=true;const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:"add",p_id:null,p_txt:t,p_resp:val("mkc_r")||null,p_prazo:val("mkc_p")||null});
+    if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
   if(f.id==="f-mk-com"){const tx=val("mk_com");if(!tx)return;if(btn)btn.disabled=true;const {error}=await sb.from("mkt_comentarios").insert({acao_id:S.mkSel,texto:tx.slice(0,4000)});if(error){if(btn)btn.disabled=false;aviso("Não foi possível comentar.");return;}carregarMkCard(S.mkSel);return;}
   if(f.id==="f-mk-link"){const u=val("mk_lurl");if(!/^https?:\/\//i.test(u)){aviso("Use um link começando com https://");return;}const {error}=await sb.rpc("mkt_anexar",{p_acao:S.mkSel,p_path:null,p_nome:val("mk_lnome")||null,p_tipo:null,p_tam:null,p_url:u});if(error){aviso("Não foi possível adicionar o link.");return;}S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Link adicionado.");return;}
   if(f.id==="f-mk-verba"){if(!ehMkt())return;const v=mkNum(val("mk_verba"));if(!(v>=0)){aviso("Confira o valor da verba.");return;}const {data,error}=await sb.from("mkt_verba").update({valor:v}).eq("safra",mkSafra).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar a verba.");return;}S.mkVerba=data;render();aviso("Verba salva.");return;}
@@ -4065,7 +4190,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Pe
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-painel","Verba e saldo"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -4436,7 +4561,10 @@ document.addEventListener("submit",async ev=>{
     S.canais=null;render();aviso("Ação atualizada.");return;
   }
   if(f.id==="f-canal"){
-    const dados={tier:f.querySelector("#c_tier").value,responsavel:f.querySelector("#c_resp").value.trim(),responsavel_legal:f.querySelector("#c_legal").value.trim(),meta_kg:+f.querySelector("#c_meta").value||0,valor_kg:+f.querySelector("#c_valor").value||0};
+    const elCom=f.querySelector("#c_com");const comId=elCom&&!elCom.disabled?(elCom.value||null):undefined;const comNome=comId?((S.rvComerciais||[]).find(x=>x.id===comId)||{}).nome:null;
+    let respTxt=f.querySelector("#c_resp").value.trim();const cAnt=(S.canais||[]).find(x=>x.id===S.canalSel)||{};
+    if(comId!==undefined&&comId!==cAnt.comercial_id&&comNome&&(!respTxt||respTxt===cAnt.responsavel))respTxt=comNome;
+    const dados={tier:f.querySelector("#c_tier").value,responsavel:respTxt,...(comId!==undefined?{comercial_id:comId}:{}),responsavel_legal:f.querySelector("#c_legal").value.trim(),meta_kg:+f.querySelector("#c_meta").value||0,valor_kg:+f.querySelector("#c_valor").value||0};
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("canais").update(dados).eq("id",S.canalSel);
     if(error){aviso("Erro ao salvar.");render();return;}
