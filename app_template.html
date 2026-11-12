@@ -3171,13 +3171,15 @@ const intCli=r=>finNorm(String(r.org||"")||String(r.nome||"").split(" - ")[0]);
 const intNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const t=String(v).replace(/[^\d,.-]/g,"");if(!t)return null;const n=parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t);return isFinite(n)?n:null;};
 const intDias=(a,b)=>{if(!a||!b)return null;const d=(new Date(String(b).slice(0,10)+"T00:00:00Z")-new Date(String(a).slice(0,10)+"T00:00:00Z"))/864e5;return isFinite(d)?Math.round(d):null;};
 const intMed=a=>{const x=a.filter(v=>v!=null).sort((p,q)=>p-q);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2;};
+/* hibridos que entram so na visao geral (BI), nao nos programas Conecta */
+const INT_HIB_EXTRA=/mulato|barmix plus|barmix palhada ?\+/;
 function intCalc(){
   if(S.intC)return S.intC;
   const L=(S.intMapa||[]).map(r=>{
     /* visao geral: Mulato II conta como hibrido (como no BI). Nos programas Conecta ele segue como convencional (kg_h do CRM). */
-    const mul=Array.isArray(r.itens)?r.itens.filter(x=>/mulato/.test(finNorm(x[0]))):[],kgMul=mul.reduce((t,x)=>t+(Number(x[1])||0),0);
+    const mul=Array.isArray(r.itens)?r.itens.filter(x=>INT_HIB_EXTRA.test(finNorm(x[0]))):[],kgMul=mul.reduce((t,x)=>t+(Number(x[1])||0),0);
     const kgH=(Number(r.kg_h)||0)+kgMul,kgC=Math.max(0,(Number(r.kg_c)||0)-kgMul),rs=Number(r.rs)||0;let rsH;
-    if(Array.isArray(r.itens)&&r.itens.some(x=>Number(x[2])>0))rsH=r.itens.filter(x=>/cayana|sabia|convert 330|carcara|mulato/.test(finNorm(x[0]))).reduce((t,x)=>t+(Number(x[2])||0),0);
+    if(Array.isArray(r.itens)&&r.itens.some(x=>Number(x[2])>0))rsH=r.itens.filter(x=>/cayana|sabia|convert 330|carcara/.test(finNorm(x[0]))||INT_HIB_EXTRA.test(finNorm(x[0]))).reduce((t,x)=>t+(Number(x[2])||0),0);
     else rsH=kgH+kgC?rs*kgH/(kgH+kgC):0;
     return {r,kgH,kgC,kgMul,kg:kgH+kgC,rs,rsH,hib:kgH>0,seg:r.seg==="B2B"?"B2B":"B2C",via:intVia(r),cli:intCli(r),uf:r.uf||"",cid:r.cidade||"",
       frete:intNum(r.frete),pag:r.pag?String(r.pag).trim():"",ciclo:intDias(r.cl,r.fat)};});
@@ -3340,7 +3342,7 @@ function vIntSeg(C){
   const cliN={};b2c.forEach(x=>{cliN[x.cli]=(cliN[x.cli]||0)+1;});const nCli=Object.keys(cliN).length,rec=Object.values(cliN).filter(v=>v>1).length;
   const ufB=C.ag(b2c,x=>x.uf).sort((a,b)=>b.kgH-a.kgH).slice(0,8),totB=b2c.reduce((a,x)=>a+x.kgH,0)||1;
   const cu={};b2c.forEach(x=>{const c=x.r.cults&&Object.keys(x.r.cults).length?Object.entries(x.r.cults):(Array.isArray(x.r.itens)?x.r.itens.map(i=>{const l=finNorm(i[0]);return [/cayana/.test(l)?"Cayana":/sabia|convert 330/.test(l)?"Sabiá":/carcara/.test(l)?"Carcará":"",i[1]];}):[]);
-    if(x.kgMul&&!c.some(([k])=>k==="Mulato II"))c.push(["Mulato II",x.kgMul]);
+    if(Array.isArray(x.r.itens))x.r.itens.forEach(i=>{const l=finNorm(i[0]);const k=/mulato/.test(l)?"Mulato II":INT_HIB_EXTRA.test(l)?"Barmix Plus":"";if(k&&!(x.r.cults||{})[k])c.push([k,Number(i[1])||0]);});
     c.forEach(([k,v])=>{if(agHibF(k))cu[k]=(cu[k]||0)+(Number(v)||0);});});
   // ciclo e pagamento
   const cic=(xs)=>{const d=xs.map(x=>x.ciclo).filter(v=>v!=null&&v>=0&&v<400);return d.length?`${Math.round(intMed(d))} dias (média ${Math.round(d.reduce((a,v)=>a+v,0)/d.length)}, ${d.length} ${d.length===1?"pedido":"pedidos"})`:"—";};
@@ -3359,8 +3361,8 @@ function vIntSeg(C){
     <tr><td><strong>Demais cultivares</strong></td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2C"))}</td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2B"))}</td></tr></tbody></table></div><p class="precos-nota">Mediana de dias entre a data em que o pedido foi marcado como vendido no CRM e a data de faturamento.</p>`:intPend("A data em que o pedido foi marcado como vendido")}</section>
   <section class="bloco"><h2 class="sec">Formas de pagamento</h2>${C.temPag?`<div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${pagT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${pagT("B2B")}</div></div></div>`:intPend("A forma de pagamento")}</section>`;
 }
-const agHibF=k=>/^(Sabiá|Cayana|Carcará|Mulato II)$/.test(k);
-const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará e Mulato II, como no BI. Nos programas Conecta RC e Conecta Revendas o Mulato II conta como convencional.";
+const agHibF=k=>/^(Sabiá|Cayana|Carcará|Mulato II|Barmix Plus)$/.test(k);
+const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará, Mulato II e Barmix Plus, como no BI. Nos programas Conecta RC e Conecta Revendas, Mulato II e Barmix Plus contam como convencionais.";
 
 /* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||temPerfil("Financeiro")||temAcessoExtra("financeiro");
