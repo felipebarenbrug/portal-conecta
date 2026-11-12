@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="bingbot" content="noindex, nofollow, noarchive">
 <title>Portal Conecta Barenbrug</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
@@ -485,6 +488,7 @@ main.largo{max-width:1120px}
 .pc-txt p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.pc-txt .link{justify-self:start;font-size:12px}
 .pc-form{display:flex;gap:8px;align-items:flex-end}.pc-form textarea{flex:1;min-width:0;resize:vertical;font:inherit;font-size:15px;padding:10px 12px;min-height:44px;border:1px solid var(--linha,#cfd8e3);border-radius:10px;background:var(--branco,#fff);color:inherit}.pc-form .btn{padding:8px 14px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.btn.perigo-t{color:var(--vermelho,#c0392b);border-color:var(--vermelho,#c0392b)}
 </style>
 </head>
 <body>
@@ -992,7 +996,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112104002";
+const APP_VER="20261112104839";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3522,6 +3526,10 @@ const MK_STATUS=["A fazer","Em andamento","Concluída","Cancelada"];
 const MK_TIPOS=["Evento","Dia de campo","Feira","Patrocínio","Mídia e conteúdo","Material e brindes","Ação com revenda","Treinamento","Outro"];
 const MK_MIMES=["image/jpeg","image/png","image/webp","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.ms-powerpoint","application/vnd.openxmlformats-officedocument.presentationml.presentation","text/plain"];
 const BD_LOCAIS=["Estoque UPI Guaíra","Escritório RP"];
+const BD_SAFRA="26/27";
+const bdEmprestado=id=>(S.bdEmp||[]).filter(e=>e.brinde_id===id&&!e.encerrado).reduce((t,e)=>t+Math.max(0,(Number(e.qtd)||0)-(Number(e.devolvido_qtd)||0)),0);
+const bdValor=b=>(Number(b.qtd_total)||0)*(Number(b.valor_unit)||0);
+const bdDias=d=>d?Math.floor((Date.now()-new Date(d+"T12:00:00").getTime())/864e5):0;
 const BD_STATUS_COR={"Pendente":"amarelo","Aprovada":"azul","Entregue":"verde","Recusada":"vermelho","Cancelada":"cinza","Histórico":"cinza"};
 const mkCusto=a=>(Number(a.valor_real)||0)>0?Number(a.valor_real):(Number(a.valor_prev)||0);
 const mkData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
@@ -3664,14 +3672,17 @@ function vAcoesMkt(){
 /* ---------- Brindes de Marketing ---------- */
 function subnavBrindes(){
   const g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length;
-  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-painel","Painel"]]:[])];
+  const empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
+  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Brindes de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Brindes de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Brindes de Marketing</span></div></div>`;
 }
 async function carregarBrindes(){
   if(S.bdBusy)return;S.bdBusy=true;
-  try{if(ehMkt()){const {data}=await sb.from("brindes").select("*").order("nome");S.bd=data||[];}
+  try{if(ehMkt()){const {data}=await sb.from("brindes").select("*").order("nome");S.bd=data||[];
+      const [bu,bx,em]=await Promise.all([sb.from("brinde_budget").select("*").eq("id",BD_SAFRA).maybeSingle(),sb.from("brinde_baixas").select("*").order("em",{ascending:false}),sb.from("brinde_emprestimos").select("*").order("saiu_em",{ascending:false})]);
+      S.bdBudget=bu.data||{id:BD_SAFRA,valor:0};S.bdBaixas=bx.data||[];S.bdEmp=em.data||[];}
     else{const {data}=await sb.rpc("brindes_catalogo");S.bd=(Array.isArray(data)?data:[]).map(x=>({...x,qtd_total:x.qtd,qtd_visivel:x.qtd,visivel:true}));}}catch(e){S.bd=[];}
   try{const {data}=await sb.from("brinde_reqs").select("*").order("criado_em",{ascending:false}).limit(1000);S.bdReqs=data||[];}catch(e){S.bdReqs=[];}
   if(!S.mk&&veAcoesMkt()){try{const {data}=await sb.from("mkt_acoes").select("id,titulo,status").neq("status","Cancelada").order("id",{ascending:false});S.bdAcoes=data||[];}catch(e){S.bdAcoes=[];}}
@@ -3686,22 +3697,24 @@ function bdCardHTML(b){
     <div class="bd-info"><strong>${esc(b.nome)}</strong><span class="meta">Cód. ${esc(b.codigo||"—")} · ${esc(b.local||"")}</span>
       <div class="bd-num"><span><b>${fmtR(b.valor_unit)}</b><small>unitário</small></span>${g?`<span><b>${(Number(b.qtd_total)||0).toLocaleString("pt-BR")}</b><small>no estoque</small></span><span><b>${(Number(b.qtd_visivel)||0).toLocaleString("pt-BR")}</b><small>visível</small></span>`:`<span><b>${disp.toLocaleString("pt-BR")}</b><small>disponível</small></span>`}</div>
       <span class="meta">Estoque atualizado em ${mkData(b.estoque_em)||"—"}</span>
-      ${g?`<div class="bd-tags">${b.uso_interno?stTag("Uso interno","cinza"):b.visivel?stTag("Visível ao comercial","verde"):stTag("Oculto","cinza")}${b.obs?`<span class="meta" title="${esc(b.obs)}">${esc(b.obs.slice(0,60))}</span>`:""}</div>`:""}
-      <div class="bd-acoes">${disp>0&&(!g||(!b.uso_interno||true))?`<div class="bd-qtd"><button type="button" class="btn sec" data-a="bd-menos" data-v="${b.id}" aria-label="Menos">−</button><input inputmode="numeric" data-bdq="${b.id}" value="${q||""}" placeholder="0" aria-label="Quantidade de ${esc(b.nome)}"><button type="button" class="btn sec" data-a="bd-mais" data-v="${b.id}" aria-label="Mais">+</button></div>`:`<span class="meta">Sem saldo para requisitar</span>`}${g?`<button class="link" data-a="bd-editar" data-v="${b.id}">Editar</button>`:""}</div>
+      ${g?`<div class="bd-tags">${b.ativo===false?stTag("Arquivado","vermelho"):""}${b.uso_interno?stTag("Uso interno · fora do total","cinza"):b.visivel?stTag("Visível ao comercial","verde"):stTag("Oculto","cinza")}${b.uso_interno?"":b.baixado?stTag("Baixado","azul"):stTag("Sem baixa fiscal","amarelo")}${bdEmprestado(b.id)?stTag(bdEmprestado(b.id).toLocaleString("pt-BR")+" emprestado"+(bdEmprestado(b.id)>1?"s":""),"amarelo"):""}${b.obs?`<span class="meta" title="${esc(b.obs)}">${esc(b.obs.slice(0,60))}</span>`:""}</div>`:""}
+      <div class="bd-acoes">${disp>0&&(!g||(!b.uso_interno||true))?`<div class="bd-qtd"><button type="button" class="btn sec" data-a="bd-menos" data-v="${b.id}" aria-label="Menos">−</button><input inputmode="numeric" data-bdq="${b.id}" value="${q||""}" placeholder="0" aria-label="Quantidade de ${esc(b.nome)}"><button type="button" class="btn sec" data-a="bd-mais" data-v="${b.id}" aria-label="Mais">+</button></div>`:`<span class="meta">Sem saldo para requisitar</span>`}${g?`<button class="link" data-a="bd-editar" data-v="${b.id}">Editar</button>${b.qtd_total>bdEmprestado(b.id)&&b.ativo!==false?`<button class="link" data-a="bd-emprestar" data-v="${b.id}">Emprestar</button>`:""}`:""}</div>
     </div></article>`;
 }
 function vBdCatalogo(){
   if(!S.bd)return `<div class="carregando">Carregando os brindes…</div>`;
   const g=ehMkt(),busca=finNorm(S.bdBusca||""),fc=S.bdCat||"Todas",fl=S.bdLoc||"Todos",fv=S.bdVis||"Todos";
   const cats=[...new Set(S.bd.map(b=>b.categoria).filter(Boolean))];
-  const L=S.bd.filter(b=>(fc==="Todas"||b.categoria===fc)&&(fl==="Todos"||b.local===fl)&&(!g||fv==="Todos"||(fv==="Visíveis"?b.visivel&&!b.uso_interno:fv==="Ocultos"?!b.visivel||b.uso_interno:fv==="Sem saldo"?!(b.qtd_total>0):true))&&(!busca||finNorm(b.nome+" "+(b.codigo||"")).includes(busca)));
+  const fOk=b=>{if(!g)return true;if(fv==="Arquivados")return b.ativo===false;if(b.ativo===false)return false;
+    return fv==="Todos"||(fv==="Visíveis"?b.visivel&&!b.uso_interno:fv==="Ocultos"?!b.visivel||b.uso_interno:fv==="Sem saldo"?!(b.qtd_total>0):fv==="Uso interno"?b.uso_interno:fv==="Baixados"?b.baixado&&!b.uso_interno:fv==="Sem baixa fiscal"?!b.baixado&&!b.uso_interno:fv==="Emprestados"?bdEmprestado(b.id)>0:true);};
+  const L=S.bd.filter(b=>(fc==="Todas"||b.categoria===fc)&&(fl==="Todos"||b.local===fl)&&fOk(b)&&(!busca||finNorm(b.nome+" "+(b.codigo||"")).includes(busca)));
   const C=bdCarr(),itens=Object.entries(C).filter(([,q])=>q>0),tot=itens.reduce((t,[id,q])=>{const b=S.bd.find(x=>String(x.id)===String(id));return t+(b?q*(Number(b.valor_unit)||0):0);},0);
   return `<div><h1 class="titulo">Brindes de Marketing</h1><p class="sub">${g?"Todo o estoque de brindes e materiais. Defina quanto cada item mostra ao time comercial e se ele aparece. Itens de uso interno nunca aparecem para o comercial.":"Brindes e materiais liberados pelo Marketing. Escolha as quantidades e faça a requisição: o Marketing aprova e separa."}</p></div>
   <div class="mk-barra">
     <input type="search" id="bd_busca" placeholder="Buscar por nome ou código" value="${esc(S.bdBusca||"")}" aria-label="Buscar">
     <select id="bd_cat" aria-label="Categoria">${["Todas",...cats].map(t=>`<option ${t===fc?"selected":""}>${t}</option>`).join("")}</select>
     <select id="bd_loc" aria-label="Local">${["Todos",...BD_LOCAIS].map(t=>`<option ${t===fl?"selected":""}>${t}</option>`).join("")}</select>
-    ${g?`<select id="bd_vis" aria-label="Visibilidade">${["Todos","Visíveis","Ocultos","Sem saldo"].map(t=>`<option ${t===fv?"selected":""}>${t}</option>`).join("")}</select><button class="btn" data-a="bd-novo">+ Novo item</button>`:""}
+    ${g?`<select id="bd_vis" aria-label="Visibilidade">${["Todos","Visíveis","Ocultos","Sem saldo","Uso interno","Baixados","Sem baixa fiscal","Emprestados","Arquivados"].map(t=>`<option ${t===fv?"selected":""}>${t}</option>`).join("")}</select><button class="btn" data-a="bd-novo">+ Novo item</button>`:""}
   </div>
   <div class="bd-grade">${L.map(bdCardHTML).join("")||`<div class="vazio">Nenhum item${S.bd.length?" com esses filtros":g?"":" liberado no momento"}.</div>`}</div>
   ${itens.length?`<div class="bd-carrinho" role="region" aria-label="Requisição em montagem"><div><strong>${itens.length} ${itens.length===1?"item":"itens"} · ${itens.reduce((t,[,q])=>t+q,0).toLocaleString("pt-BR")} unidades</strong><span>${fmtR(tot)}</span></div><div class="acoes" style="margin:0"><button class="link" data-a="bd-limpar">limpar</button><button class="btn" data-a="pag" data-v="brindes-pedir">Fazer requisição</button></div></div>`:""}`;
@@ -3753,14 +3766,78 @@ function vBdItem(){
       <div><label for="bi_loc">Local</label><select id="bi_loc">${BD_LOCAIS.map(l=>`<option ${l===b.local?"selected":""}>${l}</option>`).join("")}</select></div></div>
     <div class="dupla"><div><label for="bi_val">Valor unitário (R$)</label><input id="bi_val" inputmode="decimal" value="${esc(String(b.valor_unit||0).replace(".",","))}"></div><div><label for="bi_tot">Quantidade total no estoque</label><input id="bi_tot" inputmode="numeric" value="${b.qtd_total||0}"><span class="meta">Mudar o total atualiza a data do estoque e fica no histórico.</span></div></div>
     <div class="dupla"><div><label for="bi_vis">Quantidade visível ao comercial</label><input id="bi_vis" inputmode="numeric" value="${b.qtd_visivel||0}"><span class="meta">É o máximo que o comercial vê e pode pedir. Nunca passa do total.</span></div>
-      <div><label>Visibilidade</label><label class="check"><input type="checkbox" id="bi_on" ${b.visivel?"checked":""}> Mostrar ao time comercial</label><label class="check"><input type="checkbox" id="bi_ui" ${b.uso_interno?"checked":""}> Uso interno (nunca aparece)</label><label class="check"><input type="checkbox" id="bi_at" ${b.ativo===false?"":"checked"}> Item ativo</label></div></div>
+      <div><label>Visibilidade</label><label class="check"><input type="checkbox" id="bi_on" ${b.visivel?"checked":""}> Mostrar ao time comercial</label><label class="check"><input type="checkbox" id="bi_ui" ${b.uso_interno?"checked":""}> Uso interno (nunca aparece)</label><label class="check"><input type="checkbox" id="bi_at" ${b.ativo===false?"":"checked"}> Item ativo (desmarque para arquivar: some do catálogo e do painel)</label></div></div>
     <div><label for="bi_obs">Observação</label><input id="bi_obs" maxlength="300" value="${esc(b.obs||"")}"></div>
     ${b.estoque_em?`<p class="meta">Estoque atualizado em ${mkData(b.estoque_em)}${b.atualizado_em?" · última edição "+fmtDataHora(b.atualizado_em):""}</p>`:""}
-    <div class="acoes"><button class="btn" type="submit">${b.id?"Salvar":"Criar item"}</button></div></form>`;
+    <div class="acoes"><button class="btn" type="submit">${b.id?"Salvar":"Criar item"}</button></div></form>
+  ${b.id?bdFiscalHTML(b)+bdEmpItemHTML(b)+bdExcluirHTML(b):""}`;
+}
+function bdFiscalHTML(b){
+  if(b.uso_interno)return `<section class="form-card"><h2 class="sec">Situação fiscal</h2><p class="meta">Item de uso interno: não entra no valor do estoque nem no budget. Serve para controle de onde está e com quem. Empréstimos não dão baixa.</p></section>`;
+  const v=bdValor(b),deb=(S.bdBaixas||[]).filter(x=>x.brinde_id===b.id).reduce((t,x)=>t+(Number(x.valor)||0),0);
+  return `<section class="form-card"><h2 class="sec">Situação fiscal</h2>
+    <p>${b.baixado?`${stTag("Baixado","azul")} desde ${mkData(b.baixado_em)||"—"}. O valor já saiu do estoque fiscal e foi debitado do budget de brindes.`:`${stTag("Sem baixa fiscal","amarelo")} O item está no estoque fiscal. Ele só debita o budget quando você der baixa, ou na parte que sair por requisição aprovada.`}</p>
+    <p class="meta">Debitado do budget por este item até hoje: ${fmtR(deb)}.</p>
+    <div class="acoes">${b.baixado?`<button class="btn sec" data-a="bd-baixa" data-v="${b.id}" data-on="0">Desfazer a baixa (estorna ${fmtR(Math.max(0,(S.bdBaixas||[]).filter(x=>x.brinde_id===b.id&&x.origem!=="requisicao").reduce((t,x)=>t+(Number(x.valor)||0),0)))})</button>`:`<button class="btn" data-a="bd-baixa" data-v="${b.id}" data-on="1">Dar baixa fiscal · debita ${fmtR(v)} do budget</button>`}</div></section>`;
+}
+function bdEmpItemHTML(b){
+  const E=(S.bdEmp||[]).filter(e=>e.brinde_id===b.id);const ab=E.filter(e=>!e.encerrado),fora=bdEmprestado(b.id);
+  return `<section class="form-card"><h2 class="sec">Onde está</h2>
+    <p>${(Number(b.qtd_total)||0).toLocaleString("pt-BR")} no total · <strong>${Math.max(0,(Number(b.qtd_total)||0)-fora).toLocaleString("pt-BR")} em ${esc(b.local)}</strong>${fora?` · ${fora.toLocaleString("pt-BR")} emprestados`:""}</p>
+    ${ab.length?`<div class="lista">${ab.map(bdEmpLinha).join("")}</div>`:`<p class="meta">Nada emprestado agora.</p>`}
+    <div class="acoes">${b.qtd_total>fora?`<button class="btn sec" data-a="bd-emprestar" data-v="${b.id}">Registrar empréstimo</button>`:""}${E.length>ab.length?`<button class="link" data-a="pag" data-v="brindes-emp">Ver histórico de empréstimos</button>`:""}</div></section>`;
+}
+function bdExcluirHTML(b){
+  const ab=bdEmprestado(b.id);
+  return `<section class="form-card"><h2 class="sec">Excluir item</h2>
+    ${S.bdDel===b.id?`<p>Excluir <strong>${esc(b.nome)}</strong> de vez? O histórico de eventos do item é apagado. Requisições antigas e baixas já debitadas continuam registradas pelo nome. Para só tirar da visão, desmarque "Item ativo" e salve.</p>
+      <div class="acoes"><button class="btn perigo" data-a="bd-del-ok" data-v="${b.id}">Excluir de vez</button><button class="btn sec" data-a="bd-del" data-v="">Cancelar</button></div>`
+    :ab?`<p class="meta">Há ${ab} unidades emprestadas. Registre a devolução ou encerre o empréstimo antes de excluir.</p>`:`<div class="acoes"><button class="btn sec perigo-t" data-a="bd-del" data-v="${b.id}">Excluir item</button></div>`}</section>`;
+}
+function bdEmpLinha(e){
+  const b=(S.bd||[]).find(x=>x.id===e.brinde_id)||{};const falta=Math.max(0,e.qtd-(e.devolvido_qtd||0)),dias=bdDias(e.saiu_em),atr=e.previsto&&!e.encerrado&&new Date(e.previsto+"T23:59:59")<new Date();
+  const ab=S.bdDevSel===e.id;
+  return `<div class="bd-req">
+    <div class="bd-req-top"><div><strong>${esc(b.nome||"Item excluído")} · ${(e.qtd||0).toLocaleString("pt-BR")} un</strong><span class="meta">com ${esc(e.responsavel)} · ${esc(e.destino)}</span></div>${e.encerrado?stTag("Encerrado","cinza"):atr?stTag("Atrasado","vermelho"):stTag("Fora",  "amarelo")}</div>
+    <div class="meta">Saiu em ${mkData(e.saiu_em)}${e.encerrado?"":` · há ${dias} ${dias===1?"dia":"dias"}`}${e.previsto?` · volta prevista ${mkData(e.previsto)}`:""}${e.devolvido_qtd?` · devolvidos ${e.devolvido_qtd}${e.devolvido_em?" em "+mkData(e.devolvido_em):""}`:""}${!e.encerrado&&falta?` · <strong>faltam ${falta}</strong>`:""}</div>
+    ${e.motivo?`<div class="meta">Motivo: ${esc(e.motivo)}</div>`:""}${e.obs?`<div class="meta">Obs.: ${esc(e.obs)}</div>`:""}
+    <div class="meta">Registrado por ${esc(e.criado_nome||"—")}${e.atualizado_nome?` · última atualização ${esc(e.atualizado_nome)} ${fmtDataHora(e.atualizado_em)}`:""}</div>
+    ${e.encerrado?"":ab?`<form class="bd-decidir" id="f-bd-dev" data-id="${e.id}"><div class="dupla"><div><label for="bdv_q">Quantidade que voltou</label><input id="bdv_q" inputmode="numeric" value="${falta}"></div><div><label for="bdv_d">Data da volta</label><input id="bdv_d" type="date" value="${new Date().toISOString().slice(0,10)}"></div></div>
+      <div><label for="bdv_o">Observação</label><input id="bdv_o" maxlength="300" placeholder="Ex.: voltou com avaria, ficou 1 no evento"></div>
+      <label class="check"><input type="checkbox" id="bdv_enc"> Encerrar mesmo sem voltar tudo e descontar do estoque o que não voltou</label>
+      <div class="acoes"><button class="btn" type="submit">Registrar devolução</button><button type="button" class="link" data-a="bd-devsel" data-v="">fechar</button></div></form>`
+      :`<div class="acoes" style="margin:0"><button class="btn sec" data-a="bd-devsel" data-v="${e.id}">Registrar devolução</button></div>`}
+  </div>`;
+}
+function vBdEmp(){
+  if(!S.bd||!S.bdEmp)return `<div class="carregando">Carregando…</div>`;
+  const ab=S.bdEmp.filter(e=>!e.encerrado),enc=S.bdEmp.filter(e=>e.encerrado);
+  const atr=ab.filter(e=>e.previsto&&new Date(e.previsto+"T23:59:59")<new Date());
+  return `<div><h1 class="titulo">Empréstimos de materiais</h1><p class="sub">Itens que saíram para eventos e devem voltar ao estoque, como balões, tendas e banners. Empréstimo não dá baixa fiscal nem debita o budget: é controle de onde o item está e com quem.</p></div>
+  <div class="mk-barra"><button class="btn" data-a="bd-emprestar" data-v="">+ Registrar empréstimo</button></div>
+  <div class="metrics"><div class="metric"><span>Fora do estoque agora</span><strong>${ab.length}</strong><span class="meta">${ab.reduce((t,e)=>t+Math.max(0,e.qtd-(e.devolvido_qtd||0)),0).toLocaleString("pt-BR")} unidades</span></div>
+    <div class="metric" style="${atr.length?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Com volta atrasada</span><strong>${atr.length}</strong></div>
+    <div class="metric"><span>Encerrados</span><strong>${enc.length}</strong></div></div>
+  <section class="bloco"><h2 class="sec">Fora do estoque</h2>${ab.length?`<div class="lista bd-reqs">${ab.map(bdEmpLinha).join("")}</div>`:`<div class="vazio">Nada emprestado agora.</div>`}</section>
+  ${enc.length?`<section class="bloco"><h2 class="sec">Histórico</h2><div class="lista bd-reqs">${enc.slice(0,100).map(bdEmpLinha).join("")}</div></section>`:""}`;
+}
+function vBdEmpNovo(){
+  const ok=(S.bd||[]).filter(b=>b.ativo!==false&&b.qtd_total>bdEmprestado(b.id)).sort((a,b)=>(b.uso_interno-a.uso_interno)||String(a.nome).localeCompare(String(b.nome)));
+  const sel=S.bdEmpItem||"";
+  return `<button class="voltar" data-a="pag" data-v="brindes-emp">‹ Empréstimos</button>
+  <form class="form-card" id="f-bd-emp"><h2 class="sec">Registrar empréstimo</h2><p class="meta">Quem levou, para onde e quando volta. Não mexe no estoque fiscal nem no budget.</p>
+    <div class="dupla"><div><label for="be_item">Item *</label><select id="be_item" required><option value="">Selecione…</option>${ok.map(b=>`<option value="${b.id}" ${String(b.id)===String(sel)?"selected":""}>${esc(b.nome)}${b.uso_interno?" (uso interno)":""} · ${Math.max(0,b.qtd_total-bdEmprestado(b.id))} disponíveis</option>`).join("")}</select></div>
+      <div><label for="be_q">Quantidade *</label><input id="be_q" inputmode="numeric" value="1" required></div></div>
+    <div class="dupla"><div><label for="be_resp">Responsável *</label><input id="be_resp" required maxlength="160" placeholder="Quem está com o item"></div><div><label for="be_dest">Para onde *</label><input id="be_dest" required maxlength="300" placeholder="Evento, cidade/UF"></div></div>
+    <div class="dupla"><div><label for="be_sai">Saiu em</label><input id="be_sai" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div><label for="be_prev">Volta prevista</label><input id="be_prev" type="date"></div></div>
+    <div><label for="be_mot">Motivo / observação</label><input id="be_mot" maxlength="500"></div>
+    <div class="acoes"><button class="btn" type="submit">Registrar</button></div></form>`;
 }
 function vBdPainel(){
   if(!S.bd)return `<div class="carregando">Carregando…</div>`;
-  const B=S.bd.filter(b=>b.ativo!==false),R=S.bdReqs||[];
+  const Ball=S.bd.filter(b=>b.ativo!==false),B=Ball.filter(b=>!b.uso_interno),UI=Ball.filter(b=>b.uso_interno),R=S.bdReqs||[];
+  const budget=Number((S.bdBudget||{}).valor)||0,BX=(S.bdBaixas||[]).filter(x=>(x.safra||BD_SAFRA)===BD_SAFRA),debit=BX.reduce((t,x)=>t+(Number(x.valor)||0),0),saldoB=budget-debit;
+  const semBx=B.filter(b=>!b.baixado),bxd=B.filter(b=>b.baixado);
   const val=xs=>xs.reduce((t,b)=>t+(Number(b.qtd_total)||0)*(Number(b.valor_unit)||0),0),qt=xs=>xs.reduce((t,b)=>t+(Number(b.qtd_total)||0),0);
   const vis=B.filter(b=>b.visivel&&!b.uso_interno),visV=vis.reduce((t,b)=>t+Math.min(b.qtd_visivel,b.qtd_total)*(Number(b.valor_unit)||0),0);
   const pend=R.filter(r=>r.status==="Pendente"),saiu=R.filter(r=>r.status==="Aprovada"||r.status==="Entregue"),hist=R.filter(r=>r.status==="Histórico");
@@ -3769,9 +3846,22 @@ function vBdPainel(){
   const itR={};[...saiu,...hist].forEach(r=>(r.itens||[]).forEach(i=>{const k=i.nome||i.codigo||"—";const a=itR[k]||(itR[k]={k,q:0,v:0});a.q+=Number(i.qtd)||0;a.v+=(Number(i.qtd)||0)*(Number(i.valor_unit)||0);}));
   const tb=(t,xs,cols)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th>${cols.map(c=>`<th class="val">${c[0]}</th>`).join("")}</tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.k)}</td>${cols.map(c=>`<td class="val">${c[1](x)}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${cols.length+1}">—</td></tr>`}</tbody></table></div></div>`;
   const semFoto=B.filter(b=>!b.foto).length,zer=B.filter(b=>!(b.qtd_total>0)).length;
-  return `<div><h1 class="titulo">Painel de brindes</h1><p class="sub">Valor e quantidade do estoque, o que está liberado ao comercial e o que saiu pelas requisições.</p></div>
+  const empA=(S.bdEmp||[]).filter(e=>!e.encerrado);
+  return `<div><h1 class="titulo">Painel de brindes</h1><p class="sub">Budget de brindes, valor e quantidade do estoque, o que está liberado ao comercial e o que saiu pelas requisições. Itens de uso interno ficam fora dos valores.</p></div>
+  <section class="bloco"><h2 class="sec">Budget de brindes · safra ${BD_SAFRA}</h2>
+  <p class="sub" style="margin:0 0 10px">O budget só é debitado na baixa fiscal: quando você dá baixa num item, ou quando sai por requisição aprovada um item que ainda não tinha baixa. Item em estoque sem baixa ainda não pesa no budget.</p>
   <div class="metrics">
-    <div class="metric"><span>Valor em estoque</span><strong>${fmtK0(val(B))}</strong><span class="meta">${qt(B).toLocaleString("pt-BR")} unidades em ${B.filter(b=>b.qtd_total>0).length} itens</span></div>
+    <div class="metric"><span>Budget atual</span><strong>${fmtK0(budget)}</strong><span class="meta">${(S.bdBudget||{}).atualizado_nome?"atualizado por "+esc(S.bdBudget.atualizado_nome)+" em "+fmtDataHora(S.bdBudget.atualizado_em):"informe abaixo"}</span></div>
+    <div class="metric"><span>Já debitado (baixas)</span><strong>${fmtK0(debit)}</strong><span class="meta">${BX.filter(x=>x.origem==="item").length} itens baixados · ${BX.filter(x=>x.origem==="requisicao").length} saídas por requisição</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px ${saldoB<0?"var(--vermelho)":"var(--amarelo)"}"><span>Saldo do budget</span><strong>${fmtK0(saldoB)}</strong><span class="meta">${saldoB<0?"baixas acima do budget":"disponível para novas baixas"}</span></div>
+    <div class="metric" style="${val(semBx)>saldoB?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Estoque sem baixa fiscal</span><strong>${fmtK0(val(semBx))}</strong><span class="meta">${semBx.filter(b=>b.qtd_total>0).length} itens · entra no budget quando der baixa${val(semBx)>saldoB?` · <strong>${fmtK0(val(semBx)-saldoB)} acima do saldo</strong>`:""}</span></div>
+  </div>
+  <form class="mk-barra" id="f-bd-budget" style="margin-top:10px"><label for="bdb_v" style="align-self:center">Budget de brindes ${BD_SAFRA} (R$)</label><input id="bdb_v" inputmode="decimal" value="${esc(String(budget).replace(".",","))}" style="max-width:200px"><button class="btn sec" type="submit">Salvar budget</button></form>
+  ${BX.length?`<details class="lote" style="margin-top:10px"><summary>Baixas que debitaram o budget (${BX.length})</summary><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Quando</th><th>Item</th><th>Origem</th><th class="val">Qtd</th><th class="val">Valor</th><th>Quem</th></tr></thead><tbody>${BX.slice(0,200).map(x=>`<tr><td>${fmtDataHora(x.em)}</td><td>${esc(x.nome||"—")}</td><td>${x.origem==="item"?"Baixa do item":x.origem==="requisicao"?"Requisição #"+esc(String(x.req_id||"")):"Estorno"}</td><td class="val">${(x.qtd||0).toLocaleString("pt-BR")}</td><td class="val">${fmtR(x.valor)}</td><td>${esc(x.quem_nome||"")}</td></tr>`).join("")}</tbody></table></div></details>`:""}
+  </section>
+  <div class="metrics">
+    <div class="metric"><span>Valor em estoque</span><strong>${fmtK0(val(B))}</strong><span class="meta">${qt(B).toLocaleString("pt-BR")} unidades em ${B.filter(b=>b.qtd_total>0).length} itens · baixado ${fmtK0(val(bxd))} · sem baixa ${fmtK0(val(semBx))}</span></div>
+    <div class="metric"><span>Uso interno (só controle)</span><strong>${qt(UI).toLocaleString("pt-BR")} un</strong><span class="meta">${UI.length} itens, fora do total · ${empA.length} empréstimos em aberto</span></div>
     <div class="metric"><span>Liberado ao comercial</span><strong>${fmtK0(visV)}</strong><span class="meta">${vis.filter(b=>Math.min(b.qtd_visivel,b.qtd_total)>0).length} itens visíveis</span></div>
     <div class="metric" style="${pend.length?"box-shadow:inset 0 0 0 2px var(--amarelo)":""}"><span>Requisições pendentes</span><strong>${pend.length}</strong><span class="meta">${fmtK0(pend.reduce((t,r)=>t+(Number(r.total)||0),0))}</span></div>
     <div class="metric"><span>Saída pelo portal</span><strong>${fmtK0(saiu.reduce((t,r)=>t+(Number(r.total)||0),0))}</strong><span class="meta">${saiu.length} aprovadas ou entregues · histórico da planilha ${fmtK0(hist.reduce((t,r)=>t+(Number(r.total)||0),0))}</span></div>
@@ -3786,6 +3876,8 @@ function vBrindes(){
   if(S.pag==="brindes-pedir")return vBdPedir();
   if(S.pag==="brindes-item"&&ehMkt())return vBdItem();
   if(S.pag==="brindes-painel"&&ehMkt())return vBdPainel();
+  if(S.pag==="brindes-emp"&&ehMkt())return vBdEmp();
+  if(S.pag==="brindes-emp-novo"&&ehMkt())return vBdEmpNovo();
   return vBdCatalogo();
 }
 
@@ -3807,6 +3899,12 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-com-del"){const {error}=await sb.from("mkt_comentarios").delete().eq("id",+v);if(!error)carregarMkCard(S.mkSel);return;}
   if(a==="bd-mais"||a==="bd-menos"){const it=(S.bd||[]).find(x=>String(x.id)===v);if(!it)return;const C=bdCarr();const q=Math.max(0,Math.min(bdDisp(it),(C[v]||0)+(a==="bd-mais"?1:-1)));if(q)C[v]=q;else delete C[v];render();return;}
   if(a==="bd-limpar"){S.bdCarr={};render();return;}
+  if(a==="bd-baixa"){if(!ehMkt())return;b.disabled=true;const {data,error}=await sb.rpc("brinde_baixa_item",{p_id:+v,p_baixado:b.dataset.on==="1"});if(error){b.disabled=false;aviso("Não foi possível registrar a baixa.");return;}S.bd=null;await carregarBrindes();aviso(b.dataset.on==="1"?`Baixa registrada: ${fmtR(data)} debitados do budget.`:`Baixa desfeita: ${fmtR(-data)} estornados ao budget.`);return;}
+  if(a==="bd-del"){S.bdDel=v?+v:null;render();return;}
+  if(a==="bd-del-ok"){if(!ehMkt())return;if(bdEmprestado(+v)){aviso("Há unidades emprestadas deste item.");return;}const it=(S.bd||[]).find(x=>x.id===+v);const r=await sb.from("brindes").delete().eq("id",+v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o item.");return;}
+    if(it&&it.foto&&/^brindes\//.test(it.foto)){try{await sb.storage.from("mkt").remove([it.foto]);}catch(e){}}S.bdDel=null;S.bdEdit=null;S.pag="brindes-catalogo";S.bd=null;await carregarBrindes();aviso("Item excluído.");return;}
+  if(a==="bd-emprestar"){if(!ehMkt())return;S.bdEmpItem=v||"";S.pag="brindes-emp-novo";render();window.scrollTo(0,0);return;}
+  if(a==="bd-devsel"){S.bdDevSel=v?+v:null;render();return;}
   if(a==="bd-editar"){if(!ehMkt())return;S.bdEdit=+v;S.pag="brindes-item";render();window.scrollTo(0,0);return;}
   if(a==="bd-novo"){if(!ehMkt())return;S.bdEdit="novo";S.pag="brindes-item";render();window.scrollTo(0,0);return;}
   if(a==="bd-reqf"){S.bdReqF=v;render();return;}
@@ -3863,6 +3961,22 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-bd-budget"){if(!ehMkt())return;const v=mkNum(val("bdb_v"));if(!(v>=0)){aviso("Confira o valor do budget.");return;}
+    const {data,error}=await sb.from("brinde_budget").update({valor:v}).eq("id",BD_SAFRA).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o budget.");return;}S.bdBudget=data;render();aviso("Budget de brindes salvo.");return;}
+  if(f.id==="f-bd-emp"){if(!ehMkt())return;const id=+val("be_item"),q=parseInt(val("be_q")||"0",10),it=(S.bd||[]).find(x=>x.id===id);
+    if(!it){aviso("Escolha o item.");return;}const disp=Math.max(0,(it.qtd_total||0)-bdEmprestado(id));if(!(q>0)||q>disp){aviso(`Quantidade inválida. Disponível: ${disp}.`);return;}
+    const d={brinde_id:id,qtd:q,responsavel:val("be_resp"),destino:val("be_dest"),saiu_em:val("be_sai")||new Date().toISOString().slice(0,10),previsto:val("be_prev")||null,motivo:val("be_mot")||null};
+    if(!d.responsavel||!d.destino){aviso("Informe o responsável e para onde foi.");return;}if(btn)btn.disabled=true;
+    const {error}=await sb.from("brinde_emprestimos").insert(d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível registrar o empréstimo.");return;}
+    S.bdEmpItem="";S.pag="brindes-emp";S.bd=null;await carregarBrindes();aviso("Empréstimo registrado.");return;}
+  if(f.id==="f-bd-dev"){if(!ehMkt())return;const e=(S.bdEmp||[]).find(x=>x.id===+f.dataset.id);if(!e)return;const falta=Math.max(0,e.qtd-(e.devolvido_qtd||0));
+    const q=parseInt(val("bdv_q")||"0",10),enc=f.querySelector("#bdv_enc").checked;if(!(q>=0)||q>falta){aviso(`Informe de 0 a ${falta}.`);return;}if(!q&&!enc){aviso("Informe quanto voltou, ou marque para encerrar.");return;}
+    if(btn)btn.disabled=true;const nd=(e.devolvido_qtd||0)+q,perda=enc?falta-q:0;
+    const obs=[e.obs,val("bdv_o"),perda?`${perda} não voltaram (descontados do estoque)`:""].filter(Boolean).join(" · ");
+    const {error}=await sb.from("brinde_emprestimos").update({devolvido_qtd:nd,devolvido_em:val("bdv_d")||new Date().toISOString().slice(0,10),encerrado:enc||nd>=e.qtd,obs:obs||null}).eq("id",e.id);
+    if(error){if(btn)btn.disabled=false;aviso("Não foi possível registrar a devolução.");return;}
+    if(perda>0){const it=(S.bd||[]).find(x=>x.id===e.brinde_id);if(it){const nt=Math.max(0,(it.qtd_total||0)-perda);await sb.from("brindes").update({qtd_total:nt,qtd_visivel:Math.min(it.qtd_visivel||0,nt)}).eq("id",it.id);}}
+    S.bdDevSel=null;S.bd=null;await carregarBrindes();aviso(perda?`Encerrado. ${perda} descontados do estoque.`:nd>=e.qtd?"Devolução completa registrada.":"Devolução parcial registrada.");return;}
   if(f.id==="f-bd-item"){if(!ehMkt())return;const vu=mkNum(val("bi_val")),qt=parseInt(val("bi_tot")||"0",10),qv=parseInt(val("bi_vis")||"0",10);
     if(!(vu>=0)||!(qt>=0)||!(qv>=0)){aviso("Confira valor e quantidades.");return;}
     const d={nome:val("bi_nome"),codigo:val("bi_cod")||null,categoria:val("bi_cat")||null,local:val("bi_loc"),valor_unit:vu,qtd_total:qt,qtd_visivel:Math.min(qv,qt),
@@ -3952,7 +4066,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Pe
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
   "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-painel","Verba e saldo"]],
-  "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-painel","Painel"]]};
+  "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
 const semOcultas=abas=>{const o=abasOcultas();return abas.filter(([k])=>!o.includes(chaveAba(k)));};
