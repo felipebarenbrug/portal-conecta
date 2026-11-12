@@ -363,6 +363,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
 .aviso-est{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-left:4px solid var(--amarelo);color:var(--preto);padding:12px 14px;border-radius:8px;margin:4px 0 14px;font-size:14px;line-height:1.5}
 .aviso-est strong{display:block;margin-bottom:2px}
+.muted{color:var(--apagado);font-weight:400}
 .aviso-est p{margin:0}
 .aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
 
@@ -881,7 +882,9 @@ async function boot(){
   iniciarWatchdog();
   render();
 }
-async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});const M={};(data||[]).forEach(r=>{const k=repCanon(r.crm);const x=M[k]||(M[k]={crm:k,nome:repCanon(r.nome)||k,fat:0,aFat:0,kg:0,cFat:0,cAFat:0,cKg:0,em:null});
+/* fora do ranking do Conecta RC: vende pelo Inside Sales como CLT, sem comissão */
+const RANK_FORA=/^\s*mayane\b/i;
+async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").select("*").order("kg",{ascending:false});const M={};(data||[]).filter(r=>!RANK_FORA.test(r.crm||"")&&!RANK_FORA.test(r.nome||"")).forEach(r=>{const k=repCanon(r.crm);const x=M[k]||(M[k]={crm:k,nome:repCanon(r.nome)||k,fat:0,aFat:0,kg:0,cFat:0,cAFat:0,cKg:0,em:null});
       x.fat+=+r.fat||0;x.aFat+=+r.a_fat||0;x.kg+=+r.kg||0;x.cFat+=+r.conv_fat||0;x.cAFat+=+r.conv_afat||0;x.cKg+=+r.conv_kg||0;if(r.atualizado_em&&(!x.em||r.atualizado_em>x.em))x.em=r.atualizado_em;});
     RC_RANKING=Object.values(M).sort((a,b)=>b.kg-a.kg);}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
@@ -2878,8 +2881,9 @@ function vIntCanais(){
   const todasR=todas;const todas2=rd==="todas"?todas:todas.filter(x=>x.rodada===rd);
   const f=S.intCult||"Todos";const lst=f==="Todos"?todas2:todas2.filter(x=>finNorm(x.cultivar)===finNorm(f));
   const cults=[...new Set(todas.map(x=>x.cultivar).filter(Boolean))];
-  const resumo=cults.map(cu=>{const xs=todas2.filter(x=>x.cultivar===cu&&Number(x.preco)>0).map(x=>Number(x.preco));if(!xs.length)return null;
-    const ult=todas2.find(x=>x.cultivar===cu);return {cu,n:xs.length,med:xs.reduce((t,v)=>t+v,0)/xs.length,min:Math.min(...xs),max:Math.max(...xs),ult};}).filter(Boolean);
+  const resumo=cults.map(cu=>{const ls=todas2.filter(x=>x.cultivar===cu&&Number(x.preco)>0),xs=ls.map(x=>Number(x.preco));if(!xs.length)return null;
+    const min=Math.min(...xs),max=Math.max(...xs),quem=v=>{const ns=[...new Set(ls.filter(x=>Number(x.preco)===v).map(x=>x.canal))];return ns.slice(0,2).join(", ")+(ns.length>2?" +"+(ns.length-2):"");};
+    return {cu,n:xs.length,nr:new Set(ls.map(x=>x.canal)).size,med:xs.reduce((t,v)=>t+v,0)/xs.length,min,max,qmin:quem(min),qmax:quem(max),ult:ls[0]};}).filter(Boolean);
   const form=S.novoPreco?`<form class="form-card" id="f-preco"><h3 class="sec">Nova pesquisa de preço (cliente oculto)</h3>
     <div class="dupla"><div><label for="pr_canal">Revenda</label><select id="pr_canal" required><option value="">Selecione…</option>${S.canais.map(c=>`<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join("")}</select></div>
       <div><label for="pr_cult">Cultivar</label><select id="pr_cult" required>${INT_CULTS.map(c=>`<option>${c}</option>`).join("")}</select></div></div>
@@ -2890,7 +2894,7 @@ function vIntCanais(){
   <div class="acoes" style="margin:0"><button class="btn" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>
   ${form}
   ${rodsT.length?`<div class="filtros" role="group" aria-label="Rodada da auditoria">${[...rodsT,"todas"].map(r=>`<button class="chip" data-a="int-rod" data-v="${r}" aria-pressed="${r===rd}">${r==="todas"?"Todas as pesquisas":esc(ROD_NOME[r]||r+"ª rodada")}</button>`).join("")}</div>`:""}
-  ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar${rd!=="todas"?" · "+esc(ROD_NOME[rd]||""):""}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor</th><th class="val">Maior</th><th>Última pesquisa</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}</td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}</td><td class="val">${fmtR(r.max)}</td><td>${esc(r.ult.canal)} · ${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div></section>`:""}
+  ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar${rd!=="todas"?" · "+esc(ROD_NOME[rd]||""):""}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor preço</th><th class="val">Maior preço</th><th>Pesquisa mais recente</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}<br><small class="muted">${r.nr} revenda${r.nr>1?"s":""}</small></td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}<br><small class="muted">${esc(r.qmin)}</small></td><td class="val">${fmtR(r.max)}<br><small class="muted">${esc(r.qmax)}</small></td><td>${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div><p class="muted" style="font-size:.85em;margin-top:6px">Abaixo de cada preço, a revenda que praticou o menor e o maior valor.</p></section>`:""}
   <section class="bloco"><h2 class="sec">Todas as pesquisas (${lst.length})</h2>
     ${cults.length>1?`<div class="filtros" role="group" aria-label="Filtrar por cultivar" style="margin-bottom:10px">${["Todos",...cults].map(c=>`<button class="chip" data-a="int-cult" data-v="${esc(c)}" aria-pressed="${c===f}">${esc(c)}</button>`).join("")}</div>`:""}
     ${lst.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Data</th><th>Revenda</th><th>Cultivar</th><th class="val">Preço (R$/kg)</th><th>Fonte</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(intData(x.data_pesquisa))}</td><td>${esc(x.canal)}</td><td>${esc(x.cultivar||"—")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td>${esc(x.fonte||"Cliente oculto")}</td><td>${ehAdmin()?`<button class="link perigo" data-a="preco-del" data-v="${esc(x.id)}">excluir</button>`:""}</td></tr>`).join("")}</tbody></table></div>`
@@ -2930,6 +2934,25 @@ function intCalc(){
   return S.intC={L,H,temFrete,temPag,temCiclo,ag};
 }
 const intPk=(rs,kg)=>kg?fmtR(rs/kg):"—";
+const INT_FAIXAS=[[0,50,"Até 50 kg"],[50,100,"51 a 100 kg"],[100,250,"101 a 250 kg"],[250,500,"251 a 500 kg"],[500,1000,"501 kg a 1 t"],[1000,5000,"1 a 5 t"],[5000,15000,"5 a 15 t"],[15000,Infinity,"Acima de 15 t (carga fechada, CIF)"]];
+const intFaixa=kg=>INT_FAIXAS.findIndex(([a,b])=>kg>a&&kg<=b);
+function vIntFaixas(C,ufs){
+  const H=C.H.filter(x=>x.kgH>0&&x.rsH>0);if(!H.length)return "";
+  const tot=H.reduce((t,x)=>t+x.rsH,0)/H.reduce((t,x)=>t+x.kgH,0);
+  const soma=xs=>{const kg=xs.reduce((t,x)=>t+x.kgH,0),rs=xs.reduce((t,x)=>t+x.rsH,0),fr=xs.filter(x=>x.frete!=null&&x.frete>0),frKg=fr.reduce((t,x)=>t+x.kg,0);
+    return {n:xs.length,kg,rs,p:kg?rs/kg:null,f:frKg?fr.reduce((t,x)=>t+x.frete,0)/frKg:null,nf:fr.length};};
+  const fx=INT_FAIXAS.map((f,i)=>({f,xs:H.filter(x=>intFaixa(x.kg)===i)}));
+  const linhas=fx.map(({f,xs})=>{const a=soma(xs),c=soma(xs.filter(x=>x.seg==="B2C")),b=soma(xs.filter(x=>x.seg==="B2B"));
+    const d=a.p!=null?a.p/tot-1:null;
+    return `<tr><td><strong>${f[2]}</strong></td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kg))}</td><td class="val">${a.p!=null?fmtR(a.p):"—"}</td><td class="val">${c.p!=null?fmtR(c.p):"—"}</td><td class="val">${b.p!=null?fmtR(b.p):"—"}</td><td class="val">${d==null?"—":(d>=0?"+":"−")+pctTxt(Math.abs(d))}</td>${C.temFrete?`<td class="val">${a.f!=null?fmtR(a.f)+`<br><small class="muted">${a.nf} com frete</small>`:"—"}</td>`:""}</tr>`;}).join("");
+  const ufL=ufs.filter(a=>a.k!=="—").map(a=>a.k);
+  const cel=xs=>{const a=soma(xs);return a.n?`${fmtR(a.p)}<br><small class="muted">${a.n} ${a.n===1?"pedido":"pedidos"}</small>`:"—";};
+  const mat=ufL.map(uf=>{const xs=H.filter(x=>x.uf===uf);return `<tr><td><strong>${esc(uf)}</strong></td>${INT_FAIXAS.map((f,i)=>`<td class="val">${cel(xs.filter(x=>intFaixa(x.kg)===i))}</td>`).join("")}<td class="val">${cel(xs)}</td></tr>`;}).join("");
+  return `<section class="bloco"><h2 class="sec">Preço médio por tamanho do pedido</h2>
+    <p class="muted" style="margin:-4px 0 10px">Faixa pelo peso total do pedido (todas as sementes); o preço é o dos híbridos (Sabiá, Cayana e Carcará) nesses pedidos. "vs. média" compara com o preço médio geral de ${fmtR(tot)}/kg. Acima de 15 t é carga fechada de caminhão, com preço CIF.</p>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Faixa</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th><th class="val">vs. média</th>${C.temFrete?`<th class="val">Frete (R$/kg)</th>`:""}</tr></thead><tbody>${linhas}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Preço médio por tamanho do pedido, por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>UF</th>${INT_FAIXAS.map(f=>`<th class="val">${f[2]}</th>`).join("")}<th class="val">Todas</th></tr></thead><tbody>${mat||`<tr><td colspan="${INT_FAIXAS.length+2}">Sem pedidos.</td></tr>`}</tbody></table></div></section>`;
+}
 function intPend(t){return `<div class="aviso-bloq" style="margin:0">${t} entra na próxima atualização automática do CRM, depois da ativação no banco.</div>`;}
 function vIntVendas(C){
   const ufs=C.ag(C.H,x=>x.uf).sort((a,b)=>b.kgH-a.kgH);
@@ -2951,6 +2974,7 @@ function vIntVendas(C){
   ${C.temFrete?"":intPend("O valor do frete")}
   <section class="bloco"><h2 class="sec">Por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>UF</th><th class="val">Pedidos de híbridos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th><th class="val">Frete médio (R$/kg)</th></tr></thead><tbody>
     ${ufs.map(a=>{const f=frUf.find(x=>x.k===a.k);const xs=porUf[a.k]||[];return `<tr><td><strong>${esc(a.k)}</strong></td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${pSeg(xs,"B2C")}</td><td class="val">${pSeg(xs,"B2B")}</td><td class="val">${f&&f.frKg?fmtR(f.fr/f.frKg):"—"}</td></tr>`;}).join("")||`<tr><td colspan="7">Sem pedidos.</td></tr>`}</tbody></table></div></section>
+  ${vIntFaixas(C,ufs)}
   <section class="bloco"><h2 class="sec">15 cidades com mais híbridos</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cidade</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th></tr></thead><tbody>
     ${cids.map(a=>{const xs=porCid[a.k]||[];return `<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${pSeg(xs,"B2C")}</td><td class="val">${pSeg(xs,"B2B")}</td></tr>`;}).join("")||`<tr><td colspan="6">Sem cidade informada.</td></tr>`}</tbody></table></div></section>`;
 }
