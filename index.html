@@ -361,6 +361,12 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .aud-nota p{margin:0;font-size:14px;line-height:1.45}
 .fin-uso{display:grid;gap:4px;margin-top:12px;font-size:14px}
 .tab table.fin-t{min-width:760px}
+/* nome sempre visível: primeira coluna fixa nas tabelas largas */
+.tab table.fin-t th:first-child,.tab table.fin-t td:first-child{position:sticky;left:0;z-index:1;background:var(--branco);box-shadow:1px 0 0 var(--linha)}
+.tab table.fin-t thead th:first-child{z-index:2}
+.tab table.fin-t tr[style*="background"] td:first-child{background:inherit}
+.tab table.fin-t td.nome-rc{min-width:220px;max-width:300px;white-space:normal}
+.nome-rc .selo{margin-right:4px}
 @media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
 .aviso-est{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-left:4px solid var(--amarelo);color:var(--preto);padding:12px 14px;border-radius:8px;margin:4px 0 14px;font-size:14px;line-height:1.5}
 .aviso-est strong{display:block;margin-bottom:2px}
@@ -944,7 +950,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112100125";
+const APP_VER="20261112100952";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3129,8 +3135,8 @@ function vIntRC(C){
     ${INT_FAIXAS.map((f,i)=>`<tr><td>${f[2]}</td><td class="val">${A.fx[i]}${A.ped?` <small class="muted">${pctTxt(A.fx[i]/A.ped)}</small>`:""}</td><td class="val">${B.fx[i]}${B.ped?` <small class="muted">${pctTxt(B.fx[i]/B.ped)}</small>`:""}</td></tr>`).join("")}</tbody></table></div>`;
   const linha=(a,perfil)=>{const u=Object.entries(ufsP[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=perfil==="RC"?(sede[finNorm(a.k)]||""):"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
     const md=(S.rcModelo||{})[finNorm(a.k)]||"";const sel=perfil==="RC"?`<span class="selo">${/consultoria/i.test(md)?"Consultoria comissionada":"RC"}</span>`:`<span class="selo is">${INT_IS_SUP.test(a.k)?"Inside Sales · supervisão":"Inside Sales"}</span>`;
-    const sedeTx=perfil==="RC"?`${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}`:`Venda digital`;
-    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${sel}</td><td>${sedeTx}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;};
+    const sedeTx=perfil==="RC"?((S.rcRaio||{})[finNorm(a.k)]?esc(S.rcRaio[finNorm(a.k)].split(" · ")[0]):"sede "+esc(sd||"não informada")):`venda digital`;
+    return `<tr><td class="nome-rc"><strong>${esc(a.k)}</strong><br>${sel}<span class="meta" style="display:block">${sedeTx}</span></td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;};
   const fP=S.intPerfil||"Todos",lista=[...(fP!=="Inside Sales"?R.map(a=>[a,"RC"]):[]),...(fP!=="RC"?I.map(a=>[a,"Inside Sales"]):[])].sort((p,q)=>q[0].kgH-p[0].kgH);
   return `<div><h1 class="titulo">RCs e Inside Sales</h1><p class="sub">Venda de híbridos da safra 26/27 no CRM, separada entre representante comercial (RC) e Assessoras de Vendas Digitais do Inside Sales. Pedido com representante no CRM conta para o RC; pedido sem representante, ou com o nome de alguém do Inside Sales nesse campo, conta para o Inside Sales.</p></div>
   <div class="metrics">
@@ -3149,8 +3155,8 @@ function vIntRC(C){
     <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${rk.length}</td><td class="val">${nIS||"—"}</td><td class="val">100%</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)))}</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)/rk.length))}</td><td></td></tr></tbody></table></div></section>`;})()}
   <section class="bloco"><h2 class="sec">Vendedores e raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada vendedor vendeu híbridos. Para o RC, compara com a UF da sede do contrato 26/27 (cidade embaixo); sem contrato mapeado, vale a sede informada no cadastro do portal.</p>
   <div class="filtros" role="group" aria-label="Filtrar por perfil" style="margin-bottom:10px">${["Todos","RC","Inside Sales"].map(v=>`<button class="chip" data-a="int-perfil" data-v="${v}" aria-pressed="${v===fP}">${v}</button>`).join("")}</div>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedor</th><th>Perfil</th><th>Sede</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th class="val">R$/kg</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
-  ${lista.map(([a,pf])=>linha(a,pf)).join("")||`<tr><td colspan="11">Nenhuma venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedor · perfil · sede</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th class="val">R$/kg</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
+  ${lista.map(([a,pf])=>linha(a,pf)).join("")||`<tr><td colspan="9">Nenhuma venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
 }
 /* ---------- Contratos dos RCs (mapeamento 26/27) ---------- */
 async function carregarContratos(){if(S.rcContr||S.rcContrBusy||S.demo)return;S.rcContrBusy=true;try{const {data}=await sb.from("rc_contratos").select("*").order("nome");S.rcContr=data||[];}catch(e){S.rcContr=[];}S.rcContrBusy=false;S.intC=null;render();}
