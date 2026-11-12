@@ -364,6 +364,10 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 @media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
 .aviso-est{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-left:4px solid var(--amarelo);color:var(--preto);padding:12px 14px;border-radius:8px;margin:4px 0 14px;font-size:14px;line-height:1.5}
 .aviso-est strong{display:block;margin-bottom:2px}
+.aviso-est li strong{display:inline}
+.mod-t td,.mod-t th{min-width:170px;vertical-align:top;font-size:13px;line-height:1.45}
+.mod-t td:first-child,.mod-t th:first-child{min-width:130px}
+.prem-t input{width:100%;min-width:70px}
 .muted{color:var(--apagado);font-weight:400}
 .aviso-est p{margin:0}
 .aviso-bloq{background:#fff6d6;border:1px solid var(--amarelo,#ffdb00);border-left:4px solid var(--amarelo,#ffdb00);color:#5a4b00;padding:12px 14px;border-radius:8px;margin:14px 0;font-size:14px;line-height:1.45}
@@ -645,7 +649,7 @@ const SECOES=[
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
   {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
-  {id:"inteligencia",nome:"Inteligência de Mercado",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
+  {id:"inteligencia",nome:"Inteligência de Marketing",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"]];
@@ -850,7 +854,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112090450";
+const APP_VER="20261112093736";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1010,8 +1014,10 @@ function vPerfil(){
   <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
-    <div><button class="btn" type="submit">Salvar</button></div></form>`;
+    <div><button class="btn" type="submit">Salvar</button></div></form>
+  ${(temPerfil("RC")||temPerfil("Assessor de Vendas Digital")||temPerfil("Inside Sales"))&&!S.demo?(S.meuContr===undefined?(carregarMeuContrato(),""):contratoCard(S.meuContr,"Meu contrato 26/27")):""}`;
 }
+async function carregarMeuContrato(){if(S.meuContrBusy)return;S.meuContrBusy=true;try{const {data}=await sb.rpc("meu_contrato");S.meuContr=data||null;}catch(e){S.meuContr=null;}S.meuContrBusy=false;render();}
 
 /* ---------- shell ---------- */
 function cabecalho(){
@@ -2677,6 +2683,7 @@ function vUsuarioAdmin(){
   return `<button class="voltar" data-a="pag" data-v="gestao-home">‹ Painel de gerenciamento</button>
   <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
   ${evolucaoHTML(u.id)}
+  ${(afTem("RC")||afTem("Assessor de Vendas Digital")||afTem("Inside Sales"))?(S.rcContr?(contratoCard(contratoDe(S.adminForm.rc_crm||S.adminForm.nome,u.email),"Contrato 26/27 (mapeamento)")||`<div class="nota-admin">Nenhum contrato 26/27 mapeado para este usuário. O vínculo é pelo nome no CRM ou pelo e-mail do contrato.</div>`):(carregarContratos(),"")):""}
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">${"nivel" in u?"Perfil principal *":"Perfil de acesso *"}</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.filter(p=>!("nivel" in u)||p!=="Administrador"||S.adminForm.perfil===p).map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>${"nivel" in u?`<span class="meta">O que a pessoa faz. Define o cadastro e como ela aparece no portal.</span>`:""}</div>
     ${"nivel" in u?`<div><label>Outros perfis</label><span class="meta">Marque se a pessoa também atua em outra frente. Ela passa a ver o que cada perfil marcado vê.</span><div class="checks">${PERFIS.filter(p=>p!=="Administrador"&&p!==S.adminForm.perfil).map(p=>`<label class="check"><input type="checkbox" data-perfis="${esc(p)}" ${(S.adminForm.perfis||[]).includes(p)?"checked":""}> ${esc(p)}</label>`).join("")}</div></div>
@@ -2865,12 +2872,12 @@ function vFilaPainel(){
     ${S.filaPainel.map(x=>`<tr><td>${esc(x.nome||"—")}</td><td class="val">${x.pegos||0}</td><td class="val">${x.aberto||0}</td><td class="val">${x.negociacao||0}</td><td class="val">${x.vendido||0}</td><td class="val">${x.sem_sucesso||0}</td><td class="val" style="${x.expirou?"color:var(--vermelho)":""}">${x.expirou||0}</td><td class="val">${x.horas_media==null?"—":Number(x.horas_media).toLocaleString("pt-BR")}</td><td>${x.ultimo?fmtDataHora(x.ultimo):"—"}</td></tr>`).join("")}</tbody></table></div></details>`;
 }
 
-/* ---------- Inteligência de Mercado ---------- */
-const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"]];
+/* ---------- Inteligência de Marketing ---------- */
+const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]];
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inteligência de Mercado">${INT_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Inteligência de Mercado</span></div></div>`;
+    <nav class="nav" aria-label="Inteligência de Marketing">${INT_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Inteligência de Marketing</span></div></div>`;
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
@@ -2903,13 +2910,15 @@ function vIntCanais(){
   ${vIntAudCanais(nome)}`;
 }
 
-/* ---------- Inteligência de Mercado: análises de venda ---------- */
+/* ---------- Inteligência de Marketing: análises de venda ---------- */
 async function carregarIntMapa(){
   if(S.intBusy)return;S.intBusy=true;
   try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}t.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});S.intMapa=t;}catch(e){S.intMapa=[];}
   if(!RC_RANKING.length){try{await carregarRanking();}catch(e){}}
-  try{const {data}=await sb.from("profiles").select("nome,rc_crm,empresa_uf,empresa_cidade,raio_atuacao").eq("perfil","RC");S.rcSede={};S.rcRaio={};
-    (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).map(repCanon).forEach(k=>{const n=finNorm(k);if(x.empresa_uf){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
+  try{if(!S.rcContr){const {data:ct}=await sb.from("rc_contratos").select("*");S.rcContr=ct||[];}}catch(e){S.rcContr=[];}
+  try{const {data}=await sb.from("profiles").select("nome,rc_crm,empresa_uf,empresa_cidade,raio_atuacao").eq("perfil","RC");S.rcSede={};S.rcRaio={};S.rcModelo={};
+    (S.rcContr||[]).forEach(c=>{[c.nome,...(c.crm_nomes||[])].filter(Boolean).map(repCanon).forEach(k=>{const n=finNorm(k);if(c.uf)S.rcSede[n]=String(c.uf).toUpperCase();S.rcRaio[n]=(c.cidade?c.cidade+"/"+(c.uf||""):"")+" · contrato "+(c.status==="Assinado"?"assinado":"aguardando assinatura");S.rcModelo[n]=c.modelo;});});
+    (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).map(repCanon).forEach(k=>{const n=finNorm(k);if(x.empresa_uf&&!S.rcSede[n]){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
   S.intC=null;S.intBusy=false;
 }
 const INT_IS=/^(inside sales|is:)/i,INT_IS_REP=/^(laura|maria giulia|tha[ií]s|maria eduarda|mayane|felipe piccoli)/i;
@@ -3013,7 +3022,7 @@ function vIntRC(C){
   const tabFx=`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Tamanho do pedido</th><th class="val">RC</th><th class="val">Inside Sales</th></tr></thead><tbody>
     ${INT_FAIXAS.map((f,i)=>`<tr><td>${f[2]}</td><td class="val">${A.fx[i]}${A.ped?` <small class="muted">${pctTxt(A.fx[i]/A.ped)}</small>`:""}</td><td class="val">${B.fx[i]}${B.ped?` <small class="muted">${pctTxt(B.fx[i]/B.ped)}</small>`:""}</td></tr>`).join("")}</tbody></table></div>`;
   const linha=(a,perfil)=>{const u=Object.entries(ufsP[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=perfil==="RC"?(sede[finNorm(a.k)]||""):"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
-    const sel=perfil==="RC"?`<span class="selo">RC</span>`:`<span class="selo is">${INT_IS_SUP.test(a.k)?"Inside Sales · supervisão":"Inside Sales"}</span>`;
+    const md=(S.rcModelo||{})[finNorm(a.k)]||"";const sel=perfil==="RC"?`<span class="selo">${/consultoria/i.test(md)?"Consultoria comissionada":"RC"}</span>`:`<span class="selo is">${INT_IS_SUP.test(a.k)?"Inside Sales · supervisão":"Inside Sales"}</span>`;
     const sedeTx=perfil==="RC"?`${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}`:`Venda digital`;
     return `<tr><td><strong>${esc(a.k)}</strong></td><td>${sel}</td><td>${sedeTx}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;};
   const fP=S.intPerfil||"Todos",lista=[...(fP!=="Inside Sales"?R.map(a=>[a,"RC"]):[]),...(fP!=="RC"?I.map(a=>[a,"Inside Sales"]):[])].sort((p,q)=>q[0].kgH-p[0].kgH);
@@ -3032,10 +3041,60 @@ function vIntRC(C){
     <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Faixa de volume</th><th class="val">Vendedores</th><th class="val">dos quais Inside Sales</th><th class="val">Participação</th><th class="val">Kg no total</th><th class="val">Kg médio por vendedor</th><th class="val">Comissão produtor / canal</th></tr></thead><tbody>
     ${g.map(x=>`<tr><td><span class="selo">${esc(x.t)}</span></td><td>${esc(x.info.vol||"")}</td><td class="val"><strong>${x.n}</strong></td><td class="val">${x.nIS||"—"}</td><td class="val">${pctTxt(x.n/rk.length)}</td><td class="val">${fmtKg(Math.round(x.kg))}</td><td class="val">${x.n?fmtKg(Math.round(x.kg/x.n)):"—"}</td><td class="val">${esc((x.info.prod||"")+" / "+(x.info.canal||""))}</td></tr>`).join("")}
     <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${rk.length}</td><td class="val">${nIS||"—"}</td><td class="val">100%</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)))}</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)/rk.length))}</td><td></td></tr></tbody></table></div></section>`;})()}
-  <section class="bloco"><h2 class="sec">Vendedores e raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada vendedor vendeu híbridos. Para o RC, compara com a UF da sede que ele informou no cadastro do portal (o raio declarado aparece embaixo). RC sem cadastro no portal fica sem sede até o contrato ser carregado.</p>
+  <section class="bloco"><h2 class="sec">Vendedores e raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada vendedor vendeu híbridos. Para o RC, compara com a UF da sede do contrato 26/27 (cidade embaixo); sem contrato mapeado, vale a sede informada no cadastro do portal.</p>
   <div class="filtros" role="group" aria-label="Filtrar por perfil" style="margin-bottom:10px">${["Todos","RC","Inside Sales"].map(v=>`<button class="chip" data-a="int-perfil" data-v="${v}" aria-pressed="${v===fP}">${v}</button>`).join("")}</div>
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedor</th><th>Perfil</th><th>Sede</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th class="val">R$/kg</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
   ${lista.map(([a,pf])=>linha(a,pf)).join("")||`<tr><td colspan="11">Nenhuma venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+}
+/* ---------- Contratos dos RCs (mapeamento 26/27) ---------- */
+async function carregarContratos(){if(S.rcContr||S.rcContrBusy||S.demo)return;S.rcContrBusy=true;try{const {data}=await sb.from("rc_contratos").select("*").order("nome");S.rcContr=data||[];}catch(e){S.rcContr=[];}S.rcContrBusy=false;S.intC=null;render();}
+const contrKey=t=>finNorm(t).replace(/\b(ltda|eireli|me|epp)\b/g,"").replace(/[^a-z0-9]/g,"");
+function contratoDe(nome,email){const L=S.rcContr||[],k=contrKey(nome),e=String(email||"").toLowerCase().trim();
+  return (k&&L.find(c=>[c.nome,...(c.crm_nomes||[])].some(n=>contrKey(n)===k)))||(e&&L.find(c=>(c.emails||[]).some(x=>x.toLowerCase()===e)))||null;}
+const hojeISO=()=>new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+function contratoCard(c,titulo){
+  if(!c)return "";const core=c.core_venc?(c.core_venc<hojeISO()?`<span style="color:var(--vermelho)">vencido em ${esc(intData(c.core_venc))}</span>`:"válido até "+esc(intData(c.core_venc))):(c.modelo==="RC de Campo"?"não informado":"não se aplica");
+  const lin=(k,v)=>`<div class="linha"><div><span class="meta">${k}</span><strong>${v}</strong></div></div>`;
+  return `<section class="bloco"><h2 class="sec">${esc(titulo||"Contrato 26/27")}</h2><div class="lista">
+    ${lin("Modelo de representação",esc(c.modelo))}${lin("Situação do contrato",esc(c.status)+(c.assinado_em?" · "+esc(intData(c.assinado_em)):""))}
+    ${lin("Cidade sede",esc([c.cidade,c.uf].filter(Boolean).join("/")||"—"))}${lin("E-mail do contrato",(c.emails||[]).map(esc).join("<br>")||"—")}
+    ${lin("Regional",esc(c.regional||"—"))}${lin("CORE",core)}${lin("Comissão",esc(c.comissao||"—"))}${c.obs?lin("Observação",esc(c.obs)):""}
+  </div><p class="precos-nota">Mapeado a partir do contrato assinado e da planilha de controle do CS. Divergência? Fale com o Marketing Barenbrug.</p></section>`;
+}
+const MODELOS_REP=[
+  ["Base legal","Lei 4.886/1965 (representação comercial autônoma) e Código Civil","Código Civil: contrato de prestação de serviços de vendedor autônomo; relação só cível","Código Civil: contrato de consultoria e assessoria comissionada","Contrato de fornecimento/parceria com a Cargill e Anexo III (Parceiro) por franqueado; não é representação comercial"],
+  ["Contrato","PJ; Contrato Conecta RC 26/27 com Anexos I a VI (produtos, área, comissões, mecânica, antissuborno, política comercial)","PJ (MEI); Anexo I produtos, II região, III comissão e ajuda de custo (atualizável à parte), IV confidencialidade, V antissuborno","PJ; contrato simplificado, sem tabela de comissão por produto","Formalizado e enviado pela Nutron ao franqueado; a Barenbrug acompanha quais estão ativos"],
+  ["CORE","Obrigatório (número no Anexo II; prepostos também inscritos)","Não exigido","Não exigido no contrato","Não"],
+  ["Área de atuação","Anexo II: todo o território nacional, sem exclusividade; a Barenbrug pode vender direto, por revendas, contas nacionais e canais digitais","Anexo II: GO, MT, MS e RO e municípios vizinhos, sem exclusividade; outras regiões só com confirmação prévia","Região definida pela Barenbrug, com exclusividade da consultoria no estado do contrato (ex.: SP, GO)","Definida pela rede de franquias"],
+  ["Como capta cliente","Prospecção de campo e carteira própria; comissão por venda registrada no CRM, sem reserva de cliente","Leads gerados pelo marketing digital","Apresenta produtores com quem já tem relacionamento; envia lista prévia para a Barenbrug checar se já são clientes","Base de clientes do franqueado Nutron"],
+  ["Comissão híbridos e Cynodon","Por tier na safra (kg recebidos, produtor + canal): Blue até 3 t 10% / 8%; Yellow até 6 t 11,5% / 9%; Yellow Pro até 9 t 13% / 10%; Yellow Master 15% / 11% (produtor / canal). Piso Blue pago mensal; acerto do tier no fechamento sobre 100% do valor","6% sobre o faturado e recebido, produtor, B2B ou canal","3% sobre o faturado e recebido, sem diferenciar produto","A confirmar: documento cita o mesmo modelo do Conecta RC e também 7% + 1% de verba (proposta de 10% flat)"],
+  ["Comissão convencionais","Taxa fixa: incrustadas e grafitadas 8% / 6%; nuas 6% / 4% (aditivo nº 1 corrigiu o Anexo IV); temperadas 6% / 5%","4% (incrustadas, nuas, temperadas e Barmix)","3% (mesma taxa)","A confirmar"],
+  ["Valor fixo mensal","Não há","Ajuda de custo de R$ 2.000/mês enquanto o contrato vigorar","Não há","Não há"],
+  ["Indenização de 1/12","Sim, na rescisão sem justa causa pela Barenbrug (Lei 4.886)","Não","Não prevista","Não"],
+  ["Prazo e rescisão","Indeterminado desde a assinatura; aviso prévio de 30 dias, ou multa de 1/3 das comissões dos últimos 3 meses","Indeterminado; aviso prévio de 30 dias, sem multa","Indeterminado; aviso prévio de 60 dias","Contrato com a Cargill: aviso de 150 dias e não concorrência de 5 anos com os franqueados"],
+  ["Conflitos","Arbitragem (Lei 9.307/1996)","Arbitragem (Lei 9.307/1996)","Código Civil, com exclusão expressa da Justiça do Trabalho","Conforme contrato com a Cargill"],
+  ["Concorrentes","Proibido vender forrageira híbrida concorrente durante o contrato","Pode vender outros produtos, menos concorrentes","Proibida consultoria para empresas com produtos concorrentes","Não concorrência prevista no contrato guarda-chuva"]];
+function vIntModelos(){
+  const L=S.rcContr;const cab=["RC de Campo","RC Digital (Inside Sales)","Consultoria comissionada","Promotor de Vendas (Franquia Nutron)"];
+  const cont=m=>L?L.filter(c=>c.modelo===m):[];const ass=m=>cont(m).filter(c=>c.status==="Assinado").length;
+  const quem=[...cab.slice(0,3).map(m=>L?`${cont(m).length} contratos (${ass(m)} assinados)`:"…"),"Franqueados Nutron/Cargill com aditivo; fora desta base de contratos"];
+  const hj=hojeISO(),coreV=L?L.filter(c=>c.modelo==="RC de Campo"&&c.core_venc&&c.core_venc<hj):[];
+  const fP=S.intModF||"Todos",lista=(L||[]).filter(c=>fP==="Todos"||c.modelo===fP);
+  return `<div><h1 class="titulo">Modelos de representação</h1><p class="sub">Como a Barenbrug opera a representação comercial: RC de Campo, RC Digital (Inside Sales), Consultoria comissionada e Promotor de Vendas (Franquia Nutron). Revisado com os contratos assinados da safra 26/27. Uso interno.</p></div>
+  ${L?`<div class="metrics">${cab.slice(0,3).map(m=>`<div class="metric"><span>${m}</span><strong>${cont(m).length}</strong><span class="meta">${ass(m)} assinados · ${cont(m).length-ass(m)} aguardando</span></div>`).join("")}<div class="metric"><span>CORE vencido (RC de Campo)</span><strong>${coreV.length}</strong><span class="meta">pela planilha do CS</span></div></div>`:`<div class="carregando">Carregando os contratos…</div>`}
+  <section class="bloco"><h2 class="sec">Comparativo dos modelos</h2><div class="tab"><table class="sim-t fin-t mod-t"><thead><tr><th>Dimensão</th>${cab.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>
+    ${MODELOS_REP.map(r=>`<tr><td><strong>${r[0]}</strong></td>${r.slice(1).map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}
+    <tr><td><strong>Quem usa hoje</strong></td>${quem.map(v=>`<td>${esc(v)}</td>`).join("")}</tr></tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">O que mudou em relação ao documento de referência</h2><div class="aviso-est"><ul style="margin:0;padding-left:18px">
+    <li><strong>Consultoria comissionada:</strong> ${L?`há ${cont("Consultoria comissionada").length} contratos na pasta (${esc(cont("Consultoria comissionada").map(c=>c.nome+" · "+c.status.toLowerCase()).join("; "))})`:"veja a lista abaixo"}. Os outros nomes citados no documento de referência não têm contrato de consultoria na pasta. O contrato tem região com exclusividade por estado e aviso prévio de 60 dias (o documento dizia sem território e prazo não mapeado).</li>
+    ${L&&L.some(c=>c.obs&&/planilha/i.test(c.obs))?`<li><strong>Classificação divergente:</strong> ${esc(L.filter(c=>c.obs&&/planilha/i.test(c.obs)).map(c=>c.nome).join(", "))}: a planilha do CS classifica como consultoria comissionada, mas o contrato assinado é o do Conecta RC, com comissão por tier.</li>`:""}
+    <li><strong>RC Digital:</strong> ${L?`são ${cont("RC Digital (Inside Sales)").length} contratos`:"contratos na lista abaixo"}. A região é GO, MT, MS e RO, sem exclusividade. A ajuda de custo vence até o dia 10; em um dos contratos, até o 20º dia útil.</li>
+    <li><strong>RC de Campo:</strong> a área do Anexo II é todo o território nacional, sem exclusividade. Conflitos vão para arbitragem. O aditivo nº 1 corrigiu o erro do Anexo IV e deixou as sementes nuas em 6% (produtor) e 4% (canal).</li>
+    <li><strong>Franquia Nutron:</strong> o documento traz duas regras de comissão (mesma do Conecta RC, e 7% + 1% com proposta de 10%). Falta confirmar qual vale.</li></ul></div></section>
+  ${L?`<section class="bloco"><h2 class="sec">Contratos mapeados (${L.length})</h2>
+    <div class="filtros" role="group" aria-label="Filtrar por modelo" style="margin-bottom:10px">${["Todos",...cab.slice(0,3)].map(v=>`<button class="chip" data-a="int-modf" data-v="${esc(v)}" aria-pressed="${v===fP}">${esc(v)}</button>`).join("")}</div>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Representante</th><th>Modelo</th><th>Situação</th><th>Sede</th><th>E-mail</th><th>Regional</th><th>CORE</th></tr></thead><tbody>
+    ${lista.map(c=>`<tr><td><strong>${esc(c.nome)}</strong>${c.obs?`<br><span class="meta">${esc(c.obs)}</span>`:""}</td><td>${esc(c.modelo)}</td><td>${esc(c.status)}${c.assinado_em?`<br><span class="meta">${esc(intData(c.assinado_em))}</span>`:""}</td><td>${esc([c.cidade,c.uf].filter(Boolean).join("/"))}</td><td>${(c.emails||[]).map(esc).join("<br>")}</td><td>${esc(c.regional||"")}</td><td>${c.core_venc?(c.core_venc<hj?`<span style="color:var(--vermelho)">${esc(intData(c.core_venc))}</span>`:esc(intData(c.core_venc))):"—"}</td></tr>`).join("")}</tbody></table></div></section>`:""}`;
 }
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
@@ -3092,11 +3151,16 @@ const finCat=n=>{const l=finNorm(n);
   return "inc";};
 const FIN_CAT={hib:"Híbridos + Cynodon",inc:"Convencionais incrustadas ou grafitadas",nua:"Convencionais nuas",temp:"Temperadas (azevéns, trevos, Barmix)"};
 const FIN_RC_CONV={inc:[.08,.06],nua:[.06,.04],temp:[.06,.05]};
+/* comissoes dos RCs: vem das premissas (editaveis pelo admin); sem premissa, vale o contrato Conecta RC 26/27 */
+function finRCP(P){const r=(P&&P.rc)||{};
+  const tiers=(Array.isArray(r.tiers)&&r.tiers.length?r.tiers:CALC_TIERS.map(t=>({t:t.t,ate:isFinite(t.ate)?t.ate:null,prod:t.rp,canal:t.rc}))).map(t=>({t:t.t,ate:t.ate==null||t.ate===""?Infinity:Number(t.ate),rp:Number(t.prod)||0,rc:Number(t.canal)||0}));
+  const cv=r.conv||{};const conv={};for(const k of ["inc","nua","temp"])conv[k]=Array.isArray(cv[k])?cv[k].map(Number):FIN_RC_CONV[k];
+  return {tiers,conv,cons:r.consultoria==null?.03:Number(r.consultoria),consultores:Array.isArray(r.consultores)?r.consultores:[]};}
 const finNome=(lista,x)=>{const l=finNorm(x);if(!l)return "";for(const n of (lista||[])){const k=finNorm(n);if(k&&(l===k||l.startsWith(k+" ")))return n;}return "";};
 const FIN_INI="2026-07",FIN_MESES=(()=>{const a=[];for(let i=0;i<12;i++){const d=new Date(Date.UTC(2026,6+i,1));a.push(d.toISOString().slice(0,7));}return a;})();
 const finMesNome=k=>{if(!k)return "Sem data de faturamento";const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
 function finCalc(){
-  if(S.finC)return S.finC;const F=S.fin;const P=F.premissas||{};
+  if(S.finC)return S.finC;const F=S.fin;const P=F.premissas||{};const RP=finRCP(P);
   const hoje=new Date(Date.now()-3*3600e3).toISOString().slice(0,10),mesHoje=hoje.slice(0,7);
   const L=[];let semItens=0,semResp=0;
   for(const r of F.mapa||[]){
@@ -3115,15 +3179,16 @@ function finCalc(){
   }
   const RC={},IS={};
   for(const x of L){
-    if(x.rcN){const a=RC[x.rcN]||(RC[x.rcN]={nome:x.rcN,n:0,rs:0,kgHib:0,hibP:0,hibC:0,conv:0,convCom:0,fatRs:0});
-      let cv=0;for(const k of ["inc","nua","temp"]){cv+=x.cat[k]*FIN_RC_CONV[k][x.canal?1:0];a.conv+=x.cat[k];}
+    if(x.rcN){const a=RC[x.rcN]||(RC[x.rcN]={nome:x.rcN,n:0,rs:0,kgHib:0,hibP:0,hibC:0,conv:0,convCom:0,fatRs:0,cons:!!finNome(RP.consultores,x.rcN)});
+      let cv=0;for(const k of ["inc","nua","temp"]){cv+=x.cat[k]*RP.conv[k][x.canal?1:0];a.conv+=x.cat[k];}
       a.n++;a.rs+=x.rs;a.kgHib+=x.kgHib;if(x.canal)a.hibC+=x.cat.hib;else a.hibP+=x.cat.hib;a.convCom+=cv;if(x.fat)a.fatRs+=x.rs;
-      x.comRC=x.cat.hib*(x.canal?.08:.10)+cv;}
+      x.comRC=a.cons?x.rs*RP.cons:x.cat.hib*(x.canal?RP.tiers[0].rc:RP.tiers[0].rp)+cv;}
     if(x.isN){const a=IS[x.isN]||(IS[x.isN]={nome:x.isN,n:0,rs:0,hib:0,conv:0,com:0,fatCom:0});
       const h=x.cat.hib,c=x.cat.inc+x.cat.nua+x.cat.temp;x.comIS=h*(Number(P.is_hib)||0)+c*(Number(P.is_conv)||0);
       a.n++;a.rs+=x.rs;a.hib+=h;a.conv+=c;a.com+=x.comIS;if(x.fat)a.fatCom+=x.comIS;}
   }
-  const rcs=Object.values(RC).map(a=>{const k=CALC_TIERS.findIndex(t=>a.kgHib<=t.ate),T=CALC_TIERS[k];const piso=a.hibP*.10+a.hibC*.08+a.convCom,final=a.hibP*T.rp+a.hibC*T.rc+a.convCom;
+  const rcs=Object.values(RC).map(a=>{if(a.cons){const v=a.rs*RP.cons;return {...a,tier:"Consultoria "+pctTxt(RP.cons),piso:v,final:v,exc:0};}
+    let k=RP.tiers.findIndex(t=>a.kgHib<=t.ate);if(k<0)k=RP.tiers.length-1;const T=RP.tiers[k],B=RP.tiers[0];const piso=a.hibP*B.rp+a.hibC*B.rc+a.convCom,final=a.hibP*T.rp+a.hibC*T.rc+a.convCom;
     return {...a,tier:T.t,piso,final,exc:Math.max(0,final-piso)};}).sort((a,b)=>b.final-a.final);
   const iss=Object.values(IS).sort((a,b)=>b.com-a.com);
   const sum=(arr,f)=>arr.reduce((t,x)=>t+(Number(f(x))||0),0);
@@ -3216,11 +3281,11 @@ function vFinComissoes(C){
   <section class="bloco"><h2 class="sec">Conecta RC · ${C.rcs.length} representantes · ${fmtK0(C.comRC)}</h2>
     ${C.rcs.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Representante</th><th>Tier</th><th class="val">Híbridos + Cynodon</th><th class="val">R$ híbridos produtor</th><th class="val">R$ híbridos canal</th><th class="val">R$ convencionais</th><th class="val">Pelo piso (mensal)</th><th class="val">Acerto de tier</th><th class="val">Total estimado</th></tr></thead><tbody>${rc}
     <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${fmtKg(Math.round(S2(C.rcs,x=>x.kgHib)))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibP))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibC))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.piso))}</td><td class="val">${fmtK0(C.exc)}</td><td class="val">${fmtK0(C.comRC)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda com representante na safra.</div>`}
-    <p class="precos-nota">Tier pelos quilos de híbridos e Cynodon da safra (produtor + canal): Blue até 3 t, Yellow até 6 t, Yellow Pro até 9 t, Yellow Master acima. Alíquota final aplicada sobre todo o volume. Convencionais: incrustadas e grafitadas 8% produtor e 6% canal, nuas 6% e 4%, temperadas 6% e 5%. Canal = cliente distribuidor, cooperativa ou venda para canal (sell-in).</p></section>
+    <p class="precos-nota">${(()=>{const R=finRCP(P);return `Tier pelos quilos de híbridos e Cynodon da safra (produtor + canal): ${R.tiers.map((t,i)=>`${esc(t.t)} ${isFinite(t.ate)?"até "+fmtKg(t.ate):"acima"} (${pctTxt(t.rp)} / ${pctTxt(t.rc)})`).join(", ")}. Alíquota final aplicada sobre todo o volume. Convencionais (produtor / canal): incrustadas e grafitadas ${pctTxt(R.conv.inc[0])} / ${pctTxt(R.conv.inc[1])}, nuas ${pctTxt(R.conv.nua[0])} / ${pctTxt(R.conv.nua[1])}, temperadas ${pctTxt(R.conv.temp[0])} / ${pctTxt(R.conv.temp[1])}. Consultoria comissionada (${esc(R.consultores.join(", ")||"ninguém cadastrado")}): ${pctTxt(R.cons)} sobre tudo. Canal = cliente distribuidor, cooperativa ou venda para canal (sell-in). Regras editáveis em Premissas.`;})()}</p></section>
   <section class="bloco"><h2 class="sec">Inside Sales · ${fmtK0(C.comIS)}</h2>
     ${C.iss.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th><th class="val">R$ híbridos + Cynodon (${pctTxt(Number(P.is_hib)||0)})</th><th class="val">R$ demais (${pctTxt(Number(P.is_conv)||0)})</th><th class="val">Sobre o já faturado</th><th class="val">Total estimado</th></tr></thead><tbody>${is}
     <tr style="font-weight:700"><td>Total</td><td class="val">${fmtK0(S2(C.iss,x=>x.hib))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.fatCom))}</td><td class="val">${fmtK0(C.comIS)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda do Inside Sales identificada ainda.${C.semResp?" A identificação por vendedora entra na próxima atualização do CRM.":""}</div>`}
-    <p class="precos-nota">Mesma taxa para produtor, B2B e canal.</p></section>`;
+    <p class="precos-nota">Mesma taxa para produtor, B2B e canal. Além da comissão, cada vendedora recebe ajuda de custo de ${fmtK0(P.is_ajuda==null?2000:P.is_ajuda)} por mês (fora do pool).</p></section>`;
 }
 function vFinConecta(C){
   const P=C.P;
@@ -3250,6 +3315,13 @@ function vFinPremissas(C){
     <div class="dupla">${n("fp_ish","Inside Sales: híbridos e Cynodon (%)",P.is_hib,"Produtor, B2B ou canal.")}${n("fp_isc","Inside Sales: demais cultivares (%)",P.is_conv,"Produtor, B2B ou canal.")}</div>
     <div><label for="fp_nomes">Vendedoras do Inside Sales com comissão</label><input id="fp_nomes" value="${esc((P.is_nomes||[]).join(", "))}" ${adm?"":"disabled"}><span class="meta">Separadas por vírgula, como aparecem no CRM.</span></div>
     <div><label for="fp_sem">Sem comissão (CLT ou interno)</label><input id="fp_sem" value="${esc((P.sem_comissao||[]).join(", "))}" ${adm?"":"disabled"}></div>
+    <div><label for="fp_ajuda">Inside Sales: ajuda de custo mensal (R$)</label><input id="fp_ajuda" type="text" inputmode="decimal" value="${esc(String(P.is_ajuda==null?2000:P.is_ajuda).replace(".",","))}" ${adm?"":"disabled"}><span class="meta">Por vendedora, enquanto o contrato vigorar. Só informativo: não entra no pool de comissões.</span></div>
+    ${(()=>{const R=finRCP(P),pc=v=>esc(((Number(v)||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:3})),dis=adm?"":"disabled";
+      return `<h3 class="pgd-h" style="margin-top:8px">Conecta RC · RC de Campo</h3><span class="meta">Comissão por tier sobre híbridos (Sabiá, Cayana, Carcará) e Cynodon. O tier sai do total de quilos recebidos na safra (produtor + canal). O primeiro tier é o piso pago todo mês; no fechamento vale a alíquota do tier atingido sobre 100% do valor.</span>
+      <div class="tab"><table class="sim-t prem-t"><thead><tr><th>Tier</th><th>Até (kg)</th><th>Produtor (%)</th><th>Canal (%)</th></tr></thead><tbody>${R.tiers.map((t,i)=>`<tr><td><input data-tier="${i}" data-k="t" value="${esc(t.t)}" ${dis} aria-label="Nome do tier ${i+1}"></td><td>${i===R.tiers.length-1?`<span class="meta">acima do anterior</span>`:`<input data-tier="${i}" data-k="ate" inputmode="numeric" value="${esc(String(t.ate))}" ${dis} aria-label="Limite do tier ${esc(t.t)} em kg">`}</td><td><input data-tier="${i}" data-k="prod" inputmode="decimal" value="${pc(t.rp)}" ${dis} aria-label="Produtor ${esc(t.t)}"></td><td><input data-tier="${i}" data-k="canal" inputmode="decimal" value="${pc(t.rc)}" ${dis} aria-label="Canal ${esc(t.t)}"></td></tr>`).join("")}</tbody></table></div>
+      <div class="tab"><table class="sim-t prem-t"><thead><tr><th>Convencionais (taxa fixa)</th><th>Produtor (%)</th><th>Canal (%)</th></tr></thead><tbody>${[["inc","Incrustadas e grafitadas"],["nua","Nuas"],["temp","Temperadas (azevéns, trevos, Barmix)"]].map(([k,n])=>`<tr><td>${n}</td><td><input data-conv="${k}" data-i="0" inputmode="decimal" value="${pc(R.conv[k][0])}" ${dis} aria-label="${n} produtor"></td><td><input data-conv="${k}" data-i="1" inputmode="decimal" value="${pc(R.conv[k][1])}" ${dis} aria-label="${n} canal"></td></tr>`).join("")}</tbody></table></div>
+      <h3 class="pgd-h" style="margin-top:8px">Consultoria comissionada</h3>
+      <div class="dupla">${n("fp_cons","Comissão da consultoria (%)",R.cons,"Taxa única sobre o faturado e recebido, sem diferenciar produto.")}<div><label for="fp_consn">Consultores comissionados</label><input id="fp_consn" value="${esc(R.consultores.join(", "))}" ${dis}><span class="meta">Como aparecem no campo de representante do CRM, separados por vírgula.</span></div></div>`;})()}
     ${adm?`<div class="acoes"><button class="btn" type="submit">Salvar premissas</button></div>`:""}
   </form>
   <section class="bloco"><h2 class="sec">Como cada produto foi classificado</h2><p class="sub" style="margin:0 0 10px">Pelo nome do produto no CRM. Confira se a categoria de comissão está certa.</p>
@@ -3426,9 +3498,10 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veBarenbrugRV()){
       const an=["int-vendas","int-rc","int-seg"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
+      else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();}
       else if(!an&&!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
@@ -3459,6 +3532,7 @@ document.addEventListener("click",async ev=>{
   if(a==="int-cult"){S.intCult=v;render();return;}
   if(a==="int-rod"){S.intRod=v==="todas"?"todas":+v;render();return;}
   if(a==="int-perfil"){S.intPerfil=v;render();return;}
+  if(a==="int-modf"){S.intModF=v;render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
   if(a==="fila-pegar"){b.disabled=true;b.textContent="Pegando…";const {data,error}=await sb.rpc("rc_pegar");
     if(error){aviso(/finalize/i.test(String(error.message||""))?"Finalize o lead atual antes de pegar outro.":/vazia/i.test(String(error.message||""))?"A fila ficou vazia agora.":"Não foi possível pegar o lead. Tente de novo.");}
@@ -3662,7 +3736,14 @@ document.addEventListener("submit",async ev=>{
     const vals={pool_rc:num("fp_rc"),pool_rv:num("fp_rv"),is_hib:num("fp_ish"),is_conv:num("fp_isc")};
     if(Object.values(vals).some(x=>!(x>=0&&x<1))){aviso("Confira os percentuais (use números como 2,75).");return;}
     const lista=id=>f.querySelector("#"+id).value.split(",").map(x=>x.trim()).filter(Boolean).slice(0,20);
-    const dados={...P0,...vals,is_nomes:lista("fp_nomes"),sem_comissao:lista("fp_sem")};
+    const pctv=el=>{const v=parseFloat(String(el.value).trim().replace(/\./g,"").replace(",","."));return isFinite(v)?v/100:NaN;};
+    const tiers=[];f.querySelectorAll("[data-tier]").forEach(el=>{const i=+el.dataset.tier,k=el.dataset.k;const t=tiers[i]||(tiers[i]={t:"",ate:null,prod:0,canal:0});
+      if(k==="t")t.t=el.value.trim().slice(0,30);else if(k==="ate"){const v=parseInt(String(el.value).replace(/\D/g,""),10);t.ate=isFinite(v)?v:NaN;}else t[k]=pctv(el);});
+    const conv={inc:[0,0],nua:[0,0],temp:[0,0]};f.querySelectorAll("[data-conv]").forEach(el=>{conv[el.dataset.conv][+el.dataset.i]=pctv(el);});
+    const cons=num("fp_cons"),ajuda=parseFloat(String(f.querySelector("#fp_ajuda").value).replace(/\./g,"").replace(",","."));
+    const okP=x=>x>=0&&x<1;
+    if(!tiers.length||tiers.some((t,i)=>!t.t||!okP(t.prod)||!okP(t.canal)||(i<tiers.length-1&&!(t.ate>0))||(i>0&&i<tiers.length-1&&!(t.ate>tiers[i-1].ate)))||Object.values(conv).some(a=>a.some(x=>!okP(x)))||!okP(cons)||!(ajuda>=0)){aviso("Confira as comissões dos RCs: percentuais como 11,5 e limites de kg em ordem crescente.");return;}
+    const dados={...P0,...vals,is_nomes:lista("fp_nomes"),sem_comissao:lista("fp_sem"),is_ajuda:ajuda,rc:{tiers,conv,consultoria:cons,consultores:lista("fp_consn")}};
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("fin_premissas").update({dados}).eq("id",1);
     if(error){aviso("Não foi possível salvar as premissas.");render();return;}
