@@ -506,6 +506,11 @@ main.largo{max-width:1120px}
 .rv-chip{font:inherit;text-align:left;display:grid;gap:2px;padding:8px 12px;border-radius:10px;border:1px solid var(--linha,#e3e8ee);background:var(--branco,#fff);cursor:pointer;min-width:0;max-width:100%}
 .rv-chip:hover{border-color:var(--azul,#005a7d)}.rv-chip span{font-size:12px;color:var(--cinza,#5b6b7b)}
 .rv-nome{text-align:left}
+.rv-cen{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.rv-cen-c{background:var(--branco,#fff);border-radius:10px;padding:14px;display:grid;gap:6px;align-content:start;min-width:0}
+.rv-cen-c.full{box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00);background:var(--amarelo-claro,#fff8d6)}
+.rv-cen-t{font-size:15px}.rv-cen-tot{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.rv-cen-tot b{font-size:22px;color:var(--azul,#005a7d)}.rv-cen-tot span{font-size:13px;color:var(--cinza,#5b6b7b)}
+.rv-cen-c dl{margin:0;display:grid;gap:2px}.rv-cen-c dl div{display:flex;justify-content:space-between;gap:8px;font-size:13px}.rv-cen-c dt{color:var(--cinza,#5b6b7b)}.rv-cen-c dd{margin:0;font-weight:700}
 </style>
 </head>
 <body>
@@ -3471,7 +3476,7 @@ function vFinResumo(C){
   </section>
   ${rvCenariosHTML(C)}
   <section class="bloco"><h2 class="sec">Exportação identificada</h2>
-    <p class="sub" style="margin:0 0 10px">Pedidos com UF "EX" ou cliente marcado como exportação no CRM. Entram no pool de comissões e ficam fora do pool do Conecta Revendas.</p>
+    <p class="sub" style="margin:0 0 10px">Pedidos com UF "EX" ou cliente marcado como exportação no CRM. Entram no pool de comissões e no pool do Conecta Revendas.</p>
     ${exp.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Responsável no CRM</th><th class="val">Vendas de exportação</th></tr></thead><tbody>${exp.map(([d,v])=>`<tr><td>${esc(d)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhum pedido de exportação identificado. Confira o cadastro dos clientes de exportação no CRM.</div>`}
   </section>`;
 }
@@ -3505,12 +3510,12 @@ function vFinComissoes(C){
 function rvCenariosHTML(C){
   const pool=C.pools.rv,cen=[
     ["A pagar hoje","IGDB aprovado no PGD + BF de quem já atingiu a meta",C.rv.igdbAprov,C.rv.bonus,C.rv.aPagar],
-    ["Todo o IGDB + BF de quem já atingiu","como se todo o IGDB gerado fosse aprovado, mais o BF das "+C.rv.nMeta+" revendas com 90% ou mais da meta hoje",C.rv.igdb,C.rv.bonus,C.rv.total],
+    ["Todo o IGDB + BF de quem já atingiu","como se todo o IGDB gerado fosse aprovado, mais o BF "+(C.rv.nMeta===1?"da revenda":"das "+C.rv.nMeta+" revendas")+" com 90% ou mais da meta hoje",C.rv.igdb,C.rv.bonus,C.rv.total],
     ["Cenário full de atingimento","todo o IGDB e o BF de 100% do tier, com todas as revendas batendo a meta: o máximo a pagar na safra",C.rv.mIgdb,C.rv.mBonus,C.rv.mTotal]];
   return `<section class="bloco"><h2 class="sec">Cenários de pagamento do Conecta Revendas</h2>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cenário</th><th class="val">IGDB</th><th class="val">BF</th><th class="val">Total (com teto)</th><th class="val">% do pool</th><th class="val">Saldo do pool</th></tr></thead><tbody>
-  ${cen.map(([t,d,ig,bf,tot],k)=>`<tr${k===2?' style="background:var(--amarelo-claro)"':""}><td><strong>${t}</strong><br><span class="meta">${d}</span></td><td class="val">${fmtK0(ig)}</td><td class="val">${fmtK0(bf)}</td><td class="val"><strong>${fmtK0(tot)}</strong></td><td class="val">${finPct(tot,pool)}</td><td class="val" style="${pool-tot<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(pool-tot)}</td></tr>`).join("")}
-  </tbody></table></div>
+  <div class="rv-cen">${cen.map(([t,d,ig,bf,tot],k)=>`<div class="rv-cen-c${k===2?" full":""}"><strong class="rv-cen-t">${t}</strong><span class="meta">${d}</span>
+    <div class="rv-cen-tot"><b>${fmtK0(tot)}</b><span>${finPct(tot,pool)} do pool</span></div>
+    <dl><div><dt>IGDB</dt><dd>${fmtK0(ig)}</dd></div><div><dt>BF</dt><dd>${fmtK0(bf)}</dd></div><div><dt>Saldo do pool</dt><dd style="${pool-tot<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(pool-tot)}</dd></div></dl></div>`).join("")}</div>
   <p class="precos-nota">Pool de ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} de todas as vendas, com exportação). Teto de ${fmtK0(RV_TETO)} por revenda em todos os cenários. No cenário full, a meta de híbridos de cada revenda entra ao preço médio que ela já pratica (ou ao valor por kg do contrato), mais os convencionais já comprados.</p></section>`;
 }
 function vFinConecta(C){
