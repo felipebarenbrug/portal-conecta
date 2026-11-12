@@ -300,6 +300,9 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .rent-proj strong{font-size:14px}
 .rent-arg{margin:4px 0 10px;padding:12px;border-radius:8px;background:var(--papel);font-size:15px;line-height:1.5}
 .rent-ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.rent-wrap{display:grid;gap:14px}.rent-form{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}.rent-form>*{min-width:0}.rent-form>.calc-kg{grid-column:1/-1}
+.rent-bt{margin:0}.rent-bt .btn{min-width:160px}#rent_out .calc-res{position:static}
+#rent_out{scroll-margin-top:12px}
 @media(max-width:520px){.rent-proj{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.calc-grid{grid-template-columns:minmax(0,1fr)}.calc-res{position:static}}
 .linha .meta{display:block}
@@ -802,7 +805,7 @@ const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"tabela-precos",nome:"Tabela de preços",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
-  {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e quanto a semente pesa no custo da arroba.",ativo:true,perfis:null},
+  {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens e vídeo institucional — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
   {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null},
@@ -2233,7 +2236,7 @@ const RENT_CULT={
   carcara:{n:"Carcará",base:"Mombaça",fam:"Panicum híbrido",m:1.19,ph:35,pc:13,fonte:"+19% de produtividade animal sobre o Mombaça nos ensaios oficiais de VCU."}
 };
 const RENT_SAFRAS=4;
-function rentEstado(){if(!S.rent)S.rent={c:"cayana",v:{area:"100",lot:"1,5",dias:"730",peso:"18",pa:"320",ph:"45",pc:"15",th:"10",tc:"10",custo:"280"}};return S.rent;}
+function rentEstado(){if(!S.rent)S.rent={c:"cayana",v:{area:"100",lot:"1,5",dias:"730",peso:"18",pa:"320",ph:"45",pc:"15",th:"10",tc:"10"},res:null};return S.rent;}
 function rentConta(c,v){
   const n=k=>{const x=parseFloat(String(v[k]==null?"":v[k]).replace(/\./g,"").replace(",","."));return isFinite(x)&&x>0?x:0;};
   const C=RENT_CULT[c],area=n("area"),lot=n("lot"),dias=n("dias"),peso=n("peso"),pa=n("pa"),ph=n("ph"),pc=n("pc"),th=n("th"),tc=n("tc"),custo=n("custo");
@@ -2247,15 +2250,20 @@ function rentConta(c,v){
 }
 function calcRent(){
   const out=document.getElementById("rent_out");if(!out)return;
-  const R=rentEstado(),X=rentConta(R.c,R.v);
-  if(!X){out.innerHTML=`<div class="calc-res"><div class="vazio">Preencha lotação, ciclo, peso de abate e preço da arroba para ver o resultado.</div></div>`;return;}
+  const R=rentEstado(),snap=R.res;
+  if(!snap){out.innerHTML=`<div class="calc-res"><div class="vazio">Preencha os números da fazenda e clique em <strong>Calcular</strong>.</div></div>`;return;}
+  const X=rentConta(snap.c,snap.v);
+  if(!X){out.innerHTML=`<div class="calc-res"><div class="vazio">Preencha lotação, ciclo, peso de abate e preço da arroba e clique em Calcular.</div></div>`;return;}
+  const velho=JSON.stringify({c:R.c,v:R.v})!==JSON.stringify(snap);
   const f0=n=>"R$ "+Math.round(n).toLocaleString("pt-BR"),d1=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}),d2=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
   const pct=x=>(x*100).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
   const C=X.C,lin=(a,b,c)=>`<tr><th scope="row">${a}</th><td>${b}</td><td class="h">${c}</td></tr>`;
-  const outros=Object.keys(RENT_CULT).map(k=>{const v=Object.assign({},R.v);if(RENT_CULT[k].base!==C.base){v.ph=String(RENT_CULT[k].ph);v.pc=String(RENT_CULT[k].pc);}const Y=rentConta(k,v);return `<div class="calc-lin${k===R.c?" forte":""}"><span>${RENT_CULT[k].n} <span class="meta">sobre ${RENT_CULT[k].base}</span></span><strong>${Y?f0(Y.extraHa)+"/ha/ano":"—"}</strong></div>`;}).join("");
+  const mesmos=Object.keys(RENT_CULT).filter(k=>RENT_CULT[k].base===C.base);
+  const outros=mesmos.map(k=>{const v=Object.assign({},snap.v);if(k!==snap.c){v.ph=String(RENT_CULT[k].ph);}const Y=rentConta(k,v);return `<div class="calc-lin${k===snap.c?" forte":""}"><span>${RENT_CULT[k].n} <span class="meta">sobre ${RENT_CULT[k].base}</span></span><strong>${Y?f0(Y.extraHa)+"/ha/ano":"—"}</strong></div>`;}).join("");
   const proj=[1,2,3,4].map(i=>`<div><span>Safra ${i}</span><strong>${X.area?f0(X.extraArea*i):f0(X.extraHa*i)}</strong></div>`).join("");
   const neg=X.extraHa<=0;
   out.innerHTML=`<div class="calc-res rent-res">
+    ${velho?`<div class="nota-admin" style="margin-bottom:10px">Os dados mudaram depois do último cálculo. Clique em <strong>Calcular</strong> para atualizar o resultado.</div>`:""}
     <span class="calc-badge" style="background:var(--azul-escuro);color:#fff">${C.n} sobre ${C.base}</span>
     <div class="calc-total"><span>Lucro a mais por ano${X.area?` em ${X.area.toLocaleString("pt-BR")} ha`:" por hectare"}</span><strong>${f0(X.area?X.extraArea:X.extraHa)}</strong></div>
     <p class="meta" style="margin:8px 0 0">${f0(X.extraHa)} a mais por hectare por ano, já descontada a diferença de custo da semente.</p>
@@ -2268,17 +2276,15 @@ function calcRent(){
       ${lin("Semente, diluída em "+RENT_SAFRAS+" safras",f0(X.semC),f0(X.semH))}
       ${lin("Receita menos semente",f0(X.recC-X.semC),f0(X.recH-X.semH))}
     </tbody></table></div>
-    <h3>Quanto a semente pesa</h3>
-    ${X.custo?`<div class="calc-lin"><span>Semente no custo de cada arroba produzida</span><strong>${pct(X.pctSem)}</strong></div>`:""}
+    <h3>O investimento na semente</h3>
     <div class="calc-lin"><span>Investimento a mais em semente no plantio</span><strong>${f0(X.invExtra)}/ha</strong></div>
     ${X.retorno?`<div class="calc-lin"><span>Retorno em ${RENT_SAFRAS} safras para cada R$ 1 a mais em semente</span><strong>R$ ${d1(X.retorno)}</strong></div>`:""}
     ${X.payback?`<div class="calc-lin"><span>Tempo para a receita extra pagar a diferença</span><strong>${X.payback<1?"menos de 1 mês":d1(X.payback)+" meses"}</strong></div>`:""}
     <h3>Lucro a mais acumulado${X.area?"":" por hectare"}</h3>
     <div class="rent-proj">${proj}</div>
-    <h3>Os três híbridos com os mesmos números</h3>
-    ${outros}
+    ${mesmos.length>1?`<h3>Os híbridos de ${esc(C.fam.replace(/ híbrida?$/,""))} com os mesmos números</h3><p class="meta" style="margin:0 0 4px">Todos comparados com ${esc(C.base)}, cada um com o preço de tabela da sua semente.</p>${outros}`:""}
     <h3>Argumento pronto</h3>
-    <p id="rent_arg" class="rent-arg">${neg?"Ajuste os números para gerar o argumento.":`Hoje, com ${C.base}, a sua área produz cerca de ${d1(X.prodC)} arrobas por hectare por ano. Com o ${C.n}, a mesma área passa para ${d1(X.prodH)} arrobas, porque o pasto sustenta mais animais. Isso dá ${f0(X.extraHa)} a mais por hectare por ano${X.area?`, ou ${f0(X.extraArea)} por ano nos seus ${X.area.toLocaleString("pt-BR")} hectares`:""}, já pagando a diferença da semente.${X.custo?` E a semente do ${C.n} representa só ${pct(X.pctSem)} do custo de cada arroba.`:""}${X.payback?` A diferença de investimento se paga em ${X.payback<1?"menos de um mês":d1(X.payback)+" meses"} de produção.`:""}`}</p>
+    <p id="rent_arg" class="rent-arg">${neg?"Ajuste os números para gerar o argumento.":`Hoje, com ${C.base}, a sua área produz cerca de ${d1(X.prodC)} arrobas por hectare por ano. Com o ${C.n}, a mesma área passa para ${d1(X.prodH)} arrobas, porque o pasto sustenta mais animais. Isso dá ${f0(X.extraHa)} a mais por hectare por ano${X.area?`, ou ${f0(X.extraArea)} por ano nos seus ${X.area.toLocaleString("pt-BR")} hectares`:""}, já pagando a diferença da semente.${X.payback?` A diferença de investimento se paga em ${X.payback<1?"menos de um mês":d1(X.payback)+" meses"} de produção.`:""}`}</p>
     ${neg?"":`<div><button class="btn sec" type="button" data-a="rent-copiar">Copiar argumento</button></div>`}
     <p class="meta" style="margin:12px 0 0">${C.fonte} A lotação do híbrido é calculada pelo ganho dos ensaios e não pode ser editada. Estimativa: o resultado real depende de manejo, adubação, clima e formação do pasto.</p>
   </div>`;
@@ -2287,25 +2293,23 @@ function vRent(){
   const R=rentEstado(),C=RENT_CULT[R.c],v=R.v;
   const campo=(k,lbl,dica)=>`<div><label for="rt_${k}">${lbl}</label>${dica?`<span class="meta">${dica}</span>`:""}<input id="rt_${k}" type="text" inputmode="decimal" data-rent="${k}" value="${esc(v[k]||"")}" autocomplete="off"></div>`;
   setTimeout(calcRent,0);
-  return `<div><h1 class="titulo">Calculadora de rentabilidade</h1><p class="sub">Use na conversa com o produtor: coloque os números da fazenda dele e mostre quanto o híbrido rende a mais por hectare e quanto a semente pesa no custo da arroba. A conta tira o foco do preço do saco e leva para o lucro por hectare.</p></div>
-  <div class="calc-grid">
-  <div class="calc-form">
+  return `<div><h1 class="titulo">Calculadora de rentabilidade</h1><p class="sub">Use na conversa com o produtor: coloque os números da fazenda dele, clique em Calcular e mostre quanto o híbrido rende a mais por hectare. A conta tira o foco do preço do saco e leva para o lucro por hectare.</p></div>
+  <div class="rent-wrap">
+  <div class="calc-form rent-form">
     <div class="calc-kg"><label>Cultivar híbrido</label><span class="meta">Comparado com ${C.base} · ${C.fam}</span>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${Object.keys(RENT_CULT).map(k=>`<button class="chip" type="button" data-a="rent-cult" data-v="${k}" aria-pressed="${k===R.c}">${RENT_CULT[k].n}</button>`).join("")}</div></div>
     <div class="calc-grupo"><h4>A fazenda</h4><span class="meta">Realidade de hoje do produtor</span>
       ${campo("area","Área a formar ou reformar (ha)")}${campo("lot","Lotação atual com "+C.base+" (UA/ha)")}${campo("dias","Ciclo de produção (dias)","Do início da recria ao abate")}${campo("peso","Peso de abate (@ por cabeça)")}${campo("pa","Preço de venda da arroba (R$)")}</div>
     <div class="calc-grupo"><h4>A semente</h4><span class="meta">Preço estimado da tabela ao produtor, pode variar por região e condição comercial</span>
       ${campo("ph","Preço do "+C.n+" (R$/kg)")}${campo("th","Taxa de semeadura do "+C.n+" (kg/ha)")}${campo("pc","Preço do "+C.base+" (R$/kg)")}${campo("tc","Taxa de semeadura do "+C.base+" (kg/ha)")}</div>
-    <div class="calc-grupo"><h4>Premissa de custo</h4><span class="meta">Usada só para medir o peso da semente na arroba</span>
-      ${campo("custo","Custo total de produção da arroba (R$)")}</div>
-    <div><button class="btn sec" type="button" data-a="rent-padrao">Voltar aos valores padrão</button></div>
   </div>
+  <div class="acoes rent-bt"><button class="btn" type="button" data-a="rent-calc">Calcular</button><button class="btn sec" type="button" data-a="rent-padrao">Voltar aos valores padrão</button></div>
   <div id="rent_out" aria-live="polite"></div>
   </div>
   <div class="calc-grupo" style="margin-top:16px"><h4>Como usar na venda</h4>
     <ol class="rent-ol"><li>Pergunte ao produtor a lotação atual e o preço que ele recebe pela arroba. Use os números dele, não os padrões.</li>
     <li>Mostre primeiro a produção em arrobas por hectare. O ganho vem de sustentar mais animais na mesma área, não de o animal engordar mais rápido.</li>
-    <li>Quando vier a objeção de preço do saco, mostre o peso da semente no custo da arroba e o tempo para a diferença se pagar.</li>
+    <li>Quando vier a objeção de preço do saco, mostre o investimento a mais por hectare e o tempo para a diferença se pagar.</li>
     <li>Feche com o lucro a mais na área inteira e o acumulado em ${RENT_SAFRAS} safras.</li></ol>
     <p class="meta" style="margin:8px 0 0">Mesma lógica da calculadora pública da campanha "A lógica do custo da arroba". A semente é diluída em ${RENT_SAFRAS} safras de uso do pasto.</p></div>`;
 }
@@ -4459,7 +4463,8 @@ document.addEventListener("click",async ev=>{
   if(a==="neg-crm"){b.disabled=true;b.textContent="Lançando…";let ok=false,msg="";try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:+v}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(_){}}}catch(e){}await carregarRCNeg();render();aviso(ok?"Negociação lançada no CRM.":"O CRM não aceitou o lançamento"+(msg?": "+msg:"."));return;}
   if(a==="neg-status"){const {error}=await sb.from("rc_negociacoes").update({status:b.dataset.st}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}await carregarRCNeg();render();aviso("Negociação atualizada.");return;}
   if(a==="calc-limpar"){S.calcV=null;render();return;}
-  if(a==="rent-cult"){const R=rentEstado();const ant=RENT_CULT[R.c],nv=RENT_CULT[v];if(!nv)return;R.c=v;if(ant.base!==nv.base){R.v.ph=String(nv.ph);R.v.pc=String(nv.pc);}render();return;}
+  if(a==="rent-cult"){const R=rentEstado();const ant=RENT_CULT[R.c],nv=RENT_CULT[v];if(!nv)return;R.c=v;if(ant.base!==nv.base){R.v.ph=String(nv.ph);R.v.pc=String(nv.pc);}else if(ant.ph===Number(String(R.v.ph).replace(",",".")))R.v.ph=String(nv.ph);R.res=null;render();return;}
+  if(a==="rent-calc"){const R=rentEstado();R.res={c:R.c,v:Object.assign({},R.v)};calcRent();const o=document.getElementById("rent_out");if(o)o.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="simp-cond"){const st=simpEstado();st.cond=v;const i=document.getElementById("sp_cond");if(i)i.value=v;document.querySelectorAll('[data-a="simp-cond"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===v)));calcSimP();return;}
   if(a==="rent-padrao"){S.rent=null;render();return;}
   if(a==="rent-copiar"){const t=(document.getElementById("rent_arg")||{}).innerText||"";if(navigator.clipboard&&t)navigator.clipboard.writeText(t).then(()=>aviso("Argumento copiado."),()=>aviso("Selecione o texto e copie."));return;}
