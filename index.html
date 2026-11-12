@@ -480,6 +480,11 @@ main.largo{max-width:1120px}
 
 .tag-novo{background:var(--amarelo);color:var(--preto);font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px}
 .pergunta-tx{margin:0;font-size:17px;line-height:1.35;font-weight:700}
+.pc{display:grid;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--linha,#e3e8ee)}
+.pc-item{display:flex;gap:8px;align-items:flex-start}.pc-txt{display:grid;gap:2px;min-width:0;background:var(--azul-claro,#eef5fb);border-radius:10px;padding:8px 10px;flex:1}
+.pc-txt p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.pc-txt .link{justify-self:start;font-size:12px}
+.pc-form{display:flex;gap:8px;align-items:flex-end}.pc-form textarea{flex:1;min-width:0;resize:vertical;font:inherit;font-size:15px;padding:10px 12px;min-height:44px;border:1px solid var(--linha,#cfd8e3);border-radius:10px;background:var(--branco,#fff);color:inherit}.pc-form .btn{padding:8px 14px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
@@ -987,7 +992,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112101554";
+const APP_VER="20261112102204";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1027,13 +1032,19 @@ async function carregarRanking(){try{const {data}=await sb.from("rc_ranking").se
     RC_RANKING=Object.values(M).sort((a,b)=>b.kg-a.kg);}catch(e){RC_RANKING=[];}}
 async function carregarUsuario(u){
   S.user=u;sb=sbReal;S.demo=false;
-  let {data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
-  if(!prof){
+  let prof=null,profErr=null;
+  for(let t=0;t<4;t++){
+    if(t){await new Promise(r=>setTimeout(r,600*t));try{await sb.auth.refreshSession();}catch(e){}}
+    const r=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();
+    profErr=r.error;prof=r.data;if(prof||!profErr)break;
+  }
+  if(!prof&&!profErr){
     await sb.from("profiles").insert({id:u.id,nome:(u.email||"").split("@")[0],email:u.email});
     ({data:prof}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle());
   }
+  if(!prof){S.user=null;S.profile=null;S.perfil=null;try{await sbReal.auth.signOut();}catch(e){}S._erro="Não conseguimos carregar o seu perfil agora. Entre de novo; se continuar, fale com o Marketing Barenbrug.";render();return;}
   if(prof&&prof.ativo===false){try{await sbReal.auth.signOut();}catch(e){}S.user=null;S.profile=null;S._erro="Seu acesso está desativado. Fale com o administrador do portal.";render();return;}
-  S.profile=prof||{};S.perfil=(prof&&prof.perfil)||"RC";aplicaPerfis(prof);S.form=null;S.formAlvo="form";
+  S.profile=prof;S.perfil=prof.perfil||"RC";aplicaPerfis(prof);S.form=null;S.formAlvo="form";
   if(S.profile.demo){
     try{
       if(!window.demoIniciar)await new Promise((ok,er)=>{const sc=document.createElement("script");sc.src="demo.js?v="+APP_VER;sc.onload=ok;sc.onerror=er;document.head.appendChild(sc);});
@@ -1440,7 +1451,16 @@ function cartaoPost(p){
       ${p.imagem_url?`<img src="${esc(urlOk(p.imagem_url))}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
       ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(urlOk(p.anexo_url))}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
       <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>
+      ${comentariosPost(p)}
     </section>`;
+}
+function comentariosPost(p){
+  const L=(S.postCom&&S.postCom[p.id])||[];const aberto=String(S.postComAberto)===String(p.id);
+  const mostrar=aberto||L.length<=3?L:L.slice(-3);
+  const lista=mostrar.map(c=>`<div class="pc-item">${avatar(c.autor,c.autor_nome||"",30)}<div class="pc-txt"><span><strong>${esc(c.autor_nome||"Participante")}</strong>${perfilTxt(c.autor)} <span class="meta">${fmtDataHora(c.criado_em)}</span></span><p>${esc(c.texto)}</p>${(c.autor===S.user.id||ehAdmin())&&!S.demo?`<button class="link" data-a="post-com-del" data-v="${c.id}">excluir</button>`:""}</div></div>`).join("");
+  const mais=!aberto&&L.length>3?`<button class="link" data-a="post-com-abrir" data-v="${p.id}">Ver os ${L.length} comentários</button>`:"";
+  const form=`<form class="pc-form" id="f-post-com" data-p="${p.id}"><label class="sr" for="pc_${p.id}">Comentar esta publicação</label><textarea id="pc_${p.id}" rows="${aberto?3:1}" maxlength="2000" placeholder="Escreva um comentário…" required></textarea><button class="btn" type="submit">Comentar</button></form>`;
+  return `<div class="pc">${L.length?`<span class="meta">${L.length} ${L.length===1?"comentário":"comentários"}</span>`:""}${mais}${lista}${S.demo?"":form}</div>`;
 }
 function vDuvidas(){
   if(S.duvidas==null)return `<div class="carregando">Carregando perguntas…</div>`;
@@ -1845,7 +1865,9 @@ async function carregarPosts(){try{
   const rc={};const {data:rs}=await sb.from("post_reacoes").select("post_id,tipo,user_id");
   (rs||[]).forEach(r=>{const o=(rc[r.post_id]=rc[r.post_id]||{total:0,mine:null,tipos:{}});o.total++;o.tipos[r.tipo]=(o.tipos[r.tipo]||0)+1;if(r.user_id===S.user.id)o.mine=r.tipo;});
   S.postReac=rc;
-}catch(e){S.posts=[];S.postReac={};}}
+  const {data:cs}=await sb.from("post_comentarios").select("*").order("criado_em",{ascending:true});
+  const cm={};(cs||[]).forEach(c=>{(cm[c.post_id]=cm[c.post_id]||[]).push(c);});S.postCom=cm;
+}catch(e){S.posts=S.posts||[];S.postReac=S.postReac||{};S.postCom=S.postCom||{};}}
 const REACOES=[["like","Curti"],["amei","Gostei muito"],["aplauso","Parabéns"]];
 function vMural(){
   const admin=ehAdmin()||temPerfil("Comercial Barenbrug");
@@ -4137,6 +4159,8 @@ document.addEventListener("click",async ev=>{
   if(a==="lead-status"){const obs=(document.getElementById("lead_obs_"+v)||{}).value||null;const {error}=await sb.rpc("lead_marcar",{p_id:+v,p_status:b.dataset.st,p_obs:obs});if(error){aviso("Não foi possível gravar. Tente de novo.");return;}await carregarLeads();render();aviso("Lead atualizado.");return;}
   if(a==="leads-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{const e=document.getElementById("lead_prog");if(e)e.textContent=t;};const r=await atualizarLeads(prog);await carregarLeads();render();aviso("Leads atualizados: "+r.replace("leads: ",""));return;}
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
+  if(a==="post-com-abrir"){S.postComAberto=v;render();return;}
+  if(a==="post-com-del"){const r=await sb.from("post_comentarios").delete().eq("id",v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o comentário.");return;}await carregarPosts();render();aviso("Comentário excluído.");return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
   if(a==="del-pedir"){S.delConf=v;render();return;}
   if(a==="del-nao"){S.delConf=null;render();return;}
@@ -4348,6 +4372,13 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.from("duvidas").insert({pergunta,tema});
     if(error){aviso("Não foi possível enviar a pergunta.");render();return;}
     S.duvNova=false;await carregarDuvidas();render();aviso("Pergunta enviada. Você verá a resposta aqui.");return;
+  }
+  if(f.id==="f-post-com"){
+    const pid=+f.dataset.p,ta=f.querySelector("textarea"),texto=(ta.value||"").trim();if(!texto)return;
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
+    const {error}=await sb.from("post_comentarios").insert({post_id:pid,texto});
+    if(error){btn.disabled=false;btn.textContent="Comentar";aviso("Não foi possível comentar agora. Tente de novo.");return;}
+    S.postComAberto=pid;await carregarPosts();render();return;
   }
   if(f.id==="f-resposta"){
     const texto=f.querySelector("#r_txt").value.trim();if(texto.length<2)return;
