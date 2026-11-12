@@ -1013,7 +1013,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112105440";
+const APP_VER="20261112110216";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3420,7 +3420,7 @@ function finCalc(){
   const a0=S.canalRes,b0=S.acoesCanal;S.canalRes=resMap;S.acoesCanal=acMap;
   let canais;try{canais=(F.canais||[]).map(c=>({c,m:metricasCanal(c),ac:acMap[c.id]||[]}));}finally{S.canalRes=a0;S.acoesCanal=b0;}
   canais.sort((a,b)=>b.m.aPagar-a.m.aPagar||b.m.total-a.m.total||String(a.c.nome).localeCompare(String(b.c.nome)));
-  const rv={aPagar:sum(canais,x=>x.m.aPagar),igdbAprov:sum(canais,x=>x.m.igdbAprov),mAPagar:sum(canais,x=>x.m.mAPagar),total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
+  const rv={mIgdb:sum(canais,x=>x.m.mIgdb),mBonus:sum(canais,x=>x.m.mBonus),nMeta:canais.filter(x=>x.m.fator>0).length,aPagar:sum(canais,x=>x.m.aPagar),igdbAprov:sum(canais,x=>x.m.igdbAprov),mAPagar:sum(canais,x=>x.m.mAPagar),total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
   const pools={rc:tot*(Number(P.pool_rc)||0),rcFat:totFat*(Number(P.pool_rc)||0),rv:tot*(Number(P.pool_rv)||0),rvFat:totFat*(Number(P.pool_rv)||0)};
   const prods={};for(const x of L)for(const i of x.it){const k=i.n||"(sem nome)";const p=prods[k]||(prods[k]={n:k,c:i.c,kg:0,rs:0,est:false});p.kg+=i.kg;p.rs+=i.rs;if(x.est)p.est=true;}
   S.finC={P,L,ajudaTot,ajudaAte,rcs,iss,tot,totFat,exp,interno,internoFat,comRC,comIS,com,exc,comFat,vendCom,dupla,expDono,meses,canais,rv,pools,semItens,semResp,prods:Object.values(prods).sort((a,b)=>b.rs-a.rs),hoje};
@@ -3469,6 +3469,7 @@ function vFinResumo(C){
     </div>
     ${finBarra(usoRV)}
   </section>
+  ${rvCenariosHTML(C)}
   <section class="bloco"><h2 class="sec">Exportação identificada</h2>
     <p class="sub" style="margin:0 0 10px">Pedidos com UF "EX" ou cliente marcado como exportação no CRM. Entram no pool de comissões e ficam fora do pool do Conecta Revendas.</p>
     ${exp.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Responsável no CRM</th><th class="val">Vendas de exportação</th></tr></thead><tbody>${exp.map(([d,v])=>`<tr><td>${esc(d)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhum pedido de exportação identificado. Confira o cadastro dos clientes de exportação no CRM.</div>`}
@@ -3501,11 +3502,22 @@ function vFinComissoes(C){
     <tr style="font-weight:700"><td>Total</td><td class="val">${fmtK0(S2(C.iss,x=>x.hib))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.fatCom))}</td><td class="val">${fmtK0(C.comIS)}</td><td class="val">${fmtK0(C.ajudaTot)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda do Inside Sales identificada ainda.${C.semResp?" A identificação por vendedora entra na próxima atualização do CRM.":""}</div>`}
     <p class="precos-nota">Mesma taxa para produtor, B2B e canal. Além da comissão, cada vendedora recebe ajuda de custo mensal (${esc(finAjudas(P).map(a=>`${a.nome} ${fmtK0(a.valor)} de ${finMesNome(a.de)}${a.ate?" a "+finMesNome(a.ate):" em diante"}`).join("; "))}). Ela conta no pool de comissões: ${fmtK0(C.ajudaTot)} na safra, ${fmtK0(C.ajudaAte)} até este mês.</p></section>`;
 }
+function rvCenariosHTML(C){
+  const pool=C.pools.rv,cen=[
+    ["A pagar hoje","IGDB aprovado no PGD + BF de quem já atingiu a meta",C.rv.igdbAprov,C.rv.bonus,C.rv.aPagar],
+    ["Todo o IGDB + BF de quem já atingiu","como se todo o IGDB gerado fosse aprovado, mais o BF das "+C.rv.nMeta+" revendas com 90% ou mais da meta hoje",C.rv.igdb,C.rv.bonus,C.rv.total],
+    ["Cenário full de atingimento","todo o IGDB e o BF de 100% do tier, com todas as revendas batendo a meta: o máximo a pagar na safra",C.rv.mIgdb,C.rv.mBonus,C.rv.mTotal]];
+  return `<section class="bloco"><h2 class="sec">Cenários de pagamento do Conecta Revendas</h2>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cenário</th><th class="val">IGDB</th><th class="val">BF</th><th class="val">Total (com teto)</th><th class="val">% do pool</th><th class="val">Saldo do pool</th></tr></thead><tbody>
+  ${cen.map(([t,d,ig,bf,tot],k)=>`<tr${k===2?' style="background:var(--amarelo-claro)"':""}><td><strong>${t}</strong><br><span class="meta">${d}</span></td><td class="val">${fmtK0(ig)}</td><td class="val">${fmtK0(bf)}</td><td class="val"><strong>${fmtK0(tot)}</strong></td><td class="val">${finPct(tot,pool)}</td><td class="val" style="${pool-tot<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(pool-tot)}</td></tr>`).join("")}
+  </tbody></table></div>
+  <p class="precos-nota">Pool de ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} de todas as vendas, com exportação). Teto de ${fmtK0(RV_TETO)} por revenda em todos os cenários. No cenário full, a meta de híbridos de cada revenda entra ao preço médio que ela já pratica (ou ao valor por kg do contrato), mais os convencionais já comprados.</p></section>`;
+}
 function vFinConecta(C){
   const P=C.P;
   const st=a=>(a.status||"Em Análise");
   const rows=C.canais.map(({c,m,ac})=>{const apr=ac.filter(a=>st(a)==="Aprovado");const comp=apr.filter(a=>a.foto_path||(Array.isArray(a.anexos)&&a.anexos.length)).length;
-    return `<tr><td>${esc(c.nome)}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${fmtK0(m.igdbAprov)}${m.aprovIG>m.igdb?`<br><span class="meta">PGD ${fmtK0(m.aprovIG)}</span>`:""}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td class="val">${fmtK0(m.total)}</td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
+    return `<tr><td>${esc(c.nome)}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${fmtK0(m.igdbAprov)}${m.aprovIG>m.igdb?`<br><span class="meta">PGD ${fmtK0(m.aprovIG)}</span>`:""}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td class="val">${fmtK0(m.total)}</td><td class="val">${fmtK0(m.mTotal)}</td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
   return `<div><h1 class="titulo">Conecta Revendas · visão financeira</h1><p class="sub">Quanto cada revenda tem a receber, frente ao pool de ${pctTxt(Number(P.pool_rv)||0)} de todas as vendas, com exportação (${fmtK0(C.pools.rv)}). O IGDB só é devido com o PGD submetido e aprovado; o BF, só com 90% ou mais da meta.</p></div>
   ${finAvisoTopo(C)}
   <div class="metrics">
@@ -3515,8 +3527,9 @@ function vFinConecta(C){
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>A pagar (IGDB aprovado + BF)</span><strong>${fmtK0(C.rv.aPagar)}</strong><span class="meta">${finPct(C.rv.aPagar,C.pools.rv)} do pool · potencial com todo o IGDB aprovado: ${fmtK0(C.rv.total)}</span></div>
   </div>
   ${finBarra(C.pools.rv?C.rv.aPagar/C.pools.rv:null)}
+  ${rvCenariosHTML(C)}
   <section class="bloco"><h2 class="sec">Por revenda</h2>
-  ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB total</th><th class="val">IGDB já faturado</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Potencial</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
+  ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB total</th><th class="val">IGDB já faturado</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Todo IGDB + BF atual</th><th class="val">Full (meta batida)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
   <p class="precos-nota">IGDB total: percentual do tier sobre o sell-in de híbridos e convencionais. Só vira pagamento pelas ações de PGD submetidas, aprovadas e comprovadas, por trimestre, até o limite do IGDB gerado (coluna IGDB aprovado). Potencial: quanto seria com todo o IGDB aprovado. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section>`;
 }
 function vFinPremissas(C){
