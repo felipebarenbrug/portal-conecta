@@ -838,7 +838,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111231633";
+const APP_VER="20261111232010";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2869,17 +2869,23 @@ function vIntVendas(C){
   const cids=C.ag(C.H,x=>x.cid&&x.uf?x.cid+"/"+x.uf:"").filter(a=>a.k!=="—").sort((a,b)=>b.kgH-a.kgH).slice(0,15);
   const totH=C.H.reduce((t,x)=>t+x.kgH,0),totRsH=C.H.reduce((t,x)=>t+x.rsH,0);
   const fr=C.L.filter(x=>x.frete!=null&&x.frete>0),frT=fr.reduce((t,x)=>t+x.frete,0),frKg=fr.reduce((t,x)=>t+x.kg,0);
+  const sg=(xs,seg)=>{const ys=xs.filter(x=>x.seg===seg);return [ys.reduce((t,x)=>t+x.rsH,0),ys.reduce((t,x)=>t+x.kgH,0),ys.length];};
+  const pSeg=(xs,seg)=>{const [r,k]=sg(xs,seg);return intPk(r,k);};
+  const [rC,kC,nC]=sg(C.H,"B2C"),[rB,kB,nB]=sg(C.H,"B2B");
+  const porUf={},porCid={};C.H.forEach(x=>{(porUf[x.uf||"—"]=porUf[x.uf||"—"]||[]).push(x);if(x.cid&&x.uf)(porCid[x.cid+"/"+x.uf]=porCid[x.cid+"/"+x.uf]||[]).push(x);});
   const frUf=C.ag(fr,x=>x.uf).sort((a,b)=>b.frKg-a.frKg);
   return `<div><h1 class="titulo">Preço e frete por região</h1><p class="sub">Pedidos ganhos da safra 26/27 no CRM. Preço médio dos híbridos (Sabiá, Cayana e Carcará) em R$ por kg e frete médio por kg.</p></div>
   <div class="metrics">
-    <div class="metric"><span>Preço médio dos híbridos</span><strong>${intPk(totRsH,totH)}/kg</strong><span class="meta">${fmtKg(Math.round(totH))} em ${C.H.length} pedidos</span></div>
+    <div class="metric"><span>Preço médio dos híbridos</span><strong>${intPk(totRsH,totH)}/kg</strong><span class="meta">${fmtKg(Math.round(totH))} em ${C.H.length} ${C.H.length===1?"pedido":"pedidos"}</span></div>
+    <div class="metric"><span>B2C · produtor</span><strong>${intPk(rC,kC)}/kg</strong><span class="meta">${fmtKg(Math.round(kC))} em ${nC} ${nC===1?"pedido":"pedidos"}</span></div>
+    <div class="metric"><span>B2B · canal</span><strong>${intPk(rB,kB)}/kg</strong><span class="meta">${fmtKg(Math.round(kB))} em ${nB} ${nB===1?"pedido":"pedidos"}${kC&&kB&&rC?(()=>{const d=1-(rB/kB)/(rC/kC);return " · "+pctTxt(Math.abs(d))+(d>=0?" abaixo":" acima")+" do B2C";})():""}</span></div>
     <div class="metric"><span>Frete médio por kg</span><strong>${C.temFrete&&frKg?fmtR(frT/frKg)+"/kg":"—"}</strong><span class="meta">${C.temFrete?fr.length+" pedidos com frete informado":"aguardando o campo de frete"}</span></div>
   </div>
   ${C.temFrete?"":intPend("O valor do frete")}
-  <section class="bloco"><h2 class="sec">Por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>UF</th><th class="val">Pedidos de híbridos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">Frete médio (R$/kg)</th></tr></thead><tbody>
-    ${ufs.map(a=>{const f=frUf.find(x=>x.k===a.k);return `<tr><td><strong>${esc(a.k)}</strong></td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${f&&f.frKg?fmtR(f.fr/f.frKg):"—"}</td></tr>`;}).join("")||`<tr><td colspan="5">Sem pedidos.</td></tr>`}</tbody></table></div></section>
-  <section class="bloco"><h2 class="sec">15 cidades com mais híbridos</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cidade</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th></tr></thead><tbody>
-    ${cids.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td></tr>`).join("")||`<tr><td colspan="4">Sem cidade informada.</td></tr>`}</tbody></table></div></section>`;
+  <section class="bloco"><h2 class="sec">Por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>UF</th><th class="val">Pedidos de híbridos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th><th class="val">Frete médio (R$/kg)</th></tr></thead><tbody>
+    ${ufs.map(a=>{const f=frUf.find(x=>x.k===a.k);const xs=porUf[a.k]||[];return `<tr><td><strong>${esc(a.k)}</strong></td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${pSeg(xs,"B2C")}</td><td class="val">${pSeg(xs,"B2B")}</td><td class="val">${f&&f.frKg?fmtR(f.fr/f.frKg):"—"}</td></tr>`;}).join("")||`<tr><td colspan="7">Sem pedidos.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">15 cidades com mais híbridos</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cidade</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th></tr></thead><tbody>
+    ${cids.map(a=>{const xs=porCid[a.k]||[];return `<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${pSeg(xs,"B2C")}</td><td class="val">${pSeg(xs,"B2B")}</td></tr>`;}).join("")||`<tr><td colspan="6">Sem cidade informada.</td></tr>`}</tbody></table></div></section>`;
 }
 function vIntRC(C){
   const R=C.ag(C.H.filter(x=>x.via==="RC"),x=>x.r.rep).sort((a,b)=>b.kgH-a.kgH);
