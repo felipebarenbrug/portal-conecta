@@ -617,6 +617,7 @@ const SECOES=[
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
   {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
+  {id:"inteligencia",nome:"Inteligência de Mercado",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"financeiro",nome:"Financeiro Barenbrug",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"]];
@@ -1761,7 +1762,7 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural");
+  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veBarenbrugRV():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural");
   const bloq=bloqueadoCurso();
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
@@ -2500,7 +2501,7 @@ function vRVCanal(){
   ${vCanalContatos(c)}
   ${vCanalFiliais(c)}
   ${vCanalEstoque(c)}
-  ${B?vCanalPrecos(c):""}`;
+`;
 }
 function vBase(){
   const b=S.busca.toLowerCase();
@@ -2707,6 +2708,43 @@ function rankMini(){
   if(!R){carregarRanking("geral").then(()=>{if(S.pag==="trilha")render();});return "";}
   if(R.erro)return "";const eu=R.eu;
   return `<section class="rk-mini"><div><span class="rot">Ranking da Academia</span><strong>${eu&&eu.pos?`Você está em ${eu.pos}º de ${R.total}`:"Você ainda não pontuou"}</strong><span class="meta">${eu&&eu.pos?(Number(eu.pontos)||0).toLocaleString("pt-BR")+" pontos":"Cada acerto nas provas vale pontos."}</span></div><button class="btn sec" data-a="pag" data-v="ranking">Ver ranking</button></section>`;
+}
+
+/* ---------- Inteligência de Mercado ---------- */
+const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"]];
+function subnavInt(){
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Inteligência de Mercado">${INT_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Inteligência de Mercado</span></div></div>`;
+}
+const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
+const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
+function vIntCanais(){
+  if(!S.canais)return `<div class="carregando">Carregando as pesquisas…</div>`;
+  const nome={};S.canais.forEach(c=>{nome[c.id]=c.nome;});
+  const todas=Object.entries(S.canalPrecos||{}).flatMap(([cid,l])=>(l||[]).map(x=>({...x,canal:nome[cid]||"Revenda"}))).sort((a,b)=>String(b.data_pesquisa||"").localeCompare(String(a.data_pesquisa||"")));
+  const f=S.intCult||"Todos";const lst=f==="Todos"?todas:todas.filter(x=>finNorm(x.cultivar)===finNorm(f));
+  const cults=[...new Set(todas.map(x=>x.cultivar).filter(Boolean))];
+  const resumo=cults.map(cu=>{const xs=todas.filter(x=>x.cultivar===cu&&Number(x.preco)>0).map(x=>Number(x.preco));if(!xs.length)return null;
+    const ult=todas.find(x=>x.cultivar===cu);return {cu,n:xs.length,med:xs.reduce((t,v)=>t+v,0)/xs.length,min:Math.min(...xs),max:Math.max(...xs),ult};}).filter(Boolean);
+  const form=S.novoPreco?`<form class="form-card" id="f-preco"><h3 class="sec">Nova pesquisa de preço (cliente oculto)</h3>
+    <div class="dupla"><div><label for="pr_canal">Revenda</label><select id="pr_canal" required><option value="">Selecione…</option>${S.canais.map(c=>`<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join("")}</select></div>
+      <div><label for="pr_cult">Cultivar</label><select id="pr_cult" required>${INT_CULTS.map(c=>`<option>${c}</option>`).join("")}</select></div></div>
+    <div class="dupla"><div><label for="pr_preco">Preço praticado (R$/kg)</label><input id="pr_preco" type="number" step="0.01" min="0" required></div><div><label for="pr_data">Data da pesquisa</label><input id="pr_data" type="date" required></div></div>
+    <div><label for="pr_fonte">Fonte</label><input id="pr_fonte" value="Cliente oculto"></div>
+    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="preco-novo" data-v="0">Cancelar</button></div></form>`:"";
+  return `<div><h1 class="titulo">Preços praticados pelos canais</h1><p class="sub">Pesquisas de cliente oculto nas revendas do Conecta Revendas. Uso interno da Barenbrug: as revendas não veem esta área.</p></div>
+  <div class="acoes" style="margin:0"><button class="btn" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>
+  ${form}
+  ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor</th><th class="val">Maior</th><th>Última pesquisa</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}</td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}</td><td class="val">${fmtR(r.max)}</td><td>${esc(r.ult.canal)} · ${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div></section>`:""}
+  <section class="bloco"><h2 class="sec">Todas as pesquisas (${lst.length})</h2>
+    ${cults.length>1?`<div class="filtros" role="group" aria-label="Filtrar por cultivar" style="margin-bottom:10px">${["Todos",...cults].map(c=>`<button class="chip" data-a="int-cult" data-v="${esc(c)}" aria-pressed="${c===f}">${esc(c)}</button>`).join("")}</div>`:""}
+    ${lst.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Data</th><th>Revenda</th><th>Cultivar</th><th class="val">Preço (R$/kg)</th><th>Fonte</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(intData(x.data_pesquisa))}</td><td>${esc(x.canal)}</td><td>${esc(x.cultivar||"—")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td>${esc(x.fonte||"Cliente oculto")}</td><td>${ehAdmin()?`<button class="link perigo" data-a="preco-del" data-v="${esc(x.id)}">excluir</button>`:""}</td></tr>`).join("")}</tbody></table></div>`
+    :`<div class="vazio">Nenhuma pesquisa registrada. A meta é uma rodada de cliente oculto por trimestre em cada revenda.</div>`}</section>`;
+}
+function vIntConcorrentes(){
+  return `<div><h1 class="titulo">Preços praticados pelos concorrentes</h1><p class="sub">Preços de cultivares concorrentes levantados no cliente oculto, por região e data. Uso interno da Barenbrug.</p></div>
+  <section class="bloco"><div class="vazio">Aguardando o material do cliente oculto. Quando ele entrar, esta página mostra cada concorrente e produto, o preço por kg, a UF ou cidade, a data e a fonte, com a comparação frente aos híbridos Barenbrug.</div></section>`;
 }
 
 /* ---------- Financeiro Barenbrug ---------- */
@@ -3052,6 +3090,10 @@ function renderApp(){
     if(!S.posts){carregarPosts().then(render);}
     return;
   }
+  if(S.secao==="inteligencia"){
+    if(veBarenbrugRV()){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais()}</main>`;if(!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);return;}
+    S.secao=null;S.pag="hub";
+  }
   if(S.secao==="financeiro"){
     if(ehFin()){app.innerHTML=cabecalho()+subnavFin()+`<main class="largo">${vFin()}</main>`;if(!S.fin)carregarFin().then(render);return;}
     S.secao=null;S.pag="hub";
@@ -3074,6 +3116,8 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
+  if(a==="secao"&&v==="inteligencia"){if(!veBarenbrugRV())return;S.secao=v;S.pag="int-canais";S.novoPreco=false;render();window.scrollTo(0,0);return;}
+  if(a==="int-cult"){S.intCult=v;render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
   if(a==="rank-f"){S.rankF=v;render();return;}
   if(a==="fin-recarregar"){S.fin=null;render();return;}
@@ -3441,7 +3485,7 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
   if(f.id==="f-filial"){const r={canal_id:S.canalSel,nome:f.querySelector("#fl_nome").value.trim(),cidade:f.querySelector("#fl_cidade").value.trim(),uf:f.querySelector("#fl_uf").value.trim().toUpperCase(),endereco:f.querySelector("#fl_end").value.trim(),responsavel:f.querySelector("#fl_resp").value.trim(),contato:f.querySelector("#fl_contato").value.trim()};const {error}=await sb.from("canal_filiais").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novaFilial=false;S.canais=null;render();aviso("Filial adicionada.");return;}
   if(f.id==="f-estoque"){const r={canal_id:S.canalSel,cultivar:f.querySelector("#es_cult").value.trim(),quantidade_kg:+f.querySelector("#es_qtd").value||0,data:f.querySelector("#es_data").value||null,obs:f.querySelector("#es_obs").value.trim()};const {error}=await sb.from("canal_estoque").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoEstoque=false;S.canais=null;render();aviso("Estoque registrado.");return;}
-  if(f.id==="f-preco"){const r={canal_id:S.canalSel,cultivar:f.querySelector("#pr_cult").value.trim(),preco:+f.querySelector("#pr_preco").value||0,data_pesquisa:f.querySelector("#pr_data").value||null,fonte:f.querySelector("#pr_fonte").value.trim()||"Cliente oculto"};const {error}=await sb.from("canal_precos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoPreco=false;S.canais=null;render();aviso("Preço registrado.");return;}
+  if(f.id==="f-preco"){const cs=f.querySelector("#pr_canal");const r={canal_id:cs?cs.value:S.canalSel,cultivar:f.querySelector("#pr_cult").value.trim(),preco:+f.querySelector("#pr_preco").value||0,data_pesquisa:f.querySelector("#pr_data").value||null,fonte:f.querySelector("#pr_fonte").value.trim()||"Cliente oculto"};const {error}=await sb.from("canal_precos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoPreco=false;S.canais=null;render();aviso("Preço registrado.");return;}
   if(f.id==="f-calc"){
     const kg=+f.querySelector("#calc_kg").value||0;const rs=+f.querySelector("#calc_rs").value||0;
     const faixa=TIERS_RC.find(x=>kg>=x.min&&kg<=x.max)||TIERS_RC[0];
