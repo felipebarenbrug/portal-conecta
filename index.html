@@ -944,7 +944,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112094301";
+const APP_VER="20261112100125";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2738,7 +2738,10 @@ function vAcomp(){
     ${sem.length?`<p class="dica">Revendas do Conecta ainda sem ninguém no portal: ${sem.map(k=>esc(k.nome)).join(" · ")}.</p>`:""}</section>`;})()}
   <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
-  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th>${ETAPAS_ATIVAS.map(id=>`<th>${esc(({melhoramento:"Melhoramento",qualcapim:"Qual capim"})[id]||ETAPAS.find(e=>e.id===id).n)}</th>`).join("")}<th>Geral</th><th>Pontos</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td>${ETAPAS_ATIVAS.map(id=>`<td>${cel(id)}</td>`).join("")}<td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td>${x.pontos?`<strong>${x.pontos}</strong>`:'<span class="meta">—</span>'}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>`;
+  <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th>${ETAPAS_ATIVAS.map(id=>`<th>${esc(({melhoramento:"Melhoramento",qualcapim:"Qual capim"})[id]||ETAPAS.find(e=>e.id===id).n)}</th>`).join("")}<th>Geral</th><th>Pontos</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td>${ETAPAS_ATIVAS.map(id=>`<td>${cel(id)}</td>`).join("")}<td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td>${x.pontos?`<strong>${x.pontos}</strong>`:'<span class="meta">—</span>'}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>
+  ${(()=>{const pu=S.progPorUser||{},nome={};S.equipe.forEach(x=>{nome[x.id]=x;});
+    return `<section class="bloco"><h2 class="sec">Provas dos programas Conecta</h2><p class="sub" style="margin:0 0 10px">Quem já foi aprovado nas provas dos cursos do Conecta RC e do Conecta Revendas. Essas provas não somam pontos no ranking da Academia.</p><div class="int-2">${Object.entries(PROVAS_EXTRA).map(([id,P])=>{const L=Object.entries(pu).filter(([u,rs])=>rs[id]!=null&&nome[u]).map(([u,rs])=>({x:nome[u],n:rs[id]})).sort((a,b)=>b.n-a.n||a.x.nome.localeCompare(b.x.nome));
+      return `<div style="min-width:0"><h3 class="pgd-h">${P.n} · ${L.length} ${L.length===1?"aprovado":"aprovados"}</h3>${L.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Perfil</th><th class="val">Acertos</th></tr></thead><tbody>${L.map(o=>`<tr><td><button class="link" data-a="verusuario" data-v="${o.x.id}">${esc(o.x.nome)}</button></td><td>${esc(o.x.perfil||"")}</td><td class="val">${o.n} de ${P.quiz.length}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Ninguém concluiu ainda.</div>`}</div>`;}).join("")}</div></section>`;})()}`;
 }
 const totalQ=id=>{if(PROVAS_EXTRA[id])return PROVAS_EXTRA[id].quiz.length;const e=ETAPAS.find(x=>x.id===id);return e&&e.quiz&&e.quiz.length?e.quiz.length:1;};
 function vProvaExtra(id){const P=PROVAS_EXTRA[id],nota=S.notas[id],feita=S.feitas.includes(id);
@@ -3164,19 +3167,9 @@ function contratoCard(c,titulo){
     ${lin("Regional",esc(c.regional||"—"))}${lin("CORE",core)}${lin("Comissão",esc(c.comissao||"—"))}${c.obs?lin("Observação",esc(c.obs)):""}
   </div><p class="precos-nota">Mapeado a partir do contrato assinado e da planilha de controle do CS. Divergência? Fale com o Marketing Barenbrug.</p></section>`;
 }
-const MODELOS_REP=[
-  ["Base legal","Lei 4.886/1965 (representação comercial autônoma) e Código Civil","Código Civil: contrato de prestação de serviços de vendedor autônomo; relação só cível","Código Civil: contrato de consultoria e assessoria comissionada","Contrato de fornecimento/parceria com a Cargill e Anexo III (Parceiro) por franqueado; não é representação comercial"],
-  ["Contrato","PJ; Contrato Conecta RC 26/27 com Anexos I a VI (produtos, área, comissões, mecânica, antissuborno, política comercial)","PJ (MEI); Anexo I produtos, II região, III comissão e ajuda de custo (atualizável à parte), IV confidencialidade, V antissuborno","PJ; contrato simplificado, sem tabela de comissão por produto","Formalizado e enviado pela Nutron ao franqueado; a Barenbrug acompanha quais estão ativos"],
-  ["CORE","Obrigatório (número no Anexo II; prepostos também inscritos)","Não exigido","Não exigido no contrato","Não"],
-  ["Área de atuação","Anexo II: todo o território nacional, sem exclusividade; a Barenbrug pode vender direto, por revendas, contas nacionais e canais digitais","Anexo II: GO, MT, MS e RO e municípios vizinhos, sem exclusividade; outras regiões só com confirmação prévia","Região definida pela Barenbrug, com exclusividade da consultoria no estado do contrato (ex.: SP, GO)","Definida pela rede de franquias"],
-  ["Como capta cliente","Prospecção de campo e carteira própria; comissão por venda registrada no CRM, sem reserva de cliente","Leads gerados pelo marketing digital","Apresenta produtores com quem já tem relacionamento; envia lista prévia para a Barenbrug checar se já são clientes","Base de clientes do franqueado Nutron"],
-  ["Comissão híbridos e Cynodon","Por tier na safra (kg recebidos, produtor + canal): Blue até 3 t 10% / 8%; Yellow até 6 t 11,5% / 9%; Yellow Pro até 9 t 13% / 10%; Yellow Master 15% / 11% (produtor / canal). Piso Blue pago mensal; acerto do tier no fechamento sobre 100% do valor","6% sobre o faturado e recebido, produtor, B2B ou canal","3% sobre o faturado e recebido, sem diferenciar produto","A confirmar: documento cita o mesmo modelo do Conecta RC e também 7% + 1% de verba (proposta de 10% flat)"],
-  ["Comissão convencionais","Taxa fixa: incrustadas e grafitadas 8% / 6%; nuas 6% / 4% (aditivo nº 1 corrigiu o Anexo IV); temperadas 6% / 5%","4% (incrustadas, nuas, temperadas e Barmix)","3% (mesma taxa)","A confirmar"],
-  ["Valor fixo mensal","Não há","Ajuda de custo de R$ 2.000/mês enquanto o contrato vigorar","Não há","Não há"],
-  ["Indenização de 1/12","Sim, na rescisão sem justa causa pela Barenbrug (Lei 4.886)","Não","Não prevista","Não"],
-  ["Prazo e rescisão","Indeterminado desde a assinatura; aviso prévio de 30 dias, ou multa de 1/3 das comissões dos últimos 3 meses","Indeterminado; aviso prévio de 30 dias, sem multa","Indeterminado; aviso prévio de 60 dias","Contrato com a Cargill: aviso de 150 dias e não concorrência de 5 anos com os franqueados"],
-  ["Conflitos","Arbitragem (Lei 9.307/1996)","Arbitragem (Lei 9.307/1996)","Código Civil, com exclusão expressa da Justiça do Trabalho","Conforme contrato com a Cargill"],
-  ["Concorrentes","Proibido vender forrageira híbrida concorrente durante o contrato","Pode vender outros produtos, menos concorrentes","Proibida consultoria para empresas com produtos concorrentes","Não concorrência prevista no contrato guarda-chuva"]];
+// o comparativo dos modelos (com comissões e valores de contrato) fica no banco: int_textos.modelos_rep
+let MODELOS_REP=null;
+async function carregarModelosRep(){if(MODELOS_REP||S.modBusy||S.demo)return;S.modBusy=true;try{const {data}=await sb.from("int_textos").select("dados").eq("id","modelos_rep").maybeSingle();MODELOS_REP=(data&&Array.isArray(data.dados))?data.dados:[];}catch(e){MODELOS_REP=[];}S.modBusy=false;render();}
 function vIntModelos(){
   const L=S.rcContr;const cab=["RC de Campo","RC Digital (Inside Sales)","Consultoria comissionada","Promotor de Vendas (Franquia Nutron)"];
   const cont=m=>L?L.filter(c=>c.modelo===m):[];const ass=m=>cont(m).filter(c=>c.status==="Assinado").length;
@@ -3186,7 +3179,7 @@ function vIntModelos(){
   return `<div><h1 class="titulo">Modelos de representação</h1><p class="sub">Como a Barenbrug opera a representação comercial: RC de Campo, RC Digital (Inside Sales), Consultoria comissionada e Promotor de Vendas (Franquia Nutron). Revisado com os contratos assinados da safra 26/27. Uso interno.</p></div>
   ${L?`<div class="metrics">${cab.slice(0,3).map(m=>`<div class="metric"><span>${m}</span><strong>${cont(m).length}</strong><span class="meta">${ass(m)} assinados · ${cont(m).length-ass(m)} aguardando</span></div>`).join("")}<div class="metric"><span>CORE vencido (RC de Campo)</span><strong>${coreV.length}</strong><span class="meta">pela planilha do CS</span></div></div>`:`<div class="carregando">Carregando os contratos…</div>`}
   <section class="bloco"><h2 class="sec">Comparativo dos modelos</h2><div class="tab"><table class="sim-t fin-t mod-t"><thead><tr><th>Dimensão</th>${cab.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>
-    ${MODELOS_REP.map(r=>`<tr><td><strong>${r[0]}</strong></td>${r.slice(1).map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}
+    ${(MODELOS_REP||[]).map(r=>`<tr><td><strong>${r[0]}</strong></td>${r.slice(1).map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}
     <tr><td><strong>Quem usa hoje</strong></td>${quem.map(v=>`<td>${esc(v)}</td>`).join("")}</tr></tbody></table></div></section>
   <section class="bloco"><h2 class="sec">O que mudou em relação ao documento de referência</h2><div class="aviso-est"><ul style="margin:0;padding-left:18px">
     <li><strong>Consultoria comissionada:</strong> ${L?`há ${cont("Consultoria comissionada").length} contratos na pasta (${esc(cont("Consultoria comissionada").map(c=>c.nome+" · "+c.status.toLowerCase()).join("; "))})`:"veja a lista abaixo"}. Os outros nomes citados no documento de referência não têm contrato de consultoria na pasta. O contrato tem região com exclusividade por estado e aviso prévio de 60 dias (o documento dizia sem território e prazo não mapeado).</li>
@@ -3254,6 +3247,11 @@ const finCat=n=>{const l=finNorm(n);
   return "inc";};
 const FIN_CAT={hib:"Híbridos + Cynodon",inc:"Convencionais incrustadas ou grafitadas",nua:"Convencionais nuas",temp:"Temperadas (azevéns, trevos, Barmix)"};
 const FIN_RC_CONV={inc:[.08,.06],nua:[.06,.04],temp:[.06,.05]};
+/* ajuda de custo do Inside Sales: periodos por vendedora (mes inicial e final, valor mensal) */
+// os periodos e valores ficam só no banco (fin_premissas), visíveis para admin e Financeiro
+const FIN_AJUDA_PADRAO=[];
+const finAjudas=P=>Array.isArray(P&&P.is_ajudas)?P.is_ajudas:FIN_AJUDA_PADRAO;
+const finAjudaMes=(P,k,nome)=>finAjudas(P).filter(a=>(!nome||finNorm(a.nome)===finNorm(nome))&&a.de&&k>=a.de&&(!a.ate||k<=a.ate)).reduce((t,a)=>t+(Number(a.valor)||0),0);
 /* comissoes dos RCs: vem das premissas (editaveis pelo admin); sem premissa, vale o contrato Conecta RC 26/27 */
 function finRCP(P){const r=(P&&P.rc)||{};
   const tiers=(Array.isArray(r.tiers)&&r.tiers.length?r.tiers:CALC_TIERS.map(t=>({t:t.t,ate:isFinite(t.ate)?t.ate:null,prod:t.rp,canal:t.rc}))).map(t=>({t:t.t,ate:t.ate==null||t.ate===""?Infinity:Number(t.ate),rp:Number(t.prod)||0,rc:Number(t.canal)||0}));
@@ -3297,12 +3295,15 @@ function finCalc(){
   const sum=(arr,f)=>arr.reduce((t,x)=>t+(Number(f(x))||0),0);
   const tot=sum(L,x=>x.rs),totFat=sum(L.filter(x=>x.fat),x=>x.rs),exp=sum(L.filter(x=>x.exp),x=>x.rs),expFat=sum(L.filter(x=>x.exp&&x.fat),x=>x.rs);
   const interno=tot-exp,internoFat=totFat-expFat;
-  const comRC=sum(rcs,x=>x.final),comIS=sum(iss,x=>x.com),com=comRC+comIS,exc=sum(rcs,x=>x.exc);
+  iss.forEach(a=>{a.ajuda=FIN_MESES.reduce((t,k)=>t+finAjudaMes(P,k,a.nome),0);});
+  const ajudaTot=FIN_MESES.reduce((t,k)=>t+finAjudaMes(P,k),0),ajudaAte=FIN_MESES.filter(k=>k<=mesHoje).reduce((t,k)=>t+finAjudaMes(P,k),0);
+  const comRC=sum(rcs,x=>x.final),comIS=sum(iss,x=>x.com),com=comRC+comIS+ajudaTot,exc=sum(rcs,x=>x.exc);
   const comFat=sum(L.filter(x=>x.fat),x=>x.comRC+x.comIS);
   const vendCom=sum(L.filter(x=>x.rcN||x.isN),x=>x.rs),dupla=L.filter(x=>x.rcN&&x.isN);
   const expDono={};L.filter(x=>x.exp).forEach(x=>{const d=x.r.dono||"—";expDono[d]=(expDono[d]||0)+x.rs;});
   const meses=[...FIN_MESES,""].map(k=>{const xs=L.filter(x=>x.mes===k||(k===""&&!FIN_MESES.includes(x.mes)));const v=sum(xs,x=>x.rs),e=sum(xs.filter(x=>x.exp),x=>x.rs);
-    return {k,v,exp:e,int:v-e,n:xs.length,poolRC:v*(Number(P.pool_rc)||0),poolRV:(v-e)*(Number(P.pool_rv)||0),com:sum(xs,x=>x.comRC+x.comIS),comRC:sum(xs,x=>x.comRC),comIS:sum(xs,x=>x.comIS),
+    const aj=k?finAjudaMes(P,k):0;
+    return {k,v,exp:e,int:v-e,n:xs.length,poolRC:v*(Number(P.pool_rc)||0),poolRV:(v-e)*(Number(P.pool_rv)||0),com:sum(xs,x=>x.comRC+x.comIS)+aj,ajuda:aj,comRC:sum(xs,x=>x.comRC),comIS:sum(xs,x=>x.comIS),
       st:!k?"":k<mesHoje?"faturado":k===mesHoje?"em curso":"a faturar"};}).filter(m=>m.k||m.n);
   // Conecta Revendas
   const resMap={},acMap={};(F.res||[]).forEach(r=>{resMap[r.canal_id]=r;});(F.acoes||[]).forEach(a=>{(acMap[a.canal_id]=acMap[a.canal_id]||[]).push(a);});
@@ -3312,7 +3313,7 @@ function finCalc(){
   const rv={total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
   const pools={rc:tot*(Number(P.pool_rc)||0),rcFat:totFat*(Number(P.pool_rc)||0),rv:interno*(Number(P.pool_rv)||0),rvFat:internoFat*(Number(P.pool_rv)||0)};
   const prods={};for(const x of L)for(const i of x.it){const k=i.n||"(sem nome)";const p=prods[k]||(prods[k]={n:k,c:i.c,kg:0,rs:0,est:false});p.kg+=i.kg;p.rs+=i.rs;if(x.est)p.est=true;}
-  S.finC={P,L,rcs,iss,tot,totFat,exp,interno,internoFat,comRC,comIS,com,exc,comFat,vendCom,dupla,expDono,meses,canais,rv,pools,semItens,semResp,prods:Object.values(prods).sort((a,b)=>b.rs-a.rs),hoje};
+  S.finC={P,L,ajudaTot,ajudaAte,rcs,iss,tot,totFat,exp,interno,internoFat,comRC,comIS,com,exc,comFat,vendCom,dupla,expDono,meses,canais,rv,pools,semItens,semResp,prods:Object.values(prods).sort((a,b)=>b.rs-a.rs),hoje};
   return S.finC;
 }
 const finPct=(a,b)=>b?pctTxt(a/b):"—";
@@ -3342,7 +3343,7 @@ function vFinResumo(C){
     <div class="metrics">
       <div class="metric"><span>Vendas da safra (base do pool)</span><strong>${fmtK0(C.tot)}</strong><span class="meta">faturado ${fmtK0(C.totFat)} · a faturar ${fmtK0(C.tot-C.totFat)}</span></div>
       <div class="metric"><span>Pool formado (${pp(P.pool_rc)})</span><strong>${fmtK0(C.pools.rc)}</strong><span class="meta">já formado sobre o faturado: ${fmtK0(C.pools.rcFat)}</span></div>
-      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Comissões estimadas</span><strong>${fmtK0(C.com)}</strong><span class="meta">${finPct(C.com,C.tot)} das vendas · RC ${fmtK0(C.comRC)} · Inside Sales ${fmtK0(C.comIS)}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Comissões + ajuda de custo</span><strong>${fmtK0(C.com)}</strong><span class="meta">${finPct(C.com,C.tot)} das vendas · RC ${fmtK0(C.comRC)} · Inside Sales ${fmtK0(C.comIS)} · ajuda de custo IS ${fmtK0(C.ajudaTot)} na safra</span></div>
       <div class="metric" style="${C.pools.rc-C.com<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Saldo do pool</span><strong>${fmtK0(C.pools.rc-C.com)}</strong><span class="meta">${C.pools.rc-C.com<0?"comissões acima do pool":"sobra dentro do pool"}</span></div>
     </div>
     ${finBarra(usoRC)}
@@ -3365,18 +3366,18 @@ function vFinResumo(C){
 }
 function vFinMensal(C){
   const P=C.P,T=k=>C.meses.reduce((t,m)=>t+(m[k]||0),0);
-  const rows=C.meses.map(m=>`<tr${m.st==="em curso"?' style="background:var(--amarelo-claro)"':""}><td><strong>${finMesNome(m.k)}</strong><br><span class="meta">${m.st||"—"}</span></td><td class="val">${fmtK0(m.v)}</td><td class="val">${fmtK0(m.exp)}</td><td class="val">${fmtK0(m.poolRC)}</td><td class="val">${fmtK0(m.com)}</td><td class="val" style="${m.poolRC-m.com<0?"color:var(--vermelho)":""}">${fmtK0(m.poolRC-m.com)}</td><td class="val">${fmtK0(m.poolRV)}</td></tr>`).join("");
+  const rows=C.meses.map(m=>`<tr${m.st==="em curso"?' style="background:var(--amarelo-claro)"':""}><td><strong>${finMesNome(m.k)}</strong><br><span class="meta">${m.st||"—"}</span></td><td class="val">${fmtK0(m.v)}</td><td class="val">${fmtK0(m.exp)}</td><td class="val">${fmtK0(m.poolRC)}</td><td class="val">${fmtK0(m.com)}${m.ajuda?`<br><span class="meta">ajuda IS ${fmtK0(m.ajuda)}</span>`:""}</td><td class="val" style="${m.poolRC-m.com<0?"color:var(--vermelho)":""}">${fmtK0(m.poolRC-m.com)}</td><td class="val">${fmtK0(m.poolRV)}</td></tr>`).join("");
   return `<div><h1 class="titulo">Provisão mês a mês</h1><p class="sub">Pelo mês de faturamento dos pedidos. Use a coluna "Reservar" como fundo de reserva: o pool que cada mês forma, comparado com a comissão que o mesmo mês gera.</p></div>
   ${finAvisoTopo(C)}
-  <section class="bloco"><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Vendas</th><th class="val">Exportação</th><th class="val">Reservar · pool comissões (${pctTxt(Number(P.pool_rc)||0)})</th><th class="val">Comissão do mês</th><th class="val">Saldo do mês</th><th class="val">Reservar · pool Conecta Revendas (${pctTxt(Number(P.pool_rv)||0)})</th></tr></thead>
+  <section class="bloco"><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Vendas</th><th class="val">Exportação</th><th class="val">Reservar · pool comissões (${pctTxt(Number(P.pool_rc)||0)})</th><th class="val">Comissão + ajuda de custo do mês</th><th class="val">Saldo do mês</th><th class="val">Reservar · pool Conecta Revendas (${pctTxt(Number(P.pool_rv)||0)})</th></tr></thead>
     <tbody>${rows}<tr><td><strong>Acerto de tier do Conecta RC</strong><br><span class="meta">no fechamento da safra</span></td><td class="val">—</td><td class="val">—</td><td class="val">—</td><td class="val">${fmtK0(C.exc)}</td><td class="val">${fmtK0(-C.exc)}</td><td class="val">—</td></tr>
     <tr style="font-weight:700"><td>Total da safra</td><td class="val">${fmtK0(T("v"))}</td><td class="val">${fmtK0(T("exp"))}</td><td class="val">${fmtK0(T("poolRC"))}</td><td class="val">${fmtK0(T("com")+C.exc)}</td><td class="val">${fmtK0(T("poolRC")-T("com")-C.exc)}</td><td class="val">${fmtK0(T("poolRV"))}</td></tr></tbody></table></div>
-  <p class="precos-nota">Comissão do mês: Conecta RC pelo piso (10% ao produtor e 8% a canais nos híbridos e Cynodon, taxa fixa nas convencionais) mais Inside Sales (${pctTxt(Number(P.is_hib)||0)} híbridos e Cynodon, ${pctTxt(Number(P.is_conv)||0)} demais). A diferença até o tier final de cada representante entra na linha do acerto. O Conecta Revendas paga o IGDB por trimestre e o BF no fim da safra: a reserva mensal acumula o pool; o custo estimado por canal está na aba Conecta Revendas.</p></section>`;
+  <p class="precos-nota">A ajuda de custo mensal do Inside Sales entra no mês em que é paga, conforme os períodos de cada vendedora em Premissas. Comissão do mês: Conecta RC pelo piso (10% ao produtor e 8% a canais nos híbridos e Cynodon, taxa fixa nas convencionais) mais Inside Sales (${pctTxt(Number(P.is_hib)||0)} híbridos e Cynodon, ${pctTxt(Number(P.is_conv)||0)} demais). A diferença até o tier final de cada representante entra na linha do acerto. O Conecta Revendas paga o IGDB por trimestre e o BF no fim da safra: a reserva mensal acumula o pool; o custo estimado por canal está na aba Conecta Revendas.</p></section>`;
 }
 function vFinComissoes(C){
   const P=C.P;
   const rc=C.rcs.map(a=>`<tr><td>${esc(a.nome)}<br><span class="meta">${a.n} pedidos</span></td><td><span class="selo">${esc(a.tier)}</span></td><td class="val">${fmtKg(Math.round(a.kgHib))}</td><td class="val">${fmtK0(a.hibP)}</td><td class="val">${fmtK0(a.hibC)}</td><td class="val">${fmtK0(a.conv)}</td><td class="val">${fmtK0(a.piso)}</td><td class="val">${fmtK0(a.exc)}</td><td class="val"><strong>${fmtK0(a.final)}</strong></td></tr>`).join("");
-  const is=C.iss.map(a=>`<tr><td>${esc(a.nome)}<br><span class="meta">${a.n} pedidos</span></td><td class="val">${fmtK0(a.hib)}</td><td class="val">${fmtK0(a.conv)}</td><td class="val">${fmtK0(a.fatCom)}</td><td class="val"><strong>${fmtK0(a.com)}</strong></td></tr>`).join("");
+  const is=C.iss.map(a=>`<tr><td>${esc(a.nome)}<br><span class="meta">${a.n} pedidos</span></td><td class="val">${fmtK0(a.hib)}</td><td class="val">${fmtK0(a.conv)}</td><td class="val">${fmtK0(a.fatCom)}</td><td class="val"><strong>${fmtK0(a.com)}</strong></td><td class="val">${fmtK0(a.ajuda||0)}</td></tr>`).join("");
   const S2=(arr,f)=>arr.reduce((t,x)=>t+(Number(f(x))||0),0);
   return `<div><h1 class="titulo">Comissões estimadas</h1><p class="sub">Quem recebe: representantes comerciais do Conecta RC, nas vendas em que aparecem no CRM, e as vendedoras do Inside Sales (${esc((P.is_nomes||[]).join(", "))}). Venda direta do time interno não paga comissão.</p></div>
   ${finAvisoTopo(C)}
@@ -3386,9 +3387,9 @@ function vFinComissoes(C){
     <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${fmtKg(Math.round(S2(C.rcs,x=>x.kgHib)))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibP))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.hibC))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.rcs,x=>x.piso))}</td><td class="val">${fmtK0(C.exc)}</td><td class="val">${fmtK0(C.comRC)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda com representante na safra.</div>`}
     <p class="precos-nota">${(()=>{const R=finRCP(P);return `Tier pelos quilos de híbridos e Cynodon da safra (produtor + canal): ${R.tiers.map((t,i)=>`${esc(t.t)} ${isFinite(t.ate)?"até "+fmtKg(t.ate):"acima"} (${pctTxt(t.rp)} / ${pctTxt(t.rc)})`).join(", ")}. Alíquota final aplicada sobre todo o volume. Convencionais (produtor / canal): incrustadas e grafitadas ${pctTxt(R.conv.inc[0])} / ${pctTxt(R.conv.inc[1])}, nuas ${pctTxt(R.conv.nua[0])} / ${pctTxt(R.conv.nua[1])}, temperadas ${pctTxt(R.conv.temp[0])} / ${pctTxt(R.conv.temp[1])}. Consultoria comissionada (${esc(R.consultores.join(", ")||"ninguém cadastrado")}): ${pctTxt(R.cons)} sobre tudo. Canal = cliente distribuidor, cooperativa ou venda para canal (sell-in). Regras editáveis em Premissas.`;})()}</p></section>
   <section class="bloco"><h2 class="sec">Inside Sales · ${fmtK0(C.comIS)}</h2>
-    ${C.iss.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th><th class="val">R$ híbridos + Cynodon (${pctTxt(Number(P.is_hib)||0)})</th><th class="val">R$ demais (${pctTxt(Number(P.is_conv)||0)})</th><th class="val">Sobre o já faturado</th><th class="val">Total estimado</th></tr></thead><tbody>${is}
-    <tr style="font-weight:700"><td>Total</td><td class="val">${fmtK0(S2(C.iss,x=>x.hib))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.fatCom))}</td><td class="val">${fmtK0(C.comIS)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda do Inside Sales identificada ainda.${C.semResp?" A identificação por vendedora entra na próxima atualização do CRM.":""}</div>`}
-    <p class="precos-nota">Mesma taxa para produtor, B2B e canal. Além da comissão, cada vendedora recebe ajuda de custo de ${fmtK0(P.is_ajuda==null?2000:P.is_ajuda)} por mês (fora do pool).</p></section>`;
+    ${C.iss.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th><th class="val">R$ híbridos + Cynodon (${pctTxt(Number(P.is_hib)||0)})</th><th class="val">R$ demais (${pctTxt(Number(P.is_conv)||0)})</th><th class="val">Sobre o já faturado</th><th class="val">Comissão estimada</th><th class="val">Ajuda de custo na safra</th></tr></thead><tbody>${is}
+    <tr style="font-weight:700"><td>Total</td><td class="val">${fmtK0(S2(C.iss,x=>x.hib))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.conv))}</td><td class="val">${fmtK0(S2(C.iss,x=>x.fatCom))}</td><td class="val">${fmtK0(C.comIS)}</td><td class="val">${fmtK0(C.ajudaTot)}</td></tr></tbody></table></div>`:`<div class="vazio">Nenhuma venda do Inside Sales identificada ainda.${C.semResp?" A identificação por vendedora entra na próxima atualização do CRM.":""}</div>`}
+    <p class="precos-nota">Mesma taxa para produtor, B2B e canal. Além da comissão, cada vendedora recebe ajuda de custo mensal (${esc(finAjudas(P).map(a=>`${a.nome} ${fmtK0(a.valor)} de ${finMesNome(a.de)}${a.ate?" a "+finMesNome(a.ate):" em diante"}`).join("; "))}). Ela conta no pool de comissões: ${fmtK0(C.ajudaTot)} na safra, ${fmtK0(C.ajudaAte)} até este mês.</p></section>`;
 }
 function vFinConecta(C){
   const P=C.P;
@@ -3418,7 +3419,9 @@ function vFinPremissas(C){
     <div class="dupla">${n("fp_ish","Inside Sales: híbridos e Cynodon (%)",P.is_hib,"Produtor, B2B ou canal.")}${n("fp_isc","Inside Sales: demais cultivares (%)",P.is_conv,"Produtor, B2B ou canal.")}</div>
     <div><label for="fp_nomes">Vendedoras do Inside Sales com comissão</label><input id="fp_nomes" value="${esc((P.is_nomes||[]).join(", "))}" ${adm?"":"disabled"}><span class="meta">Separadas por vírgula, como aparecem no CRM.</span></div>
     <div><label for="fp_sem">Sem comissão (CLT ou interno)</label><input id="fp_sem" value="${esc((P.sem_comissao||[]).join(", "))}" ${adm?"":"disabled"}></div>
-    <div><label for="fp_ajuda">Inside Sales: ajuda de custo mensal (R$)</label><input id="fp_ajuda" type="text" inputmode="decimal" value="${esc(String(P.is_ajuda==null?2000:P.is_ajuda).replace(".",","))}" ${adm?"":"disabled"}><span class="meta">Por vendedora, enquanto o contrato vigorar. Só informativo: não entra no pool de comissões.</span></div>
+    ${(()=>{const A=finAjudas(P).concat(adm?[{nome:"",de:"",ate:"",valor:""}]:[]),dis=adm?"":"disabled";
+      return `<div><label>Inside Sales: ajuda de custo mensal</label><span class="meta">Um período por linha: vendedora, mês inicial, mês final (vazio = até o fim do contrato) e valor por mês. Conta no pool de comissões, no mês do pagamento. Para mudar o valor, feche o período anterior e abra outro. A linha vazia serve para incluir.</span>
+      <div class="tab"><table class="sim-t prem-t"><thead><tr><th>Vendedora</th><th>De (mês)</th><th>Até (mês)</th><th>R$ por mês</th></tr></thead><tbody>${A.map((a,i)=>`<tr><td><input data-aj="${i}" data-k="nome" value="${esc(a.nome)}" ${dis} aria-label="Vendedora"></td><td><input type="month" data-aj="${i}" data-k="de" value="${esc(a.de||"")}" ${dis} aria-label="Mês inicial"></td><td><input type="month" data-aj="${i}" data-k="ate" value="${esc(a.ate||"")}" ${dis} aria-label="Mês final"></td><td><input data-aj="${i}" data-k="valor" inputmode="decimal" value="${a.valor===""?"":esc(String(a.valor).replace(".",","))}" ${dis} aria-label="Valor mensal"></td></tr>`).join("")}</tbody></table></div></div>`;})()}
     ${(()=>{const R=finRCP(P),pc=v=>esc(((Number(v)||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:3})),dis=adm?"":"disabled";
       return `<h3 class="pgd-h" style="margin-top:8px">Conecta RC · RC de Campo</h3><span class="meta">Comissão por tier sobre híbridos (Sabiá, Cayana, Carcará) e Cynodon. O tier sai do total de quilos recebidos na safra (produtor + canal). O primeiro tier é o piso pago todo mês; no fechamento vale a alíquota do tier atingido sobre 100% do valor.</span>
       <div class="tab"><table class="sim-t prem-t"><thead><tr><th>Tier</th><th>Até (kg)</th><th>Produtor (%)</th><th>Canal (%)</th></tr></thead><tbody>${R.tiers.map((t,i)=>`<tr><td><input data-tier="${i}" data-k="t" value="${esc(t.t)}" ${dis} aria-label="Nome do tier ${i+1}"></td><td>${i===R.tiers.length-1?`<span class="meta">acima do anterior</span>`:`<input data-tier="${i}" data-k="ate" inputmode="numeric" value="${esc(String(t.ate))}" ${dis} aria-label="Limite do tier ${esc(t.t)} em kg">`}</td><td><input data-tier="${i}" data-k="prod" inputmode="decimal" value="${pc(t.rp)}" ${dis} aria-label="Produtor ${esc(t.t)}"></td><td><input data-tier="${i}" data-k="canal" inputmode="decimal" value="${pc(t.rc)}" ${dis} aria-label="Canal ${esc(t.t)}"></td></tr>`).join("")}</tbody></table></div>
@@ -3604,7 +3607,7 @@ function renderApp(){
       const corpo=an?(S.intMapa?(S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
-      else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();}
+      else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
       else if(!an&&!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
@@ -3844,10 +3847,11 @@ document.addEventListener("submit",async ev=>{
     const tiers=[];f.querySelectorAll("[data-tier]").forEach(el=>{const i=+el.dataset.tier,k=el.dataset.k;const t=tiers[i]||(tiers[i]={t:"",ate:null,prod:0,canal:0});
       if(k==="t")t.t=el.value.trim().slice(0,30);else if(k==="ate"){const v=parseInt(String(el.value).replace(/\D/g,""),10);t.ate=isFinite(v)?v:NaN;}else t[k]=pctv(el);});
     const conv={inc:[0,0],nua:[0,0],temp:[0,0]};f.querySelectorAll("[data-conv]").forEach(el=>{conv[el.dataset.conv][+el.dataset.i]=pctv(el);});
-    const cons=num("fp_cons"),ajuda=parseFloat(String(f.querySelector("#fp_ajuda").value).replace(/\./g,"").replace(",","."));
+    const cons=num("fp_cons");const ajs=[];f.querySelectorAll("[data-aj]").forEach(el=>{const i=+el.dataset.aj;const a=ajs[i]||(ajs[i]={nome:"",de:"",ate:"",valor:0});a[el.dataset.k]=el.dataset.k==="valor"?parseFloat(String(el.value).replace(/\./g,"").replace(",",".")):el.value.trim();});
+    const is_ajudas=ajs.filter(a=>a&&a.nome).map(a=>({nome:a.nome.slice(0,40),de:a.de,ate:a.ate||"",valor:a.valor}));const ajuda=is_ajudas.every(a=>/^\d{4}-\d{2}$/.test(a.de)&&(!a.ate||a.ate>=a.de)&&a.valor>=0)?0:NaN;
     const okP=x=>x>=0&&x<1;
-    if(!tiers.length||tiers.some((t,i)=>!t.t||!okP(t.prod)||!okP(t.canal)||(i<tiers.length-1&&!(t.ate>0))||(i>0&&i<tiers.length-1&&!(t.ate>tiers[i-1].ate)))||Object.values(conv).some(a=>a.some(x=>!okP(x)))||!okP(cons)||!(ajuda>=0)){aviso("Confira as comissões dos RCs: percentuais como 11,5 e limites de kg em ordem crescente.");return;}
-    const dados={...P0,...vals,is_nomes:lista("fp_nomes"),sem_comissao:lista("fp_sem"),is_ajuda:ajuda,rc:{tiers,conv,consultoria:cons,consultores:lista("fp_consn")}};
+    if(!tiers.length||tiers.some((t,i)=>!t.t||!okP(t.prod)||!okP(t.canal)||(i<tiers.length-1&&!(t.ate>0))||(i>0&&i<tiers.length-1&&!(t.ate>tiers[i-1].ate)))||Object.values(conv).some(a=>a.some(x=>!okP(x)))||!okP(cons)||!(ajuda>=0)){aviso("Confira as premissas: percentuais como 11,5, limites de kg em ordem crescente e períodos de ajuda de custo com mês inicial.");return;}
+    const dados={...P0,...vals,is_nomes:lista("fp_nomes"),sem_comissao:lista("fp_sem"),is_ajudas,rc:{tiers,conv,consultoria:cons,consultores:lista("fp_consn")}};
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("fin_premissas").update({dados}).eq("id",1);
     if(error){aviso("Não foi possível salvar as premissas.");render();return;}
