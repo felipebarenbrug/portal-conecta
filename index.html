@@ -838,7 +838,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261111231527";
+const APP_VER="20261111231633";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2841,7 +2841,10 @@ async function carregarIntMapa(){
   S.intC=null;S.intBusy=false;
 }
 const INT_IS=/^(inside sales|is:)/i,INT_IS_REP=/^(laura|maria giulia|tha[ií]s|maria eduarda|mayane|felipe piccoli)/i;
-const intVia=r=>INT_IS.test(String(r.dono||""))||INT_IS_REP.test(String(r.rep||""))||INT_IS_REP.test(String(r.resp||""))||INT_IS_REP.test(String(r.dono||""))?"Inside Sales":r.rep?"RC":"Comercial Barenbrug";
+// Representante de verdade no pedido manda: vira venda de RC, mesmo que o dono seja do Inside Sales (a Mayane supervisiona RCs).
+// Sem representante, ou com o nome de alguem do Inside Sales (inclusive a Mayane) no campo, e venda do Inside Sales.
+const intVia=r=>{const rep=String(r.rep||"").trim();if(rep&&!INT_IS_REP.test(rep))return "RC";
+  return INT_IS.test(String(r.dono||""))||INT_IS_REP.test(rep)||INT_IS_REP.test(String(r.resp||""))||INT_IS_REP.test(String(r.dono||""))?"Inside Sales":"Comercial Barenbrug";};
 const intCli=r=>finNorm(String(r.org||"")||String(r.nome||"").split(" - ")[0]);
 const intNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const t=String(v).replace(/[^\d,.-]/g,"");if(!t)return null;const n=parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t);return isFinite(n)?n:null;};
 const intDias=(a,b)=>{if(!a||!b)return null;const d=(new Date(String(b).slice(0,10)+"T00:00:00Z")-new Date(String(a).slice(0,10)+"T00:00:00Z"))/864e5;return isFinite(d)?Math.round(d):null;};
