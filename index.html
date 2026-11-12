@@ -841,7 +841,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112065820";
+const APP_VER="20261112070321";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2702,7 +2702,7 @@ async function abrirUsuario(id){
 
 /* ---------- Ranking da Academia ---------- */
 const RANK_FALTA=e=>/PGRST202|Could not find the function|does not exist/i.test(String((e&&(e.code+" "+e.message))||e||""));
-async function carregarRanking(f){
+async function carregarRankAcad(f){
   S.rank=S.rank||{};if(S.rank["_busy_"+f])return;S.rank["_busy_"+f]=true;
   try{const {data,error}=await sb.rpc("ranking_academia",{p_filtro:f});
     if(error){if(RANK_FALTA(error))S.rankOff=true;S.rank[f]={erro:true};}
@@ -2721,7 +2721,7 @@ function rankLinha(x,eu){
 }
 function vRanking(){
   const f=rankFiltro(),R=S.rank&&S.rank[f];
-  if(!R){carregarRanking(f).then(render);return `<div class="carregando">Carregando o ranking…</div>`;}
+  if(!R){carregarRankAcad(f).then(render);return `<div class="carregando">Carregando o ranking…</div>`;}
   if(R.erro)return `<div><h2 class="sec">Ranking da Academia</h2></div><div class="vazio">${S.rankOff?"O ranking abre em breve.":"Não foi possível carregar o ranking agora."}</div>`;
   const provas=Array.isArray(R.provas)?R.provas:[];
   const chips=[["geral",R.grupo_nome?"Geral · "+R.grupo_nome:"Geral"],...provas.map(p=>[p.id,p.titulo||("Especialista em "+p.nome)])];
@@ -2737,7 +2737,7 @@ function vRanking(){
 }
 function rankMini(){
   if(S.rankOff)return "";const R=S.rank&&S.rank.geral;
-  if(!R){carregarRanking("geral").then(()=>{if(S.pag==="trilha")render();});return "";}
+  if(!R){carregarRankAcad("geral").then(()=>{if(S.pag==="trilha")render();});return "";}
   if(R.erro)return "";const eu=R.eu;
   return `<section class="rk-mini"><div><span class="rot">Ranking da Academia</span><strong>${eu&&eu.pos?`Você está em ${eu.pos}º de ${R.total}`:"Você ainda não pontuou"}</strong><span class="meta">${eu&&eu.pos?(Number(eu.pontos)||0).toLocaleString("pt-BR")+" pontos":"Cada acerto nas provas vale pontos."}</span></div><button class="btn sec" data-a="pag" data-v="ranking">Ver ranking</button></section>`;
 }
@@ -2841,6 +2841,7 @@ function vIntConcorrentes(){
 async function carregarIntMapa(){
   if(S.intBusy)return;S.intBusy=true;
   try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}t.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});S.intMapa=t;}catch(e){S.intMapa=[];}
+  if(!RC_RANKING.length){try{await carregarRanking();}catch(e){}}
   try{const {data}=await sb.from("profiles").select("nome,rc_crm,empresa_uf,empresa_cidade,raio_atuacao").eq("perfil","RC");S.rcSede={};S.rcRaio={};
     (data||[]).forEach(x=>{[x.rc_crm,x.nome].filter(Boolean).map(repCanon).forEach(k=>{const n=finNorm(k);if(x.empresa_uf){S.rcSede[n]=String(x.empresa_uf).toUpperCase();S.rcRaio[n]=(x.empresa_cidade?x.empresa_cidade+" · ":"")+(x.raio_atuacao||"");}});});}catch(e){}
   S.intC=null;S.intBusy=false;
@@ -2903,11 +2904,18 @@ function vIntRC(C){
     <div class="metric"><span>Clientes de híbridos por RC</span><strong>${n?(cli/n).toLocaleString("pt-BR",{maximumFractionDigits:1}):"—"}</strong><span class="meta">${cli} clientes no total</span></div>
     <div class="metric"><span>Ticket médio por pedido</span><strong>${ped?fmtK0(rs/ped):"—"}</strong><span class="meta">só o valor dos híbridos</span></div>
     <div class="metric"><span>Kg de híbridos por RC</span><strong>${n?fmtKg(Math.round(kg/n)):"—"}</strong><span class="meta">${fmtKg(Math.round(kg))} no total</span></div>
+    <div class="metric"><span>Pedido médio em quantidade</span><strong>${ped?fmtKg(Math.round(kg/ped)):"—"}</strong><span class="meta">kg de híbridos por pedido</span></div>
   </div>
+  ${(()=>{const rk=(RC_RANKING||[]).filter(x=>x.kg>0);if(!rk.length)return "";const ord=["Yellow Master","Yellow Pro","Yellow","Blue"];
+    const g=ord.map(t=>{const xs=rk.filter(x=>tierDoKg(x.kg)===t);const kgT=xs.reduce((a,x)=>a+x.kg,0);return {t,n:xs.length,kg:kgT,info:RC_TIERS.find(x=>x.t===t)||{}};});
+    return `<section class="bloco"><h2 class="sec">RCs por categoria do Conecta RC</h2><p class="sub" style="margin:0 0 10px">Pelo volume de híbridos e Cynodon da safra no ranking oficial do Conecta RC (${rk.length} RCs com venda).</p>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Faixa de volume</th><th class="val">RCs</th><th class="val">Participação</th><th class="val">Kg no total</th><th class="val">Kg médio por RC</th><th class="val">Comissão produtor / canal</th></tr></thead><tbody>
+    ${g.map(x=>`<tr><td><span class="selo">${esc(x.t)}</span></td><td>${esc(x.info.vol||"")}</td><td class="val"><strong>${x.n}</strong></td><td class="val">${pctTxt(x.n/rk.length)}</td><td class="val">${fmtKg(Math.round(x.kg))}</td><td class="val">${x.n?fmtKg(Math.round(x.kg/x.n)):"—"}</td><td class="val">${esc((x.info.prod||"")+" / "+(x.info.canal||""))}</td></tr>`).join("")}
+    <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${rk.length}</td><td class="val">100%</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)))}</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)/rk.length))}</td><td></td></tr></tbody></table></div></section>`;})()}
   <section class="bloco"><h2 class="sec">Raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada RC vendeu híbridos, comparados com a UF da sede da empresa que o RC informou no cadastro do portal (o raio declarado aparece embaixo). RC sem cadastro no portal fica sem sede até o contrato ser carregado.</p>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>RC</th><th>Sede (contrato)</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Ticket médio</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>RC</th><th>Sede (contrato)</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
   ${R.map(a=>{const u=Object.entries(ufsRC[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=sede[finNorm(a.k)]||"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
-    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="8">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="9">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
 }
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
