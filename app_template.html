@@ -354,6 +354,10 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .pgd-h{margin:4px 0 0;font-size:15px}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:760px){.int-2{grid-template-columns:minmax(0,1fr)}}
+.aud-notas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.aud-nota{background:var(--branco);border-radius:10px;padding:12px 14px;display:grid;gap:4px;box-shadow:inset 4px 0 0 var(--linha)}
+.aud-nota.at{box-shadow:inset 4px 0 0 var(--vermelho)}.aud-nota.de{box-shadow:inset 4px 0 0 var(--verde,#1b7f3b)}
+.aud-nota p{margin:0;font-size:14px;line-height:1.45}
 .fin-uso{display:grid;gap:4px;margin-top:12px;font-size:14px}
 .tab table.fin-t{min-width:760px}
 @media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
@@ -2749,6 +2753,56 @@ function rankMini(){
   return `<section class="rk-mini"><div><span class="rot">Ranking da Academia</span><strong>${eu&&eu.pos?`Você está em ${eu.pos}º de ${R.total}`:"Você ainda não pontuou"}</strong><span class="meta">${eu&&eu.pos?(Number(eu.pontos)||0).toLocaleString("pt-BR")+" pontos":"Cada acerto nas provas vale pontos."}</span></div><button class="btn sec" data-a="pag" data-v="ranking">Ver ranking</button></section>`;
 }
 
+/* ---------- Inteligência: auditoria de preços (cliente oculto) ---------- */
+async function carregarIntAud(){
+  if(S.intAudBusy)return;S.intAudBusy=true;
+  try{const [a,b,c]=await Promise.all([sb.from("canal_auditoria").select("*"),sb.from("concorrente_precos").select("*").order("marca"),sb.from("concorrente_cond").select("*")]);
+    S.intAud={cond:a.data||[],conc:b.data||[],concCond:c.data||[]};}catch(e){S.intAud={cond:[],conc:[],concCond:[]};}
+  S.intAudBusy=false;
+}
+const ROD_NOME={1:"1ª rodada (mar/26)",2:"2ª rodada (ago/26)",3:"3ª rodada (out/26)"};
+const audVar=(a,b)=>a&&b?(b/a-1):null;
+const audVarTxt=v=>v==null?"—":`<span style="color:${v<=-0.1?"var(--vermelho)":v>=0.1?"var(--verde,#1b7f3b)":"inherit"}">${v>0?"+":""}${(v*100).toLocaleString("pt-BR",{maximumFractionDigits:0})}%</span>`;
+function vIntAudCanais(nome){
+  if(!S.intAud){carregarIntAud().then(render);return "";}
+  const A=S.intAud;const precos=Object.entries(S.canalPrecos||{}).flatMap(([cid,l])=>(l||[]).map(x=>({...x,canal_id:cid,canal:nome[cid]||"Revenda"})));
+  const CU=["Sabiá","Cayana","Carcará"];
+  const ev={};precos.filter(x=>x.rodada===1||x.rodada===3).forEach(x=>{const k=x.canal;(ev[k]=ev[k]||{})[x.cultivar+"|"+x.rodada]=Number(x.preco);});
+  const evRows=Object.entries(ev).sort((a,b)=>a[0].localeCompare(b[0]));
+  const med=(rod,cu)=>{const v=precos.filter(x=>x.rodada===rod&&x.cultivar===cu&&Number(x.preco)>0).map(x=>Number(x.preco));return v.length?v.reduce((t,y)=>t+y,0)/v.length:null;};
+  const conds=A.cond.filter(x=>x.rodada===3).map(x=>({...x,canal:nome[x.canal_id]||"Revenda"})).sort((a,b)=>a.canal.localeCompare(b.canal));
+  const notas=conds.filter(x=>x.nota);
+  const pct=v=>v==null?"—":(v*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%";
+  return `${evRows.length?`<section class="bloco"><h2 class="sec">Evolução: 1ª rodada (mar/26) → 3ª rodada (out/26)</h2>
+    <p class="sub" style="margin:0 0 10px">Preço à vista por kg na mesma revenda. Média das revendas: ${CU.map(cu=>`${cu} ${med(1,cu)?fmtR(med(1,cu)):"—"} → ${med(3,cu)?fmtR(med(3,cu)):"—"} (${audVarTxt(audVar(med(1,cu),med(3,cu)))})`).join(" · ")}.</p>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th>${CU.map(c=>`<th class="val">${c}: mar → out</th>`).join("")}</tr></thead><tbody>
+    ${evRows.map(([k,o])=>`<tr><td><strong>${esc(k)}</strong></td>${CU.map(cu=>{const a=o[cu+"|1"],b=o[cu+"|3"];return `<td class="val">${a?fmtR(a):"—"} → ${b?fmtR(b):"—"}<br>${audVarTxt(audVar(a,b))}</td>`;}).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="precos-nota">Vermelho: queda de 10% ou mais. Verde: alta de 10% ou mais.</p></section>`:""}
+  ${conds.length?`<section class="bloco"><h2 class="sec">Condições comerciais e margem · 3ª rodada</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Cartão</th><th>A prazo</th><th>Frete</th><th>Linha cotada</th><th class="val">Margem Sabiá</th><th class="val">Cayana</th><th class="val">Carcará</th></tr></thead><tbody>
+    ${conds.map(x=>{const m=x.margem||{};return `<tr><td><strong>${esc(x.canal)}</strong></td><td>${esc(x.cartao||"—")}</td><td>${esc(x.prazo||"—")}</td><td>${esc(x.frete||"—")}</td><td>${esc(x.linha||"—")}</td><td class="val">${pct(m["Sabiá"])}</td><td class="val">${pct(m["Cayana"])}</td><td class="val">${pct(m["Carcará"])}</td></tr>`;}).join("")}</tbody></table></div>
+    <p class="precos-nota">Margem = (preço de venda à vista na auditoria − preço médio de compra nas notas) ÷ preço de venda. Frete referente à cidade de destino da cotação.</p></section>`:""}
+  ${notas.length?`<section class="bloco"><h2 class="sec">Observações de campo</h2><div class="aud-notas">${notas.map(x=>`<div class="aud-nota ${x.nota_tipo==="Atenção"?"at":x.nota_tipo==="Destaque"?"de":""}"><span class="selo">${esc(x.nota_tipo||"")}</span><strong>${esc(x.canal)}</strong><p>${esc(x.nota)}</p></div>`).join("")}</div></section>`:""}`;
+}
+function vIntConcorrentes(){
+  if(!S.intAud){carregarIntAud().then(render);return `<div class="carregando">Carregando a auditoria…</div>`;}
+  const L=S.intAud.conc;
+  if(!L.length)return `<div><h1 class="titulo">Preços praticados pelos concorrentes</h1></div><section class="bloco"><div class="vazio">Nenhuma rodada de auditoria de concorrentes registrada.</div></section>`;
+  const prods={};L.forEach(x=>{const k=x.marca+" · "+x.produto;const p=prods[k]||(prods[k]={marca:x.marca,produto:x.produto,r:{}});p.r[x.rodada]=Number(x.preco)||null;});
+  const P=Object.values(prods);const rods=[...new Set(L.map(x=>x.rodada))].sort();const ult=rods[rods.length-1];
+  const media=(m,r)=>{const v=P.filter(p=>p.marca===m&&p.r[r]).map(p=>p.r[r]);return v.length?v.reduce((t,y)=>t+y,0)/v.length:null;};
+  const bb=media("Barenbrug",ult);const marcas=[...new Set(P.map(p=>p.marca))].filter(m=>m!=="Barenbrug").sort((a,b)=>(media(b,ult)||0)-(media(a,ult)||0));
+  P.sort((a,b)=>(b.r[ult]||0)-(a.r[ult]||0));
+  const cond=S.intAud.concCond.filter(x=>x.rodada===ult).sort((a,b)=>a.marca==="Barenbrug"?-1:b.marca==="Barenbrug"?1:a.marca.localeCompare(b.marca));
+  return `<div><h1 class="titulo">Preços praticados pelos concorrentes</h1><p class="sub">Auditoria de cliente oculto · ${rods.map(r=>ROD_NOME[r]||r+"ª rodada").join(", ")}. Preços à vista por kg. Barenbrug = tabela comercial. Uso interno da Barenbrug.</p></div>
+  <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Barenbrug · média da tabela</span><strong>${bb?fmtR(bb):"—"}/kg</strong><span class="meta">${esc(ROD_NOME[ult]||"")}</span></div>
+    ${marcas.map(m=>{const v=media(m,ult);return `<div class="metric"><span>${esc(m)} · média</span><strong>${v?fmtR(v):"—"}/kg</strong><span class="meta">${bb&&v?audVarTxt(v/bb-1)+" frente à Barenbrug":""}</span></div>`;}).join("")}</div>
+  <section class="bloco"><h2 class="sec">Preço por produto em cada rodada</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Marca · produto</th>${rods.map(r=>`<th class="val">${r}ª rodada</th>`).join("")}<th class="val">Última variação</th><th class="val">Desde a 1ª</th><th class="val">Frente à média Barenbrug</th></tr></thead><tbody>
+  ${P.map(p=>{const eh=p.marca==="Barenbrug";const ant=rods.length>1?p.r[rods[rods.length-2]]:null;return `<tr${eh?' style="background:var(--amarelo-claro);font-weight:700"':""}><td>${esc(p.marca)} · ${esc(p.produto)}</td>${rods.map(r=>`<td class="val">${p.r[r]?fmtR(p.r[r]):"—"}</td>`).join("")}<td class="val">${audVarTxt(audVar(ant,p.r[ult]))}</td><td class="val">${audVarTxt(audVar(p.r[rods[0]],p.r[ult]))}</td><td class="val">${eh?"—":audVarTxt(bb&&p.r[ult]?p.r[ult]/bb-1:null)}</td></tr>`;}).join("")}</tbody></table></div></section>
+  ${cond.length?`<section class="bloco"><h2 class="sec">Condições comerciais · ${esc(ROD_NOME[ult]||"")}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Marca</th><th>Frete</th><th>Formas de pagamento</th><th>Desconto à vista</th></tr></thead><tbody>
+    ${cond.map(x=>`<tr${x.marca==="Barenbrug"?' style="background:var(--amarelo-claro)"':""}><td><strong>${esc(x.marca)}</strong></td><td>${esc(x.frete||"—")}</td><td>${esc(x.pagamento||"—")}</td><td>${esc(x.desconto||"—")}</td></tr>`).join("")}</tbody></table></div>
+    <p class="precos-nota">Cotação para 50 ha com destino a Luís Eduardo Magalhães (BA). A Barenbrug dá o maior desconto à vista, mas é a única que parcela com juros.</p></section>`:""}`;
+}
+
 /* ---------- LeadsBaren: fila do RC ---------- */
 const FILA_MOTIVOS=["Não consegui contato","Número errado ou inexistente","Sem interesse no momento","Já comprou de outro fornecedor","Preço","Fora da minha região","Outro"];
 async function carregarFila(){
@@ -2820,10 +2874,12 @@ function vIntCanais(){
   if(!S.canais)return `<div class="carregando">Carregando as pesquisas…</div>`;
   const nome={};S.canais.forEach(c=>{nome[c.id]=c.nome;});
   const todas=Object.entries(S.canalPrecos||{}).flatMap(([cid,l])=>(l||[]).map(x=>({...x,canal:nome[cid]||"Revenda"}))).sort((a,b)=>String(b.data_pesquisa||"").localeCompare(String(a.data_pesquisa||"")));
-  const f=S.intCult||"Todos";const lst=f==="Todos"?todas:todas.filter(x=>finNorm(x.cultivar)===finNorm(f));
+  const rodsT=[...new Set(todas.map(x=>x.rodada).filter(Boolean))].sort((a,b)=>b-a);const rd=S.intRod===undefined?(rodsT[0]||"todas"):S.intRod;
+  const todasR=todas;const todas2=rd==="todas"?todas:todas.filter(x=>x.rodada===rd);
+  const f=S.intCult||"Todos";const lst=f==="Todos"?todas2:todas2.filter(x=>finNorm(x.cultivar)===finNorm(f));
   const cults=[...new Set(todas.map(x=>x.cultivar).filter(Boolean))];
-  const resumo=cults.map(cu=>{const xs=todas.filter(x=>x.cultivar===cu&&Number(x.preco)>0).map(x=>Number(x.preco));if(!xs.length)return null;
-    const ult=todas.find(x=>x.cultivar===cu);return {cu,n:xs.length,med:xs.reduce((t,v)=>t+v,0)/xs.length,min:Math.min(...xs),max:Math.max(...xs),ult};}).filter(Boolean);
+  const resumo=cults.map(cu=>{const xs=todas2.filter(x=>x.cultivar===cu&&Number(x.preco)>0).map(x=>Number(x.preco));if(!xs.length)return null;
+    const ult=todas2.find(x=>x.cultivar===cu);return {cu,n:xs.length,med:xs.reduce((t,v)=>t+v,0)/xs.length,min:Math.min(...xs),max:Math.max(...xs),ult};}).filter(Boolean);
   const form=S.novoPreco?`<form class="form-card" id="f-preco"><h3 class="sec">Nova pesquisa de preço (cliente oculto)</h3>
     <div class="dupla"><div><label for="pr_canal">Revenda</label><select id="pr_canal" required><option value="">Selecione…</option>${S.canais.map(c=>`<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join("")}</select></div>
       <div><label for="pr_cult">Cultivar</label><select id="pr_cult" required>${INT_CULTS.map(c=>`<option>${c}</option>`).join("")}</select></div></div>
@@ -2833,15 +2889,13 @@ function vIntCanais(){
   return `<div><h1 class="titulo">Preços praticados pelos canais</h1><p class="sub">Pesquisas de cliente oculto nas revendas do Conecta Revendas. Uso interno da Barenbrug: as revendas não veem esta área.</p></div>
   <div class="acoes" style="margin:0"><button class="btn" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>
   ${form}
-  ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor</th><th class="val">Maior</th><th>Última pesquisa</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}</td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}</td><td class="val">${fmtR(r.max)}</td><td>${esc(r.ult.canal)} · ${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div></section>`:""}
+  ${rodsT.length?`<div class="filtros" role="group" aria-label="Rodada da auditoria">${[...rodsT,"todas"].map(r=>`<button class="chip" data-a="int-rod" data-v="${r}" aria-pressed="${r===rd}">${r==="todas"?"Todas as pesquisas":esc(ROD_NOME[r]||r+"ª rodada")}</button>`).join("")}</div>`:""}
+  ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar${rd!=="todas"?" · "+esc(ROD_NOME[rd]||""):""}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor</th><th class="val">Maior</th><th>Última pesquisa</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}</td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}</td><td class="val">${fmtR(r.max)}</td><td>${esc(r.ult.canal)} · ${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div></section>`:""}
   <section class="bloco"><h2 class="sec">Todas as pesquisas (${lst.length})</h2>
     ${cults.length>1?`<div class="filtros" role="group" aria-label="Filtrar por cultivar" style="margin-bottom:10px">${["Todos",...cults].map(c=>`<button class="chip" data-a="int-cult" data-v="${esc(c)}" aria-pressed="${c===f}">${esc(c)}</button>`).join("")}</div>`:""}
     ${lst.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Data</th><th>Revenda</th><th>Cultivar</th><th class="val">Preço (R$/kg)</th><th>Fonte</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(intData(x.data_pesquisa))}</td><td>${esc(x.canal)}</td><td>${esc(x.cultivar||"—")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td>${esc(x.fonte||"Cliente oculto")}</td><td>${ehAdmin()?`<button class="link perigo" data-a="preco-del" data-v="${esc(x.id)}">excluir</button>`:""}</td></tr>`).join("")}</tbody></table></div>`
-    :`<div class="vazio">Nenhuma pesquisa registrada. A meta é uma rodada de cliente oculto por trimestre em cada revenda.</div>`}</section>`;
-}
-function vIntConcorrentes(){
-  return `<div><h1 class="titulo">Preços praticados pelos concorrentes</h1><p class="sub">Preços de cultivares concorrentes levantados no cliente oculto, por região e data. Uso interno da Barenbrug.</p></div>
-  <section class="bloco"><div class="vazio">Aguardando o material do cliente oculto. Quando ele entrar, esta página mostra cada concorrente e produto, o preço por kg, a UF ou cidade, a data e a fonte, com a comparação frente aos híbridos Barenbrug.</div></section>`;
+    :`<div class="vazio">Nenhuma pesquisa registrada. A meta é uma rodada de cliente oculto por trimestre em cada revenda.</div>`}</section>
+  ${vIntAudCanais(nome)}`;
 }
 
 /* ---------- Inteligência de Mercado: análises de venda ---------- */
@@ -3344,6 +3398,7 @@ document.addEventListener("click",async ev=>{
   if(a==="visto")return;
   if(a==="secao"&&v==="inteligencia"){if(!veBarenbrugRV())return;S.secao=v;S.pag="int-canais";S.novoPreco=false;render();window.scrollTo(0,0);return;}
   if(a==="int-cult"){S.intCult=v;render();return;}
+  if(a==="int-rod"){S.intRod=v==="todas"?"todas":+v;render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
   if(a==="fila-pegar"){b.disabled=true;b.textContent="Pegando…";const {data,error}=await sb.rpc("rc_pegar");
     if(error){aviso(/finalize/i.test(String(error.message||""))?"Finalize o lead atual antes de pegar outro.":/vazia/i.test(String(error.message||""))?"A fila ficou vazia agora.":"Não foi possível pegar o lead. Tente de novo.");}
