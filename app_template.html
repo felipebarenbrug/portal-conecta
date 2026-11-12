@@ -340,6 +340,8 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .pgd-doc .meta{width:100%}
 .pgd-del{display:flex;gap:10px;flex-wrap:wrap}
 .pgd-h{margin:4px 0 0;font-size:15px}
+.int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.int-2{grid-template-columns:minmax(0,1fr)}}
 .fin-uso{display:grid;gap:4px;margin-top:12px;font-size:14px}
 .tab table.fin-t{min-width:760px}
 @media (max-width:560px){.pgd-capa-box{grid-template-columns:1fr}}
@@ -626,7 +628,7 @@ const SECOES=[
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
   {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
   {id:"inteligencia",nome:"Inteligência de Mercado",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
-  {id:"financeiro",nome:"Financeiro Barenbrug",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
+  {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
@@ -2721,7 +2723,7 @@ function rankMini(){
 }
 
 /* ---------- Inteligência de Mercado ---------- */
-const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"]];
+const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs"],["int-seg","B2C e B2B"]];
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inteligência de Mercado">${INT_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -2757,13 +2759,105 @@ function vIntConcorrentes(){
   <section class="bloco"><div class="vazio">Aguardando o material do cliente oculto. Quando ele entrar, esta página mostra cada concorrente e produto, o preço por kg, a UF ou cidade, a data e a fonte, com a comparação frente aos híbridos Barenbrug.</div></section>`;
 }
 
-/* ---------- Financeiro Barenbrug ---------- */
+/* ---------- Inteligência de Mercado: análises de venda ---------- */
+async function carregarIntMapa(){
+  if(S.intBusy)return;S.intBusy=true;
+  try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.intMapa=t;}catch(e){S.intMapa=[];}
+  S.intC=null;S.intBusy=false;
+}
+const INT_IS=/^(inside sales|is:)/i,INT_IS_REP=/^(laura|maria giulia|tha[ií]s|maria eduarda|mayane|felipe piccoli)/i;
+const intVia=r=>INT_IS.test(String(r.dono||""))||INT_IS_REP.test(String(r.rep||""))?"Inside Sales":r.rep?"RC":"Comercial Barenbrug";
+const intCli=r=>finNorm(String(r.org||"")||String(r.nome||"").split(" - ")[0]);
+const intNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const t=String(v).replace(/[^\d,.-]/g,"");if(!t)return null;const n=parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t);return isFinite(n)?n:null;};
+const intDias=(a,b)=>{if(!a||!b)return null;const d=(new Date(String(b).slice(0,10)+"T00:00:00Z")-new Date(String(a).slice(0,10)+"T00:00:00Z"))/864e5;return isFinite(d)?Math.round(d):null;};
+const intMed=a=>{const x=a.filter(v=>v!=null).sort((p,q)=>p-q);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2;};
+function intCalc(){
+  if(S.intC)return S.intC;
+  const L=(S.intMapa||[]).map(r=>{
+    const kgH=Number(r.kg_h)||0,kgC=Number(r.kg_c)||0,rs=Number(r.rs)||0;let rsH;
+    if(Array.isArray(r.itens)&&r.itens.some(x=>Number(x[2])>0))rsH=r.itens.filter(x=>/cayana|sabia|convert 330|carcara/.test(finNorm(x[0]))).reduce((t,x)=>t+(Number(x[2])||0),0);
+    else rsH=kgH+kgC?rs*kgH/(kgH+kgC):0;
+    return {r,kgH,kgC,kg:kgH+kgC,rs,rsH,hib:kgH>0,seg:r.seg==="B2B"?"B2B":"B2C",via:intVia(r),cli:intCli(r),uf:r.uf||"",cid:r.cidade||"",
+      frete:intNum(r.frete),pag:r.pag?String(r.pag).trim():"",ciclo:intDias(r.cl,r.fat)};});
+  const temFrete=L.some(x=>x.frete!=null),temPag=L.some(x=>x.pag),temCiclo=L.some(x=>x.ciclo!=null);
+  const H=L.filter(x=>x.hib);
+  const ag=(xs,key)=>{const o={};xs.forEach(x=>{const k=key(x)||"—";const a=o[k]||(o[k]={k,n:0,kg:0,rs:0,kgH:0,rsH:0,cli:new Set(),fr:0,frKg:0});a.n++;a.kg+=x.kg;a.rs+=x.rs;a.kgH+=x.kgH;a.rsH+=x.rsH;a.cli.add(x.cli);if(x.frete!=null&&x.frete>0){a.fr+=x.frete;a.frKg+=x.kg;}});return Object.values(o);};
+  return S.intC={L,H,temFrete,temPag,temCiclo,ag};
+}
+const intPk=(rs,kg)=>kg?fmtR(rs/kg):"—";
+function intPend(t){return `<div class="aviso-bloq" style="margin:0">${t} entra na próxima atualização automática do CRM, depois da ativação no banco.</div>`;}
+function vIntVendas(C){
+  const ufs=C.ag(C.H,x=>x.uf).sort((a,b)=>b.kgH-a.kgH);
+  const cids=C.ag(C.H,x=>x.cid&&x.uf?x.cid+"/"+x.uf:"").filter(a=>a.k!=="—").sort((a,b)=>b.kgH-a.kgH).slice(0,15);
+  const totH=C.H.reduce((t,x)=>t+x.kgH,0),totRsH=C.H.reduce((t,x)=>t+x.rsH,0);
+  const fr=C.L.filter(x=>x.frete!=null&&x.frete>0),frT=fr.reduce((t,x)=>t+x.frete,0),frKg=fr.reduce((t,x)=>t+x.kg,0);
+  const frUf=C.ag(fr,x=>x.uf).sort((a,b)=>b.frKg-a.frKg);
+  return `<div><h1 class="titulo">Preço e frete por região</h1><p class="sub">Pedidos ganhos da safra 26/27 no CRM. Preço médio dos híbridos (Sabiá, Cayana e Carcará) em R$ por kg e frete médio por kg.</p></div>
+  <div class="metrics">
+    <div class="metric"><span>Preço médio dos híbridos</span><strong>${intPk(totRsH,totH)}/kg</strong><span class="meta">${fmtKg(Math.round(totH))} em ${C.H.length} pedidos</span></div>
+    <div class="metric"><span>Frete médio por kg</span><strong>${C.temFrete&&frKg?fmtR(frT/frKg)+"/kg":"—"}</strong><span class="meta">${C.temFrete?fr.length+" pedidos com frete informado":"aguardando o campo de frete"}</span></div>
+  </div>
+  ${C.temFrete?"":intPend("O valor do frete")}
+  <section class="bloco"><h2 class="sec">Por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>UF</th><th class="val">Pedidos de híbridos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">Frete médio (R$/kg)</th></tr></thead><tbody>
+    ${ufs.map(a=>{const f=frUf.find(x=>x.k===a.k);return `<tr><td><strong>${esc(a.k)}</strong></td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${f&&f.frKg?fmtR(f.fr/f.frKg):"—"}</td></tr>`;}).join("")||`<tr><td colspan="5">Sem pedidos.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">15 cidades com mais híbridos</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cidade</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th></tr></thead><tbody>
+    ${cids.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td></tr>`).join("")||`<tr><td colspan="4">Sem cidade informada.</td></tr>`}</tbody></table></div></section>`;
+}
+function vIntRC(C){
+  const R=C.ag(C.H.filter(x=>x.via==="RC"),x=>x.r.rep).sort((a,b)=>b.kgH-a.kgH);
+  const ufsRC={};C.H.filter(x=>x.via==="RC").forEach(x=>{const o=ufsRC[x.r.rep]||(ufsRC[x.r.rep]={});o[x.uf||"—"]=(o[x.uf||"—"]||0)+x.kgH;});
+  const n=R.length,cli=R.reduce((t,a)=>t+a.cli.size,0),ped=R.reduce((t,a)=>t+a.n,0),kg=R.reduce((t,a)=>t+a.kgH,0),rs=R.reduce((t,a)=>t+a.rsH,0);
+  const sede=S.rcSede||{};
+  return `<div><h1 class="titulo">Representantes comerciais (RC)</h1><p class="sub">RCs com venda de híbridos na safra 26/27, pelo campo de representante dos pedidos no CRM.</p></div>
+  <div class="metrics">
+    <div class="metric"><span>RCs com venda de híbridos</span><strong>${n}</strong><span class="meta">${ped} pedidos</span></div>
+    <div class="metric"><span>Clientes de híbridos por RC</span><strong>${n?(cli/n).toLocaleString("pt-BR",{maximumFractionDigits:1}):"—"}</strong><span class="meta">${cli} clientes no total</span></div>
+    <div class="metric"><span>Ticket médio por pedido</span><strong>${ped?fmtK0(rs/ped):"—"}</strong><span class="meta">só o valor dos híbridos</span></div>
+    <div class="metric"><span>Kg de híbridos por RC</span><strong>${n?fmtKg(Math.round(kg/n)):"—"}</strong><span class="meta">${fmtKg(Math.round(kg))} no total</span></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada RC vendeu híbridos. A UF da sede, que vem do contrato dos RCs, entra na comparação quando o contrato for carregado.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>RC</th><th>Sede (contrato)</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Ticket médio</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
+  ${R.map(a=>{const u=Object.entries(ufsRC[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=sede[finNorm(a.k)]||"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
+    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="8">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+}
+function vIntSeg(C){
+  const vias=["Inside Sales","RC","Comercial Barenbrug"];
+  const seg=s=>C.H.filter(x=>x.seg===s);
+  const lin=(xs,t)=>{const kg=xs.reduce((a,x)=>a+x.kgH,0),rs=xs.reduce((a,x)=>a+x.rsH,0);return `<tr><td><strong>${t}</strong></td><td class="val">${xs.length}</td><td class="val">${new Set(xs.map(x=>x.cli)).size}</td><td class="val">${fmtKg(Math.round(kg))}</td><td class="val">${fmtK0(rs)}</td><td class="val">${intPk(rs,kg)}</td><td class="val">${xs.length?fmtK0(rs/xs.length):"—"}</td></tr>`;};
+  const viaT=s=>{const xs=seg(s),tot=xs.reduce((a,x)=>a+x.kgH,0)||1;return `<table class="sim-t fin-t"><thead><tr><th>Via de venda</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Participação</th><th class="val">Preço médio (R$/kg)</th></tr></thead><tbody>${vias.map(v=>{const ys=xs.filter(x=>x.via===v),kg=ys.reduce((a,x)=>a+x.kgH,0),rs=ys.reduce((a,x)=>a+x.rsH,0);return `<tr><td>${v}</td><td class="val">${ys.length}</td><td class="val">${fmtKg(Math.round(kg))}</td><td class="val">${pctTxt(kg/tot)}</td><td class="val">${intPk(rs,kg)}</td></tr>`;}).join("")}</tbody></table>`;};
+  // perfil B2C
+  const b2c=seg("B2C"),faixas=[[100,"até 100 kg"],[500,"101 a 500 kg"],[2000,"501 a 2.000 kg"],[5000,"2.001 a 5.000 kg"],[1e12,"mais de 5.000 kg"]];
+  const fx=faixas.map(([ate,t],i)=>{const de=i?faixas[i-1][0]:0;const ys=b2c.filter(x=>x.kgH>de&&x.kgH<=ate);return [t,ys.length,ys.reduce((a,x)=>a+x.kgH,0)];});
+  const cliN={};b2c.forEach(x=>{cliN[x.cli]=(cliN[x.cli]||0)+1;});const nCli=Object.keys(cliN).length,rec=Object.values(cliN).filter(v=>v>1).length;
+  const ufB=C.ag(b2c,x=>x.uf).sort((a,b)=>b.kgH-a.kgH).slice(0,8),totB=b2c.reduce((a,x)=>a+x.kgH,0)||1;
+  const cu={};b2c.forEach(x=>{const c=x.r.cults&&Object.keys(x.r.cults).length?Object.entries(x.r.cults):(Array.isArray(x.r.itens)?x.r.itens.map(i=>{const l=finNorm(i[0]);return [/cayana/.test(l)?"Cayana":/sabia|convert 330/.test(l)?"Sabiá":/carcara/.test(l)?"Carcará":"",i[1]];}):[]);
+    c.forEach(([k,v])=>{if(agHibF(k))cu[k]=(cu[k]||0)+(Number(v)||0);});});
+  // ciclo e pagamento
+  const cic=(xs)=>{const d=xs.map(x=>x.ciclo).filter(v=>v!=null&&v>=0&&v<400);return d.length?`${Math.round(intMed(d))} dias (média ${Math.round(d.reduce((a,v)=>a+v,0)/d.length)}, ${d.length} ${d.length===1?"pedido":"pedidos"})`:"—";};
+  const pagT=s=>{const xs=C.L.filter(x=>x.seg===s&&x.pag);const o={};xs.forEach(x=>{const k=x.pag;const a=o[k]||(o[k]={k,n:0,v:{}});a.n++;a.v[x.via]=(a.v[x.via]||0)+1;});const top=Object.values(o).sort((a,b)=>b.n-a.n).slice(0,8);
+    return top.length?`<table class="sim-t fin-t"><thead><tr><th>Forma de pagamento</th><th class="val">Pedidos</th><th class="val">Participação</th>${vias.map(v=>`<th class="val">${v}</th>`).join("")}</tr></thead><tbody>${top.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${pctTxt(a.n/xs.length)}</td>${vias.map(v=>`<td class="val">${a.v[v]||0}</td>`).join("")}</tr>`).join("")}</tbody></table>`:`<div class="vazio">Sem forma de pagamento registrada.</div>`;};
+  return `<div><h1 class="titulo">B2C e B2B</h1><p class="sub">B2B: distribuidores, cooperativas e venda para canal (sell-in). B2C: venda ao produtor. Pedidos de híbridos ganhos na safra 26/27.</p></div>
+  <section class="bloco"><h2 class="sec">Híbridos: B2C x B2B</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Segmento</th><th class="val">Pedidos</th><th class="val">Clientes</th><th class="val">Kg</th><th class="val">Valor</th><th class="val">Preço médio (R$/kg)</th><th class="val">Ticket médio</th></tr></thead><tbody>${lin(seg("B2C"),"B2C · produtor")}${lin(seg("B2B"),"B2B · canal")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Por onde vendemos</h2><div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${viaT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${viaT("B2B")}</div></div></div></section>
+  <section class="bloco"><h2 class="sec">Perfil do cliente B2C de híbridos</h2>
+    <div class="metrics"><div class="metric"><span>Clientes B2C</span><strong>${nCli}</strong><span class="meta">${rec} compraram mais de uma vez</span></div><div class="metric"><span>Kg por cliente</span><strong>${nCli?fmtKg(Math.round(totB/nCli)):"—"}</strong><span class="meta">média da safra</span></div>
+      <div class="metric"><span>Cultivar mais comprado</span><strong>${esc((Object.entries(cu).sort((a,b)=>b[1]-a[1])[0]||["—"])[0])}</strong><span class="meta">${Object.entries(cu).sort((a,b)=>b[1]-a[1]).map(([k,v])=>esc(k)+" "+Math.round(v/totB*100)+"%").join(" · ")}</span></div></div>
+    <div class="int-2" style="margin-top:12px"><div style="min-width:0"><h3 class="pgd-h">Tamanho do pedido</h3><div class="tab"><table class="sim-t"><thead><tr><th>Faixa</th><th class="val">Pedidos</th><th class="val">Kg</th></tr></thead><tbody>${fx.map(([t,n,kg])=>`<tr><td>${t}</td><td class="val">${n}</td><td class="val">${fmtKg(Math.round(kg))}</td></tr>`).join("")}</tbody></table></div></div>
+      <div style="min-width:0"><h3 class="pgd-h">Onde estão</h3><div class="tab"><table class="sim-t"><thead><tr><th>UF</th><th class="val">Clientes</th><th class="val">Kg</th><th class="val">Participação</th></tr></thead><tbody>${ufB.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.cli.size}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${pctTxt(a.kgH/totB)}</td></tr>`).join("")}</tbody></table></div></div></div></section>
+  <section class="bloco"><h2 class="sec">Ciclo do pedido: de vendido a faturado</h2>${C.temCiclo?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th>B2C</th><th>B2B</th></tr></thead><tbody>
+    <tr><td><strong>Híbridos</strong></td><td>${cic(C.L.filter(x=>x.hib&&x.seg==="B2C"))}</td><td>${cic(C.L.filter(x=>x.hib&&x.seg==="B2B"))}</td></tr>
+    <tr><td><strong>Demais cultivares</strong></td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2C"))}</td><td>${cic(C.L.filter(x=>!x.hib&&x.seg==="B2B"))}</td></tr></tbody></table></div><p class="precos-nota">Mediana de dias entre a data em que o pedido foi marcado como vendido no CRM e a data de faturamento.</p>`:intPend("A data em que o pedido foi marcado como vendido")}</section>
+  <section class="bloco"><h2 class="sec">Formas de pagamento</h2>${C.temPag?`<div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${pagT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${pagT("B2B")}</div></div></div>`:intPend("A forma de pagamento")}</section>`;
+}
+const agHibF=k=>/^(Sabiá|Cayana|Carcará)$/.test(k);
+
+/* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||S.perfil==="Financeiro";
 const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-premissas","Premissas"]];
 function subnavFin(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Financeiro Barenbrug">${FIN_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Financeiro Barenbrug</span></div></div>`;
+    <nav class="nav" aria-label="Marketing + Financeiro">${FIN_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Marketing + Financeiro</span></div></div>`;
 }
 async function carregarFin(){
   if(S.finBusy)return;S.finBusy=true;
@@ -2844,9 +2938,9 @@ function finAvisoTopo(C){
   ${C.semItens?`<div class="aviso-bloq" style="margin-top:0">${C.semItens} pedidos ainda não têm o valor por produto: nesses, o valor foi dividido pelos quilos de cada cultivar. O detalhe completo entra na próxima atualização automática do CRM.</div>`:""}`;
 }
 function vFin(){
-  if(!ehFin())return `<div class="vazio">Esta área é restrita ao Financeiro.</div>`;
-  if(!S.fin)return `<div class="carregando">Carregando os números do Financeiro…</div>`;
-  if(S.fin.erro)return `<div><h1 class="titulo">Financeiro Barenbrug</h1></div><section class="bloco"><p class="sub" style="margin:0">Não foi possível carregar os dados agora. Se o painel acabou de ser criado, a ativação no banco ainda está pendente.</p><div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="fin-recarregar">Tentar de novo</button></div></section>`;
+  if(!ehFin())return `<div class="vazio">Esta área é restrita ao Marketing e ao Financeiro.</div>`;
+  if(!S.fin)return `<div class="carregando">Carregando os números…</div>`;
+  if(S.fin.erro)return `<div><h1 class="titulo">Marketing + Financeiro</h1></div><section class="bloco"><p class="sub" style="margin:0">Não foi possível carregar os dados agora. Se o painel acabou de ser criado, a ativação no banco ainda está pendente.</p><div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="fin-recarregar">Tentar de novo</button></div></section>`;
   const C=finCalc();
   const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-premissas"?vFinPremissas(C):vFinResumo(C);
   return v;
@@ -2855,7 +2949,7 @@ function vFinResumo(C){
   const P=C.P,usoRC=C.pools.rc?C.com/C.pools.rc:null,usoRV=C.pools.rv?C.rv.total/C.pools.rv:null,usoRVm=C.pools.rv?C.rv.mTotal/C.pools.rv:null;
   const pp=x=>pctTxt(Number(x)||0);
   const exp=Object.entries(C.expDono).sort((a,b)=>b[1]-a[1]);
-  return `<div><h1 class="titulo">Financeiro Barenbrug</h1><p class="sub">Quanto a Barenbrug precisa reservar para comissões e para o Conecta Revendas, e quanto isso representa das vendas, frente às premissas de ${pp(P.pool_rc)} e ${pp(P.pool_rv)}.</p></div>
+  return `<div><h1 class="titulo">Marketing + Financeiro</h1><p class="sub">Quanto a Barenbrug precisa reservar para comissões e para o Conecta Revendas, e quanto isso representa das vendas, frente às premissas de ${pp(P.pool_rc)} e ${pp(P.pool_rv)}.</p></div>
   ${finAvisoTopo(C)}
   <section class="bloco"><h2 class="sec">Pool de comissões · ${pp(P.pool_rc)} sobre todas as vendas</h2>
     <p class="sub" style="margin:0 0 10px">O pool é formado sobre todas as vendas da Barenbrug, inclusive exportação e vendas sem comissão. Dele saem as comissões dos representantes do Conecta RC e do Inside Sales.</p>
@@ -2932,7 +3026,7 @@ function vFinPremissas(C){
   const P=C.P,adm=ehAdmin();
   const n=(id,lbl,v,dica)=>`<div><label for="${id}">${lbl}</label><input id="${id}" type="text" inputmode="decimal" value="${esc(((Number(v)||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:3}))}" ${adm?"":"disabled"}><span class="meta">${dica}</span></div>`;
   const pr=C.prods.slice(0,60).map(p=>`<tr><td>${esc(p.n)}${p.est?' <span class="meta">(valor rateado)</span>':""}</td><td>${esc(FIN_CAT[p.c])}</td><td class="val">${fmtKg(Math.round(p.kg))}</td><td class="val">${fmtK0(p.rs)}</td></tr>`).join("");
-  return `<div><h1 class="titulo">Premissas</h1><p class="sub">As regras que alimentam os cálculos do Financeiro. ${adm?"Só o administrador altera; cada alteração fica registrada.":"Para alterar, fale com o administrador do portal."}</p></div>
+  return `<div><h1 class="titulo">Premissas</h1><p class="sub">As regras que alimentam os cálculos desta área. ${adm?"Só o administrador altera; cada alteração fica registrada.":"Para alterar, fale com o administrador do portal."}</p></div>
   <form class="form-card" id="f-finprem">
     <div class="dupla">${n("fp_rc","Pool de comissões (% sobre todas as vendas)",P.pool_rc,"Conecta RC + Inside Sales. Inclui exportação.")}${n("fp_rv","Pool do Conecta Revendas (% sobre o mercado interno)",P.pool_rv,"Exclui exportação.")}</div>
     <div class="dupla">${n("fp_ish","Inside Sales: híbridos e Cynodon (%)",P.is_hib,"Produtor, B2B ou canal.")}${n("fp_isc","Inside Sales: demais cultivares (%)",P.is_conv,"Produtor, B2B ou canal.")}</div>
@@ -3110,7 +3204,13 @@ function renderApp(){
     return;
   }
   if(S.secao==="inteligencia"){
-    if(veBarenbrugRV()){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais()}</main>`;if(!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);return;}
+    if(veBarenbrugRV()){
+      const an=["int-vendas","int-rc","int-seg"].includes(S.pag);
+      const corpo=an?(S.intMapa?(S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
+      if(an&&!S.intMapa)carregarIntMapa().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);
+      return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="financeiro"){
