@@ -3544,14 +3544,19 @@ function rvPlanoHTML(C){
   const tP=fat?PL.full/fat:0,tT=fat?PL.todos_meta/fat:0,cr=C.canalRs;
   const tHoje=cr?C.rv.aPagar/cr:0,tPot=cr?C.rv.total/cr:0,tFull=cr?C.rv.mTotal/cr:0;
   const proj=tPot*fat;
-  const veredito=!cr?"Ainda sem sell-in dos canais para comparar.":tPot<=tP?`O custo potencial hoje (todo o IGDB + BF de quem já atingiu) é ${pctTxt(tPot)} do sell-in dos canais, abaixo dos ${pctTxt(tP)} previstos no cenário full do plano. Estamos dentro do previsto.`:tPot<=tT?`O custo potencial hoje é ${pctTxt(tPot)} do sell-in dos canais: acima dos ${pctTxt(tP)} do cenário full (60% na meta), mas dentro dos ${pctTxt(tT)} do cenário com todos na meta.`:`O custo potencial hoje é ${pctTxt(tPot)} do sell-in dos canais, acima dos ${pctTxt(tT)} do cenário com todos na meta. Vale revisar.`;
+  const veredito=!cr?"Ainda sem compras dos canais para comparar.":tPot<=tP?`A provisão de hoje (todo o IGDB + BF de quem já atingiu) é ${pctTxt(tPot)} das compras dos canais, abaixo dos ${pctTxt(tP)} previstos no cenário full do plano. Estamos dentro do previsto.`:tPot<=tT?`A provisão de hoje é ${pctTxt(tPot)} das compras dos canais: acima dos ${pctTxt(tP)} do cenário full (60% na meta), mas dentro dos ${pctTxt(tT)} do cenário com todos na meta.`:`A provisão de hoje é ${pctTxt(tPot)} das compras dos canais, acima dos ${pctTxt(tT)} do cenário com todos na meta. Vale revisar.`;
   return `<section class="bloco"><h2 class="sec">Plano do programa · junho de 2026</h2>
   <p class="sub" style="margin:0 0 10px">Memória de cálculo: como o Conecta Revendas 26/27 foi desenhado, e a base para saber se estamos dentro do previsto.</p>
+  <h3 class="pgd-h">De onde vem o dinheiro: o pool</h3>
   <div class="metrics">
-    <div class="metric"><span>Faturamento previsto dos canais</span><strong>${fmtK0(fat)}</strong><span class="meta">todos os canais do programa na safra</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Cenário full do plano</span><strong>${fmtK0(PL.full)}</strong><span class="meta">${pctTxt(PL.full_pct_meta||.6)} dos canais batendo a meta · ${pctTxt(tP)} do faturamento dos canais</span></div>
-    <div class="metric"><span>Se todos batessem a meta</span><strong>${fmtK0(PL.todos_meta)}</strong><span class="meta">IGDB + BF de todos os canais · ${pctTxt(tT)} do faturamento</span></div>
-    <div class="metric"><span>Pool previsto na safra</span><strong>${fmtK0(PL.pool)}</strong><span class="meta">${pctTxt(Number(C.P.pool_rv)||0)} sobre ${fmtK0(PL.vendasRs)} de vendas previstas</span></div>
+    <div class="metric"><span>Vendas totais previstas na safra</span><strong>${fmtK0(PL.vendasRs)}</strong><span class="meta">todas as vendas da Barenbrug, base do pool · realizado até hoje ${fmtK0(C.tot)} (${finPct(C.tot,PL.vendasRs)})</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Pool previsto (${pctTxt(Number(C.P.pool_rv)||0)} das vendas totais)</span><strong>${fmtK0(PL.pool)}</strong><span class="meta">formado até hoje: ${fmtK0(C.pools.rv)}</span></div>
+  </div>
+  <h3 class="pgd-h" style="margin-top:12px">Para onde vai: o que os canais do programa recebem</h3>
+  <div class="metrics">
+    <div class="metric"><span>Compras previstas dos canais do programa</span><strong>${fmtK0(fat)}</strong><span class="meta">base do IGDB e do BF · o pool não incide sobre este valor · realizado ${fmtK0(cr)} (${finPct(cr,fat)})</span></div>
+    <div class="metric"><span>Cenário full do plano</span><strong>${fmtK0(PL.full)}</strong><span class="meta">${pctTxt(PL.full_pct_meta||.6)} dos canais na meta · ${finPct(PL.full,PL.pool)} do pool previsto</span></div>
+    <div class="metric"><span>Se todos batessem a meta</span><strong>${fmtK0(PL.todos_meta)}</strong><span class="meta">IGDB + BF de todos os canais · ${finPct(PL.todos_meta,PL.pool)} do pool previsto</span></div>
   </div>
   <div class="int-2" style="margin-top:10px"><div style="min-width:0"><h3 class="pgd-h">Composição do cenário full</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Valor</th></tr></thead><tbody>
     ${Object.entries(ig).map(([t,v])=>`<tr><td>IGDB ${esc(t)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}
@@ -3562,14 +3567,15 @@ function rvPlanoHTML(C){
     <tr style="font-weight:700"><td>Total com todos na meta</td><td class="val">${fmtK0(PL.todos_meta)}</td></tr></tbody></table></div></div>
   <div style="min-width:0"><h3 class="pgd-h">Estamos dentro do previsto?</h3><p style="margin:0 0 8px">${veredito}</p>
     <dl class="rv-plano-dl">
-      <div><dt>Sell-in dos canais até hoje</dt><dd>${fmtK0(cr)} · ${finPct(cr,fat)} do previsto</dd></div>
+      <div><dt>Compras dos canais até hoje</dt><dd>${fmtK0(cr)} · ${finPct(cr,fat)} do previsto</dd></div>
       <div><dt>Safra decorrida</dt><dd>${pctTxt(C.dSafra)}</dd></div>
-      <div><dt>A pagar hoje sobre o sell-in</dt><dd>${pctTxt(tHoje)}</dd></div>
-      <div><dt>Potencial hoje sobre o sell-in</dt><dd>${pctTxt(tPot)} · plano ${pctTxt(tP)}</dd></div>
-      <div><dt>Full atual (todos na meta) sobre o sell-in</dt><dd>${pctTxt(tFull)} · plano ${pctTxt(tT)}</dd></div>
+      <div><dt>Só PGD aprovado, sobre as compras dos canais</dt><dd>${pctTxt(tHoje)}</dd></div>
+      <div><dt>Provisão (todo IGDB + BF), sobre as compras dos canais</dt><dd>${pctTxt(tPot)} · plano ${pctTxt(tP)}</dd></div>
+      <div><dt>Full atual (todos na meta), sobre as compras dos canais</dt><dd>${pctTxt(tFull)} · plano ${pctTxt(tT)}</dd></div>
+      <div><dt>Provisão sobre o pool previsto</dt><dd>${finPct(C.rv.total,PL.pool)} · plano full ${finPct(PL.full,PL.pool)}</dd></div>
       <div><dt>Teto conservador: mantendo o % de hoje</dt><dd>${fmtK0(proj)} · plano ${fmtK0(PL.full)}</dd></div>
     </dl>
-    <p class="meta" style="margin:8px 0 0">A comparação justa é em percentual do sell-in dos canais, porque o valor absoluto cresce com as vendas da safra. Comparar o custo de hoje com o pool formado até hoje deixa a conta pessimista no início da safra. Mesmo em percentual, o início da safra tende a ficar acima do plano: as vendas até aqui são mais de híbridos, que pagam IGDB e BF maiores, e ruziziensis e temperadas, que pagam percentual menor, entram depois. Por isso a projeção mantendo o percentual de hoje é um teto conservador, não a expectativa.</p></div></div>
+    <p class="meta" style="margin:8px 0 0">Duas bases diferentes: o pool é ${pctTxt(Number(C.P.pool_rv)||0)} sobre as vendas totais da Barenbrug (${fmtK0(PL.vendasRs)} previstos), e o IGDB e o BF são calculados sobre as compras dos canais do programa (${fmtK0(fat)} previstos). Para o ritmo do rebate, a comparação justa é em percentual das compras dos canais, porque o valor absoluto cresce com as vendas da safra. Comparar o custo de hoje com o pool formado até hoje deixa a conta pessimista no início da safra. Mesmo em percentual, o início da safra tende a ficar acima do plano: as vendas até aqui são mais de híbridos, que pagam IGDB e BF maiores, e ruziziensis e temperadas, que pagam percentual menor, entram depois. Por isso a projeção mantendo o percentual de hoje é um teto conservador, não a expectativa.</p></div></div>
   <h3 class="pgd-h" style="margin-top:14px">Previsão de vendas do plano x realizado</h3>
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th class="val">kg previstos</th><th class="val">kg realizados</th><th class="val">% kg</th><th class="val">R$/kg previsto</th><th class="val">R$/kg realizado</th><th class="val">R$ previstos</th><th class="val">R$ realizados</th><th class="val">% R$</th></tr></thead><tbody>${linhas}
     <tr style="font-weight:700"><td>Total</td><td class="val">${fmtKg(pKg)}</td><td class="val">${fmtKg(rT.kg)}</td><td class="val">${pKg?pctTxt(rT.kg/pKg):"—"}</td><td></td><td></td><td class="val">${fmtK0(PL.vendasRs)}</td><td class="val">${fmtK0(rT.rs)}</td><td class="val">${PL.vendasRs?pctTxt(rT.rs/PL.vendasRs):"—"}</td></tr></tbody></table></div>
