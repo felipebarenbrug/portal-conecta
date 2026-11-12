@@ -464,6 +464,15 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .mp-leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 main.largo{max-width:1120px}
 .home{display:grid;grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
+.home:has(.home-dir){grid-template-columns:250px minmax(0,1fr) 290px}
+.home-dir{display:grid;gap:12px;position:sticky;top:12px;min-width:0}
+.merc-home{display:grid;gap:10px}.merc-bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.merc-bt{font:inherit;text-align:left;display:grid;gap:2px;padding:10px;border-radius:10px;border:0;background:var(--amarelo-claro,#fff8d6);cursor:pointer;min-width:0}
+.merc-bt span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--azul-escuro,#00384f)}.merc-bt strong{font-size:18px;color:var(--preto,#1d1d1b)}.merc-bt small{font-size:11.5px;color:var(--cinza,#5b6b7b);line-height:1.3}
+.merc-h{margin:4px 0 0;font-size:14px;color:var(--azul-escuro,#00384f)}
+.merc-nt{display:grid;gap:2px}.merc-nt>a,.merc-nt>div{display:grid;gap:2px;padding:8px 0;border-bottom:1px solid var(--linha,#e3e8ee);text-decoration:none;color:inherit}.merc-nt .nt-tit{font-size:14px;font-weight:600;line-height:1.35}.merc-nt>a:hover .nt-tit{text-decoration:underline}
+@media(max-width:1199px){.home:has(.home-dir){grid-template-columns:250px minmax(0,1fr)}.home:has(.home-dir)>.home-lado{grid-row:1/span 2}.home-dir{grid-column:2;grid-row:1;position:static}.home:has(.home-dir)>.home-feed{grid-column:2;grid-row:2}.merc-nt{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:16px}}
+@media(max-width:860px){.home:has(.home-dir){grid-template-columns:minmax(0,1fr)}.home:has(.home-dir)>.home-lado,.home:has(.home-dir)>.home-feed,.home-dir{grid-column:auto;grid-row:auto}.home-dir{order:1}.home:has(.home-dir)>.home-feed{order:2}.merc-nt{grid-template-columns:minmax(0,1fr)}}
 .home-lado{display:grid;gap:12px;position:sticky;top:12px}
 .home-feed{display:grid;gap:14px;min-width:0}
 .cx{background:var(--branco);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
@@ -1985,7 +1994,7 @@ function carregarCepea(){
   const limpa=v=>String(v==null?"":v).replace(/\s+/g," ").trim().slice(0,80);
   const fim=linhas=>{if(feito)return;feito=true;window.removeEventListener("message",ouve);
     const out=(Array.isArray(linhas)?linhas:[]).slice(0,12).map(x=>x&&typeof x==="object"?{data:limpa(x.data),produto:limpa(x.produto),un:limpa(x.un),valor:limpa(x.valor)}:null).filter(x=>x&&/\d/.test(x.valor));
-    fr.remove();S.cepea=out;S.cepeaBusy=false;if(S.secao==="mercado"&&S.pag==="mercado-boi")render();};
+    fr.remove();S.cepea=out;S.cepeaBusy=false;if((S.secao==="mercado"&&S.pag==="mercado-boi")||(!S.secao&&S.pag==="hub"))render();};
   const ouve=e=>{if(e.source!==fr.contentWindow||!e.data||e.data.tipo!=="cepea")return;fim(e.data.linhas);};
   window.addEventListener("message",ouve);setTimeout(()=>fim([]),9000);
   const coleta=`window.addEventListener("load",function(){setTimeout(function(){var out=[];try{var rs=document.querySelectorAll("tbody tr");for(var i=0;i<rs.length;i++){var td=rs[i].querySelectorAll("td");if(td.length<3)continue;var pr=(td[1].innerText||td[1].textContent).split("\\n").map(function(x){return x.trim();}).filter(Boolean);out.push({data:(td[0].innerText||td[0].textContent).trim(),produto:pr[0]||"",un:pr[1]||"",valor:(td[2].innerText||td[2].textContent).trim()});}}catch(e){}parent.postMessage({tipo:"cepea",linhas:out},"*");},300);});`;
@@ -2066,6 +2075,25 @@ function vHub(){
         <div class="mkt-lista"><span class="meta">Fale com o Marketing</span>${mktContatosHTML()}</div></div>
     </aside>
     <div class="home-feed">${vPendenciasHome()}${vFeed()}</div>
+    ${veMercadoHome()?`<aside class="home-dir">${vMercadoHome()}</aside>`:""}
+  </div>`;
+}
+const veMercadoHome=()=>!S.demo&&(ehAdmin()||(Array.isArray(S.profile.acessos)&&S.profile.acessos.includes("mercado")));
+function vMercadoHome(){
+  const m=S.mercado;if(m==null){if(!S.mercHomeBusy){S.mercHomeBusy=true;carregarMercado().then(()=>{S.mercHomeBusy=false;render();});}return `<div class="cx"><h2>Mercado</h2><div class="carregando">Carregando…</div></div>`;}
+  if(S.cepea===undefined)setTimeout(carregarCepea,0);
+  const C=S.cepea,boi=C&&C.length?(C.find(x=>/boi gordo/i.test(x.produto))||C[0]):null;
+  const n=(m.noticias||[]).slice().sort((a,b)=>String(b.data||"").localeCompare(String(a.data||""))).slice(0,5);
+  const hora=d=>{const t=new Date(d);if(isNaN(t.getTime()))return "";const hj=new Date().toLocaleDateString("pt-BR")===t.toLocaleDateString("pt-BR");return hj?t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});};
+  const chuva=(m.clima||[]).filter(x=>Array.isArray(x.dias)&&x.dias.some(d=>!["pn","ps","e","n","cl","nv","g","ne","nd","vn"].includes(d.t))).length,nc=(m.clima||[]).length;
+  return `<div class="cx merc-home"><h2>Mercado</h2>
+    <div class="merc-bts">
+      <button class="merc-bt" data-a="merc-ir" data-v="mercado-boi"><span>Arroba do boi</span>${boi?`<strong>${esc(boi.valor)}</strong><small>${esc(boi.produto)} · ${esc(boi.data)}</small>`:C===undefined?`<small>buscando no CEPEA…</small>`:`<small>ver cotações</small>`}</button>
+      <button class="merc-bt" data-a="merc-ir" data-v="mercado-clima"><span>Clima</span>${nc?`<strong>${chuva} de ${nc}</strong><small>praças com chuva nos próximos 7 dias</small>`:`<small>previsão de 7 dias</small>`}</button>
+    </div>
+    <h3 class="merc-h">Notícias da pecuária</h3>
+    ${n.length?`<div class="merc-nt">${n.map(x=>{const u=x.url&&urlOk(x.url)!=="#"?urlOk(x.url):"";const corpo=`<span class="nt-tit">${esc(x.titulo||"")}</span><span class="meta">${esc(x.fonte||"")}${x.data?" · "+esc(hora(x.data)):""}</span>`;return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${corpo}</a>`:`<div>${corpo}</div>`;}).join("")}</div>`:`<div class="vazio">Sem notícias agora.</div>`}
+    <button class="btn sec" style="width:100%" data-a="merc-ir" data-v="mercado-noticias">Ver todas as notícias</button>
   </div>`;
 }
 function vPendenciasHome(){
@@ -4656,6 +4684,7 @@ document.addEventListener("click",async ev=>{
   if(a==="post-com-abrir"){S.postComAberto=v;render();return;}
   if(a==="post-com-del"){const r=await sb.from("post_comentarios").delete().eq("id",v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o comentário.");return;}await carregarPosts();render();aviso("Comentário excluído.");return;}
   if(a==="duv-publicar"){if(!moderaDuv())return;b.disabled=true;const {error}=await sb.rpc("duvida_publicar",{p_id:+v,p_pub:b.dataset.on==="1"});if(error){aviso("Não foi possível atualizar a pergunta.");render();return;}await carregarDuvidas();render();aviso(b.dataset.on==="1"?"Pergunta exibida para todos.":"Pergunta tirada da visão de todos.");return;}
+  if(a==="merc-ir"){S.secao="mercado";S.pag=v;render();window.scrollTo(0,0);return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
   if(a==="del-pedir"){S.delConf=v;render();return;}
   if(a==="del-nao"){S.delConf=null;render();return;}
