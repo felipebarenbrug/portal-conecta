@@ -255,6 +255,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .is-peq{color:var(--cinza,#7a7a7a);font-weight:400}
 .is-passos{margin:0;padding-left:22px;display:grid;gap:4px}.is-passos li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--linha,#e3e8ee)}.is-passos li:nth-child(4){font-weight:700}
 .is-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:10px}.is-grid2>*{min-width:0}
+.is-alerta{background:var(--amarelo-claro,#fff8d6);border-left:4px solid var(--amarelo,#ffdb00);border-radius:6px;padding:12px 14px;margin-top:10px}.is-alerta ol{margin:6px 0 0;padding-left:20px;display:grid;gap:6px;line-height:1.5}
 .is-tot td{border-top:2px solid var(--azul-escuro);font-weight:700}.is-tab td,.is-tab th{white-space:nowrap}
 .mesbar{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:14px}
 .mesbar .trilho{height:16px;background:var(--linha,#eee);border-radius:8px;overflow:hidden;position:relative}
@@ -1065,7 +1066,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112201449";
+const APP_VER="20261112205139";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1425,6 +1426,39 @@ function isPerSel(cfg){const ms=isMeses(cfg);const p=S.isPer||"safra";const ops=
 function isMat(meses){const at=isMesAtual();return meses.includes(at)?`<span class="selo" title="Leads e negociações recentes ainda podem avançar">coorte em maturação</span>`:"";}
 function isCabecalho(cfg,row){return `<p class="precos-nota" style="margin:0 0 8px">Fonte: CRM RD Station · atualizado em ${fmtDataHora(row.atualizado_em)} · safra ${esc((cfg.safra||[]).map(d=>d.split("-").reverse().join("/")).join(" a "))} pela data de faturamento · híbridos: ${esc((cfg.cesta||[]).join(", "))}</p>`;}
 
+
+function vISPlano(A,cfg){
+  const meta=+cfg.meta_kg||60000,real=A.real||{},ab=A.ab||{},al=A.alerta||{};const msS=isMeses(cfg);
+  const proj=(+real.kgh||0)+(+ab.pond||0),falta=Math.max(0,meta-proj),faltaReal=Math.max(0,meta-(+real.kgh||0));
+  const mq=isSoma(A.mql,msS),dc=isSoma(A.dec,msS),co=isSoma(A.coorte,msS);let g=0,p=0;Object.entries(dc).forEach(([k,v])=>{if(k.endsWith("_g"))g+=v;else if(k.endsWith("_p"))p+=v;});
+  const tSQL=(g+p)?g/(g+p):0,tMQL=(+mq.rec)?(+mq.qual||0)/(+mq.rec):0,kgVenda=(+real.n)?(+real.kgh||0)/(+real.n):0;
+  const ciclo=isEst(isLista(A.ciclo,msS));const cicloD=ciclo?Math.round(ciclo.med):30;
+  const hoje=new Date(Date.now()-3*3600e3),fim=new Date(((cfg.safra||[])[1]||"2027-06-30")+"T00:00:00Z");
+  const diasUteis=Math.max(0,Math.round((fim-hoje)/864e5)-cicloD),mesesUteis=Math.max(.5,diasUteis/30.4);
+  const mesesPass=msS.filter(m=>m<isMesAtual()),nP=Math.max(1,mesesPass.length);const mqP=isSoma(A.mql,mesesPass);const ritmoMQL=(mqP.rec||0)/nP,ritmoSQL=(mqP.qual||0)/nP;
+  const vendas=kgVenda?Math.ceil(falta/kgVenda):0,sql=tSQL?Math.ceil(vendas/tSQL):0,mql=tMQL?Math.ceil(sql/tMQL):0;
+  const sqlMes=Math.ceil(sql/mesesUteis),mqlMes=Math.ceil(mql/mesesUteis);
+  const quente=[4,5].reduce((t,r)=>{const x=(A.est||{})[r]||{};return {n:t.n+(+x.n||0),kgh:t.kgh+(+x.kgh||0)};},{n:0,kgh:0});
+  const morno=(A.est||{})[3]||{};const st=al.sem_tarefa||{},ed=al.est_data||{},d30=(A.faixa||{}).d30||{};
+  const acoes=[];
+  if(quente.n)acoes.push(`<li><strong>Fechar as ${isN(quente.n)} negociações de 4 e 5 estrelas</strong> (${isT(quente.kgh)} de híbrido). Elas sustentam a maior parte do ponderado; cada uma que escapar abre gap.</li>`);
+  if(+d30.n)acoes.push(`<li><strong>Garantir o faturamento dos próximos 30 dias:</strong> ${isN(d30.n)} negociações, ${isT(d30.kgh)}. Confirmar data, crédito e pedido de cada uma.</li>`);
+  if(+morno.n)acoes.push(`<li><strong>Esquentar as ${isN(morno.n)} negociações de 3 estrelas</strong> (${isT(morno.kgh)}): cada uma que sobe para 4 estrelas dobra o peso na projeção (35% para 70%).</li>`);
+  if(+st.n)acoes.push(`<li><strong>Agendar o próximo passo de ${isN(st.n)} negociações</strong> que estão sem tarefa no CRM (${isT(st.kgh)}).</li>`);
+  if(+ed.n)acoes.push(`<li><strong>Revisar ${isN(ed.n)} negociações com estrela × data em conflito</strong>: faturam em até 30 dias mas estão com 1 ou 2 estrelas. Ou a data está errada, ou a negociação precisa de atenção já.</li>`);
+  if(falta>0&&sqlMes)acoes.push(`<li><strong>Abrir ${isN(sqlMes)} negociações novas por mês</strong> até ${isNomeMes(new Date(fim.getTime()-cicloD*864e5).toISOString().slice(0,7))}${ritmoSQL?` (hoje entram em média ${isN(ritmoSQL)} por mês vindas de MQL, sem contar Forecast e repasse)`:""}.</li>`);
+  if(falta>0&&mqlMes)acoes.push(`<li><strong>Receber ${isN(mqlMes)} MQL por mês</strong>, se as negociações novas vierem do inbound${ritmoMQL?` (a média da safra é ${isN(ritmoMQL)} por mês, ${ritmoMQL>=mqlMes?"suficiente se a conversão se mantiver":"faltam cerca de "+isN(mqlMes-ritmoMQL)+" por mês: pedir reforço de campanha ao Marketing"})`:""}.</li>`);
+  const ok=falta<=0;
+  return `<section class="bloco"><h2 class="sec">Plano para bater a meta</h2>
+    <div class="pv-aviso" style="${ok?"background:#e6f4ea":"background:#fdecea"}"><div><strong>${ok?"A projeção cobre a meta, se o funil converter como as estrelas indicam":"A projeção ainda não cobre a meta: faltam "+isT(falta)}</strong><span>${ok?"O trabalho agora é fechar o que está no funil e não deixar negociação esfriar. Para bater a meta, o time precisa converter "+(ab.kgh?isPct(faltaReal,ab.kgh):"—")+" do que está em andamento.":"Mesmo fechando o funil atual na proporção das estrelas, o time precisa gerar negócio novo além do que já está aberto."}</span></div></div>
+    ${!ok?`<div class="metrics">
+      <div class="metric"><span>Vendas novas necessárias</span><strong>${isN(vendas)}</strong><span class="meta">${isT(falta)} ÷ ${isN(kgVenda)} kg de híbrido por venda (média da safra)</span></div>
+      <div class="metric"><span>Negociações novas (SQL)</span><strong>${isN(sql)}</strong><span class="meta">${isN(vendas)} vendas ÷ ${Math.round(100*tSQL)}% de conversão SQL → Venda · ${isN(sqlMes)} por mês</span></div>
+      <div class="metric"><span>MQL necessários</span><strong>${isN(mql)}</strong><span class="meta">${isN(sql)} SQL ÷ ${Math.round(100*tMQL)}% de MQL → SQL · ${isN(mqlMes)} por mês</span></div>
+      <div class="metric"><span>Tempo útil</span><strong>${isN(mesesUteis)} ${mesesUteis<1.5?"mês":"meses"}</strong><span class="meta">até o fim da safra, descontado o ciclo de venda mediano de ${isN(cicloD)} dias</span></div></div>`:""}
+    ${acoes.length?`<div class="is-alerta"><strong>O que o time precisa fazer agora</strong><ol>${acoes.join("")}</ol></div>`:""}
+    ${isAjuda("Falta = meta − (realizado + ponderado do funil). Vendas novas = falta ÷ quilos médios de híbrido por venda ganha na safra (média, puxada para cima por pedidos grandes; na prática podem ser necessárias mais vendas). Negociações novas = vendas ÷ taxa SQL → Venda das decididas da safra. MQL = negociações ÷ taxa MQL → SQL da safra, supondo que todo o negócio novo venha do inbound; negociação de Forecast ou repasse reduz essa necessidade. Ritmo mensal = total ÷ meses que restam até o fim da safra menos o ciclo mediano de venda, porque negociação aberta muito tarde não fatura a tempo. As taxas são as da safra até hoje e mudam a cada atualização.")}</section>`;
+}
 function vISBloco(nome,row,cfg,ehTime){
   const A=row.dados||{};const meta=+cfg.meta_kg||60000;const ms=isPeriodo(cfg);const pessoa=(cfg.pessoas||[]).find(p=>p.p===nome)||{};
   const real=A.real||{},ab=A.ab||{},al=A.alerta||{},fx=A.faixa||{};
@@ -1499,7 +1533,7 @@ function vISBloco(nome,row,cfg,ehTime){
     <div class="metric"><span>Perdas no período</span><strong>${isN(pr.n)}</strong><span class="meta">${isR(pr.rs)} · ${isT(pr.kgh)}</span></div></div>
     ${Object.keys(mot).length?`<div class="tab" style="margin-top:10px"><table><thead><tr><th>Motivo da perda</th><th class="val">Neg.</th><th class="val">Valor</th></tr></thead><tbody>${Object.entries(mot).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="val">${isN(v.n)}</td><td class="val">${isR(v.rs)}</td></tr>`).join("")}</tbody></table></div>`:""}
     ${isAjuda("Pausada é lembrete do time, não temperatura: fica fora do realizado, do funil, da projeção e das taxas. O ponderado hipotético mostra quanto valeria se voltasse ao funil com a estrela atual. Perdas pelo mês do fechamento.")}</section>`;
-  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${conv}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
+  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?vISPlano(A,cfg):""}${conv}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
 }
 const IS_AL={sem_tarefa:"sem próximo passo",parada:"parada",vencida:"data vencida",sem_data:"sem data",est_data:"estrela × data",fech:"pedido finalizado sem ganho"};
 function isListaHTML(L,mostraDono){
