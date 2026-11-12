@@ -522,6 +522,8 @@ main.largo{max-width:1120px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
 .pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}
+.bd-como{background:var(--azul-claro,#eef5fb);border-radius:10px;padding:10px 14px;font-size:14px}.bd-como ol{margin:4px 0 0;padding-left:20px;display:grid;gap:2px}
+.mk-sol{box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}
 </style>
 </head>
 <body>
@@ -1029,7 +1031,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112142159";
+const APP_VER="20261112161538";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1429,6 +1431,7 @@ function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome|
 async function carregarFeed(){
   await Promise.all([carregarPosts(),carregarDuvidas(),
     (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
+    (async()=>{if(S.demo||!ehMkt())return;try{const {data}=await sb.from("mkt_acoes").select("id,titulo,solicitante_nome,criado_em,verba_pedida,inicio").eq("status","Solicitada").order("criado_em");S.mkSolHome=data||[];}catch(e){}})(),
     (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
 }
@@ -2071,6 +2074,9 @@ function vPendenciasHome(){
     out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações pendentes (${L.length})</strong><button class="btn" data-a="secao" data-v="gestao">Atender no painel</button></div>
       <p class="meta" style="margin:0">${[nS?`${nS} ${nS===1?"pedido":"pedidos"} de nova senha`:"",nA?`${nA} ${nA===1?"pedido":"pedidos"} de acesso`:""].filter(Boolean).join(" · ")}</p>
       <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></section>`);}
+  if(ehMkt()&&(S.mkSolHome||[]).length){const L=S.mkSolHome;
+    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações de ação de marketing (${L.length})</strong><button class="btn" data-a="mk-ir-solic">Analisar</button></div>
+      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div></div>`).join("")}</div></section>`);}
   if(moderaDuv()){const P=(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto);if(P.length)
     out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Perguntas aguardando o embaixador técnico (${P.length})</strong><button class="btn" data-a="secao" data-v="duvidas">Responder</button></div>
       <p class="meta" style="margin:0">Só você, o autor e os administradores veem estas perguntas até alguém clicar em "Exibir a todos".</p>
@@ -3720,7 +3726,9 @@ function vFinPremissas(C){
 /* ================= AÇÕES DE MARKETING + BRINDES DE MARKETING ================= */
 const ehMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing"));
 const meusAcessos=()=>Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];
-const veAcoesMkt=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("acoes-mkt"));
+const veAcoesMkt=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
+const mkPodeSolic=()=>!S.demo&&(ehMkt()||ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
+const MK_FORA=["Cancelada","Solicitada","Recusada"];const mkConta=a=>!MK_FORA.includes(a.status);
 const veBrindes=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("brindes"));
 const MK_STATUS=["A fazer","Em andamento","Concluída","Cancelada"];
 const MK_TIPOS=["Evento","Dia de campo","Feira","Patrocínio","Mídia e conteúdo","Material e brindes","Ação com revenda","Treinamento","Outro"];
@@ -3753,9 +3761,10 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
-  const abas=[["acoes-quadro","Quadro"],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]]:[])];
+  const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada").length;
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)/.test(S.pag))?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
 }
 async function carregarMkt(){
@@ -3784,9 +3793,9 @@ function mkCardHTML(a){
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
-  const L=S.mk.filter(a=>(ft==="Todos"||a.tipo===ft)&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
   const verCanc=!!S.mkCanc;const cols=MK_STATUS.filter(s=>s!=="Cancelada"||verCanc);
-  const tot=L.filter(a=>a.status!=="Cancelada").reduce((t,a)=>t+mkCusto(a),0);
+  const tot=L.filter(mkConta).reduce((t,a)=>t+mkCusto(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
   <div class="mk-barra">
     <input type="search" id="mk_busca" placeholder="Buscar ação, local ou pessoa" value="${esc(S.mkBusca||"")}" aria-label="Buscar">
@@ -3794,7 +3803,7 @@ function vAcoesQuadro(){
     <label class="check"><input type="checkbox" data-a="mk-canc" ${verCanc?"checked":""}> Mostrar canceladas</label>
     ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}
   </div>
-  ${g?`<p class="meta" style="margin:0">${L.filter(a=>a.status!=="Cancelada").length} ações · ${fmtK0(tot)} no total (realizado quando houver, senão previsto)</p>`:""}
+  ${g?`<p class="meta" style="margin:0">${L.filter(mkConta).length} ações · ${fmtK0(tot)} no total (realizado quando houver, senão previsto)</p>`:""}
   <div class="mk-quadro">${cols.map(st=>{const xs=L.filter(a=>a.status===st);const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
     return `<section class="mk-col" aria-label="${esc(st)}"><header><strong>${esc(st)}</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.map(mkCardHTML).join("")||`<div class="vazio" style="padding:12px">Nada aqui.</div>`}</section>`;}).join("")}</div>`;
 }
@@ -3819,6 +3828,34 @@ function mkFormHTML(a){
     <div class="acoes"><button class="btn" type="submit">${a.id?"Salvar":"Criar ação"}</button><button type="button" class="btn sec" data-a="${a.id?"mk-abrir":"pag"}" data-v="${a.id||"acoes-quadro"}">Cancelar</button></div>
   </form>`;
 }
+function mkSolLinha(a){const st=a.status==="Solicitada"?stTag("Aguardando o Marketing","amarelo"):a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):stTag("Aprovada · "+a.status,"verde");
+  return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>
+    <span class="meta">${esc([a.solicitante_nome?"pedido por "+a.solicitante_nome:"",fmtDataHora(a.criado_em),a.inicio?"evento em "+mkData(a.inicio):"",a.local||""].filter(Boolean).join(" · "))}</span><span class="bd-tags">${st}${a.brindes_pedidos?stTag("pede brindes","azul"):""}</span></div>
+    <div style="text-align:right"><strong class="val">${fmtK0(a.verba_pedida)}</strong><span class="meta" style="display:block">verba pedida</span>${a.status!=="Solicitada"&&a.status!=="Recusada"&&a.status!=="Cancelada"&&Number(a.valor_prev)!==Number(a.verba_pedida)?`<span class="meta" style="display:block">aprovado ${fmtK0(a.valor_prev)}</span>`:""}</div></div>`;}
+function vAcoesSolic(){
+  if(!S.mk)return `<div class="carregando">Carregando…</div>`;
+  const g=ehMkt(),L=S.mk.filter(a=>a.solicitante);
+  const ag=L.filter(a=>a.status==="Solicitada"),ok=L.filter(a=>!["Solicitada","Recusada","Cancelada"].includes(a.status)),nao=L.filter(a=>a.status==="Recusada"||a.status==="Cancelada");
+  const bl=(t,xs,v)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}</h2>${xs.length?`<div class="lista">${xs.map(mkSolLinha).join("")}</div>`:`<div class="vazio">${v}</div>`}</section>`;
+  return `<div><h1 class="titulo">Solicitações de ação de marketing</h1><p class="sub">${g?"Pedidos de apoio e verba do time comercial e dos RCs. Abra a solicitação para conversar, aprovar com o valor e registrar a decisão. Aprovada, ela vira uma ação no quadro.":"Peça apoio do Marketing Barenbrug para uma ação, como um dia de campo, um evento ou material para clientes. Você acompanha o status e conversa com o Marketing pelos comentários da solicitação."} ${temPerfil("Comercial Barenbrug")&&!g?"Você também vê as solicitações dos RCs que supervisiona.":""}</p></div>
+  ${mkPodeSolic()?`<div class="mk-barra"><button class="btn" data-a="pag" data-v="acoes-solic-nova">+ Nova solicitação</button></div>`:""}
+  <p class="meta" style="margin:0">Revendas do Conecta Revendas pedem apoio pelo PGD, usando a verba do IGDB, dentro do Conecta Revendas.</p>
+  ${bl(g?"Aguardando sua análise":"Aguardando o Marketing",ag,"Nada aguardando.")}
+  ${bl("Aprovadas",ok,"Nenhuma aprovada ainda.")}
+  ${nao.length?bl("Recusadas e canceladas",nao,""):""}`;
+}
+function vAcoesSolicNova(){
+  return `<button class="voltar" data-a="pag" data-v="acoes-solic">‹ Solicitações</button>
+  <form class="form-card" id="f-mk-solic"><h2 class="sec">Nova solicitação de ação de marketing</h2>
+    <p class="meta">Conte o que você precisa. O Marketing analisa, conversa com você pelos comentários e aprova o valor. Depois de enviada, você acompanha tudo em Solicitações.</p>
+    <div><label for="ms_tit">O que é a ação *</label><input id="ms_tit" required maxlength="160" placeholder="Ex.: Dia de campo Sabiá na Fazenda Boa Vista"></div>
+    <div class="dupla"><div><label for="ms_tp">Tipo</label><select id="ms_tp">${MK_TIPOS.map(t=>`<option>${t}</option>`).join("")}</select></div><div><label for="ms_loc">Local</label><input id="ms_loc" maxlength="160" placeholder="Cidade/UF, fazenda, revenda"></div></div>
+    <div class="dupla"><div><label for="ms_ini">Data</label><input id="ms_ini" type="date"></div><div><label for="ms_fim">Até (se for mais de um dia)</label><input id="ms_fim" type="date"></div></div>
+    <div><label for="ms_desc">Objetivo e o que o Marketing deve apoiar *</label><textarea id="ms_desc" rows="4" required maxlength="4000" placeholder="Para que é a ação, o que você espera dela e o que precisa do Marketing: verba, material, divulgação, palestrante…"></textarea></div>
+    <div class="dupla"><div><label for="ms_pub">Público esperado</label><input id="ms_pub" maxlength="300" placeholder="Ex.: 40 pecuaristas da região, clientes da revenda X"></div><div><label for="ms_val">Verba pedida (R$)</label><input id="ms_val" inputmode="decimal" placeholder="0,00"><span class="meta">Deixe em branco se não precisar de verba.</span></div></div>
+    <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
+    <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
+}
 function vAcoesNova(){return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>${mkFormHTML({})}`;}
 function vAcoesCard(){
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);
@@ -3828,11 +3865,12 @@ function vAcoesCard(){
   const anex=(a.anexos||[]),links=(a.links||[]),capa=a.capa_path?mkUrl(a.capa_path):"";
   const podeRem=x=>g||x.por===S.user.id;
   const idx=MK_STATUS.indexOf(a.status);
-  return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>
+  return `${a.solicitante&&(a.status==="Solicitada"||a.status==="Recusada"||!g)?`<button class="voltar" data-a="pag" data-v="acoes-solic">‹ Solicitações</button>`:`<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>`}
   ${capa?`<div class="mk-capa-g"><img src="${esc(capa)}" alt=""></div>`:""}
   <div><span class="rot">${esc(a.tipo||"Ação")} · ${esc(a.status)}</span><h1 class="titulo">${esc(a.titulo)}</h1>
     <p class="sub">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</p></div>
-  ${g?`<div class="acoes" style="margin:0">${idx>0&&a.status!=="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="${MK_STATUS[idx-1]}">← ${MK_STATUS[idx-1]}</button>`:""}${idx<2?`<button class="btn" data-a="mk-mover" data-v="${MK_STATUS[idx+1]}">${MK_STATUS[idx+1]} →</button>`:""}${a.status==="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="A fazer">Reabrir</button>`:`<button class="btn sec" data-a="mk-mover" data-v="Cancelada">Cancelar ação</button>`}<button class="btn sec" data-a="mk-editar">Editar</button>${S.mkDel?`<button class="btn perigo" data-a="mk-excluir">Confirmar exclusão</button><button class="link" data-a="mk-del-n">não excluir</button>`:`<button class="link perigo" data-a="mk-del">Excluir</button>`}</div>`:""}
+  ${a.solicitante?mkSolBlocoHTML(a):""}
+  ${g&&a.status!=="Solicitada"&&a.status!=="Recusada"?`<div class="acoes" style="margin:0">${idx>0&&a.status!=="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="${MK_STATUS[idx-1]}">← ${MK_STATUS[idx-1]}</button>`:""}${idx<2?`<button class="btn" data-a="mk-mover" data-v="${MK_STATUS[idx+1]}">${MK_STATUS[idx+1]} →</button>`:""}${a.status==="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="A fazer">Reabrir</button>`:`<button class="btn sec" data-a="mk-mover" data-v="Cancelada">Cancelar ação</button>`}<button class="btn sec" data-a="mk-editar">Editar</button>${S.mkDel?`<button class="btn perigo" data-a="mk-excluir">Confirmar exclusão</button><button class="link" data-a="mk-del-n">não excluir</button>`:`<button class="link perigo" data-a="mk-del">Excluir</button>`}</div>`:""}
   <div class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}<span class="meta">${MK_FIN_TXT[mkFin(a)]}${a.pago_em?" · paga em "+mkData(a.pago_em):""}</span>${mkAtrasada(a)?stTag("Atrasada: a data já passou e a ação não foi concluída","vermelho"):""}</div>
   <div class="metrics">
     <div class="metric"><span>Valor previsto</span><strong>${fmtK0(a.valor_prev)}</strong></div>
@@ -3855,6 +3893,21 @@ function vAcoesCard(){
     <form id="f-mk-com" class="form-card" style="margin-top:8px"><label for="mk_com">Novo comentário</label><textarea id="mk_com" rows="3" maxlength="4000" required></textarea><div class="acoes"><button class="btn" type="submit">Comentar</button></div></form></section>
   ${S.mkEv&&S.mkEv.length?`<section class="bloco"><h2 class="sec">Histórico</h2><div class="lista">${S.mkEv.map(e=>`<div class="linha"><div><strong>${esc(e.evento)}</strong><span class="meta">${esc(e.detalhe||"")} · ${esc(e.quem_nome||"")} · ${fmtDataHora(e.em)}</span></div></div>`).join("")}</div></section>`:""}`;
 }
+function mkSolBlocoHTML(a){
+  const g=ehMkt(),eu=a.solicitante===S.user.id;
+  const brBt=(a.status!=="Recusada"&&a.status!=="Cancelada"&&veBrindes())?`<button class="btn sec" data-a="mk-brindes" data-v="${a.id}">Pedir brindes para esta ação</button>`:"";
+  return `<section class="bloco mk-sol"><h2 class="sec">Solicitação</h2>
+    <p class="meta" style="margin:0">Pedida por <strong>${esc(a.solicitante_nome||"")}</strong> em ${fmtDataHora(a.criado_em)} · verba pedida ${fmtK0(a.verba_pedida)}${a.publico?" · público: "+esc(a.publico):""}</p>
+    ${a.brindes_pedidos?`<p style="margin:4px 0 0"><strong>Brindes pedidos:</strong> ${esc(a.brindes_pedidos)}</p>`:""}
+    ${a.status==="Solicitada"?(g?`<form id="f-mk-decidir" class="form-card" style="margin-top:8px"><div class="dupla"><div><label for="md_val">Verba aprovada (R$)</label><input id="md_val" inputmode="decimal" value="${a.verba_pedida?esc(String(a.verba_pedida).replace(".",",")):""}"></div><div><label for="md_obs">Mensagem para quem pediu</label><input id="md_obs" maxlength="500" placeholder="Opcional: condições, próximos passos"></div></div>
+        <div class="acoes"><button class="btn" type="submit" data-ok="1">Aprovar</button><button class="btn sec perigo-t" type="submit" data-ok="0">Recusar</button></div><p class="meta">Aprovada, ela vai para o quadro como "A fazer", com a verba como aprovada. A decisão entra nos comentários e fica registrada.</p></form>`
+      :`<div class="nota-admin" style="margin-top:8px">Aguardando análise do Marketing. Use os comentários abaixo para conversar e os anexos para mandar orçamento ou proposta.${eu?` <button class="link perigo" data-a="mk-sol-canc" data-v="${a.id}">Cancelar solicitação</button>`:""}</div>`)
+    :a.status==="Recusada"?`<div class="nota-admin" style="margin-top:8px">Recusada por ${esc(a.decidido_nome||"")} em ${fmtDataHora(a.decidido_em)}${a.decisao_obs?": "+esc(a.decisao_obs):"."}</div>`
+    :a.status==="Cancelada"?`<div class="nota-admin" style="margin-top:8px">Solicitação cancelada.</div>`
+    :`<div class="nota-admin" style="margin-top:8px">Aprovada por ${esc(a.decidido_nome||"")} em ${fmtDataHora(a.decidido_em)} com verba de ${fmtK0(a.valor_prev)}${a.decisao_obs?". "+esc(a.decisao_obs):"."}</div>`}
+    ${brBt||a.brindes_pedidos?`<div class="acoes" style="margin-top:8px">${brBt}${!veBrindes()&&a.brindes_pedidos?`<span class="meta">O Marketing separa os brindes pedidos e registra a requisição nesta ação.</span>`:""}</div>`:""}
+  </section>`;
+}
 function mkChecklistHTML(a){
   const c=mkChk(a),h=mkHoje(),dono=ehMkt()||a.responsavel===S.user.id;
   return `<section class="bloco"><h2 class="sec">Checklist${c.n?` · ${c.f} de ${c.n}`:""}</h2>
@@ -3870,7 +3923,7 @@ function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&i<=d&&d<=f;
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
-  const A=S.mk.filter(a=>a.status!=="Cancelada"&&(ff==="Todas"||(ff==="Atrasadas"?mkAtrasada(a):mkFin(a)===ff)));
+  const A=S.mk.filter(a=>mkConta(a)&&(ff==="Todas"||(ff==="Atrasadas"?mkAtrasada(a):mkFin(a)===ff)));
   const nomeMes=(t=>t.charAt(0).toUpperCase()+t.slice(1))(new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}));
   const prim=new Date(y,mo-1,1).getDay(),dias=new Date(y,mo,0).getDate(),h=mkHoje();
   const cel=[];for(let i=0;i<prim;i++)cel.push(`<div class="mk-dia vazio-d"></div>`);
@@ -3895,7 +3948,7 @@ function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
     ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
 function vAcoesGestao(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const h=mkHoje(),A=S.mk.filter(a=>a.status!=="Cancelada"),V=Number((S.mkVerba||{}).valor)||0;
+  const h=mkHoje(),A=S.mk.filter(mkConta),V=Number((S.mkVerba||{}).valor)||0;
   const sumV=xs=>xs.reduce((t,a)=>t+mkCusto(a),0);
   const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
   const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
@@ -3928,7 +3981,7 @@ function vAcoesGestao(){
 }
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(a=>a.status!=="Cancelada");
+  const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(mkConta),SOL=S.mk.filter(a=>a.status==="Solicitada");
   const prev=A.reduce((t,a)=>t+(Number(a.valor_prev)||0),0),real=A.reduce((t,a)=>t+(Number(a.valor_real)||0),0),comp=A.reduce((t,a)=>t+mkCusto(a),0),saldo=V-comp;
   const brv=Object.values(S.mkBrAcao||{}).reduce((t,v)=>t+v,0);
   const sf=f=>A.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0),vPag=sf("Paga"),vApr=sf("Aprovada"),vProv=sf("Provisionada");
@@ -3944,6 +3997,7 @@ function vAcoesPainel(){
     <div class="metric"><span>Previsto · realizado</span><strong style="font-size:17px">${fmtK0(prev)} · ${fmtK0(real)}</strong><span class="meta">${A.length} ações ativas</span></div>
   </div>
   ${finBarra(V?comp/V:null,"da verba comprometida")}
+  ${SOL.length?`<div class="nota-admin"><strong>${SOL.length} ${SOL.length===1?"solicitação aguarda":"solicitações aguardam"} sua análise</strong> · ${fmtK0(SOL.reduce((t,a)=>t+(Number(a.verba_pedida)||0),0))} de verba pedida, fora dos cenários até você aprovar. <button class="link" data-a="pag" data-v="acoes-solic">Ver solicitações</button></div>`:""}
   <section class="bloco"><h2 class="sec">Cenários da verba</h2><p class="sub" style="margin:0 0 8px">Paga: já debitada · Aprovada: a pagar · Provisionada: reservada, ainda não aprovada. Ações "Sem custo" não entram.</p>
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cenário</th><th class="val">Usado</th><th class="val">% da verba</th><th class="val">Saldo</th></tr></thead><tbody>${cen.map(([t,v,d])=>`<tr><td><strong>${t}</strong><br><span class="meta">${d}</span></td><td class="val">${fmtK0(v)}</td><td class="val">${V?pctTxt(v/V):"—"}</td><td class="val" style="${V-v<0?"color:var(--vermelho);font-weight:700":""}">${fmtK0(V-v)}</td></tr>`).join("")}</tbody></table></div>
   <div class="metrics" style="margin-top:10px"><div class="metric"><span>Pago</span><strong>${fmtK0(vPag)}</strong></div><div class="metric"><span>Aprovado</span><strong>${fmtK0(vApr)}</strong></div><div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong></div></div></section>
@@ -3957,6 +4011,8 @@ function vAcoesMkt(){
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
   if(S.pag==="acoes-cal")return vAcoesCal();
+  if(S.pag==="acoes-solic")return vAcoesSolic();
+  if(S.pag==="acoes-solic-nova"&&mkPodeSolic())return vAcoesSolicNova();
   if(S.pag==="acoes-gestao"&&ehMkt())return vAcoesGestao();
   return vAcoesQuadro();
 }
@@ -4002,6 +4058,8 @@ function vBdCatalogo(){
   const L=S.bd.filter(b=>(fc==="Todas"||b.categoria===fc)&&(fl==="Todos"||b.local===fl)&&fOk(b)&&(!busca||finNorm(b.nome+" "+(b.codigo||"")).includes(busca)));
   const C=bdCarr(),itens=Object.entries(C).filter(([,q])=>q>0),tot=itens.reduce((t,[id,q])=>{const b=S.bd.find(x=>String(x.id)===String(id));return t+(b?q*(Number(b.valor_unit)||0):0);},0);
   return `<div><h1 class="titulo">Brindes de Marketing</h1><p class="sub">${g?"Todo o estoque de brindes e materiais. Defina quanto cada item mostra ao time comercial e se ele aparece. Itens de uso interno nunca aparecem para o comercial.":"Brindes e materiais liberados pelo Marketing. Escolha as quantidades e faça a requisição: o Marketing aprova e separa."}</p></div>
+  ${S.bdAcaoPre?`<div class="nota-admin">Pedido de brindes para a ação <strong>${esc(S.bdAcaoPreT||"#"+S.bdAcaoPre)}</strong>. A requisição fica vinculada a ela. <button class="link" data-a="bd-acao-limpar">não vincular</button></div>`:""}
+  <div class="bd-como"><strong>Como pedir brindes</strong><ol><li>Em cada item, escolha a quantidade com <b>+</b> e <b>−</b> (ou digite).</li><li>Clique em <b>Fazer requisição</b>, na barra que aparece no pé da tela.</li><li>Conte o motivo, o destino e quem retira, e envie. ${g?"Você aprova em Requisições.":"O Marketing aprova e você acompanha em Minhas requisições."}</li></ol></div>
   <div class="mk-barra">
     <input type="search" id="bd_busca" placeholder="Buscar por nome ou código" value="${esc(S.bdBusca||"")}" aria-label="Buscar">
     <select id="bd_cat" aria-label="Categoria">${["Todas",...cats].map(t=>`<option ${t===fc?"selected":""}>${t}</option>`).join("")}</select>
@@ -4014,14 +4072,14 @@ function vBdCatalogo(){
 function vBdPedir(){
   const C=bdCarr(),itens=Object.entries(C).filter(([,q])=>q>0).map(([id,q])=>({b:(S.bd||[]).find(x=>String(x.id)===String(id)),q})).filter(x=>x.b);
   if(!itens.length)return `<button class="voltar" data-a="pag" data-v="brindes-catalogo">‹ Catálogo</button><div class="vazio">Escolha os itens no catálogo primeiro.</div>`;
-  const tot=itens.reduce((t,x)=>t+x.q*(Number(x.b.valor_unit)||0),0),acs=(S.mk||S.bdAcoes||[]).filter(a=>a.status!=="Cancelada");
+  const tot=itens.reduce((t,x)=>t+x.q*(Number(x.b.valor_unit)||0),0),acs=(S.mk||S.bdAcoes||[]).filter(a=>a.status!=="Cancelada"&&a.status!=="Recusada");if(S.bdAcaoPre&&!acs.some(a=>a.id===S.bdAcaoPre))acs.unshift({id:S.bdAcaoPre,titulo:S.bdAcaoPreT||("Ação #"+S.bdAcaoPre)});
   return `<button class="voltar" data-a="pag" data-v="brindes-catalogo">‹ Catálogo</button>
   <div><h1 class="titulo">Requisição de brindes</h1><p class="sub">Confira os itens e conte para que e para quem são. O Marketing aprova, dá baixa no estoque e registra quem retirou.</p></div>
   <section class="bloco"><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Item</th><th class="val">Qtd</th><th class="val">Unitário</th><th class="val">Total</th></tr></thead><tbody>${itens.map(x=>`<tr><td>${esc(x.b.nome)}<br><span class="meta">Cód. ${esc(x.b.codigo||"—")} · ${esc(x.b.local||"")}</span></td><td class="val">${x.q.toLocaleString("pt-BR")}</td><td class="val">${fmtR(x.b.valor_unit)}</td><td class="val">${fmtR(x.q*(Number(x.b.valor_unit)||0))}</td></tr>`).join("")}<tr style="font-weight:700"><td>Total</td><td></td><td></td><td class="val">${fmtR(tot)}</td></tr></tbody></table></div></section>
   <form class="form-card" id="f-bd-req">
     <div><label for="bd_mot">Motivo da requisição *</label><textarea id="bd_mot" rows="3" required maxlength="1000" placeholder="Ex.: dia de campo com clientes da revenda, kit para novo RC, premiação…"></textarea></div>
     <div class="dupla"><div><label for="bd_dest">Destino *</label><input id="bd_dest" required maxlength="300" placeholder="Evento, cidade/UF, revenda ou fazenda"></div><div><label for="bd_para">Para quem</label><input id="bd_para" maxlength="300" placeholder="Cliente, revenda, RC ou público"></div></div>
-    <div class="dupla"><div><label for="bd_ret">Quem vai retirar</label><input id="bd_ret" maxlength="200" placeholder="Nome de quem pega no estoque"></div>${acs.length?`<div><label for="bd_acao">Ação de marketing (opcional)</label><select id="bd_acao"><option value="">—</option>${acs.map(a=>`<option value="${a.id}">${esc(a.titulo)}</option>`).join("")}</select></div>`:""}</div>
+    <div class="dupla"><div><label for="bd_ret">Quem vai retirar</label><input id="bd_ret" maxlength="200" placeholder="Nome de quem pega no estoque"></div>${acs.length?`<div><label for="bd_acao">Ação de marketing (opcional)</label><select id="bd_acao"><option value="">—</option>${acs.map(a=>`<option value="${a.id}" ${a.id===S.bdAcaoPre?"selected":""}>${esc(a.titulo)}</option>`).join("")}</select></div>`:""}</div>
     <div class="acoes"><button class="btn" type="submit">Enviar requisição · ${fmtR(tot)}</button></div></form>`;
 }
 function bdItensTxt(r){return (r.itens||[]).map(i=>`${(Number(i.qtd)||0).toLocaleString("pt-BR")} × ${esc(i.nome||i.codigo||"")}`).join(" · ");}
@@ -4185,6 +4243,9 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-del-n"){S.mkDel=false;render();return;}
   if(a==="mk-excluir"){if(!ehMkt())return;const {error}=await sb.from("mkt_acoes").delete().eq("id",S.mkSel);if(error){aviso("Não foi possível excluir.");return;}S.mk=(S.mk||[]).filter(x=>x.id!==S.mkSel);S.pag="acoes-quadro";render();aviso("Ação excluída.");return;}
   if(a==="mk-mes"){S.mkMes=v;render();return;}
+  if(a==="mk-ir-solic"){S.secao="acoes-mkt";S.pag="acoes-solic";S.mk=null;carregarMkt();render();window.scrollTo(0,0);return;}
+  if(a==="mk-sol-canc"){const {data,error}=await sb.rpc("mkt_cancelar_solicitacao",{p_id:+v});if(error||!data){aviso("Não foi possível cancelar.");return;}S.mk=null;await carregarMkt();aviso("Solicitação cancelada.");return;}
+  if(a==="mk-brindes"){const x=(S.mk||[]).find(y=>y.id===+v);S.bdAcaoPre=+v;S.bdAcaoPreT=x?x.titulo:"";S.secao="brindes";S.pag="brindes-catalogo";S.bd=null;carregarBrindes();render();window.scrollTo(0,0);return;}
   if(a==="mk-calf"){S.mkCalF=v;render();return;}
   if(a==="mk-chk"||a==="mk-chk-del"){const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:a==="mk-chk"?"toggle":"del",p_id:v});if(error){aviso("Não foi possível atualizar o checklist.");render();return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();return;}
   if(a==="mk-mover"){if(!ehMkt())return;const {data,error}=await sb.from("mkt_acoes").update({status:v}).eq("id",S.mkSel).select().maybeSingle();if(error||!data){aviso("Não foi possível mudar o status.");return;}S.mk=S.mk.map(x=>x.id===data.id?data:x);render();carregarMkCard(data.id);return;}
@@ -4194,6 +4255,7 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-com-del"){const {error}=await sb.from("mkt_comentarios").delete().eq("id",+v);if(!error)carregarMkCard(S.mkSel);return;}
   if(a==="bd-mais"||a==="bd-menos"){const it=(S.bd||[]).find(x=>String(x.id)===v);if(!it)return;const C=bdCarr();const q=Math.max(0,Math.min(bdDisp(it),(C[v]||0)+(a==="bd-mais"?1:-1)));if(q)C[v]=q;else delete C[v];render();return;}
   if(a==="bd-limpar"){S.bdCarr={};render();return;}
+  if(a==="bd-acao-limpar"){S.bdAcaoPre=null;S.bdAcaoPreT="";render();return;}
   if(a==="bd-baixa"){if(!ehMkt())return;b.disabled=true;const {data,error}=await sb.rpc("brinde_baixa_item",{p_id:+v,p_baixado:b.dataset.on==="1"});if(error){b.disabled=false;aviso("Não foi possível registrar a baixa.");return;}S.bd=null;await carregarBrindes();aviso(b.dataset.on==="1"?`Baixa registrada: ${fmtR(data)} debitados do budget.`:`Baixa desfeita: ${fmtR(-data)} estornados ao budget.`);return;}
   if(a==="bd-del"){S.bdDel=v?+v:null;render();return;}
   if(a==="bd-del-ok"){if(!ehMkt())return;if(bdEmprestado(+v)){aviso("Há unidades emprestadas deste item.");return;}const it=(S.bd||[]).find(x=>x.id===+v);const r=await sb.from("brindes").delete().eq("id",+v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o item.");return;}
@@ -4245,6 +4307,13 @@ document.addEventListener("submit",async ev=>{
     const q=id?sb.from("mkt_acoes").update(d).eq("id",id).select().maybeSingle():sb.from("mkt_acoes").insert(d).select().maybeSingle();
     const {data,error}=await q;if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a ação.");return;}
     S.mk=id?S.mk.map(x=>x.id===id?data:x):[...(S.mk||[]),data];S.mkSel=data.id;S.mkEdit=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(data.id);aviso(id?"Ação salva.":"Ação criada.");return;}
+  if(f.id==="f-mk-solic"){const d={p_titulo:val("ms_tit"),p_tipo:val("ms_tp"),p_descricao:val("ms_desc"),p_local:val("ms_loc")||null,p_inicio:val("ms_ini")||null,p_fim:val("ms_fim")||null,p_valor:mkNum(val("ms_val"))||0,p_publico:val("ms_pub")||null,p_brindes:val("ms_br")||null};
+    if(!d.p_titulo||!d.p_descricao){aviso("Conte o que é a ação e o objetivo.");return;}if(btn)btn.disabled=true;
+    const {data,error}=await sb.rpc("mkt_solicitar",d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível enviar a solicitação.");return;}
+    S.mk=null;await carregarMkt();S.mkSel=data;S.pag="acoes-card";carregarMkCard(data);render();window.scrollTo(0,0);aviso("Solicitação enviada ao Marketing.");return;}
+  if(f.id==="f-mk-decidir"){if(!ehMkt())return;const ok=(ev.submitter&&ev.submitter.dataset.ok)==="1";const v=mkNum(val("md_val"));
+    const {error}=await sb.rpc("mkt_decidir",{p_id:S.mkSel,p_ok:ok,p_valor:ok?(v||0):null,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar a decisão.");return;}
+    S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(ok?"Solicitação aprovada. Ela está no quadro como A fazer.":"Solicitação recusada.");return;}
   if(f.id==="f-mk-chk"){const t=val("mkc_t");if(!t)return;if(btn)btn.disabled=true;const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:"add",p_id:null,p_txt:t,p_resp:val("mkc_r")||null,p_prazo:val("mkc_p")||null});
     if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
   if(f.id==="f-mk-com"){const tx=val("mk_com");if(!tx)return;if(btn)btn.disabled=true;const {error}=await sb.from("mkt_comentarios").insert({acao_id:S.mkSel,texto:tx.slice(0,4000)});if(error){if(btn)btn.disabled=false;aviso("Não foi possível comentar.");return;}carregarMkCard(S.mkSel);return;}
@@ -4254,7 +4323,7 @@ document.addEventListener("submit",async ev=>{
     const mot=val("bd_mot"),dest=val("bd_dest");if(!mot||!dest){aviso("Informe o motivo e o destino.");return;}if(btn)btn.disabled=true;
     const {data,error}=await sb.rpc("brinde_requisitar",{p_itens:it,p_motivo:mot,p_destino:dest,p_destinatario:val("bd_para"),p_retirado_por:val("bd_ret"),p_acao:val("bd_acao")?+val("bd_acao"):null});
     if(error){if(btn)btn.disabled=false;aviso(/acima do disponivel/i.test(error.message||"")?"Algum item não tem mais essa quantidade disponível. Atualize o catálogo.":"Não foi possível enviar a requisição.");return;}
-    S.bdCarr={};S.bd=null;S.bdReqs=null;S.bdReqF="Todas";S.pag="brindes-reqs";render();carregarBrindes();aviso(`Requisição #${data} enviada ao Marketing.`);return;}
+    S.bdCarr={};S.bdAcaoPre=null;S.bdAcaoPreT="";S.bd=null;S.bdReqs=null;S.bdReqF="Todas";S.pag="brindes-reqs";render();carregarBrindes();aviso(`Requisição #${data} enviada ao Marketing.`);return;}
   if(f.id==="f-bd-dec"){if(!ehMkt())return;const st=(ev.submitter&&ev.submitter.dataset.st)||"Aprovada";if(btn)btn.disabled=true;
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
@@ -4366,7 +4435,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Pe
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
