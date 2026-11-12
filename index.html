@@ -160,6 +160,7 @@ table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
 th{text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--apagado);padding:10px 12px;border-bottom:2px solid var(--linha)}
 td{padding:10px 12px;border-bottom:1px solid var(--linha);font-variant-numeric:tabular-nums}
 .selo{font-size:12px;font-weight:700;padding:2px 8px;background:var(--azul-claro);color:var(--azul-escuro);border-radius:4px;white-space:nowrap}
+.selo.is{background:var(--amarelo-claro);color:var(--preto)}
 .nota-admin{background:var(--amarelo-claro);border-left:4px solid var(--amarelo);padding:12px 14px;font-size:14px;border-radius:4px}
 .perigo-box{background:#FBE9EA;border-left:4px solid var(--vermelho);padding:12px 14px;font-size:14px;border-radius:4px;display:grid;gap:10px}
 .linha.col{flex-direction:column;align-items:stretch}
@@ -849,7 +850,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112090136";
+const APP_VER="20261112090450";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2865,7 +2866,7 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Mercado ---------- */
-const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs"],["int-seg","B2C e B2B"]];
+const INT_ABAS=[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"]];
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inteligência de Mercado">${INT_ABAS.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -2978,29 +2979,63 @@ function vIntVendas(C){
   <section class="bloco"><h2 class="sec">15 cidades com mais híbridos</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cidade</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Preço médio (R$/kg)</th><th class="val">B2C (R$/kg)</th><th class="val">B2B (R$/kg)</th></tr></thead><tbody>
     ${cids.map(a=>{const xs=porCid[a.k]||[];return `<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td class="val">${pSeg(xs,"B2C")}</td><td class="val">${pSeg(xs,"B2B")}</td></tr>`;}).join("")||`<tr><td colspan="6">Sem cidade informada.</td></tr>`}</tbody></table></div></section>`;
 }
+/* quem vendeu: o RC do pedido ou a pessoa do Inside Sales (representante, vendedor ou dono do negocio no CRM) */
+const INT_IS_SUP=/^mayane/i;
+const intPessoa=x=>{if(x.via==="RC")return x.r.rep;if(x.via!=="Inside Sales")return "";
+  const n=[x.r.rep,x.r.resp,x.r.dono].map(v=>String(v||"").trim()).find(v=>INT_IS_REP.test(v));return n?repCanon(n):"Inside Sales (sem nome no pedido)";};
+function intPerfilVenda(xs,quem){
+  const pes=new Set(xs.map(quem).filter(Boolean)),np=pes.size||0,ped=xs.length,kg=xs.reduce((t,x)=>t+x.kgH,0),rs=xs.reduce((t,x)=>t+x.rsH,0);
+  const cli=new Set(xs.map(x=>x.cli)).size,b2c=xs.filter(x=>x.seg==="B2C").reduce((t,x)=>t+x.kgH,0),ufs=new Set(xs.map(x=>x.uf).filter(Boolean)).size;
+  const cic=xs.map(x=>x.ciclo).filter(v=>v!=null&&v>=0&&v<400),pg={};xs.forEach(x=>{if(x.pag)pg[x.pag]=(pg[x.pag]||0)+1;});const pgTop=Object.entries(pg).sort((a,b)=>b[1]-a[1])[0];
+  const rec={};xs.forEach(x=>{rec[x.cli]=(rec[x.cli]||0)+1;});const nRec=Object.values(rec).filter(v=>v>1).length;
+  const cu={};xs.forEach(x=>{(Array.isArray(x.r.itens)?x.r.itens:[]).forEach(i=>{const l=finNorm(i[0]);const k=/cayana/.test(l)?"Cayana":/sabia|convert 330/.test(l)?"Sabiá":/carcara/.test(l)?"Carcará":"";if(k)cu[k]=(cu[k]||0)+(Number(i[1])||0);});});
+  const cuT=Object.values(cu).reduce((a,v)=>a+v,0);
+  return {np,ped,kg,rs,cli,ufs,pk:kg?rs/kg:null,tk:ped?rs/ped:null,pm:ped?kg/ped:null,pmed:intMed(xs.map(x=>x.kgH)),kgP:np?kg/np:null,cliP:np?cli/np:null,pedP:np?ped/np:null,
+    b2c:kg?b2c/kg:null,rec:cli?nRec/cli:null,cic:cic.length?cic.reduce((a,v)=>a+v,0)/cic.length:null,pg:pgTop?pgTop[0]+" ("+pctTxt(pgTop[1]/ped)+")":"—",
+    cu:cuT?Object.entries(cu).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+" "+Math.round(v/cuT*100)+"%").join(" · "):"—",
+    fx:INT_FAIXAS.map((f,i)=>xs.filter(x=>intFaixa(x.kg)===i).length)};
+}
 function vIntRC(C){
-  const R=C.ag(C.H.filter(x=>x.via==="RC"),x=>x.r.rep).sort((a,b)=>b.kgH-a.kgH);
-  const ufsRC={};C.H.filter(x=>x.via==="RC").forEach(x=>{const o=ufsRC[x.r.rep]||(ufsRC[x.r.rep]={});o[x.uf||"—"]=(o[x.uf||"—"]||0)+x.kgH;});
-  const n=R.length,cli=R.reduce((t,a)=>t+a.cli.size,0),ped=R.reduce((t,a)=>t+a.n,0),kg=R.reduce((t,a)=>t+a.kgH,0),rs=R.reduce((t,a)=>t+a.rsH,0);
+  const XR=C.H.filter(x=>x.via==="RC"),XI=C.H.filter(x=>x.via==="Inside Sales");
+  const R=C.ag(XR,x=>x.r.rep).sort((a,b)=>b.kgH-a.kgH),I=C.ag(XI,intPessoa).sort((a,b)=>b.kgH-a.kgH);
+  const ufsP={};[...XR,...XI].forEach(x=>{const k=intPessoa(x);const o=ufsP[k]||(ufsP[k]={});o[x.uf||"—"]=(o[x.uf||"—"]||0)+x.kgH;});
+  const A=intPerfilVenda(XR,x=>x.r.rep),B=intPerfilVenda(XI,intPessoa);
   const sede=S.rcSede||{};
-  return `<div><h1 class="titulo">Representantes comerciais (RC)</h1><p class="sub">RCs com venda de híbridos na safra 26/27, pelo campo de representante dos pedidos no CRM.</p></div>
+  const nu=(v,f)=>v==null?"—":f(v),kgF=v=>fmtKg(Math.round(v)),dec=v=>v.toLocaleString("pt-BR",{maximumFractionDigits:1}),dias=v=>Math.round(v)+" dias";
+  const dif=(a,b)=>a==null||b==null||!a?"—":((b/a-1)>=0?"+":"−")+pctTxt(Math.abs(b/a-1));
+  const linhas=[["Vendedores com venda de híbridos",A.np,B.np,String,0],["Pedidos",A.ped,B.ped,String,0],["Clientes",A.cli,B.cli,String,0],
+    ["Clientes por vendedor",A.cliP,B.cliP,dec,1],["Pedidos por vendedor",A.pedP,B.pedP,dec,1],["Kg de híbridos no total",A.kg,B.kg,kgF,1],["Kg por vendedor",A.kgP,B.kgP,kgF,1],
+    ["Pedido médio (kg)",A.pm,B.pm,kgF,1],["Pedido mediano (kg)",A.pmed,B.pmed,kgF,1],["Ticket médio por pedido",A.tk,B.tk,fmtK0,1],["Preço médio (R$/kg)",A.pk,B.pk,fmtR,1],
+    ["Participação B2C (produtor) no kg",A.b2c,B.b2c,pctTxt,0],["Clientes que compraram mais de uma vez",A.rec,B.rec,pctTxt,0],["Estados atendidos",A.ufs,B.ufs,String,0],
+    ...(C.temCiclo?[["Ciclo médio de vendido a faturado",A.cic,B.cic,dias,1]]:[]),...(C.temPag?[["Forma de pagamento mais usada",A.pg,B.pg,v=>esc(v),-1]]:[]),["Mix de híbridos (kg)",A.cu,B.cu,v=>esc(v),-1]];
+  const tabCmp=`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Indicador</th><th class="val">RC</th><th class="val">Inside Sales</th><th class="val">Inside Sales vs. RC</th></tr></thead><tbody>
+    ${linhas.map(([t,a,b,f,d])=>`<tr><td>${t}</td><td class="val">${nu(a,f)}</td><td class="val">${nu(b,f)}</td><td class="val">${d===1?dif(a,b):d===0&&typeof a==="number"&&typeof b==="number"&&a<=1&&b<=1&&f===pctTxt?((b-a)>=0?"+":"−")+(Math.abs(b-a)*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+" p.p.":"—"}</td></tr>`).join("")}</tbody></table></div>`;
+  const tabFx=`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Tamanho do pedido</th><th class="val">RC</th><th class="val">Inside Sales</th></tr></thead><tbody>
+    ${INT_FAIXAS.map((f,i)=>`<tr><td>${f[2]}</td><td class="val">${A.fx[i]}${A.ped?` <small class="muted">${pctTxt(A.fx[i]/A.ped)}</small>`:""}</td><td class="val">${B.fx[i]}${B.ped?` <small class="muted">${pctTxt(B.fx[i]/B.ped)}</small>`:""}</td></tr>`).join("")}</tbody></table></div>`;
+  const linha=(a,perfil)=>{const u=Object.entries(ufsP[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=perfil==="RC"?(sede[finNorm(a.k)]||""):"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
+    const sel=perfil==="RC"?`<span class="selo">RC</span>`:`<span class="selo is">${INT_IS_SUP.test(a.k)?"Inside Sales · supervisão":"Inside Sales"}</span>`;
+    const sedeTx=perfil==="RC"?`${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}`:`Venda digital`;
+    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${sel}</td><td>${sedeTx}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td class="val">${intPk(a.rsH,a.kgH)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;};
+  const fP=S.intPerfil||"Todos",lista=[...(fP!=="Inside Sales"?R.map(a=>[a,"RC"]):[]),...(fP!=="RC"?I.map(a=>[a,"Inside Sales"]):[])].sort((p,q)=>q[0].kgH-p[0].kgH);
+  return `<div><h1 class="titulo">RCs e Inside Sales</h1><p class="sub">Venda de híbridos da safra 26/27 no CRM, separada entre representante comercial (RC) e Assessoras de Vendas Digitais do Inside Sales. Pedido com representante no CRM conta para o RC; pedido sem representante, ou com o nome de alguém do Inside Sales nesse campo, conta para o Inside Sales.</p></div>
   <div class="metrics">
-    <div class="metric"><span>RCs com venda de híbridos</span><strong>${n}</strong><span class="meta">${ped} pedidos</span></div>
-    <div class="metric"><span>Clientes de híbridos por RC</span><strong>${n?(cli/n).toLocaleString("pt-BR",{maximumFractionDigits:1}):"—"}</strong><span class="meta">${cli} clientes no total</span></div>
-    <div class="metric"><span>Ticket médio por pedido</span><strong>${ped?fmtK0(rs/ped):"—"}</strong><span class="meta">só o valor dos híbridos</span></div>
-    <div class="metric"><span>Kg de híbridos por RC</span><strong>${n?fmtKg(Math.round(kg/n)):"—"}</strong><span class="meta">${fmtKg(Math.round(kg))} no total</span></div>
-    <div class="metric"><span>Pedido médio em quantidade</span><strong>${ped?fmtKg(Math.round(kg/ped)):"—"}</strong><span class="meta">kg de híbridos por pedido</span></div>
+    <div class="metric"><span>RCs com venda</span><strong>${A.np}</strong><span class="meta">${A.ped} pedidos · ${fmtKg(Math.round(A.kg))}</span></div>
+    <div class="metric"><span>Inside Sales com venda</span><strong>${B.np}</strong><span class="meta">${B.ped} pedidos · ${fmtKg(Math.round(B.kg))}</span></div>
+    <div class="metric"><span>Pedido médio RC</span><strong>${nu(A.pm,kgF)}</strong><span class="meta">ticket ${nu(A.tk,fmtK0)}</span></div>
+    <div class="metric"><span>Pedido médio Inside Sales</span><strong>${nu(B.pm,kgF)}</strong><span class="meta">ticket ${nu(B.tk,fmtK0)}</span></div>
   </div>
+  <section class="bloco"><h2 class="sec">Perfil de venda: RC x Inside Sales</h2>${tabCmp}<p class="muted" style="font-size:.85em;margin-top:6px">Para percentuais, a diferença está em pontos percentuais (p.p.). Pedido mediano: metade dos pedidos fica abaixo desse peso.</p></section>
+  <section class="bloco"><h2 class="sec">Tamanho do pedido: RC x Inside Sales</h2><p class="muted" style="margin:-4px 0 10px">Número de pedidos por faixa de peso total do pedido.</p>${tabFx}</section>
   ${(()=>{const rk=(RC_RANKING||[]).filter(x=>x.kg>0);if(!rk.length)return "";const ord=["Yellow Master","Yellow Pro","Yellow","Blue"];
-    const g=ord.map(t=>{const xs=rk.filter(x=>tierDoKg(x.kg)===t);const kgT=xs.reduce((a,x)=>a+x.kg,0);return {t,n:xs.length,kg:kgT,info:RC_TIERS.find(x=>x.t===t)||{}};});
-    return `<section class="bloco"><h2 class="sec">RCs por categoria do Conecta RC</h2><p class="sub" style="margin:0 0 10px">Pelo volume de híbridos e Cynodon da safra no ranking oficial do Conecta RC (${rk.length} RCs com venda).</p>
-    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Faixa de volume</th><th class="val">RCs</th><th class="val">Participação</th><th class="val">Kg no total</th><th class="val">Kg médio por RC</th><th class="val">Comissão produtor / canal</th></tr></thead><tbody>
-    ${g.map(x=>`<tr><td><span class="selo">${esc(x.t)}</span></td><td>${esc(x.info.vol||"")}</td><td class="val"><strong>${x.n}</strong></td><td class="val">${pctTxt(x.n/rk.length)}</td><td class="val">${fmtKg(Math.round(x.kg))}</td><td class="val">${x.n?fmtKg(Math.round(x.kg/x.n)):"—"}</td><td class="val">${esc((x.info.prod||"")+" / "+(x.info.canal||""))}</td></tr>`).join("")}
-    <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${rk.length}</td><td class="val">100%</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)))}</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)/rk.length))}</td><td></td></tr></tbody></table></div></section>`;})()}
-  <section class="bloco"><h2 class="sec">Raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada RC vendeu híbridos, comparados com a UF da sede da empresa que o RC informou no cadastro do portal (o raio declarado aparece embaixo). RC sem cadastro no portal fica sem sede até o contrato ser carregado.</p>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>RC</th><th>Sede (contrato)</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
-  ${R.map(a=>{const u=Object.entries(ufsRC[a.k]||{}).sort((p,q)=>q[1]-p[1]);const sd=sede[finNorm(a.k)]||"";const fora=sd?u.filter(([k])=>k!==sd).reduce((t,[,v])=>t+v,0)/(a.kgH||1):null;
-    return `<tr><td><strong>${esc(a.k)}</strong></td><td>${esc(sd||"—")}${(S.rcRaio||{})[finNorm(a.k)]?`<br><span class="meta">${esc(S.rcRaio[finNorm(a.k)])}</span>`:""}</td><td class="val">${a.cli.size}</td><td class="val">${a.n}</td><td class="val">${fmtKg(Math.round(a.kgH))}</td><td class="val">${fmtKg(Math.round(a.kgH/a.n))}</td><td class="val">${fmtK0(a.rsH/a.n)}</td><td>${u.map(([k,v])=>`${esc(k)} ${Math.round(v/(a.kgH||1)*100)}%`).join(" · ")}</td><td class="val">${fora==null?"—":pctTxt(fora)}</td></tr>`;}).join("")||`<tr><td colspan="9">Nenhum RC com venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
+    const g=ord.map(t=>{const xs=rk.filter(x=>tierDoKg(x.kg)===t);const kgT=xs.reduce((a,x)=>a+x.kg,0);return {t,n:xs.length,nIS:xs.filter(x=>INT_IS_REP.test(x.crm||"")||INT_IS_REP.test(x.nome||"")).length,kg:kgT,info:RC_TIERS.find(x=>x.t===t)||{}};});const nIS=g.reduce((a,x)=>a+x.nIS,0);
+    return `<section class="bloco"><h2 class="sec">RCs por categoria do Conecta RC</h2><p class="sub" style="margin:0 0 10px">Pelo volume de híbridos e Cynodon da safra no ranking oficial do Conecta RC (${rk.length} com venda, sendo ${nIS} do Inside Sales).</p>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Faixa de volume</th><th class="val">Vendedores</th><th class="val">dos quais Inside Sales</th><th class="val">Participação</th><th class="val">Kg no total</th><th class="val">Kg médio por vendedor</th><th class="val">Comissão produtor / canal</th></tr></thead><tbody>
+    ${g.map(x=>`<tr><td><span class="selo">${esc(x.t)}</span></td><td>${esc(x.info.vol||"")}</td><td class="val"><strong>${x.n}</strong></td><td class="val">${x.nIS||"—"}</td><td class="val">${pctTxt(x.n/rk.length)}</td><td class="val">${fmtKg(Math.round(x.kg))}</td><td class="val">${x.n?fmtKg(Math.round(x.kg/x.n)):"—"}</td><td class="val">${esc((x.info.prod||"")+" / "+(x.info.canal||""))}</td></tr>`).join("")}
+    <tr style="font-weight:700"><td>Total</td><td></td><td class="val">${rk.length}</td><td class="val">${nIS||"—"}</td><td class="val">100%</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)))}</td><td class="val">${fmtKg(Math.round(rk.reduce((a,x)=>a+x.kg,0)/rk.length))}</td><td></td></tr></tbody></table></div></section>`;})()}
+  <section class="bloco"><h2 class="sec">Vendedores e raio de atuação</h2><p class="sub" style="margin:0 0 10px">Estados onde cada vendedor vendeu híbridos. Para o RC, compara com a UF da sede que ele informou no cadastro do portal (o raio declarado aparece embaixo). RC sem cadastro no portal fica sem sede até o contrato ser carregado.</p>
+  <div class="filtros" role="group" aria-label="Filtrar por perfil" style="margin-bottom:10px">${["Todos","RC","Inside Sales"].map(v=>`<button class="chip" data-a="int-perfil" data-v="${v}" aria-pressed="${v===fP}">${v}</button>`).join("")}</div>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedor</th><th>Perfil</th><th>Sede</th><th class="val">Clientes</th><th class="val">Pedidos</th><th class="val">Kg de híbridos</th><th class="val">Pedido médio (kg)</th><th class="val">Ticket médio</th><th class="val">R$/kg</th><th>Estados onde vendeu</th><th class="val">Fora da UF da sede</th></tr></thead><tbody>
+  ${lista.map(([a,pf])=>linha(a,pf)).join("")||`<tr><td colspan="11">Nenhuma venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
 }
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
@@ -3423,6 +3458,7 @@ document.addEventListener("click",async ev=>{
   if(a==="secao"&&v==="inteligencia"){if(!veBarenbrugRV())return;S.secao=v;S.pag="int-canais";S.novoPreco=false;render();window.scrollTo(0,0);return;}
   if(a==="int-cult"){S.intCult=v;render();return;}
   if(a==="int-rod"){S.intRod=v==="todas"?"todas":+v;render();return;}
+  if(a==="int-perfil"){S.intPerfil=v;render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
   if(a==="fila-pegar"){b.disabled=true;b.textContent="Pegando…";const {data,error}=await sb.rpc("rc_pegar");
     if(error){aviso(/finalize/i.test(String(error.message||""))?"Finalize o lead atual antes de pegar outro.":/vazia/i.test(String(error.message||""))?"A fila ficou vazia agora.":"Não foi possível pegar o lead. Tente de novo.");}
