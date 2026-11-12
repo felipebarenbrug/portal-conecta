@@ -140,6 +140,26 @@ button.etapa-b:hover h3{text-decoration:underline}
 .perg .op{display:flex;gap:9px;align-items:flex-start;padding:7px 0;font-weight:400;font-size:15px;cursor:pointer;margin:0}
 .perg .op input{margin-top:4px;width:auto;accent-color:var(--azul-escuro)}
 .mark{font-size:13px;font-weight:700;margin-top:8px}
+.perg legend{float:left;width:100%;padding:0}.perg legend+*{clear:both}
+.perg-tx{margin:0 0 10px;font-size:16px;line-height:1.45;font-weight:700;overflow-wrap:anywhere}
+.perg .op span{min-width:0;overflow-wrap:anywhere}
+.prova-protegida{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pv-ini ul{margin:6px 0 0;padding-left:20px;display:grid;gap:6px;line-height:1.5}.pv-ini h3{margin:0}
+.pv{display:grid;gap:12px}.pv .perg{padding:0;background:none}
+.pv-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.pv-prog{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--apagado,#5b6b7b)}
+.pv-relogio{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;color:var(--azul-escuro,#00384f);background:var(--amarelo-claro,#fff8d6);border-radius:999px;padding:4px 14px;min-width:84px;text-align:center}
+.pv-relogio.pv-fim{color:#fff;background:#c0392b}
+.pv-trilho{height:8px;border-radius:8px;background:var(--linha,#e3e8ee);overflow:hidden}.pv-trilho i{display:block;height:100%;background:var(--azul,#00a8e2);transition:width .2s linear}
+.pv-rodape{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.pv-rev{display:grid;gap:10px;margin:12px 0}
+.pv-aviso{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;background:var(--amarelo,#ffdb00);color:var(--preto,#1d1d1b);border-radius:8px;padding:14px 16px;margin:12px 0}
+.pv-aviso>div{display:grid;gap:2px;min-width:0}.pv-aviso strong{font-size:16px}
+.pv-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,20,35,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.pv-modal-in{background:var(--branco,#fff);color:var(--preto,#1d1d1b);max-width:560px;width:100%;border-radius:12px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+.pv-modal-in h2{margin:0 0 10px;font-size:20px;color:var(--azul-escuro,#00384f)}.pv-modal-in p{margin:0 0 10px;line-height:1.5}
+.pv-modal-forte{background:#fdecea;border-left:4px solid #c0392b;padding:10px 12px;border-radius:4px;font-weight:600}
+
 .resultado{padding:16px;border-radius:6px}
 .resultado.ok{background:var(--azul);color:var(--branco)}
 .resultado.nao{background:var(--amarelo)}
@@ -1045,7 +1065,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112191836";
+const APP_VER="20261112201449";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2304,22 +2324,93 @@ function vTrilha(){
     const corpo=`<h3>${e.n}</h3><p>${e.d}</p><span class="est">${s==="feita"?`Concluído${nota!=null?" · "+nota+" de "+totalQ(e.id)+" acertos":""}`:s==="atual"?"Módulo atual":"Bloqueado: conclua o anterior"}</span>`;
     return `<li class="${s}"><span class="marco" aria-hidden="true">${s==="feita"?"✓":i+1}</span>${s==="bloq"?`<div class="etapa-b">${corpo}</div>`:`<button class="etapa-b" data-a="abrir" data-v="${i}">${corpo}</button>`}</li>`;}).join("")}</ol>`;
 }
-function vQuiz(lista,id){
-  const r=S.res;
-  return `<form id="f-quiz" class="bloco" data-id="${id}">${lista.map((x,i)=>`<fieldset class="perg"><legend>${i+1}. ${x.p}</legend>${x.ops.map((o,j)=>`<label class="op"><input type="radio" name="p${i}" value="${j}" required ${r&&r.resp[i]===j?"checked":""}><span>${o}</span></label>`).join("")}${r&&!r.ok?`<div class="mark">${(r.cor?r.cor[i]:r.resp[i]===x.c)?"Correta":"Revise esta resposta"}</div>`:""}</fieldset>`).join("")}
-  ${r?`<div class="resultado ${r.ok?"ok":"nao"}" role="status">${r.ok?`<h3>Aprovado: <b>${r.ac} de ${lista.length}</b></h3><p>${PROVAS_EXTRA[id]?"Prova concluída.":"O próximo módulo foi liberado."}</p>`:`<h3>${r.ac} de ${lista.length} acertos</h3><p>Você precisa de ${r.min}. Revise os vídeos e tente de novo.</p>`}</div>`:""}
-  ${r&&r.ok&&PROVAS_EXTRA[id]?`<button type="button" class="btn" data-a="pag" data-v="${PROVAS_EXTRA[id].volta}">Voltar ao curso</button>`:r&&r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"Ver certificado":"Ir para os cursos"}</button>`:`<button class="btn" type="submit">${r?"Tentar de novo":"Enviar respostas"}</button>`}</form>`;
-}
+/* ===== Prova monitorada: uma pergunta por vez, cronometro, ordem sorteada, saida de tela e copia bloqueadas ===== */
+const PV_SEG=45;
+const pvLista=id=>id==="prova"?PROVA:PROVAS_EXTRA[id]?PROVAS_EXTRA[id].quiz:((ETAPAS.find(e=>e.id===id)||{}).quiz||[]);
+const pvMin=(id,L)=>PROVAS_EXTRA[id]?PROVAS_EXTRA[id].min:Math.ceil((MIN_PCT[id]||.7)*L.length);
+const pvEmb=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+let PV_T=null;
+function pvIniciar(id){const L=pvLista(id);if(!L.length)return;S.res=null;document.getElementById("pv_modal")?.remove();
+  S.pv={id,ord:pvEmb(L.length),ops:L.map(x=>pvEmb(x.ops.length)),pos:0,resp:L.map(()=>-1),saidas:0,fora:false,modal:false,pausa:null,fim:Date.now()+PV_SEG*1000,enviando:false,falhou:false};
+  render();pvRelogio();const el=document.getElementById("f-pv");if(el)window.scrollTo(0,Math.max(0,el.getBoundingClientRect().top+window.scrollY-90));}
+const pvAtivo=()=>!!(S.pv&&!S.res&&!S.pv.enviando&&!S.pv.falhou&&document.getElementById("f-pv"));
+function pvRelogio(){clearInterval(PV_T);PV_T=setInterval(()=>{const P=S.pv;if(!P||S.res||P.enviando){clearInterval(PV_T);return;}if(!document.getElementById("f-pv")||P.pausa!=null)return;
+  const rest=Math.max(0,P.fim-Date.now()),sg=Math.ceil(rest/1000);const el=document.getElementById("pv_tempo"),bar=document.getElementById("pv_barra");
+  if(el){el.textContent=sg+" s";el.closest(".pv-relogio")?.classList.toggle("pv-fim",sg<=10);}if(bar)bar.style.width=(100*rest/(PV_SEG*1000))+"%";
+  if(rest<=0)pvProxima(true);},200);}
+function pvProxima(esgotou){const P=S.pv;if(!P||P.enviando||S.res)return;const f=document.getElementById("f-pv");const qi=P.ord[P.pos];const sel=f?f.querySelector('input[name="pv_op"]:checked'):null;
+  P.resp[qi]=sel?+sel.value:-1;if(esgotou&&!sel)aviso("O tempo desta pergunta acabou e ela ficou sem resposta. Vamos para a próxima.");
+  if(P.pos+1<P.ord.length){P.pos++;P.fim=Date.now()+PV_SEG*1000;render();window.scrollTo(0,Math.max(0,(document.getElementById("f-pv")?.getBoundingClientRect().top||0)+window.scrollY-90));}else pvEnviar(false);}
+async function pvEnviar(anulada){const P=S.pv;if(!P)return;P.enviando=true;P.falhou=false;clearInterval(PV_T);document.getElementById("pv_modal")?.remove();
+  const id=P.id,L=pvLista(id),min=pvMin(id,L);const errada=x=>x&&x.c!=null&&x.ops?(x.c+1)%x.ops.length:0;const resp=L.map((x,i)=>!anulada&&P.resp[i]>=0?P.resp[i]:errada(x));const mostra=L.map((x,i)=>anulada?-1:P.resp[i]);render();
+  let srv=null,erroMsg=null;
+  try{const {data,error}=await sb.rpc("prova_responder",{p_prova:id,p_respostas:resp});
+    if(!error&&data&&typeof data==="object"&&"acertos" in data)srv=data;
+    else if(error&&!RANK_FALTA(error))erroMsg=/muitas/i.test(String(error.message||""))?"Muitas tentativas seguidas. Revise os vídeos e tente de novo daqui a pouco.":"Não foi possível corrigir agora. Tente de novo.";
+  }catch(e){}
+  if(anulada){S.res={resp:mostra,ac:0,ok:false,min:srv?Number(srv.min)||min:min,cor:null,anulada:true};S.rank=null;P.enviando=false;render();return;}
+  if(srv){const ok=!!srv.ok,ac=Number(srv.acertos)||0;S.res={resp:mostra,ac,ok,min:Number(srv.min)||min,cor:Array.isArray(srv.corretas)?srv.corretas:null};if(ok&&!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=ac;}S.rank=null;}
+  else if(S.demo&&!erroMsg){const ac=L.length;S.res={resp:mostra,ac,ok:true,min};await concluir(id,ac);}
+  else{P.enviando=false;P.falhou=true;aviso(erroMsg||"Não foi possível corrigir a prova agora. Tente de novo em instantes.");render();return;}
+  P.enviando=false;render();document.querySelector(".resultado")?.scrollIntoView({block:"center"});}
+function pvSaiu(){if(!pvAtivo()||S.pv.fora)return;const P=S.pv;P.fora=true;P.saidas++;
+  if(P.saidas>=2){pvEnviar(true);return;}
+  P.modal=true;P.pausa=Math.max(0,P.fim-Date.now());}
+function pvVoltou(){const P=S.pv;if(!P||!P.fora)return;P.fora=false;if(P.modal&&!S.res&&!P.enviando&&document.getElementById("f-pv"))pvModal();}
+function pvModal(){document.getElementById("pv_modal")?.remove();const d=document.createElement("div");d.id="pv_modal";d.className="pv-modal";d.setAttribute("role","alertdialog");d.setAttribute("aria-modal","true");d.setAttribute("aria-labelledby","pv_modal_t");
+  d.innerHTML=`<div class="pv-modal-in"><h2 id="pv_modal_t">Ei, a prova ficou esperando por você!</h2>
+  <p>Percebemos que você saiu da tela da prova por um instante. Sem problemas, isso acontece.</p>
+  <p>A gente só quer lembrar o combinado: esta prova é para mostrar o que <strong>você</strong> aprendeu nos vídeos. Por isso ela é monitorada, e trocar de aba, abrir outro programa ou minimizar o navegador conta como saída. O objetivo é que ninguém precise buscar respostas fora do portal, em sites, com colegas ou em ferramentas de inteligência artificial. Confiamos no seu conhecimento.</p>
+  <p class="pv-modal-forte">Este é o único aviso. Se a tela da prova for deixada de novo, a tentativa será anulada e contará como reprovada.</p>
+  <p>O cronômetro ficou pausado enquanto você lê esta mensagem. Boa prova!</p>
+  <button class="btn" type="button" data-a="pv-retomar">Entendi, voltar para a prova</button></div>`;
+  document.body.append(d);setTimeout(()=>d.querySelector("button")?.focus(),30);}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)pvSaiu();else pvVoltou();});
+window.addEventListener("blur",()=>setTimeout(()=>{const ae=document.activeElement;if(ae&&ae.tagName==="IFRAME")return;if(document.getElementById("pv_modal"))return;pvSaiu();},60));
+window.addEventListener("focus",()=>pvVoltou());
+["copy","cut","contextmenu","selectstart","dragstart"].forEach(t=>document.addEventListener(t,e=>{const el=e.target&&e.target.nodeType===3?e.target.parentElement:e.target;if(el&&el.closest&&el.closest(".prova-protegida")){e.preventDefault();if(t==="copy"||t==="cut")aviso("Copiar o conteúdo da prova não é permitido.");}}));
+function vQuizInicio(L,id){const min=pvMin(id,L);
+  return `<div class="bloco pv-ini"><h3>Antes de começar</h3><ul>
+    <li><strong>${L.length} perguntas, uma de cada vez</strong>, com <strong>${PV_SEG} segundos</strong> para cada uma. O cronômetro aparece no alto da pergunta. Se o tempo acabar, a prova passa para a próxima e aquela conta como não respondida.</li>
+    <li>Depois de avançar não dá para voltar a uma pergunta anterior.</li>
+    <li>A ordem das perguntas e das alternativas muda a cada tentativa.</li>
+    <li>A prova é monitorada: trocar de aba, abrir outro programa ou minimizar o navegador conta como saída. Na primeira saída você recebe um aviso; na segunda, a tentativa é anulada e conta como reprovada.</li>
+    <li>Não é possível copiar o texto das perguntas.</li>
+    <li>Aprovação com ${min} de ${L.length} acertos.</li></ul>
+    <p class="sub" style="margin:8px 0 12px">Responda com o que você aprendeu, sem consultar sites, colegas ou inteligência artificial. Escolha um momento tranquilo e deixe só esta tela aberta.</p>
+    <button class="btn" type="button" data-a="prova-ini" data-v="${id}">Começar a prova</button></div>`;}
+function vQuizPasso(L,id){const P=S.pv,n=L.length;
+  if(P.enviando)return `<div class="bloco prova-protegida"><div class="carregando">Corrigindo suas respostas…</div></div>`;
+  if(P.falhou)return `<div class="bloco prova-protegida"><p class="sub" style="margin:0 0 10px">Suas respostas estão guardadas, mas não conseguimos corrigir agora.</p><button class="btn" type="button" data-a="pv-reenviar">Enviar respostas de novo</button></div>`;
+  const qi=P.ord[P.pos],x=L[qi];const rest=Math.max(0,P.pausa!=null?P.pausa:P.fim-Date.now()),sg=Math.ceil(rest/1000);
+  return `<form id="f-pv" class="bloco pv prova-protegida" autocomplete="off">
+    <div class="pv-topo"><span class="pv-prog">Pergunta ${P.pos+1} de ${n}</span><span class="pv-relogio${sg<=10?" pv-fim":""}" aria-label="Tempo restante"><span id="pv_tempo">${sg} s</span></span></div>
+    <div class="pv-trilho" aria-hidden="true"><i id="pv_barra" style="width:${100*rest/(PV_SEG*1000)}%"></i></div>
+    <div class="perg"><p class="perg-tx">${x.p}</p>${P.ops[qi].map(j=>`<label class="op"><input type="radio" name="pv_op" value="${j}"><span>${x.ops[j]}</span></label>`).join("")}</div>
+    <div class="pv-rodape"><span class="meta">${P.saidas?"Você já recebeu o aviso: se sair desta tela de novo, a tentativa será anulada.":"Fique nesta tela até terminar."}</span><button class="btn" type="submit">${P.pos+1<n?"Próxima pergunta":"Enviar respostas"}</button></div></form>`;}
+function vQuizRes(L,id){const r=S.res,P=S.pv&&S.pv.id===id?S.pv:null,ord=P?P.ord:L.map((_,i)=>i);
+  const head=r.anulada?`<div class="resultado nao" role="status"><h3>Tentativa anulada</h3><p>A tela da prova foi deixada pela segunda vez, então esta tentativa foi registrada como reprovada. Tudo bem: revise os vídeos com calma e comece de novo quando quiser, deixando só esta tela aberta até o fim.</p></div>`
+    :`<div class="resultado ${r.ok?"ok":"nao"}" role="status">${r.ok?`<h3>Aprovado: <b>${r.ac} de ${L.length}</b></h3><p>${PROVAS_EXTRA[id]?"Prova concluída.":"O próximo módulo foi liberado."}</p>`:`<h3>${r.ac} de ${L.length} acertos</h3><p>Você precisa de ${r.min}. Revise os vídeos e tente de novo.</p>`}</div>`;
+  const rev=!r.ok&&!r.anulada?`<div class="pv-rev">${ord.map((qi,k)=>{const x=L[qi],sua=r.resp[qi],certa=r.cor?r.cor[qi]:sua===x.c;return `<div class="perg"><p class="perg-tx">${k+1}. ${x.p}</p><p class="meta" style="margin:0">Sua resposta: ${sua>=0&&x.ops[sua]!=null?x.ops[sua]:"não respondida"}</p><div class="mark">${certa?"Correta":"Revise esta resposta"}</div></div>`;}).join("")}</div>`:"";
+  const bt=r.ok&&PROVAS_EXTRA[id]?`<button type="button" class="btn" data-a="pag" data-v="${PROVAS_EXTRA[id].volta}">Voltar ao curso</button>`:r.ok?`<button type="button" class="btn" data-a="pos-quiz">${qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"Ver certificado":"Ir para os cursos"}</button>`:`<button type="button" class="btn" data-a="prova-ini" data-v="${id}">Fazer nova tentativa</button>`;
+  return `<div class="bloco prova-protegida">${head}${rev}${bt}</div>`;}
+function vQuiz(lista,id){if(S.res&&(!S.pv||S.pv.id===id))return vQuizRes(lista,id);if(S.pv&&S.pv.id===id)return vQuizPasso(lista,id);return vQuizInicio(lista,id);}
 function vEtapa(){
   const i=S.etapa,e=ETAPAS_ON[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
   if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
+  const emProva=S.pv&&S.pv.id===e.id&&!S.res;
+  const secProva=`<section class="bloco" id="sec-prova"><h2 class="sec">Prova</h2>${s==="feita"&&!S.res&&!emProva?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar a prova. Aprovação com ${Math.ceil((MIN_PCT[e.id]||.7)*e.quiz.length)} de ${e.quiz.length} acertos.</div>`}</section>`;
+  if(emProva)return `<div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1></div>${secProva}`;
+  const chamada=todos&&s!=="feita"?`<div class="pv-aviso" role="status"><div><strong>Você assistiu a todos os vídeos deste módulo.</strong><span>Agora falta a prova para concluir o módulo e liberar o próximo.</span></div><button class="btn" type="button" data-a="ir-prova">Ir para a prova</button></div>`:"";
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button>
   <div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
+  ${chamada}
   ${v.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${v.yt}?rel=0" title="${esc(v.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m?v.m+" min · ":""}O vídeo entra aqui no site final</p></div>`}
-  <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button>${x.m?`<span class="meta"> · ${x.m} min</span>`:""}</div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div></section>
-  ${e.mat.length?`<section class="bloco"><h2 class="sec">Materiais de apoio</h2><div class="lista">${e.mat.map(matHTML).join("")}</div></section>`:""}
-  <section class="bloco"><h2 class="sec">Prova</h2>${s==="feita"&&!S.res?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar a prova. Aprovação com ${Math.ceil((MIN_PCT[e.id]||.7)*e.quiz.length)} de ${e.quiz.length} acertos.</div>`}</section>`;
+  <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button>${x.m?`<span class="meta"> · ${x.m} min</span>`:""}</div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div>${!todos&&s!=="feita"?`<p class="dica" style="margin:8px 0 0">A prova do módulo fica logo abaixo e é liberada quando você marcar todos os vídeos como assistidos.</p>`:""}</section>
+  ${chamada?chamada.replace('class="pv-aviso"','class="pv-aviso pv-aviso-2"'):""}
+  ${secProva}
+  ${e.mat.length?`<section class="bloco"><h2 class="sec">Materiais de apoio</h2><div class="lista">${e.mat.map(matHTML).join("")}</div></section>`:""}`;
 }
 function matHTML(m){
   const meta=`${m.c?esc(m.c)+" · ":""}${esc(m.tipo)}`;
@@ -4745,7 +4836,7 @@ function renderApp(){
   }
   app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();
 }
-const irPag=p=>{S.pag=p;S.res=null;S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
+const irPag=p=>{S.pag=p;S.res=null;S.pv=null;clearInterval(PV_T);document.getElementById("pv_modal")?.remove();S._erro=null;if(p!=="usuario"){S.formAlvo="form";}render();window.scrollTo(0,0);};
 async function concluir(id,nota){
   if(!S.feitas.includes(id)){S.feitas.push(id);S.notas[id]=nota;
     await sb.from("progresso").upsert({user_id:S.user.id,etapa:id,nota},{onConflict:"user_id,etapa"});}
@@ -4789,7 +4880,11 @@ document.addEventListener("click",async ev=>{
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
-  if(a==="quiz-extra"){S.quizExtra=v;S.res=null;render();return;}
+  if(a==="quiz-extra"){S.quizExtra=v;S.res=null;S.pv=null;render();return;}
+  if(a==="prova-ini"){pvIniciar(v);return;}
+  if(a==="pv-retomar"){const P=S.pv;document.getElementById("pv_modal")?.remove();if(P){P.modal=false;if(P.pausa!=null){P.fim=Date.now()+P.pausa;P.pausa=null;}pvRelogio();}return;}
+  if(a==="pv-reenviar"){pvEnviar(false);return;}
+  if(a==="ir-prova"){document.getElementById("sec-prova")?.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;S.novoContato=false;S.novaFilial=false;S.novoEstoque=false;S.novoPreco=false;irPag("rv-canal");}
   if(a==="contato-novo"){S.novoContato=v==="1";render();return;}
@@ -4935,7 +5030,9 @@ document.addEventListener("change",async ev=>{
   if(c.dataset.a==="visto"){
     const id=ETAPAS_ON[S.etapa].id,k=+c.dataset.v;S.vistos[id]=S.vistos[id]||[];
     S.vistos[id]=c.checked?[...new Set([...S.vistos[id],k])]:S.vistos[id].filter(x=>x!==k);
-    if(c.checked&&k+1<ETAPAS_ON[S.etapa].v.length)S.video=k+1;render();return;
+    if(c.checked&&k+1<ETAPAS_ON[S.etapa].v.length)S.video=k+1;render();
+    if(c.checked&&ETAPAS_ON[S.etapa].v.every((_,q)=>S.vistos[id].includes(q))&&!S.feitas.includes(id)){aviso("Vídeos concluídos. Agora é a vez da prova!");setTimeout(()=>document.getElementById("sec-prova")?.scrollIntoView({behavior:"smooth",block:"start"}),150);}
+    return;
   }
   if(c.dataset.perfis&&S.adminForm){const ps=new Set(S.adminForm.perfis||[]);if(c.checked)ps.add(c.dataset.perfis);else ps.delete(c.dataset.perfis);S.adminForm.perfis=[...ps];
     const vals={};document.querySelectorAll("#f-usuario input,#f-usuario select,#f-usuario textarea").forEach(e=>{if(e.id&&e.type!=="checkbox"&&e.type!=="file")vals[e.id]=e.value;});
@@ -5230,6 +5327,7 @@ document.addEventListener("submit",async ev=>{
     S.mktNovo=null;S.mkt=null;S._erro=null;render();aviso("Material adicionado.");
     return;
   }
+  if(f.id==="f-pv"){pvProxima(false);return;}
   if(f.id==="f-quiz"){
     const id=f.dataset.id,lista=id==="prova"?PROVA:PROVAS_EXTRA[id]?PROVAS_EXTRA[id].quiz:ETAPAS.find(e=>e.id===id).quiz,min=PROVAS_EXTRA[id]?PROVAS_EXTRA[id].min:Math.ceil(lista.length*0.7);
     const fd=new FormData(f),resp=lista.map((_,i)=>+fd.get("p"+i));
