@@ -570,6 +570,8 @@ main.largo{max-width:1120px}
 .pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}
 .bd-como{background:var(--azul-claro,#eef5fb);border-radius:10px;padding:10px 14px;font-size:14px}.bd-como ol{margin:4px 0 0;padding-left:20px;display:grid;gap:2px}
 .mk-sol{box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}
+.pp-item{display:grid;grid-template-columns:1.2fr 1fr .8fr .9fr 1.2fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--linha,#e3e8ee)}.pp-item label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}.pp-val{padding:10px 0;font-weight:600}.pp-chk{display:flex!important;gap:6px;align-items:center;font-weight:600}.pp-chk input{width:auto;margin:0}.pp-desc input[data-pp=pedido]{margin-top:6px}.pp-tot-box .l1{display:flex;justify-content:space-between;gap:12px}@media(max-width:700px){.pp-item{grid-template-columns:1fr 1fr}}
+#f-prop{max-width:none}.pp-val{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1881,10 +1883,176 @@ function cartaoNeg(x,gestor){
     <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="${ST_NEG[x.status]||"selo-pend"}">${esc(x.status==="Enviado"?"Aguardando o comercial":x.status==="No CRM"?"Lançada no CRM":x.status)}</span>${x.crm_erro?`<span class="meta" style="color:#c0392b">${esc(x.crm_erro)}</span>`:""}
     ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-crm" data-v="${x.id}">Lançar no CRM agora</button><button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Já lancei à mão</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
 }
+/* ===== Propostas do RC ===== */
+const PROP_CULTS=["Sabiá","Cayana","Carcará","Cynodon"];
+const propBRL=x=>"R$ "+(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const propNum=v=>{const t=String(v??"").replace(/[^\d,.-]/g,"");if(!t)return 0;return parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;};
+const propAprova=()=>ehAdmin()||temPerfil("Comercial Barenbrug");
+function propPrecoTab(cult,mes){const r=PRECOS.find(p=>p.cult===cult);if(!r)return 0;const i=Math.max(0,PRECOS_MESES.indexOf(mes));return propNum(r.v[i]);}
+function propLinhaTab(cult){return PRECOS.find(p=>p.cult===cult)||{};}
+async function carregarPropostas(){
+  try{await carregarPrecos();
+    const p=S.profile||{};
+    const [a,b,c]=await Promise.all([
+      sb.from("propostas").select("*").order("criado_em",{ascending:false}).limit(200),
+      sb.from("proposta_config").select("*").eq("id",1).maybeSingle(),
+      p.rc_crm?sb.from("crm_mapa").select("did,nome,st,cidade,uf").eq("rep",p.rc_crm).eq("st","A").not("did","is",null).limit(300):Promise.resolve({data:[]})]);
+    if(S.rcNeg===undefined)await carregarRCNeg();
+    S.props=a.data||[];S.propCfg=b.data||{condicoes:"",validade_dias:7};
+    const meus=(S.rcNeg||[]).filter(x=>x.autor===S.user.id&&x.crm_deal_id).map(x=>({did:x.crm_deal_id,nome:x.cliente_nome+(x.cliente_cidade?" · "+x.cliente_cidade:"")+(x.cliente_uf?"/"+x.cliente_uf:"")}));
+    const vis=new Set(meus.map(x=>x.did));S.propDeals=meus.concat((c.data||[]).filter(x=>!vis.has(x.did)).map(x=>({did:x.did,nome:x.nome+(x.cidade?" · "+x.cidade:"")+(x.uf?"/"+x.uf:"")})));
+  }catch(e){S.props=[];S.propCfg={condicoes:"",validade_dias:7};S.propDeals=[];}
+}
+function propNova(){const p=S.profile||{};const hoje=new Date(Date.now()-3*3600e3);const val=new Date(hoje.getTime()+(+(S.propCfg&&S.propCfg.validade_dias)||7)*864e5);
+  return {rc_nome:p.nome||"",rc_empresa:p.razao_social||"",rc_telefone:p.telefone||"",rc_email:p.email||S.user?.email||"",cliente_nome:"",cliente_doc:"",cliente_cidade:"",cliente_uf:"",cliente_contato:"",mes_ref:PRECOS_MESES[PRECOS_MES_ATUAL]||"",validade:val.toISOString().slice(0,10),itens:[{cult:"Sabiá",kg:""}],frete_modo:"estimado",frete_regiao:(FRETE[0]||{}).uf||"",cond_pagamento:"",obs:"",desconto_motivo:""};}
+function propCalc(P){
+  const its=(P.itens||[]).filter(i=>i.cult&&propNum(i.kg)>0).map(i=>{const tab=propPrecoTab(i.cult,P.mes_ref),kg=propNum(i.kg),ped=propNum(i.pedido);const ok=P.desconto_status==="aprovado"&&ped>0;const preco=ok?ped:tab;const L=propLinhaTab(i.cult);return {cult:i.cult,cod:L.cod||"",emb:L.emb||"",trat:L.trat||"",kg,preco_tab:tab,pedido:ped>0?ped:0,preco,total:Math.round(kg*preco*100)/100};});
+  const kg=its.reduce((t,i)=>t+i.kg,0),sub=its.reduce((t,i)=>t+i.total,0);
+  const F=FRETE.find(f=>f.uf===P.frete_regiao)||{};const fr=kg<=1000&&F.frac&&F.frac!=="—"?propNum(F.frac):propNum(F.f);
+  const fkg=P.frete_modo==="estimado"?fr:0,ft=Math.round(kg*fkg*100)/100;
+  return {its,kg,sub,fkg,ft,total:Math.round((sub+ft)*100)/100,temPedido:its.some(i=>i.pedido>0&&i.pedido<i.preco_tab)};
+}
+function propLerForm(){const f=document.getElementById("f-prop");if(!f)return S.propEd;const P=S.propEd||propNova();const g=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};
+  ["rc_nome","rc_empresa","rc_telefone","rc_email","cliente_nome","cliente_doc","cliente_cidade","cliente_uf","cliente_contato","mes_ref","validade","frete_modo","frete_regiao","cond_pagamento","obs","desconto_motivo"].forEach(k=>{const e=f.querySelector("#pp_"+k);if(e)P[k]=e.value.trim();});
+  P.cliente_uf=(P.cliente_uf||"").toUpperCase();
+  P.itens=[...f.querySelectorAll(".pp-item")].map(r=>({cult:r.querySelector("[data-pp=cult]").value,kg:r.querySelector("[data-pp=kg]").value,pedido:(r.querySelector("[data-pp=desc]")?.checked?r.querySelector("[data-pp=pedido]").value:"")}));
+  S.propEd=P;return P;}
+function propAtualizaTotais(){const P=propLerForm();const C=propCalc(P);const el=document.getElementById("pp_totais");if(!el)return;
+  document.querySelectorAll(".pp-item").forEach((r,i)=>{const it=P.itens[i]||{};const tab=propPrecoTab(it.cult,P.mes_ref);const o=r.querySelector(".pp-tab");if(o)o.textContent=propBRL(tab)+"/kg";const t=r.querySelector(".pp-tot");if(t)t.textContent=propBRL(propNum(it.kg)*tab);const d=r.querySelector(".pp-ped");if(d)d.hidden=!r.querySelector("[data-pp=desc]").checked;});
+  const m=document.getElementById("pp_motivo_box");if(m)m.hidden=!C.temPedido;
+  el.innerHTML=`<div class="l1"><span>Produtos (${isNum(C.kg)} kg)</span><strong>${propBRL(C.sub)}</strong></div>${C.fkg?`<div class="l1"><span>Frete estimado (${propBRL(C.fkg)}/kg)</span><strong>${propBRL(C.ft)}</strong></div>`:""}<div class="l1" style="font-size:18px"><span>Total da proposta</span><strong>${propBRL(C.total)}</strong></div>${C.temPedido?`<span class="meta">Com pedido de desconto: a proposta sai com preço de tabela até o responsável comercial aprovar.</span>`:""}`;}
+const isNum=x=>(Number(x)||0).toLocaleString("pt-BR");
+function vPropForm(){
+  const P=S.propEd;const C=propCalc(P);const ed=!!P.id;
+  const cults=PRECOS.length?PROP_CULTS.filter(c=>PRECOS.some(p=>p.cult===c)):PROP_CULTS;
+  const linha=(it,i)=>{const tab=propPrecoTab(it.cult,P.mes_ref);const tem=propNum(it.pedido)>0;return `<div class="pp-item"><div><label>Cultivar</label><select data-pp="cult">${cults.map(c=>`<option ${c===it.cult?"selected":""}>${c}</option>`).join("")}</select></div>
+    <div><label>Quantidade (kg)</label><input data-pp="kg" inputmode="numeric" value="${esc(String(it.kg??""))}" placeholder="Ex.: 500"></div>
+    <div><label>Tabela</label><div class="pp-tab pp-val">${propBRL(tab)}/kg</div></div>
+    <div><label>Total</label><div class="pp-tot pp-val">${propBRL(propNum(it.kg)*tab)}</div></div>
+    <div class="pp-desc"><label class="pp-chk"><input type="checkbox" data-pp="desc" ${tem?"checked":""}> Pedir desconto</label><div class="pp-ped" ${tem?"":"hidden"}><input data-pp="pedido" inputmode="decimal" value="${tem?esc(String(it.pedido)):""}" placeholder="Preço pedido R$/kg"></div></div>
+    ${P.itens.length>1?`<div><button type="button" class="link" data-a="prop-rm" data-v="${i}">Remover</button></div>`:""}</div>`;};
+  const deals=S.propDeals||[];
+  return `<section class="bloco"><h2 class="sec">${ed?"Editar proposta P-"+P.id:"Nova proposta"}</h2>
+  <form class="form-card" id="f-prop">
+    <h3 style="margin:0">Seus dados</h3>
+    <div class="neg-item"><div><label for="pp_rc_empresa">Nome da sua empresa *</label><input id="pp_rc_empresa" required maxlength="120" value="${esc(P.rc_empresa||"")}"></div><div><label for="pp_rc_nome">Seu nome *</label><input id="pp_rc_nome" required maxlength="80" value="${esc(P.rc_nome||"")}"></div><div><label for="pp_rc_telefone">Telefone</label><input id="pp_rc_telefone" maxlength="30" value="${esc(P.rc_telefone||"")}"></div><div><label for="pp_rc_email">E-mail</label><input id="pp_rc_email" maxlength="120" value="${esc(P.rc_email||"")}"></div></div>
+    <h3 style="margin:8px 0 0">Cliente</h3>
+    <div class="neg-item"><div><label for="pp_cliente_nome">Cliente ou fazenda *</label><input id="pp_cliente_nome" required maxlength="120" value="${esc(P.cliente_nome||"")}"></div><div><label for="pp_cliente_doc">CPF ou CNPJ</label><input id="pp_cliente_doc" maxlength="20" value="${esc(P.cliente_doc||"")}"></div><div><label for="pp_cliente_cidade">Cidade</label><input id="pp_cliente_cidade" maxlength="60" value="${esc(P.cliente_cidade||"")}"></div><div><label for="pp_cliente_uf">UF</label><input id="pp_cliente_uf" maxlength="2" value="${esc(P.cliente_uf||"")}"></div><div><label for="pp_cliente_contato">Contato</label><input id="pp_cliente_contato" maxlength="80" value="${esc(P.cliente_contato||"")}"></div></div>
+    <h3 style="margin:8px 0 0">Produtos</h3>
+    <div class="neg-item"><div><label for="pp_mes_ref">Mês de pagamento (define o preço)</label><select id="pp_mes_ref">${PRECOS_MESES.map((m,i)=>i>=PRECOS_MES_ATUAL?`<option ${m===P.mes_ref?"selected":""}>${m}</option>`:"").join("")}</select></div><div><label for="pp_validade">Válida até</label><input id="pp_validade" type="date" value="${esc(P.validade||"")}"></div></div>
+    ${P.itens.map(linha).join("")}
+    <div><button type="button" class="btn sec" data-a="prop-add">Adicionar produto</button></div>
+    <div id="pp_motivo_box" ${C.temPedido?"":"hidden"}><label for="pp_desconto_motivo">Motivo do pedido de desconto *</label><textarea id="pp_desconto_motivo" rows="2" maxlength="600" placeholder="Ex.: cliente tem cotação de concorrente a R$ 38/kg; volume de 2 t">${esc(P.desconto_motivo||"")}</textarea><span class="meta">O pedido vai para ${esc((S.profile||{}).comercial_resp||"o seu responsável comercial")}. Enquanto não for aprovado, a proposta sai com o preço de tabela.</span></div>
+    <h3 style="margin:8px 0 0">Frete e pagamento</h3>
+    <div class="neg-item"><div><label for="pp_frete_modo">Frete</label><select id="pp_frete_modo"><option value="estimado" ${P.frete_modo==="estimado"?"selected":""}>Incluir frete estimado da tabela</option><option value="CIF" ${P.frete_modo==="CIF"?"selected":""}>CIF (carga fechada acima de 15 t)</option><option value="a combinar" ${P.frete_modo==="a combinar"?"selected":""}>A combinar</option></select></div>
+      <div><label for="pp_frete_regiao">Região de entrega</label><select id="pp_frete_regiao">${FRETE.map(f=>`<option ${f.uf===P.frete_regiao?"selected":""}>${esc(f.uf)}</option>`).join("")}</select></div>
+      <div><label for="pp_cond_pagamento">Condição de pagamento</label><input id="pp_cond_pagamento" maxlength="120" value="${esc(P.cond_pagamento||"")}" placeholder="Ex.: à vista no mês de pagamento"></div></div>
+    <div><label for="pp_obs">Observações para o cliente</label><textarea id="pp_obs" rows="2" maxlength="800">${esc(P.obs||"")}</textarea></div>
+    <div class="neg pp-tot-box" id="pp_totais"></div>
+    <div><label for="pp_deal">Negociação no CRM</label><select id="pp_deal"><option value="">Escolher depois</option>${deals.map(d=>`<option value="${esc(d.did)}" ${d.did===P.deal_id?"selected":""}>${esc(d.nome)}</option>`).join("")}<option value="nova">Criar nova negociação com esta proposta</option></select><span class="meta">A proposta é registrada como anotação na negociação escolhida.</span></div>
+    <div class="acoes"><button class="btn" type="submit">${ed?"Salvar alterações":"Salvar proposta"}</button><button type="button" class="btn sec" data-a="prop-cancela">Cancelar</button></div>
+  </form></section>`;
+}
+function propCartao(x,gestor){
+  const it=Array.isArray(x.itens)?x.itens:[];const st=x.desconto_status;
+  const stTxt=st==="pendente"?`<span class="selo-pend">desconto aguardando aprovação</span>`:st==="aprovado"?`<span class="selo">desconto aprovado${x.desconto_resp?" por "+esc(x.desconto_resp):""}</span>`:st==="recusado"?`<span class="selo-pend" style="color:#c0392b">desconto recusado${x.desconto_obs?": "+esc(x.desconto_obs):""}</span>`:"";
+  return `<div class="neg"><div class="l1"><span>P-${x.id} · ${esc(x.cliente_nome)}</span><span>${propBRL(x.total)}</span></div>
+    <span class="meta">${gestor?esc(x.rc_nome||"")+(x.rc_empresa?" ("+esc(x.rc_empresa)+")":"")+" · ":""}${x.cliente_cidade?esc(x.cliente_cidade)+(x.cliente_uf?"/"+esc(x.cliente_uf):"")+" · ":""}criada em ${fmtDataHora(x.criado_em)} · válida até ${x.validade?x.validade.split("-").reverse().join("/"):"—"}</span>
+    <span class="meta">${it.map(i=>`${esc(i.cult)} ${isNum(i.kg)} kg a ${propBRL(i.preco)}/kg${i.pedido>0?` (pedido ${propBRL(i.pedido)})`:""}`).join(" · ")}</span>
+    ${x.desconto_motivo&&st?`<span class="meta">Motivo do desconto: ${esc(x.desconto_motivo)}</span>`:""}
+    <span class="meta">${x.crm_status==="registrada"?`No CRM: ${esc(x.deal_nome||"negociação")}`:x.crm_status==="erro"?`<span style="color:#c0392b">${esc(x.crm_erro||"Erro no CRM")}</span>`:"Ainda não registrada no CRM"}</span>
+    <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px">${stTxt}
+      <button class="link" data-a="prop-pdf" data-v="${x.id}">Gerar PDF</button>
+      ${x.autor===S.user.id?`<button class="link" data-a="prop-edit" data-v="${x.id}">Editar</button><button class="link" data-a="prop-dup" data-v="${x.id}">Duplicar</button>`:""}
+      ${x.autor===S.user.id&&x.crm_status!=="registrada"?`<button class="link" data-a="prop-crm" data-v="${x.id}">Registrar no CRM</button>`:""}
+      ${gestor&&st==="pendente"?`<button class="link" data-a="prop-aprova" data-v="${x.id}">Aprovar desconto</button><button class="link" data-a="prop-recusa" data-v="${x.id}">Recusar</button>`:""}</div></div>`;
+}
+function vRCProposta(){
+  if(S.props===undefined){if(!S.propBusy){S.propBusy=true;carregarPropostas().then(()=>{S.propBusy=false;render();});}return `<div class="carregando">Carregando…</div>`;}
+  if(!S.precosOk)return `<div><h1 class="titulo">Montar proposta</h1></div><section class="bloco"><p class="sub" style="margin:0">A tabela de preços não está liberada para o seu acesso. Peça ao administrador do portal.</p></section>`;
+  const meus=S.props.filter(x=>x.autor===S.user.id),outros=S.props.filter(x=>x.autor!==S.user.id);const gestor=propAprova();
+  const pend=outros.filter(x=>x.desconto_status==="pendente");
+  const cfg=ehAdmin()?`<details class="lote"><summary>Condições gerais impressas na proposta (só admins editam)</summary><form class="form-card" id="f-prop-cfg" style="margin-top:8px"><label for="pc_txt">Uma condição por linha</label><textarea id="pc_txt" rows="9">${esc((S.propCfg||{}).condicoes||"")}</textarea><div class="neg-item"><div><label for="pc_dias">Validade padrão (dias)</label><input id="pc_dias" inputmode="numeric" value="${+(S.propCfg||{}).validade_dias||7}"></div></div><div class="acoes"><button class="btn" type="submit">Salvar condições</button></div></form></details>`:"";
+  return `<div><h1 class="titulo">Montar proposta</h1><p class="sub">Monte a proposta com a tabela de preços Barenbrug, gere o PDF para enviar ao cliente e registre no CRM. Precisa de um preço diferente? Peça desconto com o motivo e o responsável comercial aprova aqui.</p></div>
+  ${cfg}
+  ${gestor&&pend.length?`<section class="bloco"><h2 class="sec">Pedidos de desconto para aprovar (${pend.length})</h2><div class="lista">${pend.map(x=>propCartao(x,true)).join("")}</div></section>`:""}
+  ${S.propEd?vPropForm():`<div class="acoes"><button class="btn" data-a="prop-nova">Nova proposta</button></div>`}
+  <section class="bloco"><h2 class="sec">Suas propostas</h2>${meus.length?`<div class="lista">${meus.map(x=>propCartao(x,false)).join("")}</div>`:`<div class="vazio">Você ainda não montou nenhuma proposta.</div>`}</section>
+  ${gestor&&outros.length>pend.length?`<section class="bloco"><h2 class="sec">Propostas dos RCs</h2><div class="lista">${outros.filter(x=>x.desconto_status!=="pendente").slice(0,100).map(x=>propCartao(x,true)).join("")}</div></section>`:""}`;
+}
+function propPDF(x){
+  const cfg=S.propCfg||{};const it=Array.isArray(x.itens)?x.itens:[];const dt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+  const conds=String(cfg.condicoes||"").split("\n").map(s=>s.trim()).filter(Boolean);
+  const pend=x.desconto_status==="pendente";
+  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta P-${x.id} · ${esc(x.cliente_nome)}</title>
+<style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;font-size:12px;margin:0 auto;max-width:820px;padding:24px 16px}@media print{body{padding:0;max-width:none}}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ffdb00;padding-bottom:12px}.top img{height:38px}
+h1{font-size:20px;margin:14px 0 2px}.cx{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.cx div{border:1px solid #ddd;border-radius:6px;padding:10px}
+.r{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{padding:7px 8px;border-bottom:1px solid #e5e5e5;text-align:left}th{background:#f4f4f4;font-size:11px}td.v,th.v{text-align:right;white-space:nowrap}
+.tot td{font-weight:bold;font-size:14px;border-top:2px solid #1a1a1a}.cond{margin-top:16px;font-size:10.5px;color:#333}.cond li{margin:3px 0}.rod{margin-top:18px;font-size:10px;color:#666;border-top:1px solid #ddd;padding-top:8px}.bt{position:fixed;bottom:16px;right:16px;padding:10px 16px;font-size:14px;background:#00527a;color:#fff;border:0;border-radius:6px;cursor:pointer}@media print{.bt{display:none}}</style></head><body>
+<button class="bt" onclick="window.print()">Salvar em PDF</button>
+<div class="top"><img src="${LOGO}" alt="Barenbrug"><div style="text-align:right"><strong>Proposta comercial P-${x.id}</strong><br>Data: ${dt(x.criado_em)}<br>Válida até: ${dt(x.validade)}</div></div>
+<h1>Proposta de sementes forrageiras Barenbrug</h1>
+<div class="cx"><div><p class="r">Cliente</p><strong>${esc(x.cliente_nome)}</strong><br>${x.cliente_doc?esc(docFmt(x.cliente_doc))+"<br>":""}${esc(x.cliente_cidade||"")}${x.cliente_uf?"/"+esc(x.cliente_uf):""}${x.cliente_contato?"<br>"+esc(x.cliente_contato):""}</div>
+<div><p class="r">Representante comercial</p><strong>${esc(x.rc_empresa||"")}</strong><br>${esc(x.rc_nome||"")}${x.rc_telefone?"<br>"+esc(x.rc_telefone):""}${x.rc_email?"<br>"+esc(x.rc_email):""}</div></div>
+<table><thead><tr><th>Cultivar</th><th>Código</th><th>Tratamento · embalagem</th><th class="v">Quantidade</th><th class="v">Preço (R$/kg)</th><th class="v">Total</th></tr></thead><tbody>
+${it.map(i=>`<tr><td><strong>${esc(i.cult)}</strong></td><td>${esc(i.cod||"")}</td><td>${esc([i.trat,i.emb].filter(Boolean).join(" · "))}</td><td class="v">${isNum(i.kg)} kg</td><td class="v">${propBRL(pend?i.preco_tab:i.preco).replace("R$ ","")}</td><td class="v">${propBRL(pend?i.kg*i.preco_tab:i.total)}</td></tr>`).join("")}
+${+x.frete_total>0?`<tr><td colspan="5">Frete estimado · ${esc(x.frete_regiao||"")} (${propBRL(x.frete_rs_kg)}/kg)</td><td class="v">${propBRL(x.frete_total)}</td></tr>`:`<tr><td colspan="6">Frete: ${esc(x.frete_modo==="CIF"?"CIF, carga fechada acima de 15 t":"a combinar")}</td></tr>`}
+<tr class="tot"><td colspan="5">Total</td><td class="v">${propBRL(pend?it.reduce((t,i)=>t+i.kg*i.preco_tab,0)+(+x.frete_total||0):x.total)}</td></tr></tbody></table>
+<p style="margin-top:10px"><strong>Mês de pagamento de referência:</strong> ${esc(x.mes_ref||"")}${x.cond_pagamento?" · <strong>Condição:</strong> "+esc(x.cond_pagamento):""}</p>
+${x.obs?`<p><strong>Observações:</strong> ${esc(x.obs)}</p>`:""}
+${conds.length?`<div class="cond"><strong>Condições gerais</strong><ul>${conds.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></div>`:""}
+<div class="rod">Barenbrug do Brasil Sementes · Proposta emitida pelo representante comercial no Portal Conecta Barenbrug. Esta proposta não constitui pedido; o pedido é confirmado após aprovação de cadastro e crédito pela Barenbrug.</div>
+</body></html>`;
+  const w=window.open("","_blank");if(!w){aviso("Libere a abertura de janelas para gerar o PDF.");return;}w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(e){}},600);
+}
+document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
+document.addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
+document.addEventListener("click",async ev=>{
+  const b=ev.target.closest&&ev.target.closest("[data-a^='prop-']");if(!b)return;const a=b.dataset.a,v=b.dataset.v;ev.preventDefault();ev.stopPropagation();
+  const acha=id=>(S.props||[]).find(x=>String(x.id)===String(id));
+  if(a==="prop-nova"){S.propEd=propNova();render();setTimeout(propAtualizaTotais,0);return;}
+  if(a==="prop-cancela"){S.propEd=null;render();return;}
+  if(a==="prop-add"){const P=propLerForm();P.itens.push({cult:"Cayana",kg:""});render();setTimeout(propAtualizaTotais,0);return;}
+  if(a==="prop-rm"){const P=propLerForm();P.itens.splice(+v,1);render();setTimeout(propAtualizaTotais,0);return;}
+  if(a==="prop-edit"||a==="prop-dup"){const x=acha(v);if(!x)return;const P=JSON.parse(JSON.stringify(x));P.itens=(P.itens||[]).map(i=>({cult:i.cult,kg:i.kg,pedido:i.pedido||""}));if(a==="prop-dup"){["id","deal_id","deal_nome","crm_status","crm_erro","desconto_status","desconto_resp","desconto_obs"].forEach(k=>delete P[k]);const n=propNova();P.validade=n.validade;P.mes_ref=n.mes_ref;}S.propEd=P;render();setTimeout(()=>{propAtualizaTotais();document.getElementById("f-prop")?.scrollIntoView({behavior:"smooth"});},0);return;}
+  if(a==="prop-pdf"){const x=acha(v);if(x)propPDF(x);return;}
+  if(a==="prop-crm"){const x=acha(v);if(!x)return;const sel=S.propDeals||[];
+    if(!x.deal_id){if(!sel.length){S.propEd=Object.assign(JSON.parse(JSON.stringify(x)),{});aviso("Escolha a negociação no formulário ou crie uma nova.");render();return;}}
+    b.disabled=true;b.textContent="Registrando…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"proposta_crm",id:x.id}});await carregarPropostas();render();aviso(r.data&&r.data.ok?"Proposta registrada no CRM.":"Não foi possível registrar no CRM. Edite a proposta e escolha a negociação.");return;}
+  if(a==="prop-aprova"||a==="prop-recusa"){const x=acha(v);if(!x)return;let obs=null;
+    if(a==="prop-recusa"){obs=(window.prompt?window.prompt("Motivo da recusa (aparece para o RC):",""):"")||"";}
+    const its=(x.itens||[]).map(i=>a==="prop-aprova"&&i.pedido>0?Object.assign({},i,{preco:i.pedido,total:Math.round(i.kg*i.pedido*100)/100}):i);
+    const sub=its.reduce((t,i)=>t+i.total,0);
+    const {error}=await sb.from("propostas").update({desconto_status:a==="prop-aprova"?"aprovado":"recusado",desconto_obs:obs,itens:its,subtotal:sub,total:Math.round((sub+(+x.frete_total||0))*100)/100}).eq("id",x.id);
+    if(error){aviso("Não foi possível gravar.");return;}await carregarPropostas();render();aviso(a==="prop-aprova"?"Desconto aprovado. O RC já pode gerar a proposta com o novo preço.":"Desconto recusado.");return;}
+},true);
+document.addEventListener("submit",async ev=>{
+  const f=ev.target;if(!f||(f.id!=="f-prop"&&f.id!=="f-prop-cfg"))return;ev.preventDefault();ev.stopImmediatePropagation();
+  if(f.id==="f-prop-cfg"){if(!ehAdmin())return;const {error}=await sb.from("proposta_config").upsert({id:1,condicoes:f.querySelector("#pc_txt").value.trim(),validade_dias:parseInt(f.querySelector("#pc_dias").value)||7,atualizado_em:new Date().toISOString()});if(error){aviso("Não foi possível salvar.");return;}await carregarPropostas();render();aviso("Condições salvas.");return;}
+  const P=propLerForm();const C=propCalc(P);
+  if(!P.cliente_nome){aviso("Informe o cliente.");return;}if(!C.its.length){aviso("Informe pelo menos um produto com quantidade.");return;}
+  if(C.temPedido&&!P.desconto_motivo){aviso("Explique o motivo do pedido de desconto.");return;}
+  const deal=f.querySelector("#pp_deal").value;
+  const st=C.temPedido?(P.desconto_status==="aprovado"&&P.id?"aprovado":"pendente"):"";
+  const reg={rc_nome:P.rc_nome,rc_empresa:P.rc_empresa,rc_telefone:P.rc_telefone,rc_email:P.rc_email,cliente_nome:P.cliente_nome,cliente_doc:docLimpo(P.cliente_doc||"")||null,cliente_cidade:P.cliente_cidade,cliente_uf:P.cliente_uf,cliente_contato:P.cliente_contato,mes_ref:P.mes_ref,validade:P.validade||null,itens:C.its,frete_modo:P.frete_modo,frete_regiao:P.frete_regiao,frete_rs_kg:C.fkg,frete_total:C.ft,subtotal:C.sub,total:C.total,cond_pagamento:P.cond_pagamento,obs:P.obs,desconto_motivo:C.temPedido?P.desconto_motivo:null,desconto_status:st};
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
+  const q=P.id?sb.from("propostas").update(reg).eq("id",P.id).select("*").single():sb.from("propostas").insert(reg).select("*").single();
+  const {data:pr,error}=await q;if(error||!pr){btn.disabled=false;btn.textContent="Salvar proposta";aviso("Não foi possível salvar a proposta.");return;}
+  S.propEd=null;
+  if(deal&&deal!=="nova"&&pr.crm_status!=="registrada"){const nm=(S.propDeals||[]).find(d=>d.did===deal);const r=await sb.functions.invoke("rd-crm",{body:{acao:"proposta_crm",id:pr.id,deal_id:deal,deal_nome:nm?nm.nome:""}});await carregarPropostas();render();aviso(r.data&&r.data.ok?"Proposta salva e registrada no CRM.":"Proposta salva. Não foi possível registrar no CRM agora; tente de novo pelo botão Registrar no CRM.");return;}
+  if(deal==="nova"){S.propNeg=pr;S.leadNeg=null;S.pag="rc-pedido";S.negItens=Math.max(1,pr.itens.length);S._erroNeg=null;render();window.scrollTo(0,0);
+    setTimeout(()=>{const put=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null&&v!=="")e.value=v;};put("ng_nome",pr.cliente_nome);put("ng_doc",pr.cliente_doc);put("ng_cid",pr.cliente_cidade);put("ng_uf",pr.cliente_uf);put("ng_obs","Proposta P-"+pr.id+" do Portal Conecta");
+      pr.itens.forEach((i,k)=>{const s=document.getElementById("ni_c"+k);if(s)s.value=i.cult;put("ni_k"+k,String(i.kg));put("ni_p"+k,String(i.preco).replace(".",","));});},50);
+    aviso("Proposta salva. Complete os dados para criar a negociação; a proposta é registrada nela em seguida.");return;}
+  await carregarPropostas();render();aviso(st==="pendente"?"Proposta salva. O pedido de desconto foi para o responsável comercial.":"Proposta salva. Gere o PDF para enviar ao cliente.");
+},true);
+
 function vRCPedido(){
   const L=S.rcNeg;const n=S.negItens||1;const p=S.profile||{};
   const linhas=Array.from({length:n},(_,i)=>`<div class="neg-item"><div><label for="ni_c${i}">Cultivar</label><select id="ni_c${i}">${CULT_PEDIDO.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="ni_k${i}">Quantidade (kg)</label><input id="ni_k${i}" type="text" inputmode="numeric" ${i===0?"required":""} placeholder="Ex: 500"></div><div><label for="ni_p${i}">Preço por kg (R$)</label><input id="ni_p${i}" type="text" inputmode="decimal" placeholder="Ex: 32,50"></div></div>`).join("");
   return `<div><h1 class="titulo">Enviar negociação</h1><p class="sub">Preencha os dados da venda. Ela vai para ${p.comercial_resp?`<strong>${esc(p.comercial_resp)}</strong>, seu responsável comercial`:"o seu responsável comercial na Barenbrug"}, que revisa e lança no CRM. Você acompanha o andamento aqui embaixo.</p></div>
+  ${S.propNeg?`<div class="aviso-est" role="note"><strong>Nova negociação da proposta P-${S.propNeg.id}</strong><p>Os dados da proposta já estão no formulário. Complete o CPF ou CNPJ e envie: a negociação é criada no CRM e a proposta entra como anotação nela. <button type="button" class="link" data-a="pag" data-v="rc-proposta">Voltar para a proposta</button></p></div>`:""}
   ${S.leadNeg?`<div class="aviso-est" role="note"><strong>Negociação do lead ${esc(S.leadNeg.nome||"do LeadsBaren")}</strong><p>Ao enviar, a negociação vai para o seu responsável comercial lançar no CRM, o lead fica como "${S.leadNeg.st==="Vendido"?"Vendido":"Em negociação"}" e o próximo da fila é liberado. <button type="button" class="link" data-a="lead-neg-cancela">Voltar para o lead</button></p></div>`:""}
   ${!p.comercial_resp?`<div class="nota-admin">Seu acesso ainda não tem um responsável comercial vinculado. Você pode enviar; a Barenbrug direciona a negociação.</div>`:""}
   <form class="form-card" id="f-negrc">
@@ -2604,7 +2772,7 @@ const vePainelRC=()=>ehAdmin()||temPerfil("RC")||temPerfil("Assessor de Vendas D
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 function subnavRC(){
-  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"]];
+  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -4816,7 +4984,7 @@ function rodapeMkt(){
 function render(){renderApp();injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -4849,7 +5017,7 @@ function renderApp(){
   }
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc,"rc-pedido":vRCPedido}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
@@ -5262,7 +5430,8 @@ document.addEventListener("submit",async ev=>{
     const cliente_extra={};["razao","fantasia","ie","cep","endereco","numero","bairro","contato","telefone","email"].forEach(k=>{const v=q("#nx_"+k);if(v)cliente_extra[k]=v;});
     const {data:nv,error}=await sb.from("rc_negociacoes").insert({cliente_extra,anexos,cliente_doc:doc,cliente_nome:q("#ng_nome"),cliente_cidade:q("#ng_cid"),cliente_uf:q("#ng_uf").toUpperCase(),cliente_novo:f.querySelector("#ng_novo").checked,itens,valor_total:itens.reduce((t,i)=>t+i.kg*i.preco,0),data_faturamento:q("#ng_fat")||null,forma:q("#ng_forma"),cond_pagamento:q("#ng_cond"),frete:q("#ng_frete"),anotacao:q("#ng_obs")}).select("id").single();
     if(error){S._erroNeg="Não foi possível enviar. Tente de novo em instantes.";render();return;}
-    btn.textContent="Lançando no CRM…";let noCrm=false;try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:nv.id}});noCrm=!!(r.data&&r.data.ok);}catch(e){}
+    btn.textContent="Lançando no CRM…";let noCrm=false,propOk=false;try{const r=await sb.functions.invoke("rd-crm",{body:{acao:"criar",id:nv.id}});noCrm=!!(r.data&&r.data.ok);if(noCrm&&S.propNeg&&r.data.deal_id){const rp=await sb.functions.invoke("rd-crm",{body:{acao:"proposta_crm",id:S.propNeg.id,deal_id:r.data.deal_id,deal_nome:q("#ng_nome")}});propOk=!!(rp.data&&rp.data.ok);}}catch(e){}
+    if(S.propNeg){S.propNeg=null;S.props=undefined;S.propDeals=undefined;S.pag="rc-proposta";S._erroNeg=null;S.negItens=1;await carregarRCNeg();render();window.scrollTo(0,0);aviso(propOk?"Negociação criada e proposta registrada nela.":noCrm?"Negociação criada. Registre a proposta pelo botão Registrar no CRM.":"Negociação enviada ao seu responsável comercial. Depois que ela entrar no CRM, registre a proposta.");return;}
     S._erroNeg=null;S.negItens=1;await carregarRCNeg();
     if(S.leadNeg){const ln=S.leadNeg;const r=await sb.rpc("rc_lead_finalizar",{p_id:ln.id,p_status:ln.st,p_motivo:null,p_obs:null,p_neg:String(nv.id)});S.leadNeg=null;S.fila=null;
       if(r.error){aviso("Negociação enviada, mas o lead não foi encerrado. Abra o LeadsBaren e tente de novo.");render();return;}
