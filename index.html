@@ -1077,7 +1077,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261113081016";
+const APP_VER="20261113081842";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1628,7 +1628,8 @@ function vISObjecoes(){
       <div class="obj-barras">${(H.cn||[]).map((c,i)=>`<div class="obj-barra"><span>${esc(c)}</span><span class="t"><i style="width:${100*(H.nc[i]||0)/mx}%"></i></span><b>${H.nc[i]||0}</b></div>`).join("")}</div>
       ${(d.conhecimento||[]).map(x=>`<p>${esc(x)}</p>`).join("")}</section>
   </div>
-  <section class="bloco"><h2 class="sec">O que levar para o playbook</h2><ul class="obj-lista">${(d.playbook||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
+  <section class="bloco"><h2 class="sec">O que fazer já, com o que temos</h2><ul class="obj-lista">${(d.recomendacoes||d.playbook||[]).map(([t,x])=>`<li><strong>${esc(t.replace(/\.$/,""))}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
+  ${ehAdmin()&&(d.playbook_guardado||[]).length?`<details class="lote"><summary>Guardado para o playbook (só admins veem)</summary><ul class="obj-lista" style="margin-top:8px">${d.playbook_guardado.map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x||"")}</li>`).join("")}</ul></details>`:""}
   <p class="precos-nota">Como foi feita: ${esc(d.metodo||"")} Atualizado em ${esc(String(d.atualizado||R.atualizado_em||"").slice(0,10).split("-").reverse().join("/"))}.</p>`;
 }
 function vInsideSales(){
@@ -2265,7 +2266,7 @@ async function carregarMercado(){try{
     sb.from("mercado_noticias").select("*").order("data",{ascending:false}),
     sb.from("mercado_boi").select("*"),
     sb.from("mercado_clima").select("*")]);
-  S.mercado={noticias:a.data||[],boi:b.data||[],clima:c.data||[]};
+  S.mercado={noticias:a.data||[],boi:b.data||[],clima:c.data||[]};S.mercadoEm=Date.now();
 }catch(e){S.mercado={noticias:[],boi:[],clima:[]};}}
 function carregarCepea(){
   if(S.cepea!==undefined||S.cepeaBusy)return;S.cepeaBusy=true;
@@ -2365,6 +2366,7 @@ function vHub(){
 }
 const veMercadoHome=()=>!S.demo&&(ehAdmin()||(Array.isArray(S.profile.acessos)&&S.profile.acessos.includes("mercado")));
 function vMercadoHome(){
+  if(S.mercado&&S.mercadoEm&&Date.now()-S.mercadoEm>30*60e3&&!S.mercHomeBusy){S.mercHomeBusy=true;carregarMercado().then(()=>{S.mercHomeBusy=false;render();});}
   const m=S.mercado;if(m==null){if(!S.mercHomeBusy){S.mercHomeBusy=true;carregarMercado().then(()=>{S.mercHomeBusy=false;render();});}return `<div class="cx"><h2>Mercado</h2><div class="carregando">Carregando…</div></div>`;}
   if(S.cepea===undefined)setTimeout(carregarCepea,0);
   const C=S.cepea,boi=C&&C.length?(C.find(x=>/boi gordo/i.test(x.produto))||C[0]):null;
