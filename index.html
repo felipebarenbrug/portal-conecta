@@ -572,6 +572,7 @@ main.largo{max-width:1120px}
 .mk-sol{box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}
 .pp-item{display:grid;grid-template-columns:1.2fr 1fr .8fr .9fr 1.2fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--linha,#e3e8ee)}.pp-item label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}.pp-val{padding:10px 0;font-weight:600}.pp-chk{display:flex!important;gap:6px;align-items:center;font-weight:600}.pp-chk input{width:auto;margin:0}.pp-desc input[data-pp=pedido]{margin-top:6px}.pp-tot-box .l1{display:flex;justify-content:space-between;gap:12px}@media(max-width:700px){.pp-item{grid-template-columns:1fr 1fr}}
 #f-prop{max-width:none}.pp-val{white-space:nowrap}
+.mk-custo-l{display:grid;grid-template-columns:1.2fr 1.8fr .9fr .9fr auto;gap:10px;align-items:end}.mk-mz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:700px){.mk-custo-l,.mk-mz{grid-template-columns:1fr}}.mk-quad{border-collapse:collapse;width:100%;min-width:620px}.mk-quad th,.mk-quad td{border:1px solid var(--linha,#e3e8ee);padding:8px;vertical-align:top;font-size:13px}.mk-quad td{height:64px}.mk-quad .q-verde{background:rgba(46,160,67,.10)}.mk-quad .q-amarelo{background:rgba(255,219,0,.16)}.mk-quad .q-vermelho{background:rgba(192,57,43,.08)}.mk-q-i{display:block;text-align:left;margin:2px 0}
 </style>
 </head>
 <body>
@@ -1079,7 +1080,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261113083130";
+const APP_VER="20261113083444";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4316,7 +4317,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada").length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -4344,6 +4345,109 @@ function mkCardHTML(a){
     <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${(()=>{const c=mkChk(a);return c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):"";})()}</span>
     <span class="mk-rod">${(a.envolvidos_nomes||[]).slice(0,3).map(x=>`<span class="mk-pessoa" title="${esc(x)}">${esc(String(x).split(" ")[0])}</span>`).join("")}${(a.envolvidos_nomes||[]).length>3?`<span class="meta">+${a.envolvidos_nomes.length-3}</span>`:""}${n?`<span class="meta">${n} ${n===1?"anexo":"anexos"}</span>`:""}</span></button>`;
 }
+/* ---------- Ações: custos, matriz de participação e resultado ---------- */
+const MK_CUSTO_CAT=["Patrocínio ou cota","Estande e montagem","Alimentação e bebidas","Vídeo e foto","Material gráfico","Brindes comprados","Deslocamento e hospedagem","Palestrante ou técnico","Mídia e divulgação","Locação de espaço ou equipamento","Outro"];
+const MK_MZ={obj1:["Reconhecimento de marca / lembrança","Abertura de mercado","Fortalecimento de relacionamento com canal","Autoridade técnica","Vendas diretas"],obj2:["Captura de leads qualificados","Recrutamento de novos canais/RCs","Coleta de inteligência de mercado","Relacionamento com clientes finais e canais","Geração de conteúdo"],
+  pub:["Produtor tecnificado","Canal/Revenda","Consultor","Misto"],pen:["Em expansão (baixa penetração, prioridade)","Consolidado via canal","Consolidado via venda direta","Mercado maduro / saturado","Internacional / não mapeado"],
+  venda:["Venda direta (sell-in)","Via canal/distribuidor","Ambos / a definir","Não aplicável"],verba:["Institucional Marketing","Conecta/Rebate parceiro","Exportação","Gifts Marketing","Verba Comercial/Representação"],dec:["Em avaliação","Aprovado","Conceito","Pendência de dados","Descartado"]};
+const MK_ADER=[[5,"Público é o nosso comprador (pecuarista tecnificado ou canal) em região prioritária, e há canal ou RC para dar seguimento aos contatos."],[4,"Público certo e região boa, mas o seguimento dos contatos é parcial."],[3,"Público misto ou região secundária."],[2,"Público pouco qualificado ou sem como dar seguimento aos contatos."],[1,"Fora do nosso modelo de venda."]];
+const MK_RES_OBJ=["Venda","Geração de leads","Relacionamento com canal","Marca e autoridade técnica","Outro"];
+const mkLinhas=a=>Array.isArray(a.custos)?a.custos:[];
+const mkSomaL=L=>({prev:L.reduce((t,x)=>t+(Number(x.prev)||0),0),real:L.reduce((t,x)=>t+(Number(x.real)||0),0)});
+const mkBrindes=a=>(S.mkBrAcao&&S.mkBrAcao[a.id])||0;
+const mkCustoTotal=a=>mkCusto(a)+mkBrindes(a);
+function mkScore(m){if(!m)return null;const ad=+m.aderencia||0;const voz=(!m.area_demo||!m.palestra)?0:(m.area_demo==="Sim"&&m.palestra==="Sim")?3:(m.area_demo==="Sim"||m.palestra==="Sim")?2:1;
+  const sc=voz*2+ad;const rec=!ad||!voz?"Nota incompleta":sc>=8?"Participar · prioridade":sc>=5?"Avaliar":"Não priorizar";
+  const vozT=voz===3?"Campo + palco":voz===2?(m.area_demo==="Sim"?"Campo (produto no chão)":"Palco / palestra"):voz===1?"Estande com rizotron e amostra":"A confirmar";return {voz,ad,sc,rec,vozT};}
+const MK_REC_COR={"Participar · prioridade":"verde","Avaliar":"amarelo","Não priorizar":"vermelho","Nota incompleta":"cinza"};
+async function mkSalva(id,patch,msg){const {data,error}=await sb.from("mkt_acoes").update(patch).eq("id",id).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar.");return null;}S.mk=S.mk.map(x=>x.id===id?data:x);render();if(msg)aviso(msg);return data;}
+function vMkCustos(a){
+  const g=ehMkt(),L=mkLinhas(a),s=mkSomaL(L),br=mkBrindes(a);
+  if(!g&&!L.length)return "";
+  const linhas=L.map(x=>`<tr><td>${esc(x.cat||"")}</td><td>${esc(x.desc||"")}</td><td class="val">${fmtK0(x.prev)}</td><td class="val">${Number(x.real)>0?fmtK0(x.real):"—"}</td>${g?`<td class="val"><button class="link perigo" data-a="mk-custo-rm" data-v="${esc(x.id)}">remover</button></td>`:""}</tr>`).join("");
+  return `<section class="bloco"><h2 class="sec">Custos da ação</h2>
+    ${L.length||br?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Fornecedor ou descrição</th><th class="val">Previsto</th><th class="val">Realizado</th>${g?"<th></th>":""}</tr></thead><tbody>${linhas}
+      ${br?`<tr><td>Brindes do estoque</td><td>requisições aprovadas para esta ação</td><td class="val">${fmtK0(br)}</td><td class="val">${fmtK0(br)}</td>${g?"<td></td>":""}</tr>`:""}
+      <tr><td colspan="2"><strong>Total da ação</strong></td><td class="val"><strong>${fmtK0(s.prev+br)}</strong></td><td class="val"><strong>${s.real?fmtK0(s.real+br):"—"}</strong></td>${g?"<td></td>":""}</tr></tbody></table></div>
+      ${br?`<p class="meta" style="margin:6px 0 0">Os brindes do estoque entram no custo da ação e no retorno, mas não na verba da safra, porque o estoque já foi comprado.</p>`:""}`:`<div class="vazio">Nenhum custo lançado. Lance cada gasto separado: patrocínio, estande, alimentação, vídeo, deslocamento…</div>`}
+    ${g?`<form id="f-mk-custo" class="form-card" style="margin-top:8px"><div class="mk-custo-l"><div><label for="mc_cat">Categoria</label><select id="mc_cat">${MK_CUSTO_CAT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="mc_desc">Fornecedor ou descrição</label><input id="mc_desc" maxlength="160" placeholder="Ex.: Buffet Sabor do Campo, 80 refeições"></div><div><label for="mc_prev">Previsto (R$)</label><input id="mc_prev" inputmode="decimal"></div><div><label for="mc_real">Realizado (R$)</label><input id="mc_real" inputmode="decimal"></div><div><button class="btn sec" type="submit">Adicionar custo</button></div></div>
+      <span class="meta">O valor previsto e o realizado da ação passam a ser a soma das linhas.</span></form>`:""}</section>`;
+}
+function vMkMatriz(a){
+  if(!ehMkt())return "";const m=a.matriz||{};const sc=mkScore(a.matriz);const ct=mkCustoTotal(a);const pe=+m.publico_est||0;
+  const sel=(id,ops,v)=>`<select id="${id}"><option value="">—</option>${ops.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  return `<section class="bloco"><h2 class="sec">Matriz de participação · nota interna</h2>
+    ${sc?`<div class="metrics"><div class="metric"><span>Score final</span><strong>${sc.sc} <small style="font-size:13px">de 11</small></strong><span class="meta">voz ativa ${sc.voz} × 2 + aderência ${sc.ad||"—"}</span></div><div class="metric"><span>Recomendação</span><strong style="font-size:16px">${stTag(sc.rec,MK_REC_COR[sc.rec])}</strong><span class="meta">${esc(m.decisao||"Em avaliação")}</span></div><div class="metric"><span>Presença</span><strong style="font-size:15px">${esc(sc.vozT)}</strong></div>${pe?`<div class="metric"><span>Custo por pessoa</span><strong>${fmtK0(ct/pe)}</strong><span class="meta">${isNum(pe)} pessoas estimadas · alcance, não qualificação</span></div>`:""}</div>`:""}
+    <details class="lote" ${a.matriz?"":"open"}><summary>${a.matriz?"Editar a nota":"Dar a nota desta ação"}</summary>
+    <form id="f-mk-matriz" class="form-card" style="margin-top:8px">
+      <div class="mk-mz"><div><label for="mz_area">Tem área demonstrativa nossa?</label>${sel("mz_area",["Sim","Não"],m.area_demo)}</div><div><label for="mz_pal">Tem palestra nossa?</label>${sel("mz_pal",["Sim","Não"],m.palestra)}</div>
+      <div><label for="mz_ad">Aderência ao modelo operacional (1 a 5)</label>${sel("mz_ad",["5","4","3","2","1"],m.aderencia?String(m.aderencia):"")}</div></div>
+      <details class="is-ajuda"><summary>Como dar a nota de aderência</summary><ul style="margin:6px 0 0;padding-left:18px">${MK_ADER.map(([n,t])=>`<li><strong>${n}</strong> · ${esc(t)}</li>`).join("")}</ul><p style="margin:6px 0 0">Voz ativa: área demonstrativa e palestra = 3 · só uma das duas = 2 · nenhuma (estande com rizotron e amostra) = 1. Score final = voz ativa × 2 + aderência, de 3 a 11. A partir de 8: participar com prioridade. De 5 a 7: avaliar. Abaixo de 5: não priorizar.</p></details>
+      <div class="mk-mz"><div><label for="mz_o1">Objetivo principal</label>${sel("mz_o1",MK_MZ.obj1,m.obj1)}</div><div><label for="mz_o2">Objetivo secundário</label>${sel("mz_o2",MK_MZ.obj2,m.obj2)}</div><div><label for="mz_pub">Público-alvo</label>${sel("mz_pub",MK_MZ.pub,m.publico_alvo)}</div>
+      <div><label for="mz_pen">Mercado da região</label>${sel("mz_pen",MK_MZ.pen,m.penetracao)}</div><div><label for="mz_vd">Como a venda seria fechada</label>${sel("mz_vd",MK_MZ.venda,m.modelo_venda)}</div><div><label for="mz_fv">Fonte da verba</label>${sel("mz_fv",MK_MZ.verba,m.fonte_verba)}</div>
+      <div><label for="mz_pe">Público estimado (pessoas)</label><input id="mz_pe" inputmode="numeric" value="${m.publico_est||""}"></div><div><label for="mz_jp">Já participamos antes?</label>${sel("mz_jp",["Sim","Não"],m.ja_participou)}</div><div><label for="mz_dec">Status da decisão</label>${sel("mz_dec",MK_MZ.dec,m.decisao)}</div></div>
+      <div><label for="mz_conc">Concorrência presente</label><input id="mz_conc" maxlength="200" value="${esc(m.concorrencia||"")}"><span class="meta">Uso interno do Marketing.</span></div>
+      <div class="acoes"><button class="btn" type="submit">Salvar nota</button></div></form></details></section>`;
+}
+function mkResCalc(a){const r=a.resultado||{};const c=mkCustoTotal(a);const rec=+r.receita||0;const o={c,rec};
+  o.roi=c&&rec?(rec-c)/c:null;o.ret=c&&rec?rec/c:null;o.cpl=c&&+r.leads?c/r.leads:null;o.cplq=c&&+r.leads_qual?c/r.leads_qual:null;o.cpp=c&&+r.pedidos?c/r.pedidos:null;o.cpart=c&&+r.participantes?c/r.participantes:null;
+  o.ating=+r.meta_valor&&r.real_valor!=null&&r.real_valor!==""?(+r.real_valor)/(+r.meta_valor):null;o.cun=c&&+r.real_valor?c/r.real_valor:null;return o;}
+function vMkResultado(a){
+  const g=ehMkt(),r=a.resultado||{},tem=!!a.resultado,fim=a.status==="Concluída";
+  if(!g&&!tem)return "";if(!tem&&!fim&&g)return `<section class="bloco"><h2 class="sec">Resultado</h2><div class="vazio">Depois da ação, registre aqui o que ela trouxe: vendas, leads ou o resultado do objetivo. <button class="link" data-a="mk-res-abrir">Registrar agora</button></div>${S.mkResAberto?vMkResForm(a):""}</section>`;
+  const o=mkResCalc(a);const venda=(r.objetivo||"Venda")==="Venda";const pct=x=>x==null?"—":(x*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%";
+  const met=[];
+  if(+r.receita||venda){met.push(`<div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Retorno sobre o investimento (ROI)</span><strong>${pct(o.roi)}</strong><span class="meta">${o.ret!=null?"cada R$ 1 investido trouxe R$ "+o.ret.toLocaleString("pt-BR",{maximumFractionDigits:2})+" em vendas":"informe a receita"}</span></div>`);
+    met.push(`<div class="metric"><span>Vendido</span><strong>${fmtK0(r.receita)}</strong><span class="meta">${+r.pedidos?isNum(r.pedidos)+" pedidos":""}${+r.kg?" · "+isNum(r.kg)+" kg":""}${r.janela?" · janela de "+r.janela+" dias":""}</span></div>`);}
+  if(!venda||r.meta_valor)met.push(`<div class="metric" style="${venda?"":"box-shadow:inset 0 0 0 2px var(--azul)"}"><span>${esc(r.meta_desc||"Resultado do objetivo")}</span><strong>${r.real_valor!=null&&r.real_valor!==""?isNum(r.real_valor):"—"}${+r.meta_valor?` <small style="font-size:13px">de ${isNum(r.meta_valor)}</small>`:""}</strong><span class="meta">${o.ating!=null?pct(o.ating)+" da meta":""}${o.cun?" · "+fmtK0(o.cun)+" por unidade":""}</span></div>`);
+  met.push(`<div class="metric"><span>Custo da ação</span><strong>${fmtK0(o.c)}</strong><span class="meta">${+a.valor_real>0?"realizado":"previsto"}${mkBrindes(a)?" + brindes":""}</span></div>`);
+  const sec=[["Leads",r.leads,o.cpl,"por lead"],["Leads no perfil",r.leads_qual,o.cplq,"por lead no perfil"],["Pedidos",r.pedidos,o.cpp,"por pedido"],["Participantes",r.participantes,o.cpart,"por participante"]].filter(x=>+x[1]);
+  return `<section class="bloco"><h2 class="sec">Resultado${r.objetivo?" · objetivo: "+esc(r.objetivo):""}</h2>
+    <div class="metrics">${met.join("")}</div>
+    ${sec.length?`<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Quantidade</th><th class="val">Custo</th></tr></thead><tbody>${sec.map(([t,q,cu,u])=>`<tr><td>${t}</td><td class="val">${isNum(q)}</td><td class="val">${cu?fmtK0(cu)+" "+u:"—"}</td></tr>`).join("")}</tbody></table></div>`:""}
+    ${r.obs?`<p style="white-space:pre-wrap;margin:8px 0 0">${esc(r.obs)}</p>`:""}
+    ${g?`<details class="lote" style="margin-top:8px" ${tem?"":"open"}><summary>${tem?"Editar o resultado":"Registrar o resultado"}</summary>${vMkResForm(a)}</details>`:""}</section>`;
+}
+function vMkResForm(a){const r=a.resultado||{};const v=k=>r[k]!=null?esc(String(r[k])):"";
+  return `<form id="f-mk-res" class="form-card" style="margin-top:8px">
+    <div class="mk-mz"><div><label for="mr_obj">Objetivo da ação</label><select id="mr_obj">${MK_RES_OBJ.map(o=>`<option ${o===(r.objetivo||"Venda")?"selected":""}>${o}</option>`).join("")}</select></div>
+    <div><label for="mr_jan">Janela de atribuição</label><select id="mr_jan">${[90,180,365].map(d=>`<option value="${d}" ${+r.janela===d||(!r.janela&&d===180)?"selected":""}>${d} dias após a ação</option>`).join("")}</select></div></div>
+    <h3 style="margin:6px 0 0">Vendas originadas</h3>
+    <div class="mk-mz"><div><label for="mr_rec">Receita (R$)</label><input id="mr_rec" inputmode="decimal" value="${r.receita?esc(String(r.receita).replace(".",",")):""}"></div><div><label for="mr_ped">Pedidos</label><input id="mr_ped" inputmode="numeric" value="${v("pedidos")}"></div><div><label for="mr_kg">Volume (kg)</label><input id="mr_kg" inputmode="numeric" value="${v("kg")}"></div></div>
+    <h3 style="margin:6px 0 0">Contatos</h3>
+    <div class="mk-mz"><div><label for="mr_part">Participantes</label><input id="mr_part" inputmode="numeric" value="${v("participantes")}"></div><div><label for="mr_lead">Leads capturados</label><input id="mr_lead" inputmode="numeric" value="${v("leads")}"></div><div><label for="mr_lq">Leads no perfil</label><input id="mr_lq" inputmode="numeric" value="${v("leads_qual")}"><span class="meta">produtor tecnificado, canal ou consultor</span></div></div>
+    <h3 style="margin:6px 0 0">Quando o objetivo não é venda</h3>
+    <div class="mk-mz"><div><label for="mr_md">O que foi medido</label><input id="mr_md" maxlength="120" value="${v("meta_desc")}" placeholder="Ex.: novas revendas cadastradas, visitas ao estande, inscritos"></div><div><label for="mr_mv">Meta</label><input id="mr_mv" inputmode="numeric" value="${v("meta_valor")}"></div><div><label for="mr_rv">Realizado</label><input id="mr_rv" inputmode="numeric" value="${v("real_valor")}"></div></div>
+    <div><label for="mr_obs">Observações</label><textarea id="mr_obs" rows="3" maxlength="2000" placeholder="O que funcionou, o que não funcionou, se vale repetir">${esc(r.obs||"")}</textarea></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar resultado</button></div></form>`;}
+function vAcoesMatriz(){
+  if(!S.mk)return `<div class="carregando">Carregando…</div>`;
+  const L=S.mk.filter(a=>a.status!=="Recusada"&&a.status!=="Solicitada");const com=L.filter(a=>a.matriz).map(a=>({a,s:mkScore(a.matriz)}));
+  const ok=com.filter(x=>x.s.ad&&x.s.voz),inc=com.filter(x=>!(x.s.ad&&x.s.voz));const sem=L.filter(a=>!a.matriz&&/Evento|Feira|Dia de campo|Patroc/i.test(a.tipo||""));
+  const cel=(voz,ad)=>ok.filter(x=>x.s.voz===voz&&x.s.ad===ad).map(x=>`<button class="link mk-q-i" data-a="mk-abrir" data-v="${x.a.id}">${esc(x.a.titulo)}</button>`).join("");
+  const grade=`<div class="tab"><table class="mk-quad"><thead><tr><th>Voz ativa ↓ · Aderência →</th>${[1,2,3,4,5].map(n=>`<th>${n}</th>`).join("")}</tr></thead><tbody>${[3,2,1].map(v=>`<tr><th>${v===3?"Campo + palco (3)":v===2?"Campo ou palco (2)":"Estande (1)"}</th>${[1,2,3,4,5].map(ad=>{const sc=v*2+ad;return `<td class="q-${sc>=8?"verde":sc>=5?"amarelo":"vermelho"}">${cel(v,ad)}</td>`;}).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const grp=k=>ok.filter(x=>x.s.rec===k);const sumc=xs=>xs.reduce((t,x)=>t+mkCustoTotal(x.a),0);
+  const lin=x=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${x.a.id}">${esc(x.a.titulo)}</button><br><span class="meta">${esc([x.a.inicio?mkData(x.a.inicio):"",x.a.local||"",x.a.matriz.decisao||"Em avaliação"].filter(Boolean).join(" · "))}</span></td><td class="val">${x.s.sc}</td><td>${stTag(x.s.rec,MK_REC_COR[x.s.rec])}</td><td class="val">${mkCustoTotal(x.a)?fmtK0(mkCustoTotal(x.a)):"sem valor"}</td><td class="val">${x.a.resultado&&x.a.resultado.receita&&mkCustoTotal(x.a)?((x.a.resultado.receita-mkCustoTotal(x.a))/mkCustoTotal(x.a)*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":"—"}</td></tr>`;
+  return `<div><h1 class="titulo">Matriz de participação</h1><p class="sub">Nota interna das ações, principalmente eventos. Cruza a voz ativa (área demonstrativa e palestra) com a aderência ao nosso modelo de venda. O quadrante obriga a escolha: colocar uma ação no canto forte é tirar outra de lá.</p></div>
+  <div class="metrics">${["Participar · prioridade","Avaliar","Não priorizar"].map(k=>`<div class="metric"><span>${k}</span><strong>${grp(k).length}</strong><span class="meta">${fmtK0(sumc(grp(k)))}</span></div>`).join("")}<div class="metric"><span>Sem nota</span><strong>${sem.length+inc.length}</strong><span class="meta">eventos sem nota completa</span></div></div>
+  <section class="bloco"><h2 class="sec">Quadrante</h2>${ok.length?grade:`<div class="vazio">Nenhuma ação com nota ainda. Abra uma ação e preencha a matriz.</div>`}</section>
+  ${ok.length?`<section class="bloco"><h2 class="sec">Ordem de prioridade</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th class="val">Score</th><th>Recomendação</th><th class="val">Custo</th><th class="val">ROI</th></tr></thead><tbody>${ok.sort((x,y)=>y.s.sc-x.s.sc).map(lin).join("")}</tbody></table></div></section>`:""}
+  ${sem.length+inc.length?`<section class="bloco"><h2 class="sec">Sem nota completa</h2><div class="lista">${[...inc.map(x=>x.a),...sem].map(a=>`<div class="linha"><button class="link" data-a="mk-abrir" data-v="${a.id}">${esc(a.titulo)}</button><span class="meta">${esc([a.tipo,a.inicio?mkData(a.inicio):""].filter(Boolean).join(" · "))}</span></div>`).join("")}</div><p class="meta">Sem nota não é nota baixa: a ação fica fora do quadrante até ser avaliada.</p></section>`:""}`;
+}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-custo-rm'],[data-a='mk-res-abrir']");if(!b)return;ev.preventDefault();ev.stopPropagation();
+  const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;
+  if(b.dataset.a==="mk-res-abrir"){S.mkResAberto=true;render();return;}
+  const L=mkLinhas(a).filter(x=>x.id!==b.dataset.v);const s=mkSomaL(L);await mkSalva(a.id,{custos:L,valor_prev:s.prev,valor_real:s.real},"Custo removido.");},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!["f-mk-custo","f-mk-matriz","f-mk-res"].includes(f.id))return;ev.preventDefault();ev.stopImmediatePropagation();
+  const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const n=id=>{const t=val(id);return t===""?null:mkNum(t);};const i=id=>{const t=val(id).replace(/\D/g,"");return t===""?null:+t;};
+  if(f.id==="f-mk-custo"){const prev=n("mc_prev")||0,real=n("mc_real")||0;if(!(prev>0||real>0)){aviso("Informe o valor previsto ou o realizado.");return;}
+    const L=[...mkLinhas(a),{id:Date.now().toString(36),cat:val("mc_cat"),desc:val("mc_desc"),prev,real}];const s=mkSomaL(L);await mkSalva(a.id,{custos:L,valor_prev:s.prev,valor_real:s.real},"Custo lançado.");return;}
+  if(f.id==="f-mk-matriz"){const m={area_demo:val("mz_area"),palestra:val("mz_pal"),aderencia:+val("mz_ad")||null,obj1:val("mz_o1"),obj2:val("mz_o2"),publico_alvo:val("mz_pub"),penetracao:val("mz_pen"),modelo_venda:val("mz_vd"),fonte_verba:val("mz_fv"),publico_est:i("mz_pe"),ja_participou:val("mz_jp"),decisao:val("mz_dec")||"Em avaliação",concorrencia:val("mz_conc")};
+    await mkSalva(a.id,{matriz:m},"Nota salva.");return;}
+  if(f.id==="f-mk-res"){const r={objetivo:val("mr_obj"),janela:+val("mr_jan")||180,receita:n("mr_rec"),pedidos:i("mr_ped"),kg:i("mr_kg"),participantes:i("mr_part"),leads:i("mr_lead"),leads_qual:i("mr_lq"),meta_desc:val("mr_md"),meta_valor:n("mr_mv"),real_valor:n("mr_rv"),obs:val("mr_obs"),em:new Date().toISOString()};
+    S.mkResAberto=false;await mkSalva(a.id,{resultado:r},"Resultado salvo.");return;}
+},true);
+
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
@@ -4373,8 +4477,8 @@ function mkFormHTML(a){
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
     <div class="dupla"><div><label for="mk_fin">Situação financeira</label><select id="mk_fin">${MK_FIN.map(t=>`<option ${t===mkFin(a)?"selected":""}>${t}</option>`).join("")}</select><span class="meta">Provisionada: reservada · Aprovada: a pagar · Paga: já debitada da verba</span></div>
       <div><label for="mk_pg">Pago em</label><input id="mk_pg" type="date" value="${esc(a.pago_em||"")}"></div></div>
-    <div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
-      <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
+    ${mkLinhas(a).length?`<p class="meta" style="margin:0">O previsto e o realizado são a soma dos custos lançados no cartão da ação.</p>`:""}<div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
+      <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
     <div><label for="mk_resp">Responsável</label><select id="mk_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)} · ${esc(p.perfil||"")}</option>`).join("")}</select></div>
     <div><label>Pessoas envolvidas</label><span class="meta">Quem for marcado vê esta ação no quadro, pode comentar e anexar arquivos. O acesso à seção é liberado automaticamente.</span>
       <input type="search" id="mk_penv" placeholder="Filtrar pessoas" aria-label="Filtrar pessoas" style="margin:6px 0">
@@ -4433,7 +4537,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
-  ${mkChecklistHTML(a)}
+  ${vMkCustos(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
@@ -4564,6 +4668,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-nova"&&ehMkt())return vAcoesNova();
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
+  if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
   if(S.pag==="acoes-solic")return vAcoesSolic();
   if(S.pag==="acoes-solic-nova"&&mkPodeSolic())return vAcoesSolicNova();
@@ -4989,7 +5094,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Pe
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-painel","Verba e cenários"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
