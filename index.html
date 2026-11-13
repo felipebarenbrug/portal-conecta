@@ -1077,7 +1077,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261113075531";
+const APP_VER="20261113081016";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1471,26 +1471,43 @@ function vISPlano(A,cfg){
     ${isAjuda("Falta = meta − (realizado + ponderado do funil). Vendas novas = falta ÷ quilos médios de híbrido por venda ganha na safra (média, puxada para cima por pedidos grandes; na prática podem ser necessárias mais vendas). Negociações novas = vendas ÷ taxa SQL → Venda das decididas da safra. MQL = negociações ÷ taxa MQL → SQL da safra, supondo que todo o negócio novo venha do inbound; negociação de Forecast ou repasse reduz essa necessidade. Ritmo mensal = total ÷ meses que restam até o fim da safra menos o ciclo mediano de venda, porque negociação aberta muito tarde não fatura a tempo. As taxas são as da safra até hoje e mudam a cada atualização.")}</section>`;
 }
 
-function vISLtv(L){
+const isMot=m=>{m=String(m||"");return !ehAdmin()&&/^Optou pel[oa] /i.test(m)&&!/commodity|concorrente/i.test(m)?"Optou por híbrido concorrente":m;};
+const IS_LTV_ST={G:"Recompraram",A:"Em negociação",Z:"Pausadas",P:"Perderam na safra atual",N:"Sem nenhuma negociação"};
+function vISLtvLista(L){
+  const F=S.isLtvF||"P";const rows=L.filter(x=>F==="todas"||x.st===F);const cnt=k=>k==="todas"?L.length:L.filter(x=>x.st===k).length;
+  const chips=[["P","Perderam"],["Z","Pausadas"],["A","Em negociação"],["N","Sem negociação"],["todas","Todas"]].map(([k,t])=>`<button class="chip" data-a="is-ltvf" data-v="${k}" aria-pressed="${F===k}">${esc(t)} (${cnt(k)})</button>`).join("");
+  const dt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+  return `<div class="filtros">${chips}</div>${rows.length?`<div class="lista">${rows.slice(0,250).map(x=>`<div class="neg"><div class="l1"><span>${esc(String(x.n||"").trim())}</span><span>${isR(x.rs25)}</span></div>
+    <span class="meta">safra passada: ${esc(x.quem25||"")} · ${isN(x.ped25)} pedido${+x.ped25>1?"s":""}${+x.kg25?" · "+isN(x.kg25)+" kg de híbrido":""}${x.ult25?" · último faturamento "+dt(x.ult25):""}</span>
+    <span class="meta">${x.st==="N"?"nenhuma negociação aberta na safra atual":`${esc(IS_LTV_ST[x.st]||x.st)}${x.quem26?" · "+esc(x.quem26):""}${x.data?" · "+dt(x.data):""}${x.forecast?" · Forecast 26/27":""}${+x.neg>1?" · "+isN(x.neg)+" negociações":""}`}</span>
+    ${x.nome26?`<span class="meta">${esc(x.nome26)}</span>`:""}
+    ${x.st==="P"?`<span class="meta" style="color:#c0392b">motivo: ${esc(x.motivo?isMot(x.motivo):"sem motivo registrado")}</span>`:""}</div>`).join("")}</div>${rows.length>250?`<p class="dica">Mostrando 250 de ${rows.length}.</p>`:""}`:`<div class="vazio">Nenhum cliente neste filtro.</div>`}`;
+}
+function vISLtv(L,lista){
   if(!L||!L.s25)return "";const a=L.s25,b=L.s26,r=L.recompra,n=L.novos,base=+L.base||0;
   const med=(x)=>x&&x.clientes?(+x.rs||0)/x.clientes:0,medk=(x)=>x&&x.clientes?(+x.kg||0)/x.clientes:0;
   const sa=(L.safra_ant||[]).map(d=>String(d).slice(2,4)).join("/"),sb=(L.safra||[]).map(d=>String(d).slice(2,4)).join("/");
   const ltv2=r.clientes?((+r.rs25||0)+(+r.rs||0))/r.clientes:0;
+  const st=L.status||null;const C=st?st.cnt:{G:r.clientes,A:L.em_andamento,N:L.sem_compra},V=st?st.rs25:{G:r.rs25,N:L.sem_compra_rs25},K=st?st.kg25:{G:r.kg25,N:L.sem_compra_kg25};
+  const lin=(k,rot,forte)=>C[k]==null?"":`<tr><td>${forte?"<strong>"+rot+"</strong>":rot}</td><td class="val">${isN(C[k])}</td><td class="val">${isPct(C[k],base)}</td><td class="val">${V&&V[k]!=null?isR(V[k])+" · "+isT(K[k]):"—"}</td></tr>`;
+  const mo={};Object.entries(L.motivos||{}).forEach(([k,q])=>{const m=isMot(k);mo[m]=(mo[m]||0)+q;});const mot=Object.entries(mo).sort((x,y)=>y[1]-x[1]);const nP=+(C.P||0);
+  const motH=mot.length?`<div class="tab" style="margin-top:10px"><table><thead><tr><th>Por que os ${isN(nP)} clientes perdidos não recompraram</th><th class="val">Clientes</th><th class="val">%</th></tr></thead><tbody>${mot.map(([m,q])=>`<tr><td>${esc(m)}</td><td class="val">${isN(q)}</td><td class="val">${isPct(q,nP)}</td></tr>`).join("")}</tbody></table></div>`:"";
+  const ativ=(+C.Z||0)+(+C.P||0)+(+C.N||0);
   return `<section class="bloco"><h2 class="sec">Clientes, recompra e LTV</h2>
     <div class="metrics">
       <div class="metric"><span>Clientes da safra ${sa}</span><strong>${isN(a.clientes)}</strong><span class="meta">${isR(a.rs)} · ${isT(a.kg)} de híbrido · ${isR(med(a))} por cliente</span></div>
       <div class="metric"><span>Clientes da safra ${sb} até agora</span><strong>${isN(b.clientes)}</strong><span class="meta">${isR(b.rs)} · ${isT(b.kg)} de híbrido · ${isR(med(b))} por cliente</span></div>
       <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Recompraram na ${sb}</span><strong>${isN(r.clientes)} <small style="font-size:14px">(${isPct(r.clientes,base)})</small></strong><span class="meta">dos ${isN(base)} clientes da ${sa} · ${isR(r.rs)} na ${sb}</span></div>
       <div class="metric"><span>LTV de quem recomprou</span><strong>${isR(ltv2)}</strong><span class="meta">média por cliente somando as duas safras</span></div></div>
-    <div class="tab" style="margin-top:10px"><table><thead><tr><th>Clientes da safra ${sa}</th><th class="val">Clientes</th><th class="val">%</th><th class="val">Compraram na ${sa}</th></tr></thead><tbody>
-      <tr><td>Já recompraram na ${sb}</td><td class="val">${isN(r.clientes)}</td><td class="val">${isPct(r.clientes,base)}</td><td class="val">${isR(r.rs25)} · ${isT(r.kg25)}</td></tr>
-      <tr><td>Têm negociação em andamento</td><td class="val">${isN(L.em_andamento)}</td><td class="val">${isPct(L.em_andamento,base)}</td><td class="val">—</td></tr>
-      <tr><td><strong>Ainda não compraram nem negociam</strong></td><td class="val"><strong>${isN(L.sem_compra)}</strong></td><td class="val"><strong>${isPct(L.sem_compra,base)}</strong></td><td class="val">${isR(L.sem_compra_rs25)} · ${isT(L.sem_compra_kg25)}</td></tr></tbody></table></div>
+    <div class="tab" style="margin-top:10px"><table><thead><tr><th>Os ${isN(base)} clientes da safra ${sa} na safra ${sb}</th><th class="val">Clientes</th><th class="val">%</th><th class="val">Compraram na ${sa}</th></tr></thead><tbody>
+      ${lin("G","Já recompraram")}${lin("A","Têm negociação em andamento")}${lin("Z","Negociação pausada")}${lin("P","Negociação perdida (tentaram e o cliente não comprou)",true)}${lin("N","Sem nenhuma negociação na safra",true)}</tbody></table></div>
+    ${motH}
     <div class="tab" style="margin-top:10px"><table><thead><tr><th>Clientes da safra ${sb}</th><th class="val">Clientes</th><th class="val">Valor</th><th class="val">Híbridos</th><th class="val">Ticket por cliente</th></tr></thead><tbody>
       <tr><td>Recompra (já eram clientes)</td><td class="val">${isN(r.clientes)}</td><td class="val">${isR(r.rs)}</td><td class="val">${isT(r.kg)}</td><td class="val">${isR(med(r))} · ${isN(medk(r))} kg</td></tr>
       <tr><td>Clientes novos</td><td class="val">${isN(n.clientes)}</td><td class="val">${isR(n.rs)}</td><td class="val">${isT(n.kg)}</td><td class="val">${isR(med(n))} · ${isN(medk(n))} kg</td></tr></tbody></table></div>
-    ${+L.sem_compra?`<div class="is-alerta"><strong>Carteira para reativar</strong><ol><li>${isN(L.sem_compra)} clientes da ${sa} ainda não compraram nem têm negociação aberta. Na safra passada eles compraram ${isR(L.sem_compra_rs25)} e ${isT(L.sem_compra_kg25)} de híbrido. Vale abrir negociação para cada um antes do pico de plantio.</li></ol></div>`:""}
-    ${isAjuda(`Cliente = empresa do CRM (ou o contato, quando a negociação não tem empresa). Conta a venda ganha com data de faturamento na safra, das pessoas do Inside Sales de hoje e das que atuaram na safra ${sa}. Recompra = cliente da ${sa} que já tem venda ganha na ${sb}. Compra feita por RC, revenda ou outro canal não aparece aqui, então a recompra real pode ser maior. O churn só fica definitivo depois de 30/06 do fim da safra. LTV = valor médio por cliente somando as duas safras. Toneladas só de híbrido (sem Cynodon).`)}</section>`;
+    ${st&&ativ?`<div class="is-alerta"><strong>Carteira para reativar</strong><ol>${+C.P?`<li>${isN(C.P)} clientes da ${sa} tiveram negociação na ${sb} e foram dados como perdidos. Muitos com o motivo genérico "mudou prioridades". Vale um segundo contato perto do plantio, com proposta nova.</li>`:""}${+C.Z?`<li>${isN(C.Z)} estão com a negociação pausada. Definir data de retomada em cada uma.</li>`:""}${+C.N?`<li>${isN(C.N)} ainda não têm nenhuma negociação aberta. Na ${sa} compraram ${isR(V.N)}.</li>`:""}</ol></div>`:""}
+    ${Array.isArray(lista)&&lista.length?`<details class="lote" style="margin-top:12px" ${S.isLtvAberto?"open":""}><summary><strong>Ver os clientes que ainda não recompraram (${isN(lista.length)})</strong></summary>${vISLtvLista(lista)}</details>`:""}
+    ${isAjuda(`Cliente = empresa do CRM ou o mesmo contato (e-mail ou telefone): negociações com qualquer um deles em comum contam como o mesmo cliente. Base = quem teve venda ganha com faturamento na safra ${sa}, das pessoas do Inside Sales de hoje e das que atuaram na safra ${sa}. Na ${sb} entram as negociações desses clientes criadas desde junho, as com faturamento na safra e as da campanha Forecast; vale a situação mais avançada (ganha, em andamento, pausada, perdida). Compra feita por RC, revenda ou outro canal não aparece aqui, então a recompra real pode ser maior. LTV = valor médio por cliente somando as duas safras. Toneladas só de híbrido (sem Cynodon).`)}</section>`;
 }
 function vISBloco(nome,row,cfg,ehTime){
   const A=row.dados||{};const meta=+cfg.meta_kg||60000;const ms=isPeriodo(cfg);const pessoa=(cfg.pessoas||[]).find(p=>p.p===nome)||{};
@@ -1566,7 +1583,7 @@ function vISBloco(nome,row,cfg,ehTime){
     <div class="metric"><span>Perdas no período</span><strong>${isN(pr.n)}</strong><span class="meta">${isR(pr.rs)} · ${isT(pr.kgh)}</span></div></div>
     ${Object.keys(mot).length?`<div class="tab" style="margin-top:10px"><table><thead><tr><th>Motivo da perda</th><th class="val">Neg.</th><th class="val">Valor</th></tr></thead><tbody>${Object.entries(mot).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="val">${isN(v.n)}</td><td class="val">${isR(v.rs)}</td></tr>`).join("")}</tbody></table></div>`:""}
     ${isAjuda("Pausada é lembrete do time, não temperatura: fica fora do realizado, do funil, da projeção e das taxas. O ponderado hipotético mostra quanto valeria se voltasse ao funil com a estrela atual. Perdas pelo mês do fechamento.")}</section>`;
-  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?vISPlano(A,cfg):""}${conv}${ehTime?vISLtv(A.ltv):""}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
+  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?vISPlano(A,cfg):""}${conv}${ehTime?vISLtv(A.ltv,A.ltv_lista):""}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
 }
 const IS_AL={sem_tarefa:"sem próximo passo",parada:"parada",vencida:"data vencida",sem_data:"sem data",est_data:"estrela × data",fech:"pedido finalizado sem ganho"};
 function isListaHTML(L,mostraDono){
@@ -5010,6 +5027,7 @@ document.addEventListener("click",async ev=>{
   if(a==="is-sel"){S.isSel=v;render();}
   if(a==="is-per"){S.isPer=v;render();return;}
   if(a==="is-negf"){S.isNegF=v;render();return;}
+  if(a==="is-ltvf"){S.isLtvF=v;S.isLtvAberto=1;render();return;}
   if(a==="noticias-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo os portais…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_noticias"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler as notícias agora.":`Notícias atualizadas (${r.data.gravadas} lidas${(r.data.falhas||[]).length?", com falha em: "+r.data.falhas.join(", "):""}).`);return;}
   if(a==="clima-uf"){S.climaUf=v;render();return;}
   if(a==="clima-atualizar"){if(!ehAdmin())return;b.disabled=true;b.textContent="Lendo a previsão…";const r=await sb.functions.invoke("rd-crm",{body:{acao:"sync_clima"}});S.mercado=null;await carregarMercado();render();aviso(r.error||!r.data||r.data.error?"Não foi possível ler a previsão agora.":`Previsão atualizada para ${r.data.gravadas} praças${(r.data.falhas||[]).length?" (sem dados: "+r.data.falhas.join(", ")+")":""}.`);return;}
