@@ -1077,7 +1077,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112224433";
+const APP_VER="20261113075531";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1470,6 +1470,28 @@ function vISPlano(A,cfg){
     ${acoes.length?`<div class="is-alerta"><strong>O que o time precisa fazer agora</strong><ol>${acoes.join("")}</ol></div>`:""}
     ${isAjuda("Falta = meta − (realizado + ponderado do funil). Vendas novas = falta ÷ quilos médios de híbrido por venda ganha na safra (média, puxada para cima por pedidos grandes; na prática podem ser necessárias mais vendas). Negociações novas = vendas ÷ taxa SQL → Venda das decididas da safra. MQL = negociações ÷ taxa MQL → SQL da safra, supondo que todo o negócio novo venha do inbound; negociação de Forecast ou repasse reduz essa necessidade. Ritmo mensal = total ÷ meses que restam até o fim da safra menos o ciclo mediano de venda, porque negociação aberta muito tarde não fatura a tempo. As taxas são as da safra até hoje e mudam a cada atualização.")}</section>`;
 }
+
+function vISLtv(L){
+  if(!L||!L.s25)return "";const a=L.s25,b=L.s26,r=L.recompra,n=L.novos,base=+L.base||0;
+  const med=(x)=>x&&x.clientes?(+x.rs||0)/x.clientes:0,medk=(x)=>x&&x.clientes?(+x.kg||0)/x.clientes:0;
+  const sa=(L.safra_ant||[]).map(d=>String(d).slice(2,4)).join("/"),sb=(L.safra||[]).map(d=>String(d).slice(2,4)).join("/");
+  const ltv2=r.clientes?((+r.rs25||0)+(+r.rs||0))/r.clientes:0;
+  return `<section class="bloco"><h2 class="sec">Clientes, recompra e LTV</h2>
+    <div class="metrics">
+      <div class="metric"><span>Clientes da safra ${sa}</span><strong>${isN(a.clientes)}</strong><span class="meta">${isR(a.rs)} · ${isT(a.kg)} de híbrido · ${isR(med(a))} por cliente</span></div>
+      <div class="metric"><span>Clientes da safra ${sb} até agora</span><strong>${isN(b.clientes)}</strong><span class="meta">${isR(b.rs)} · ${isT(b.kg)} de híbrido · ${isR(med(b))} por cliente</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Recompraram na ${sb}</span><strong>${isN(r.clientes)} <small style="font-size:14px">(${isPct(r.clientes,base)})</small></strong><span class="meta">dos ${isN(base)} clientes da ${sa} · ${isR(r.rs)} na ${sb}</span></div>
+      <div class="metric"><span>LTV de quem recomprou</span><strong>${isR(ltv2)}</strong><span class="meta">média por cliente somando as duas safras</span></div></div>
+    <div class="tab" style="margin-top:10px"><table><thead><tr><th>Clientes da safra ${sa}</th><th class="val">Clientes</th><th class="val">%</th><th class="val">Compraram na ${sa}</th></tr></thead><tbody>
+      <tr><td>Já recompraram na ${sb}</td><td class="val">${isN(r.clientes)}</td><td class="val">${isPct(r.clientes,base)}</td><td class="val">${isR(r.rs25)} · ${isT(r.kg25)}</td></tr>
+      <tr><td>Têm negociação em andamento</td><td class="val">${isN(L.em_andamento)}</td><td class="val">${isPct(L.em_andamento,base)}</td><td class="val">—</td></tr>
+      <tr><td><strong>Ainda não compraram nem negociam</strong></td><td class="val"><strong>${isN(L.sem_compra)}</strong></td><td class="val"><strong>${isPct(L.sem_compra,base)}</strong></td><td class="val">${isR(L.sem_compra_rs25)} · ${isT(L.sem_compra_kg25)}</td></tr></tbody></table></div>
+    <div class="tab" style="margin-top:10px"><table><thead><tr><th>Clientes da safra ${sb}</th><th class="val">Clientes</th><th class="val">Valor</th><th class="val">Híbridos</th><th class="val">Ticket por cliente</th></tr></thead><tbody>
+      <tr><td>Recompra (já eram clientes)</td><td class="val">${isN(r.clientes)}</td><td class="val">${isR(r.rs)}</td><td class="val">${isT(r.kg)}</td><td class="val">${isR(med(r))} · ${isN(medk(r))} kg</td></tr>
+      <tr><td>Clientes novos</td><td class="val">${isN(n.clientes)}</td><td class="val">${isR(n.rs)}</td><td class="val">${isT(n.kg)}</td><td class="val">${isR(med(n))} · ${isN(medk(n))} kg</td></tr></tbody></table></div>
+    ${+L.sem_compra?`<div class="is-alerta"><strong>Carteira para reativar</strong><ol><li>${isN(L.sem_compra)} clientes da ${sa} ainda não compraram nem têm negociação aberta. Na safra passada eles compraram ${isR(L.sem_compra_rs25)} e ${isT(L.sem_compra_kg25)} de híbrido. Vale abrir negociação para cada um antes do pico de plantio.</li></ol></div>`:""}
+    ${isAjuda(`Cliente = empresa do CRM (ou o contato, quando a negociação não tem empresa). Conta a venda ganha com data de faturamento na safra, das pessoas do Inside Sales de hoje e das que atuaram na safra ${sa}. Recompra = cliente da ${sa} que já tem venda ganha na ${sb}. Compra feita por RC, revenda ou outro canal não aparece aqui, então a recompra real pode ser maior. O churn só fica definitivo depois de 30/06 do fim da safra. LTV = valor médio por cliente somando as duas safras. Toneladas só de híbrido (sem Cynodon).`)}</section>`;
+}
 function vISBloco(nome,row,cfg,ehTime){
   const A=row.dados||{};const meta=+cfg.meta_kg||60000;const ms=isPeriodo(cfg);const pessoa=(cfg.pessoas||[]).find(p=>p.p===nome)||{};
   const real=A.real||{},ab=A.ab||{},al=A.alerta||{},fx=A.faixa||{};
@@ -1544,7 +1566,7 @@ function vISBloco(nome,row,cfg,ehTime){
     <div class="metric"><span>Perdas no período</span><strong>${isN(pr.n)}</strong><span class="meta">${isR(pr.rs)} · ${isT(pr.kgh)}</span></div></div>
     ${Object.keys(mot).length?`<div class="tab" style="margin-top:10px"><table><thead><tr><th>Motivo da perda</th><th class="val">Neg.</th><th class="val">Valor</th></tr></thead><tbody>${Object.entries(mot).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="val">${isN(v.n)}</td><td class="val">${isR(v.rs)}</td></tr>`).join("")}</tbody></table></div>`:""}
     ${isAjuda("Pausada é lembrete do time, não temperatura: fica fora do realizado, do funil, da projeção e das taxas. O ponderado hipotético mostra quanto valeria se voltasse ao funil com a estrela atual. Perdas pelo mês do fechamento.")}</section>`;
-  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?vISPlano(A,cfg):""}${conv}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
+  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?vISPlano(A,cfg):""}${conv}${ehTime?vISLtv(A.ltv):""}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
 }
 const IS_AL={sem_tarefa:"sem próximo passo",parada:"parada",vencida:"data vencida",sem_data:"sem data",est_data:"estrela × data",fech:"pedido finalizado sem ganho"};
 function isListaHTML(L,mostraDono){
