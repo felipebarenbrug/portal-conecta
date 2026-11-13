@@ -256,6 +256,17 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .is-passos{margin:0;padding-left:22px;display:grid;gap:4px}.is-passos li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--linha,#e3e8ee)}.is-passos li:nth-child(4){font-weight:700}
 .is-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:10px}.is-grid2>*{min-width:0}
 .is-alerta{background:var(--amarelo-claro,#fff8d6);border-left:4px solid var(--amarelo,#ffdb00);border-radius:6px;padding:12px 14px;margin-top:10px}.is-alerta ol{margin:6px 0 0;padding-left:20px;display:grid;gap:6px;line-height:1.5}
+:root{--obj-h0:#eef4f7;--obj-h1:#cfe9f5;--obj-h2:#8fd0ee;--obj-h3:#2fb2e6;--obj-h4:#00658f}
+.obj-heat{border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;min-width:620px}
+.obj-heat th{font-size:12px;font-weight:600;color:var(--apagado,#5b6b7b);text-align:left;padding:4px 6px;vertical-align:bottom;white-space:normal}
+.obj-heat th{text-transform:none;letter-spacing:0}.obj-heat tbody th{min-width:180px;font-size:13px;color:var(--preto,#1d1d1b);line-height:1.3}.obj-heat td{padding:0}.obj-heat thead th{text-align:center;max-width:96px;line-height:1.25}.obj-heat thead small{display:block;font-weight:400}
+.obj-heat td{width:56px;height:32px;text-align:center;border-radius:5px;font-weight:700}.obj-heat td.obj-tot{background:none;border-left:2px solid var(--linha,#e3e8ee);border-radius:0}
+.obj-lista{margin:0;padding-left:20px;display:grid;gap:10px;line-height:1.5}.obj-lista p{margin:4px 0 0}
+.obj-lista blockquote{margin:6px 0 0;padding:6px 12px;border-left:3px solid var(--amarelo,#ffdb00);background:var(--amarelo-claro,#fff8d6);font-style:italic;border-radius:0 6px 6px 0}
+.obj-alerta{margin:12px 0 0;padding:10px 12px;border-left:4px solid #c0392b;background:#fdecea;border-radius:4px}
+.obj-barras{display:grid;gap:8px;margin-bottom:10px}.obj-barra{display:grid;grid-template-columns:170px 1fr 34px;gap:10px;align-items:center;font-size:14px}
+.obj-barra .t{height:14px;border-radius:7px;background:var(--obj-h0);overflow:hidden}.obj-barra .t i{display:block;height:100%;background:var(--azul,#00a8e2)}.obj-barra b{text-align:right}
+@media(max-width:520px){.obj-barra{grid-template-columns:1fr 34px}.obj-barra .t{grid-column:1/3;grid-row:2}}
 .is-tot td{border-top:2px solid var(--azul-escuro);font-weight:700}.is-tab td,.is-tab th{white-space:nowrap}
 .mesbar{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:14px}
 .mesbar .trilho{height:16px;background:var(--linha,#eee);border-radius:8px;overflow:hidden;position:relative}
@@ -1066,7 +1077,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261112205139";
+const APP_VER="20261112224433";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1399,7 +1410,7 @@ async function carregarISP(){
   if(!Object.keys(S.isp).length&&!S.crm)await carregarCRM();
 }
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -1559,7 +1570,30 @@ function vISVend(cfg){
     ${linha("Time","Time")}</tbody></table></div>
     <p class="dica">Vendas, híbridos, convencionais, valor e % da meta: safra inteira (contribuição de cada pessoa para as ${isT(meta)} do time). MQL, SQL → Venda, lead → venda e atribuição: período escolhido acima. SQL → Venda mostra ganhas × perdidas. Taxa em cinza: menos de 10 casos, não serve para ranquear. Toque no nome para abrir o painel da pessoa.</p></section>`;
 }
+
+function vISObjecoes(){
+  if(S.isObj===undefined){S.isObj=null;(async()=>{try{const {data}=await sb.from("is_relatorios").select("*").eq("chave","objecoes").maybeSingle();S.isObj=data||false;}catch(e){S.isObj=false;}if(S.pag==="is-obj")render();})();}
+  if(S.isObj===null)return `<div class="carregando">Carregando análise…</div>`;
+  if(!S.isObj)return `<div><h1 class="titulo">Inside Sales · Objeções</h1></div><section class="bloco"><div class="vazio">A análise de objeções ainda não foi publicada no banco do portal.</div></section>`;
+  const R=S.isObj,d=R.dados||{},H=d.heat||{};
+  const heat=(cols,ncol,M)=>{const max=Math.max(1,...(M||[]).flat());const c=v=>{if(!v)return "background:var(--obj-h0)";const r=v/max,i=r>.75?4:r>.5?3:r>.25?2:1;return `background:var(--obj-h${i});color:${i>=3?"#fff":"var(--preto,#1d1d1b)"}`;};
+    return `<div class="tab"><table class="obj-heat"><thead><tr><th></th>${cols.map((x,j)=>`<th>${esc(x)}<small>n=${ncol[j]}</small></th>`).join("")}<th>Total</th></tr></thead><tbody>${(H.temas||[]).map((t,i)=>H.tot[i]?`<tr><th scope="row">${esc(t)}</th>${M[i].map(v=>`<td style="${c(v)}">${v||""}</td>`).join("")}<td class="obj-tot">${H.tot[i]}</td></tr>`:"").join("")}</tbody></table></div>`;};
+  const mx=Math.max(1,...(H.nc||[]));
+  return `<div><h1 class="titulo">Inside Sales · Objeções</h1><p class="sub">${esc(d.periodo||"")}. ${esc(d.intro||"")}</p></div>
+  <div class="metrics">${(d.kpis||[]).map(([a,b,c])=>`<div class="metric"><span>${esc(a)}</span><strong>${esc(b)}</strong><span class="meta">${esc(c)}</span></div>`).join("")}</div>
+  <section class="bloco"><h2 class="sec">Objeção identificada na conversa × motivo registrado no CRM</h2><p class="dica" style="margin:0 0 8px">Cada célula conta negociações da amostra. Uma negociação pode ter mais de uma objeção.</p>${heat(H.mot||[],H.nm||[],H.M1)}</section>
+  <section class="bloco"><h2 class="sec">Objeção × quanto o cliente já conhecia do produto</h2>${heat(H.cn||[],H.nc||[],H.M2)}</section>
+  <div class="is-grid2">
+    <section class="bloco"><h2 class="sec">Por que não querem híbrido</h2><ol class="obj-lista">${(d.motivos||[]).map(([t,x,q])=>`<li><strong>${esc(t)}.</strong><p>${esc(x)}</p>${q?`<blockquote>${esc(q)}</blockquote>`:""}</li>`).join("")}</ol>${d.ponto_cego?`<p class="obj-alerta">${esc(d.ponto_cego)}</p>`:""}</section>
+    <section class="bloco"><h2 class="sec">Chegam cientes ou precisam de explicação?</h2>
+      <div class="obj-barras">${(H.cn||[]).map((c,i)=>`<div class="obj-barra"><span>${esc(c)}</span><span class="t"><i style="width:${100*(H.nc[i]||0)/mx}%"></i></span><b>${H.nc[i]||0}</b></div>`).join("")}</div>
+      ${(d.conhecimento||[]).map(x=>`<p>${esc(x)}</p>`).join("")}</section>
+  </div>
+  <section class="bloco"><h2 class="sec">O que levar para o playbook</h2><ul class="obj-lista">${(d.playbook||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
+  <p class="precos-nota">Como foi feita: ${esc(d.metodo||"")} Atualizado em ${esc(String(d.atualizado||R.atualizado_em||"").slice(0,10).split("-").reverse().join("/"))}.</p>`;
+}
 function vInsideSales(){
+  if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
   if(S.isp==null)return `<div class="carregando">Carregando indicadores…</div>`;
   const T=S.isp["Time"];const cfg=(T&&T.dados&&T.dados.cfg)||{};const manager=veTimeIS();
   const atualiza=ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:"";
@@ -4816,7 +4850,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
-    if(["is-time","is-vend","is-neg"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(["is-time","is-vend","is-neg","is-obj"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
