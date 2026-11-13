@@ -574,6 +574,17 @@ main.largo{max-width:1120px}
 #f-prop{max-width:none}.pp-val{white-space:nowrap}
 .mk-custo-l{display:grid;grid-template-columns:1.2fr 1.8fr .9fr .9fr auto;gap:10px;align-items:end}.mk-mz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:700px){.mk-custo-l,.mk-mz{grid-template-columns:1fr}}.mk-quad{border-collapse:collapse;width:100%;min-width:620px}.mk-quad th,.mk-quad td{border:1px solid var(--linha,#e3e8ee);padding:8px;vertical-align:top;font-size:13px}.mk-quad td{height:64px}.mk-quad .q-verde{background:rgba(46,160,67,.10)}.mk-quad .q-amarelo{background:rgba(255,219,0,.16)}.mk-quad .q-vermelho{background:rgba(192,57,43,.08)}.mk-q-i{display:block;text-align:left;margin:2px 0}
 #f-mk-acao,#f-mk-solic{max-width:none}
+.mj-nav{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px;position:sticky;top:0;z-index:3;background:var(--fundo,#f3f6f9);padding:8px 0}
+.mj-aviso{border-left:4px solid var(--amarelo,#ffdb00);background:var(--branco);padding:12px 14px;border-radius:6px;margin-bottom:14px}
+.mj-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.mj-card{background:var(--branco);border:1px solid var(--linha,#e3e8ee);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}.mj-card>strong{font-size:17px;color:var(--azul)}.mj-card p{margin:0}
+.mj-num{font-size:22px;font-weight:700;color:var(--azul)}.mj-num small{font-size:13px;font-weight:500;color:inherit;opacity:.8}
+.mj-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}.mj-2>div{min-width:0}.mj-2 h3,.bloco h3{font-size:15px;margin:10px 0 4px}@media(max-width:760px){.mj-2{grid-template-columns:1fr}}
+.mj-ul{margin:4px 0 0;padding-left:20px}.mj-ul li{margin:4px 0}.mj-check{background:var(--branco);border:1px dashed var(--azul);border-radius:8px;padding:12px 14px;margin-top:12px}
+.mj-t{border-collapse:collapse;width:100%;min-width:560px}.mj-t th,.mj-t td{padding:9px 10px;border-bottom:1px solid var(--linha,#e3e8ee);text-align:left;vertical-align:top}.mj-t thead th{font-size:13px;background:var(--fundo,#f3f6f9)}.mj-t tbody th{font-weight:700}
+.mj-tl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:8px 0 4px}.mj-tl>div{background:var(--branco);border-top:4px solid var(--azul);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:4px}.mj-tl strong{color:var(--azul)}@media(max-width:760px){.mj-tl{grid-template-columns:1fr 1fr}}
+.mj-erros{padding-left:22px;margin:0}.mj-erros li{margin:8px 0}
+.mj-nav+.mj-aviso{scroll-margin-top:60px}.bloco[id^=mj-]{scroll-margin-top:70px}
+.mj-t tbody th{text-transform:none;letter-spacing:0;font-size:14px;color:inherit}
 </style>
 </head>
 <body>
@@ -1081,7 +1092,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261113085527";
+const APP_VER="20261113150215";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1297,7 +1308,7 @@ function cabecalho(){
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
 }
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
+  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -3423,6 +3434,86 @@ function vRVCanal(){
   ${vCanalEstoque(c)}
 `;
 }
+/* ===== Guia técnico de manejo dos híbridos ===== */
+const MJ_SEC=[["mj-produto","O que muda no híbrido"],["mj-armaz","1. Armazenamento"],["mj-solo","2. Solo"],["mj-janela","Janela de plantio"],["mj-plantio","3. Plantio"],["mj-germ","Germinação"],["mj-form","4. Formação e 1º pastejo"],["mj-cult","5. Cultivares"],["mj-cal","Calendário anual"],["mj-erros","10 erros mais comuns"]];
+function mjTab(cab,linhas,cls){return `<div class="tab"><table class="mj-t ${cls||""}"><thead><tr>${cab.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${linhas.map(l=>`<tr>${l.map((c,i)=>i===0?`<th scope="row">${c}</th>`:`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;}
+const mjLi=a=>`<ul class="mj-ul">${a.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+function vManejo(){
+  const nav=`<nav class="mj-nav" aria-label="Seções do guia">${MJ_SEC.map(([id,t])=>`<button class="chip" data-a="mj-ir" data-v="${id}">${t}</button>`).join("")}</nav>`;
+  return `<div><h1 class="titulo">Guia técnico de manejo dos híbridos</h1><p class="sub">Tudo o que o produtor precisa saber para o pasto híbrido produzir o máximo: armazenamento da semente, solo, plantio, germinação, formação, manejo de Sabiá, Cayana e Carcará, calendário do ano e os erros mais comuns. Use na conversa com o cliente e antes de qualquer plantio.</p></div>
+  ${nav}
+  <div class="mj-aviso" role="note"><strong>Material de apoio técnico.</strong> Não substitui a assistência agronômica. As recomendações variam com solo, clima, manejo e região, e as decisões na fazenda devem ser tomadas com engenheiro agrônomo ou zootecnista habilitado.</div>
+  <section class="bloco"><h2 class="sec">Como usar este guia</h2>
+    <div class="mj-cards">
+      <div class="mj-card"><strong>Produtor iniciante</strong><p>Ler do início ao fim antes do plantio, anotar as dúvidas e levar ao agrônomo.</p></div>
+      <div class="mj-card"><strong>Produtor experiente</strong><p>Ir direto a Cultivares (alturas e manejo) e a Plantio (parâmetros de calibragem).</p></div>
+      <div class="mj-card"><strong>Agrônomo ou zootecnista</strong><p>Parâmetros baseados em VCU e ensaios da rede técnica Barenbrug. Cultivares serve de ponto de partida para o diagnóstico.</p></div></div></section>
+
+  <section class="bloco" id="mj-produto"><h2 class="sec">Antes de tudo: o que muda no pasto híbrido</h2>
+    <div class="mj-cards">
+      <div class="mj-card"><strong>Genética</strong><p>Cruzamento controlado com heterose: raiz mais profunda, mais perfilhamento, sanidade superior e melhor distribuição de produção ao longo do ano. O Sabiá é <em>B. brizantha</em> × <em>B. ruziziensis</em>, com 4 ciclos de seleção. A semente não se multiplica na fazenda: cada área nova exige semente certificada.</p></div>
+      <div class="mj-card"><strong>Custo</strong><p>O quilo custa mais que o convencional, mas o custo por hectare instalado e por arroba produzida é menor. Em ensaios VCU, a produtividade animal sobre o convencional foi de +36% (Sabiá), +42,2% (Cayana) e +19% (Carcará). A comparação certa é R$ por hectare e R$ por arroba, não R$ por saco.</p></div>
+      <div class="mj-card"><strong>Manejo mais exigente</strong><p>O ganho depende de respeitar altura de entrada, altura de saída e lotação. Subpastejo desperdiça folha e antecipa o entouceiramento. Superpastejo destrói as reservas da raiz e abre espaço para invasoras.</p></div></div></section>
+
+  <section class="bloco" id="mj-armaz"><h2 class="sec">Etapa 1 · Armazenamento da semente</h2>
+    <div class="metrics"><div class="metric"><span>Condição ideal</span><strong>15 a 25 °C</strong><span class="meta">umidade relativa abaixo de 60%</span></div><div class="metric"><span>Atenção</span><strong>acima de 30 °C</strong><span class="meta">a longevidade da semente cai rápido</span></div><div class="metric"><span>Empilhamento</span><strong>até 5 sacos</strong><span class="meta">sobre estrado, a 50 cm das paredes</span></div></div>
+    <div class="mj-2"><div><h3>No recebimento</h3>${mjLi(["Conferir lote, validade, nota fiscal e o Certificado de Análise de Sementes (CAS).","Registrar e fotografar sacaria danificada na entrega.","Não abrir sementes peletizadas antes do uso."])}</div>
+      <div><h3>Onde guardar</h3>${mjLi(["Galpão coberto, seco, bem ventilado e sem sol direto.","Sobre estrado de madeira, nunca no chão.","Nunca junto de defensivos, fertilizantes, combustíveis, ração ou produtos voláteis.","Protegido de roedores e pássaros.","Plantar logo depois de receber, sempre que possível."])}</div></div>
+    <p class="meta">O CAS informa a data-limite da semente. Em dúvida sobre o lote, validar a germinação em laboratório credenciado antes do plantio.</p>
+    <div class="mj-check"><strong>Checklist antes do plantio</strong>${mjLi(["Sacos íntegros, sem furos, mofo ou odor estranho","Lote e validade conferem com a nota fiscal","Galpão seco, ventilado e sem contato com defensivos","Até 5 sacos empilhados sobre estrado de madeira","Temperatura abaixo de 25 °C e umidade abaixo de 60%","Semeadora calibrada para o dia do plantio"])}</div></section>
+
+  <section class="bloco" id="mj-solo"><h2 class="sec">Etapa 2 · Análise de solo, correção e preparo</h2>
+    ${mjTab(["Item","Recomendação"],[["Amostragem","Camadas de 0 a 20 cm (química) e 20 a 40 cm (subsuperfície). No máximo 20 ha por talhão homogêneo."],["Análise química","pH, MO, P, K, Ca, Mg, S, micronutrientes, V%, Al e CTC."],["Análise física","Textura e densidade, em áreas com suspeita de compactação."],["Calagem","60 a 90 dias antes do plantio, com o solo úmido."],["Gessagem","Quando há alumínio em subsuperfície ou camadas profundas de baixa fertilidade."],["Fosfatagem corretiva","Em solos muito pobres em fósforo, no preparo, antes da adubação de plantio."],["Micronutrientes","Zinco e boro costumam ser limitantes em solos de Cerrado."]])}
+    <p class="meta">As doses de calcário, gesso e adubo dependem do laudo da análise e da recomendação do agrônomo. A Barenbrug não emite recomendação personalizada de adubação.</p></section>
+
+  <section class="bloco" id="mj-janela"><h2 class="sec">Janela de plantio por região</h2>
+    ${mjTab(["Região","Janela","Observações"],[["Centro-Oeste","Outubro a dezembro","Plantio tardio (janeiro e fevereiro) só com chuva garantida e rebrota planejada."],["Sudeste","Outubro a dezembro","Em ILP depois de soja precoce, ajustar para o início de fevereiro, com cobertura de palhada."],["Sul","Outubro a novembro","Janela mais curta e risco climático maior. Atenção a geadas tardias e à taxa de semeadura."],["Norte","Outubro a dezembro","Pará, Tocantins, Rondônia, Acre e sul do Amazonas. Roraima e extremo norte do Amazonas têm regime invertido: plantio em maio e junho."],["Nordeste","Janeiro a julho","Acompanha o início das chuvas. MATOPIBA (oeste da BA, sul do MA, sul do PI e TO): outubro a dezembro."]])}
+    <p class="meta">Princípio geral: plantar com chuva suficiente para o pasto se estabelecer antes da seca. Confirmar a janela da microrregião com o técnico local e com o ZARC do MAPA.</p></section>
+
+  <section class="bloco" id="mj-plantio"><h2 class="sec">Etapa 3 · Plantio: método, profundidade e taxa de semeadura</h2>
+    <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Plantio direto ou em linha</span><strong>10 kg/ha</strong><span class="meta">base de referência Barenbrug</span></div><div class="metric"><span>Lanço, solo arenoso ou morro</span><strong>12 a 15 kg/ha</strong></div><div class="metric"><span>Drone ou avião</span><strong>até 2× a taxa</strong><span class="meta">do plantio direto</span></div><div class="metric"><span>Profundidade</span><strong>1 a 3 cm</strong><span class="meta">Cayana: 1 a 2 cm</span></div></div>
+    <p class="meta">A taxa final depende do método, do maquinário e do lote (pureza e germinação). Confirme com o técnico e com o manual da máquina.</p>
+    ${mjTab(["Método","Quando indicar","Custo","Risco","Atenção principal"],[["Semeadora de plantio direto","Grandes áreas, ILP, palhada de soja ou milho","Médio","Baixo","Calibragem precisa da dosagem"],["Semeadora convencional mecânica","Áreas de reforma com solo preparado","Médio","Baixo","Velocidade da operação"],["Semeadora elétrica de fluxo contínuo","Áreas pequenas a médias, plantio de precisão","Médio","Baixo","Velocidade constante e dosador calibrado"],["Lanço com distribuidor","Reforma, áreas pequenas e médias","Baixo","Médio","Cobertura da semente, enterradeira e rolo compressor"],["Lanço a avião","Áreas grandes, consórcio com soja ou arroz","Alto fixo","Médio","Janela de clima e regulagem aérea"],["Lanço com drone","Áreas pequenas a médias, relevo difícil","Médio","Médio","Operador habilitado e vento"],["Plantio direto sobre cobertura","ILP depois da colheita de grãos","Médio","Baixo","Palhada bem distribuída"]])}
+    <div class="mj-2"><div><h3>Profundidade por textura</h3>${mjLi(["Solo argiloso pesado: 1 a 2 cm.","Solo arenoso ou de textura média: 2 a 3 cm.","Cayana: 1 a 2 cm.","Mais de 3 cm a semente não emerge."])}
+        <h3>Calibragem da semeadora elétrica</h3>${mjLi(["Velocidade do trator constante, em geral 5 a 7 km/h.","Dosador calibrado com a semente real, com passada-teste em superfície dura, considerando pureza e viabilidade.","Profundidade conferida em 3 pontos da área.","Recalibrar a cada troca de lote, cultivar ou condição de solo."])}</div>
+      <div><h3>Adubação de plantio</h3>${mjLi(["Fósforo (P₂O₅) é o mais crítico no início, conforme a análise de solo.","Potássio (K₂O) todo no plantio ou parcelado, conforme a textura.","Pouco nitrogênio no plantio: a maior demanda vem no perfilhamento.","Zinco e boro costumam ser limitantes no Cerrado."])}
+        <h3>Rolo compressor</h3><p>Passar logo depois da semeadura, principalmente no plantio a lanço e em solo arenoso: melhora o contato da semente com o solo. Dispensar em solo úmido demais ou em plantio direto com palhada densa.</p></div></div></section>
+
+  <section class="bloco" id="mj-germ"><h2 class="sec">Germinação: por que demora e o que esperar</h2>
+    <p>O híbrido investe primeiro na raiz, por isso a parte aérea pode aparecer depois do que o produtor espera. Esperar até 21 dias faz parte do protocolo: demora não é sinal de semente ruim.</p>
+    ${mjTab(["Fase","Prazo","O que acontece"],[["Embebição","3 a 7 dias","Germinação dentro do solo, sem sinal na superfície"],["Emergência","7 a 14 dias","Até 21 dias em condições marginais"],["1ª folha verdadeira","14 a 21 dias",""],["Perfilhamento","A partir de 30 dias",""],["Cobertura uniforme","45 a 60 dias","Solo praticamente fechado, fase de pré-pastejo"]])}
+    <div class="mj-2"><div><h3>Sinais de que está tudo certo</h3>${mjLi(["Plântulas vigorosas e distribuição razoavelmente uniforme.","Cor verde-clara saudável.","Solo úmido na profundidade da raiz.","Floração em no máximo 5% da área."])}</div>
+      <div><h3>Sinais de alerta</h3>${mjLi(["Mais de 30% da área sem emergência depois de 21 dias: chamar o técnico.","Plântulas amareladas: sinal de falta de nitrogênio.","Plântulas arroxeadas: sinal de falta de fósforo.","Falhas em manchas: verificar formigueiro, cigarrinha ou compactação.","Plântulas rasteiras: verificar profundidade de semeadura ou tratamento de semente."])}</div></div>
+    <div class="mj-check"><strong>No primeiro mês, não fazer</strong>${mjLi(["Entrar com gado ou máquinas pesadas.","Aplicar produtos sem orientação técnica.","Aplicar herbicida pós-emergente antes de 3 folhas verdadeiras.","Replantar achando que a semente é ruim antes de 21 dias."])}</div></section>
+
+  <section class="bloco" id="mj-form"><h2 class="sec">Etapa 4 · Formação: do plantio ao primeiro pastejo (0 a 120 dias)</h2>
+    <div class="mj-tl">${[["D0","Plantio e rolo compressor"],["D7 a D14","Emergência (até D21 em condição marginal)"],["D30 a D45","Adubação de cobertura com nitrogênio"],["D45 a D60","Cobertura uniforme do solo"],["D90 a D120","Primeiro pastejo, se passar nos critérios"]].map(([d,t])=>`<div><strong>${d}</strong><span>${t}</span></div>`).join("")}</div>
+    <div class="mj-2"><div><h3>Adubação de cobertura</h3>${mjLi(["Entre 30 e 45 dias depois da emergência, com nitrogênio.","Preferir sulfato de amônio ou nitrato de amônio. A ureia perde nitrogênio por volatilização no clima quente e seco.","Em solo arenoso, parcelar a aplicação.","Em ILP, descontar o nitrogênio residual da soja, que pode reduzir a necessidade em até 30%.","A dose segue a recomendação do agrônomo."])}
+        <h3>Plantas daninhas</h3><p>Produto e dose exigem receita agronômica. Não aplicar antes de 3 a 4 folhas verdadeiras da forrageira.</p></div>
+      <div><h3>Liberação do primeiro pastejo</h3><p>Entre 90 e 120 dias depois do plantio, liberado pelos critérios e não pelo calendário:</p>${mjLi(["<strong>Teste de arranque:</strong> puxar algumas plantas com a mão. Se a raiz sair do solo, esperar.","<strong>Cobertura:</strong> solo coberto em mais de 80% da área plantada.","<strong>Floração:</strong> não entrar se houver floração generalizada.","<strong>Animais leves:</strong> bezerras ou novilhas, em pastejo de desponte (só o topo da planta), para estimular o perfilhamento sem danificar a raiz.","<strong>Altura de entrada:</strong> Sabiá 30 cm, Cayana 32 cm, Carcará 70 a 80 cm."])}</div></div></section>
+
+  <section class="bloco" id="mj-cult"><h2 class="sec">Etapa 5 · Manejo por cultivar</h2>
+    <div class="mj-cards mj-cult">
+      <div class="mj-card"><strong>Sabiá</strong><span class="meta"><em>Urochloa brizantha</em> × <em>U. ruziziensis</em> · referência Marandu</span><p class="mj-num">+36% <small>produtividade animal</small></p><p class="mj-num">+5,1 @/ha/ano</p>${mjLi(["Entrada 30 cm e saída 15 a 20 cm no rotacionado.","Contínuo: 25 a 30 cm.","Resíduo no inverno: 15 a 20 cm.","+42% de acúmulo de forragem e +62% de lâmina foliar na seca, sobre Marandu.","Proteína bruta de 9,2% a 13,4%.","Adaptação semelhante à do Marandu."])}</div>
+      <div class="mj-card"><strong>Cayana</strong><span class="meta"><em>Urochloa brizantha</em> · referência Marandu</span><p class="mj-num">+42,2% <small>produtividade animal (VCU UFU Capim Branco)</small></p><p class="mj-num">+8,0 @/ha/ano</p>${mjLi(["Entrada 32 cm e saída 16 a 20 cm no rotacionado.","Contínuo: 30 a 35 cm.","Taxa de 10, 12 ou 15 kg/ha em condição ideal, intermediária ou adversa. Profundidade de 1 a 2 cm.","Proteína bruta de 11,9% a 13,1% na matéria seca total e 13,6% na folha. Digestibilidade de 76,1% a 81,1%.","Acúmulo de 9,7 a 24,8 t/ha/ano e produtividade de 12,1 a 32,6 @/ha/ano.","Semi-decumbente, exigente em fertilidade e com alta resposta à adubação.","Chuva mínima de 800 mm, altitude até 1.800 m e até 6 meses sem chuva.","Primeiro pastejo entre 60 e 90 dias, conforme a fertilidade."])}</div>
+      <div class="mj-card"><strong>Carcará</strong><span class="meta"><em>Megathyrsus maximus</em> · referência Mombaça</span><p class="mj-num">+19% <small>rendimento animal (VCU)</small></p><p class="mj-num">+4,4 @/ha/ano</p>${mjLi(["Entrada 70 a 80 cm e resíduo de 35 a 40 cm.","Taxa de 8 a 10 kg/ha (semente incrustada).","Porte alto e alta produção de massa.","Para solos de média a alta fertilidade e sistemas intensivos, de preferência rotacionado.","Substitui diretamente o Mombaça."])}</div></div>
+    ${mjTab(["Altura de manejo","Sabiá","Cayana","Carcará"],[["Entrada (rotacionado)","30 cm","32 cm","70 a 80 cm"],["Saída (rotacionado)","15 a 20 cm","16 a 20 cm","35 a 40 cm"],["Pastejo contínuo","25 a 30 cm","30 a 35 cm","—"]])}</section>
+
+  <section class="bloco" id="mj-cal"><h2 class="sec">Calendário anual em quatro estações</h2>
+    <div class="mj-cards mj-cal">
+      <div class="mj-card"><strong>Águas</strong><span class="meta">outubro a março</span>${mjLi(["Ajustar a lotação ao pico de produção.","Monitorar a altura de entrada e de saída.","Adubação de manutenção depois de cada pastejo com N e K. Fósforo conforme a análise anual.","Começar o monitoramento de cigarrinha."])}</div>
+      <div class="mj-card"><strong>Transição águas-seca</strong><span class="meta">abril e maio</span>${mjLi(["Diferir áreas escolhidas 60 a 90 dias antes do fim das chuvas.","Manter resíduo mais alto para proteger as reservas da raiz.","Conservar forragem (silagem, pré-secado ou feno) quando couber.","Decidir a suplementação proteica da seca."])}</div>
+      <div class="mj-card"><strong>Seca</strong><span class="meta">junho a setembro</span>${mjLi(["Manejo conservador para proteger o banco de raízes.","Suplementação proteica ajustada à categoria animal.","Reservar o pasto em melhor condição para bezerros, novilhas e matrizes.","Manter alta população de perfilhos vivos."])}</div>
+      <div class="mj-card"><strong>Transição seca-águas</strong><span class="meta">setembro e outubro</span>${mjLi(["Evitar superpastejo nas primeiras chuvas.","Adubação nitrogenada de retomada com sulfato ou nitrato de amônio, não ureia.","Roçada de uniformização para tirar o material seco.","Monitorar cigarrinha e invasoras."])}</div></div></section>
+
+  <section class="bloco" id="mj-erros"><h2 class="sec">Os 10 erros mais comuns</h2>
+    <ol class="mj-erros">${[["Guardar a semente perto de defensivos ou em galpão úmido","Contaminação química e umidade acabam com a germinação. Separar das embalagens químicas, usar estrado e controlar temperatura e umidade."],["Plantar fora da janela da região","Um veranico pode matar as plântulas recém-emergidas. Respeitar o ZARC e o regime de chuvas."],["Semear a mais de 3 cm","A semente não emerge. Calibrar a semeadora para 1 a 3 cm, conforme a textura."],["Usar a mesma taxa em todos os métodos","Os 10 kg/ha valem para o plantio direto. Lanço, solo arenoso, drone e avião pedem taxa maior, a confirmar com o técnico."],["Replantar achando que a semente é ruim","O híbrido investe primeiro na raiz. Esperar até 21 dias antes de qualquer ação."],["Entrar com gado antes da raiz ancorar","Fazer o teste de arranque. Se a planta sai pela raiz, a pastagem não está pronta."],["Esperar a floração para o primeiro pastejo","A floração reduz a proteína, aumenta o colmo e atrasa a rebrota."],["Subpastejo nas águas","A sobra de pasto vira colmo e leva à degradação. Ajustar a lotação ao pico de produção."],["Superpastejo no início das chuvas","Manter a lotação da seca por mais 30 dias para a planta recompor as reservas da raiz."],["Plantar sem análise de solo","É o investimento mais barato e de maior retorno na reforma. Sem ela, a adubação fica no chute."]].map(([t,x])=>`<li><strong>${t}.</strong> ${x}</li>`).join("")}</ol></section>
+
+  <section class="bloco"><h2 class="sec">Ficou uma dúvida técnica?</h2><p class="sub" style="margin:0 0 10px">Leve a dúvida do cliente para o time técnico da Barenbrug.</p><div class="acoes" style="margin:0"><button class="btn" data-a="secao" data-v="duvidas">Abrir o Tira-Dúvidas</button><button class="btn sec" data-a="pag" data-v="base">Ver os materiais da Base de conhecimento</button></div></section>
+  <p class="meta">Conteúdo do Guia Técnico de Manejo dos Híbridos Barenbrug, safra 26/27.</p>`;
+}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mj-ir']");if(!b)return;ev.preventDefault();ev.stopPropagation();const el=document.getElementById(b.dataset.v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},true);
+
 function vBase(){
   const b=S.busca.toLowerCase();
   const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
@@ -5170,7 +5261,7 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
