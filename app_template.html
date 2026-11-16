@@ -601,6 +601,7 @@ main.largo{max-width:1120px}
 @media(max-width:760px){.msg-wrap{grid-template-columns:1fr;height:calc(100vh - 230px)}.msg-wrap.aberto .msg-lado{display:none}.msg-wrap:not(.aberto) .msg-painel{display:none}.msg-so-mob{display:inline}.msg-b{max-width:88%}}
 .msg-form textarea{font:inherit;padding:10px 12px;border:1px solid var(--linha);border-radius:8px}
 .pgd-x{border:1px solid var(--linha);border-radius:8px;padding:12px;margin:0 0 12px;background:var(--branco)}.pgd-x.neg{border-color:#e6b0aa;background:#fdf3f2}.pgd-x-msg{margin:10px 0 0;line-height:1.5}
+.tp-ed input{padding:6px 8px;font-size:13px;min-width:0;width:100%}.tp-ed td{padding:4px}.tp-oculto{opacity:.45}
 </style>
 </head>
 <body>
@@ -882,8 +883,8 @@ const RV_VEDADO=["Campanhas promocionais internas do time do canal","Prêmios ou
 let PRECOS_MESES=[],PRECOS_MES_ATUAL=0,PRECOS=[],FRETE=[],PRECOS_VER="";
 async function carregarPrecos(){
   if(S.precosOk!==undefined||S.precosBusy)return;S.precosBusy=true;
-  try{const {data}=await sb.from("tabela_precos").select("versao,meses,precos,frete").eq("id",1).maybeSingle();
-    if(data&&Array.isArray(data.precos)){PRECOS_MESES=data.meses||[];PRECOS=data.precos;FRETE=data.frete||[];PRECOS_VER=data.versao||"";
+  try{const {data}=await sb.from("tabela_precos").select("versao,meses,precos,frete,atualizado_em,atualizado_nome").eq("id",1).maybeSingle();
+    if(data&&Array.isArray(data.precos)){PRECOS_MESES=data.meses||[];PRECOS_TODOS=data.precos;PRECOS=data.precos.filter(p=>!p.oculto);PRECOS_INFO={em:data.atualizado_em,nome:data.atualizado_nome};FRETE=data.frete||[];PRECOS_VER=data.versao||"";
       const h=new Date(Date.now()-3*3600e3),k=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][h.getUTCMonth()]+"/"+String(h.getUTCFullYear()).slice(2);
       PRECOS_MES_ATUAL=Math.max(0,PRECOS_MESES.indexOf(k));S.precosOk=true;}else S.precosOk=false;}catch(e){S.precosOk=false;}
   S.precosBusy=false;
@@ -2852,6 +2853,60 @@ function vSimPrecos(){
       <label for="sp_fr">Frete (volumes abaixo de 15 t, FOB Guaíra)</label><select id="sp_fr" data-simp="frete"><option value="">Sem frete (CIF, carga fechada)</option>${FRETE.map(x=>`<option value="${x.uf}"${st.frete===x.uf?" selected":""}>${x.uf} · R$ ${x.f}/kg</option>`).join("")}</select></div>
   </div><div id="simp_out" aria-live="polite"></div></div></section>`;
 }
+/* ---------- Tabela de preços: edição (admin) ---------- */
+let PRECOS_TODOS=[],PRECOS_INFO={};
+const tpPodeEditar=()=>ehAdmin();
+function tpEditor(){
+  const E=S.tpEd;const meses=E.meses;
+  const lin=E.precos.map((p,i)=>`<tr class="${p.oculto?"tp-oculto":""}">
+    <td><input data-tp="cult" data-i="${i}" value="${esc(p.cult||"")}" aria-label="Cultivar"></td><td><input data-tp="cod" data-i="${i}" value="${esc(p.cod||"")}" aria-label="Código" style="width:90px"></td>
+    <td><input data-tp="cat" data-i="${i}" value="${esc(p.cat||"")}" aria-label="Gênero"></td><td><input data-tp="trat" data-i="${i}" value="${esc(p.trat||"")}" aria-label="Tratamento" style="width:120px"></td><td><input data-tp="emb" data-i="${i}" value="${esc(p.emb||"")}" aria-label="Embalagem" style="width:120px"></td>
+    ${meses.map((m,j)=>`<td><input data-tp="v" data-i="${i}" data-j="${j}" value="${esc((p.v||[])[j]||"")}" inputmode="decimal" aria-label="${esc(p.cult)} ${m}" style="width:70px"></td>`).join("")}
+    <td><button type="button" class="link" data-a="tp-ocultar" data-v="${i}">${p.oculto?"Mostrar":"Ocultar"}</button>${p.novo?` <button type="button" class="link perigo" data-a="tp-rm" data-v="${i}">remover</button>`:""}</td></tr>`).join("");
+  const fr=E.frete.map((f,i)=>`<tr><td><input data-tf="uf" data-i="${i}" value="${esc(f.uf||"")}"></td><td><input data-tf="f" data-i="${i}" value="${esc(f.f||"")}" inputmode="decimal" style="width:90px"></td><td><input data-tf="frac" data-i="${i}" value="${esc(f.frac||"")}" style="width:90px"></td></tr>`).join("");
+  return `<form id="f-tp" class="form-card" style="max-width:none">
+    <div class="mk-mz"><div><label for="tp_ver">Versão da tabela</label><input id="tp_ver" value="${esc(E.versao||"")}"></div></div>
+    <h3 style="margin:6px 0 0">Preços ao produtor (R$/kg)</h3>
+    <div class="tab"><table class="precos tp-ed"><thead><tr><th>Cultivar</th><th>Código</th><th>Gênero/Categoria</th><th>Tratamento</th><th>Embalagem</th>${meses.map(m=>`<th>${m}</th>`).join("")}<th></th></tr></thead><tbody>${lin}</tbody></table></div>
+    <div class="acoes" style="margin:0"><button type="button" class="btn sec" data-a="tp-add">Adicionar produto</button></div>
+    <p class="meta">Produto oculto some da tabela, das propostas e do simulador, mas fica guardado para voltar quando quiser. Valores com vírgula, ex.: 43,15.</p>
+    <h3 style="margin:6px 0 0">Frete (R$/kg)</h3>
+    <div class="tab"><table class="frete tp-ed"><thead><tr><th>UF / Região</th><th>Frete</th><th>Fracionado até 1.000 kg</th></tr></thead><tbody>${fr}</tbody></table></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar alterações</button><button type="button" class="btn sec" data-a="tp-cancela">Cancelar</button></div></form>`;
+}
+function tpLerForm(){const f=document.getElementById("f-tp");if(!f||!S.tpEd)return;const E=S.tpEd;
+  E.versao=f.querySelector("#tp_ver").value.trim();
+  f.querySelectorAll("[data-tp]").forEach(el=>{const p=E.precos[+el.dataset.i];if(!p)return;if(el.dataset.tp==="v"){p.v=p.v||[];p.v[+el.dataset.j]=el.value.trim();}else p[el.dataset.tp]=el.value.trim();});
+  f.querySelectorAll("[data-tf]").forEach(el=>{const x=E.frete[+el.dataset.i];if(x)x[el.dataset.tf]=el.value.trim();});}
+function tpDiff(A,B){const m=[];const nome=p=>p.cult+(p.cod?" ("+p.cod+")":"");
+  if((A.versao||"")!==(B.versao||""))m.push({campo:"Versão",de:A.versao||"",para:B.versao||""});
+  B.precos.forEach((p,i)=>{const o=A.precos[i];if(!o){m.push({campo:"Produto adicionado",de:"",para:nome(p)});return;}
+    ["cult","cod","cat","trat","emb"].forEach(k=>{if((o[k]||"")!==(p[k]||""))m.push({campo:nome(o)+" · "+k,de:o[k]||"",para:p[k]||""});});
+    (B.meses||[]).forEach((mm,j)=>{const a=(o.v||[])[j]||"",b=(p.v||[])[j]||"";if(a!==b)m.push({campo:nome(p)+" · "+mm,de:a,para:b});});
+    if(!!o.oculto!==!!p.oculto)m.push({campo:nome(p),de:o.oculto?"oculto":"visível",para:p.oculto?"oculto":"visível"});});
+  B.frete.forEach((x,i)=>{const o=A.frete[i]||{};["uf","f","frac"].forEach(k=>{if((o[k]||"")!==(x[k]||""))m.push({campo:"Frete "+(x.uf||o.uf||"")+" · "+k,de:o[k]||"",para:x[k]||""});});});
+  return m;}
+async function tpCarregarLog(){if(!tpPodeEditar())return;try{const {data}=await sb.from("tabela_precos_log").select("*").order("em",{ascending:false}).limit(30);S.tpLog=data||[];}catch(e){S.tpLog=[];}render();}
+function tpLogHTML(){if(!tpPodeEditar())return "";if(S.tpLog===undefined){S.tpLog=null;tpCarregarLog();}const L=S.tpLog||[];
+  return `<details class="lote"><summary>Histórico de alterações${L.length?" ("+L.length+")":""}</summary>${L.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Quando</th><th>Quem</th><th>O que mudou</th></tr></thead><tbody>${L.map(r=>`<tr><td>${fmtDataHora(r.em)}</td><td>${esc(r.por_nome||"")}</td><td>${(r.mudancas||[]).slice(0,40).map(x=>`${esc(x.campo)}: ${esc(x.de||"—")} → <strong>${esc(x.para||"—")}</strong>`).join("<br>")}${(r.mudancas||[]).length>40?"<br>…":""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma alteração registrada ainda.</div>`}</details>`;}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='tp-']");if(!b)return;ev.preventDefault();ev.stopPropagation();if(!tpPodeEditar())return;const a=b.dataset.a,v=+b.dataset.v;
+  if(a==="tp-editar"){S.tpEd=JSON.parse(JSON.stringify({versao:PRECOS_VER,meses:PRECOS_MESES,precos:PRECOS_TODOS,frete:FRETE}));S.tpOrig=JSON.parse(JSON.stringify(S.tpEd));render();return;}
+  if(a==="tp-cancela"){S.tpEd=null;render();return;}
+  tpLerForm();
+  if(a==="tp-add"){S.tpEd.precos.push({cult:"",cod:"",cat:"",trat:"",emb:"",v:S.tpEd.meses.map(()=>""),novo:true});render();return;}
+  if(a==="tp-ocultar"){const p=S.tpEd.precos[v];if(p)p.oculto=!p.oculto;render();return;}
+  if(a==="tp-rm"){S.tpEd.precos.splice(v,1);render();return;}
+},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-tp")return;ev.preventDefault();ev.stopImmediatePropagation();if(!tpPodeEditar())return;tpLerForm();
+  const E=S.tpEd;E.precos=E.precos.filter(p=>p.cult||p.cod).map(p=>{const q={...p};delete q.novo;return q;});
+  if(E.precos.some(p=>!p.cult)){aviso("Todo produto precisa de nome da cultivar.");return;}
+  const mud=tpDiff(S.tpOrig,E);if(!mud.length){S.tpEd=null;render();aviso("Nada mudou.");return;}
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  const {error}=await sb.from("tabela_precos").update({versao:E.versao,precos:E.precos,frete:E.frete}).eq("id",1);
+  if(error){btn.disabled=false;aviso("Não foi possível salvar a tabela.");return;}
+  try{await sb.from("tabela_precos_log").insert({mudancas:mud,por:S.user.id});}catch(e){}
+  S.tpEd=null;S.precosOk=undefined;S.tpLog=undefined;await carregarPrecos();render();aviso(`Tabela salva: ${mud.length} alteraç${mud.length>1?"ões":"ão"} registrada${mud.length>1?"s":""}.`);},true);
+
 function vPrecos(){
   if(S.precosOk===undefined){carregarPrecos().then(render);return `<div class="carregando">Carregando a tabela de preços…</div>`;}
   if(!S.precosOk)return `<div><h1 class="titulo">Tabela de preços</h1></div><section class="bloco"><p class="sub" style="margin:0">A tabela de preços não está liberada para o seu acesso. Peça ao administrador do portal.</p></section>`;
@@ -2861,12 +2916,14 @@ function vPrecos(){
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
   return `${voltar}
   <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
-  ${vSimPrecos()}
-  <section class="bloco"><h2 class="sec">Preços ao produtor (R$/kg)</h2>
+  ${S.tpEd&&tpPodeEditar()?`<section class="bloco"><h2 class="sec">Editar a tabela</h2>${tpEditor()}</section>`:`
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 class="sec">Preços ao produtor (R$/kg)</h2>${tpPodeEditar()?`<button class="btn sec" data-a="tp-editar">Editar tabela</button>`:""}</div>
     <div class="tab"><table class="precos"><thead><tr><th>Cultivar</th><th>Código</th><th>Gênero/Categoria</th><th>Tratamento</th><th>Embalagem</th>${th}</tr></thead><tbody>${linhas}</tbody></table></div>
-    <p class="precos-cap">Tratamento da ruziziensis inclui nematicida biológico (Yellow Jacket®).</p></section>
+    <p class="precos-cap">Tratamento da ruziziensis inclui nematicida biológico (Yellow Jacket®).${PRECOS_INFO.nome?` Última alteração: ${esc(PRECOS_INFO.nome)} em ${fmtDataHora(PRECOS_INFO.em)}.`:""}${tpPodeEditar()&&PRECOS_TODOS.length>PRECOS.length?` ${PRECOS_TODOS.length-PRECOS.length} produto(s) oculto(s).`:""}</p></section>
+  ${vSimPrecos()}
   <section class="bloco"><h2 class="sec">Tabela de frete (R$/kg)</h2>
     <div class="tab"><table class="frete"><thead><tr><th>UF / Região</th><th class="val">Frete (R$/kg)</th><th class="val">Fracionado até 1.000 kg</th></tr></thead><tbody>${frete}</tbody></table></div></section>
+  ${tpLogHTML()}`}
   <div class="precos-nota"><strong>Condições gerais</strong>
     <div class="cond"><ul style="margin:0;padding:0;list-style:disc"><li>Preços <strong>CIF</strong> para cargas fechadas acima de 15 t (exceto Roraima). Volumes menores: <strong>FOB</strong> Guaíra–SP + frete da tabela acima.</li>
     <li>Entrega em fazenda somente com carga fechada e estradas em boas condições (anexar roteiro e km).</li>
