@@ -1029,7 +1029,7 @@ function preloadCidades(perfil){
 
 /* ---------- boot ---------- */
 /* ---------- sessão: expiração por inatividade / tempo ---------- */
-const SESSAO_INATIV_MIN=30, SESSAO_MAX_H=12;
+const SESSAO_INATIV_MIN=240, SESSAO_MAX_H=12;
 function marcarAtividade(){try{localStorage.setItem("pc_lastact",String(Date.now()));}catch(e){}}
 function sessaoExpirada(){try{
   const la=+localStorage.getItem("pc_lastact")||0, ss=+localStorage.getItem("pc_sessstart")||0, n=Date.now();
