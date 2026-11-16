@@ -4673,6 +4673,38 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const L=[...mkSem(a),{id:Date.now().toString(36),cult:c,fin:f.querySelector("#ms2_f").value,kg,preco:mkSemPreco(c)||null,obs:f.querySelector("#ms2_o").value.trim()}];
   const patch={sementes:L};if(!a.pagamento)patch.pagamento=mkCusto(a)>0?"Dinheiro e produto":"Produto (bonificação)";await mkSalva(a.id,patch,"Semente lançada.");},true);
 
+/* ---------- Ações: pedido agrupado (mãe e filhas) ---------- */
+const mkFilhas=a=>(S.mk||[]).filter(x=>x.mae_id===a.id).sort((x,y)=>String(x.inicio||"").localeCompare(String(y.inicio||"")));
+const mkFoiAprov=x=>!["Solicitada","Em análise","Recusada","Cancelada"].includes(x.status);
+function mkGrupoResumo(a){const F=mkFilhas(a);const ped=F.reduce((t,x)=>t+(Number(x.verba_pedida)||0),0);
+  const apr=F.filter(mkFoiAprov).reduce((t,x)=>t+mkCusto(x),0),ana=F.filter(x=>x.status==="Em análise").reduce((t,x)=>t+mkCusto(x),0);
+  const pend=F.filter(x=>x.status==="Solicitada"),rec=F.filter(x=>x.status==="Recusada"||x.status==="Cancelada");
+  return {F,ped,apr,ana,pend,rec,pedPend:pend.reduce((t,x)=>t+(Number(x.verba_pedida)||0),0)};}
+function vMkGrupo(a){
+  const g=ehMkt(),R=mkGrupoResumo(a);if(!R.F.length)return `<section class="bloco"><div class="vazio">Nenhum pedido neste grupo.</div></section>`;
+  const st=x=>x.status==="Solicitada"?stTag("Aguardando","amarelo"):x.status==="Em análise"?stTag("Em análise","azul"):x.status==="Recusada"?stTag("Recusada","vermelho"):x.status==="Cancelada"?stTag("Cancelada","cinza"):stTag("Aprovada · "+x.status,"verde");
+  return `<section class="bloco"><h2 class="sec">Pedidos deste grupo · ${R.F.length}</h2>
+    <div class="metrics"><div class="metric"><span>Pedido</span><strong>${fmtK0(R.ped)}</strong><span class="meta">${R.F.length} eventos</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Aprovado</span><strong>${fmtK0(R.apr)}</strong><span class="meta">${R.ped?pctTxt(R.apr/R.ped)+" do pedido":""}</span></div>
+      <div class="metric"><span>Em análise</span><strong>${fmtK0(R.ana)}</strong><span class="meta">reservado como provisionado</span></div>
+      <div class="metric"><span>Aguardando decisão</span><strong>${fmtK0(R.pedPend)}</strong><span class="meta">${R.pend.length} pedidos${R.rec.length?` · ${R.rec.length} recusados`:""}</span></div></div>
+    <div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Evento</th><th>Quando</th><th class="val">Pedido</th><th class="val">Aprovado</th><th>Situação</th></tr></thead><tbody>
+      ${R.F.map(x=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${x.id}">${esc(x.titulo)}</button><br><span class="meta">${esc(x.local||"")}</span></td><td>${x.inicio?mkData(x.inicio)+(x.fim&&x.fim!==x.inicio?" a "+mkData(x.fim):""):"—"}</td><td class="val">${fmtK0(x.verba_pedida)}</td><td class="val">${mkFoiAprov(x)?fmtK0(mkCusto(x)):x.status==="Em análise"?`<span class="meta">${fmtK0(mkCusto(x))} reservado</span>`:"—"}</td><td>${st(x)}</td></tr>`).join("")}
+      <tr><td colspan="2"><strong>Total</strong></td><td class="val"><strong>${fmtK0(R.ped)}</strong></td><td class="val"><strong>${fmtK0(R.apr)}</strong></td><td></td></tr></tbody></table></div>
+    ${g&&R.pend.length?`<form id="f-mk-grupo" class="form-card" style="margin-top:10px"><h3 style="margin:0">Decidir os ${R.pend.length} pedidos que aguardam</h3>
+      <div class="mk-mz"><div><label for="mg_pct">Percentual do pedido a aprovar</label><input id="mg_pct" inputmode="numeric" value="100"><span class="meta">Ex.: 50 aprova metade do valor pedido em cada evento.</span></div><div style="grid-column:span 2"><label for="mg_obs">Mensagem para quem pediu</label><input id="mg_obs" maxlength="500" placeholder="Opcional: condições, contrapartidas"></div></div>
+      <div class="acoes"><button class="btn" type="submit" data-g="ok">Aprovar todos com esse percentual</button><button class="btn sec" type="submit" data-g="an">Colocar todos em análise</button></div>
+      <p class="meta">Para decidir um evento de cada vez, com valores diferentes, abra o evento na tabela. O total aprovado do grupo é a soma dos eventos.</p></form>`:""}</section>`;
+}
+function mkMaeLink(a){if(!a.mae_id)return "";const m=(S.mk||[]).find(x=>x.id===a.mae_id);return m?`<div class="nota-admin" style="margin:8px 0">Este evento faz parte do pedido <button class="link" data-a="mk-abrir" data-v="${m.id}">${esc(m.titulo)}</button>. Lá você vê o total pedido e o aprovado do grupo.</div>`:"";}
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-mk-grupo")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehMkt())return;
+  const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a)return;const R=mkGrupoResumo(a);const modo=(ev.submitter&&ev.submitter.dataset.g)||"ok";
+  const pct=Math.max(0,Math.min(100,parseFloat(String(f.querySelector("#mg_pct").value).replace(",","."))||0));const obs=f.querySelector("#mg_obs").value.trim()||null;
+  [...f.querySelectorAll("button")].forEach(b=>b.disabled=true);let ok=0;
+  for(const x of R.pend){const v=Math.round((Number(x.verba_pedida)||0)*pct)/100;
+    const r=modo==="an"?await sb.rpc("mkt_em_analise",{p_id:x.id,p_valor:v,p_obs:obs}):await sb.rpc("mkt_decidir",{p_id:x.id,p_ok:true,p_valor:v,p_obs:obs});if(!r.error)ok++;}
+  S.mk=null;await carregarMkt();carregarMkCard(a.id);aviso(modo==="an"?`${ok} pedidos em análise, com ${pct}% reservado na verba.`:`${ok} pedidos aprovados com ${pct}% do valor pedido.`);},true);
+
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
@@ -4711,21 +4743,24 @@ function mkFormHTML(a){
     <div class="acoes"><button class="btn" type="submit">${a.id?"Salvar":"Criar ação"}</button><button type="button" class="btn sec" data-a="${a.id?"mk-abrir":"pag"}" data-v="${a.id||"acoes-quadro"}">Cancelar</button></div>
   </form>`;
 }
-function mkSolLinha(a){const st=a.status==="Solicitada"?stTag("Aguardando o Marketing","amarelo"):a.status==="Em análise"?stTag("Em análise pelo Marketing","azul"):a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):stTag("Aprovada · "+a.status,"verde");
+function mkSolLinha(a){if(a.agrupador){const R=mkGrupoResumo(a);return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button><span class="meta">${esc([a.solicitante_nome?"pedido por "+a.solicitante_nome:"",R.F.length+" eventos",a.local||""].filter(Boolean).join(" · "))}</span><span class="bd-tags">${stTag("Pedido agrupado","azul")}${R.pend.length?stTag(R.pend.length+" aguardando","amarelo"):""}</span></div><div style="text-align:right"><strong class="val">${fmtK0(R.ped)}</strong><span class="meta" style="display:block">pedido</span><span class="meta" style="display:block">aprovado ${fmtK0(R.apr)}${R.ped?" ("+pctTxt(R.apr/R.ped)+")":""}</span></div></div>`;}
+  const st=a.status==="Solicitada"?stTag("Aguardando o Marketing","amarelo"):a.status==="Em análise"?stTag("Em análise pelo Marketing","azul"):a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):stTag("Aprovada · "+a.status,"verde");
   return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>
     <span class="meta">${esc([a.solicitante_nome?"pedido por "+a.solicitante_nome:"",fmtDataHora(a.criado_em),a.inicio?"evento em "+mkData(a.inicio):"",a.local||""].filter(Boolean).join(" · "))}</span><span class="bd-tags">${st}${a.brindes_pedidos?stTag("pede brindes","azul"):""}</span></div>
     <div style="text-align:right"><strong class="val">${fmtK0(a.verba_pedida)}</strong><span class="meta" style="display:block">verba pedida</span>${a.status!=="Solicitada"&&a.status!=="Recusada"&&a.status!=="Cancelada"&&Number(a.valor_prev)!==Number(a.verba_pedida)?`<span class="meta" style="display:block">aprovado ${fmtK0(a.valor_prev)}</span>`:""}</div></div>`;}
 function vAcoesSolic(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const g=ehMkt(),L=S.mk.filter(a=>a.solicitante||a.solicitante_nome||a.status==="Solicitada");
-  const ag=L.filter(a=>a.status==="Solicitada"||a.status==="Em análise"),ok=L.filter(a=>!["Solicitada","Em análise","Recusada","Cancelada"].includes(a.status)),nao=L.filter(a=>a.status==="Recusada"||a.status==="Cancelada");
+  const g=ehMkt(),L=S.mk.filter(a=>!a.mae_id&&(a.solicitante||a.solicitante_nome||a.status==="Solicitada"||a.agrupador));
+  const stG=a=>{if(!a.agrupador)return a.status;const R=mkGrupoResumo(a);return R.pend.length||R.F.some(x=>x.status==="Em análise")?"Solicitada":R.F.length&&R.F.every(x=>x.status==="Recusada"||x.status==="Cancelada")?"Recusada":"A fazer";};
+  const ag=L.filter(a=>["Solicitada","Em análise"].includes(stG(a))),ok=L.filter(a=>!["Solicitada","Em análise","Recusada","Cancelada"].includes(stG(a))),nao=L.filter(a=>a.status==="Recusada"||a.status==="Cancelada");
+  const nao2=L.filter(a=>["Recusada","Cancelada"].includes(stG(a)));
   const bl=(t,xs,v)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}</h2>${xs.length?`<div class="lista">${xs.map(mkSolLinha).join("")}</div>`:`<div class="vazio">${v}</div>`}</section>`;
   return `<div><h1 class="titulo">Solicitações de ação de marketing</h1><p class="sub">${g?"Pedidos de apoio e verba do time comercial e dos RCs. Abra a solicitação para conversar, aprovar com o valor e registrar a decisão. Aprovada, ela vira uma ação no quadro.":"Peça apoio do Marketing Barenbrug para uma ação, como um dia de campo, um evento ou material para clientes. Você acompanha o status e conversa com o Marketing pelos comentários da solicitação."} ${temPerfil("Comercial Barenbrug")&&!g?"Você também vê as solicitações dos RCs que supervisiona.":""}</p></div>
   ${mkPodeSolic()?`<div class="mk-barra"><button class="btn" data-a="pag" data-v="acoes-solic-nova">+ Nova solicitação</button></div>`:""}
   <p class="meta" style="margin:0">Revendas do Conecta Revendas pedem apoio pelo PGD, usando a verba do IGDB, dentro do Conecta Revendas.</p>
   ${bl(g?"Aguardando sua análise":"Aguardando o Marketing",ag,"Nada aguardando.")}
   ${bl("Aprovadas",ok,"Nenhuma aprovada ainda.")}
-  ${nao.length?bl("Recusadas e canceladas",nao,""):""}`;
+  ${nao2.length?bl("Recusadas e canceladas",nao2,""):""}`;
 }
 function vAcoesSolicNova(){
   return `<button class="voltar" data-a="pag" data-v="acoes-solic">‹ Solicitações</button>
@@ -4750,9 +4785,9 @@ function vAcoesCard(){
   const idx=MK_STATUS.indexOf(a.status);
   return `${(a.solicitante||a.solicitante_nome)&&(a.status==="Solicitada"||a.status==="Em análise"||a.status==="Recusada"||!g)?`<button class="voltar" data-a="pag" data-v="acoes-solic">‹ Solicitações</button>`:`<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>`}
   ${capa?`<div class="mk-capa-g"><img src="${esc(capa)}" alt=""></div>`:""}
-  <div><span class="rot">${esc(a.tipo||"Ação")} · ${esc(a.status)}</span><h1 class="titulo">${esc(a.titulo)}</h1>
+  <div><span class="rot">${a.agrupador?"Pedido agrupado":esc(a.tipo||"Ação")+" · "+esc(a.status)}</span><h1 class="titulo">${esc(a.titulo)}</h1>
     <p class="sub">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</p></div>
-  ${(a.solicitante||a.solicitante_nome||a.status==="Solicitada")?mkSolBlocoHTML(a):""}
+  ${a.agrupador?vMkGrupo(a):mkMaeLink(a)+((a.solicitante||a.solicitante_nome||a.status==="Solicitada")?mkSolBlocoHTML(a):"")}
   ${g&&a.status!=="Solicitada"&&a.status!=="Recusada"?`<div class="acoes" style="margin:0">${idx>0&&a.status!=="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="${MK_STATUS[idx-1]}">← ${MK_STATUS[idx-1]}</button>`:""}${idx<2?`<button class="btn" data-a="mk-mover" data-v="${MK_STATUS[idx+1]}">${MK_STATUS[idx+1]} →</button>`:""}${a.status==="Cancelada"?`<button class="btn sec" data-a="mk-mover" data-v="A fazer">Reabrir</button>`:`<button class="btn sec" data-a="mk-mover" data-v="Cancelada">Cancelar ação</button>`}<button class="btn sec" data-a="mk-editar">Editar</button>${S.mkDel?`<button class="btn perigo" data-a="mk-excluir">Confirmar exclusão</button><button class="link" data-a="mk-del-n">não excluir</button>`:`<button class="link perigo" data-a="mk-del">Excluir</button>`}</div>`:""}
   <div class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}<span class="meta">${MK_FIN_TXT[mkFin(a)]}${a.pago_em?" · paga em "+mkData(a.pago_em):""}</span>${mkAtrasada(a)?stTag("Atrasada: a data já passou e a ação não foi concluída","vermelho"):""}</div>
   <div class="metrics">
@@ -4762,7 +4797,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
-  ${vMkCustos(a)}${vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
+  ${a.agrupador?"":vMkCustos(a)+vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
