@@ -1118,7 +1118,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116163644";
+const APP_VER="20261116175700";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4854,11 +4854,11 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:s,p_valor:v||null,p_obs:o});if(error){aviso("Não foi possível registrar.");return;}
   S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":"Recusada. Saiu da verba.");},true);
 /* ---------- Ações: fonte da verba (Marketing ou verba do canal no Conecta) ---------- */
-const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)"];
+const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)","Marketing (Brindes)"];
 const MK_FONTES=[...MK_FONTES_MKT,"IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
 const mkEhFonteMkt=f=>!f||String(f).startsWith("Marketing");
 const mkFonteMkt=a=>{const f=a&&a.fonte;return !f||f==="Marketing"?"Marketing (Eventos)":f;};
-const mkContaChave=f=>/publicidade/i.test(f)?"publicidade":"evento";
+const mkContaChave=f=>/publicidade/i.test(f)?"publicidade":/brinde/i.test(f)?"brinde":"evento";
 function mkContaDe(f){const k=mkContaChave(f);return mkContas().filter(c=>finNorm(c.conta||"").includes(k));}
 const mkFonteCanal=a=>a&&!mkEhFonteMkt(a.fonte);
 const mkVerbaMkt=a=>!mkFonteCanal(a);
@@ -5038,17 +5038,24 @@ function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&!mkPeriodo(
 function mkPerTxt(a){const f=a.fim||a.inicio,d=x=>x.split("-").reverse().slice(0,2).join("/"),ini=a.inicio.slice(8)==="01",fimM=new Date(+f.slice(0,4),+f.slice(5,7),0).getDate()===+f.slice(8);
   if(ini&&fimM&&a.inicio.slice(0,7)===f.slice(0,7))return "data a definir no mês";return `${d(a.inicio)} a ${d(f)}`;}
 function mkContas(){const vb=S.mkVerba||{};let c=Array.isArray(vb.contas)?vb.contas:[];if(!c.length&&Number(vb.valor))c=[{cc:"",projeto:"",conta:"",valor:Number(vb.valor)}];return c;}
-function vMkVerbaContas(V){const C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v?esc(String(v).replace(".",",")):"";
-  const linhas=C.map((c,i)=>ed?`<tr><td><input id="vc_cc_${i}" value="${esc(c.cc||"")}" style="width:70px" aria-label="Centro de custo"></td><td><input id="vc_pj_${i}" value="${esc(c.projeto||"")}" style="width:70px" aria-label="Projeto"></td><td><input id="vc_ct_${i}" value="${esc(c.conta||"")}" aria-label="Descrição da conta"></td><td class="val"><input id="vc_v_${i}" inputmode="decimal" value="${n(c.valor)}" style="width:120px;text-align:right" aria-label="Valor"></td><td><button type="button" class="link" data-a="vc-del" data-v="${i}">remover</button></td></tr>`
-    :`<tr><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td>${esc(c.conta||"—")}</td><td class="val">${fmtK0(Number(c.valor)||0)}</td></tr>`).join("");
-  return `<form class="form-card" id="f-mk-verba"><h2 class="sec" style="margin:0">De onde vem a verba</h2><p class="meta">A verba disponível é a soma das contas abaixo. Para somar outra conta, use Editar e Adicionar conta.</p>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Centro de custo</th><th>Projeto</th><th>Descrição da conta</th><th class="val">Saldo (R$)</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="5" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
-  <tfoot><tr><th colspan="3">Total disponível</th><th class="val">${fmtK0(V)}</th>${ed?"<th></th>":""}</tr></tfoot></table></div>
+function mkSaldoConta(c){const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
+function vMkVerbaContas(V){const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v||v===0?esc(String(v).replace(".",",")):"";
+  const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0),gas=C.reduce((t,c)=>t+(Number(c.gasto_antes)||0),0),fal=C.filter(c=>mkSaldoConta(c)==null);
+  const inp=(id,v,w,lab,num)=>`<input id="${id}" value="${num?n(v):esc(v||"")}" ${num?'inputmode="decimal"':""} style="width:${w};${num?"text-align:right":""}" aria-label="${lab}">`;
+  const linhas=C.map((c,i)=>{const sd=mkSaldoConta(c);return ed?`<tr><td>${inp("vc_num_"+i,c.num,"64px","Número da conta")}</td><td>${inp("vc_ct_"+i,c.conta,"100%","Descrição da conta")}</td><td>${inp("vc_cc_"+i,c.cc,"52px","Centro de custo")}</td><td>${inp("vc_pj_"+i,c.projeto,"52px","Projeto")}</td><td class="val">${inp("vc_o_"+i,c.orcado,"110px","Orçado",1)}</td><td class="val">${inp("vc_g_"+i,c.gasto_antes,"110px","Gasto antes do portal",1)}</td><td class="val meta">calculado</td><td><button type="button" class="link" data-a="vc-del" data-v="${i}">remover</button></td></tr>`
+    :`<tr><td>${esc(c.num||"—")}</td><td>${esc(c.conta||"—")}</td><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td class="val">${c.orcado!=null&&c.orcado!==""?fmtK0(+c.orcado):"—"}</td><td class="val">${c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):'<span class="meta">a informar</span>'}</td><td class="val"><strong>${sd==null?'<span class="meta">a informar</span>':fmtK0(sd)}</strong></td></tr>`;}).join("");
+  const nc=ed?8:7;
+  return `<form class="form-card" id="f-mk-verba"><h2 class="sec" style="margin:0">Orçamento de Marketing ${esc(mkSafra)}</h2>
+  <p class="meta">Saldo disponível = orçado menos o que já foi gasto antes de as ações estarem no portal. A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto antes do portal</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
+  <tfoot><tr><th colspan="4">Subtotal das contas</th><th class="val">${fmtK0(orc)}</th><th class="val">${fmtK0(gas)}</th><th class="val">${fmtK0(V)}${fal.length?" *":""}</th>${ed?"<th></th>":""}</tr>
+  ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas":""}</th></tr>`:""}</tfoot></table></div>
+  ${fal.length?`<p class="meta" style="margin:4px 0 0">* Fora do total até informar o gasto anterior: ${fal.map(c=>esc(c.conta)).join(", ")}.</p>`:""}
   <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
-function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(Number(c.valor)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0};});
-  return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${x.tem?fmtK0(x.v):'<span class="meta">sem conta</span>'}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
-  <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade e Propaganda".</p>`;}
-function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";};return C.map((c,i)=>({cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),conta:g("vc_ct_"+i),valor:mkNum(g("vc_v_"+i))}));}
+function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(Number(c.valor)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
+  return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos", "Publicidade" ou "Brindes".</p>`;}
+function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";},nn=id=>{const t=g(id);return t===""?null:mkNum(t);};return C.map((c,i)=>{const x={num:g("vc_num_"+i),conta:g("vc_ct_"+i),cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),orcado:nn("vc_o_"+i),gasto_antes:nn("vc_g_"+i)};x.valor=mkSaldoConta(x);return x;});}
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
@@ -5467,7 +5474,7 @@ document.addEventListener("submit",async ev=>{
     if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
   if(f.id==="f-mk-com"){const tx=val("mk_com");if(!tx)return;if(btn)btn.disabled=true;const {error}=await sb.from("mkt_comentarios").insert({acao_id:S.mkSel,texto:tx.slice(0,4000)});if(error){if(btn)btn.disabled=false;aviso("Não foi possível comentar.");return;}carregarMkCard(S.mkSel);return;}
   if(f.id==="f-mk-link"){const u=val("mk_lurl");if(!/^https?:\/\//i.test(u)){aviso("Use um link começando com https://");return;}const {error}=await sb.rpc("mkt_anexar",{p_acao:S.mkSel,p_path:null,p_nome:val("mk_lnome")||null,p_tipo:null,p_tam:null,p_url:u});if(error){aviso("Não foi possível adicionar o link.");return;}S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Link adicionado.");return;}
-  if(f.id==="f-mk-verba"){if(!ehMkt()||!S.mkVerbaEd)return;const C=mkVcLer().filter(c=>c.cc||c.projeto||c.conta||c.valor);if(C.some(c=>!(c.valor>=0)||!c.conta)){aviso("Confira a descrição e o saldo de cada conta.");return;}
+  if(f.id==="f-mk-verba"){if(!ehMkt()||!S.mkVerbaEd)return;const C=mkVcLer().filter(c=>c.num||c.cc||c.projeto||c.conta||c.orcado!=null);if(C.some(c=>!c.conta||(c.orcado!=null&&!(c.orcado>=0))||(c.gasto_antes!=null&&!(c.gasto_antes>=0)))){aviso("Confira a descrição e os valores de cada conta.");return;}
     const v=C.reduce((t,c)=>t+(c.valor||0),0);const {data,error}=await sb.from("mkt_verba").update({valor:v,contas:C}).eq("safra",mkSafra).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar a verba.");return;}S.mkVerba=data;S.mkVerbaEd=null;render();aviso("Contas da verba salvas.");return;}
   if(f.id==="f-bd-req"){const C=bdCarr(),it=Object.entries(C).filter(([,q])=>q>0).map(([id,q])=>({id:+id,qtd:q}));if(!it.length)return;
     const mot=val("bd_mot"),dest=val("bd_dest");if(!mot||!dest){aviso("Informe o motivo e o destino.");return;}if(btn)btn.disabled=true;
