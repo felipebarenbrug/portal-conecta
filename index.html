@@ -1131,7 +1131,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116193707";
+const APP_VER="20261116193904";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5242,7 +5242,8 @@ function mkMidia(c){return mkEhPub(c)?Number((S.midia||{}).tot)||0:0;}
 function mkVerbaTotal(){const C=mkContas();if(!C.length)return Number((S.mkVerba||{}).valor)||0;return C.reduce((t,c)=>{const v=mkSaldoConta(c);return t+(v==null?0:v);},0);}
 function mkMidiaProj(c){if(!mkEhPub(c)||!S.md||!S.md.d||!S.md.d.length)return 0;const R=mdResumo();return Math.round(R.vd*R.restSafra);}
 function mkSaldoHoje(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Number(c.orcado)-(Number(c.gasto_antes)||0)-md;return mkSaldoBase(c);}
-function mkSaldoConta(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Number(c.orcado)-(Number(c.gasto_antes)||0)-md-mkMidiaProj(c);return mkSaldoBase(c);}
+const mkSubGasto=c=>Array.isArray(c.sub)?c.sub.filter(x=>!x.midia).reduce((t,x)=>t+(Number(x.gasto)||0),0):0;
+function mkSaldoConta(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Number(c.orcado)-(Number(c.gasto_antes)||0)-mkSubGasto(c)-md-mkMidiaProj(c);return mkSaldoBase(c);}
 function mkSaldoBase(c){const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
 function vMkVerbaContas(V){if(!S.md)carregarMidia();const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v||v===0?esc(String(v).replace(".",",")):"";
   const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0),gas=C.reduce((t,c)=>t+(Number(c.gasto_antes)||0)+mkMidia(c),0),fal=C.filter(c=>mkSaldoConta(c)==null);
@@ -5264,10 +5265,11 @@ function vMkOrcCards(C,V,vb){const R=S.md&&S.md.d&&S.md.d.length?mdResumo():null
     return `<div class="orc-c"><div class="orc-h"><strong>${esc(c.num||"")} · ${esc(c.conta||"")}</strong><span class="meta">CC ${esc(c.cc||"—")} · projeto ${esc(c.projeto||"—")}</span></div>
       ${lin("Orçado",o!=null?fmtK0(o):"—")}
       ${md?lin(`Mídia Meta Ads já gasta<span class="meta"> até ${mdData((S.midia||{}).ate||"")}</span>`,"− "+fmtK0(md)):""}
-      ${lin(md?"Outras ações de publicidade":"Gasto antes do portal",ga!=null?"− "+fmtK0(ga):'<span class="meta">a informar</span>')}
+      ${Array.isArray(c.sub)&&c.sub.length?(ga?lin("Outros gastos já lançados","− "+fmtK0(ga)):""):lin(md?"Outras ações de publicidade":"Gasto antes do portal",ga!=null?"− "+fmtK0(ga):'<span class="meta">a informar</span>')}
       ${pj?lin(`Mídia projetada até 30/06/2027<span class="meta"> ${R?isR(R.vd)+"/dia × "+R.restSafra+" dias":""}</span>`,"− "+fmtK0(pj)):""}
       ${lin(pj?"Saldo livre na safra":"Saldo disponível",sd==null?'<span class="meta">a informar</span>':fmtK0(sd),"orc-tot"+(sd!=null&&sd<0?" neg":""))}
-      ${md&&mdVerbaDigital()&&o!=null?(()=>{const vd=mdVerbaDigital(),sobra=vd-md-pj;return `<div class="orc-sub">${lin("Dentro do orçado: verba de mídia digital",fmtK0(vd))}${lin("Sobra projetada da mídia digital",fmtK0(sobra),sobra<0?"neg":"")}${lin("Para outras ações de publicidade",fmtK0(o-vd)+(ga!=null?`<span class="meta">${fmtK0(ga)} já usados</span>`:""))}</div>`;})():""}</div>`;}).join("");
+      ${Array.isArray(c.sub)&&c.sub.length?`<div class="orc-sub"><span class="meta" style="font-weight:700">Divisão do orçado</span>${c.sub.map(x=>{const v=Number(x.valor)||0;const usado=x.midia?md+pj:(Number(x.gasto)||0);const sb=v-usado;
+        return lin(`${esc(x.nome)}<span class="meta">${fmtK0(v)} · ${x.midia?`gasto ${fmtK0(md)} + projetado ${fmtK0(pj)}`:usado?`usado ${fmtK0(usado)}`:"nada usado ainda"}</span>`,(x.midia?"sobra ":"saldo ")+fmtK0(sb),sb<0?"neg":"");}).join("")}</div>`:""}</div>`;}).join("");
   const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0);
   return `<div class="orc-cards">${cards}</div>
   <div class="orc-c orc-res">${lin("Orçado nas contas",fmtK0(orc))}${lin("Saldo livre somado",fmtK0(V),"orc-tot")}${vb.grupo_orcado?lin(`Grupo ${esc(vb.grupo_nome||"")}<span class="meta"> inclui a conta 1221 Brindes, controlada no Painel de brindes</span>`,fmtK0(+vb.grupo_orcado)):""}</div>`;}
@@ -5293,7 +5295,7 @@ function vMkFila(A){
 function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(mkSaldoConta(c)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
   return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
   <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade". Brindes (conta 1221) ficam no Painel de brindes.</p>`;}
-function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";},nn=id=>{const t=g(id);return t===""?null:mkNum(t);};return C.map((c,i)=>{const x={num:g("vc_num_"+i),conta:g("vc_ct_"+i),cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),orcado:nn("vc_o_"+i),gasto_antes:nn("vc_g_"+i)};x.valor=mkSaldoConta(x);return x;});}
+function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";},nn=id=>{const t=g(id);return t===""?null:mkNum(t);};return C.map((c,i)=>{const x={num:g("vc_num_"+i),conta:g("vc_ct_"+i),cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),orcado:nn("vc_o_"+i),gasto_antes:nn("vc_g_"+i)};if(C[i]&&C[i].sub)x.sub=C[i].sub;x.valor=mkSaldoConta(x);return x;});}
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
