@@ -600,6 +600,7 @@ main.largo{max-width:1120px}
 .msg-vazio{margin:auto;padding:24px}.msg-so-mob{display:none}
 @media(max-width:760px){.msg-wrap{grid-template-columns:1fr;height:calc(100vh - 230px)}.msg-wrap.aberto .msg-lado{display:none}.msg-wrap:not(.aberto) .msg-painel{display:none}.msg-so-mob{display:inline}.msg-b{max-width:88%}}
 .msg-form textarea{font:inherit;padding:10px 12px;border:1px solid var(--linha);border-radius:8px}
+.pgd-x{border:1px solid var(--linha);border-radius:8px;padding:12px;margin:0 0 12px;background:var(--branco)}.pgd-x.neg{border-color:#e6b0aa;background:#fdf3f2}.pgd-x-msg{margin:10px 0 0;line-height:1.5}
 </style>
 </head>
 <body>
@@ -1107,7 +1108,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116093241";
+const APP_VER="20261116100754";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3238,6 +3239,15 @@ function metricasCanal(c){
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,aprovIG:som("Aprovado",false),aprovBP:som("Aprovado",true),analiseIG:som("Em Análise",false),saldo:igdb-som("Aprovado",false),faltaKg,soma:aprov+analise};
 }
+function vPlanoXIgdb(m){
+  const plano=(m.aprovIG||0)+(m.analiseIG||0);if(!plano)return "";
+  const est=m.mIgdb||0,saldo=est-plano,neg=saldo<0;
+  return `<div class="pgd-x ${neg?"neg":"ok"}"><div class="metrics">
+    <div class="metric"><span>Plano de geração de demanda</span><strong>${fmtK0(plano)}</strong><span class="meta">ações de IGDB aprovadas (${fmtK0(m.aprovIG)}) e em análise (${fmtK0(m.analiseIG)})</span></div>
+    <div class="metric"><span>IGDB estimado na safra</span><strong>${fmtK0(est)}</strong><span class="meta">meta de híbridos a ${m.pxH?"R$ "+Number(m.pxH).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"/kg":"preço a definir"} × ${pctTxt(m.g.ih)}${m.rsC?" + convencionais comprados × "+pctTxt(m.g.ic):" (convencionais somam "+pctTxt(m.g.ic)+" quando comprados)"} · gerado até agora: ${fmtK0(m.igdb)}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px ${neg?"#c0392b":"#2e8b57"}"><span>Saldo (IGDB estimado − plano)</span><strong style="color:${neg?"#c0392b":"inherit"}">${fmtK0(saldo)}</strong><span class="meta">${neg?"o plano passa o IGDB estimado":"o IGDB estimado cobre o plano"}</span></div></div>
+    ${neg?`<p class="pgd-x-msg"><strong>Atenção: o IGDB estimado não cobre todo o plano.</strong> A Barenbrug reembolsa as ações aprovadas até o limite do IGDB gerado pelas compras de híbridos e convencionais da safra. Com as compras na meta, ${fmtK0(-saldo)} do plano ficam por conta da revenda. Cada compra acima da meta, de híbridos ou de convencionais, aumenta o IGDB e reduz essa diferença.</p>`:""}</div>`;
+}
 const barraMeta=(m)=>{const p=m.ating==null?0:Math.min(1,m.ating);return `<div class="resumo"><div class="barra"><i style="width:${Math.round(p*100)}%"></i></div><span>${m.ating==null?"Meta não definida":`${pctTxt(m.ating)} da meta de híbridos`}</span></div>`;};
 const statusBonus=m=>m.ating==null?"Sem meta definida":m.fator===1?"Meta batida: bônus de 100% do tier":m.fator===.7?"Entre 90% e 99,99%: bônus de 70% do tier":`Abaixo de 90% da meta: sem bônus por enquanto (faltam ${fmtKg(Math.max(0,Math.ceil(m.meta*.9-m.kgH)))} para 90%)`;
 function vRVPainel(){
@@ -3495,6 +3505,7 @@ function vRVCanal(){
   <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
+  ${vPlanoXIgdb(m)}
   ${S.editCanal?vCanalEditor(c):""}
   ${S.novaAcao&&S.novaAcao!=="bp"?vNovaAcao():""}
   ${acIG.length?`<div class="acoes-grid">${acIG.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma ação de IGDB cadastrada.</div>`}
