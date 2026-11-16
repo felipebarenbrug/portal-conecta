@@ -1108,7 +1108,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116122533";
+const APP_VER="20261116122916";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4552,7 +4552,7 @@ const MK_RES_OBJ=["Venda","Geração de leads","Relacionamento com canal","Marca
 const mkLinhas=a=>Array.isArray(a.custos)?a.custos:[];
 const mkSomaL=L=>({prev:L.reduce((t,x)=>t+(Number(x.prev)||0),0),real:L.reduce((t,x)=>t+(Number(x.real)||0),0)});
 const mkBrindes=a=>(S.mkBrAcao&&S.mkBrAcao[a.id])||0;
-const mkCustoTotal=a=>mkCusto(a)+mkBrindes(a);
+const mkCustoTotal=a=>mkCusto(a)+mkBrindes(a)+(typeof mkSemTotal==="function"?mkSemTotal(a):0);
 function mkScore(m){if(!m)return null;const ad=+m.aderencia||0;const voz=(!m.area_demo||!m.palestra)?0:(m.area_demo==="Sim"&&m.palestra==="Sim")?3:(m.area_demo==="Sim"||m.palestra==="Sim")?2:1;
   const sc=voz*2+ad;const rec=!ad||!voz?"Nota incompleta":sc>=8?"Participar · prioridade":sc>=5?"Avaliar":"Não priorizar";
   const vozT=voz===3?"Campo + palco":voz===2?(m.area_demo==="Sim"?"Campo (produto no chão)":"Palco / palestra"):voz===1?"Estande com rizotron e amostra":"A confirmar";return {voz,ad,sc,rec,vozT};}
@@ -4645,6 +4645,34 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!["f-mk-c
     S.mkResAberto=false;await mkSalva(a.id,{resultado:r},"Resultado salvo.");return;}
 },true);
 
+/* ---------- Ações: sementes (bonificação e plantio) e forma de pagamento ---------- */
+const MK_SEM_CULT=["Sabiá","Cayana","Carcará"];
+const MK_SEM_FIN=["Bonificação (pagamento em produto)","Plantio de área demonstrativa"];
+const MK_PAGTO=["Dinheiro","Produto (bonificação)","Dinheiro e produto","Sem custo"];
+const mkSem=a=>Array.isArray(a.sementes)?a.sementes:[];
+function mkSemPreco(c){const r=(typeof PRECOS!=="undefined"?PRECOS:[]).find(p=>p.cult===c);if(!r)return 0;const v=String(r.v[PRECOS_MES_ATUAL]||r.v[0]||"0").replace(/\./g,"").replace(",",".");return Number(v)||0;}
+const mkSemValor=x=>(Number(x.kg)||0)*(Number(x.preco)||mkSemPreco(x.cult));
+const mkSemTotal=a=>mkSem(a).reduce((t,x)=>t+mkSemValor(x),0);
+function vMkSementes(a){
+  const g=ehMkt(),L=mkSem(a);if(!g&&!L.length&&!a.pagamento)return "";
+  if(g&&!S.precosOk&&!S._mkPrecoBusy){S._mkPrecoBusy=1;carregarPrecos().then(()=>render());}
+  const kg=L.reduce((t,x)=>t+(Number(x.kg)||0),0),tot=mkSemTotal(a);
+  return `<section class="bloco"><h2 class="sec">Pagamento e sementes</h2>
+    <div class="mk-mz" style="margin-bottom:10px"><div><label for="mkp_pg">Forma de pagamento</label>${g?`<select id="mkp_pg" data-mk-pg="${a.id}"><option value="">—</option>${MK_PAGTO.map(o=>`<option ${o===a.pagamento?"selected":""}>${o}</option>`).join("")}</select>`:`<div class="pp-val">${esc(a.pagamento||"—")}</div>`}</div>
+      <div><label>Em dinheiro</label><div class="pp-val">${fmtK0(mkCusto(a))}</div></div><div><label>Em produto (preço de tabela)</label><div class="pp-val">${fmtK0(tot)}${kg?` · ${isNum(kg)} kg`:""}</div></div></div>
+    ${L.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th>Para quê</th><th class="val">Quantidade</th><th class="val">Preço de tabela</th><th class="val">Valor</th>${g?"<th></th>":""}</tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.cult)}</strong></td><td>${esc(x.fin||"")}${x.obs?`<br><span class="meta">${esc(x.obs)}</span>`:""}</td><td class="val">${isNum(x.kg)} kg</td><td class="val">R$ ${(Number(x.preco)||mkSemPreco(x.cult)).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}/kg</td><td class="val">${fmtK0(mkSemValor(x))}</td>${g?`<td class="val"><button class="link perigo" data-a="mk-sem-rm" data-v="${esc(x.id)}">remover</button></td>`:""}</tr>`).join("")}
+      <tr><td colspan="2"><strong>Total em sementes</strong></td><td class="val"><strong>${isNum(kg)} kg</strong></td><td></td><td class="val"><strong>${fmtK0(tot)}</strong></td>${g?"<td></td>":""}</tr></tbody></table></div>`:`<div class="vazio">Nenhuma semente lançada. Use quando a ação for paga em bonificação de produto ou precisar de semente para plantar área demonstrativa.</div>`}
+    ${g?`<form id="f-mk-sem" class="form-card" style="margin-top:8px"><div class="mk-custo-l"><div><label for="ms2_c">Cultivar</label><select id="ms2_c">${MK_SEM_CULT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="ms2_f">Para quê</label><select id="ms2_f">${MK_SEM_FIN.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="ms2_k">Quantidade (kg)</label><input id="ms2_k" inputmode="numeric" placeholder="Ex.: 100"></div><div><label for="ms2_o">Observação</label><input id="ms2_o" maxlength="160" placeholder="Ex.: enviar até 01/12"></div><div><button class="btn sec" type="submit">Adicionar semente</button></div></div>
+      <span class="meta">O valor usa a tabela de preços do mês atual${S.precosOk?"":" (carregando a tabela…)"}. Ele entra no custo da ação e no retorno, separado da verba em dinheiro.</span></form>`:""}</section>`;
+}
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.mkPg||!ehMkt())return;await mkSalva(+t.dataset.mkPg,{pagamento:t.value||null},"Forma de pagamento salva.");});
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-sem-rm']");if(!b)return;ev.preventDefault();ev.stopPropagation();const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;
+  await mkSalva(a.id,{sementes:mkSem(a).filter(x=>x.id!==b.dataset.v)},"Semente removida.");},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-mk-sem")return;ev.preventDefault();ev.stopImmediatePropagation();const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;
+  const kg=parseInt(String(f.querySelector("#ms2_k").value).replace(/\D/g,""))||0;if(!kg){aviso("Informe a quantidade em kg.");return;}const c=f.querySelector("#ms2_c").value;
+  const L=[...mkSem(a),{id:Date.now().toString(36),cult:c,fin:f.querySelector("#ms2_f").value,kg,preco:mkSemPreco(c)||null,obs:f.querySelector("#ms2_o").value.trim()}];
+  const patch={sementes:L};if(!a.pagamento)patch.pagamento=mkCusto(a)>0?"Dinheiro e produto":"Produto (bonificação)";await mkSalva(a.id,patch,"Semente lançada.");},true);
+
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
@@ -4734,7 +4762,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
-  ${vMkCustos(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
+  ${vMkCustos(a)}${vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
@@ -4855,6 +4883,7 @@ function vAcoesPainel(){
     <div class="metric"><span>Pago</span><strong>${fmtK0(vPag)}</strong><span class="meta">já saiu da verba</span></div>
     <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(vApr)}</strong><span class="meta">compromisso assumido</span></div>
     <div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong><span class="meta">reservado, ainda sem aprovação${(()=>{const ea=A.filter(a=>a.status==="Em análise");return ea.length?` · ${ea.length} em análise: ${fmtK0(ea.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}</span></div>
+    ${(()=>{const o={};A.forEach(x=>mkSem(x).forEach(i=>{o[i.cult]=(o[i.cult]||0)+(Number(i.kg)||0);}));const ks=Object.keys(o);return ks.length?`<div class="metric"><span>Sementes comprometidas</span><strong>${isNum(ks.reduce((t,k)=>t+o[k],0))} kg</strong><span class="meta">${ks.map(k=>k+" "+isNum(o[k])+" kg").join(" · ")} · ${fmtK0(A.reduce((t,x)=>t+mkSemTotal(x),0))} em produto, fora da verba em dinheiro</span></div>`:"";})()}
     <div class="metric"><span>Saldo só com o aprovado</span><strong>${fmtK0(V-vPag-vApr)}</strong><span class="meta">verba menos pago e aprovado; com a provisão: ${fmtK0(saldo)}</span></div>
   </div>
   ${finBarra(V?comp/V:null,"da verba comprometida")}
