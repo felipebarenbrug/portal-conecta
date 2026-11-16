@@ -546,6 +546,9 @@ main.largo{max-width:1120px}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
 .uf-grid{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.uf-chip{padding:3px 8px;font-size:12px;min-width:38px}
+.rfv-segs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:8px}
+.rfv-seg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-radius:8px;padding:10px 12px;background:var(--branco);cursor:pointer;font:inherit;color:inherit}
+.rfv-seg.on{border-color:var(--azul);box-shadow:inset 0 0 0 1px var(--azul)}.rfv-seg .meta{font-size:12.5px;line-height:1.35}
 .mz-q{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}.mz-q legend{font-weight:600;font-size:14px;padding:0;margin-bottom:6px}
 .mz-ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:6px}
 .mz-op{display:flex!important;margin:0;font-weight:400;gap:8px;align-items:flex-start;border:1px solid var(--linha,#d8dee4);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13.5px;line-height:1.35;background:var(--branco,#fff)}
@@ -1118,7 +1121,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116183602";
+const APP_VER="20261116184748";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1465,8 +1468,168 @@ async function carregarISP(){
   try{const [a,b]=await Promise.all([sb.from("is_painel").select("*"),S.demo?Promise.resolve({data:false}):sb.rpc("is_ve_time")]);S.isTime=!!b.data;S.isp={};(a.data||[]).forEach(r=>{S.isp[r.pessoa]=r;});}catch(e){S.isp={};}
   if(!Object.keys(S.isp).length&&!S.crm)await carregarCRM();
 }
+/* ===== Mídia digital (Meta Ads via MCP) ===== */
+const MD_SAFRA_FIM="2027-06-30";
+const MD_OBJ={OUTCOME_LEADS:"Geração de leads",OUTCOME_AWARENESS:"Reconhecimento",OUTCOME_ENGAGEMENT:"Engajamento",LINK_CLICKS:"Tráfego (post impulsionado)",OUTCOME_TRAFFIC:"Tráfego",OUTCOME_SALES:"Vendas"};
+const mdData=s=>s?String(s).slice(0,10).split("-").reverse().join("/"):"";
+const mdK=v=>{v=Number(v)||0;return v>=1e6?(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mi":v>=1e4?Math.round(v/1e3).toLocaleString("pt-BR")+" mil":Math.round(v).toLocaleString("pt-BR");};
+const mdR2=v=>"R$ "+(Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function carregarMidia(forca){
+  if(S.md&&!forca)return;S.md={carregando:true};
+  try{const [d,c,r,a,ct]=await Promise.all([
+    sb.from("midia_diaria").select("dia,gasto,impressoes,alcance,cliques,leads").gte("dia",MK_SAFRA_INI).order("dia"),
+    sb.from("midia_campanhas").select("*").order("gasto",{ascending:false}),
+    sb.from("midia_regiao").select("*").order("gasto",{ascending:false}),
+    sb.from("midia_atualizacoes").select("*").order("feito_em",{ascending:false}).limit(5),
+    sb.from("midia_contas").select("*")]);
+    S.md={d:d.data||[],c:c.data||[],r:r.data||[],a:a.data||[],ct:ct.data||[]};}
+  catch(e){S.md={d:[],c:[],r:[],a:[],ct:[]};}
+  render();
+}
+function mdResumo(){
+  const M=S.md||{},D=M.d||[];const ate=D.length?D[D.length-1].dia:mkHoje();
+  const soma=(L,k)=>L.reduce((t,x)=>t+(Number(x[k])||0),0);
+  const mes=ate.slice(0,7),Dm=D.filter(x=>x.dia.slice(0,7)===mes);
+  const y=+ate.slice(0,4),mo=+ate.slice(5,7),dd=+ate.slice(8,10),diasMes=new Date(y,mo,0).getDate();
+  const ativas=(M.c||[]).filter(c=>c.status==="ACTIVE");
+  const vdCamp=ativas.reduce((t,c)=>t+(Number(c.verba_diaria)||0),0);
+  const ult7=D.slice(-7),med7=ult7.length?soma(ult7,"gasto")/ult7.length:0;
+  const vd=vdCamp||med7;
+  const restMes=Math.max(0,diasMes-dd),restSafra=Math.max(0,Math.round((new Date(MD_SAFRA_FIM+"T12:00")-new Date(ate+"T12:00"))/864e5));
+  const tot=soma(D,"gasto"),gm=soma(Dm,"gasto");
+  return {D,ate,mes,tot,gm,vd,vdCamp,med7,restMes,restSafra,projMes:gm+vd*restMes,projSafra:tot+vd*restSafra,ativas,
+    imp:soma(D,"impressoes"),cli:soma(D,"cliques"),leads:soma(D,"leads"),diasMes};
+}
+function mdMeses(D){const o={};D.forEach(x=>{const k=x.dia.slice(0,7);const a=o[k]||(o[k]={k,g:0,i:0,c:0,l:0,n:0});a.g+=Number(x.gasto)||0;a.i+=Number(x.impressoes)||0;a.c+=Number(x.cliques)||0;a.l+=Number(x.leads)||0;a.n++;});return Object.values(o).sort((a,b)=>a.k.localeCompare(b.k));}
+const MD_MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const mdMesTxt=k=>MD_MES[+k.slice(5,7)-1]+"/"+k.slice(2,4);
+function mdGrafico(D){
+  if(!D.length)return "";const W=Math.max(600,D.length*6),H=170,max=Math.max(...D.map(x=>Number(x.gasto)||0))||1,bw=W/D.length;
+  const maxL=Math.max(1,...D.map(x=>Number(x.leads)||0));
+  const bars=D.map((x,i)=>{const h=(Number(x.gasto)||0)/max*(H-30);return `<rect x="${(i*bw).toFixed(1)}" y="${(H-18-h).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--azul)"><title>${mdData(x.dia)}: ${mdR2(x.gasto)} · ${isN(x.leads)} leads</title></rect>`;}).join("");
+  const pts=D.map((x,i)=>`${(i*bw+bw/2).toFixed(1)},${(H-18-(Number(x.leads)||0)/maxL*(H-30)).toFixed(1)}`).join(" ");
+  const marcas=D.map((x,i)=>x.dia.slice(8)==="01"?`<line x1="${(i*bw).toFixed(1)}" x2="${(i*bw).toFixed(1)}" y1="4" y2="${H-14}" stroke="var(--linha)"/><text x="${(i*bw+3).toFixed(1)}" y="${H-3}" font-size="11" fill="var(--apagado)">${mdMesTxt(x.dia.slice(0,7))}</text>`:"").join("");
+  return `<div class="tab" style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:600px;display:block" role="img" aria-label="Gasto diário em barras e leads em linha">${marcas}${bars}<polyline points="${pts}" fill="none" stroke="var(--azul-escuro)" stroke-width="1.5"/></svg></div>
+  <p class="meta" style="margin:4px 0 0"><span style="display:inline-block;width:10px;height:10px;background:var(--azul);vertical-align:middle"></span> gasto por dia (máximo ${mdR2(max)}) · <span style="display:inline-block;width:14px;border-top:2px solid var(--azul-escuro);vertical-align:middle"></span> leads de formulário por dia (máximo ${isN(maxL)})</p>`;
+}
+function mdAtualizInfo(){const A=(S.md||{}).a||[];const a=A[0];if(!a)return `<p class="meta">Ainda sem atualização registrada.</p>`;
+  return `<div class="nota-admin" style="margin:0 0 12px"><strong>Última atualização: ${fmtDataHora(a.feito_em)}</strong> · dados de ${mdData(a.periodo_ini)} a ${mdData(a.periodo_fim)} · pedida por ${esc(a.pedido_por||"—")}, executada por ${esc(a.executado_por||"—")}.<br><span class="meta">A leitura do Meta Ads é feita sob pedido: peça ao Claude no chat "atualize os dados do Meta Ads" e a data desta linha muda.${a.resumo?" Última: "+esc(a.resumo):""}</span></div>`;}
+function vAcoesDigital(){
+  if(!ehMkt())return `<div class="vazio">Área do Marketing.</div>`;
+  if(!S.md){carregarMidia();return `<div class="carregando">Carregando campanhas…</div>`;}
+  if(S.md.carregando)return `<div class="carregando">Carregando campanhas…</div>`;
+  const R=mdResumo();const C=S.md.c||[],RG=(S.md.r||[]).filter(x=>x.uf!=="XX"),totR=RG.reduce((t,x)=>t+(Number(x.gasto)||0),0);
+  const conta=(mkContas()||[]).find(mkEhPub),orc=conta&&conta.orcado!=null?Number(conta.orcado):0,outras=conta?Number(conta.gasto_antes)||0:0;
+  const projTot=R.projSafra+outras,dif=orc?orc-projTot:0;
+  const meses=mdMeses(R.D);
+  const cpl=R.leads?R.tot/R.leads:0,ctr=R.imp?R.cli/R.imp*100:0,cpm=R.imp?R.tot/R.imp*1000:0;
+  const stTx=s=>s==="ACTIVE"?stTag("Ativa","verde"):s==="PAUSED"?stTag("Pausada","cinza"):stTag(esc(s||"—"),"cinza");
+  return `<div><h1 class="titulo">Campanhas digitais</h1><p class="sub">Investimento, alcance e resultados das campanhas do Meta Ads na safra ${esc(mkSafra)}. O gasto daqui desconta da conta 1119 Publicidade e propaganda e alimenta o custo de aquisição do Inside Sales.</p></div>
+  ${mdAtualizInfo()}
+  <section class="bloco"><h2 class="sec">Verba e projeção</h2><div class="metrics">
+    <div class="metric"><span>Gasto na safra</span><strong>${isR(R.tot)}</strong><span class="meta">1º/07 a ${mdData(R.ate)} · média ${isR(R.tot/Math.max(1,R.D.length))} por dia</span></div>
+    <div class="metric"><span>Gasto em ${mdMesTxt(R.mes)}</span><strong>${isR(R.gm)}</strong><span class="meta">projeção do mês ${isR(R.projMes)} · faltam ${R.restMes} dias</span></div>
+    <div class="metric"><span>Verba diária ativa</span><strong>${isR(R.vd)}</strong><span class="meta">${R.vdCamp?(()=>{const n=R.ativas.filter(c=>+c.verba_diaria).length;return n===1?"1 campanha ativa com verba diária":`soma das ${n} campanhas ativas com verba diária`;})():"média dos últimos 7 dias"} · últimos 7 dias: ${isR(R.med7)}/dia</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px ${orc&&dif<0?"var(--vermelho)":"var(--amarelo)"}"><span>Projeção até 30/06/2027</span><strong>${isR(R.projSafra)}</strong><span class="meta">${orc?`com outras ações de publicidade (${isR(outras)}): ${isR(projTot)} de ${isR(orc)} orçados · ${dif>=0?"sobram "+isR(dif):"faltam "+isR(-dif)}`:"conta 1119 sem orçado cadastrado"} · ritmo atual por ${R.restSafra} dias</span></div>
+  </div>
+  <div class="metrics" style="margin-top:10px">
+    <div class="metric"><span>Impressões</span><strong>${mdK(R.imp)}</strong><span class="meta">CPM ${mdR2(cpm)}</span></div>
+    <div class="metric"><span>Cliques</span><strong>${mdK(R.cli)}</strong><span class="meta">CTR ${ctr.toLocaleString("pt-BR",{maximumFractionDigits:2})}%</span></div>
+    <div class="metric"><span>Leads de formulário</span><strong>${isN(R.leads)}</strong><span class="meta">${cpl?"custo por lead "+mdR2(cpl):""} · leads do Meta, antes da qualificação</span></div>
+    <div class="metric"><span>Campanhas ativas</span><strong>${R.ativas.length}</strong><span class="meta">de ${C.length} com gasto na safra</span></div>
+  </div></section>
+  <section class="bloco"><h2 class="sec">Dia a dia</h2>${mdGrafico(R.D)}
+    <div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Gasto</th><th class="val">Média/dia</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Leads</th><th class="val">Custo por lead</th></tr></thead>
+    <tbody>${meses.map(m=>`<tr><td>${mdMesTxt(m.k)}${m.k===R.mes?" (parcial)":""}</td><td class="val">${isR(m.g)}</td><td class="val">${isR(m.g/m.n)}</td><td class="val">${mdK(m.i)}</td><td class="val">${mdK(m.c)}</td><td class="val">${isN(m.l)}</td><td class="val">${m.l?mdR2(m.g/m.l):"—"}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><th>Safra</th><th class="val">${isR(R.tot)}</th><th class="val">${isR(R.tot/Math.max(1,R.D.length))}</th><th class="val">${mdK(R.imp)}</th><th class="val">${mdK(R.cli)}</th><th class="val">${isN(R.leads)}</th><th class="val">${cpl?mdR2(cpl):"—"}</th></tr></tfoot></table></div></section>
+  <section class="bloco"><h2 class="sec">Campanhas · ${C.length}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Campanha</th><th>Situação</th><th>Objetivo</th><th class="val">Verba</th><th class="val">Gasto</th><th class="val">Alcance</th><th class="val">Impressões</th><th class="val">CTR</th><th class="val">CPM</th><th class="val">Leads</th><th class="val">Custo/lead</th></tr></thead>
+    <tbody>${C.map(c=>`<tr><td style="min-width:220px">${esc(c.nome)}<br><span class="meta">${c.inicio?"desde "+mdData(c.inicio):""}${c.fim?" até "+mdData(c.fim):""}</span></td><td>${stTx(c.status)}</td><td>${esc(MD_OBJ[c.objetivo]||c.objetivo||"")}</td><td class="val">${c.verba_diaria?isR(c.verba_diaria)+"/dia":c.verba_total?isR(c.verba_total)+" total":"—"}</td><td class="val">${isR(c.gasto)}</td><td class="val">${mdK(c.alcance)}</td><td class="val">${mdK(c.impressoes)}</td><td class="val">${c.ctr!=null?Number(c.ctr).toLocaleString("pt-BR")+"%":"—"}</td><td class="val">${c.cpm!=null?mdR2(c.cpm):"—"}</td><td class="val">${c.leads?isN(c.leads):"—"}</td><td class="val">${c.leads?mdR2(c.gasto/c.leads):"—"}</td></tr>`).join("")}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">Alcance é de pessoas únicas por campanha; não some o alcance de campanhas diferentes. Leads são os registros de formulário contados pelo Meta.</p></section>
+  <section class="bloco"><h2 class="sec">Onde o dinheiro está indo · por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th class="val">Gasto</th><th style="min-width:140px">% do gasto</th><th class="val">Pessoas alcançadas</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Custo por mil pessoas</th></tr></thead>
+    <tbody>${RG.map(x=>{const p=totR?(Number(x.gasto)||0)/totR*100:0;return `<tr><td>${esc(x.uf)} · ${esc(x.regiao||"")}</td><td class="val">${isR(x.gasto)}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:var(--azul-claro);height:8px;border-radius:4px"><div style="width:${p.toFixed(1)}%;background:var(--azul);height:8px;border-radius:4px"></div></div><span class="meta" style="min-width:42px;text-align:right">${p.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</span></div></td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.impressoes)}</td><td class="val">${isN(x.cliques)}</td><td class="val">${x.alcance?mdR2((Number(x.gasto)||0)/x.alcance*1000):"—"}</td></tr>`;}).join("")}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>`;
+}
+
+/* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
+async function carregarCustoTime(){if(!ehAdmin()||S.isCustoT!==undefined)return;S.isCustoT=null;try{const {data}=await sb.from("is_config").select("valor").eq("chave","custo_time_mensal").maybeSingle();S.isCustoT=data?Number(data.valor)||0:0;}catch(e){S.isCustoT=0;}render();}
+function vISCac(){
+  const T=S.isp&&S.isp["Time"];const MQ=(T&&T.dados&&T.dados.mql)||{};
+  if(!S.md){carregarMidia();return `<div class="carregando">Carregando mídia…</div>`;}
+  if(S.md.carregando)return `<div class="carregando">Carregando mídia…</div>`;
+  carregarCustoTime();
+  const mm={};mdMeses(S.md.d||[]).forEach(m=>mm[m.k]=m);
+  const ks=[...new Set([...Object.keys(mm),...Object.keys(MQ).filter(k=>k>=MK_SAFRA_INI.slice(0,7))])].sort();
+  const ct=ehAdmin()?Number(S.isCustoT)||0:0;
+  const L=ks.map(k=>{const q=MQ[k]||{},g=(mm[k]||{}).g||0;return {k,g,rec:+q.rec||0,qual:+q.qual||0,venda:+q.venda||0,vrs:+q.vrs||0,ct};});
+  const t=L.reduce((a,x)=>({g:a.g+x.g,rec:a.rec+x.rec,qual:a.qual+x.qual,venda:a.venda+x.venda,vrs:a.vrs+x.vrs,ct:a.ct+x.ct}),{g:0,rec:0,qual:0,venda:0,vrs:0,ct:0});
+  const div=(a,b)=>b?a/b:0,rs=v=>v?isR(v):"—",rx=v=>v?v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"x":"—";
+  const linha=(x,rot)=>`<tr><td>${rot}</td><td class="val">${isR(x.g)}</td><td class="val">${isN(x.rec)}</td><td class="val">${isN(x.qual)}</td><td class="val">${isN(x.venda)}</td><td class="val">${isR(x.vrs)}</td><td class="val">${rs(div(x.g,x.rec))}</td><td class="val">${rs(div(x.g,x.qual))}</td><td class="val">${rs(div(x.g,x.venda))}</td>${ct?`<td class="val">${rs(div(x.g+x.ct,x.venda))}</td>`:""}<td class="val">${rx(div(x.vrs,x.g))}</td></tr>`;
+  return `<div><h1 class="titulo">Inside Sales · Custo de aquisição</h1><p class="sub">Quanto custa cada MQL, cada SQL e cada venda, cruzando a mídia paga do Meta Ads com o funil do Inside Sales mês a mês.</p></div>
+  ${mdAtualizInfo()}
+  <section class="bloco"><h2 class="sec">Safra até agora</h2><div class="metrics">
+    <div class="metric"><span>Custo por MQL</span><strong>${rs(div(t.g,t.rec))}</strong><span class="meta">${isR(t.g)} de mídia ÷ ${isN(t.rec)} MQL recebidos</span></div>
+    <div class="metric"><span>Custo por SQL</span><strong>${rs(div(t.g,t.qual))}</strong><span class="meta">÷ ${isN(t.qual)} qualificados</span></div>
+    <div class="metric"><span>CAC de mídia</span><strong>${rs(div(t.g,t.venda))}</strong><span class="meta">÷ ${isN(t.venda)} vendas vindas de MQL${ct?` · CAC com o time: ${rs(div(t.g+t.ct,t.venda))}`:""}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>ROAS</span><strong>${rx(div(t.vrs,t.g))}</strong><span class="meta">${isR(t.vrs)} vendidos a partir dos MQL ÷ mídia</span></div>
+  </div></section>
+  <section class="bloco"><h2 class="sec">Mês a mês</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Mídia</th><th class="val">MQL</th><th class="val">SQL</th><th class="val">Vendas</th><th class="val">Vendido</th><th class="val">Custo/MQL</th><th class="val">Custo/SQL</th><th class="val">CAC mídia</th>${ct?`<th class="val">CAC com time</th>`:""}<th class="val">ROAS</th></tr></thead>
+    <tbody>${L.map(x=>linha(x,mdMesTxt(x.k))).join("")}</tbody><tfoot>${linha(t,"<strong>Safra</strong>")}</tfoot></table></div>
+    <p class="meta" style="margin:6px 0 0">Como ler: MQL, SQL e vendas são da coorte do mês, ou seja, os MQL que chegaram naquele mês e o que eles viraram depois. Por isso os meses recentes ainda vão ganhar vendas. A mídia é só o Meta Ads; MQL de outras origens (site orgânico, indicação) também entram na conta, então o custo real do digital é um pouco maior do que parece.</p></section>
+  ${ehAdmin()?`<section class="bloco"><h2 class="sec">Custo do time para o CAC completo</h2><form class="mk-barra" id="f-is-custo"><label for="isc_v" style="align-self:center">Custo mensal do time de Inside Sales (R$)</label><input id="isc_v" inputmode="decimal" style="max-width:180px" value="${ct?esc(String(ct).replace(".",",")):""}"><button class="btn sec" type="submit">Salvar</button></form><p class="meta" style="margin:6px 0 0">Ajuda de custo, comissões e ferramentas do time por mês. Fica só com administradores e entra na coluna "CAC com time".</p></section>`:""}`;
+}
+
+/* ===== Inside Sales: RFV ===== */
+const RFV_SEG={
+  "Campeões":{cor:"verde",acao:"Cuidar de perto: avisar primeiro de lançamentos e condições, pedir indicação e depoimento."},
+  "Fiéis":{cor:"verde",acao:"Manter a cadência: contato antes da janela de plantio e oferta do mix completo."},
+  "Novos":{cor:"azul",acao:"Garantir a segunda compra: pós-venda em 30 dias, visita técnica do embaixador e acompanhamento do estabelecimento."},
+  "Promissores":{cor:"azul",acao:"Compraram há pouco e uma vez: mostrar resultado de campo e propor ampliar a área."},
+  "Precisam de atenção":{cor:"amarelo",acao:"Estão esfriando: ligar para entender o planejamento da próxima safra."},
+  "Em risco":{cor:"vermelho",acao:"Valiosos e sumindo: ligar agora, antes da janela de plantio, com condição especial ou visita técnica."},
+  "Hibernando":{cor:"cinza",acao:"Baixo valor e sem compra recente: incluir em campanhas de e-mail e WhatsApp, sem ligação ativa."}
+};
+const RFV_ORD=["Campeões","Fiéis","Novos","Promissores","Precisam de atenção","Em risco","Hibernando"];
+async function carregarRFV(){if(S.rfv!==undefined)return;S.rfv=null;try{const {data}=await sb.from("is_relatorios").select("dados,atualizado_em").eq("chave","rfv").maybeSingle();S.rfv=data?{...data.dados,em:data.atualizado_em}:{clientes:[]};}catch(e){S.rfv={clientes:[]};}render();}
+function rfvCalc(L){
+  const hoje=new Date();const ini=MK_SAFRA_INI;
+  const vs=L.map(c=>Number(c.rs)||0).sort((a,b)=>a-b);const qv=v=>{if(!vs.length)return 1;let i=0;while(i<vs.length&&vs[i]<=v)i++;return Math.min(5,Math.max(1,Math.ceil(i/vs.length*5)));};
+  return L.map(c=>{const dias=Math.round((hoje-new Date(c.ult+"T12:00"))/864e5);
+    const R=dias<=90?5:dias<=180?4:dias<=300?3:dias<=420?2:1;
+    let F=c.ped>=6?5:c.ped>=4?4:c.ped===3?3:c.ped===2?2:1;if(c.safras>=2)F=Math.min(5,F+1);
+    const V=qv(Number(c.rs)||0);const novo=c.prim>=ini&&c.safras===1;
+    const seg=R>=4&&F>=3&&V>=4?"Campeões":F>=3&&R>=3?"Fiéis":novo&&c.ped<=1?"Novos":R>=4&&F<=2?"Promissores":R<=2&&(F>=3||V>=4)?"Em risco":R<=2?"Hibernando":"Precisam de atenção";
+    return {...c,dias,R,F,V,seg};});
+}
+function vISRfv(){
+  carregarRFV();if(S.rfv==null)return `<div class="carregando">Carregando clientes…</div>`;
+  const B=rfvCalc(S.rfv.clientes||[]);
+  if(!B.length)return `<div><h1 class="titulo">Inside Sales · RFV</h1></div><section class="bloco"><div class="vazio">A tabela RFV ainda não foi calculada. Ela é atualizada todo dia de manhã a partir das vendas do CRM.${ehAdmin()?` <button class="btn sec" data-a="rfv-atualizar">Calcular agora</button>`:""}</div></section>`;
+  const F=S.rfvF||(S.rfvF={seg:"Todos",quem:"Todas",uf:"Todos"});
+  const quems=[...new Set(B.map(c=>c.quem).filter(Boolean))].sort(),ufs=[...new Set(B.map(c=>c.uf).filter(Boolean))].sort();
+  const rows=B.filter(c=>(F.seg==="Todos"||c.seg===F.seg)&&(F.quem==="Todas"||c.quem===F.quem)&&(F.uf==="Todos"||c.uf===F.uf)).sort((a,b)=>RFV_ORD.indexOf(a.seg)-RFV_ORD.indexOf(b.seg)||b.rs-a.rs);
+  const ag={};B.forEach(c=>{const a=ag[c.seg]||(ag[c.seg]={n:0,rs:0});a.n++;a.rs+=Number(c.rs)||0;});
+  const chips=(campo,ops,sel)=>ops.map(x=>`<button class="chip" data-a="rfv-f" data-v="${esc(campo+"|"+x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
+  const grid=[5,4,3,2,1].map(r=>`<tr><th>R${r}</th>${[1,2,3,4,5].map(f=>{const n=B.filter(c=>c.R===r&&c.F===f).length;const a=n?Math.min(1,.15+n/Math.max(...[1,2,3,4,5].flatMap(ff=>[5,4,3,2,1].map(rr=>B.filter(c=>c.R===rr&&c.F===ff).length)))):0;return `<td class="val" style="background:rgba(0,168,226,${a.toFixed(2)})">${n||""}</td>`;}).join("")}</tr>`).join("");
+  return `<div><h1 class="titulo">Inside Sales · RFV</h1><p class="sub">Recência, frequência e valor dos ${B.length} clientes que compraram pelo Inside Sales desde 1º/07/2025. Cada cliente ganha uma nota de 1 a 5 em cada eixo e cai num segmento com a ação recomendada.</p></div>
+  <p class="meta" style="margin:0 0 10px">Calculado em ${fmtDataHora(S.rfv.em||S.rfv.gerado_em)} a partir de ${isN(S.rfv.pedidos)} pedidos ganhos.${ehAdmin()?` <button class="link" data-a="rfv-atualizar">recalcular agora</button>`:""}</p>
+  <details class="lote"><summary>Como as notas são dadas</summary><div class="sub" style="margin-top:8px">
+    <p><strong>Recência (R):</strong> dias desde o último faturamento. Até 90 dias = 5, até 180 = 4, até 300 = 3, até 420 = 2, mais que isso = 1.</p>
+    <p><strong>Frequência (F):</strong> número de pedidos (1 = 1, 2 = 2, 3 = 3, 4 ou 5 = 4, 6 ou mais = 5), com 1 ponto a mais para quem comprou nas duas safras.</p>
+    <p><strong>Valor (V):</strong> faturamento total do cliente comparado com os demais, em cinco faixas de mesmo tamanho (os 20% maiores = 5).</p>
+    <p>Bonificações, itens de preço zero e o canal CROP Agrícola ficam fora.</p></div></details>
+  <section class="bloco"><h2 class="sec">Segmentos</h2><div class="rfv-segs">${RFV_ORD.filter(s=>ag[s]).map(s=>`<button class="rfv-seg${F.seg===s?" on":""}" data-a="rfv-f" data-v="${esc("seg|"+(F.seg===s?"Todos":s))}"><span>${stTag(s,RFV_SEG[s].cor)}</span><strong>${ag[s].n} ${ag[s].n===1?"cliente":"clientes"}</strong><span class="meta">${isR(ag[s].rs)}</span><span class="meta">${esc(RFV_SEG[s].acao)}</span></button>`).join("")}</div></section>
+  <details class="lote"><summary>Mapa recência × frequência</summary><div class="tab" style="margin-top:8px;max-width:420px"><table class="sim-t fin-t"><thead><tr><th></th>${[1,2,3,4,5].map(f=>`<th class="val">F${f}</th>`).join("")}</tr></thead><tbody>${grid}</tbody></table></div><p class="meta">Canto de cima à direita: compram muito e recentemente. Canto de baixo à direita: compravam muito e pararam.</p></details>
+  <details class="lote" ${F.quem!=="Todas"||F.uf!=="Todos"?"open":""}><summary>Filtros</summary>
+    <p class="meta" style="margin:10px 0 4px">Vendedora</p><div class="filtros">${chips("quem",["Todas",...quems],F.quem)}</div>
+    ${ufs.length>1?`<p class="meta" style="margin:10px 0 4px">Estado</p><div class="filtros">${chips("uf",["Todos",...ufs],F.uf)}</div>`:""}</details>
+  <section class="bloco"><p class="sub" style="margin:0 0 6px">${rows.length} de ${B.length} clientes${F.seg!=="Todos"?" · "+esc(F.seg):""}.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cliente</th><th>Segmento</th><th class="val">R</th><th class="val">F</th><th class="val">V</th><th class="val">Última compra</th><th class="val">Pedidos</th><th class="val">Faturado</th><th>Vendedora</th></tr></thead>
+  <tbody>${rows.slice(0,300).map(c=>`<tr><td style="min-width:200px">${esc(c.n)}${c.uf?` <span class="meta">${esc(c.uf)}</span>`:""}</td><td>${stTag(c.seg,RFV_SEG[c.seg].cor)}</td><td class="val">${c.R}</td><td class="val">${c.F}</td><td class="val">${c.V}</td><td class="val">${mdData(c.ult)}<br><span class="meta">há ${isN(c.dias)} dias</span></td><td class="val">${c.ped}${c.safras>1?`<br><span class="meta">2 safras</span>`:""}</td><td class="val">${isR(c.rs)}${c.rs26?`<br><span class="meta">26/27: ${isR(c.rs26)}</span>`:""}</td><td>${esc(c.quem||"")}</td></tr>`).join("")}</tbody></table></div>
+  ${rows.length>300?`<p class="dica">Mostrando 300 de ${rows.length}. Use os filtros.</p>`:""}</section>`;
+}
+
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-rfv","RFV"],["is-cac","Custo de aquisição"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -1690,9 +1853,11 @@ function vISObjecoes(){
 }
 function vInsideSales(){
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
+  if(S.pag==="is-rfv"&&veTimeIS())return vISRfv();
   if(S.isp==null)return `<div class="carregando">Carregando indicadores…</div>`;
   const T=S.isp["Time"];const cfg=(T&&T.dados&&T.dados.cfg)||{};const manager=veTimeIS();
   const atualiza=ehAdmin()?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:"";
+  if(S.pag==="is-cac"&&manager)return vISCac();
   const linhasP=Object.keys(S.isp).filter(k=>k!=="Time");
   if(!linhasP.length&&!T)return vInsideSalesAntigo();
   if(manager&&!T)return `<div><h1 class="titulo">Inside Sales</h1></div>${atualiza}<section class="bloco"><div class="vazio">O painel ainda não foi calculado. Use o botão acima.</div></section>`;
@@ -4607,7 +4772,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -5164,6 +5329,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-nova"&&ehMkt())return vAcoesNova();
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
+  if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
   if(S.pag==="acoes-solic")return vAcoesSolic();
@@ -5490,6 +5656,7 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-is-custo"){if(!ehAdmin())return;const v=mkNum(val("isc_v"));if(!(v>=0)){aviso("Confira o valor.");return;}const {error}=await sb.from("is_config").upsert({chave:"custo_time_mensal",valor:v,atualizado_em:new Date().toISOString()},{onConflict:"chave"});if(error){aviso("Não foi possível salvar.");return;}S.isCustoT=v;render();aviso("Custo do time salvo.");return;}
   if(f.id==="f-bd-budget"){if(!ehMkt())return;const v=mkNum(val("bdb_v"));if(!(v>=0)){aviso("Confira o valor do budget.");return;}
     const {data,error}=await sb.from("brinde_budget").update({valor:v}).eq("id",BD_SAFRA).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o budget.");return;}S.bdBudget=data;render();aviso("Budget de brindes salvo.");return;}
   if(f.id==="f-bd-emp"){if(!ehMkt())return;const id=+val("be_item"),q=parseInt(val("be_q")||"0",10),it=(S.bd||[]).find(x=>x.id===id);
@@ -5597,7 +5764,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Pe
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -5667,7 +5834,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
-    if(["is-time","is-vend","is-neg","is-obj"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(["is-time","is-vend","is-neg","is-obj","is-rfv","is-cac"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
@@ -5819,6 +5986,8 @@ document.addEventListener("click",async ev=>{
   if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
   if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
+  if(a==="rfv-f"){const i=v.indexOf("|");S.rfvF=S.rfvF||{seg:"Todos",quem:"Todas",uf:"Todos"};S.rfvF[v.slice(0,i)]=v.slice(i+1);render();return;}
+  if(a==="rfv-atualizar"){if(!ehAdmin())return;b.disabled=true;aviso("Recalculando o RFV a partir do CRM…");const r=await sb.functions.invoke("is-rfv",{body:{}});if(r.error||!r.data||r.data.error){aviso("Não foi possível recalcular agora.");b.disabled=false;return;}S.rfv=undefined;render();aviso(`RFV recalculado: ${r.data.clientes} clientes.`);return;}
   if(a==="rc-uf"){if(!ehAdmin())return;const i=v.indexOf("|"),id=v.slice(0,i),u=v.slice(i+1);const r=(S.leadRCs||[]).find(x=>x.id===id);if(!r)return;const U=new Set(r.ufs_leads||[]);U.has(u)?U.delete(u):U.add(u);await rcLeadsSalva(id,r.recebe||U.size>0,[...U].sort());return;}
   if(a==="lead-f"){const i=v.indexOf("|");S.leadF=S.leadF||{};S.leadF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_contato",{p_id:+v});if(error)throw error;S.leadVistos[v]=data||{telefone:null,email:null};}catch(e){delete S.leadVistos[v];aviso("Não foi possível abrir o contato deste lead.");}render();return;}
