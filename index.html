@@ -546,6 +546,7 @@ main.largo{max-width:1120px}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
 .uf-grid{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.uf-chip{padding:3px 8px;font-size:12px;min-width:38px}
+.md-dest{display:flex;flex-direction:column;gap:12px}.md-dest-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.md-bar{background:var(--azul-claro);height:10px;border-radius:5px;margin:4px 0}.md-bar>div{background:var(--azul);height:10px;border-radius:5px}
 .rfv-segs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:8px}
 .rfv-seg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-radius:8px;padding:10px 12px;background:var(--branco);cursor:pointer;font:inherit;color:inherit}
 .rfv-seg.on{border-color:var(--azul);box-shadow:inset 0 0 0 1px var(--azul)}.rfv-seg .meta{font-size:12.5px;line-height:1.35}
@@ -1121,7 +1122,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116184748";
+const APP_VER="20261116190104";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1476,14 +1477,15 @@ const mdK=v=>{v=Number(v)||0;return v>=1e6?(v/1e6).toLocaleString("pt-BR",{maxim
 const mdR2=v=>"R$ "+(Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 async function carregarMidia(forca){
   if(S.md&&!forca)return;S.md={carregando:true};
-  try{const [d,c,r,a,ct]=await Promise.all([
+  try{const [d,c,r,a,ct,cm]=await Promise.all([
     sb.from("midia_diaria").select("dia,gasto,impressoes,alcance,cliques,leads").gte("dia",MK_SAFRA_INI).order("dia"),
     sb.from("midia_campanhas").select("*").order("gasto",{ascending:false}),
     sb.from("midia_regiao").select("*").order("gasto",{ascending:false}),
     sb.from("midia_atualizacoes").select("*").order("feito_em",{ascending:false}).limit(5),
-    sb.from("midia_contas").select("*")]);
-    S.md={d:d.data||[],c:c.data||[],r:r.data||[],a:a.data||[],ct:ct.data||[]};}
-  catch(e){S.md={d:[],c:[],r:[],a:[],ct:[]};}
+    sb.from("midia_contas").select("*"),
+    sb.from("midia_campanha_mes").select("campanha_id,mes,objetivo,gasto,alcance,impressoes,leads")]);
+    S.md={d:d.data||[],c:c.data||[],r:r.data||[],a:a.data||[],ct:ct.data||[],cm:cm.data||[]};}
+  catch(e){S.md={d:[],c:[],r:[],a:[],ct:[],cm:[]};}
   render();
 }
 function mdResumo(){
@@ -1514,6 +1516,13 @@ function mdGrafico(D){
 }
 function mdAtualizInfo(){const A=(S.md||{}).a||[];const a=A[0];if(!a)return `<p class="meta">Ainda sem atualização registrada.</p>`;
   return `<div class="nota-admin" style="margin:0 0 12px"><strong>Última atualização: ${fmtDataHora(a.feito_em)}</strong> · dados de ${mdData(a.periodo_ini)} a ${mdData(a.periodo_fim)} · pedida por ${esc(a.pedido_por||"—")}, executada por ${esc(a.executado_por||"—")}.<br><span class="meta">A leitura do Meta Ads é feita sob pedido: peça ao Claude no chat "atualize os dados do Meta Ads" e a data desta linha muda.${a.resumo?" Última: "+esc(a.resumo):""}</span></div>`;}
+const MD_GRUPOS=[["demanda","Geração de demanda","Campanhas de leads que abastecem o Inside Sales e as revendas",["OUTCOME_LEADS","OUTCOME_SALES"]],["marca","Reconhecimento e alcance","Vídeo e alcance para a marca ser lembrada no campo",["OUTCOME_AWARENESS"]],["conteudo","Engajamento e conteúdo","Engajamento, perfil e posts impulsionados",["OUTCOME_ENGAGEMENT","LINK_CLICKS","OUTCOME_TRAFFIC"]]];
+const mdGrupoDe=obj=>(MD_GRUPOS.find(g=>g[3].includes(obj))||MD_GRUPOS[2])[0];
+function mdGrupos(mes){const L=((S.md||{}).cm||[]).filter(x=>!mes||x.mes===mes);const o={};MD_GRUPOS.forEach(g=>o[g[0]]={k:g[0],t:g[1],d:g[2],g:0,a:0,i:0,l:0});L.forEach(x=>{const a=o[mdGrupoDe(x.objetivo)];a.g+=Number(x.gasto)||0;a.a+=Number(x.alcance)||0;a.i+=Number(x.impressoes)||0;a.l+=Number(x.leads)||0;});return MD_GRUPOS.map(g=>o[g[0]]);}
+function vMdDestino(){const G=mdGrupos();const tot=G.reduce((t,x)=>t+x.g,0);if(!tot)return "";const marca=G.filter(x=>x.k!=="demanda");const pm=marca.reduce((t,x)=>t+x.g,0),im=marca.reduce((t,x)=>t+x.i,0);
+  return `<section class="bloco"><h2 class="sec">Para onde vai a verba de mídia</h2>
+  <p class="sub" style="margin:0 0 10px">${Math.round(pm/tot*100)}% do investimento (${isR(pm)}) vai para construir a marca, com ${mdK(im)} impressões; ${Math.round((tot-pm)/tot*100)}% (${isR(tot-pm)}) vai para gerar demanda para o time comercial.</p>
+  <div class="md-dest">${G.map(x=>{const p=x.g/tot*100;return `<div class="md-dest-i"><div class="md-dest-top"><strong>${esc(x.t)}</strong><span>${isR(x.g)} · ${p.toLocaleString("pt-BR",{maximumFractionDigits:0})}%</span></div><div class="md-bar"><div style="width:${p.toFixed(1)}%"></div></div><span class="meta">${esc(x.d)} · ${mdK(x.i)} impressões · ${mdK(x.a)} de alcance somado das campanhas${x.l?" · "+isN(x.l)+" leads":""}</span></div>`;}).join("")}</div></section>`;}
 function vAcoesDigital(){
   if(!ehMkt())return `<div class="vazio">Área do Marketing.</div>`;
   if(!S.md){carregarMidia();return `<div class="carregando">Carregando campanhas…</div>`;}
@@ -1538,6 +1547,7 @@ function vAcoesDigital(){
     <div class="metric"><span>Leads de formulário</span><strong>${isN(R.leads)}</strong><span class="meta">${cpl?"custo por lead "+mdR2(cpl):""} · leads do Meta, antes da qualificação</span></div>
     <div class="metric"><span>Campanhas ativas</span><strong>${R.ativas.length}</strong><span class="meta">de ${C.length} com gasto na safra</span></div>
   </div></section>
+  ${vMdDestino()}
   <section class="bloco"><h2 class="sec">Dia a dia</h2>${mdGrafico(R.D)}
     <div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Gasto</th><th class="val">Média/dia</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Leads</th><th class="val">Custo por lead</th></tr></thead>
     <tbody>${meses.map(m=>`<tr><td>${mdMesTxt(m.k)}${m.k===R.mes?" (parcial)":""}</td><td class="val">${isR(m.g)}</td><td class="val">${isR(m.g/m.n)}</td><td class="val">${mdK(m.i)}</td><td class="val">${mdK(m.c)}</td><td class="val">${isN(m.l)}</td><td class="val">${m.l?mdR2(m.g/m.l):"—"}</td></tr>`).join("")}</tbody>
@@ -1553,29 +1563,41 @@ function vAcoesDigital(){
 /* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
 async function carregarCustoTime(){if(!ehAdmin()||S.isCustoT!==undefined)return;S.isCustoT=null;try{const {data}=await sb.from("is_config").select("valor").eq("chave","custo_time_mensal").maybeSingle();S.isCustoT=data?Number(data.valor)||0:0;}catch(e){S.isCustoT=0;}render();}
 function vISCac(){
-  const T=S.isp&&S.isp["Time"];const MQ=(T&&T.dados&&T.dados.mql)||{};
+  const T=S.isp&&S.isp["Time"];const MQ=(T&&T.dados&&T.dados.mql)||{},VM=(T&&T.dados&&T.dados.vend_mes)||{};
   if(!S.md){carregarMidia();return `<div class="carregando">Carregando mídia…</div>`;}
   if(S.md.carregando)return `<div class="carregando">Carregando mídia…</div>`;
   carregarCustoTime();
-  const mm={};mdMeses(S.md.d||[]).forEach(m=>mm[m.k]=m);
-  const ks=[...new Set([...Object.keys(mm),...Object.keys(MQ).filter(k=>k>=MK_SAFRA_INI.slice(0,7))])].sort();
+  const ini=MK_SAFRA_INI.slice(0,7);const mm={};mdMeses(S.md.d||[]).forEach(m=>mm[m.k]=m);
+  const dem={};((S.md.cm)||[]).forEach(x=>{if(mdGrupoDe(x.objetivo)==="demanda")dem[x.mes]=(dem[x.mes]||0)+(Number(x.gasto)||0);});
+  const temCM=((S.md.cm)||[]).length>0;
+  const ks=[...new Set([...Object.keys(mm),...Object.keys(MQ),...Object.keys(VM)].filter(k=>k>=ini))].sort();
   const ct=ehAdmin()?Number(S.isCustoT)||0:0;
-  const L=ks.map(k=>{const q=MQ[k]||{},g=(mm[k]||{}).g||0;return {k,g,rec:+q.rec||0,qual:+q.qual||0,venda:+q.venda||0,vrs:+q.vrs||0,ct};});
-  const t=L.reduce((a,x)=>({g:a.g+x.g,rec:a.rec+x.rec,qual:a.qual+x.qual,venda:a.venda+x.venda,vrs:a.vrs+x.vrs,ct:a.ct+x.ct}),{g:0,rec:0,qual:0,venda:0,vrs:0,ct:0});
+  const L=ks.map(k=>{const q=MQ[k]||{},v=VM[k]||{},g=(mm[k]||{}).g||0;return {k,g,gd:temCM?(dem[k]||0):g,rec:+q.rec||0,qual:+q.qual||0,venda:+q.venda||0,vrs:+q.vrs||0,vn:+v.n||0,vt:+v.rs||0,ct};});
+  const t=L.reduce((a,x)=>{for(const f of ["g","gd","rec","qual","venda","vrs","vn","vt","ct"])a[f]=(a[f]||0)+x[f];return a;},{});
   const div=(a,b)=>b?a/b:0,rs=v=>v?isR(v):"—",rx=v=>v?v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"x":"—";
-  const linha=(x,rot)=>`<tr><td>${rot}</td><td class="val">${isR(x.g)}</td><td class="val">${isN(x.rec)}</td><td class="val">${isN(x.qual)}</td><td class="val">${isN(x.venda)}</td><td class="val">${isR(x.vrs)}</td><td class="val">${rs(div(x.g,x.rec))}</td><td class="val">${rs(div(x.g,x.qual))}</td><td class="val">${rs(div(x.g,x.venda))}</td>${ct?`<td class="val">${rs(div(x.g+x.ct,x.venda))}</td>`:""}<td class="val">${rx(div(x.vrs,x.g))}</td></tr>`;
-  return `<div><h1 class="titulo">Inside Sales · Custo de aquisição</h1><p class="sub">Quanto custa cada MQL, cada SQL e cada venda, cruzando a mídia paga do Meta Ads com o funil do Inside Sales mês a mês.</p></div>
+  const GG=mdGrupos(),gtot=GG.reduce((a,x)=>a+x.g,0);const pm=gtot?Math.round(GG.filter(x=>x.k!=="demanda").reduce((a,x)=>a+x.g,0)/gtot*100):0;
+  const linha=(x,rot)=>`<tr><td>${rot}</td><td class="val">${isR(x.g)}</td><td class="val">${isN(x.vn)}</td><td class="val">${isR(x.vt)}</td><td class="val"><strong>${rx(div(x.vt,x.g))}</strong></td><td class="val">${rs(div(x.g+x.ct,x.vn))}</td><td class="val">${isR(x.gd)}</td><td class="val">${isN(x.rec)}</td><td class="val">${rs(div(x.gd,x.rec))}</td><td class="val">${isN(x.qual)}</td><td class="val">${rs(div(x.gd,x.qual))}</td><td class="val">${rx(div(x.vrs,x.gd))}</td></tr>`;
+  return `<div><h1 class="titulo">Inside Sales · Retorno da mídia</h1><p class="sub">O investimento em mídia paga do Meta Ads comparado com tudo o que o time vendeu, e o custo de cada etapa do funil de MQL.</p></div>
   ${mdAtualizInfo()}
-  <section class="bloco"><h2 class="sec">Safra até agora</h2><div class="metrics">
-    <div class="metric"><span>Custo por MQL</span><strong>${rs(div(t.g,t.rec))}</strong><span class="meta">${isR(t.g)} de mídia ÷ ${isN(t.rec)} MQL recebidos</span></div>
-    <div class="metric"><span>Custo por SQL</span><strong>${rs(div(t.g,t.qual))}</strong><span class="meta">÷ ${isN(t.qual)} qualificados</span></div>
-    <div class="metric"><span>CAC de mídia</span><strong>${rs(div(t.g,t.venda))}</strong><span class="meta">÷ ${isN(t.venda)} vendas vindas de MQL${ct?` · CAC com o time: ${rs(div(t.g+t.ct,t.venda))}`:""}</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>ROAS</span><strong>${rx(div(t.vrs,t.g))}</strong><span class="meta">${isR(t.vrs)} vendidos a partir dos MQL ÷ mídia</span></div>
+  <section class="bloco"><h2 class="sec">Visão da operação · safra até agora</h2><div class="metrics">
+    <div class="metric"><span>Investimento em mídia</span><strong>${isR(t.g)}</strong><span class="meta">Meta Ads, todas as campanhas</span></div>
+    <div class="metric"><span>Vendido pelo time</span><strong>${isR(t.vt)}</strong><span class="meta">${isN(t.vn)} vendas fechadas, de todas as origens</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>ROAS da operação</span><strong>${rx(div(t.vt,t.g))}</strong><span class="meta">cada R$ 1 de mídia, ${mdR2(div(t.vt,t.g))} vendidos pelo time</span></div>
+    <div class="metric"><span>CAC da operação</span><strong>${rs(div(t.g+t.ct,t.vn))}</strong><span class="meta">${ct?"mídia + custo do time":"mídia"} ÷ vendas fechadas</span></div>
+  </div>
+  <p class="meta" style="margin:8px 0 0">A mídia não trabalha só para o Inside Sales: ${pm}% dela vai para reconhecimento, alcance e conteúdo da marca, que ajudam também as revendas, os RCs e o time de campo. O ROAS da operação usa o total investido contra o total vendido pelo time, como a diretoria acompanha.</p></section>
+  ${vMdDestino()}
+  <section class="bloco"><h2 class="sec">Funil de MQL · só a mídia de geração de demanda</h2><div class="metrics">
+    <div class="metric"><span>Mídia de geração de demanda</span><strong>${isR(t.gd)}</strong><span class="meta">campanhas de leads</span></div>
+    <div class="metric"><span>Custo por MQL</span><strong>${rs(div(t.gd,t.rec))}</strong><span class="meta">÷ ${isN(t.rec)} MQL recebidos</span></div>
+    <div class="metric"><span>Custo por SQL</span><strong>${rs(div(t.gd,t.qual))}</strong><span class="meta">÷ ${isN(t.qual)} qualificados</span></div>
+    <div class="metric"><span>ROAS dos MQL</span><strong>${rx(div(t.vrs,t.gd))}</strong><span class="meta">${isR(t.vrs)} em ${isN(t.venda)} vendas vindas dos MQL</span></div>
   </div></section>
-  <section class="bloco"><h2 class="sec">Mês a mês</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Mídia</th><th class="val">MQL</th><th class="val">SQL</th><th class="val">Vendas</th><th class="val">Vendido</th><th class="val">Custo/MQL</th><th class="val">Custo/SQL</th><th class="val">CAC mídia</th>${ct?`<th class="val">CAC com time</th>`:""}<th class="val">ROAS</th></tr></thead>
+  <section class="bloco"><h2 class="sec">Mês a mês</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th rowspan="2">Mês</th><th colspan="5" style="text-align:center">Operação</th><th colspan="6" style="text-align:center">Funil de MQL</th></tr>
+    <tr><th class="val">Mídia total</th><th class="val">Vendas</th><th class="val">Vendido</th><th class="val">ROAS</th><th class="val">CAC</th><th class="val">Mídia de demanda</th><th class="val">MQL</th><th class="val">Custo/MQL</th><th class="val">SQL</th><th class="val">Custo/SQL</th><th class="val">ROAS MQL</th></tr></thead>
     <tbody>${L.map(x=>linha(x,mdMesTxt(x.k))).join("")}</tbody><tfoot>${linha(t,"<strong>Safra</strong>")}</tfoot></table></div>
-    <p class="meta" style="margin:6px 0 0">Como ler: MQL, SQL e vendas são da coorte do mês, ou seja, os MQL que chegaram naquele mês e o que eles viraram depois. Por isso os meses recentes ainda vão ganhar vendas. A mídia é só o Meta Ads; MQL de outras origens (site orgânico, indicação) também entram na conta, então o custo real do digital é um pouco maior do que parece.</p></section>
-  ${ehAdmin()?`<section class="bloco"><h2 class="sec">Custo do time para o CAC completo</h2><form class="mk-barra" id="f-is-custo"><label for="isc_v" style="align-self:center">Custo mensal do time de Inside Sales (R$)</label><input id="isc_v" inputmode="decimal" style="max-width:180px" value="${ct?esc(String(ct).replace(".",",")):""}"><button class="btn sec" type="submit">Salvar</button></form><p class="meta" style="margin:6px 0 0">Ajuda de custo, comissões e ferramentas do time por mês. Fica só com administradores e entra na coluna "CAC com time".</p></section>`:""}`;
+    <p class="meta" style="margin:6px 0 0">Vendas da operação: negociações ganhas pelo time no mês, de qualquer origem. Funil de MQL: coorte do mês, ou seja, os MQL que chegaram naquele mês e o que viraram depois; os meses recentes ainda vão ganhar vendas. Custos do funil usam só a mídia das campanhas de leads.</p></section>
+  ${ehAdmin()?`<section class="bloco"><h2 class="sec">Custo do time para o CAC completo</h2><form class="mk-barra" id="f-is-custo"><label for="isc_v" style="align-self:center">Custo mensal do time de Inside Sales (R$)</label><input id="isc_v" inputmode="decimal" style="max-width:180px" value="${ct?esc(String(ct).replace(".",",")):""}"><button class="btn sec" type="submit">Salvar</button></form><p class="meta" style="margin:6px 0 0">Ajuda de custo, comissões e ferramentas do time por mês. Fica só com administradores e entra no CAC da operação.</p></section>`:""}`;
 }
 
 /* ===== Inside Sales: RFV ===== */
@@ -1629,7 +1651,7 @@ function vISRfv(){
 }
 
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-rfv","RFV"],["is-cac","Custo de aquisição"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
