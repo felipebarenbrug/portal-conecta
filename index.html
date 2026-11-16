@@ -1110,7 +1110,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116133749";
+const APP_VER="20261116135126";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4776,6 +4776,42 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const s=(ev.submitter&&ev.submitter.dataset.s)||"aprovar";const v=mkNum(f.querySelector("#msit_v").value);const o=f.querySelector("#msit_o").value.trim()||null;
   const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:s,p_valor:v||null,p_obs:o});if(error){aviso("Não foi possível registrar.");return;}
   S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":"Recusada. Saiu da verba.");},true);
+/* ---------- Ações: fonte da verba (Marketing ou verba do canal no Conecta) ---------- */
+const MK_FONTES=["Marketing","IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
+const mkFonteCanal=a=>a&&a.fonte&&a.fonte!=="Marketing";
+const mkVerbaMkt=a=>!mkFonteCanal(a);
+function vMkFonte(a){
+  const g=ehMkt();if(a.agrupador)return "";if(!g&&!mkFonteCanal(a))return "";
+  if(g&&mkFonteCanal(a)&&S.canais==null&&!S._mkCanBusy){S._mkCanBusy=1;carregarCanais().then(()=>{S._mkCanBusy=0;render();});}
+  const c=(S.canais||[]).find(x=>x.id===a.canal_id);const m=c?metricasCanal(c):null;const bp=a.fonte&&a.fonte.startsWith("Bônus");
+  const val=mkCusto(a);const pgd=c&&a.pgd_id?((S.acoesCanal||{})[c.id]||[]).find(x=>x.id===a.pgd_id):null;
+  let info="";
+  if(c&&m){const plano=bp?(m.aprovBP||0):(m.aprovIG||0)+(m.analiseIG||0);const disp=bp?(m.mBonus||0):(m.mIgdb||0);const jaConta=pgd?Number(pgd.valor_igdb)||0:0;const saldo=disp-plano-(pgd?0:val);
+    info=`<div class="metrics" style="margin-top:10px"><div class="metric"><span>${bp?"Bônus de Performance na meta":"IGDB estimado na safra"}</span><strong>${fmtK0(disp)}</strong><span class="meta">${esc(c.nome)} · ${esc(c.tier||"")}${bp?" · só com 90% ou mais da meta":""}</span></div>
+      <div class="metric"><span>Já planejado no canal</span><strong>${fmtK0(plano)}</strong><span class="meta">${bp?"campanhas aprovadas":"ações de PGD aprovadas e em análise"}${pgd?", incluindo esta":""}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px ${saldo<0?"#c0392b":"#2e8b57"}"><span>Saldo ${pgd?"":"depois desta ação"}</span><strong style="color:${saldo<0?"#c0392b":"inherit"}">${fmtK0(saldo)}</strong><span class="meta">${saldo<0?"a verba do canal não cobre":"cabe na verba do canal"}</span></div></div>
+      <p class="meta" style="margin:6px 0 0">${pgd?`Lançada no PGD do canal como "${esc(pgd.status||"Em Análise")}", ${fmtK0(jaConta)}. A revenda vê a ação no plano dela.`:"Ainda não lançada no PGD do canal: o valor não está descontando a verba dele."}</p>`;}
+  return `<section class="bloco"><h2 class="sec">Fonte da verba</h2>
+    ${g?`<form id="f-mk-fonte" class="mk-mz"><div><label for="mkf_f">De onde sai o dinheiro</label><select id="mkf_f">${MK_FONTES.map(o=>`<option ${o===(a.fonte||"Marketing")?"selected":""}>${o}</option>`).join("")}</select></div>
+      <div ${mkFonteCanal(a)?"":"hidden"} id="mkf_cbox"><label for="mkf_c">Canal do Conecta</label><select id="mkf_c"><option value="">— escolha —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${k.id===a.canal_id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select></div>
+      <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" type="submit">Salvar fonte</button>${mkFonteCanal(a)&&c&&ehAdmin()?`<button class="btn" type="button" data-a="mk-pgd">${pgd?"Atualizar no PGD do canal":"Lançar no PGD do canal"}</button>`:""}</div></form>`
+      :`<p style="margin:0">${esc(a.fonte)}${c?" · "+esc(c.nome):""}</p>`}
+    ${info}
+    <p class="meta" style="margin:8px 0 0">Com a fonte no canal, o valor sai da verba do Conecta da revenda e não conta na verba de Marketing. Lançar no PGD registra a ação no plano do canal${bp?" como campanha do Bônus de Performance":", usando o IGDB dele"}, com o mesmo valor e situação.</p></section>`;
+}
+document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="mkf_f"){const b=document.getElementById("mkf_cbox");if(b)b.hidden=ev.target.value==="Marketing";if(ev.target.value!=="Marketing"&&S.canais==null){carregarCanais().then(render);}}});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-mk-fonte")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehMkt())return;
+  const fo=f.querySelector("#mkf_f").value,ca=f.querySelector("#mkf_c").value||null;if(fo!=="Marketing"&&!ca){aviso("Escolha o canal.");return;}
+  await mkSalva(S.mkSel,{fonte:fo,canal_id:fo==="Marketing"?null:ca},fo==="Marketing"?"Fonte: verba de Marketing.":"Fonte salva: a ação sai da verba do canal.");},true);
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-pgd']");if(!b)return;ev.preventDefault();ev.stopPropagation();if(!ehAdmin())return;
+  const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!a.canal_id)return;b.disabled=true;
+  const aprov=["A fazer","Em andamento","Concluída"].includes(a.status)&&["Aprovada","Paga","Sem custo"].includes(mkFin(a));const bp=(a.fonte||"").startsWith("Bônus");
+  const mes=a.inicio?["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"][+String(a.inicio).slice(5,7)-1]:"";
+  const reg={canal_id:a.canal_id,tipo:a.tipo==="Feira"||a.tipo==="Evento"?"Evento/Feira":a.tipo==="Dia de campo"?"Dia de Campo":"Outros",categoria:"Ação de Reconhecimento da Marca",cidade:a.local||"",descricao:("Ação de Marketing: "+a.titulo).slice(0,300),data_acao:mes,valor_igdb:mkCusto(a),status:aprov?"Aprovado":a.status==="Recusada"?"Reprovado":"Em Análise",verba:bp?"Bônus de Performance":"IGDB",mkt_acao_id:a.id};
+  let r;if(a.pgd_id){r=await sb.from("acoes_pgd").update(reg).eq("id",a.pgd_id).select("id").maybeSingle();}else{r=await sb.from("acoes_pgd").insert(reg).select("id").single();}
+  if(r.error||!r.data){b.disabled=false;aviso("Não foi possível lançar no PGD do canal.");return;}
+  if(!a.pgd_id)await mkSalva(a.id,{pgd_id:r.data.id});S.canais=null;await carregarCanais();render();aviso(a.pgd_id?"PGD do canal atualizado.":"Lançada no PGD do canal.");},true);
+
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
@@ -4868,7 +4904,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
-  ${a.agrupador?"":vMkCustos(a)+vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
+  ${a.agrupador?"":vMkCustos(a)+vMkFonte(a)+vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
@@ -4970,7 +5006,7 @@ function vAcoesGestao(){
 }
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(mkConta),SOL=S.mk.filter(a=>a.status==="Solicitada");
+  const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)),SOL=S.mk.filter(a=>a.status==="Solicitada");
   const prev=A.reduce((t,a)=>t+(Number(a.valor_prev)||0),0),real=A.reduce((t,a)=>t+(Number(a.valor_real)||0),0),comp=A.reduce((t,a)=>t+mkCusto(a),0),saldo=V-comp;
   const brv=Object.values(S.mkBrAcao||{}).reduce((t,v)=>t+v,0);
   const sf=f=>A.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0),vPag=sf("Paga"),vApr=sf("Aprovada"),vProv=sf("Provisionada");
@@ -4990,6 +5026,7 @@ function vAcoesPainel(){
     <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(vApr)}</strong><span class="meta">compromisso assumido</span></div>
     <div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong><span class="meta">reservado, ainda sem aprovação${(()=>{const ea=A.filter(a=>a.status==="Em análise");return ea.length?` · ${ea.length} em análise: ${fmtK0(ea.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}</span></div>
     ${(()=>{const o={};A.forEach(x=>mkSem(x).forEach(i=>{o[i.cult]=(o[i.cult]||0)+(Number(i.kg)||0);}));const ks=Object.keys(o);return ks.length?`<div class="metric"><span>Sementes comprometidas</span><strong>${isNum(ks.reduce((t,k)=>t+o[k],0))} kg</strong><span class="meta">${ks.map(k=>k+" "+isNum(o[k])+" kg").join(" · ")} · ${fmtK0(A.reduce((t,x)=>t+mkSemTotal(x),0))} em produto, fora da verba em dinheiro</span></div>`:"";})()}
+    ${ACAN.length?`<div class="metric"><span>Com verba dos canais (Conecta)</span><strong>${fmtK0(ACAN.reduce((t,x)=>t+mkCusto(x),0))}</strong><span class="meta">${ACAN.length} ações pagas com IGDB ou bônus das revendas, fora da verba de Marketing</span></div>`:""}
     <div class="metric"><span>Saldo só com o aprovado</span><strong>${fmtK0(V-vPag-vApr)}</strong><span class="meta">verba menos pago e aprovado; com a provisão: ${fmtK0(saldo)}</span></div>
   </div>
   ${finBarra(V?comp/V:null,"da verba comprometida")}
