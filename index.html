@@ -547,6 +547,7 @@ main.largo{max-width:1120px}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
 .uf-grid{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.uf-chip{padding:3px 8px;font-size:12px;min-width:38px}
+.mk-corte td{background:#FDE7E7;color:var(--vermelho);font-weight:700;font-size:12.5px;text-align:center;border-top:2px dashed var(--vermelho)}
 .orc-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:10px;margin:10px 0}
 .orc-c{border:1px solid var(--linha);border-radius:8px;padding:12px 14px;background:var(--branco);display:flex;flex-direction:column;gap:6px;min-width:0}
 .orc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}.orc-l{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
@@ -1129,7 +1130,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116191700";
+const APP_VER="20261116193000";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5267,6 +5268,25 @@ function vMkOrcCards(C,V,vb){const R=S.md&&S.md.d&&S.md.d.length?mdResumo():null
   const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0);
   return `<div class="orc-cards">${cards}</div>
   <div class="orc-c orc-res">${lin("Orçado nas contas",fmtK0(orc))}${lin("Saldo livre somado",fmtK0(V),"orc-tot")}${vb.grupo_orcado?lin(`Grupo ${esc(vb.grupo_nome||"")}<span class="meta"> inclui a conta 1221 Brindes, controlada no Painel de brindes</span>`,fmtK0(+vb.grupo_orcado)):""}</div>`;}
+function vMkFila(A){
+  const blocos=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f);if(!C.length)return "";const livre=C.reduce((t,c)=>t+(mkSaldoConta(c)||0),0);
+    const X=A.filter(a=>mkFonteMkt(a)===f),firme=X.filter(a=>["Aprovada","Paga"].includes(mkFin(a))).reduce((t,a)=>t+mkCusto(a),0);
+    const disp=livre-firme;
+    const F=X.filter(a=>a.status==="Em análise"&&mkFin(a)==="Provisionada").map(a=>({a,s:mkScore(a.matriz),v:mkCusto(a)}));
+    if(!F.length)return "";
+    const ok=x=>x.s&&x.s.rec!=="Nota incompleta";
+    F.sort((x,y)=>(ok(y)-ok(x))||((y.s&&y.s.sc||0)-(x.s&&x.s.sc||0))||(x.v-y.v));
+    let acc=0,cortou=false;const linhas=F.map((x,i)=>{const inc=!ok(x);if(!inc)acc+=x.v;const cabe=!inc&&acc<=disp;let corte="";
+      if(!cabe&&!cortou&&!inc){cortou=true;corte=`<tr class="mk-corte"><td colspan="6">Linha de corte: o saldo de ${fmtK0(disp)} acaba aqui</td></tr>`;}
+      return corte+`<tr><td><button class="link" data-a="mk-abrir" data-v="${x.a.id}" style="text-align:left">${esc(x.a.titulo)}</button></td><td class="val">${inc?"—":x.s.sc}</td><td>${stTag(x.s?x.s.rec:"Nota incompleta",MK_REC_COR[x.s?x.s.rec:"Nota incompleta"])}</td><td class="val">${fmtK0(x.v)}</td><td class="val">${inc?"—":fmtK0(acc)}</td><td>${inc?stTag("Responder matriz","cinza"):cabe?stTag("Cabe","verde"):stTag("Não cabe","vermelho")}</td></tr>`;}).join("");
+    const nInc=F.filter(x=>!ok(x)).length;
+    return `<h3 class="pgd-h" style="margin-top:12px">${esc(f)}</h3>
+    <p class="meta" style="margin:0 0 6px">Saldo livre ${fmtK0(livre)} − aprovado e pago ${fmtK0(firme)} = <strong>${fmtK0(disp)} para decidir</strong> · ${F.length} em análise somando ${fmtK0(F.reduce((t,x)=>t+x.v,0))}</p>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação em análise</th><th class="val">Nota</th><th>Recomendação</th><th class="val">Valor</th><th class="val">Acumulado</th><th>Verba</th></tr></thead><tbody>${linhas}</tbody></table></div>
+    ${nInc?`<p class="meta" style="margin:4px 0 0">${nInc} ${nInc===1?"ação está":"ações estão"} sem nota completa e fora da conta. Responda a matriz no cartão para entrar na fila.</p>`:""}`;}).join("");
+  if(!blocos)return "";
+  return `<section class="bloco"><h2 class="sec">Fila de decisão · o que cabe na verba</h2>
+  <p class="sub" style="margin:0 0 6px">As ações em análise em ordem de nota da matriz (empate: a mais barata primeiro). O valor vai somando de cima para baixo até acabar o saldo de cada conta, já descontado o que foi aprovado e pago. É uma sugestão para decidir; quem aprova continua sendo o Marketing.</p>${blocos}</section>`;}
 function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(mkSaldoConta(c)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
   return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
   <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade". Brindes (conta 1221) ficam no Painel de brindes.</p>`;}
@@ -5346,6 +5366,7 @@ function vAcoesPainel(){
   const tab=(t,xs)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Ações</th><th class="val">Valor</th><th class="val">% da verba</th></tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.k)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.v)}</td><td class="val">${V?pctTxt(x.v/V):"—"}</td></tr>`).join("")}</tbody></table></div></div>`;
   return `<div><h1 class="titulo">Verba e cenários · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
   ${vMkVerbaContas(V)}${vMkPorConta(A)}${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
+  ${vMkFila(A)}
   <div class="metrics">
     <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong></div>
     <div class="metric"><span>Comprometido</span><strong>${fmtK0(comp)}</strong><span class="meta">${V?pctTxt(comp/V)+" da verba":""}</span></div>
