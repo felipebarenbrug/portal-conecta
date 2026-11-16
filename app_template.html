@@ -574,7 +574,7 @@ main.largo{max-width:1120px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
-.pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}
+.pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}summary.pend-top{cursor:pointer;list-style:none}summary.pend-top::-webkit-details-marker{display:none}summary.pend-top strong::before{content:'\25BE';display:inline-block;margin-right:8px;font-size:13px;transition:transform .15s}details.pend-home:not([open]) summary.pend-top strong::before{transform:rotate(-90deg)}details.pend-home:not([open]){gap:0}.pend-acts{display:flex;gap:8px}
 .bd-como{background:var(--azul-claro,#eef5fb);border-radius:10px;padding:10px 14px;font-size:14px}.bd-como ol{margin:4px 0 0;padding-left:20px;display:grid;gap:2px}
 .mk-sol{box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}
 .pp-item{display:grid;grid-template-columns:1.2fr 1fr .8fr .9fr 1.2fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--linha,#e3e8ee)}.pp-item label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}.pp-val{padding:10px 0;font-weight:600}.pp-chk{display:flex!important;gap:6px;align-items:center;font-weight:600}.pp-chk input{width:auto;margin:0}.pp-desc input[data-pp=pedido]{margin-top:6px}.pp-tot-box .l1{display:flex;justify-content:space-between;gap:12px}@media(max-width:700px){.pp-item{grid-template-columns:1fr 1fr}}
@@ -2669,23 +2669,25 @@ function vMercadoHome(){
     <button class="btn sec" style="width:100%" data-a="merc-ir" data-v="mercado-noticias">Ver todas as notícias</button>
   </div>`;
 }
+function pendAberto(k){try{return localStorage.getItem("pc_pend_"+k)!=="0";}catch(e){return true;}}
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.classList&&d.classList.contains("pend-home")&&d.dataset.pk){try{localStorage.setItem("pc_pend_"+d.dataset.pk,d.open?"1":"0");}catch(e){}}},true);
 function vPendenciasHome(){
   const out=[];
   if(ehAdmin()&&(S.solic||[]).length){const L=S.solic;const nS=L.filter(x=>x.tipo==="senha").length,nA=L.length-nS;
-    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações pendentes (${L.length})</strong><button class="btn" data-a="secao" data-v="gestao">Atender no painel</button></div>
+    out.push(`<details class="bloco cx pend-home" data-pk="92240" ${pendAberto("92240")?"open":""}><summary class="pend-top"><strong>Solicitações pendentes (${L.length})</strong><span class="pend-acts"><button class="btn" data-a="secao" data-v="gestao">Atender no painel</button></span></summary>
       <p class="meta" style="margin:0">${[nS?`${nS} ${nS===1?"pedido":"pedidos"} de nova senha`:"",nA?`${nA} ${nA===1?"pedido":"pedidos"} de acesso`:""].filter(Boolean).join(" · ")}</p>
-      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></section>`);}
+      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></details>`);}
   if(ehMkt()&&(S.mkSolHome||[]).length){const L=S.mkSolHome;
-    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações de ação de marketing (${L.length})</strong><button class="btn" data-a="mk-ir-solic">Analisar</button></div>
-      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div></div>`).join("")}</div></section>`);}
+    out.push(`<details class="bloco cx pend-home" data-pk="95084" ${pendAberto("95084")?"open":""}><summary class="pend-top"><strong>Solicitações de ação de marketing (${L.length})</strong><span class="pend-acts"><button class="btn" data-a="mk-ir-solic">Analisar</button></span></summary>
+      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div></div>`).join("")}</div></details>`);}
   if(ehAdmin()&&(S.pgdHome||[]).length){const L=S.pgdHome,por={};L.forEach(x=>{const k=x.canal_id;(por[k]=por[k]||{nome:(x.canais&&x.canais.nome)||"Canal",n:0,v:0,ult:x.criado_em}).n++;por[k].v+=Number(x.valor_igdb)||0;if(x.criado_em>por[k].ult)por[k].ult=x.criado_em;});
-    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Ações de PGD aguardando validação (${L.length})</strong></div>
+    out.push(`<details class="bloco cx pend-home" data-pk="35441" ${pendAberto("35441")?"open":""}><summary class="pend-top"><strong>Ações de PGD aguardando validação (${L.length})</strong><span class="pend-acts"></span></summary>
       <p class="meta" style="margin:0">Lançadas pelas revendas no Conecta Revendas. Abra o canal para aprovar, pedir ajuste ou recusar cada ação.</p>
-      <div class="lista">${Object.entries(por).map(([id,x])=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${x.n} ${x.n===1?"ação":"ações"} · ${fmtK0(x.v)} pedidos · última em ${fmtDataHora(x.ult)}</span></div><button class="btn sec" data-a="pgd-ir" data-v="${esc(id)}">Validar</button></div>`).join("")}</div></section>`);}
+      <div class="lista">${Object.entries(por).map(([id,x])=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${x.n} ${x.n===1?"ação":"ações"} · ${fmtK0(x.v)} pedidos · última em ${fmtDataHora(x.ult)}</span></div><button class="btn sec" data-a="pgd-ir" data-v="${esc(id)}">Validar</button></div>`).join("")}</div></details>`);}
   if(moderaDuv()){const P=(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto);if(P.length)
-    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Perguntas aguardando o embaixador técnico (${P.length})</strong><button class="btn" data-a="secao" data-v="duvidas">Responder</button></div>
+    out.push(`<details class="bloco cx pend-home" data-pk="84719" ${pendAberto("84719")?"open":""}><summary class="pend-top"><strong>Perguntas aguardando o embaixador técnico (${P.length})</strong><span class="pend-acts"><button class="btn" data-a="secao" data-v="duvidas">Responder</button></span></summary>
       <p class="meta" style="margin:0">Só você, o autor e os administradores veem estas perguntas até alguém clicar em "Exibir a todos".</p>
-      <div class="lista">${P.slice(0,5).map(q=>`<div class="linha"><div><strong>${esc((q.pergunta||"").slice(0,120))}${(q.pergunta||"").length>120?"…":""}</strong><span class="meta">${esc(q.autor_nome||"")} · ${esc(q.tema||"")} · ${fmtDataHora(q.criado_em)}</span></div></div>`).join("")}</div></section>`);}
+      <div class="lista">${P.slice(0,5).map(q=>`<div class="linha"><div><strong>${esc((q.pergunta||"").slice(0,120))}${(q.pergunta||"").length>120?"…":""}</strong><span class="meta">${esc(q.autor_nome||"")} · ${esc(q.tema||"")} · ${fmtDataHora(q.criado_em)}</span></div></div>`).join("")}</div></details>`);}
   return out.join("");
 }
 
