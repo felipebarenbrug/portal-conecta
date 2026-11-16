@@ -545,6 +545,7 @@ main.largo{max-width:1120px}
 .mk-dia.hoje{background:var(--amarelo-claro,#fff8d6)}.mk-dia.vazio-d{background:var(--fundo,#f6f8fa)}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
+.mk-per-g{display:flex;flex-direction:column;gap:6px;margin-top:10px}.mk-per-l{display:flex;flex-wrap:wrap;gap:6px}.mk-per-l .mk-ev{white-space:normal;font-size:12.5px;padding:4px 8px}
 .mk-ev.atr{box-shadow:inset 0 0 0 2px var(--vermelho,#c0392b)}
 .mk-linha{align-items:flex-start}.mk-linha .bd-tags{margin-top:4px}
 .mk-chk{display:grid;gap:6px}.mk-chk-i{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:8px 10px;border:1px solid var(--linha,#e3e8ee);border-radius:10px}
@@ -4944,7 +4945,21 @@ function mkChecklistHTML(a){
   </section>`;
 }
 function mkCal(){const m=S.mkMes||mkHoje().slice(0,7);return m;}
-function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&i<=d&&d<=f;}
+const MK_CAL_MAX=7;
+function mkDiasSpan(a){if(!a.inicio)return 0;const f=a.fim||a.inicio;return Math.round((new Date(f+"T12:00")-new Date(a.inicio+"T12:00"))/864e5)+1;}
+function mkPeriodo(a){return mkDiasSpan(a)>MK_CAL_MAX;}
+function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&!mkPeriodo(a)&&i<=d&&d<=f;}
+function mkPerTxt(a){const f=a.fim||a.inicio,d=x=>x.split("-").reverse().slice(0,2).join("/"),ini=a.inicio.slice(8)==="01",fimM=new Date(+f.slice(0,4),+f.slice(5,7),0).getDate()===+f.slice(8);
+  if(ini&&fimM&&a.inicio.slice(0,7)===f.slice(0,7))return "data a definir no mês";return `${d(a.inicio)} a ${d(f)}`;}
+function mkContas(){const vb=S.mkVerba||{};let c=Array.isArray(vb.contas)?vb.contas:[];if(!c.length&&Number(vb.valor))c=[{cc:"",projeto:"",conta:"",valor:Number(vb.valor)}];return c;}
+function vMkVerbaContas(V){const C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v?esc(String(v).replace(".",",")):"";
+  const linhas=C.map((c,i)=>ed?`<tr><td><input id="vc_cc_${i}" value="${esc(c.cc||"")}" style="width:70px" aria-label="Centro de custo"></td><td><input id="vc_pj_${i}" value="${esc(c.projeto||"")}" style="width:70px" aria-label="Projeto"></td><td><input id="vc_ct_${i}" value="${esc(c.conta||"")}" aria-label="Descrição da conta"></td><td class="val"><input id="vc_v_${i}" inputmode="decimal" value="${n(c.valor)}" style="width:120px;text-align:right" aria-label="Valor"></td><td><button type="button" class="link" data-a="vc-del" data-v="${i}">remover</button></td></tr>`
+    :`<tr><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td>${esc(c.conta||"—")}</td><td class="val">${fmtK0(Number(c.valor)||0)}</td></tr>`).join("");
+  return `<form class="form-card" id="f-mk-verba"><h2 class="sec" style="margin:0">De onde vem a verba</h2><p class="meta">A verba disponível é a soma das contas abaixo. Para somar outra conta, use Editar e Adicionar conta.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Centro de custo</th><th>Projeto</th><th>Descrição da conta</th><th class="val">Saldo (R$)</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="5" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
+  <tfoot><tr><th colspan="3">Total disponível</th><th class="val">${fmtK0(V)}</th>${ed?"<th></th>":""}</tr></tfoot></table></div>
+  <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
+function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";};return C.map((c,i)=>({cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),conta:g("vc_ct_"+i),valor:mkNum(g("vc_v_"+i))}));}
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
@@ -4957,11 +4972,16 @@ function vAcoesCal(){
   const mesI=`${m}-01`,mesF=`${m}-${String(dias).padStart(2,"0")}`;
   const doMes=A.filter(a=>a.inicio&&a.inicio<=mesF&&(a.fim||a.inicio)>=mesI).sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));
   const semData=A.filter(a=>!a.inicio&&mkAberta(a));
+  const per=doMes.filter(mkPeriodo),grp={};per.forEach(a=>{const k=a.mae_id||("s"+a.id);(grp[k]=grp[k]||[]).push(a);});
+  const maeT=id=>{const x=S.mk.find(b=>b.id===id);return x?x.titulo:"";};
+  const perHTML=per.length?`<section class="bloco mk-per"><h2 class="sec">Ao longo do mês, sem dia marcado · ${per.length}</h2><p class="meta">Ações com período longo ou só com o mês definido. Não aparecem nos dias para não encher o calendário.</p>
+    ${Object.entries(grp).map(([k,xs])=>`<div class="mk-per-g">${k[0]!=="s"?`<strong class="meta">${esc(maeT(+k))}</strong>`:""}<div class="mk-per-l">${xs.map(a=>`<button class="mk-ev st-${MK_FIN_COR[mkFin(a)]}${mkAtrasada(a)?" atr":""}" data-a="mk-abrir" data-v="${a.id}" title="${esc(a.titulo)}">${esc(a.titulo)} · ${esc(mkPerTxt(a))}</button>`).join("")}</div></div>`).join("")}</section>`:"";
   const mv=k=>{const d=new Date(y,mo-1+k,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
-  return `<div><h1 class="titulo">Calendário de ações</h1><p class="sub">As ações pela data. A cor mostra a situação financeira: amarelo provisionada, azul aprovada, verde paga, cinza sem custo. Borda vermelha: atrasada.</p></div>
+  return `<div><h1 class="titulo">Calendário de ações</h1><p class="sub">As ações pela data. Eventos de até ${MK_CAL_MAX} dias aparecem nos dias; períodos longos ficam na faixa abaixo do calendário. A cor mostra a situação financeira: amarelo provisionada, azul aprovada, verde paga, cinza sem custo. Borda vermelha: atrasada.</p></div>
   <div class="mk-barra"><button class="btn sec" data-a="mk-mes" data-v="${mv(-1)}" aria-label="Mês anterior">‹</button><strong style="align-self:center;min-width:150px;text-align:center">${esc(nomeMes)}</strong><button class="btn sec" data-a="mk-mes" data-v="${mv(1)}" aria-label="Próximo mês">›</button><button class="link" data-a="mk-mes" data-v="${h.slice(0,7)}">hoje</button>
     <div class="filtros" style="margin:0">${["Todas",...MK_FIN,"Atrasadas"].map(t=>`<button class="chip" data-a="mk-calf" data-v="${t}" aria-pressed="${t===ff}">${t}</button>`).join("")}</div>${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}</div>
   <div class="mk-cal"><div class="mk-sem">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(x=>`<span>${x}</span>`).join("")}</div><div class="mk-grade">${cel.join("")}</div></div>
+  ${perHTML}
   <section class="bloco"><h2 class="sec">No mês · ${doMes.length} ${doMes.length===1?"ação":"ações"}${g?" · "+fmtK0(doMes.reduce((t,a)=>t+mkCusto(a),0)):""}</h2>
     ${doMes.length?`<div class="lista">${doMes.map(mkLinhaHTML).join("")}</div>`:`<div class="vazio">Nenhuma ação neste mês.</div>`}</section>
   ${semData.length?`<section class="bloco"><h2 class="sec">Sem data definida</h2><div class="lista">${semData.map(mkLinhaHTML).join("")}</div></section>`:""}`;
@@ -5014,7 +5034,7 @@ function vAcoesPainel(){
   const por=k=>{const o={};A.forEach(a=>{const c=a[k]||"—";const x=o[c]||(o[c]={k:c,n:0,v:0});x.n++;x.v+=mkCusto(a);});return Object.values(o).sort((a,b)=>b.v-a.v);};
   const tab=(t,xs)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Ações</th><th class="val">Valor</th><th class="val">% da verba</th></tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.k)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.v)}</td><td class="val">${V?pctTxt(x.v/V):"—"}</td></tr>`).join("")}</tbody></table></div></div>`;
   return `<div><h1 class="titulo">Verba e cenários · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
-  <form class="form-card" id="f-mk-verba" style="max-width:520px"><label for="mk_verba">Verba disponível na safra (R$)</label><div class="mk-link"><input id="mk_verba" inputmode="decimal" value="${V?esc(String(V).replace(".",",")):""}"><button class="btn" type="submit">Salvar verba</button></div>${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
+  ${vMkVerbaContas(V)}${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
   <div class="metrics">
     <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong></div>
     <div class="metric"><span>Comprometido</span><strong>${fmtK0(comp)}</strong><span class="meta">${V?pctTxt(comp/V)+" da verba":""}</span></div>
@@ -5281,6 +5301,10 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-sol-canc"){const {data,error}=await sb.rpc("mkt_cancelar_solicitacao",{p_id:+v});if(error||!data){aviso("Não foi possível cancelar.");return;}S.mk=null;await carregarMkt();aviso("Solicitação cancelada.");return;}
   if(a==="mk-brindes"){const x=(S.mk||[]).find(y=>y.id===+v);S.bdAcaoPre=+v;S.bdAcaoPreT=x?x.titulo:"";S.secao="brindes";S.pag="brindes-catalogo";S.bd=null;carregarBrindes();render();window.scrollTo(0,0);return;}
   if(a==="mk-calf"){S.mkCalF=v;render();return;}
+  if(a==="vc-edit"){S.mkVerbaEd=mkContas().map(c=>({...c}));if(!S.mkVerbaEd.length)S.mkVerbaEd=[{cc:"93",projeto:"97",conta:"Eventos",valor:0}];render();return;}
+  if(a==="vc-add"){S.mkVerbaEd=mkVcLer();S.mkVerbaEd.push({cc:"",projeto:"",conta:"",valor:0});render();return;}
+  if(a==="vc-del"){const x=mkVcLer();x.splice(+v,1);S.mkVerbaEd=x;render();return;}
+  if(a==="vc-cancel"){S.mkVerbaEd=null;render();return;}
   if(a==="mk-chk"||a==="mk-chk-del"){const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:a==="mk-chk"?"toggle":"del",p_id:v});if(error){aviso("Não foi possível atualizar o checklist.");render();return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();return;}
   if(a==="mk-mover"){if(!ehMkt())return;const {data,error}=await sb.from("mkt_acoes").update({status:v}).eq("id",S.mkSel).select().maybeSingle();if(error||!data){aviso("Não foi possível mudar o status.");return;}S.mk=S.mk.map(x=>x.id===data.id?data:x);render();carregarMkCard(data.id);return;}
   if(a==="mk-capa"){if(!ehMkt())return;const {data,error}=await sb.from("mkt_acoes").update({capa_path:v}).eq("id",S.mkSel).select().maybeSingle();if(!error&&data){S.mk=S.mk.map(x=>x.id===data.id?data:x);render();}return;}
@@ -5354,7 +5378,8 @@ document.addEventListener("submit",async ev=>{
     if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
   if(f.id==="f-mk-com"){const tx=val("mk_com");if(!tx)return;if(btn)btn.disabled=true;const {error}=await sb.from("mkt_comentarios").insert({acao_id:S.mkSel,texto:tx.slice(0,4000)});if(error){if(btn)btn.disabled=false;aviso("Não foi possível comentar.");return;}carregarMkCard(S.mkSel);return;}
   if(f.id==="f-mk-link"){const u=val("mk_lurl");if(!/^https?:\/\//i.test(u)){aviso("Use um link começando com https://");return;}const {error}=await sb.rpc("mkt_anexar",{p_acao:S.mkSel,p_path:null,p_nome:val("mk_lnome")||null,p_tipo:null,p_tam:null,p_url:u});if(error){aviso("Não foi possível adicionar o link.");return;}S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Link adicionado.");return;}
-  if(f.id==="f-mk-verba"){if(!ehMkt())return;const v=mkNum(val("mk_verba"));if(!(v>=0)){aviso("Confira o valor da verba.");return;}const {data,error}=await sb.from("mkt_verba").update({valor:v}).eq("safra",mkSafra).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar a verba.");return;}S.mkVerba=data;render();aviso("Verba salva.");return;}
+  if(f.id==="f-mk-verba"){if(!ehMkt()||!S.mkVerbaEd)return;const C=mkVcLer().filter(c=>c.cc||c.projeto||c.conta||c.valor);if(C.some(c=>!(c.valor>=0)||!c.conta)){aviso("Confira a descrição e o saldo de cada conta.");return;}
+    const v=C.reduce((t,c)=>t+(c.valor||0),0);const {data,error}=await sb.from("mkt_verba").update({valor:v,contas:C}).eq("safra",mkSafra).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar a verba.");return;}S.mkVerba=data;S.mkVerbaEd=null;render();aviso("Contas da verba salvas.");return;}
   if(f.id==="f-bd-req"){const C=bdCarr(),it=Object.entries(C).filter(([,q])=>q>0).map(([id,q])=>({id:+id,qtd:q}));if(!it.length)return;
     const mot=val("bd_mot"),dest=val("bd_dest");if(!mot||!dest){aviso("Informe o motivo e o destino.");return;}if(btn)btn.disabled=true;
     const {data,error}=await sb.rpc("brinde_requisitar",{p_itens:it,p_motivo:mot,p_destino:dest,p_destinatario:val("bd_para"),p_retirado_por:val("bd_ret"),p_acao:val("bd_acao")?+val("bd_acao"):null});
