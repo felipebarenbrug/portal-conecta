@@ -553,6 +553,7 @@ main.largo{max-width:1120px}
 .orc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}.orc-l{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
 .orc-l span{min-width:0}.orc-l .meta{display:block;font-size:12px}.orc-l strong{white-space:nowrap;font-variant-numeric:tabular-nums}
 .orc-tot{border-top:1px solid var(--linha);padding-top:6px;margin-top:2px}.orc-tot strong{font-size:17px;color:var(--azul-escuro)}.orc-tot.neg strong{color:var(--vermelho)}
+.orc-sub{background:var(--papel);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;margin-top:4px}.orc-sub .orc-l{font-size:13px}.orc-l.neg strong{color:var(--vermelho)}
 .orc-res{margin-bottom:10px;background:var(--papel)}
 .md-dest{display:flex;flex-direction:column;gap:12px}.md-dest-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.md-bar{background:var(--azul-claro);height:10px;border-radius:5px;margin:4px 0}.md-bar>div{background:var(--azul);height:10px;border-radius:5px}
 .rfv-segs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:8px}
@@ -1130,7 +1131,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116193000";
+const APP_VER="20261116193707";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1496,6 +1497,7 @@ async function carregarMidia(forca){
   catch(e){S.md={d:[],c:[],r:[],a:[],ct:[],cm:[]};}
   render();
 }
+function mdVerbaDigital(){return ((S.md||{}).ct||[]).reduce((t,c)=>t+(Number(c.verba_safra)||0),0);}
 function mdResumo(){
   const M=S.md||{},D=M.d||[];const ate=D.length?D[D.length-1].dia:mkHoje();
   const soma=(L,k)=>L.reduce((t,x)=>t+(Number(x[k])||0),0);
@@ -1537,7 +1539,7 @@ function vAcoesDigital(){
   if(S.md.carregando)return `<div class="carregando">Carregando campanhas…</div>`;
   const R=mdResumo();const C=S.md.c||[],RG=(S.md.r||[]).filter(x=>x.uf!=="XX"),totR=RG.reduce((t,x)=>t+(Number(x.gasto)||0),0);
   const conta=(mkContas()||[]).find(mkEhPub),orc=conta&&conta.orcado!=null?Number(conta.orcado):0,outras=conta?Number(conta.gasto_antes)||0:0;
-  const projTot=R.projSafra+outras,dif=orc?orc-projTot:0;
+  const vdig=mdVerbaDigital(),base=vdig||orc,projTot=vdig?R.projSafra:R.projSafra+outras,dif=base?base-projTot:0;
   const meses=mdMeses(R.D);
   const cpl=R.leads?R.tot/R.leads:0,ctr=R.imp?R.cli/R.imp*100:0,cpm=R.imp?R.tot/R.imp*1000:0;
   const stTx=s=>s==="ACTIVE"?stTag("Ativa","verde"):s==="PAUSED"?stTag("Pausada","cinza"):stTag(esc(s||"—"),"cinza");
@@ -1547,7 +1549,7 @@ function vAcoesDigital(){
     <div class="metric"><span>Gasto na safra</span><strong>${isR(R.tot)}</strong><span class="meta">1º/07 a ${mdData(R.ate)} · média ${isR(R.tot/Math.max(1,R.D.length))} por dia</span></div>
     <div class="metric"><span>Gasto em ${mdMesTxt(R.mes)}</span><strong>${isR(R.gm)}</strong><span class="meta">projeção do mês ${isR(R.projMes)} · faltam ${R.restMes} dias</span></div>
     <div class="metric"><span>Verba diária ativa</span><strong>${isR(R.vd)}</strong><span class="meta">${R.vdCamp?(()=>{const n=R.ativas.filter(c=>+c.verba_diaria).length;return n===1?"1 campanha ativa com verba diária":`soma das ${n} campanhas ativas com verba diária`;})():"média dos últimos 7 dias"} · últimos 7 dias: ${isR(R.med7)}/dia</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px ${orc&&dif<0?"var(--vermelho)":"var(--amarelo)"}"><span>Projeção até 30/06/2027</span><strong>${isR(R.projSafra)}</strong><span class="meta">${orc?`com outras ações de publicidade (${isR(outras)}): ${isR(projTot)} de ${isR(orc)} orçados · ${dif>=0?"sobram "+isR(dif):"faltam "+isR(-dif)}`:"conta 1119 sem orçado cadastrado"} · ritmo atual por ${R.restSafra} dias</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px ${base&&dif<0?"var(--vermelho)":"var(--amarelo)"}"><span>Projeção até 30/06/2027</span><strong>${isR(R.projSafra)}</strong><span class="meta">${vdig?`de ${isR(vdig)} de verba de mídia digital na safra · ${dif>=0?"sobram "+isR(dif):"faltam "+isR(-dif)}`:orc?`com outras ações de publicidade (${isR(outras)}): ${isR(projTot)} de ${isR(orc)} orçados · ${dif>=0?"sobram "+isR(dif):"faltam "+isR(-dif)}`:"sem verba cadastrada"} · ritmo atual por ${R.restSafra} dias</span></div>
   </div>
   <div class="metrics" style="margin-top:10px">
     <div class="metric"><span>Impressões</span><strong>${mdK(R.imp)}</strong><span class="meta">CPM ${mdR2(cpm)}</span></div>
@@ -5264,7 +5266,8 @@ function vMkOrcCards(C,V,vb){const R=S.md&&S.md.d&&S.md.d.length?mdResumo():null
       ${md?lin(`Mídia Meta Ads já gasta<span class="meta"> até ${mdData((S.midia||{}).ate||"")}</span>`,"− "+fmtK0(md)):""}
       ${lin(md?"Outras ações de publicidade":"Gasto antes do portal",ga!=null?"− "+fmtK0(ga):'<span class="meta">a informar</span>')}
       ${pj?lin(`Mídia projetada até 30/06/2027<span class="meta"> ${R?isR(R.vd)+"/dia × "+R.restSafra+" dias":""}</span>`,"− "+fmtK0(pj)):""}
-      ${lin(pj?"Saldo livre na safra":"Saldo disponível",sd==null?'<span class="meta">a informar</span>':fmtK0(sd),"orc-tot"+(sd!=null&&sd<0?" neg":""))}</div>`;}).join("");
+      ${lin(pj?"Saldo livre na safra":"Saldo disponível",sd==null?'<span class="meta">a informar</span>':fmtK0(sd),"orc-tot"+(sd!=null&&sd<0?" neg":""))}
+      ${md&&mdVerbaDigital()&&o!=null?(()=>{const vd=mdVerbaDigital(),sobra=vd-md-pj;return `<div class="orc-sub">${lin("Dentro do orçado: verba de mídia digital",fmtK0(vd))}${lin("Sobra projetada da mídia digital",fmtK0(sobra),sobra<0?"neg":"")}${lin("Para outras ações de publicidade",fmtK0(o-vd)+(ga!=null?`<span class="meta">${fmtK0(ga)} já usados</span>`:""))}</div>`;})():""}</div>`;}).join("");
   const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0);
   return `<div class="orc-cards">${cards}</div>
   <div class="orc-c orc-res">${lin("Orçado nas contas",fmtK0(orc))}${lin("Saldo livre somado",fmtK0(V),"orc-tot")}${vb.grupo_orcado?lin(`Grupo ${esc(vb.grupo_nome||"")}<span class="meta"> inclui a conta 1221 Brindes, controlada no Painel de brindes</span>`,fmtK0(+vb.grupo_orcado)):""}</div>`;}
