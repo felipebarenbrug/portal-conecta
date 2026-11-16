@@ -4948,7 +4948,11 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao?`<section class="bloco"><h2 class="sec">Descrição</h2><p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p></section>`:""}
-  ${a.agrupador?"":vMkCustos(a)+vMkFonte(a)+vMkSementes(a)}${mkChecklistHTML(a)}${vMkMatriz(a)}${vMkResultado(a)}
+  ${a.agrupador?"":vMkCustos(a)+vMkFonte(a)+vMkSementes(a)}${mkChecklistHTML(a)}
+  <section class="bloco"><h2 class="sec">Comentários</h2>
+    ${S.mkCom==null?`<div class="carregando">Carregando…</div>`:S.mkCom.length?`<div class="mk-coms">${S.mkCom.map(c=>`<div class="mk-com"><div class="autor">${avatar(c.autor,c.autor_nome,32)}<div><strong>${esc(c.autor_nome||"")}</strong><span class="meta">${fmtDataHora(c.criado_em)}</span></div>${c.autor===S.user.id||g?`<button class="link perigo" data-a="mk-com-del" data-v="${c.id}" style="margin-left:auto">apagar</button>`:""}</div><p>${esc(c.texto)}</p></div>`).join("")}</div>`:`<div class="vazio">Sem comentários.</div>`}
+    <form id="f-mk-com" class="form-card" style="margin-top:8px"><label for="mk_com">Novo comentário</label><textarea id="mk_com" rows="3" maxlength="4000" required></textarea><div class="acoes"><button class="btn" type="submit">Comentar</button></div></form></section>
+  ${vMkMatriz(a)}${vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
@@ -4957,9 +4961,6 @@ function vAcoesCard(){
     <div class="mk-anexar"><label class="btn sec pgd-up">Anexar arquivos<input type="file" multiple data-mkup="${a.id}" accept="${MK_MIMES.join(",")}"></label>
       <form id="f-mk-link" class="mk-link"><input id="mk_lurl" type="url" placeholder="https://…" aria-label="Link" required><input id="mk_lnome" placeholder="Nome do link (opcional)" aria-label="Nome do link" maxlength="160"><button class="btn sec" type="submit">Adicionar link</button></form></div>
     <p class="meta">Contratos, notas fiscais, fotos, orçamentos e apresentações. Até 15 MB por arquivo.</p></section>
-  <section class="bloco"><h2 class="sec">Comentários</h2>
-    ${S.mkCom==null?`<div class="carregando">Carregando…</div>`:S.mkCom.length?`<div class="mk-coms">${S.mkCom.map(c=>`<div class="mk-com"><div class="autor">${avatar(c.autor,c.autor_nome,32)}<div><strong>${esc(c.autor_nome||"")}</strong><span class="meta">${fmtDataHora(c.criado_em)}</span></div>${c.autor===S.user.id||g?`<button class="link perigo" data-a="mk-com-del" data-v="${c.id}" style="margin-left:auto">apagar</button>`:""}</div><p>${esc(c.texto)}</p></div>`).join("")}</div>`:`<div class="vazio">Sem comentários.</div>`}
-    <form id="f-mk-com" class="form-card" style="margin-top:8px"><label for="mk_com">Novo comentário</label><textarea id="mk_com" rows="3" maxlength="4000" required></textarea><div class="acoes"><button class="btn" type="submit">Comentar</button></div></form></section>
   ${S.mkEv&&S.mkEv.length?`<section class="bloco"><h2 class="sec">Histórico</h2><div class="lista">${S.mkEv.map(e=>`<div class="linha"><div><strong>${esc(e.evento)}</strong><span class="meta">${esc(e.detalhe||"")} · ${esc(e.quem_nome||"")} · ${fmtDataHora(e.em)}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function mkSolBlocoHTML(a){
