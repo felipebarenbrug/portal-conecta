@@ -1117,7 +1117,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116152810";
+const APP_VER="20261116161837";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1824,6 +1824,7 @@ function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome|
 async function carregarFeed(){
   await Promise.all([carregarPosts(),carregarDuvidas(),carregarMsgs(),
     (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
+    (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("acoes_pgd").select("id,canal_id,tipo,categoria,cidade,valor_igdb,verba,criado_em,canais(nome)").eq("status","Em Análise").order("criado_em");S.pgdHome=data||[];}catch(e){}})(),
     (async()=>{if(S.demo||!ehMkt())return;try{const {data}=await sb.from("mkt_acoes").select("id,titulo,solicitante_nome,criado_em,verba_pedida,inicio").eq("status","Solicitada").order("criado_em");S.mkSolHome=data||[];}catch(e){}})(),
     (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
@@ -2677,6 +2678,10 @@ function vPendenciasHome(){
   if(ehMkt()&&(S.mkSolHome||[]).length){const L=S.mkSolHome;
     out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Solicitações de ação de marketing (${L.length})</strong><button class="btn" data-a="mk-ir-solic">Analisar</button></div>
       <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div></div>`).join("")}</div></section>`);}
+  if(ehAdmin()&&(S.pgdHome||[]).length){const L=S.pgdHome,por={};L.forEach(x=>{const k=x.canal_id;(por[k]=por[k]||{nome:(x.canais&&x.canais.nome)||"Canal",n:0,v:0,ult:x.criado_em}).n++;por[k].v+=Number(x.valor_igdb)||0;if(x.criado_em>por[k].ult)por[k].ult=x.criado_em;});
+    out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Ações de PGD aguardando validação (${L.length})</strong></div>
+      <p class="meta" style="margin:0">Lançadas pelas revendas no Conecta Revendas. Abra o canal para aprovar, pedir ajuste ou recusar cada ação.</p>
+      <div class="lista">${Object.entries(por).map(([id,x])=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${x.n} ${x.n===1?"ação":"ações"} · ${fmtK0(x.v)} pedidos · última em ${fmtDataHora(x.ult)}</span></div><button class="btn sec" data-a="pgd-ir" data-v="${esc(id)}">Validar</button></div>`).join("")}</div></section>`);}
   if(moderaDuv()){const P=(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto);if(P.length)
     out.push(`<section class="bloco cx pend-home"><div class="pend-top"><strong>Perguntas aguardando o embaixador técnico (${P.length})</strong><button class="btn" data-a="secao" data-v="duvidas">Responder</button></div>
       <p class="meta" style="margin:0">Só você, o autor e os administradores veem estas perguntas até alguém clicar em "Exibir a todos".</p>
@@ -3489,13 +3494,17 @@ function vCanalEditor(c){
       <div><label>Valor médio do kg (R$)</label><input id="c_valor" type="number" step="0.01" value="${Number(c.valor_kg)||0}"></div></div>
     <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="editarcanal">Cancelar</button></div></form>`;
 }
+const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
 function vNovaAcao(modo){
   const bp=modo==="bp";
   const tipos=bp?["Incentivo por saco vendido","Premiação / Viagem","Premiação em dinheiro ou vale","Campanha de vendas da equipe","Outros"]:["Ação em Loja","AT - Assistente Técnico","Bonificação / Campo Demonstrativo","Campanha Digital","Dia de Campo","Encontro de Produtores","Evento/Feira","Leilão/Patrocínio","Material POS/PDV","Palestra Técnica","Treinamento Canal","Visita Técnica","Webinar/Live","Outros"];
   return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"><h3 class="sec">${bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
     <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(t=>`<option>${t}</option>`).join("")}</select></div>
-    <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':""}></div><div><label for="na_valor">${bp?"Custo estimado (R$)":"Valor de IGDB (R$)"}</label><input id="na_valor" type="number" step="0.01" value="0"></div></div>
-    <div><label for="na_descr">${bp?"Regra da campanha":"Descrição"}</label><textarea id="na_descr" rows="3" ${bp?'placeholder="Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos."':""}></textarea></div>
+    ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option>${t}</option>`).join("")}</select></div>`}
+    <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
+    <div><label for="na_valor">${bp?"Custo estimado (R$) *":"Valor de IGDB pedido (R$) *"}</label><input id="na_valor" inputmode="decimal" placeholder="0,00" style="max-width:220px"><span class="meta">${bp?"":"Quanto da verba de IGDB do canal esta ação vai usar."}</span></div>
+    <div><label for="na_descr">${bp?"Regra da campanha *":"O que será feito *"}</label><textarea id="na_descr" rows="3" placeholder="${bp?"Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos.":"Ex: dia de campo com 40 pecuaristas na fazenda X, com área de Sabiá. Inclui almoço e transporte."}"></textarea></div>
+    <p class="meta" style="margin:0">A ação entra como Em análise e não desconta do saldo até o Marketing aprovar. Depois de adicionar, anexe orçamento, fotos ou material em "Fotos e documentos". Se faltar alguma informação, o Marketing avisa no comentário da ação.</p>
     <div class="acoes"><button class="btn" type="submit">${bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="novaacao" data-v="fechar">Cancelar</button></div></form>`;
 }
 const PAPEIS_CANAL=["Financeiro","Marketing","Gerente Comercial","Gestor/Responsável Legal"];
@@ -5732,6 +5741,7 @@ document.addEventListener("click",async ev=>{
   if(a==="pv-reenviar"){pvEnviar(false);return;}
   if(a==="ir-prova"){document.getElementById("sec-prova")?.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="rv-abrir"){S.rvEtapa=+v;irPag("rv-etapa");}
+  if(a==="pgd-ir"){S.secao="conecta-revendas";if(!S.canais)await carregarCanais();S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;irPag("rv-canal");window.scrollTo(0,0);return;}
   if(a==="vercanal"){S.canalSel=v;S.acaoSel=null;S.editCanal=false;S.novaAcao=false;S.novoContato=false;S.novaFilial=false;S.novoEstoque=false;S.novoPreco=false;irPag("rv-canal");}
   if(a==="contato-novo"){S.novoContato=v==="1";render();return;}
   if(a==="filial-nova"){S.novaFilial=v==="1";render();return;}
@@ -5955,11 +5965,13 @@ document.addEventListener("submit",async ev=>{
     S.canais=null;S.editCanal=false;render();aviso("Canal atualizado.");return;
   }
   if(f.id==="f-novaacao"){
-    const dados={canal_id:S.canalSel,tipo:f.querySelector("#na_tipo").value,cidade:f.querySelector("#na_cidade").value.trim(),valor_igdb:+f.querySelector("#na_valor").value||0,descricao:f.querySelector("#na_descr").value.trim(),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
+    const q=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const bpv=f.dataset.verba==="Bônus de Performance";
+    const dados={canal_id:S.canalSel,tipo:q("na_tipo"),categoria:bpv?null:q("na_cat")||null,cidade:q("na_cidade"),data_acao:q("na_data"),valor_igdb:mkNum(q("na_valor")),descricao:q("na_descr"),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
+    {const F=[];if(!bpv&&!dados.cidade)F.push("cidade");if(!dados.data_acao)F.push("quando");if(!(dados.valor_igdb>0))F.push("valor");if(!dados.descricao)F.push(bpv?"regra da campanha":"o que será feito");if(F.length){aviso("Preencha: "+F.join(", ")+".");return;}}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
-    S.canais=null;S.novaAcao=false;render();aviso("Ação adicionada.");return;
+    S.canais=null;S.novaAcao=false;render();aviso(ehAdmin()?"Ação adicionada.":"Ação enviada. Ela fica em análise até o Marketing validar.");return;
   }
   if(f.id==="f-mfa"){
     const cod=(f.querySelector("#mfa_cod").value||"").replace(/\D/g,"");if(cod.length!==6){S.mfa.erro="Digite os 6 números do aplicativo.";render();return;}
