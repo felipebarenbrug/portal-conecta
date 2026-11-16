@@ -19,6 +19,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--papel);color:var(--preto);font-family:var(--fonte);font-size:16px;line-height:1.55}
 button,input,select{font:inherit}
 h1,h2,h3{margin:0;line-height:1.15}
@@ -546,6 +547,12 @@ main.largo{max-width:1120px}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
 .uf-grid{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.uf-chip{padding:3px 8px;font-size:12px;min-width:38px}
+.orc-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:10px;margin:10px 0}
+.orc-c{border:1px solid var(--linha);border-radius:8px;padding:12px 14px;background:var(--branco);display:flex;flex-direction:column;gap:6px;min-width:0}
+.orc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}.orc-l{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
+.orc-l span{min-width:0}.orc-l .meta{display:block;font-size:12px}.orc-l strong{white-space:nowrap;font-variant-numeric:tabular-nums}
+.orc-tot{border-top:1px solid var(--linha);padding-top:6px;margin-top:2px}.orc-tot strong{font-size:17px;color:var(--azul-escuro)}.orc-tot.neg strong{color:var(--vermelho)}
+.orc-res{margin-bottom:10px;background:var(--papel)}
 .md-dest{display:flex;flex-direction:column;gap:12px}.md-dest-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.md-bar{background:var(--azul-claro);height:10px;border-radius:5px;margin:4px 0}.md-bar>div{background:var(--azul);height:10px;border-radius:5px}
 .rfv-segs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:8px}
 .rfv-seg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-radius:8px;padding:10px 12px;background:var(--branco);cursor:pointer;font:inherit;color:inherit}
@@ -5230,20 +5237,36 @@ const MK_SAFRA_INI="2026-07-01";
 const mkEhPub=c=>c&&(c.num==="1119"||/publicidade/i.test(c.conta||""));
 function mkMidia(c){return mkEhPub(c)?Number((S.midia||{}).tot)||0:0;}
 function mkVerbaTotal(){const C=mkContas();if(!C.length)return Number((S.mkVerba||{}).valor)||0;return C.reduce((t,c)=>{const v=mkSaldoConta(c);return t+(v==null?0:v);},0);}
-function mkSaldoConta(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Math.max(0,Number(c.orcado)-(Number(c.gasto_antes)||0)-md);const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
-function vMkVerbaContas(V){const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v||v===0?esc(String(v).replace(".",",")):"";
+function mkMidiaProj(c){if(!mkEhPub(c)||!S.md||!S.md.d||!S.md.d.length)return 0;const R=mdResumo();return Math.round(R.vd*R.restSafra);}
+function mkSaldoHoje(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Number(c.orcado)-(Number(c.gasto_antes)||0)-md;return mkSaldoBase(c);}
+function mkSaldoConta(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Number(c.orcado)-(Number(c.gasto_antes)||0)-md-mkMidiaProj(c);return mkSaldoBase(c);}
+function mkSaldoBase(c){const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
+function vMkVerbaContas(V){if(!S.md)carregarMidia();const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v||v===0?esc(String(v).replace(".",",")):"";
   const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0),gas=C.reduce((t,c)=>t+(Number(c.gasto_antes)||0)+mkMidia(c),0),fal=C.filter(c=>mkSaldoConta(c)==null);
   const inp=(id,v,w,lab,num)=>`<input id="${id}" value="${num?n(v):esc(v||"")}" ${num?'inputmode="decimal"':""} style="width:${w};${num?"text-align:right":""}" aria-label="${lab}">`;
   const linhas=C.map((c,i)=>{const sd=mkSaldoConta(c);return ed?`<tr><td>${inp("vc_num_"+i,c.num,"64px","Número da conta")}</td><td>${inp("vc_ct_"+i,c.conta,"100%","Descrição da conta")}</td><td>${inp("vc_cc_"+i,c.cc,"52px","Centro de custo")}</td><td>${inp("vc_pj_"+i,c.projeto,"52px","Projeto")}</td><td class="val">${inp("vc_o_"+i,c.orcado,"110px","Orçado",1)}</td><td class="val">${inp("vc_g_"+i,c.gasto_antes,"110px","Gasto antes do portal",1)}</td><td class="val meta">calculado</td><td><button type="button" class="link" data-a="vc-del" data-v="${i}">remover</button></td></tr>`
     :`<tr><td>${esc(c.num||"—")}</td><td>${esc(c.conta||"—")}</td><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td class="val">${c.orcado!=null&&c.orcado!==""?fmtK0(+c.orcado):"—"}</td><td class="val">${mkMidia(c)?`${fmtK0(mkMidia(c)+(Number(c.gasto_antes)||0))}<br><span class="meta">mídia Meta ${fmtK0(mkMidia(c))}${S.midia&&S.midia.ate?" até "+esc(S.midia.ate.split("-").reverse().join("/")):""} · outras ${c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):"a informar"}</span>`:c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):'<span class="meta">a informar</span>'}</td><td class="val"><strong>${sd==null?'<span class="meta">a informar</span>':fmtK0(sd)}</strong></td></tr>`;}).join("");
   const nc=ed?8:7;
   return `<form class="form-card" id="f-mk-verba"><h2 class="sec" style="margin:0">Orçamento de Marketing ${esc(mkSafra)}</h2>
-  <p class="meta">Saldo disponível = orçado menos o que foi gasto fora das ações do portal (gastos anteriores e, em Publicidade, a mídia do Meta Ads lida automaticamente). A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto fora das ações</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
+  <p class="meta">Saldo livre = orçado menos o que já foi gasto fora das ações do portal e, em Publicidade, menos a mídia do Meta Ads já gasta e a projetada até o fim da safra pela verba diária atual. A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
+  ${ed?"":vMkOrcCards(C,V,vb)}
+  ${!ed?"":`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto fora das ações</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
   <tfoot><tr><th colspan="4">Subtotal das contas</th><th class="val">${fmtK0(orc)}</th><th class="val">${fmtK0(gas)}</th><th class="val">${fmtK0(V)}${fal.length?" *":""}</th>${ed?"<th></th>":""}</tr>
-  ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas, incluindo a conta 1221 Brindes, que é controlada no Painel de brindes":""}</th></tr>`:""}</tfoot></table></div>
+  ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas, incluindo a conta 1221 Brindes, que é controlada no Painel de brindes":""}</th></tr>`:""}</tfoot></table></div>`}
   ${fal.length?`<p class="meta" style="margin:4px 0 0">* Fora do total até informar o gasto anterior: ${fal.map(c=>esc(c.conta)).join(", ")}.</p>`:""}
   <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
+function vMkOrcCards(C,V,vb){const R=S.md&&S.md.d&&S.md.d.length?mdResumo():null;
+  const lin=(t,v,cl)=>`<div class="orc-l${cl?" "+cl:""}"><span>${t}</span><strong>${v}</strong></div>`;
+  const cards=C.map(c=>{const o=c.orcado!=null&&c.orcado!==""?+c.orcado:null,ga=c.gasto_antes!=null&&c.gasto_antes!==""?+c.gasto_antes:null,md=mkMidia(c),pj=mkMidiaProj(c),sd=mkSaldoConta(c);
+    return `<div class="orc-c"><div class="orc-h"><strong>${esc(c.num||"")} · ${esc(c.conta||"")}</strong><span class="meta">CC ${esc(c.cc||"—")} · projeto ${esc(c.projeto||"—")}</span></div>
+      ${lin("Orçado",o!=null?fmtK0(o):"—")}
+      ${md?lin(`Mídia Meta Ads já gasta<span class="meta"> até ${mdData((S.midia||{}).ate||"")}</span>`,"− "+fmtK0(md)):""}
+      ${lin(md?"Outras ações de publicidade":"Gasto antes do portal",ga!=null?"− "+fmtK0(ga):'<span class="meta">a informar</span>')}
+      ${pj?lin(`Mídia projetada até 30/06/2027<span class="meta"> ${R?isR(R.vd)+"/dia × "+R.restSafra+" dias":""}</span>`,"− "+fmtK0(pj)):""}
+      ${lin(pj?"Saldo livre na safra":"Saldo disponível",sd==null?'<span class="meta">a informar</span>':fmtK0(sd),"orc-tot"+(sd!=null&&sd<0?" neg":""))}</div>`;}).join("");
+  const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0);
+  return `<div class="orc-cards">${cards}</div>
+  <div class="orc-c orc-res">${lin("Orçado nas contas",fmtK0(orc))}${lin("Saldo livre somado",fmtK0(V),"orc-tot")}${vb.grupo_orcado?lin(`Grupo ${esc(vb.grupo_nome||"")}<span class="meta"> inclui a conta 1221 Brindes, controlada no Painel de brindes</span>`,fmtK0(+vb.grupo_orcado)):""}</div>`;}
 function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(mkSaldoConta(c)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
   return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
   <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade". Brindes (conta 1221) ficam no Painel de brindes.</p>`;}
