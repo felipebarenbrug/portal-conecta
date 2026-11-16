@@ -1118,7 +1118,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116175700";
+const APP_VER="20261116175857";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4854,7 +4854,7 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:s,p_valor:v||null,p_obs:o});if(error){aviso("Não foi possível registrar.");return;}
   S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":"Recusada. Saiu da verba.");},true);
 /* ---------- Ações: fonte da verba (Marketing ou verba do canal no Conecta) ---------- */
-const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)","Marketing (Brindes)"];
+const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)"];
 const MK_FONTES=[...MK_FONTES_MKT,"IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
 const mkEhFonteMkt=f=>!f||String(f).startsWith("Marketing");
 const mkFonteMkt=a=>{const f=a&&a.fonte;return !f||f==="Marketing"?"Marketing (Eventos)":f;};
@@ -5049,12 +5049,12 @@ function vMkVerbaContas(V){const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!
   <p class="meta">Saldo disponível = orçado menos o que já foi gasto antes de as ações estarem no portal. A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto antes do portal</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
   <tfoot><tr><th colspan="4">Subtotal das contas</th><th class="val">${fmtK0(orc)}</th><th class="val">${fmtK0(gas)}</th><th class="val">${fmtK0(V)}${fal.length?" *":""}</th>${ed?"<th></th>":""}</tr>
-  ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas":""}</th></tr>`:""}</tfoot></table></div>
+  ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas, incluindo a conta 1221 Brindes, que é controlada no Painel de brindes":""}</th></tr>`:""}</tfoot></table></div>
   ${fal.length?`<p class="meta" style="margin:4px 0 0">* Fora do total até informar o gasto anterior: ${fal.map(c=>esc(c.conta)).join(", ")}.</p>`:""}
   <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
 function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(Number(c.valor)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
   return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
-  <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos", "Publicidade" ou "Brindes".</p>`;}
+  <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade". Brindes (conta 1221) ficam no Painel de brindes.</p>`;}
 function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";},nn=id=>{const t=g(id);return t===""?null:mkNum(t);};return C.map((c,i)=>{const x={num:g("vc_num_"+i),conta:g("vc_ct_"+i),cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),orcado:nn("vc_o_"+i),gasto_antes:nn("vc_g_"+i)};x.valor=mkSaldoConta(x);return x;});}
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
@@ -5351,7 +5351,7 @@ function vBdPainel(){
   <section class="bloco"><h2 class="sec">Budget de brindes · safra ${BD_SAFRA}</h2>
   <p class="sub" style="margin:0 0 10px">O budget só é debitado na baixa fiscal: quando você dá baixa num item, ou quando sai por requisição aprovada um item que ainda não tinha baixa. Item em estoque sem baixa ainda não pesa no budget.</p>
   <div class="metrics">
-    <div class="metric"><span>Budget atual</span><strong>${fmtK0(budget)}</strong><span class="meta">${(S.bdBudget||{}).atualizado_nome?"atualizado por "+esc(S.bdBudget.atualizado_nome)+" em "+fmtDataHora(S.bdBudget.atualizado_em):"informe abaixo"}</span></div>
+    <div class="metric"><span>Budget atual</span><strong>${fmtK0(budget)}</strong><span class="meta">${(S.bdBudget||{}).conta?esc(S.bdBudget.conta)+" · ":""}${(S.bdBudget||{}).atualizado_nome?"atualizado por "+esc(S.bdBudget.atualizado_nome)+" em "+fmtDataHora(S.bdBudget.atualizado_em):"informe abaixo"}</span></div>
     <div class="metric"><span>Já debitado (baixas)</span><strong>${fmtK0(debit)}</strong><span class="meta">${BX.filter(x=>x.origem==="item").length} itens baixados · ${BX.filter(x=>x.origem==="requisicao").length} saídas por requisição</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px ${saldoB<0?"var(--vermelho)":"var(--amarelo)"}"><span>Saldo do budget</span><strong>${fmtK0(saldoB)}</strong><span class="meta">${saldoB<0?"baixas acima do budget":"disponível para novas baixas"}</span></div>
     <div class="metric" style="${val(semBx)>saldoB?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Estoque sem baixa fiscal</span><strong>${fmtK0(val(semBx))}</strong><span class="meta">${semBx.filter(b=>b.qtd_total>0).length} itens · entra no budget quando der baixa${val(semBx)>saldoB?` · <strong>${fmtK0(val(semBx)-saldoB)} acima do saldo</strong>`:""}</span></div>
