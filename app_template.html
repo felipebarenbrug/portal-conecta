@@ -4793,6 +4793,9 @@ const mkChk=a=>{const L=Array.isArray(a.checklist)?a.checklist:[],h=mkHoje();ret
 const mkData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
 const mkLimpo=n=>String(n||"arquivo").normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"-").slice(-80)||"arquivo";
 const mkSafra="26/27";
+const mkSafraDe=d=>{if(!d)return null;const y=+String(d).slice(0,4),m=+String(d).slice(5,7);const a=m>=7?y:y-1;return String(a%100).padStart(2,"0")+"/"+String((a+1)%100).padStart(2,"0");};
+const mkSafraA=a=>mkSafraDe(a.inicio||a.fim)||a.safra||mkSafra;
+const mkDaSafra=a=>mkSafraA(a)===mkSafra;
 /* URLs assinadas do bucket mkt */
 const mkUrl=p=>{if(!p)return "";if(/^materiais\//.test(p))return p;S.mkUrls=S.mkUrls||{};const u=S.mkUrls[p];if(u&&u.exp>Date.now())return u.url;
   S.mkFila=S.mkFila||new Set();S.mkFila.add(p);clearTimeout(S.mkT);S.mkT=setTimeout(mkFlush,40);return "";};
@@ -4830,7 +4833,7 @@ function mkCardHTML(a){
     <span class="mk-tipo">${esc(a.tipo||"Ação")}</span><strong>${esc(a.titulo)}</strong>
     ${a.inicio||a.local?`<span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</span>`:""}
     <span class="mk-val">${fmtK0(mkCusto(a))}${Number(a.valor_real)>0?' <span class="meta">realizado</span>':' <span class="meta">previsto</span>'}</span>
-    <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${a.status==="Em análise"&&a.decidido_nome?stTag("em análise por "+String(a.decidido_nome).split(" ")[0],"azul"):""}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${(()=>{const c=mkChk(a);return c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):"";})()}</span>
+    <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${!mkDaSafra(a)?stTag("Safra "+mkSafraA(a),"cinza"):""}${a.status==="Em análise"&&a.decidido_nome?stTag("em análise por "+String(a.decidido_nome).split(" ")[0],"azul"):""}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${(()=>{const c=mkChk(a);return c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):"";})()}</span>
     <span class="mk-rod">${(a.envolvidos_nomes||[]).slice(0,3).map(x=>`<span class="mk-pessoa" title="${esc(x)}">${esc(String(x).split(" ")[0])}</span>`).join("")}${(a.envolvidos_nomes||[]).length>3?`<span class="meta">+${a.envolvidos_nomes.length-3}</span>`:""}${n?`<span class="meta">${n} ${n===1?"anexo":"anexos"}</span>`:""}</span></button>`;
 }
 /* ---------- Ações: custos, matriz de participação e resultado ---------- */
@@ -5329,7 +5332,7 @@ function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
     ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
 function vAcoesGestao(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const h=mkHoje(),A=S.mk.filter(mkConta),V=mkVerbaTotal();
+  const h=mkHoje(),A=S.mk.filter(a=>mkConta(a)&&mkDaSafra(a)),V=mkVerbaTotal();
   const sumV=xs=>xs.reduce((t,a)=>t+mkCusto(a),0);
   const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
   const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
@@ -5362,7 +5365,7 @@ function vAcoesGestao(){
 }
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const V=mkVerbaTotal(),A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)),SOL=S.mk.filter(a=>a.status==="Solicitada");
+  const V=mkVerbaTotal(),A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)&&mkDaSafra(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)&&mkDaSafra(a)),PROX=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)&&!mkDaSafra(a)&&mkSafraA(a)>mkSafra),SOL=S.mk.filter(a=>a.status==="Solicitada");
   const prev=A.reduce((t,a)=>t+(Number(a.valor_prev)||0),0),real=A.reduce((t,a)=>t+(Number(a.valor_real)||0),0),comp=A.reduce((t,a)=>t+mkCusto(a),0),saldo=V-comp;
   const brv=Object.values(S.mkBrAcao||{}).reduce((t,v)=>t+v,0);
   const sf=f=>A.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0),vPag=sf("Paga"),vApr=sf("Aprovada"),vProv=sf("Provisionada");
@@ -5372,6 +5375,7 @@ function vAcoesPainel(){
   return `<div><h1 class="titulo">Verba e cenários · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
   ${vMkVerbaContas(V)}${vMkPorConta(A)}${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
   ${vMkFila(A)}
+  ${PROX.length?`<section class="bloco"><h2 class="sec">Já previsto para as próximas safras</h2><p class="sub" style="margin:0 0 6px">Ações com data a partir de julho de 2027. Não entram na verba nem no saldo de ${esc(mkSafra)}.</p><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Safra</th><th>Etapa</th><th class="val">Valor</th></tr></thead><tbody>${PROX.map(a=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${a.id}" style="text-align:left">${esc(a.titulo)}</button></td><td>${esc(mkSafraA(a))}</td><td>${stTag(a.status,"azul")}</td><td class="val">${fmtK0(mkCusto(a))}</td></tr>`).join("")}</tbody><tfoot><tr><th colspan="3">Total</th><th class="val">${fmtK0(PROX.reduce((t,a)=>t+mkCusto(a),0))}</th></tr></tfoot></table></div></section>`:""}
   <div class="metrics">
     <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong></div>
     <div class="metric"><span>Comprometido</span><strong>${fmtK0(comp)}</strong><span class="meta">${V?pctTxt(comp/V)+" da verba":""}</span></div>
