@@ -4611,7 +4611,7 @@ function mkCardHTML(a){
 const MK_CUSTO_CAT=["Patrocínio ou cota","Estande e montagem","Alimentação e bebidas","Vídeo e foto","Material gráfico","Brindes comprados","Deslocamento e hospedagem","Palestrante ou técnico","Mídia e divulgação","Locação de espaço ou equipamento","Outro"];
 const MK_MZ={obj1:["Reconhecimento de marca / lembrança","Abertura de mercado","Fortalecimento de relacionamento com canal","Autoridade técnica","Vendas diretas"],obj2:["Captura de leads qualificados","Recrutamento de novos canais/RCs","Coleta de inteligência de mercado","Relacionamento com clientes finais e canais","Geração de conteúdo"],
   pub:["Produtor tecnificado","Canal/Revenda","Consultor","Misto"],pen:["Em expansão (baixa penetração, prioridade)","Consolidado via canal","Consolidado via venda direta","Mercado maduro / saturado","Internacional / não mapeado"],
-  venda:["Venda direta (sell-in)","Via canal/distribuidor","Ambos / a definir","Não aplicável"],verba:["Institucional Marketing","Conecta/Rebate parceiro","Exportação","Gifts Marketing","Verba Comercial/Representação"],dec:["Em avaliação","Aprovado","Conceito","Pendência de dados","Descartado"]};
+  venda:["Venda direta (sell-in)","Via canal/distribuidor","Ambos / a definir","Não aplicável"],verba:["Marketing (Eventos)","Marketing (Publicidade e Propaganda)","Conecta/Rebate parceiro","Exportação","Gifts Marketing","Verba Comercial/Representação"],dec:["Em avaliação","Aprovado","Conceito","Pendência de dados","Descartado"]};
 const MK_ADER=[[5,"Aderência alta: o público compra híbridos, a região tem canal ou RC e os contatos têm quem atenda."],[4,"Aderência boa: público e região certos, seguimento dos contatos parcial."],[3,"Aderência média: público misto ou região secundária."],[2,"Aderência baixa: público pouco qualificado ou sem como dar seguimento aos contatos."],[1,"Aderência inicial: ação mais de marca, longe do comprador de híbridos por enquanto."]];
 const MZ_Q=[
  {k:"pub",t:"Quem é o público principal da ação?",o:[["Pecuaristas que investem em pastagem",2],["Revendas, cooperativas ou canais",2],["Consultores e técnicos de campo",1.5],["Público misto: pecuária e outras culturas",1],["Produtores em geral, pecuária não é o foco",.5],["Estudantes, comunidade ou público geral",0]]},
@@ -4633,7 +4633,9 @@ async function mkSalva(id,patch,msg){const {data,error}=await sb.from("mkt_acoes
 function vMkCustos(a){
   const g=ehMkt(),L=mkLinhas(a),s=mkSomaL(L),br=mkBrindes(a);
   if(!g&&!L.length)return "";
-  const linhas=L.map(x=>`<tr><td>${esc(x.cat||"")}</td><td>${esc(x.desc||"")}</td><td class="val">${fmtK0(x.prev)}</td><td class="val">${Number(x.real)>0?fmtK0(x.real):"—"}</td>${g?`<td class="val"><button class="link perigo" data-a="mk-custo-rm" data-v="${esc(x.id)}">remover</button></td>`:""}</tr>`).join("");
+  const nv=v=>v?esc(String(v).replace(".",",")):"";
+  const linhas=L.map(x=>g&&S.mkCustoEd===x.id?`<tr class="mk-cedit"><td><select id="mce_cat" aria-label="Categoria">${[...new Set([...MK_CUSTO_CAT,x.cat||""])].filter(Boolean).map(c=>`<option ${c===x.cat?"selected":""}>${esc(c)}</option>`).join("")}</select></td><td><input id="mce_desc" maxlength="160" value="${esc(x.desc||"")}" aria-label="Fornecedor ou descrição"></td><td class="val"><input id="mce_prev" inputmode="decimal" value="${nv(x.prev)}" aria-label="Previsto" style="width:110px;text-align:right"></td><td class="val"><input id="mce_real" inputmode="decimal" value="${nv(x.real)}" aria-label="Realizado" style="width:110px;text-align:right"></td><td class="val" style="white-space:nowrap"><button class="btn" data-a="mk-custo-sv" data-v="${esc(x.id)}">Salvar</button> <button class="link" data-a="mk-custo-cx">cancelar</button></td></tr>`
+    :`<tr><td>${esc(x.cat||"")}</td><td>${esc(x.desc||"")}</td><td class="val">${fmtK0(x.prev)}</td><td class="val">${Number(x.real)>0?fmtK0(x.real):"—"}</td>${g?`<td class="val" style="white-space:nowrap"><button class="link" data-a="mk-custo-ed" data-v="${esc(x.id)}">editar</button> · <button class="link perigo" data-a="mk-custo-rm" data-v="${esc(x.id)}">remover</button></td>`:""}</tr>`).join("");
   return `<section class="bloco"><h2 class="sec">Custos da ação</h2>
     ${L.length||br?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Categoria</th><th>Fornecedor ou descrição</th><th class="val">Previsto</th><th class="val">Realizado</th>${g?"<th></th>":""}</tr></thead><tbody>${linhas}
       ${br?`<tr><td>Brindes do estoque</td><td>requisições aprovadas para esta ação</td><td class="val">${fmtK0(br)}</td><td class="val">${fmtK0(br)}</td>${g?"<td></td>":""}</tr>`:""}
@@ -4730,9 +4732,14 @@ function vAcoesMatriz(){
   ${ok.length?`<section class="bloco"><h2 class="sec">Ordem de prioridade</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th class="val">Score</th><th>Recomendação</th><th class="val">Custo</th><th class="val">ROI</th></tr></thead><tbody>${ok.sort((x,y)=>y.s.sc-x.s.sc).map(lin).join("")}</tbody></table></div></section>`:""}
   ${sem.length+inc.length?`<section class="bloco"><h2 class="sec">Sem nota completa</h2><div class="lista">${[...inc.map(x=>x.a),...sem].map(a=>`<div class="linha"><button class="link" data-a="mk-abrir" data-v="${a.id}">${esc(a.titulo)}</button><span class="meta">${esc([a.tipo,a.inicio?mkData(a.inicio):""].filter(Boolean).join(" · "))}</span></div>`).join("")}</div><p class="meta">Sem nota não é nota baixa: a ação fica fora do quadrante até ser avaliada.</p></section>`:""}`;
 }
-document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-custo-rm'],[data-a='mk-res-abrir']");if(!b)return;ev.preventDefault();ev.stopPropagation();
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-custo-rm'],[data-a='mk-res-abrir'],[data-a='mk-custo-ed'],[data-a='mk-custo-sv'],[data-a='mk-custo-cx']");if(!b)return;ev.preventDefault();ev.stopPropagation();
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;
   if(b.dataset.a==="mk-res-abrir"){S.mkResAberto=true;render();return;}
+  if(b.dataset.a==="mk-custo-ed"){S.mkCustoEd=b.dataset.v;render();return;}
+  if(b.dataset.a==="mk-custo-cx"){S.mkCustoEd=null;render();return;}
+  if(b.dataset.a==="mk-custo-sv"){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";};const prev=mkNum(g("mce_prev")),real=mkNum(g("mce_real"));
+    if(!(prev>=0)||!(real>=0)){aviso("Confira os valores.");return;}if(!(prev>0||real>0)){aviso("Informe o valor previsto ou o realizado.");return;}
+    const L=mkLinhas(a).map(x=>x.id===b.dataset.v?{...x,cat:g("mce_cat")||x.cat,desc:g("mce_desc"),prev,real}:x);const s=mkSomaL(L);S.mkCustoEd=null;await mkSalva(a.id,{custos:L,valor_prev:s.prev,valor_real:s.real},"Custo atualizado.");return;}
   const L=mkLinhas(a).filter(x=>x.id!==b.dataset.v);const s=mkSomaL(L);await mkSalva(a.id,{custos:L,valor_prev:s.prev,valor_real:s.real},"Custo removido.");},true);
 document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!["f-mk-custo","f-mk-matriz","f-mk-res"].includes(f.id))return;ev.preventDefault();ev.stopImmediatePropagation();
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const n=id=>{const t=val(id);return t===""?null:mkNum(t);};const i=id=>{const t=val(id).replace(/\D/g,"");return t===""?null:+t;};
@@ -4819,8 +4826,13 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:s,p_valor:v||null,p_obs:o});if(error){aviso("Não foi possível registrar.");return;}
   S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":"Recusada. Saiu da verba.");},true);
 /* ---------- Ações: fonte da verba (Marketing ou verba do canal no Conecta) ---------- */
-const MK_FONTES=["Marketing","IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
-const mkFonteCanal=a=>a&&a.fonte&&a.fonte!=="Marketing";
+const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)"];
+const MK_FONTES=[...MK_FONTES_MKT,"IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
+const mkEhFonteMkt=f=>!f||String(f).startsWith("Marketing");
+const mkFonteMkt=a=>{const f=a&&a.fonte;return !f||f==="Marketing"?"Marketing (Eventos)":f;};
+const mkContaChave=f=>/publicidade/i.test(f)?"publicidade":"evento";
+function mkContaDe(f){const k=mkContaChave(f);return mkContas().filter(c=>finNorm(c.conta||"").includes(k));}
+const mkFonteCanal=a=>a&&!mkEhFonteMkt(a.fonte);
 const mkVerbaMkt=a=>!mkFonteCanal(a);
 function vMkFonte(a){
   const g=ehMkt();if(a.agrupador)return "";if(!g&&!mkFonteCanal(a))return "";
@@ -4834,17 +4846,18 @@ function vMkFonte(a){
       <div class="metric" style="box-shadow:inset 0 0 0 2px ${saldo<0?"#c0392b":"#2e8b57"}"><span>Saldo ${pgd?"":"depois desta ação"}</span><strong style="color:${saldo<0?"#c0392b":"inherit"}">${fmtK0(saldo)}</strong><span class="meta">${saldo<0?"a verba do canal não cobre":"cabe na verba do canal"}</span></div></div>
       <p class="meta" style="margin:6px 0 0">${pgd?`Lançada no PGD do canal como "${esc(pgd.status||"Em Análise")}", ${fmtK0(jaConta)}. A revenda vê a ação no plano dela.`:"Ainda não lançada no PGD do canal: o valor não está descontando a verba dele."}</p>`;}
   return `<section class="bloco"><h2 class="sec">Fonte da verba</h2>
-    ${g?`<form id="f-mk-fonte" class="mk-mz"><div><label for="mkf_f">De onde sai o dinheiro</label><select id="mkf_f">${MK_FONTES.map(o=>`<option ${o===(a.fonte||"Marketing")?"selected":""}>${o}</option>`).join("")}</select></div>
+    ${g?`<form id="f-mk-fonte" class="mk-mz"><div><label for="mkf_f">De onde sai o dinheiro</label><select id="mkf_f">${MK_FONTES.map(o=>`<option ${o===mkFonteMkt(a)?"selected":""}>${o}</option>`).join("")}</select></div>
       <div ${mkFonteCanal(a)?"":"hidden"} id="mkf_cbox"><label for="mkf_c">Canal do Conecta</label><select id="mkf_c"><option value="">— escolha —</option>${(S.canais||[]).map(k=>`<option value="${k.id}" ${k.id===a.canal_id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select></div>
       <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" type="submit">Salvar fonte</button>${mkFonteCanal(a)&&c&&ehAdmin()?`<button class="btn" type="button" data-a="mk-pgd">${pgd?"Atualizar no PGD do canal":"Lançar no PGD do canal"}</button>`:""}</div></form>`
-      :`<p style="margin:0">${esc(a.fonte)}${c?" · "+esc(c.nome):""}</p>`}
+      :`<p style="margin:0">${esc(mkFonteMkt(a))}${c?" · "+esc(c.nome):""}</p>`}
+    ${g&&!mkFonteCanal(a)?(()=>{const C=mkContaDe(mkFonteMkt(a));return `<p class="meta" style="margin:8px 0 0">${C.length?"Conta: "+C.map(x=>[x.cc?"CC "+x.cc:"",x.projeto?"projeto "+x.projeto:"",x.conta].filter(Boolean).join(" · ")).join("; "):"Conta de "+esc(mkFonteMkt(a).replace("Marketing (","").replace(")",""))+" ainda não cadastrada em Painel › De onde vem a verba."}</p>`;})():""}
     ${info}
     <p class="meta" style="margin:8px 0 0">Com a fonte no canal, o valor sai da verba do Conecta da revenda e não conta na verba de Marketing. Lançar no PGD registra a ação no plano do canal${bp?" como campanha do Bônus de Performance":", usando o IGDB dele"}, com o mesmo valor e situação.</p></section>`;
 }
-document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="mkf_f"){const b=document.getElementById("mkf_cbox");if(b)b.hidden=ev.target.value==="Marketing";if(ev.target.value!=="Marketing"&&S.canais==null){carregarCanais().then(render);}}});
+document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="mkf_f"){const b=document.getElementById("mkf_cbox");if(b)b.hidden=mkEhFonteMkt(ev.target.value);if(!mkEhFonteMkt(ev.target.value)&&S.canais==null){carregarCanais().then(render);}}});
 document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-mk-fonte")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehMkt())return;
-  const fo=f.querySelector("#mkf_f").value,ca=f.querySelector("#mkf_c").value||null;if(fo!=="Marketing"&&!ca){aviso("Escolha o canal.");return;}
-  await mkSalva(S.mkSel,{fonte:fo,canal_id:fo==="Marketing"?null:ca},fo==="Marketing"?"Fonte: verba de Marketing.":"Fonte salva: a ação sai da verba do canal.");},true);
+  const fo=f.querySelector("#mkf_f").value,ca=f.querySelector("#mkf_c").value||null;if(!mkEhFonteMkt(fo)&&!ca){aviso("Escolha o canal.");return;}
+  await mkSalva(S.mkSel,{fonte:fo,canal_id:mkEhFonteMkt(fo)?null:ca},mkEhFonteMkt(fo)?"Fonte salva: "+fo+".":"Fonte salva: a ação sai da verba do canal.");},true);
 document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mk-pgd']");if(!b)return;ev.preventDefault();ev.stopPropagation();if(!ehAdmin())return;
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!a.canal_id)return;b.disabled=true;
   const aprov=["A fazer","Em andamento","Concluída"].includes(a.status)&&["Aprovada","Paga","Sem custo"].includes(mkFin(a));const bp=(a.fonte||"").startsWith("Bônus");
@@ -5004,6 +5017,9 @@ function vMkVerbaContas(V){const C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=
   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Centro de custo</th><th>Projeto</th><th>Descrição da conta</th><th class="val">Saldo (R$)</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="5" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
   <tfoot><tr><th colspan="3">Total disponível</th><th class="val">${fmtK0(V)}</th>${ed?"<th></th>":""}</tr></tfoot></table></div>
   <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
+function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(Number(c.valor)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0};});
+  return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${x.tem?fmtK0(x.v):'<span class="meta">sem conta</span>'}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade e Propaganda".</p>`;}
 function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";};return C.map((c,i)=>({cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),conta:g("vc_ct_"+i),valor:mkNum(g("vc_v_"+i))}));}
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
@@ -5079,7 +5095,7 @@ function vAcoesPainel(){
   const por=k=>{const o={};A.forEach(a=>{const c=a[k]||"—";const x=o[c]||(o[c]={k:c,n:0,v:0});x.n++;x.v+=mkCusto(a);});return Object.values(o).sort((a,b)=>b.v-a.v);};
   const tab=(t,xs)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Ações</th><th class="val">Valor</th><th class="val">% da verba</th></tr></thead><tbody>${xs.map(x=>`<tr><td>${esc(x.k)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.v)}</td><td class="val">${V?pctTxt(x.v/V):"—"}</td></tr>`).join("")}</tbody></table></div></div>`;
   return `<div><h1 class="titulo">Verba e cenários · safra ${mkSafra}</h1><p class="sub">A verba é definida pelo Marketing. Cada ação conta pelo valor realizado; enquanto não houver, pelo valor previsto. Ações canceladas não entram.</p></div>
-  ${vMkVerbaContas(V)}${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
+  ${vMkVerbaContas(V)}${vMkPorConta(A)}${S.mkVerba&&S.mkVerba.atualizado_em?`<span class="meta">Atualizada em ${fmtDataHora(S.mkVerba.atualizado_em)}</span>`:""}</form>
   <div class="metrics">
     <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong></div>
     <div class="metric"><span>Comprometido</span><strong>${fmtK0(comp)}</strong><span class="meta">${V?pctTxt(comp/V)+" da verba":""}</span></div>
@@ -5334,7 +5350,7 @@ function vBrindes(){
 const mkNum=v=>{const t=String(v==null?"":v).trim();if(!t)return 0;const n=parseFloat(t.replace(/\./g,"").replace(",","."));return isFinite(n)?n:NaN;};
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
-  if(a==="mk-abrir"){S.mkSel=+v;S.mkEdit=false;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
+  if(a==="mk-abrir"){S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
   if(a==="mk-nova"){if(!ehMkt())return;S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
   if(a==="mk-canc"){S.mkCanc=b.checked;render();return;}
   if(a==="mk-editar"){S.mkEdit=true;render();return;}
