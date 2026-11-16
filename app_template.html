@@ -545,6 +545,12 @@ main.largo{max-width:1120px}
 .mk-dia.hoje{background:var(--amarelo-claro,#fff8d6)}.mk-dia.vazio-d{background:var(--fundo,#f6f8fa)}
 .mk-dn{font-size:12px;font-weight:700}
 .mk-ev{font:inherit;font-size:11.5px;text-align:left;border:0;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:100%}
+.mz-q{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}.mz-q legend{font-weight:600;font-size:14px;padding:0;margin-bottom:6px}
+.mz-ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:6px}
+.mz-op{display:flex!important;margin:0;font-weight:400;gap:8px;align-items:flex-start;border:1px solid var(--linha,#d8dee4);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13.5px;line-height:1.35;background:var(--branco,#fff)}
+.mz-op input{margin:2px 0 0;flex:none;width:auto;height:auto;padding:0}.mz-op span{flex:1;min-width:0}.mz-op:has(input:checked){border-color:var(--azul);box-shadow:inset 0 0 0 1px var(--azul);background:rgba(0,168,226,.07)}
+.mz-form,.mz-sol{display:flex;flex-direction:column;gap:14px}.mz-sol{border-top:1px solid var(--linha,#d8dee4);padding-top:12px}
+.mz-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 16px;margin:8px 0 0}.mz-res dt{font-size:12px;color:var(--cinza,#5b6b7b)}.mz-res dd{margin:0;font-size:14px}
 .mk-per-g{display:flex;flex-direction:column;gap:6px;margin-top:10px}.mk-per-l{display:flex;flex-wrap:wrap;gap:6px}.mk-per-l .mk-ev{white-space:normal;font-size:12.5px;padding:4px 8px}
 .mk-ev.atr{box-shadow:inset 0 0 0 2px var(--vermelho,#c0392b)}
 .mk-linha{align-items:flex-start}.mk-linha .bd-tags{margin-top:4px}
@@ -4606,15 +4612,22 @@ const MK_CUSTO_CAT=["Patrocínio ou cota","Estande e montagem","Alimentação e 
 const MK_MZ={obj1:["Reconhecimento de marca / lembrança","Abertura de mercado","Fortalecimento de relacionamento com canal","Autoridade técnica","Vendas diretas"],obj2:["Captura de leads qualificados","Recrutamento de novos canais/RCs","Coleta de inteligência de mercado","Relacionamento com clientes finais e canais","Geração de conteúdo"],
   pub:["Produtor tecnificado","Canal/Revenda","Consultor","Misto"],pen:["Em expansão (baixa penetração, prioridade)","Consolidado via canal","Consolidado via venda direta","Mercado maduro / saturado","Internacional / não mapeado"],
   venda:["Venda direta (sell-in)","Via canal/distribuidor","Ambos / a definir","Não aplicável"],verba:["Institucional Marketing","Conecta/Rebate parceiro","Exportação","Gifts Marketing","Verba Comercial/Representação"],dec:["Em avaliação","Aprovado","Conceito","Pendência de dados","Descartado"]};
-const MK_ADER=[[5,"Público é o nosso comprador (pecuarista tecnificado ou canal) em região prioritária, e há canal ou RC para dar seguimento aos contatos."],[4,"Público certo e região boa, mas o seguimento dos contatos é parcial."],[3,"Público misto ou região secundária."],[2,"Público pouco qualificado ou sem como dar seguimento aos contatos."],[1,"Fora do nosso modelo de venda."]];
+const MK_ADER=[[5,"Aderência alta: o público compra híbridos, a região tem canal ou RC e os contatos têm quem atenda."],[4,"Aderência boa: público e região certos, seguimento dos contatos parcial."],[3,"Aderência média: público misto ou região secundária."],[2,"Aderência baixa: público pouco qualificado ou sem como dar seguimento aos contatos."],[1,"Aderência inicial: ação mais de marca, longe do comprador de híbridos por enquanto."]];
+const MZ_Q=[
+ {k:"pub",t:"Quem é o público principal da ação?",o:[["Pecuaristas que investem em pastagem",2],["Revendas, cooperativas ou canais",2],["Consultores e técnicos de campo",1.5],["Público misto: pecuária e outras culturas",1],["Produtores em geral, pecuária não é o foco",.5],["Estudantes, comunidade ou público geral",0]]},
+ {k:"reg",t:"Como está a Barenbrug na região da ação?",o:[["Tem revenda Conecta atuando",1],["Tem RC Barenbrug atuando",1],["Tem canal, mas pouco ativo nos híbridos",.5],["Ainda não temos canal nem RC na região",0]]},
+ {k:"seg",t:"Quem atende os contatos depois da ação?",o:[["Revenda ou RC já definido, com nome",1],["Inside Sales da Barenbrug",1],["Ainda vamos definir",.5],["A ação é só de marca, sem seguimento",0]]},
+ {k:"hib",t:"Os híbridos (Sabiá, Cayana, Carcará) são o tema da ação?",o:[["Sim, são o foco",.5],["Dividem espaço com outros produtos",.25],["Não, o tema é outro",0]]},
+ {k:"cont",t:"Como os contatos serão registrados?",o:[["Cadastro com fazenda, rebanho e área (formulário ou QR)",.5],["Lista com nome e telefone",.25],["Não haverá registro",0]]}];
+function mkAderCalc(m){if(!m)return 0;if(MZ_Q.every(q=>m[q.k])){const t=MZ_Q.reduce((s,q)=>{const o=q.o.find(x=>x[0]===m[q.k]);return s+(o?o[1]:0);},0);return {pts:t,n:Math.max(1,Math.min(5,Math.round(t)))};}return null;}
 const MK_RES_OBJ=["Venda","Geração de leads","Relacionamento com canal","Marca e autoridade técnica","Outro"];
 const mkLinhas=a=>Array.isArray(a.custos)?a.custos:[];
 const mkSomaL=L=>({prev:L.reduce((t,x)=>t+(Number(x.prev)||0),0),real:L.reduce((t,x)=>t+(Number(x.real)||0),0)});
 const mkBrindes=a=>(S.mkBrAcao&&S.mkBrAcao[a.id])||0;
 const mkCustoTotal=a=>mkCusto(a)+mkBrindes(a)+(typeof mkSemTotal==="function"?mkSemTotal(a):0);
-function mkScore(m){if(!m)return null;const ad=+m.aderencia||0;const voz=(!m.area_demo||!m.palestra)?0:(m.area_demo==="Sim"&&m.palestra==="Sim")?3:(m.area_demo==="Sim"||m.palestra==="Sim")?2:1;
+function mkScore(m){if(!m)return null;const ac=mkAderCalc(m);const ad=+m.ader_ajuste||(ac?ac.n:0)||+m.aderencia||0;const voz=(!m.area_demo||!m.palestra)?0:(m.area_demo==="Sim"&&m.palestra==="Sim")?3:(m.area_demo==="Sim"||m.palestra==="Sim")?2:1;
   const sc=voz*2+ad;const rec=!ad||!voz?"Nota incompleta":sc>=8?"Participar · prioridade":sc>=5?"Avaliar":"Não priorizar";
-  const vozT=voz===3?"Campo + palco":voz===2?(m.area_demo==="Sim"?"Campo (produto no chão)":"Palco / palestra"):voz===1?"Estande com rizotron e amostra":"A confirmar";return {voz,ad,sc,rec,vozT};}
+  const vozT=voz===3?"Campo + palco":voz===2?(m.area_demo==="Sim"?"Campo (produto no chão)":"Palco / palestra"):voz===1?"Estande com rizotron e amostra":"A confirmar";return {voz,ad,sc,rec,vozT,ac,aj:!!+m.ader_ajuste};}
 const MK_REC_COR={"Participar · prioridade":"verde","Avaliar":"amarelo","Não priorizar":"vermelho","Nota incompleta":"cinza"};
 async function mkSalva(id,patch,msg){const {data,error}=await sb.from("mkt_acoes").update(patch).eq("id",id).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar.");return null;}S.mk=S.mk.map(x=>x.id===id?data:x);render();if(msg)aviso(msg);return data;}
 function vMkCustos(a){
@@ -4629,21 +4642,48 @@ function vMkCustos(a){
     ${g?`<form id="f-mk-custo" class="form-card" style="margin-top:8px"><div class="mk-custo-l"><div><label for="mc_cat">Categoria</label><select id="mc_cat">${MK_CUSTO_CAT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="mc_desc">Fornecedor ou descrição</label><input id="mc_desc" maxlength="160" placeholder="Ex.: Buffet Sabor do Campo, 80 refeições"></div><div><label for="mc_prev">Previsto (R$)</label><input id="mc_prev" inputmode="decimal"></div><div><label for="mc_real">Realizado (R$)</label><input id="mc_real" inputmode="decimal"></div><div><button class="btn sec" type="submit">Adicionar custo</button></div></div>
       <span class="meta">O valor previsto e o realizado da ação passam a ser a soma das linhas.</span></form>`:""}</section>`;
 }
+const MZ_REGRA=`<p>A matriz de participação dá uma nota de <strong>3 a 11</strong> para decidir se a Barenbrug entra numa ação. Ela soma duas coisas:</p>
+<p><strong>1. Voz ativa (peso 2).</strong> Área demonstrativa nossa e palestra nossa = 3. Só uma das duas = 2. Nenhuma, só estande com rizotron e amostra = 1. A voz ativa vale o dobro porque é onde o produtor vê o híbrido funcionando.</p>
+<p><strong>2. Aderência ao modelo operacional (1 a 5).</strong> Sai das cinco perguntas sobre público, região, seguimento dos contatos, foco nos híbridos e registro dos contatos. Público vale até 2 pontos, região e seguimento até 1 cada, foco nos híbridos e registro até 0,5 cada. A soma é arredondada e fica entre 1 e 5. O Marketing pode ajustar a aderência com um motivo.</p>
+<p><strong>Score = voz ativa × 2 + aderência.</strong> A partir de 8: participar com prioridade. De 5 a 7: avaliar. Abaixo de 5: não priorizar.</p>
+<p>Objetivos, mercado da região, fonte da verba e concorrência não mudam a nota. Eles ajudam a decidir e a medir o resultado depois. Por isso o objetivo secundário aceita mais de uma opção sem mexer no score.</p>
+<p>Quem pede a ação responde às perguntas, mas não vê a nota. A nota só aparece para o Marketing.</p>`;
+function mzRadio(nome,ops,v,req){return `<div class="mz-ops" role="radiogroup">${ops.map(o=>{const t=Array.isArray(o)?o[0]:o;return `<label class="mz-op"><input type="radio" name="${nome}" value="${esc(t)}" ${t===v?"checked":""} ${req?"required":""}><span>${esc(t)}</span></label>`;}).join("")}</div>`;}
+function mzCheck(nome,ops,vs){const V=new Set(Array.isArray(vs)?vs:vs?[vs]:[]);return `<div class="mz-ops">${ops.map(t=>`<label class="mz-op"><input type="checkbox" name="${nome}" value="${esc(t)}" ${V.has(t)?"checked":""}><span>${esc(t)}</span></label>`).join("")}</div>`;}
+function mzCampos(m,req){m=m||{};const q=(t,h)=>`<fieldset class="mz-q"><legend>${t}${req?" *":""}</legend>${h}</fieldset>`;
+  return `${q("Objetivo principal da ação",mzRadio("mzq_obj1",MK_MZ.obj1,m.obj1,req))}
+  <fieldset class="mz-q"><legend>Objetivos secundários <span class="meta">(marque quantos quiser)</span></legend>${mzCheck("mzq_obj2",MK_MZ.obj2,m.obj2)}</fieldset>
+  ${MZ_Q.map(x=>q(x.t,mzRadio("mzq_"+x.k,x.o,m[x.k],req))).join("")}
+  ${q("Vai ter área demonstrativa com os híbridos da Barenbrug?",mzRadio("mzq_area",["Sim","Não"],m.area_demo,req))}
+  ${q("Vai ter palestra ou fala técnica da Barenbrug?",mzRadio("mzq_pal",["Sim","Não"],m.palestra,req))}
+  <div style="max-width:320px"><label for="mzq_pe">Quantas pessoas devem participar?${req?" *":""}</label><input id="mzq_pe" inputmode="numeric" ${req?"required":""} value="${m.publico_est||""}"></div>
+  <fieldset class="mz-q"><legend>A Barenbrug já participou desta ação antes?</legend>${mzRadio("mzq_jp",["Sim","Não","Não sei"],m.ja_participou,false)}</fieldset>`;}
+function mzLer(f){const r=n=>{const e=f.querySelector(`input[name="${n}"]:checked`);return e?e.value:"";};
+  const o={obj1:r("mzq_obj1"),obj2:[...f.querySelectorAll('input[name="mzq_obj2"]:checked')].map(e=>e.value),area_demo:r("mzq_area"),palestra:r("mzq_pal"),ja_participou:r("mzq_jp"),publico_est:parseInt(String((f.querySelector("#mzq_pe")||{}).value||"").replace(/\D/g,""))||null};
+  MZ_Q.forEach(q=>o[q.k]=r("mzq_"+q.k));return o;}
+function mzFaltam(o){const F=[];if(!o.obj1)F.push("objetivo principal");MZ_Q.forEach(q=>{if(!o[q.k])F.push(q.t.toLowerCase().replace("?",""));});if(!o.area_demo)F.push("área demonstrativa");if(!o.palestra)F.push("palestra");if(!o.publico_est)F.push("número de pessoas");return F;}
+function mzResumo(m){if(!m)return "";const it=[["Objetivo principal",m.obj1],["Objetivos secundários",(Array.isArray(m.obj2)?m.obj2:m.obj2?[m.obj2]:[]).join(", ")],...MZ_Q.map(q=>[q.t,m[q.k]]),["Área demonstrativa",m.area_demo],["Palestra",m.palestra],["Pessoas esperadas",m.publico_est?isNum(m.publico_est):""],["Já participamos",m.ja_participou]].filter(x=>x[1]);
+  return `<dl class="mz-res">${it.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`).join("")}</dl>`;}
 function vMkMatriz(a){
-  if(!ehMkt())return "";const m=a.matriz||{};const sc=mkScore(a.matriz);const ct=mkCustoTotal(a);const pe=+m.publico_est||0;
+  const m=a.matriz||{};
+  if(!ehMkt())return a.matriz&&(a.solicitante===S.user.id)?`<section class="bloco"><h2 class="sec">Suas respostas sobre a ação</h2><p class="meta">O Marketing usa estas respostas para avaliar a participação.</p>${mzResumo(m)}</section>`:"";
+  const sc=mkScore(a.matriz);const ct=mkCustoTotal(a);const pe=+m.publico_est||0;
   const sel=(id,ops,v)=>`<select id="${id}"><option value="">—</option>${ops.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  const ac=sc&&sc.ac;
   return `<section class="bloco"><h2 class="sec">Matriz de participação · nota interna</h2>
-    ${sc?`<div class="metrics"><div class="metric"><span>Score final</span><strong>${sc.sc} <small style="font-size:13px">de 11</small></strong><span class="meta">voz ativa ${sc.voz} × 2 + aderência ${sc.ad||"—"}</span></div><div class="metric"><span>Recomendação</span><strong style="font-size:16px">${stTag(sc.rec,MK_REC_COR[sc.rec])}</strong><span class="meta">${esc(m.decisao||"Em avaliação")}</span></div><div class="metric"><span>Presença</span><strong style="font-size:15px">${esc(sc.vozT)}</strong></div>${pe?`<div class="metric"><span>Custo por pessoa</span><strong>${fmtK0(ct/pe)}</strong><span class="meta">${isNum(pe)} pessoas estimadas · alcance, não qualificação</span></div>`:""}</div>`:""}
-    <details class="lote" ${a.matriz?"":"open"}><summary>${a.matriz?"Editar a nota":"Dar a nota desta ação"}</summary>
-    <form id="f-mk-matriz" class="form-card" style="margin-top:8px">
-      <div class="mk-mz"><div><label for="mz_area">Tem área demonstrativa nossa?</label>${sel("mz_area",["Sim","Não"],m.area_demo)}</div><div><label for="mz_pal">Tem palestra nossa?</label>${sel("mz_pal",["Sim","Não"],m.palestra)}</div>
-      <div><label for="mz_ad">Aderência ao modelo operacional (1 a 5)</label>${sel("mz_ad",["5","4","3","2","1"],m.aderencia?String(m.aderencia):"")}</div></div>
-      <details class="is-ajuda"><summary>Como dar a nota de aderência</summary><ul style="margin:6px 0 0;padding-left:18px">${MK_ADER.map(([n,t])=>`<li><strong>${n}</strong> · ${esc(t)}</li>`).join("")}</ul><p style="margin:6px 0 0">Voz ativa: área demonstrativa e palestra = 3 · só uma das duas = 2 · nenhuma (estande com rizotron e amostra) = 1. Score final = voz ativa × 2 + aderência, de 3 a 11. A partir de 8: participar com prioridade. De 5 a 7: avaliar. Abaixo de 5: não priorizar.</p></details>
-      <div class="mk-mz"><div><label for="mz_o1">Objetivo principal</label>${sel("mz_o1",MK_MZ.obj1,m.obj1)}</div><div><label for="mz_o2">Objetivo secundário</label>${sel("mz_o2",MK_MZ.obj2,m.obj2)}</div><div><label for="mz_pub">Público-alvo</label>${sel("mz_pub",MK_MZ.pub,m.publico_alvo)}</div>
-      <div><label for="mz_pen">Mercado da região</label>${sel("mz_pen",MK_MZ.pen,m.penetracao)}</div><div><label for="mz_vd">Como a venda seria fechada</label>${sel("mz_vd",MK_MZ.venda,m.modelo_venda)}</div><div><label for="mz_fv">Fonte da verba</label>${sel("mz_fv",MK_MZ.verba,m.fonte_verba)}</div>
-      <div><label for="mz_pe">Público estimado (pessoas)</label><input id="mz_pe" inputmode="numeric" value="${m.publico_est||""}"></div><div><label for="mz_jp">Já participamos antes?</label>${sel("mz_jp",["Sim","Não"],m.ja_participou)}</div><div><label for="mz_dec">Status da decisão</label>${sel("mz_dec",MK_MZ.dec,m.decisao)}</div></div>
-      <div><label for="mz_conc">Concorrência presente</label><input id="mz_conc" maxlength="200" value="${esc(m.concorrencia||"")}"><span class="meta">Uso interno do Marketing.</span></div>
-      <div class="acoes"><button class="btn" type="submit">Salvar nota</button></div></form></details></section>`;
+    <details class="is-ajuda"><summary>Como funciona a matriz de participação</summary>${MZ_REGRA}</details>
+    ${sc?`<div class="metrics"><div class="metric"><span>Score final</span><strong>${sc.sc} <small style="font-size:13px">de 11</small></strong><span class="meta">voz ativa ${sc.voz} × 2 + aderência ${sc.ad||"—"}</span></div><div class="metric"><span>Recomendação</span><strong style="font-size:16px">${stTag(sc.rec,MK_REC_COR[sc.rec])}</strong><span class="meta">${esc(m.decisao||"Em avaliação")}</span></div><div class="metric"><span>Aderência</span><strong>${sc.ad||"—"} <small style="font-size:13px">de 5</small></strong><span class="meta">${sc.aj?"ajustada pelo Marketing"+(ac?" (perguntas: "+ac.n+")":""):ac?"pelas perguntas · "+String(ac.pts).replace(".",",")+" pontos":"nota manual antiga"}</span></div><div class="metric"><span>Presença</span><strong style="font-size:15px">${esc(sc.vozT)}</strong></div>${pe?`<div class="metric"><span>Custo por pessoa</span><strong>${fmtK0(ct/pe)}</strong><span class="meta">${isNum(pe)} pessoas estimadas · alcance, não qualificação</span></div>`:""}</div>
+    ${sc.ad?`<p class="meta" style="margin:6px 0 0">${esc((MK_ADER.find(x=>x[0]===sc.ad)||[0,""])[1])}${m.ader_motivo?" Ajuste: "+esc(m.ader_motivo):""}</p>`:""}`:""}
+    ${m.origem==="solicitante"?`<p class="meta">Respostas preenchidas por ${esc(a.solicitante_nome||"quem pediu")} na solicitação. Você pode corrigir abaixo.</p>`:""}
+    <details class="lote" ${a.matriz?"":"open"}><summary>${a.matriz?"Ver e editar as respostas":"Responder a matriz desta ação"}</summary>
+    <form id="f-mk-matriz" class="form-card mz-form" style="margin-top:8px">
+      ${mzCampos(m,false)}
+      <h3 class="pgd-h" style="margin-top:6px">Só para o Marketing</h3>
+      <div class="mk-mz"><div><label for="mz_pen">Mercado da região</label>${sel("mz_pen",MK_MZ.pen,m.penetracao)}</div><div><label for="mz_vd">Como a venda seria fechada</label>${sel("mz_vd",MK_MZ.venda,m.modelo_venda)}</div>
+      <div><label for="mz_fv">Fonte da verba</label>${sel("mz_fv",MK_MZ.verba,m.fonte_verba)}</div><div><label for="mz_dec">Status da decisão</label>${sel("mz_dec",MK_MZ.dec,m.decisao)}</div>
+      <div><label for="mz_aj">Ajustar a aderência (opcional)</label>${sel("mz_aj",["5","4","3","2","1"],m.ader_ajuste?String(m.ader_ajuste):"")}<span class="meta">Deixe em branco para usar a das perguntas.</span></div><div><label for="mz_ajm">Motivo do ajuste</label><input id="mz_ajm" maxlength="200" value="${esc(m.ader_motivo||"")}"></div></div>
+      <div><label for="mz_conc">Concorrência presente</label><input id="mz_conc" maxlength="200" value="${esc(m.concorrencia||"")}"></div>
+      <div class="acoes"><button class="btn" type="submit">Salvar matriz</button></div></form></details></section>`;
 }
 function mkResCalc(a){const r=a.resultado||{};const c=mkCustoTotal(a);const rec=+r.receita||0;const o={c,rec};
   o.roi=c&&rec?(rec-c)/c:null;o.ret=c&&rec?rec/c:null;o.cpl=c&&+r.leads?c/r.leads:null;o.cplq=c&&+r.leads_qual?c/r.leads_qual:null;o.cpp=c&&+r.pedidos?c/r.pedidos:null;o.cpart=c&&+r.participantes?c/r.participantes:null;
@@ -4698,7 +4738,8 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!["f-mk-c
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!ehMkt())return;const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const n=id=>{const t=val(id);return t===""?null:mkNum(t);};const i=id=>{const t=val(id).replace(/\D/g,"");return t===""?null:+t;};
   if(f.id==="f-mk-custo"){const prev=n("mc_prev")||0,real=n("mc_real")||0;if(!(prev>0||real>0)){aviso("Informe o valor previsto ou o realizado.");return;}
     const L=[...mkLinhas(a),{id:Date.now().toString(36),cat:val("mc_cat"),desc:val("mc_desc"),prev,real}];const s=mkSomaL(L);await mkSalva(a.id,{custos:L,valor_prev:s.prev,valor_real:s.real},"Custo lançado.");return;}
-  if(f.id==="f-mk-matriz"){const m={area_demo:val("mz_area"),palestra:val("mz_pal"),aderencia:+val("mz_ad")||null,obj1:val("mz_o1"),obj2:val("mz_o2"),publico_alvo:val("mz_pub"),penetracao:val("mz_pen"),modelo_venda:val("mz_vd"),fonte_verba:val("mz_fv"),publico_est:i("mz_pe"),ja_participou:val("mz_jp"),decisao:val("mz_dec")||"Em avaliação",concorrencia:val("mz_conc")};
+  if(f.id==="f-mk-matriz"){const o=mzLer(f);const aj=+val("mz_aj")||null;if(aj&&!val("mz_ajm")){aviso("Explique o motivo do ajuste da aderência.");return;}
+    const m={...(a.matriz||{}),...o,penetracao:val("mz_pen"),modelo_venda:val("mz_vd"),fonte_verba:val("mz_fv"),decisao:val("mz_dec")||"Em avaliação",concorrencia:val("mz_conc"),ader_ajuste:aj,ader_motivo:aj?val("mz_ajm"):""};delete m.aderencia;if(!mkAderCalc(m)&&(a.matriz||{}).aderencia&&!aj)m.aderencia=a.matriz.aderencia;
     await mkSalva(a.id,{matriz:m},"Nota salva.");return;}
   if(f.id==="f-mk-res"){const r={objetivo:val("mr_obj"),janela:+val("mr_jan")||180,receita:n("mr_rec"),pedidos:i("mr_ped"),kg:i("mr_kg"),participantes:i("mr_part"),leads:i("mr_lead"),leads_qual:i("mr_lq"),meta_desc:val("mr_md"),meta_valor:n("mr_mv"),real_valor:n("mr_rv"),obs:val("mr_obs"),em:new Date().toISOString()};
     S.mkResAberto=false;await mkSalva(a.id,{resultado:r},"Resultado salvo.");return;}
@@ -4880,6 +4921,7 @@ function vAcoesSolicNova(){
     <div class="dupla"><div><label for="ms_ini">Data</label><input id="ms_ini" type="date"></div><div><label for="ms_fim">Até (se for mais de um dia)</label><input id="ms_fim" type="date"></div></div>
     <div><label for="ms_desc">Objetivo e o que o Marketing deve apoiar *</label><textarea id="ms_desc" rows="4" required maxlength="4000" placeholder="Para que é a ação, o que você espera dela e o que precisa do Marketing: verba, material, divulgação, palestrante…"></textarea></div>
     <div class="dupla"><div><label for="ms_pub">Público esperado</label><input id="ms_pub" maxlength="300" placeholder="Ex.: 40 pecuaristas da região, clientes da revenda X"></div><div><label for="ms_val">Verba pedida (R$)</label><input id="ms_val" inputmode="decimal" placeholder="0,00"><span class="meta">Deixe em branco se não precisar de verba.</span></div></div>
+    <section class="mz-sol"><h3 class="pgd-h">Sobre o público e o seguimento</h3><p class="meta">Responda pensando em quem vai estar na ação e em quem atende os contatos depois. As respostas ajudam o Marketing a priorizar os pedidos da safra.</p>${mzCampos({},true)}</section>
     <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
 }
@@ -5367,8 +5409,8 @@ document.addEventListener("submit",async ev=>{
     const q=id?sb.from("mkt_acoes").update(d).eq("id",id).select().maybeSingle():sb.from("mkt_acoes").insert(d).select().maybeSingle();
     const {data,error}=await q;if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a ação.");return;}
     S.mk=id?S.mk.map(x=>x.id===id?data:x):[...(S.mk||[]),data];S.mkSel=data.id;S.mkEdit=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(data.id);aviso(id?"Ação salva.":"Ação criada.");return;}
-  if(f.id==="f-mk-solic"){const d={p_titulo:val("ms_tit"),p_tipo:val("ms_tp"),p_descricao:val("ms_desc"),p_local:val("ms_loc")||null,p_inicio:val("ms_ini")||null,p_fim:val("ms_fim")||null,p_valor:mkNum(val("ms_val"))||0,p_publico:val("ms_pub")||null,p_brindes:val("ms_br")||null};
-    if(!d.p_titulo||!d.p_descricao){aviso("Conte o que é a ação e o objetivo.");return;}if(btn)btn.disabled=true;
+  if(f.id==="f-mk-solic"){const d={p_titulo:val("ms_tit"),p_tipo:val("ms_tp"),p_descricao:val("ms_desc"),p_local:val("ms_loc")||null,p_inicio:val("ms_ini")||null,p_fim:val("ms_fim")||null,p_valor:mkNum(val("ms_val"))||0,p_publico:val("ms_pub")||null,p_brindes:val("ms_br")||null,p_matriz:mzLer(f)};
+    if(!d.p_titulo||!d.p_descricao){aviso("Conte o que é a ação e o objetivo.");return;}{const F=mzFaltam(d.p_matriz);if(F.length){aviso("Falta responder: "+F.join(", ")+".");return;}}if(btn)btn.disabled=true;
     const {data,error}=await sb.rpc("mkt_solicitar",d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível enviar a solicitação.");return;}
     S.mk=null;await carregarMkt();S.mkSel=data;S.pag="acoes-card";carregarMkCard(data);render();window.scrollTo(0,0);aviso("Solicitação enviada ao Marketing.");return;}
   if(f.id==="f-mk-decidir"){if(!ehMkt())return;const okv=(ev.submitter&&ev.submitter.dataset.ok);const ok=okv==="1";const v=mkNum(val("md_val"));
