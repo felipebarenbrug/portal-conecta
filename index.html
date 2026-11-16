@@ -555,6 +555,10 @@ main.largo{max-width:1120px}
 .orc-tot{border-top:1px solid var(--linha);padding-top:6px;margin-top:2px}.orc-tot strong{font-size:17px;color:var(--azul-escuro)}.orc-tot.neg strong{color:var(--vermelho)}
 .orc-sub{background:var(--papel);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;margin-top:4px}.orc-sub .orc-l{font-size:13px}.orc-l.neg strong{color:var(--vermelho)}
 .orc-res{margin-bottom:10px;background:var(--papel)}
+.cob-lista{display:flex;flex-direction:column;gap:4px;max-height:640px;overflow:auto}
+.cob-i{display:flex;gap:8px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-radius:6px;padding:6px 8px;background:var(--branco);cursor:pointer;font:inherit;color:inherit}
+.cob-i.on{border-color:var(--preto);box-shadow:inset 0 0 0 1px var(--preto)}.cob-dot{width:10px;height:10px;border-radius:2px;transform:rotate(45deg);flex:none;margin-top:6px}
+.cob-t{display:flex;flex-direction:column;min-width:0}.cob-t .meta{font-size:12.5px}
 .md-dest{display:flex;flex-direction:column;gap:12px}.md-dest-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.md-bar{background:var(--azul-claro);height:10px;border-radius:5px;margin:4px 0}.md-bar>div{background:var(--azul);height:10px;border-radius:5px}
 .rfv-segs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:8px}
 .rfv-seg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-radius:8px;padding:10px 12px;background:var(--branco);cursor:pointer;font:inherit;color:inherit}
@@ -1131,7 +1135,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116194204";
+const APP_VER="20261116202353";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3167,6 +3171,7 @@ async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").sel
 function subnavRC(){
   const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
+  if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))abas.push(["rc-cobertura","Cobertura dos RCs"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
@@ -3353,6 +3358,71 @@ function vRCCalc(){
   <section class="bloco"><h2 class="sec">Tabela de comissão · híbridos + Cynodon</h2><div class="tab"><table><thead><tr><th>Tier</th><th>Volume na safra</th><th class="val">Produtor</th><th class="val">Canal</th></tr></thead><tbody>${CALC_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.vol}</td><td class="val">${(x.rp*100).toLocaleString("pt-BR")}%</td><td class="val">${(x.rc*100).toLocaleString("pt-BR")}%</td></tr>`).join("")}</tbody></table></div>
   <p class="precos-nota">O tier é definido pelos quilos de híbridos + Cynodon da safra, ao produtor e a canais somados. Os pagamentos mensais usam o piso Blue. No fechamento da safra, a alíquota do tier final vale sobre o total e o excedente é pago de uma vez. Convencionais, nuas e temperadas têm taxa fixa. A comissão é calculada sobre o faturamento (kg × preço). Valores estimados: o contrato assinado com a Barenbrug prevalece.</p></section>`;
 }
+/* ===== Cobertura dos RCs: sede e área de venda ===== */
+const COB_CORES=["#00A8E2","#E8A100","#2E8B57","#C2185B","#5E35B1","#00897B","#E64A19","#3949AB","#7CB342","#8D6E63","#D81B60","#0097A7"];
+function geoLL(uf,cidade){if(!GEO||!uf)return null;const bruto=String(cidade||"");for(const c of [bruto,bruto.split(/[-\/,(]/)[0]]){const k=normGeo(c);const ll=k&&(GEO.mun[uf+"|"+k]||GEO.mun2[uf+"|"+semPrep(k)]);if(ll)return ll;}return null;}
+const kmEntre=(a,b)=>{const R=6371,t=Math.PI/180,dl=(b[0]-a[0])*t,dn=(b[1]-a[1])*t,x=Math.sin(dl/2)**2+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x));};
+async function carregarCobertura(){if(S.cobRC!==undefined)return;S.cobRC=null;pedirMapa();try{const {data}=await sb.rpc("rc_sedes");S.cobRC=data||[];}catch(e){S.cobRC=[];}render();}
+function cobCalc(){
+  const F=S.cobF||(S.cobF={mod:"Todos",st:"Vendidas",sel:null});
+  const R=(S.cobRC||[]).filter(r=>F.mod==="Todos"||r.modelo===F.mod);
+  const rows=(S.mapa||[]).filter(r=>r.rep&&(F.st==="Todas"||r.st==="V"));
+  const porRep={};rows.forEach(r=>{const k=String(r.rep).toLowerCase();(porRep[k]=porRep[k]||[]).push(r);});
+  return R.map((c,i)=>{const nomes=new Set([c.nome,...(c.crm_nomes||[])].filter(Boolean).flatMap(n=>[String(n).toLowerCase(),String(repCanon(repTitulo(n))).toLowerCase(),String(repCanon(n)).toLowerCase()]));
+    const V=[...new Set([...nomes].flatMap(n=>porRep[n]||[]))];const sede=geoLL(c.uf,c.cidade);
+    const cid={};V.forEach(r=>{const ll=geoLL(r.uf,r.cidade);const k=(r.uf||"")+"|"+normGeo(r.cidade||"");const x=cid[k]||(cid[k]={k,uf:r.uf,cidade:r.cidade,ll,n:0,kg:0,rs:0});x.n++;x.kg+=(+r.kg_h||0)+(+r.kg_c||0);x.rs+=+r.rs||0;});
+    const C=Object.values(cid);const dist=sede?C.filter(x=>x.ll).map(x=>({d:kmEntre(sede,x.ll),n:x.n})).sort((a,b)=>a.d-b.d):[];
+    const totN=dist.reduce((t,x)=>t+x.n,0);let acc=0,r80=0;for(const x of dist){acc+=x.n;r80=x.d;if(acc>=totN*.8)break;}
+    const ufs=[...new Set(C.map(x=>x.uf).filter(Boolean))].sort();
+    return {i,c,sede,C,n:V.length,kg:V.reduce((t,r)=>t+(+r.kg_h||0)+(+r.kg_c||0),0),rs:V.reduce((t,r)=>t+(+r.rs||0),0),r80:Math.round(r80),rmax:Math.round(dist.length?dist[dist.length-1].d:0),ufs,cor:COB_CORES[i%COB_CORES.length]};});
+}
+function vRCCobertura(){
+  if(!(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing")))return `<div class="vazio">Área interna da Barenbrug.</div>`;
+  carregarCobertura();
+  if(S.cobRC==null||S.mapa===undefined)return `<div class="carregando">Carregando sedes e vendas…</div>`;
+  if(!GEO)return `<section class="bloco"><div class="vazio">Não foi possível carregar o mapa. Recarregue a página.</div></section>`;
+  const F=S.cobF||(S.cobF={mod:"Todos",st:"Vendidas",sel:null});const L=cobCalc().sort((a,b)=>b.kg-a.kg);const sel=L.find(x=>x.c.nome===F.sel)||null;
+  const kmX=(km,lat)=>km/(111.32*Math.cos(lat*Math.PI/180)),kmY=km=>km/110.57*Math.cos(15*Math.PI/180);
+  const ufSede=new Set(L.filter(x=>x.sede).map(x=>x.c.uf)),ufVenda=new Set(L.flatMap(x=>x.ufs));
+  let vb=`0 0 ${GEO.W.toFixed(1)} ${GEO.H.toFixed(1)}`;
+  if(sel&&sel.sede){const P=[sel.sede,...sel.C.filter(c=>c.ll).map(c=>c.ll)].map(ll=>[GEO.px(ll[1]),GEO.py(ll[0])]);const rr=kmX(Math.max(sel.r80,20),sel.sede[0]);
+    let x0=Math.min(...P.map(p=>p[0]))-rr,x1=Math.max(...P.map(p=>p[0]))+rr,y0=Math.min(...P.map(p=>p[1]))-rr,y1=Math.max(...P.map(p=>p[1]))+rr;
+    let w=Math.max(10,x1-x0),h=Math.max(10*GEO.H/GEO.W,y1-y0);const ar=GEO.W/GEO.H;if(w/h<ar)w=h*ar;else h=w/ar;const cx=(x0+x1)/2,cy=(y0+y1)/2;vb=`${(cx-w/2).toFixed(2)} ${(cy-h/2).toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}`;}
+  const z=+vb.split(" ")[2]/GEO.W;
+  let svg=`<svg class="mp-svg" viewBox="${vb}" role="img" aria-label="Mapa do Brasil com a sede e o raio de venda dos representantes">`;
+  for(const e of GEO.st){const on=ufVenda.has(e.uf);svg+=`<path class="mp-st ${on?"":"zero"}" d="${e.d}" style="${on?"fill-opacity:.16;":""}cursor:default;stroke-width:${(.14*z).toFixed(3)};stroke-dasharray:${on?"none":(.3*z).toFixed(3)+" "+(.3*z).toFixed(3)}"><title>${e.uf}${ufSede.has(e.uf)?" · tem RC sediado":""}${on?" · tem venda de RC":" · sem venda de RC"}</title></path>`;}
+  for(const e of GEO.st)svg+=`<text class="mp-stl" x="${e.cx.toFixed(1)}" y="${(e.cy+.4*z).toFixed(2)}" style="font-size:${(1.05*Math.max(z,.35)).toFixed(2)}px">${e.uf}</text>`;
+  const desenha=x=>x.sede&&x.r80>0;
+  for(const x of L.filter(desenha)){const on=!sel||sel===x;const lat=x.sede[0];svg+=`<ellipse cx="${GEO.px(x.sede[1]).toFixed(2)}" cy="${GEO.py(lat).toFixed(2)}" rx="${kmX(Math.max(x.r80,20),lat).toFixed(2)}" ry="${kmY(Math.max(x.r80,20)).toFixed(2)}" fill="${x.cor}" fill-opacity="${sel?(on?.22:.03):.1}" stroke="${x.cor}" stroke-opacity="${on?.9:.15}" stroke-width="${((on&&sel?.22:.1)*z).toFixed(3)}" style="pointer-events:none"/>`;}
+  if(sel){for(const c of sel.C.filter(c=>c.ll)){const r=z*(.35+.9*Math.sqrt(c.kg/Math.max(1,...sel.C.map(q=>q.kg))));svg+=`<circle cx="${GEO.px(c.ll[1]).toFixed(2)}" cy="${GEO.py(c.ll[0]).toFixed(2)}" r="${r.toFixed(3)}" fill="${sel.cor}" fill-opacity=".85" stroke="#fff" stroke-width="${(.1*z).toFixed(3)}"><title>${esc(c.cidade||"")} · ${esc(c.uf||"")}: ${isN(c.n)} ${c.n===1?"venda":"vendas"} · ${isN(c.kg)} kg</title></circle>`;}
+    for(const c of sel.C.filter(c=>c.ll)){svg+=`<line x1="${GEO.px(sel.sede?sel.sede[1]:c.ll[1]).toFixed(2)}" y1="${GEO.py(sel.sede?sel.sede[0]:c.ll[0]).toFixed(2)}" x2="${GEO.px(c.ll[1]).toFixed(2)}" y2="${GEO.py(c.ll[0]).toFixed(2)}" stroke="${sel.cor}" stroke-opacity=".35" stroke-width="${(.07*z).toFixed(3)}"/>`;}}
+  for(const x of L.filter(x=>x.sede)){const on=!sel||sel===x;const cx=GEO.px(x.sede[1]),cy=GEO.py(x.sede[0]),s=(on?.75:.5)*z;
+    svg+=`<rect data-a="cob-sel" data-v="${esc(x.c.nome)}" x="${(cx-s/2).toFixed(2)}" y="${(cy-s/2).toFixed(2)}" width="${s}" height="${s}" transform="rotate(45 ${cx.toFixed(2)} ${cy.toFixed(2)})" fill="${on?x.cor:"#b9c3ca"}" stroke="#1E1E1E" stroke-width="${((sel===x?.16:.06)*z).toFixed(3)}" style="cursor:pointer"><title>${esc(x.c.nome)} · sede em ${esc(x.c.cidade||"")}/${esc(x.c.uf||"")} · ${isN(x.n)} vendas · raio de ${isN(x.r80)} km</title></rect>`;}
+  svg+=`</svg>`;
+  const chips=(campo,ops,v)=>ops.map(o=>`<button class="chip" data-a="cob-f" data-v="${esc(campo+"|"+o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join("");
+  const mods=["Todos",...new Set((S.cobRC||[]).map(r=>r.modelo).filter(Boolean))];
+  const semSede=L.filter(x=>!x.sede).length,semVenda=L.filter(x=>!x.n).length;
+  const faltam=UF_LISTA.filter(u=>!ufVenda.has(u));
+  const det=sel?`<section class="bloco cob-det" style="border-left:4px solid ${sel.cor}"><div class="mk-link" style="justify-content:space-between"><h2 class="sec" style="margin:0">${esc(sel.c.nome)}</h2><button class="link" data-a="cob-sel" data-v="">ver todos</button></div>
+    <p class="meta" style="margin:2px 0 8px">${esc(sel.c.modelo||"")} · sede em ${esc(sel.c.cidade||"")}/${esc(sel.c.uf||"")}${sel.c.regional?" · regional "+esc(sel.c.regional):""}${sel.c.status&&sel.c.status!=="Assinado"?" · "+esc(sel.c.status):""}</p>
+    <div class="metrics"><div class="metric"><span>${F.st==="Vendidas"?"Vendas na safra":"Negociações"}</span><strong>${isN(sel.n)}</strong><span class="meta">${isN(sel.kg)} kg · ${isR(sel.rs)}</span></div>
+    <div class="metric"><span>Raio de atuação</span><strong>${isN(sel.r80)} km</strong><span class="meta">80% das vendas · mais distante a ${isN(sel.rmax)} km</span></div>
+    <div class="metric"><span>Estados atendidos</span><strong>${sel.ufs.length}</strong><span class="meta">${esc(sel.ufs.join(", ")||"—")}</span></div></div>
+    ${sel.C.length?`<div class="tab" style="margin-top:8px"><table class="sim-t"><thead><tr><th>Cidade</th><th class="val">Distância da sede</th><th class="val">${F.st==="Vendidas"?"Vendas":"Negociações"}</th><th class="val">kg</th></tr></thead><tbody>${sel.C.slice().sort((a,b)=>b.kg-a.kg).map(c=>`<tr><td>${esc(c.cidade||"cidade não informada")} · ${esc(c.uf||"")}</td><td class="val">${c.ll&&sel.sede?isN(kmEntre(sel.sede,c.ll))+" km":"—"}</td><td class="val">${isN(c.n)}</td><td class="val">${isN(c.kg)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="meta">Sem ${F.st==="Vendidas"?"vendas":"negociações"} desse representante no CRM nesta safra.</p>`}</section>`:"";
+  return `<div><h1 class="titulo">Cobertura dos representantes</h1><p class="sub">Onde fica a sede de cada RC e até onde ele vende. O losango marca a sede; o círculo é o raio que concentra 80% das vendas da safra. Clique num RC no mapa ou na lista para ver as cidades atendidas.</p></div>
+  <div class="filtros" style="margin-bottom:6px">${chips("st",["Vendidas","Todas"],F.st)}</div>
+  <div class="filtros" style="margin-bottom:10px">${chips("mod",mods,F.mod)}</div>
+  <div class="metrics" style="margin-bottom:12px">
+    <div class="metric"><span>Representantes</span><strong>${L.length}</strong><span class="meta">${L.filter(x=>x.n).length} com ${F.st==="Vendidas"?"venda":"negociação"} na safra${semVenda?" · "+semVenda+" sem":""}</span></div>
+    <div class="metric"><span>Estados com RC sediado</span><strong>${ufSede.size}</strong><span class="meta">${esc([...ufSede].sort().join(", "))}</span></div>
+    <div class="metric"><span>Estados com venda de RC</span><strong>${ufVenda.size}</strong><span class="meta">${faltam.length?"sem venda: "+esc(faltam.join(", ")):"todos os estados"}</span></div>
+    <div class="metric"><span>Raio médio</span><strong>${isN((()=>{const z=L.filter(x=>x.r80>0);return z.length?z.reduce((t,x)=>t+x.r80,0)/z.length:0;})())} km</strong><span class="meta">80% das vendas de cada RC</span></div>
+  </div>
+  <div class="mp-grid"><div style="display:grid;gap:8px;min-width:0">${svg}${det}</div>
+  <section class="bloco" style="margin:0"><h2 class="sec">Representantes</h2><div class="cob-lista">${L.map(x=>`<button class="cob-i${sel===x?" on":""}" data-a="cob-sel" data-v="${esc(sel===x?"":x.c.nome)}"><span class="cob-dot" style="background:${x.cor}"></span><span class="cob-t"><strong>${esc(x.c.nome)}</strong><span class="meta">${esc(x.c.cidade||"?")}/${esc(x.c.uf||"?")} · ${x.n?`${isN(x.n)} ${F.st==="Vendidas"?(x.n===1?"venda":"vendas"):"neg."} · ${(x.kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})} t · raio ${isN(x.r80)} km`:"sem vendas na safra"}</span></span></button>`).join("")}</div>
+  ${semSede?`<p class="meta" style="margin:6px 0 0">${semSede} sem cidade da sede reconhecida no mapa; confira o cadastro do contrato.</p>`:""}</section></div>`;
+}
+
 function vRCMapa(){
   const interno=ehAdmin()||temPerfil("Comercial Barenbrug");
   if(!interno&&!(S.profile&&S.profile.rc_crm))return vRCMapaLista();
@@ -3636,7 +3706,7 @@ const avisoValoresRV=()=>"";
 const AVISO_CRM_TXT=`<strong>Dados estimados, puxados do CRM</strong><p>As quantidades e os valores desta tela vêm do CRM da Barenbrug e servem como estimativa. Não são dados confirmados pelo Financeiro nem pela Logística, e podem mudar por frete, impostos, descontos, devoluções e outros parâmetros. Para dados oficiais, consulte seu responsável comercial. Eles também serão informados dentro da política da Barenbrug.</p>`;
 function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
-  if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa";
+  if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas")return /^rv-(painel|canais|canal|meucanal)$/.test(pg);
   if(sc==="inside-sales"||sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
@@ -5834,7 +5904,7 @@ function rodapeMkt(){
 function render(){renderApp();injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -5867,7 +5937,7 @@ function renderApp(){
   }
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
@@ -6061,6 +6131,8 @@ document.addEventListener("click",async ev=>{
   if(a==="feed-post"){S.postNovo=v==="1";S.duvNova=false;S._erro=null;render();return;}
   if(a==="feed-mais"){S.feedLim=(S.feedLim||20)+20;render();return;}
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
+  if(a==="cob-sel"){S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF.sel=v||null;render();return;}
+  if(a==="cob-f"){const i=v.indexOf("|");S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="rfv-f"){const i=v.indexOf("|");S.rfvF=S.rfvF||{seg:"Todos",quem:"Todas",uf:"Todos"};S.rfvF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="rfv-atualizar"){if(!ehAdmin())return;b.disabled=true;aviso("Recalculando o RFV a partir do CRM…");const r=await sb.functions.invoke("is-rfv",{body:{}});if(r.error||!r.data||r.data.error){aviso("Não foi possível recalcular agora.");b.disabled=false;return;}S.rfv=undefined;render();aviso(`RFV recalculado: ${r.data.clientes} clientes.`);return;}
   if(a==="rc-uf"){if(!ehAdmin())return;const i=v.indexOf("|"),id=v.slice(0,i),u=v.slice(i+1);const r=(S.leadRCs||[]).find(x=>x.id===id);if(!r)return;const U=new Set(r.ufs_leads||[]);U.has(u)?U.delete(u):U.add(u);await rcLeadsSalva(id,r.recebe||U.size>0,[...U].sort());return;}
