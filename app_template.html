@@ -4616,6 +4616,7 @@ async function carregarMkt(){
   if(S.mkBusy)return;S.mkBusy=true;
   try{const {data}=await sb.from("mkt_acoes").select("*").order("inicio",{ascending:true,nullsFirst:false}).order("id");S.mk=data||[];}catch(e){S.mk=[];}
   if(ehMkt()){try{const {data}=await sb.from("mkt_verba").select("*").eq("safra",mkSafra).maybeSingle();S.mkVerba=data||{safra:mkSafra,valor:0};}catch(e){S.mkVerba={safra:mkSafra,valor:0};}
+    try{const {data}=await sb.from("midia_diaria").select("dia,gasto").gte("dia",MK_SAFRA_INI);const L=data||[];S.midia={tot:L.reduce((t,x)=>t+(Number(x.gasto)||0),0),ate:L.reduce((m,x)=>x.dia>m?x.dia:m,""),n:L.length};}catch(e){S.midia={tot:0,ate:"",n:0};}
     try{const {data}=await sb.rpc("mkt_pessoas");S.mkPessoas=Array.isArray(data)?data:[];}catch(e){S.mkPessoas=[];}
     try{const {data}=await sb.from("brinde_reqs").select("acao_id,total,status").not("acao_id","is",null);S.mkBrAcao={};(data||[]).filter(r=>r.status==="Aprovada"||r.status==="Entregue").forEach(r=>{S.mkBrAcao[r.acao_id]=(S.mkBrAcao[r.acao_id]||0)+(Number(r.total)||0);});}catch(e){S.mkBrAcao={};}}
   S.mkBusy=false;render();
@@ -5038,21 +5039,25 @@ function mkNoDia(a,d){const i=a.inicio,f=a.fim||a.inicio;return !!i&&!mkPeriodo(
 function mkPerTxt(a){const f=a.fim||a.inicio,d=x=>x.split("-").reverse().slice(0,2).join("/"),ini=a.inicio.slice(8)==="01",fimM=new Date(+f.slice(0,4),+f.slice(5,7),0).getDate()===+f.slice(8);
   if(ini&&fimM&&a.inicio.slice(0,7)===f.slice(0,7))return "data a definir no mês";return `${d(a.inicio)} a ${d(f)}`;}
 function mkContas(){const vb=S.mkVerba||{};let c=Array.isArray(vb.contas)?vb.contas:[];if(!c.length&&Number(vb.valor))c=[{cc:"",projeto:"",conta:"",valor:Number(vb.valor)}];return c;}
-function mkSaldoConta(c){const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
+const MK_SAFRA_INI="2026-07-01";
+const mkEhPub=c=>c&&(c.num==="1119"||/publicidade/i.test(c.conta||""));
+function mkMidia(c){return mkEhPub(c)?Number((S.midia||{}).tot)||0:0;}
+function mkVerbaTotal(){const C=mkContas();if(!C.length)return Number((S.mkVerba||{}).valor)||0;return C.reduce((t,c)=>{const v=mkSaldoConta(c);return t+(v==null?0:v);},0);}
+function mkSaldoConta(c){const md=mkMidia(c);if(md&&c.orcado!=null&&c.orcado!=="")return Math.max(0,Number(c.orcado)-(Number(c.gasto_antes)||0)-md);const o=c.orcado===""||c.orcado==null?null:Number(c.orcado),g=c.gasto_antes===""||c.gasto_antes==null?null:Number(c.gasto_antes);if(o!=null&&g!=null)return Math.max(0,o-g);if(o==null&&c.valor!=null&&c.valor!=="")return Number(c.valor);return null;}
 function vMkVerbaContas(V){const vb=S.mkVerba||{},C=S.mkVerbaEd||mkContas(),ed=!!S.mkVerbaEd,n=v=>v||v===0?esc(String(v).replace(".",",")):"";
-  const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0),gas=C.reduce((t,c)=>t+(Number(c.gasto_antes)||0),0),fal=C.filter(c=>mkSaldoConta(c)==null);
+  const orc=C.reduce((t,c)=>t+(Number(c.orcado)||0),0),gas=C.reduce((t,c)=>t+(Number(c.gasto_antes)||0)+mkMidia(c),0),fal=C.filter(c=>mkSaldoConta(c)==null);
   const inp=(id,v,w,lab,num)=>`<input id="${id}" value="${num?n(v):esc(v||"")}" ${num?'inputmode="decimal"':""} style="width:${w};${num?"text-align:right":""}" aria-label="${lab}">`;
   const linhas=C.map((c,i)=>{const sd=mkSaldoConta(c);return ed?`<tr><td>${inp("vc_num_"+i,c.num,"64px","Número da conta")}</td><td>${inp("vc_ct_"+i,c.conta,"100%","Descrição da conta")}</td><td>${inp("vc_cc_"+i,c.cc,"52px","Centro de custo")}</td><td>${inp("vc_pj_"+i,c.projeto,"52px","Projeto")}</td><td class="val">${inp("vc_o_"+i,c.orcado,"110px","Orçado",1)}</td><td class="val">${inp("vc_g_"+i,c.gasto_antes,"110px","Gasto antes do portal",1)}</td><td class="val meta">calculado</td><td><button type="button" class="link" data-a="vc-del" data-v="${i}">remover</button></td></tr>`
-    :`<tr><td>${esc(c.num||"—")}</td><td>${esc(c.conta||"—")}</td><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td class="val">${c.orcado!=null&&c.orcado!==""?fmtK0(+c.orcado):"—"}</td><td class="val">${c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):'<span class="meta">a informar</span>'}</td><td class="val"><strong>${sd==null?'<span class="meta">a informar</span>':fmtK0(sd)}</strong></td></tr>`;}).join("");
+    :`<tr><td>${esc(c.num||"—")}</td><td>${esc(c.conta||"—")}</td><td>${esc(c.cc||"—")}</td><td>${esc(c.projeto||"—")}</td><td class="val">${c.orcado!=null&&c.orcado!==""?fmtK0(+c.orcado):"—"}</td><td class="val">${mkMidia(c)?`${fmtK0(mkMidia(c)+(Number(c.gasto_antes)||0))}<br><span class="meta">mídia Meta ${fmtK0(mkMidia(c))}${S.midia&&S.midia.ate?" até "+esc(S.midia.ate.split("-").reverse().join("/")):""} · outras ${c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):"a informar"}</span>`:c.gasto_antes!=null&&c.gasto_antes!==""?fmtK0(+c.gasto_antes):'<span class="meta">a informar</span>'}</td><td class="val"><strong>${sd==null?'<span class="meta">a informar</span>':fmtK0(sd)}</strong></td></tr>`;}).join("");
   const nc=ed?8:7;
   return `<form class="form-card" id="f-mk-verba"><h2 class="sec" style="margin:0">Orçamento de Marketing ${esc(mkSafra)}</h2>
-  <p class="meta">Saldo disponível = orçado menos o que já foi gasto antes de as ações estarem no portal. A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
-  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto antes do portal</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
+  <p class="meta">Saldo disponível = orçado menos o que foi gasto fora das ações do portal (gastos anteriores e, em Publicidade, a mídia do Meta Ads lida automaticamente). A verba disponível do painel soma só as contas com saldo informado; as ações cadastradas aqui descontam depois, pela "Fonte da verba" de cada cartão.</p>
+  <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Conta</th><th>Descrição</th><th>CC</th><th>Projeto</th><th class="val">Orçado</th><th class="val">Gasto fora das ações</th><th class="val">Saldo disponível</th>${ed?"<th></th>":""}</tr></thead><tbody>${linhas||`<tr><td colspan="${nc}" class="meta">Nenhuma conta cadastrada.</td></tr>`}</tbody>
   <tfoot><tr><th colspan="4">Subtotal das contas</th><th class="val">${fmtK0(orc)}</th><th class="val">${fmtK0(gas)}</th><th class="val">${fmtK0(V)}${fal.length?" *":""}</th>${ed?"<th></th>":""}</tr>
   ${vb.grupo_orcado?`<tr><th colspan="4">Grupo ${esc(vb.grupo_nome||"")}</th><th class="val">${fmtK0(+vb.grupo_orcado)}</th><th colspan="${ed?3:2}" class="meta" style="font-weight:400">${orc&&+vb.grupo_orcado!==orc?fmtK0(+vb.grupo_orcado-orc)+" do grupo fora destas contas, incluindo a conta 1221 Brindes, que é controlada no Painel de brindes":""}</th></tr>`:""}</tfoot></table></div>
   ${fal.length?`<p class="meta" style="margin:4px 0 0">* Fora do total até informar o gasto anterior: ${fal.map(c=>esc(c.conta)).join(", ")}.</p>`:""}
   <div class="mk-link">${ed?`<button type="button" class="btn sec" data-a="vc-add">+ Adicionar conta</button><button class="btn" type="submit">Salvar contas</button><button type="button" class="link" data-a="vc-cancel">cancelar</button>`:`<button type="button" class="btn sec" data-a="vc-edit">Editar contas</button>`}</div>`;}
-function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(Number(c.valor)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
+function vMkPorConta(A){const L=MK_FONTES_MKT.map(f=>{const C=mkContaDe(f),v=C.reduce((t,c)=>t+(mkSaldoConta(c)||0),0),X=A.filter(a=>mkFonteMkt(a)===f),sf=k=>X.filter(a=>mkFin(a)===k).reduce((t,a)=>t+mkCusto(a),0);const pag=sf("Paga"),apr=sf("Aprovada"),prov=sf("Provisionada");return {f,v,n:X.length,pag,apr,prov,saldo:v-pag-apr-prov,tem:C.length>0,semSaldo:C.length>0&&C.every(c=>mkSaldoConta(c)==null)};});
   return `<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Fonte da verba</th><th class="val">Saldo da conta</th><th class="val">Ações</th><th class="val">Pago</th><th class="val">Aprovado</th><th class="val">Provisionado</th><th class="val">Sobra</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.f)}</td><td class="val">${!x.tem?'<span class="meta">sem conta</span>':x.semSaldo?'<span class="meta">a informar</span>':fmtK0(x.v)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.pag)}</td><td class="val">${fmtK0(x.apr)}</td><td class="val">${fmtK0(x.prov)}</td><td class="val" style="${x.saldo<0?"color:#c0392b;font-weight:600":""}">${fmtK0(x.saldo)}</td></tr>`).join("")}</tbody></table></div>
   <p class="meta" style="margin:4px 0 0">Cada ação desconta da conta escolhida em "Fonte da verba" no cartão. A conta é ligada pela descrição: "Eventos" ou "Publicidade". Brindes (conta 1221) ficam no Painel de brindes.</p>`;}
 function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementById(id);return e?e.value.trim():"";},nn=id=>{const t=g(id);return t===""?null:mkNum(t);};return C.map((c,i)=>{const x={num:g("vc_num_"+i),conta:g("vc_ct_"+i),cc:g("vc_cc_"+i),projeto:g("vc_pj_"+i),orcado:nn("vc_o_"+i),gasto_antes:nn("vc_g_"+i)};x.valor=mkSaldoConta(x);return x;});}
@@ -5089,7 +5094,7 @@ function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
     ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
 function vAcoesGestao(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const h=mkHoje(),A=S.mk.filter(mkConta),V=Number((S.mkVerba||{}).valor)||0;
+  const h=mkHoje(),A=S.mk.filter(mkConta),V=mkVerbaTotal();
   const sumV=xs=>xs.reduce((t,a)=>t+mkCusto(a),0);
   const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
   const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
@@ -5122,7 +5127,7 @@ function vAcoesGestao(){
 }
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const V=Number((S.mkVerba||{}).valor)||0,A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)),SOL=S.mk.filter(a=>a.status==="Solicitada");
+  const V=mkVerbaTotal(),A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)),SOL=S.mk.filter(a=>a.status==="Solicitada");
   const prev=A.reduce((t,a)=>t+(Number(a.valor_prev)||0),0),real=A.reduce((t,a)=>t+(Number(a.valor_real)||0),0),comp=A.reduce((t,a)=>t+mkCusto(a),0),saldo=V-comp;
   const brv=Object.values(S.mkBrAcao||{}).reduce((t,v)=>t+v,0);
   const sf=f=>A.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0),vPag=sf("Paga"),vApr=sf("Aprovada"),vProv=sf("Provisionada");
