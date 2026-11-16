@@ -1110,7 +1110,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116135126";
+const APP_VER="20261116140314";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4979,7 +4979,7 @@ function vAcoesGestao(){
   const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
   const prox=A.filter(a=>a.status==="A fazer"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
   const tAtr=A.flatMap(a=>mkChk(a).atr.map(i=>({a,i})));const tAbertas=A.reduce((t,a)=>{const c=mkChk(a);return t+c.n-c.f;},0);
-  const pag=A.filter(a=>mkFin(a)==="Paga"),apr=A.filter(a=>mkFin(a)==="Aprovada"),prov=A.filter(a=>mkFin(a)==="Provisionada");
+  const AV=A.filter(mkVerbaMkt);const pag=AV.filter(a=>mkFin(a)==="Paga"),apr=AV.filter(a=>mkFin(a)==="Aprovada"),prov=AV.filter(a=>mkFin(a)==="Provisionada");
   const feitaNaoPaga=feitas.filter(a=>mkFin(a)!=="Paga"&&mkFin(a)!=="Sem custo");
   const resp={};A.forEach(a=>{const k=a.responsavel_nome||"Sem responsável";const r=resp[k]||(resp[k]={k,n:0,feitas:0,atr:0,v:0,tf:0,tn:0,tatr:0});const c=mkChk(a);r.n++;r.v+=mkCusto(a);if(a.status==="Concluída")r.feitas++;if(mkAtrasada(a))r.atr++;r.tf+=c.f;r.tn+=c.n;r.tatr+=c.atr.length;});
   const bloco=(t,xs,vazio,nota)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}${xs.length?" · "+fmtK0(sumV(xs)):""}</h2>${nota?`<p class="sub" style="margin:0 0 8px">${nota}</p>`:""}${xs.length?`<div class="lista">${xs.slice(0,40).map(mkLinhaHTML).join("")}</div>`:`<div class="vazio">${vazio}</div>`}</section>`;
@@ -5346,7 +5346,7 @@ document.addEventListener("submit",async ev=>{
     const {data,error}=await sb.rpc("mkt_solicitar",d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível enviar a solicitação.");return;}
     S.mk=null;await carregarMkt();S.mkSel=data;S.pag="acoes-card";carregarMkCard(data);render();window.scrollTo(0,0);aviso("Solicitação enviada ao Marketing.");return;}
   if(f.id==="f-mk-decidir"){if(!ehMkt())return;const okv=(ev.submitter&&ev.submitter.dataset.ok);const ok=okv==="1";const v=mkNum(val("md_val"));
-    if(okv==="an"){const {error}=await sb.rpc("mkt_em_analise",{p_id:S.mkSel,p_valor:v||0,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar.");return;}
+    if(okv==="an"){const {error}=await sb.rpc("mkt_em_analise",{p_id:S.mkSel,p_valor:v||0,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar: "+(error.message||"erro"));return;}
       S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Em análise. Ela entrou no quadro e o valor ficou reservado na verba como provisionado.");return;}
     const {error}=await sb.rpc("mkt_decidir",{p_id:S.mkSel,p_ok:ok,p_valor:ok?(v||0):null,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar a decisão.");return;}
     S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(ok?"Solicitação aprovada. Ela está no quadro como A fazer.":"Solicitação recusada.");return;}
