@@ -1180,7 +1180,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117163553";
+const APP_VER="20261117164351";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1407,9 +1407,34 @@ function vCadastroObrig(){
       <button class="btn" type="submit">Salvar e continuar</button>
     </form></div>`;
 }
+/* ---------- progresso do perfil ---------- */
+function progItens(){
+  if(!S.profile)return [];const P=S.profile,I=[];const cheio=v=>Array.isArray(v)?v.length>0:v!=null&&String(v).trim()!=="";
+  I.push({g:"Cadastro",t:"Foto de perfil",ok:!!P.foto_url,ir:"perfil",d:"Aparece nas mensagens, perguntas e comunicados."});
+  schemaDoPerfil(S.perfil).filter(c=>c.req&&c.t!=="email_fixo").forEach(c=>I.push({g:"Cadastro",t:c.l,ok:cheio(P[c.k]),ir:"perfil"}));
+  const nomeEt=id=>(ETAPAS.find(e=>e.id===id)||{}).n||id;
+  HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os três híbridos liberam o certificado."}));
+  ETAPAS_ATIVAS.filter(id=>!HIB_CORE.includes(id)).forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia"}));
+  const com=temPerfil("Comercial Barenbrug");
+  if(com||temPerfil("RC")||temPerfil("Assessor de Vendas Digital"))I.push({g:"Programas",t:"Curso e prova do Conecta RC",ok:S.feitas.includes("conecta_rc"),ir:"conecta-rc|rc-curso"});
+  if(com||ehRevenda())I.push({g:"Programas",t:"Curso e prova do Conecta Revendas",ok:S.feitas.includes("conecta_rv"),ir:"conecta-revendas|rv-curso"});
+  return I;
+}
+function progResumo(){const I=progItens(),ok=I.filter(x=>x.ok).length;return {I,ok,n:I.length,pct:I.length?Math.round(ok/I.length*100):100};}
+function progBarra(pct,alt){return `<div class="prog-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(alt||"Progresso")}" style="height:10px;border-radius:6px;background:var(--cinza-claro,#e8edf0);overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${pct>=100?"#2E8B57":"var(--azul,#0090D0)"};border-radius:6px"></i></div>`;}
+function vProgPerfil(){
+  const R=progResumo();if(!R.n)return "";const grupos=[...new Set(R.I.map(x=>x.g))];
+  const falta=R.I.filter(x=>!x.ok);const prox=falta[0];
+  const item=x=>`<div class="linha" style="align-items:center"><div style="display:flex;gap:10px;align-items:flex-start;min-width:0"><span aria-hidden="true" style="flex-shrink:0;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:13px;font-weight:800;${x.ok?"background:#2E8B57;color:#fff":"border:2px solid #b9c4cc;color:transparent"}">✓</span><div style="min-width:0"><strong style="${x.ok?"font-weight:600":""}">${esc(x.t)}</strong>${x.obrig&&!x.ok?` ${stTag("obrigatório","amarelo")}`:""}<span class="meta">${x.ok?"Completo":"Falta"}${x.d&&!x.ok?" · "+esc(x.d):""}</span></div></div>${x.ok?"":x.ir==="perfil"?`<button class="btn sec" data-a="prog-ir" data-v="perfil-campo">Preencher</button>`:`<button class="btn sec" data-a="prog-ir" data-v="${esc(x.ir)}">Fazer</button>`}</div>`;
+  return `<section class="bloco" id="prog-perfil"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Seu perfil está ${R.pct}% completo</h2><span class="meta">${R.ok} de ${R.n} itens</span></div>
+    <div style="margin:8px 0 6px">${progBarra(R.pct,"Perfil completo")}</div>
+    <p class="meta" style="margin:0 0 10px">${R.pct>=100?"Tudo em dia. Obrigado!":`Próximo passo: <strong>${esc(prox.t)}</strong>. O que conta para o seu perfil (${esc(S.perfil)}): dados do cadastro, cursos da Academia${R.I.some(x=>x.g==="Programas")?" e os cursos dos programas":""}.`}</p>
+    ${grupos.map(g=>{const L=R.I.filter(x=>x.g===g),o=L.filter(x=>x.ok).length;return `<details class="lote" ${o<L.length?"open":""}><summary>${esc(g)} · ${o} de ${L.length}</summary><div class="lista" style="margin-top:6px">${L.map(item).join("")}</div></details>`;}).join("")}</section>`;
+}
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
-  <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
+  ${S.demo?"":vProgPerfil()}
+  <div class="cx" id="prog-dados"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div><button class="btn" type="submit">Salvar</button></div></form>
@@ -3104,7 +3129,7 @@ function vHub(){
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
   return `${banner}<div class="home">
     <aside class="home-lado">
-      <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div></div>
+      <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
       <div class="cx mkt-cx"><h2>Plataforma de marketing</h2><p>O Portal Conecta é uma iniciativa do Marketing Barenbrug para apoiar revendas, RCs e o time comercial com treinamento, programas de relacionamento, materiais e ferramentas de venda.</p>
         <div class="mkt-lista"><span class="meta">Fale com o Marketing</span>${mktContatosHTML()}</div></div>
@@ -7416,6 +7441,8 @@ document.addEventListener("click",async ev=>{
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
+  if(a==="prog-ir"){if(v==="perfil-campo"){const el=document.getElementById("prog-dados");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
+    const [sc,pg]=v.split("|");if(sc==="academia"){S.secao="academia";S.pag="trilha";}else{S.secao=sc;S.pag=pg;}S.res=null;render();window.scrollTo(0,0);return;}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
