@@ -397,6 +397,15 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .pgd-doc .meta{width:100%}
 .pgd-del{display:flex;gap:10px;flex-wrap:wrap}
 .pgd-h{margin:4px 0 0;font-size:15px}
+.par-svg{width:100%;min-width:420px;max-width:760px;height:auto;display:block}
+.par-g{stroke:var(--linha);stroke-width:1}.par-tx{font-size:11px;fill:var(--apagado)}
+.par-80{stroke:var(--amarelo);stroke-width:2;stroke-dasharray:6 4}.par-ig{stroke:var(--bloqueado);stroke-width:1;stroke-dasharray:3 4}
+.par-l{fill:none;stroke-width:2.5}.par-b2c{stroke:var(--azul)}.par-b2b{stroke:var(--azul-escuro)}
+.par-pb2c{fill:var(--azul)}.par-pb2b{fill:var(--azul-escuro)}
+.par-kb2c{background:var(--azul)!important}.par-kb2b{background:var(--azul-escuro)!important}.par-k80{background:var(--amarelo)!important}
+.par-bar{height:8px;background:var(--papel);border-radius:4px;overflow:hidden}.par-bar i{display:block;height:100%;background:var(--azul)}
+.par-t td{white-space:normal}
+.par-m{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.par-m .metric{min-width:0;padding:10px}@media(max-width:520px){.par-m{grid-template-columns:minmax(0,1fr)!important}}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:760px){.int-2{grid-template-columns:minmax(0,1fr)}}
 .aud-notas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
@@ -4755,6 +4764,62 @@ function vIntModelos(){
     <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Representante</th><th>Modelo</th><th>Situação</th><th>Sede</th><th>E-mail</th><th>Regional</th><th>CORE</th></tr></thead><tbody>
     ${lista.map(c=>`<tr><td><strong>${esc(c.nome)}</strong>${c.obs?`<br><span class="meta">${esc(c.obs)}</span>`:""}</td><td>${esc(c.modelo)}</td><td>${esc(c.status)}${c.assinado_em?`<br><span class="meta">${esc(intData(c.assinado_em))}</span>`:""}</td><td>${esc([c.cidade,c.uf].filter(Boolean).join("/"))}</td><td>${(c.emails||[]).map(esc).join("<br>")}</td><td>${esc(c.regional||"")}</td><td>${c.core_venc?(c.core_venc<hj?`<span style="color:var(--vermelho)">${esc(intData(c.core_venc))}</span>`:esc(intData(c.core_venc))):"—"}</td></tr>`).join("")}</tbody></table></div></section>`:""}`;
 }
+/* ===== B2C e B2B: concentração da carteira (Pareto) ===== */
+const PAR_GRANDE=2000;
+const parPct=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+const parNome=r=>{const o=String(r.org||"");if(o.startsWith("u:"))return o.slice(2);return pfNomeCli(r.nome)||o||"—";};
+function parCalc(C,med){
+  const out={};
+  for(const s of ["B2C","B2B"]){const o={};
+    C.L.filter(x=>x.seg===s&&x.uf!=="EX").forEach(x=>{const v=med==="kg"?x.kgH:x.rs;const a=o[x.cli]||(o[x.cli]={cli:x.cli,nome:parNome(x.r),uf:x.uf,dono:String(x.r.dono||"—"),v:0,kg:0,kgH:0,rs:0,n:0});
+      a.v+=v;a.kg+=x.kg;a.kgH+=x.kgH;a.rs+=x.rs;a.n++;});
+    const L=Object.values(o).filter(a=>a.v>0).sort((a,b)=>b.v-a.v);const tot=L.reduce((t,a)=>t+a.v,0)||1;let ac=0;
+    L.forEach((a,i)=>{const antes=ac;ac+=a.v;a.p=a.v/tot;a.ac=ac/tot;a.rk=i+1;a.cl=antes<0.8*tot?"A":antes<0.95*tot?"B":"C";});
+    const ag=k=>{const g={};L.forEach(a=>{const c=k(a);const b=g[c]||(g[c]={k:c,n:0,v:0});b.n++;b.v+=a.v;});return Object.values(g).sort((p,q)=>q.v-p.v);};
+    out[s]={L,tot,nA:L.filter(a=>a.cl==="A").length,ag};}
+  return out;
+}
+function parCurva(P){
+  const W=560,H=230,m={l:44,r:12,t:12,b:34},w=W-m.l-m.r,h=H-m.t-m.b;const X=f=>m.l+f*w,Y=f=>m.t+(1-f)*h;
+  const linha=L=>{const n=L.length;if(!n)return "";return "M"+X(0)+","+Y(0)+" "+L.map((a,i)=>"L"+X((i+1)/n).toFixed(1)+","+Y(a.ac).toFixed(1)).join(" ");};
+  const grade=[0,.2,.4,.6,.8,1].map(f=>`<line x1="${X(0)}" x2="${X(1)}" y1="${Y(f)}" y2="${Y(f)}" class="par-g"/><text x="${m.l-6}" y="${Y(f)+4}" text-anchor="end" class="par-tx">${f*100}%</text><text x="${X(f)}" y="${H-m.b+16}" text-anchor="middle" class="par-tx">${f*100}%</text>`).join("");
+  const ponto=(L,cls)=>{const n=L.length;const i=L.findIndex(a=>a.ac>=0.8);if(i<0)return "";return `<circle cx="${X((i+1)/n)}" cy="${Y(L[i].ac)}" r="4" class="${cls}"/>`;};
+  return `<svg viewBox="0 0 ${W} ${H}" class="par-svg" role="img" aria-label="Curva de Pareto: participação acumulada no valor pela participação acumulada nos clientes">${grade}
+    <line x1="${X(0)}" x2="${X(1)}" y1="${Y(.8)}" y2="${Y(.8)}" class="par-80"/><line x1="${X(0)}" x2="${X(1)}" y1="${Y(0)}" y2="${Y(1)}" class="par-ig"/>
+    <path d="${linha(P.B2B.L)}" class="par-l par-b2b"/><path d="${linha(P.B2C.L)}" class="par-l par-b2c"/>${ponto(P.B2B.L,"par-pb2b")}${ponto(P.B2C.L,"par-pb2c")}
+    <text x="${X(.5)}" y="${H-2}" text-anchor="middle" class="par-tx">clientes, do maior para o menor</text></svg>`;
+}
+function vIntPareto(C){
+  const med=S.parMed||"rs";const P=parCalc(C,med);const fv=v=>med==="kg"?fmtKg(Math.round(v)):fmtK0(v);const uni=med==="kg"?"kg de híbridos":"valor";
+  const tg=`<div class="mk-link" style="gap:6px;margin:0 0 12px">${[["rs","Toda a carteira (R$)"],["kg","Só híbridos (kg)"]].map(([k,l])=>`<button class="btn ${med===k?"":"sec"}" data-a="par-med" data-v="${k}">${l}</button>`).join("")}</div>`;
+  const top=(L,k)=>L.slice(0,k).reduce((t,a)=>t+a.p,0);
+  const kp=s=>{const D=P[s],L=D.L;if(!L.length)return `<div class="vazio">Sem pedidos.</div>`;return `<div class="metrics par-m">
+    <div class="metric"><span>Clientes</span><strong>${L.length}</strong><span class="meta">${L.filter(a=>a.n===1).length} com um pedido só</span></div>
+    <div class="metric"><span>Fazem 80% do ${uni}${inf("Menor grupo de clientes, do maior para o menor, que soma 80% do total do segmento. É a classe A.")}</span><strong>${D.nA}</strong><span class="meta">${parPct(D.nA/L.length)} dos clientes</span></div>
+    <div class="metric"><span>Maior cliente</span><strong>${parPct(L[0].p)}</strong><span class="meta">5 maiores: ${parPct(top(L,5))} · 10 maiores: ${parPct(top(L,10))}</span></div></div>`;};
+  const abc=s=>{const D=P[s];const g={A:[],B:[],C:[]};D.L.forEach(a=>g[a.cl].push(a));return `<table class="sim-t"><thead><tr><th>Classe${inf("A: clientes que somam os primeiros 80% do total. B: os 15% seguintes. C: os últimos 5%.")}</th><th class="val">Clientes</th><th class="val">${med==="kg"?"Kg de híbridos":"Valor"}</th><th class="val">Participação</th><th class="val">Média por cliente</th></tr></thead><tbody>${["A","B","C"].map(k=>{const xs=g[k],v=xs.reduce((t,a)=>t+a.v,0);return `<tr><td><strong>${k}</strong></td><td class="val">${xs.length}</td><td class="val">${fv(v)}</td><td class="val">${parPct(v/D.tot)}</td><td class="val">${xs.length?fv(v/xs.length):"—"}</td></tr>`;}).join("")}</tbody></table>`;};
+  const lista=s=>{const L=P[s].L.slice(0,15);return `<table class="sim-t fin-t par-t"><thead><tr><th class="val">#</th><th>Cliente</th><th>UF</th><th>Responsável</th><th class="val">${med==="kg"?"Kg de híbridos":"Valor"}</th><th class="val">Acumulado</th><th class="val">Híbridos no kg${inf("Parte dos quilos comprados pelo cliente que é de híbridos. Cliente grande com pouco híbrido é oportunidade de conversão.")}</th></tr></thead><tbody>${L.map(a=>`<tr><td class="val">${a.rk}</td><td>${esc(a.nome)}</td><td>${esc(a.uf||"—")}</td><td>${esc(a.dono)}</td><td class="val">${fv(a.v)}</td><td class="val">${parPct(a.ac)}</td><td class="val">${a.kg?parPct(a.kgH/a.kg):"—"}</td></tr>`).join("")}</tbody></table>`;};
+  const conc=(s,k,tit)=>{const D=P[s];const G=D.ag(k).slice(0,8);return `<h3 class="pgd-h">${tit}</h3><div class="tab"><table class="sim-t"><thead><tr><th></th><th class="val">Clientes</th><th class="val">Participação</th><th style="width:34%"></th></tr></thead><tbody>${G.map(g=>`<tr><td>${esc(g.k||"—")}</td><td class="val">${g.n}</td><td class="val">${parPct(g.v/D.tot)}</td><td><div class="par-bar"><i style="width:${(g.v/D.tot*100).toFixed(1)}%"></i></div></td></tr>`).join("")}</tbody></table></div>`;};
+  // B2C: grande produtor x varejo
+  const B=P.B2C.L,gr=B.filter(a=>a.kg>=PAR_GRANDE),vr=B.filter(a=>a.kg<PAR_GRANDE);
+  const sm=xs=>({n:xs.length,v:xs.reduce((t,a)=>t+a.v,0),rs:xs.reduce((t,a)=>t+a.rs,0),kg:xs.reduce((t,a)=>t+a.kg,0),kgH:xs.reduce((t,a)=>t+a.kgH,0),is:xs.filter(a=>/inside/i.test(a.dono)).length});
+  const g1=sm(gr),g2=sm(vr);
+  const linGV=(t,g)=>`<tr><td><strong>${t}</strong></td><td class="val">${g.n}</td><td class="val">${parPct(g.v/(P.B2C.tot||1))}</td><td class="val">${g.n?fmtK0(g.rs/g.n):"—"}</td><td class="val">${g.n?fmtKg(Math.round(g.kg/g.n)):"—"}</td><td class="val">${g.kg?parPct(g.kgH/g.kg):"—"}</td><td class="val">${g.n?parPct(g.is/g.n):"—"}</td></tr>`;
+  const sg=s=>`<div style="min-width:0"><h3 class="pgd-h">${s==="B2C"?"B2C · produtor":"B2B · canal"}</h3>${kp(s)}<div class="tab" style="margin-top:10px">${abc(s)}</div></div>`;
+  return `<section class="bloco"><h2 class="sec">Onde se concentra a carteira${inf("Pareto dos clientes com pedidos ganhos na safra 26/27, somando todos os pedidos de cada cliente. Exportação fica fora. Na visão de toda a carteira entram todos os produtos, não só híbridos.")}</h2>${tg}
+    <div class="int-2">${sg("B2C")}${sg("B2B")}</div>
+    <h3 class="pgd-h" style="margin-top:16px">Curva de Pareto</h3>
+    <div class="sz-leg"><span><i class="par-kb2c"></i>B2C · produtor</span><span><i class="par-kb2b"></i>B2B · canal</span><span><i class="par-k80"></i>linha de 80%</span></div>
+    <div class="tab">${parCurva(P)}</div>
+    <p class="meta" style="margin:4px 0 0">Quanto mais a curva sobe logo no começo, mais a carteira depende de poucos clientes. O ponto marca onde cada segmento chega a 80%. A diagonal tracejada seria uma carteira perfeitamente distribuída.</p></section>
+  <section class="bloco"><h2 class="sec">Concentração por estado e por responsável${inf("Participação de cada estado e de cada responsável no total do segmento. O responsável é o dono da negociação no CRM.")}</h2>
+    <div class="int-2"><div style="min-width:0">${conc("B2C",a=>a.uf,"B2C por estado")}${conc("B2C",a=>a.dono,"B2C por responsável")}</div><div style="min-width:0">${conc("B2B",a=>a.uf,"B2B por estado")}${conc("B2B",a=>a.dono,"B2B por responsável")}</div></div></section>
+  <section class="bloco"><h2 class="sec">B2C: grande produtor x varejo${inf("Grande produtor: cliente B2C que comprou 2 t ou mais na safra, somando todos os produtos. É o mesmo corte do ICP. Esses clientes se comportam como conta-chave e distorcem a média do varejo.")}</h2>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Clientes</th><th class="val">Participação no B2C</th><th class="val">Ticket por cliente</th><th class="val">Kg por cliente</th><th class="val">Híbridos no kg</th><th class="val">Atendidos pelo Inside Sales</th></tr></thead><tbody>${linGV("Grande produtor (2 t ou mais)",g1)}${linGV("Varejo (menos de 2 t)",g2)}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">${g1.n?`${g1.n} ${g1.n===1?"grande produtor responde":"grandes produtores respondem"} por ${parPct(g1.v/(P.B2C.tot||1))} do B2C. Sem eles, o ticket do varejo é ${g2.n?fmtK0(g2.rs/g2.n):"—"} por cliente: é essa a referência para o ICP e para as metas do Inside Sales.`:"Nenhum cliente B2C passou de 2 t nesta safra."}</p></section>
+  <section class="bloco"><h2 class="sec">Os maiores clientes de cada segmento</h2>
+    <h3 class="pgd-h">B2C · produtor</h3><div class="tab">${lista("B2C")}</div><h3 class="pgd-h" style="margin-top:14px">B2B · canal</h3><div class="tab">${lista("B2B")}</div></section>`;
+}
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
   const seg=s=>C.H.filter(x=>x.seg===s);
@@ -4774,6 +4839,7 @@ function vIntSeg(C){
     return top.length?`<table class="sim-t fin-t"><thead><tr><th>Forma de pagamento</th><th class="val">Pedidos</th><th class="val">Participação</th>${vias.map(v=>`<th class="val">${v}</th>`).join("")}</tr></thead><tbody>${top.map(a=>`<tr><td>${esc(a.k)}</td><td class="val">${a.n}</td><td class="val">${pctTxt(a.n/xs.length)}</td>${vias.map(v=>`<td class="val">${a.v[v]||0}</td>`).join("")}</tr>`).join("")}</tbody></table>`:`<div class="vazio">Sem forma de pagamento registrada.</div>`;};
   return `<div><h1 class="titulo">B2C e B2B</h1><p class="sub">B2B: distribuidores, cooperativas e venda para canal (sell-in). B2C: venda ao produtor. Só pedidos de híbridos ganhos (vendidos) no CRM na safra 26/27, já faturados ou com faturamento programado. Negociações em andamento ficam fora.${INT_HIB_NOTA}</p></div>
   <section class="bloco"><h2 class="sec">Híbridos: B2C x B2B</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Segmento</th><th class="val">Pedidos</th><th class="val">Clientes</th><th class="val">Kg</th><th class="val">Valor</th><th class="val">Preço médio (R$/kg)${inf("Faturado dividido pelos kg dos itens com preço; bonificações ficam fora.")}</th><th class="val">Ticket médio</th></tr></thead><tbody>${lin(seg("B2C"),"B2C · produtor")}${lin(seg("B2B"),"B2B · canal")}</tbody></table></div></section>
+  ${vIntPareto(C)}
   <section class="bloco"><h2 class="sec">Por onde vendemos</h2><div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${viaT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${viaT("B2B")}</div></div></div></section>
   <section class="bloco"><h2 class="sec">Perfil do cliente B2C de híbridos</h2>
     <div class="metrics"><div class="metric"><span>Clientes B2C</span><strong>${nCli}</strong><span class="meta">${rec} compraram mais de uma vez</span></div><div class="metric"><span>Kg por cliente</span><strong>${nCli?fmtKg(Math.round(totB/nCli)):"—"}</strong><span class="meta">média da safra</span></div>
@@ -6393,6 +6459,7 @@ document.addEventListener("click",async ev=>{
   if(a==="cob-f"){const i=v.indexOf("|");S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="saz-mes"){S.sazMes=+v;render();return;}
   if(a==="bm-met"){S.bmMet=v;render();return;}
+  if(a==="par-med"){S.parMed=v;render();return;}
   if(a==="pf-vis"){S.pfVis=v;S.pfSel=null;render();return;}
   if(a==="pf-sel"){S.pfSel=v||null;render();if(v)setTimeout(()=>{const e=document.querySelector(".pf-det");if(e)e.scrollIntoView({behavior:"smooth",block:"start"});},50);return;}
   if(a==="rfv-f"){const i=v.indexOf("|");S.rfvF=S.rfvF||{seg:"Todos",quem:"Todas",uf:"Todos"};S.rfvF[v.slice(0,i)]=v.slice(i+1);render();return;}
