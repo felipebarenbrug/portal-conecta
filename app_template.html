@@ -612,6 +612,9 @@ main.largo{max-width:1120px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
 .mrc{min-width:0;grid-template-columns:minmax(0,1fr)}.mrc .tab{overflow-x:auto}.mrc summary{list-style:none;cursor:pointer;display:block;max-width:100%;white-space:normal;min-width:0}.mrc summary::-webkit-details-marker{display:none}.mrc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;min-width:0}.mrc-h>div:first-child{flex:1 1 auto;min-width:0}.mrc-h strong{display:block}.mrc-n{text-align:right;flex:0 1 auto;max-width:45%}.mrc-n strong{font-size:18px}
 .lo-notas{display:grid;gap:6px;border-left:3px solid var(--amarelo,#ffd700);padding-left:10px;margin-top:4px}.lo-notas div{font-size:14px}
+.mk-barra-verba{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#dfe5ea}.mk-barra-verba i{display:block;height:100%}
+.mk-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--cinza,#5b6670)}.mk-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.mk-grp td{background:#f4f6f8}.mk-etapas{display:grid;gap:8px}.mk-etapa{display:grid;gap:4px;padding:10px 12px;border:1px solid #e3e8ec;border-radius:10px;background:#fff}.mk-etapa-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}.mk-et .tab,.bloco>.tab{min-width:0;overflow-x:auto}.mk-et summary{font-size:15px}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -6186,45 +6189,56 @@ function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
     <span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"sem data",a.local||"",a.responsavel_nome?"resp. "+a.responsavel_nome:"",a.status].filter(Boolean).join(" · "))}</span>
     <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):""}</span></div>
     ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
+const MK_ETAPAS=[
+  {k:"sol",t:"Solicitadas",cor:"cinza",d:"Pedidos que chegaram (de RCs, comerciais ou revendas) e o Marketing ainda não analisou. Não reservam verba.",f:a=>a.status==="Solicitada"},
+  {k:"ana",t:"Em análise",cor:"amarelo",d:"O Marketing está avaliando. O valor fica reservado na verba até a decisão, mas ainda não está aprovado.",f:a=>a.status==="Em análise"},
+  {k:"apr",t:"Aprovadas, a realizar",cor:"azul",d:"Aprovadas pelo Marketing e com data marcada (a fazer ou em andamento). O valor é compromisso assumido.",f:a=>a.status==="A fazer"||a.status==="Em andamento"},
+  {k:"rea",t:"Realizadas",cor:"verde",d:"A ação já aconteceu. O valor sai da verba quando o pagamento é marcado como pago.",f:a=>a.status==="Concluída"}];
 function vAcoesGestao(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
-  const h=mkHoje(),A=S.mk.filter(a=>mkConta(a)&&mkDaSafra(a)),V=mkVerbaTotal();
-  const sumV=xs=>xs.reduce((t,a)=>t+mkCusto(a),0);
-  const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
-  const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
-  const prox=A.filter(a=>a.status==="A fazer"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
-  const emAn=A.filter(a=>a.status==="Em análise"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
-  const solic=S.mk.filter(a=>a.status==="Solicitada"&&!a.mae_id),outras=S.mk.filter(a=>mkConta(a)&&!mkDaSafra(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9"))),fora=S.mk.filter(a=>a.status==="Cancelada"||a.status==="Recusada");
-  const tAtr=A.flatMap(a=>mkChk(a).atr.map(i=>({a,i})));const tAbertas=A.reduce((t,a)=>{const c=mkChk(a);return t+c.n-c.f;},0);
-  const AV=A.filter(mkVerbaMkt);const pag=AV.filter(a=>mkFin(a)==="Paga"),apr=AV.filter(a=>mkFin(a)==="Aprovada"),prov=AV.filter(a=>mkFin(a)==="Provisionada");
-  const feitaNaoPaga=feitas.filter(a=>mkFin(a)!=="Paga"&&mkFin(a)!=="Sem custo");
-  const resp={};A.forEach(a=>{const k=a.responsavel_nome||"Sem responsável";const r=resp[k]||(resp[k]={k,n:0,feitas:0,atr:0,v:0,tf:0,tn:0,tatr:0});const c=mkChk(a);r.n++;r.v+=mkCusto(a);if(a.status==="Concluída")r.feitas++;if(mkAtrasada(a))r.atr++;r.tf+=c.f;r.tn+=c.n;r.tatr+=c.atr.length;});
-  const bloco=(t,xs,vazio,nota)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}${xs.length?" · "+fmtK0(sumV(xs)):""}</h2>${nota?`<p class="sub" style="margin:0 0 8px">${nota}</p>`:""}${xs.length?`<div class="lista">${xs.slice(0,40).map(mkLinhaHTML).join("")}</div>`:`<div class="vazio">${vazio}</div>`}</section>`;
-  return `<div><h1 class="titulo">Gestão das ações · safra ${mkSafra}</h1><p class="sub">O que foi feito, o que vem, o que já saiu da verba e o que está atrasado. Atrasada: a data da ação já passou e ela não foi concluída.</p></div>
-  <div class="metrics">
-    <div class="metric"><span>Realizadas</span><strong>${feitas.length}</strong><span class="meta">${fmtK0(sumV(feitas))}${feitaNaoPaga.length?` · ${feitaNaoPaga.length} ainda sem pagamento`:""}</span></div>
-    <div class="metric"><span>Em andamento</span><strong>${andam.length}</strong><span class="meta">${fmtK0(sumV(andam))}</span></div>
-    <div class="metric"><span>Próximas</span><strong>${prox.length}</strong><span class="meta">${fmtK0(sumV(prox))}</span></div>
-    <div class="metric"><span>Em análise</span><strong>${emAn.length}</strong><span class="meta">${fmtK0(sumV(emAn))} · aguardando decisão</span></div>
-    <div class="metric" style="${atr.length?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Atrasadas</span><strong>${atr.length}</strong><span class="meta">${tAtr.length} tarefas de checklist vencidas · ${tAbertas} em aberto</span></div>
-  </div>
-  <section class="bloco"><h2 class="sec">Verba · o que já debitou e o que não</h2>
-  <div class="metrics">
-    <div class="metric"><span>Verba</span><strong>${fmtK0(V)}</strong><span class="meta"><button class="link" data-a="pag" data-v="acoes-painel">editar e ver cenários</button></span></div>
-    <div class="metric"><span>Pago (já debitado)</span><strong>${fmtK0(sumV(pag))}</strong><span class="meta">${pag.length} ações · saldo ${fmtK0(V-sumV(pag))}</span></div>
-    <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(sumV(apr))}</strong><span class="meta">${apr.length} ações</span></div>
-    <div class="metric"><span>Provisionado</span><strong>${fmtK0(sumV(prov))}</strong><span class="meta">${prov.length} ações ainda não aprovadas</span></div>
-  </div></section>
-  ${atr.length?bloco("Atrasadas",atr,"",""):""}
-  ${tAtr.length?`<section class="bloco"><h2 class="sec">Tarefas de checklist vencidas · ${tAtr.length}</h2><div class="lista">${tAtr.sort((x,y)=>String(x.i.prazo).localeCompare(String(y.i.prazo))).slice(0,60).map(({a,i})=>`<div class="linha"><div style="min-width:0"><strong>${esc(i.t)}</strong><span class="meta">${esc(i.resp||"sem responsável")} · prazo ${mkData(i.prazo)} · ${esc(a.titulo)}</span></div><button class="link" data-a="mk-abrir" data-v="${a.id}">Abrir ação</button></div>`).join("")}</div></section>`:""}
-  ${bloco("Em andamento",andam,"Nada em andamento.")}
-  ${bloco("Em análise",emAn,"Nenhuma ação em análise.","Ações que ainda aguardam decisão do Marketing. Entram na verba como provisionadas.")}
-  ${bloco("Próximas",prox,"Nada programado.")}
-  ${bloco("Realizadas",feitas,"Nenhuma ação concluída ainda.",feitaNaoPaga.length?`${feitaNaoPaga.length} realizadas ainda não estão como pagas: ${fmtK0(sumV(feitaNaoPaga))} que devem sair da verba.`:"")}
-  ${solic.length?`<section class="bloco"><h2 class="sec">Solicitações ainda não analisadas · ${solic.length}</h2><p class="sub" style="margin:0 0 8px">Pedidos que chegaram e ainda não foram para o quadro. <button class="link" data-a="pag" data-v="acoes-solic">Abrir Solicitações</button></p><div class="lista">${solic.map(mkSolLinha).join("")}</div></section>`:""}
-  ${outras.length?bloco("Outras safras",outras,"","Ações com data a partir de julho de 2027 (ou de safras anteriores). Não entram na verba de "+esc(mkSafra)+"."):""}
-  ${fora.length?`<p class="meta">${fora.length} ${fora.length===1?"ação cancelada ou recusada fica":"ações canceladas ou recusadas ficam"} fora desta tela.</p>`:""}
-  <section class="bloco"><h2 class="sec">Por responsável</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Responsável</th><th class="val">Ações</th><th class="val">Realizadas</th><th class="val">Atrasadas</th><th class="val">Tarefas feitas</th><th class="val">Tarefas vencidas</th><th class="val">Valor</th></tr></thead><tbody>${Object.values(resp).sort((a,b)=>b.v-a.v).map(r=>`<tr><td>${esc(r.k)}</td><td class="val">${r.n}</td><td class="val">${r.feitas}</td><td class="val" style="${r.atr?"color:var(--vermelho);font-weight:700":""}">${r.atr}</td><td class="val">${r.tn?r.tf+" de "+r.tn:"—"}</td><td class="val" style="${r.tatr?"color:var(--vermelho);font-weight:700":""}">${r.tatr}</td><td class="val">${fmtK0(r.v)}</td></tr>`).join("")||`<tr><td colspan="7">Nenhuma ação.</td></tr>`}</tbody></table></div></section>`;
+  if(!S.precosOk&&!S._mkPrecoBusy){S._mkPrecoBusy=1;carregarPrecos().then(()=>render());}
+  const V=mkVerbaTotal();const daSafra=a=>!a.agrupador&&mkDaSafra(a);
+  const T=S.mk.filter(a=>daSafra(a)&&a.status!=="Cancelada"&&a.status!=="Recusada");
+  const din=a=>a.status==="Solicitada"?(Number(a.verba_pedida)||Number(a.valor_prev)||0):mkCusto(a);
+  const AV=T.filter(a=>mkConta(a)&&mkVerbaMkt(a));const sf=f=>AV.filter(a=>mkFin(a)===f).reduce((t,a)=>t+mkCusto(a),0);
+  const pag=sf("Paga"),apr=sf("Aprovada"),res=sf("Provisionada"),livre=V-pag-apr-res;
+  const bon=mkBonifResumo(T.filter(mkConta));const canal=T.filter(a=>mkConta(a)&&!mkVerbaMkt(a));
+  const pct=x=>V>0?Math.max(0,Math.min(100,x/V*100)):0;
+  const atr=T.filter(mkAtrasada);const tAtr=T.flatMap(a=>mkChk(a).atr.map(i=>({a,i})));
+  const mae=id=>(S.mk||[]).find(x=>x.id===id);
+  const linha=a=>{const sem=mkSemTotal(a);return `<tr><td><button class="link" data-a="mk-abrir" data-v="${a.id}" style="text-align:left">${esc(a.titulo)}</button>${mkAtrasada(a)?` ${stTag("Atrasada","vermelho")}`:""}${!mkVerbaMkt(a)?` ${stTag("Verba do canal","cinza")}`:""}</td><td>${a.inicio?mkData(a.inicio):"sem data"}</td><td>${esc(a.responsavel_nome||"—")}</td><td>${a.status==="Solicitada"?`<span class="meta">pedido</span>`:stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}</td><td class="val">${fmtK0(din(a))}</td><td class="val">${sem?`<span class="meta">${fmtK0(sem)}</span>`:"—"}</td></tr>`;};
+  const tabela=xs=>{const soltas=xs.filter(a=>!a.mae_id),grp={};xs.filter(a=>a.mae_id).forEach(a=>{(grp[a.mae_id]=grp[a.mae_id]||[]).push(a);});
+    const ord=L=>L.slice().sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
+    return `<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Data</th><th>Responsável</th><th>Financeiro${inf("Situação do dinheiro da ação. Provisionada: reservada na verba, ainda sem aprovação. Aprovada: aprovada, ainda não paga. Paga: já saiu da verba. Sem custo: não usa verba.")}</th><th class="val">Dinheiro</th><th class="val">Sementes${inf("Valor da bonificação em sementes, a preço de tabela. É só gerencial: não sai da verba em dinheiro.")}</th></tr></thead><tbody>
+      ${ord(soltas).map(linha).join("")}
+      ${Object.entries(grp).map(([m,L])=>{const M=mae(+m);return `<tr class="mk-grp"><td colspan="6"><strong>Pedido agrupado:</strong> ${M?`<button class="link" data-a="mk-abrir" data-v="${M.id}">${esc(M.titulo)}</button>`:"—"} <span class="meta">· ${L.length} ${L.length===1?"evento nesta etapa":"eventos nesta etapa"} · ${fmtK0(L.reduce((t,a)=>t+din(a),0))}</span></td></tr>${ord(L).map(linha).join("")}`;}).join("")}
+      </tbody></table></div>`;};
+  const E=MK_ETAPAS.map(e=>{const xs=T.filter(e.f);return {...e,xs,n:xs.length,v:xs.reduce((t,a)=>t+din(a),0),sem:xs.reduce((t,a)=>t+mkSemTotal(a),0)};});
+  const resp={};T.filter(mkConta).forEach(a=>{const k=a.responsavel_nome||"Sem responsável";const r=resp[k]||(resp[k]={k,n:0,feitas:0,atr:0,v:0});r.n++;r.v+=mkCusto(a);if(a.status==="Concluída")r.feitas++;if(mkAtrasada(a))r.atr++;});
+  const outras=S.mk.filter(a=>!a.agrupador&&mkConta(a)&&!mkDaSafra(a));const fora=S.mk.filter(a=>!a.agrupador&&(a.status==="Cancelada"||a.status==="Recusada"));
+  const tile=(t,v,m,tip,st)=>`<div class="metric" ${st?`style="${st}"`:""}><span>${t}${inf(tip)}</span><strong>${fmtK0(v)}</strong><span class="meta">${m}</span></div>`;
+  return `<div><h1 class="titulo">Gestão das ações · safra ${mkSafra}</h1>
+    <p class="sub">Como ler: cada ação passa por quatro etapas: <strong>solicitada → em análise → aprovada → realizada</strong>. A verba em dinheiro é uma coisa; as sementes da bonificação são outra, só para acompanhamento, e não descontam da verba. Pedidos agrupados, como os eventos de um RC, aparecem juntos, mas cada evento conta separado.</p></div>
+  <section class="bloco" style="grid-template-columns:minmax(0,1fr)"><h2 class="sec">1. Verba de Marketing em dinheiro${inf("Só ações pagas com a verba de Marketing desta safra (julho de 2026 a junho de 2027). Ações pagas com IGDB ou bônus das revendas não entram aqui.")}</h2>
+    <div class="mk-barra-verba" role="img" aria-label="Uso da verba"><i style="width:${pct(pag)}%;background:#2E8B57" title="Pago"></i><i style="width:${pct(apr)}%;background:#0090D0" title="Aprovado, a pagar"></i><i style="width:${pct(res)}%;background:#E0A800" title="Reservado em análise"></i></div>
+    <div class="mk-leg"><span><i style="background:#2E8B57"></i>Pago</span><span><i style="background:#0090D0"></i>Aprovado, a pagar</span><span><i style="background:#E0A800"></i>Reservado (em análise)</span><span><i style="background:#dfe5ea"></i>Livre</span></div>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+      ${tile("Verba da safra",V,`<button class="link" data-a="pag" data-v="acoes-painel">editar e ver cenários</button>`,"Valor total que o Marketing tem para as ações desta safra.")}
+      ${tile("Pago",pag,V?pctTxt(pag/V)+" da verba":"","Já saiu da verba: o pagamento foi feito.")}
+      ${tile("Aprovado, a pagar",apr,V?pctTxt(apr/V)+" da verba":"","O Marketing aprovou e a Barenbrug se comprometeu a pagar, mas o pagamento ainda não saiu.")}
+      ${tile("Reservado",res,V?pctTxt(res/V)+" da verba":"","Valor das ações ainda em análise ou sem aprovação financeira. Fica separado para não estourar a verba, mas pode cair se a ação for recusada.")}
+      ${tile("Livre para novas ações",livre,livre<0?"acima da verba":"verba − pago − a pagar − reservado","Quanto ainda dá para aprovar sem passar da verba, já descontando o que está reservado.",livre<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":"box-shadow:inset 0 0 0 2px var(--amarelo)")}
+    </div>
+    <p class="meta" style="margin:0">${bon.n?`Fora da verba em dinheiro: <strong>${fmtK0(bon.rs)}</strong> em sementes (${isNum(bon.kg)} kg, bonificação e áreas demonstrativas) em ${bon.n} ${bon.n===1?"ação":"ações"}, valor gerencial. `:""}${canal.length?`${canal.length} ${canal.length===1?"ação é paga":"ações são pagas"} com verba dos canais: ${fmtK0(canal.reduce((t,a)=>t+mkCusto(a),0))}.`:""}</p></section>
+  <section class="bloco" style="grid-template-columns:minmax(0,1fr)"><h2 class="sec">2. Ações por etapa</h2>
+    <div class="mk-etapas">${E.map(e=>`<div class="mk-etapa"><div class="mk-etapa-h">${stTag(e.t,e.cor)}<span><strong>${e.n}</strong> ${e.n===1?"ação":"ações"}</span><span><strong>${fmtK0(e.v)}</strong>${e.k==="sol"?" pedidos":""}</span>${e.sem?`<span class="meta">+ ${fmtK0(e.sem)} em sementes</span>`:""}</div><span class="meta">${e.d}</span></div>`).join("")}</div>
+    ${atr.length?`<p class="meta" style="margin:0"><strong style="color:var(--vermelho)">${atr.length} ${atr.length===1?"ação atrasada":"ações atrasadas"}</strong>: a data já passou e ela não foi marcada como realizada. Normalmente é só atualizar o status do cartão. Elas aparecem com a etiqueta "Atrasada" na lista abaixo.</p>`:""}</section>
+  <section class="bloco" style="grid-template-columns:minmax(0,1fr)"><h2 class="sec">3. Todas as ações da safra</h2><p class="sub" style="margin:0">Abra cada etapa para ver as ações. Toque no nome para abrir o cartão.</p>
+    ${E.filter(e=>e.n).map(e=>`<details class="lote mk-et" ${e.k==="ana"||e.k==="apr"?"open":""}><summary>${e.t} · ${e.n} · ${fmtK0(e.v)}</summary>${tabela(e.xs)}</details>`).join("")||`<div class="vazio">Nenhuma ação nesta safra.</div>`}
+    ${outras.length?`<details class="lote mk-et"><summary>Outras safras · ${outras.length} · fora da verba de ${esc(mkSafra)}</summary>${tabela(outras)}</details>`:""}
+    ${fora.length?`<p class="meta">${fora.length} ${fora.length===1?"ação cancelada ou recusada fica":"ações canceladas ou recusadas ficam"} fora desta tela.</p>`:""}</section>
+  ${tAtr.length?`<details class="lote"><summary>Tarefas de checklist vencidas · ${tAtr.length}</summary><div class="lista" style="margin-top:8px">${tAtr.sort((x,y)=>String(x.i.prazo).localeCompare(String(y.i.prazo))).slice(0,60).map(({a,i})=>`<div class="linha"><div style="min-width:0"><strong>${esc(i.t)}</strong><span class="meta">${esc(i.resp||"sem responsável")} · prazo ${mkData(i.prazo)} · ${esc(a.titulo)}</span></div><button class="link" data-a="mk-abrir" data-v="${a.id}">Abrir ação</button></div>`).join("")}</div></details>`:""}
+  <details class="lote"><summary>Por responsável</summary><div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Responsável</th><th class="val">Ações</th><th class="val">Realizadas</th><th class="val">Atrasadas</th><th class="val">Dinheiro</th></tr></thead><tbody>${Object.values(resp).sort((a,b)=>b.v-a.v).map(r=>`<tr><td>${esc(r.k)}</td><td class="val">${r.n}</td><td class="val">${r.feitas}</td><td class="val" style="${r.atr?"color:var(--vermelho);font-weight:700":""}">${r.atr}</td><td class="val">${fmtK0(r.v)}</td></tr>`).join("")}</tbody></table></div></details>`;
 }
 function mkBonifResumo(L){const R={rs:0,kg:0,n:0,cult:{},fin:{},acoes:[]};L.forEach(a=>{const it=mkSem(a);if(!it.length)return;R.n++;let rs=0,kg=0;it.forEach(i=>{const v=mkSemValor(i),k=Number(i.kg)||0;rs+=v;kg+=k;const c=R.cult[i.cult]||(R.cult[i.cult]={kg:0,rs:0});c.kg+=k;c.rs+=v;const f=/demonstrativa/i.test(i.fin||"")?"Plantio de área demonstrativa":"Bonificação (pagamento em produto)";const g=R.fin[f]||(R.fin[f]={kg:0,rs:0});g.kg+=k;g.rs+=v;});R.rs+=rs;R.kg+=kg;R.acoes.push({a,rs,kg});});R.acoes.sort((x,y)=>y.rs-x.rs);return R;}
 function vMkBonifSec(L){if(!S.precosOk&&!S._mkPrecoBusy){S._mkPrecoBusy=1;carregarPrecos().then(()=>render());}const B=mkBonifResumo(L);if(!B.n)return "";
