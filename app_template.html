@@ -4489,14 +4489,14 @@ function vIntSaz(){
   const plantIdeal=[...(G.trop||[]),...(G.temp||[])].filter(r=>/ideal/i.test(r.m[mi]));
   const plantPoss=[...(G.trop||[]),...(G.temp||[])].filter(r=>/poss/i.test(r.m[mi]));
   const agrupa=L=>{const o={};L.forEach(r=>{const c=r.k[1].replace(/\s*\(.*\)/,"");(o[c]=o[c]||[]).push(r.k[0]);});return Object.entries(o).map(([c,u])=>`<li><strong>${esc(c.charAt(0)+c.slice(1).toLowerCase())}</strong>: ${esc([...new Set(u)].join(", "))}</li>`).join("");};
-  const jan=(G.jan||[]).filter(r=>r.m[mi]);const janL=jan.map(r=>`<li><strong>${esc(r.g.replace(/\s*—.*$/,""))}</strong> · ${esc(r.k[0])} · ${esc(r.k[1].toLowerCase())}: <span class="sz-tag ${szCls(r.m[mi])}">${esc(szTx(r.m[mi],r.k[0]))}</span></li>`).join("");
-  const calIdx=(mi+6)%12;const calL=(G.cal||[]).filter(r=>r.m[calIdx]).map(r=>`<li>${esc(r.k[0].charAt(0)+r.k[0].slice(1).toLowerCase())}: <span class="sz-tag ${szCls(r.m[calIdx])}">${esc(szTx(r.m[calIdx],r.k[0]))}</span></li>`).join("");
+  const jan=(G.jan||[]).filter(r=>r.m[mi]);const janL=jan.map(r=>`<li><strong>${esc(r.g.replace(/\s*—.*$/,""))}</strong> · ${esc(r.k[0])}: <span class="sz-tag ${szCls(r.m[mi])}">${esc(szTx(r.m[mi],r.k[0]))}</span></li>`).join("");
+  const calIdx=(mi+6)%12;const calL=(G.cal||[]).filter(r=>r.m[calIdx]).map(r=>`<li><strong>${esc((r.g||"").replace(/:.*$/,""))}</strong> · ${esc(r.k[0])}: <span class="sz-tag ${szCls(r.m[calIdx])}">${esc(szTx(r.m[calIdx],r.k[0]))}</span></li>`).join("");
   const chuvaN={c:0,t:0,s:0};(G.chuva||[]).forEach(r=>{const v=r.m[mi];if(v==="Chuva")chuvaN.c++;else if(v==="Seca")chuvaN.s++;else chuvaN.t++;});
   const neste=`<section class="bloco sz-agora"><h2 class="sec">Em ${["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][mi]}${inf("Leitura do mês escolhido, montada a partir das tabelas abaixo.")}</h2>
     <p class="meta" style="margin:0 0 8px">Chuva: ${chuvaN.c} regiões em estação chuvosa, ${chuvaN.t} em transição e ${chuvaN.s} na seca.</p>
     <div class="sz-col"><div><h3 class="pgd-h">Plantio ideal</h3><ul class="obj-lista">${agrupa(plantIdeal)||"<li>Nenhuma cultivar em janela ideal.</li>"}</ul>${plantPoss.length?`<h3 class="pgd-h">Plantio possível</h3><ul class="obj-lista">${agrupa(plantPoss)}</ul>`:""}</div>
     <div><h3 class="pgd-h">Quando o produtor compra</h3><ul class="obj-lista">${janL||"<li>Sem janela de compra marcada.</li>"}</ul></div>
-    <div><h3 class="pgd-h">Agenda comercial</h3><ul class="obj-lista">${calL||"<li>Sem ação marcada.</li>"}</ul></div></div></section>`;
+    <div><h3 class="pgd-h">Ciclo do produtor</h3><ul class="obj-lista">${calL||"<li>Nada marcado neste mês.</li>"}</ul></div></div></section>`;
   // grids
   const grade=(titulo,L,ini,dica,nKey)=>{const cols=ini===6?[...SZ_M.slice(6),...SZ_M.slice(0,6)]:SZ_M;const atual=ini===6?(mi+6)%12:mi;let g0=null;
     return `<section class="bloco"><h2 class="sec">${esc(titulo)}${inf(dica)}</h2><div class="tab"><table class="sz-t"><thead><tr><th></th>${cols.map((m,i)=>`<th class="${i===atual?"sz-hoje":""}">${m}</th>`).join("")}</tr></thead><tbody>${L.map(r=>{let h="";if(r.g&&r.g!==g0){g0=r.g;h=`<tr class="sz-g"><td colspan="13">${esc(r.g)}</td></tr>`;}return h+`<tr><th scope="row">${esc(r.k.slice(0,nKey||r.k.length).join(" · "))}</th>${r.m.map((v,i)=>`<td class="${szCls(v)}${i===atual?" sz-hoje":""}" title="${esc(szTx(v,r.k[0]))}">${esc(szTx(v,r.k[0]))}</td>`).join("")}</tr>`;}).join("")}</tbody></table></div></section>`;};
@@ -4504,20 +4504,21 @@ function vIntSaz(){
   const V=szVendasMes();const mx=Math.max(1,...V.meses.map(m=>{const a=V.ped[m],b=V.fat[m];return Math.max(a.hib+a.ruzi+a.temp+a.out,b.hib+b.ruzi+b.temp+b.out);}));
   const barra=o=>{const t=o.hib+o.ruzi+o.temp+o.out;return `<div class="sz-bar" title="${(t/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})} t">${[["hib","Híbridos"],["ruzi","Ruziziensis"],["temp","Temperadas"],["out","Outras"]].map(([k])=>o[k]?`<i class="sz-${k}" style="height:${(o[k]/mx*100).toFixed(1)}%"></i>`:"").join("")}</div>`;};
   const tt=o=>((o.hib+o.ruzi+o.temp+o.out)/1000).toLocaleString("pt-BR",{maximumFractionDigits:0});
-  const vend=`<section class="bloco"><h2 class="sec">Quando o produtor comprou nesta safra${inf("Vendas diretas ao produtor (B2C: Inside Sales e representantes) ganhas no CRM na safra 26/27, por mês de fechamento e por mês de faturamento programado. Vendas a canal, sell-in e exportação ficam fora, porque as compras antecipadas do canal distorcem a sazonalidade real.")}</h2>
+  const vend=`<section class="bloco"><h2 class="sec">Quando o produtor comprou nesta safra${inf("Vendas diretas ao produtor (B2C: Inside Sales e representantes) ganhas no CRM na safra 26/27, por mês de fechamento e por mês de faturamento programado. Vendas para revendas e exportação ficam fora: aqui entra só a compra do produtor.")}</h2>
     <div class="sz-leg"><span><i class="sz-hib"></i>Híbridos</span><span><i class="sz-ruzi"></i>Ruziziensis</span><span><i class="sz-temp"></i>Temperadas</span><span><i class="sz-out"></i>Outras</span></div>
     <div class="tab"><div class="sz-graf">${V.meses.map(m=>`<div class="sz-mcol"><div class="sz-par">${barra(V.ped[m])}${barra(V.fat[m])}</div><span class="sz-ml">${SZ_M[+m.slice(5)-1]}</span><span class="meta">${tt(V.ped[m])} · ${tt(V.fat[m])} t</span></div>`).join("")}</div></div>
     <p class="meta" style="margin:6px 0 0">Em cada mês, a barra da esquerda é o volume fechado e a da direita, o volume com faturamento programado. Pedidos fechados antes de julho entram em julho.</p></section>`;
   return `<div><h1 class="titulo">${esc(d.titulo||"Calendário de plantio e compra")}</h1><p class="sub">${esc(d.sub||"")}</p></div>
   <div class="sz-cadeia">${(d.cadeia||[]).map((c,i)=>`<span>${esc(c)}</span>${i<d.cadeia.length-1?'<b aria-hidden="true">›</b>':""}`).join("")}</div>
-  ${sel}${neste}${vend}
+  ${sel}${neste}
+  ${grade("Ciclo do produtor na safra: quando compra e quando planta (julho a junho)",G.cal||[],6,"Resumo do ciclo do produtor por grupo de cultivar: meses de compra e janela de plantio. Ideal é a melhor época de plantio; possível é a janela com mais risco de falta ou excesso de chuva.",1)}
+  ${grade("Janela de plantio das tropicais por estado",G.trop||[],0,"Janela ideal e possível de plantio de cada cultivar, por estado, conforme o regime de chuvas.",2)}
+  ${grade("Janela de plantio das temperadas e da sobressemeadura",G.temp||[],0,"Azevém, aveia e trevo no Sul e sobressemeadura em pasto tropical.",2)}
+  ${grade("Janela de compra do produtor por região",G.jan||[],0,"Quando o produtor compra semente, por região e cultivar. Só venda ao produtor; o calendário de compra do canal não entra.",1)}
+  ${grade("Regime de chuvas e potencial por estado",G.chuva||[],0,"Chuva acima de 100 mm/mês, transição de 60 a 100 mm e seca abaixo de 60 mm (climatologia INMET). O número é o potencial de mercado de semente em toneladas.",2)}
+  ${vend}
   <section class="bloco"><h2 class="sec">O que aprender com o calendário</h2><ul class="obj-lista">${(d.insights||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul>
   <h3 class="pgd-h" style="margin-top:10px">Como a Barenbrug age</h3><ul class="obj-lista">${(d.acoes||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
-  ${grade("Janela de compra do produtor",G.jan||[],0,"Quando o produtor compra semente, por região e cultivar. Só venda ao produtor; o calendário de compra do canal não entra.",2)}
-  ${grade("Plantio das tropicais por estado",G.trop||[],0,"Janela ideal e possível de plantio de cada cultivar, por estado.",2)}
-  ${grade("Plantio das temperadas e sobressemeadura",G.temp||[],0,"Azevém, aveia e trevo no Sul e sobressemeadura em pasto tropical.",2)}
-  ${grade("Regime de chuvas e potencial por estado",G.chuva||[],0,"Chuva acima de 100 mm/mês, transição de 60 a 100 mm e seca abaixo de 60 mm (climatologia INMET). O número é o potencial de mercado de semente em toneladas.",2)}
-  ${grade("Calendário comercial da safra (julho a junho)",G.cal||[],6,"Ações comerciais e de marketing voltadas ao produtor ao longo da safra: campanhas, eventos, plantio e planejamento.",1)}
   <p class="meta" style="margin-top:10px">Fontes: ${esc((d.fontes||[]).join("; "))}.</p>`;
 }
 /* ===== Inteligência: perfil dos canais por segmento ===== */
