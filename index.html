@@ -621,7 +621,7 @@ main.largo{max-width:1120px}
 .rvv-q{display:grid;gap:8px;padding:12px;border:1px solid #e3e8ec;border-radius:10px;background:#fff;min-width:0}.rvv-q h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}.rvv-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--azul-escuro,#00557f);color:#fff;font-size:13px;flex-shrink:0}
 .rvv-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.rvv-kv>div{display:grid;gap:2px;padding:8px 10px;background:#f6f8fa;border-radius:8px}.rvv-kv span{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#5b6670}.rvv-kv strong{font-size:18px}.rvv-kv em{font-style:normal;font-size:13px;color:#5b6670}.rvv-kv .rvv-dest{box-shadow:inset 0 0 0 2px #2E8B57;background:#eef8f1}
 .rvv-bar{display:grid;grid-template-columns:150px 1fr 60px;gap:8px;align-items:center;font-size:14px}.rvv-bar>div{position:relative;height:12px;background:#e3e8ec;border-radius:6px}.rvv-bar i{display:block;height:100%;border-radius:6px}.rvv-bar b{position:absolute;top:-3px;width:2px;height:18px;background:#1e1e1e;opacity:.5}.rvv-bar strong{text-align:right}
-.rvv-cen{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}.rvv-c{display:grid;gap:4px;padding:10px;border-radius:10px;border:1px solid #e3e8ec;border-top:4px solid #999}.rvv-c1{border-top-color:#2E8B57}.rvv-c2{border-top-color:#0090D0}.rvv-c3{border-top-color:#E0A800}.rvv-ct{font-weight:800}
+.rvv-cen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.rvv-c{display:grid;gap:4px;padding:10px;border-radius:10px;border:1px solid #e3e8ec;border-top:4px solid #999}.rvv-c1{border-top-color:#2E8B57}.rvv-c2{border-top-color:#0090D0}.rvv-c3{border-top-color:#E0A800}.rvv-c4{border-top-color:#00557f;background:#f5f9fc}.rvv-ct{font-weight:800}
 .rvv-l{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px;padding:4px 0;border-top:1px solid #eef1f4}.rvv-l span:nth-child(2){grid-column:1;color:#5b6670;font-size:12px}.rvv-l strong{grid-column:2;grid-row:1/3;align-self:center}.rvv-tot strong{font-size:17px}
 .rvv-pub{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:12px;border-radius:10px;background:#fff8d6;border:1px solid #f0d36b}.rvv-pub.on{background:#eef8f1;border-color:#9fd3b0}.rvv-pub strong{display:block}
 @media(max-width:600px){.rvv-bar{grid-template-columns:90px 1fr 50px}}
@@ -1196,7 +1196,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117170507";
+const APP_VER="20261117170741";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3819,6 +3819,19 @@ function rvvNum(v){if(v==null||v==="")return 0;if(typeof v==="number")return v;c
 function rvvNF(v){if(v==null||v==="")return null;const n=parseInt(String(v).replace(/\D/g,""),10);return isNaN(n)?null:String(n);}
 function rvvData(v){if(!v)return null;if(v instanceof Date)return isNaN(v)?null:v;if(typeof v==="number")return new Date(Math.round((v-25569)*864e5)+12*36e5);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],+m[2]-1,+m[1]);const d=new Date(v);return isNaN(d)?null:d;}
 const rvvISO=d=>d?new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10):null;
+function rvvCen(v,meta,g){
+  const fator=a=>a>=1?1:a>=.9?.7:0;const sc={};
+  [["pago",v.pag_rs_h,v.pag_rs_c,v.pag_kg_h],["faturado",v.fat_rs_h,v.fat_rs_c,v.fat_kg_h],["total",v.tot_rs_h,v.tot_rs_c,v.tot_kg_h]].forEach(([k,rh,rc,kh])=>{const at=meta?kh/meta:0,ig=rh*g.ih+rc*g.ic,bf=rh*g.b*fator(at);sc[k]={igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:at,fator:fator(at),bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO};});
+  sc.bf_fat_meta_total=v.fat_rs_h*g.b*fator(meta?v.tot_kg_h/meta:0);
+  return sc;
+}
+/* cenario "se bater a meta": hibridos completam a meta ao preco medio por kg; convencionais como no total */
+function rvvCenMeta(v,meta,g,pxFb){
+  const px=v.tot_kg_h>0?v.tot_rs_h/v.tot_kg_h:v.fat_kg_h>0?v.fat_rs_h/v.fat_kg_h:(pxFb||0);
+  const kh=Math.max(v.tot_kg_h,meta||0),rh=v.tot_kg_h>=(meta||0)?v.tot_rs_h:v.tot_rs_h+((meta||0)-v.tot_kg_h)*px,rc=v.tot_rs_c;
+  const ig=rh*g.ih+rc*g.ic,bf=meta?rh*g.b:0;
+  return {rh,rc,kh,px,falta:Math.max(0,(meta||0)-v.tot_kg_h),z:{igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:meta?kh/meta:0,fator:meta?1:0,bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO}};
+}
 function rvvCalcular(ped,finRows,hoje,canais){
   const fin={};
   for(const r of finRows){const cod=parseInt(r.cod,10),nf=rvvNF(r.nf);if(!cod||!nf)continue;const k=cod+"|"+nf;const x=fin[k]||(fin[k]={cod,nf,valor:0,dev:0,desc:0,perm:0,juros:0,baixa:0,aberto:0,vencido:0,parcelas:0,emis:null,prox:null});
@@ -3835,9 +3848,7 @@ function rvvCalcular(ped,finRows,hoje,canais){
       pag_rs_h:psum(p=>I(p)&&p.hib,"rs"),pag_rs_c:psum(p=>I(p)&&!p.hib,"rs"),pag_kg_h:psum(p=>I(p)&&p.hib,"kg"),pag_kg_c:psum(p=>I(p)&&!p.hib,"kg")};
     [["pag_rs_h","fat_rs_h"],["pag_rs_c","fat_rs_c"],["pag_kg_h","fat_kg_h"],["pag_kg_c","fat_kg_c"]].forEach(([a,b])=>{v[a]=Math.max(0,Math.min(v[a],v[b]));});
     v.tot_kg_h=v.fat_kg_h+v.ord_kg_h;v.tot_rs_h=v.fat_rs_h+v.ord_rs_h;v.tot_kg_c=v.fat_kg_c+v.ord_kg_c;v.tot_rs_c=v.fat_rs_c+v.ord_rs_c;
-    const fator=a=>a>=1?1:a>=.9?.7:0;const sc={};
-    [["pago",v.pag_rs_h,v.pag_rs_c,v.pag_kg_h],["faturado",v.fat_rs_h,v.fat_rs_c,v.fat_kg_h],["total",v.tot_rs_h,v.tot_rs_c,v.tot_kg_h]].forEach(([k,rh,rc,kh])=>{const at=meta?kh/meta:0,ig=rh*g.ih+rc*g.ic,bf=rh*g.b*fator(at);sc[k]={igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:at,fator:fator(at),bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO};});
-    sc.bf_fat_meta_total=v.fat_rs_h*g.b*fator(meta?v.tot_kg_h/meta:0);
+    const sc=rvvCen(v,meta,g);
     const nfSet=new Set(L.filter(I).map(p=>p.cod+"|"+p.nf)),nfs=[...nfSet].map(k=>fin[k]).filter(Boolean).sort((a,b)=>(a.emis||0)-(b.emis||0));
     const F=nfs.reduce((t,x)=>{["valor","dev","desc","perm","juros","baixa","aberto","vencido"].forEach(k=>t[k]+=x[k]);return t;},{valor:0,dev:0,desc:0,perm:0,juros:0,baixa:0,aberto:0,vencido:0});F.n_nf=nfs.length;F.n_quit=nfs.filter(x=>x.aberto<=.005).length;
     const lg={};L.forEach(p=>{const k=[p.status,p.nf,p.pv,p.cv,p.cod].join("|");const x=lg[k]||(lg[k]={st:p.status,pv:p.pv,nf:p.nf,cv:p.cv,cod:p.cod,kg:0,rs:0,pago_pct:p.share,dfat:rvvISO(p.dfat),stfin:p.stfin,sit:p.sit,semTitulo:p.semTitulo});x.kg+=p.kg;x.rs+=p.rs;});
@@ -3865,7 +3876,7 @@ async function rvvLerArquivos(fPed,fFin){
   return {ped,finRows,hoje:hoje||new Date()};
 }
 function rvvCompara(c){const m=metricasCanal(c);return {kgH:m.kgH,igdb:m.igdb,bonus:m.bonus,total:m.total};}
-function rvvBlocos(d,g,rev){
+function rvvBlocos(d,g,rev,pxFb){
   const v=d.v,s=d.sc;
   const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0),pc=n=>n==null?"—":pctTxt(n),pt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
   const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
@@ -3879,7 +3890,8 @@ function rvvBlocos(d,g,rev){
   const q3=n=>q(n,"Meta de híbridos","A meta é em kg de híbridos. Bônus de Performance: 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. As marcas na barra são 90% e 100%.",
     `<p class="meta" style="margin:0 0 6px">Meta: <strong>${kg(d.meta)}</strong> · tier ${esc(d.tier)} (IGDB ${pt(g.ih)} híbridos, ${pt(g.ic)} convencionais; bônus ${pt(g.b)} híbridos)</p>
      ${barra("Pago",s.pago.ating,"#2E8B57")}${barra("Faturado",s.faturado.ating,"#0090D0")}${barra("Com os encarteirados",s.total.ating,"#E0A800")}`);
-  const cen=[["Disponível hoje","IGDB sobre o que o canal já pagou. É o que pode ser usado agora nas ações de PGD.",s.pago,v.pag_rs_h,v.pag_rs_c,"rvv-c1"],["Se pagar todo o faturado","Todas as notas já emitidas quitadas.",s.faturado,v.fat_rs_h,v.fat_rs_c,"rvv-c2"],["Potencial","Faturar e pagar também os pedidos encarteirados.",s.total,v.tot_rs_h,v.tot_rs_c,"rvv-c3"]];
+  const CM=rvvCenMeta(v,d.meta,g,pxFb);
+  const cen=[["Disponível hoje","IGDB sobre o que o canal já pagou. É o que pode ser usado agora nas ações de PGD.",s.pago,v.pag_rs_h,v.pag_rs_c,"rvv-c1"],["Se pagar todo o faturado","Todas as notas já emitidas quitadas.",s.faturado,v.fat_rs_h,v.fat_rs_c,"rvv-c2"],["Potencial","Faturar e pagar também os pedidos encarteirados.",s.total,v.tot_rs_h,v.tot_rs_c,"rvv-c3"],["Se bater a meta",CM.falta?`Completar a meta com mais ${kg(CM.falta)} de híbridos (a ${rs(CM.px)}/kg, preço médio dos pedidos).`:"A meta já está batida com os pedidos de hoje.",CM.z,CM.rh,CM.rc,"rvv-c4"]];
   const q4=n=>q(n,"IGDB por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Não depende de bater a meta: é gerado sobre o que for faturado e pago.",
     `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">${e}</span>
       <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.ih)}</span><strong>${rs(z.igdb_h)}</strong></div>
@@ -3894,8 +3906,23 @@ function rvvBlocos(d,g,rev){
      ${s.bf_fat_meta_total&&s.faturado.fator<1?`<p class="meta" style="margin:6px 0 0">Se a meta for batida com os encarteirados, o bônus sobre o já faturado seria ${rs(s.bf_fat_meta_total)}.</p>`:""}`);
   return {q1,q3,q4,q5};
 }
+const RVV_ED=[["Pedidos encarteirados",[["ord_kg_h","Híbridos (kg)"],["ord_rs_h","Híbridos (R$)"],["ord_kg_c","Convencionais (kg)"],["ord_rs_c","Convencionais (R$)"]]],
+  ["Faturados",[["fat_kg_h","Híbridos (kg)"],["fat_rs_h","Híbridos (R$)"],["fat_kg_c","Convencionais (kg)"],["fat_rs_c","Convencionais (R$)"]]],
+  ["Pagos",[["pag_kg_h","Híbridos (kg)"],["pag_rs_h","Híbridos (R$)"],["pag_kg_c","Convencionais (kg)"],["pag_rs_c","Convencionais (R$)"]]]];
+function rvvEdBox(c,r){
+  const d=r.dados,v=d.v,f=d.fin||{},ed=d.editado;const nf=(x,dec)=>(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  const nota=ed?`<div class="nota-admin" style="margin:0">Números editados manualmente por <strong>${esc(ed.nome||"—")}</strong> em ${fmtDataHora(ed.em)}${ed.obs?": "+esc(ed.obs):""}. Um novo cálculo com os arquivos substitui a edição.</div>`:"";
+  if(S.rvvEdit!==c.id)return `<div class="acoes" style="margin:0;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap">${nota}<button class="btn sec" data-a="rvv-ed" data-v="${esc(c.id)}">Editar números</button></div>`;
+  const inp=(k,l,val,dec)=>`<div><label for="rve_${k}">${esc(l)}</label><input id="rve_${k}" data-rve="${k}" inputmode="decimal" value="${nf(val,dec)}"></div>`;
+  return `<form id="f-rvv-ed" class="form-card" data-v="${esc(c.id)}" style="border:2px solid #E0A800"><strong>Editar números de ${esc(c.nome)}</strong><span class="meta">Corrija qualquer valor. Os totais, o IGDB, o Bônus de Performance e os cenários são recalculados ao salvar. Depois confira os quadros e publique de novo para a revenda ver.</span>
+    ${RVV_ED.map(([t,L])=>`<fieldset style="border:1px solid #e3e8ec;border-radius:10px;padding:10px;display:grid;gap:8px;min-width:0"><legend style="font-weight:800;padding:0 4px">${t}</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">${L.map(([k,l])=>inp(k,l,v[k],k.includes("_kg_")?0:2)).join("")}</div></fieldset>`).join("")}
+    <fieldset style="border:1px solid #e3e8ec;border-radius:10px;padding:10px;display:grid;gap:8px;min-width:0"><legend style="font-weight:800;padding:0 4px">Meta e financeiro</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+      ${inp("meta","Meta de híbridos (kg)",d.meta,0)}${inp("n_nf","Notas emitidas",f.n_nf,0)}${inp("n_quit","Notas quitadas",f.n_quit,0)}${inp("aberto","Em aberto (R$ com impostos)",f.aberto,2)}${inp("vencido","Vencido (R$)",f.vencido,2)}</div></fieldset>
+    <div><label for="rve_obs">Motivo da edição (opcional)</label><input id="rve_obs" maxlength="200" placeholder="Ex.: nota cancelada, pagamento confirmado pelo Financeiro"></div>
+    <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar e recalcular</button><button class="btn sec" type="button" data-a="rvv-ed" data-v="">Cancelar</button></div></form>${nota}`;
+}
 function rvvDetalhe(c,r){
-  const d=r.dados,v=d.v,s=d.sc,f=d.fin,g=d.g;const pub=(S.rvPub||{})[c.id];const cp=rvvCompara(c);const B=rvvBlocos(d,g);
+  const d=r.dados,v=d.v,s=d.sc,f=d.fin,g=d.g;const pub=(S.rvPub||{})[c.id];const cp=rvvCompara(c);const B=rvvBlocos(d,g,false,(metricasCanal(c)||{}).pxH);
   const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0),pc=n=>n==null?"—":pctTxt(n),pt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
   const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
   const q=(n,t,tip,body)=>`<div class="rvv-q"><h3><span class="rvv-n">${n}</span>${t}${inf(tip)}</h3>${body}</div>`;
@@ -3914,7 +3941,7 @@ function rvvDetalhe(c,r){
       <span class="meta">${pub?`Validado por ${esc(pub.validado_nome||"—")} em ${fmtDataHora(pub.validado_em)} (Financeiro de ${dt(pub.situacao_em)}). A revenda e o comercial veem estes números.`:"A página do canal continua com os números do CRM. Confira os quadros abaixo e publique quando estiver certo."}</span></div>
       <div class="acoes" style="margin:0"><label class="check"><input type="checkbox" id="rvv_ok"> Conferi os números deste canal</label><button class="btn" data-a="rvv-pub" data-v="${esc(c.id)}">${pub?"Publicar de novo":"Validar e publicar"}</button>${pub?`<button class="link perigo" data-a="rvv-despub" data-v="${esc(c.id)}">voltar para os números do CRM</button>`:""}</div></div>`;
   return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><div><span class="rot">Validação</span><h2 class="sec" style="margin:0">${esc(c.nome)}</h2><span class="meta">Códigos de cliente no ERP: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</span></div><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
-    ${pubBox}${B.q1(1)}${q2}${B.q3(3)}${B.q4(4)}${B.q5(5)}${q6}
+    ${rvvEdBox(c,r)}${pubBox}${B.q1(1)}${q2}${B.q3(3)}${B.q4(4)}${B.q5(5)}${q6}
     <details class="lote"><summary>Notas fiscais e pagamento · ${d.nfs.length}</summary>${d.nfs.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}</details>
     <details class="lote"><summary>Pedidos do BI · ${d.linhas.length} linhas</summary>${d.linhas.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}</details></section>`;
 }
@@ -4400,7 +4427,7 @@ function vCanalCRM(c,m){
   ${vCanalNaMeta(m)}`;
 }
 function vCanalValidado(c,m){
-  const pub=(S.rvPub||{})[c.id];const d=pub.dados||{};const g=d.g||RV_REGRA[d.tier]||RV_REGRA[c.tier]||RV_REGRA.Blue;const B=rvvBlocos(d,g,true);const s=d.sc||{};
+  const pub=(S.rvPub||{})[c.id];const d=pub.dados||{};const g=d.g||RV_REGRA[d.tier]||RV_REGRA[c.tier]||RV_REGRA.Blue;const B=rvvBlocos(d,g,true,m.pxH);const s=d.sc||{};
   const sit=String(m.pub.sit||"").slice(0,10).split("-").reverse().join("/");
   const lib=m.pub.igdbPago,apr=m.aprovIG||0,ana=m.analiseIG||0;
   return `<div class="rvv-pub on" style="margin-top:4px"><div style="min-width:0"><strong>Números validados pelo Marketing</strong><span class="meta">Pedidos e pagamentos da sua revenda conferidos pelo Marketing Barenbrug com a situação de ${esc(sit)} (validado em ${fmtDataHora(m.pub.em)}). Os valores mudam a cada nova validação.</span></div></div>
@@ -4415,7 +4442,6 @@ function vCanalValidado(c,m){
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Bônus de Performance previsto${inf("Pelo cenário potencial. Só é pago com 90% ou mais da meta de híbridos no fechamento da safra.")}</span><strong>${fmtK0((s.total||{}).bf||0)}</strong><span class="meta">${(s.total||{}).fator===1?"meta batida com os encarteirados":(s.total||{}).fator?"entre 90% e 99,99% da meta":"abaixo de 90% da meta"}</span></div>
   </div>
   <div class="precos-nota">O IGDB e o Bônus só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. O IGDB é reembolsado pelas ações de PGD aprovadas e comprovadas. ${statusBonus(m)}.</div></section>
-  ${(s.total||{}).fator<1?vCanalNaMeta(m):""}
 `;}
 function vRVCanal(){
   const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
@@ -5762,10 +5788,11 @@ function finCalc(){
       st:!k?"":k<mesHoje?"faturado":k===mesHoje?"em curso":"a faturar"};}).filter(m=>m.k||m.n);
   // Conecta Revendas
   const resMap={},acMap={};(F.res||[]).forEach(r=>{resMap[r.canal_id]=r;});(F.acoes||[]).forEach(a=>{(acMap[a.canal_id]=acMap[a.canal_id]||[]).push(a);});
-  const a0=S.canalRes,b0=S.acoesCanal;S.canalRes=resMap;S.acoesCanal=acMap;
-  let canais;try{canais=(F.canais||[]).map(c=>({c,m:metricasCanal(c),ac:acMap[c.id]||[]}));}finally{S.canalRes=a0;S.acoesCanal=b0;}
+  const pubMap={};(F.pub||[]).forEach(p=>{pubMap[p.canal_id]=p;});
+  const a0=S.canalRes,b0=S.acoesCanal,p0=S.rvPub;S.canalRes=resMap;S.acoesCanal=acMap;S.rvPub=pubMap;
+  let canais;try{canais=(F.canais||[]).map(c=>({c,m:metricasCanal(c),ac:acMap[c.id]||[]}));}finally{S.canalRes=a0;S.acoesCanal=b0;S.rvPub=p0;}
   canais.sort((a,b)=>b.m.aPagar-a.m.aPagar||b.m.total-a.m.total||String(a.c.nome).localeCompare(String(b.c.nome)));
-  const rv={mIgdb:sum(canais,x=>x.m.mIgdb),mBonus:sum(canais,x=>x.m.mBonus),nMeta:canais.filter(x=>x.m.fator>0).length,aPagar:sum(canais,x=>x.m.aPagar),igdbAprov:sum(canais,x=>x.m.igdbAprov),mAPagar:sum(canais,x=>x.m.mAPagar),total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
+  const rv={nPub:canais.filter(x=>x.m.pub).length,igdbPago:sum(canais.filter(x=>x.m.pub),x=>x.m.pub.igdbPago),abertoPub:sum(canais.filter(x=>x.m.pub),x=>x.m.pub.aberto),mIgdb:sum(canais,x=>x.m.mIgdb),mBonus:sum(canais,x=>x.m.mBonus),nMeta:canais.filter(x=>x.m.fator>0).length,aPagar:sum(canais,x=>x.m.aPagar),igdbAprov:sum(canais,x=>x.m.igdbAprov),mAPagar:sum(canais,x=>x.m.mAPagar),total:sum(canais,x=>x.m.total),igdb:sum(canais,x=>x.m.igdb),bonus:sum(canais,x=>x.m.bonus),igdbFat:sum(canais,x=>x.m.igdbFat),aprovIG:sum(canais,x=>x.m.aprovIG),aprovBP:sum(canais,x=>x.m.aprovBP),mTotal:sum(canais,x=>x.m.mTotal)};
   const pools={rc:tot*(Number(P.pool_rc)||0),rcFat:totFat*(Number(P.pool_rc)||0),rv:tot*(Number(P.pool_rv)||0),rvFat:totFat*(Number(P.pool_rv)||0)};
   const prods={};for(const x of L)for(const i of x.it){const k=i.n||"(sem nome)";const p=prods[k]||(prods[k]={n:k,c:i.c,kg:0,rs:0,est:false});p.kg+=i.kg;p.rs+=i.rs;if(x.est)p.est=true;}
   const planCat=n=>{const l=finNorm(n||"");if(/cayana|sabia|carcara|convert/.test(l))return "hib";if(/ruzi/.test(l))return "ruzi";if(finCat(n)==="temp")return "temp";return "outras";};
@@ -5782,7 +5809,7 @@ function finBarra(uso,rot){const p=Math.max(0,Math.min(1,uso||0));const cor=uso>
   return `<div class="fin-uso"><div class="barra" style="height:12px"><i style="width:${(p*100).toFixed(1)}%;background:${cor}"></i></div><span>${uso==null?"—":pctTxt(uso)} ${rot||"do pool usado"}${uso>1?" · acima "+(rot?"da verba":"do pool"):""}</span></div>`;}
 function finAvisoTopo(C){
   const atual=S.fin.atualizado?` · CRM atualizado em ${fmtDataHora(S.fin.atualizado)}`:"";
-  return `<div class="aviso-est" role="note"><strong>Estimativa para provisão</strong><p>Calculada a partir dos pedidos ganhos no CRM, pela data de faturamento da safra 26/27 (jul/2026 a jun/2027)${atual}. O valor pago segue as notas liquidadas, os contratos e a comunicação oficial da Barenbrug.</p></div>
+  return `<div class="aviso-est" role="note"><strong>Estimativa para provisão</strong><p>Calculada a partir dos pedidos ganhos no CRM, pela data de faturamento da safra 26/27 (jul/2026 a jun/2027)${atual}. O valor pago segue as notas liquidadas, os contratos e a comunicação oficial da Barenbrug.${(C.rv&&C.rv.nPub)?` No Conecta Revendas, ${C.rv.nPub} ${C.rv.nPub===1?"revenda já está validada":"revendas já estão validadas"} pelo Marketing: para elas valem os pedidos do BI e os pagamentos do Financeiro Analítico.`:""}</p></div>
   ${C.semItens?`<div class="aviso-bloq" style="margin-top:0">${C.semItens} pedidos ainda não têm o valor por produto: nesses, o valor foi dividido pelos quilos de cada cultivar. O detalhe completo entra na próxima atualização automática do CRM.</div>`:""}`;
 }
 function vFin(){
@@ -5918,12 +5945,13 @@ function vFinConecta(C){
   const P=C.P;
   const st=a=>(a.status||"Em Análise");
   const rows=C.canais.map(({c,m,ac})=>{const apr=ac.filter(a=>st(a)==="Aprovado");const comp=apr.filter(a=>a.foto_path||(Array.isArray(a.anexos)&&a.anexos.length)).length;
-    return `<tr><td>${esc(c.nome)}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${fmtK0(m.igdbAprov)}${m.aprovIG>m.igdb?`<br><span class="meta">PGD ${fmtK0(m.aprovIG)}</span>`:""}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td class="val">${fmtK0(m.total)}</td><td class="val">${fmtK0(m.mTotal)}</td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
+    return `<tr><td>${esc(c.nome)}${m.pub?`<br>${stTag("validado "+String(m.pub.sit||"").slice(0,10).split("-").reverse().join("/"),"verde")}`:`<br><span class="meta">pelo CRM</span>`}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${m.pub?`<strong style="color:#2E8B57">${fmtK0(m.pub.igdbPago)}</strong><br><span class="meta">pago ${fmtK0(m.pub.pagRs)}</span>`:"—"}</td><td class="val">${fmtK0(m.igdbAprov)}${m.aprovIG>m.igdb?`<br><span class="meta">PGD ${fmtK0(m.aprovIG)}</span>`:""}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td class="val">${fmtK0(m.total)}</td><td class="val">${fmtK0(m.mTotal)}</td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
   return `<div><h1 class="titulo">Conecta Revendas · visão financeira</h1><p class="sub">Quanto cada revenda tem a receber, frente ao pool de ${pctTxt(Number(P.pool_rv)||0)} de todas as vendas, com exportação (${fmtK0(C.pools.rv)}). O IGDB só é devido com o PGD submetido e aprovado; o BF, só com 90% ou mais da meta.</p></div>
   ${finAvisoTopo(C)}
   <div class="metrics">
     <div class="metric"><span>IGDB previsto na safra (pedidos encarteirados)</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">já faturado: ${fmtK0(C.rv.igdbFat)} · não é obrigação sem PGD aprovado</span></div>
     <div class="metric"><span>IGDB aprovado (a reembolsar)</span><strong>${fmtK0(C.rv.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(C.rv.aprovIG)}, limitado ao IGDB do canal · campanhas de BF: ${fmtK0(C.rv.aprovBP)}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado (validado)${inf("Soma das revendas cujos números o Marketing validou com o relatório de pedidos do BI e o Financeiro Analítico: IGDB sobre o que a revenda já pagou.")}</span><strong>${fmtK0(C.rv.igdbPago)}</strong><span class="meta">${C.rv.nPub} de ${C.canais.length} revendas validadas${C.rv.nPub?" · notas em aberto "+fmtK0(C.rv.abertoPub):""}</span></div>
     <div class="metric"><span>BF projetado</span><strong>${fmtK0(C.rv.bonus)}</strong><span class="meta">pelo atingimento de hoje; abaixo de 90% é zero</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Provisionar (todo o IGDB + BF de quem atingiu)</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">${C.plano?finPct(C.rv.total,C.plano.pool)+" do pool previsto na safra":finPct(C.rv.total,C.pools.rv)+" do pool"} · com o PGD aprovado até hoje: ${fmtK0(C.rv.aPagar)}</span></div>
   </div>
@@ -5931,7 +5959,7 @@ function vFinConecta(C){
   ${rvCenariosHTML(C)}
   ${rvPlanoHTML(C)}
   <section class="bloco"><h2 class="sec">Por revenda</h2>
-  ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB previsto</th><th class="val">IGDB já faturado</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Todo IGDB + BF atual</th><th class="val">Full (meta batida)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
+  ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB previsto</th><th class="val">IGDB já faturado</th><th class="val">IGDB liberado (pago)${inf("Só para revendas validadas pelo Marketing: IGDB sobre o valor que a revenda já pagou, conferido nota a nota no Financeiro.")}</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Todo IGDB + BF atual</th><th class="val">Full (meta batida)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
   <p class="precos-nota">IGDB previsto: percentual do tier sobre o sell-in de híbridos e convencionais. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. Só vira pagamento pelas ações de PGD submetidas, aprovadas e comprovadas, por trimestre, até o limite do IGDB do canal (coluna IGDB aprovado). Potencial: quanto seria com todo o IGDB aprovado. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section>`;
 }
 function vFinPremissas(C){
@@ -7454,6 +7482,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
+  if(a==="rvv-ed"){if(!ehMaster())return;S.rvvEdit=v||null;render();if(v){const el=document.getElementById("f-rvv-ed");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}return;}
   if(a==="rvv-sel"){S.rvvSel=v||null;render();if(v)window.scrollTo(0,0);return;}
   if(a==="rvv-pub"){if(!ehMaster())return;const ok=document.getElementById("rvv_ok");if(!ok||!ok.checked){aviso("Marque \"Conferi os números deste canal\" antes de publicar.");return;}const r=(S.rvv||{})[v];if(!r)return;b.disabled=true;
     const row={canal_id:v,dados:{v:r.dados.v,sc:r.dados.sc,fin:{n_nf:r.dados.fin.n_nf,n_quit:r.dados.fin.n_quit,aberto:r.dados.fin.aberto,vencido:r.dados.fin.vencido},meta:r.dados.meta,tier:r.dados.tier},situacao_em:r.situacao_em,validado_por:S.user.id,validado_nome:(S.profile&&S.profile.nome)||null,validado_em:new Date().toISOString()};
@@ -7917,6 +7946,14 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
+  if(f.id==="f-rvv-ed"){if(!ehMaster())return;const id=f.dataset.v,r=(S.rvv||{})[id];if(!r)return;const c=(S.canaisAll||S.canais||[]).find(x=>x.id===id)||{};const d=JSON.parse(JSON.stringify(r.dados));const val=k=>{const el=f.querySelector("#rve_"+k);return el?rvvNum(el.value):0;};
+    RVV_ED.forEach(([,L])=>L.forEach(([k])=>{d.v[k]=val(k);}));const v=d.v;
+    if(v.pag_rs_h>v.fat_rs_h+.005||v.pag_rs_c>v.fat_rs_c+.005||v.pag_kg_h>v.fat_kg_h+.005||v.pag_kg_c>v.fat_kg_c+.005){aviso("O pago não pode ser maior que o faturado.");return;}
+    v.tot_kg_h=v.fat_kg_h+v.ord_kg_h;v.tot_rs_h=v.fat_rs_h+v.ord_rs_h;v.tot_kg_c=v.fat_kg_c+v.ord_kg_c;v.tot_rs_c=v.fat_rs_c+v.ord_rs_c;
+    d.meta=val("meta");d.fin=d.fin||{};d.fin.n_nf=Math.round(val("n_nf"));d.fin.n_quit=Math.round(val("n_quit"));d.fin.aberto=val("aberto");d.fin.vencido=val("vencido");
+    const g=d.g||RV_REGRA[d.tier]||RV_REGRA[c.tier]||RV_REGRA.Blue;d.sc=rvvCen(v,d.meta,g);d.editado={nome:(S.profile&&S.profile.nome)||null,em:new Date().toISOString(),obs:(f.querySelector("#rve_obs").value||"").trim()||null};
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;const {data,error}=await sb.from("rv_validacao").update({dados:d}).eq("canal_id",id).select().maybeSingle();btn.disabled=false;
+    if(error||!data){aviso("Não foi possível salvar a edição.");return;}S.rvv[id]=data;S.rvvEdit=null;render();aviso("Números salvos e recalculados. Confira e publique de novo para a revenda ver.");return;}
   if(f.id==="f-msgexc"){if(!ehAdmin())return;const x=f.querySelector("#mx_a").value,y=f.querySelector("#mx_b").value;if(!x||!y||x===y){aviso("Escolha duas pessoas diferentes.");return;}
     const r={a:x<y?x:y,b:x<y?y:x,permitido:f.querySelector("#mx_p").value==="1",obs:f.querySelector("#mx_obs").value.trim()||null,criado_por:S.user.id,criado_em:new Date().toISOString()};
     const {error}=await sb.from("msg_excecoes").upsert(r,{onConflict:"a,b"});if(error){aviso("Não foi possível salvar a exceção.");return;}await carregarMsgPerm();S.msgCont=undefined;S.msgVerRes=null;render();aviso("Exceção salva.");return;}
