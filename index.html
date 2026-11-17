@@ -1163,7 +1163,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117094612";
+const APP_VER="20261117095544";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4273,7 +4273,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos comerciais"],["gestao-rank","Ranking e evolução"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-rank","Ranking e evolução"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC","Assessor de Vendas Digital"],"Representantes comerciais e assessores de vendas digitais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -4283,8 +4283,8 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos comerciais","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
-  const sub={"gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Qual comercial da Barenbrug responde por cada revenda do Conecta e por cada RC. O comercial vê no portal as revendas e as negociações dos RCs vinculados a ele.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
+  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
+  const sub={"gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
   const corpo=S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
@@ -4310,21 +4310,33 @@ function gtHome(R){
   <section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Primeiros do ranking</h2>${top.map((x,i)=>`<div class="linha"><div><strong>${i+1}º ${esc(x.nome)}</strong><span class="meta">${esc(x.perfil||"")} · ${x.feitas} de ${ORDEM.length} módulos${x.conhecimento!=null?" · "+x.conhecimento+"% de acerto":""}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`).join("")}<button class="btn sec" data-a="pag" data-v="gestao-rank" style="margin-top:8px">Ver o ranking completo</button></section></div>`;
 }
 function gtVinc(){
-  const adm=ehAdmin();const C=(S.canaisLista||[]).slice();const com=S.equipe.filter(x=>(x.perfis||[x.perfil]).includes("Comercial Barenbrug")).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const adm=ehAdmin();const C=(S.canaisLista||[]).slice();const pf=x=>x.perfis&&x.perfis.length?x.perfis:[x.perfil];
+  const ehISp=x=>pf(x).some(p=>p==="Inside Sales"||p==="Assessor de Vendas Digital");
+  const IS=S.equipe.filter(x=>x.ativo!==false&&ehISp(x)).sort((a,b)=>(pf(b).includes("Inside Sales")-pf(a).includes("Inside Sales"))||a.nome.localeCompare(b.nome));
+  const com=S.equipe.filter(x=>pf(x).includes("Comercial Barenbrug")&&!ehISp(x)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const isNomes=new Set(IS.map(x=>x.nome));const timeDe=n=>isNomes.has(n)?"Inside Sales":"Comercial";
   const nomeCom=id=>{const p=S.equipe.find(x=>x.id===id);return p?p.nome:null;};
-  const RCs=S.equipe.filter(x=>(x.perfis||[x.perfil]).some(p=>p==="RC"||p==="Assessor de Vendas Digital")).sort((a,b)=>a.nome.localeCompare(b.nome));
-  const opRC=[...new Set([...(S.crmDonos||[]).filter(d=>!/^IS:|^Inside Sales$/.test(d)),...CRM_DONOS.filter(d=>d!=="Inside Sales"),...COMERCIAIS_EXTRA,...RCs.map(x=>x.comercial_resp)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const RCs=S.equipe.filter(x=>pf(x).some(p=>p==="RC"||p==="Assessor de Vendas Digital")&&!ehISp(x)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const opRC=[...new Set([...(S.crmDonos||[]).filter(d=>!/^IS:|^Inside Sales$/.test(d)),...CRM_DONOS.filter(d=>d!=="Inside Sales"),...COMERCIAIS_EXTRA,...RCs.map(x=>x.comercial_resp)].filter(Boolean))].filter(n=>!isNomes.has(n)).sort((a,b)=>a.localeCompare(b));
+  const optIS=sel=>IS.length?`<optgroup label="Inside Sales">${IS.map(p=>sel(p)).join("")}</optgroup>`:"";
   const resumo={};const add=(n,k,v)=>{if(!n)return;(resumo[n]=resumo[n]||{c:[],r:[]})[k].push(v);};
   C.forEach(k=>add(nomeCom(k.comercial_id),"c",k.nome));RCs.forEach(x=>add(x.comercial_resp,"r",x.nome));
   const semC=C.filter(k=>!k.comercial_id).length,semR=RCs.filter(x=>!x.comercial_resp).length;
+  const nIS=Object.keys(resumo).filter(n=>isNomes.has(n));const carteiraIS=nIS.reduce((t,n)=>t+resumo[n].c.length+resumo[n].r.length,0);
+  const tagT=n=>n?` ${stTag(timeDe(n),timeDe(n)==="Inside Sales"?"azul":"cinza")}`:"";
+  const linhaCart=n=>`<div class="linha"><div><strong>${esc(n)}</strong><span class="meta">${resumo[n]&&resumo[n].c.length?"Revendas: "+esc(resumo[n].c.join(", ")):"Sem revenda"} · ${resumo[n]&&resumo[n].r.length?"RCs: "+esc(resumo[n].r.join(", ")):"sem RC"}</span></div></div>`;
   return `${adm?"":`<div class="nota-admin">Você vê os vínculos, mas só o administrador master altera.</div>`}
-  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px"><div class="metric"><span>Revendas sem comercial</span><strong>${semC}</strong><span class="meta">de ${C.length} do Conecta</span></div><div class="metric"><span>RCs sem comercial</span><strong>${semR}</strong><span class="meta">de ${RCs.length} RCs no portal</span></div><div class="metric"><span>Comerciais com vínculo</span><strong>${Object.keys(resumo).length}</strong></div></div>
-  <section class="bloco"><h2 class="sec">Revendas do Conecta${inf("O comercial escolhido vê esta revenda no Conecta Revendas (painel, PGD e resultado). Cada alteração é gravada na hora.")}</h2>
-    <div class="tab"><table class="sim-t"><thead><tr><th>Revenda</th><th>Categoria</th><th>Comercial responsável</th></tr></thead><tbody>${C.map(k=>`<tr><td><strong>${esc(k.nome)}</strong></td><td>${esc(k.tier||"")}</td><td>${adm?`<select data-vinccanal="${esc(k.id)}" aria-label="Comercial de ${esc(k.nome)}"><option value="">— sem comercial —</option>${com.map(p=>`<option value="${esc(p.id)}" ${k.comercial_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select>`:esc(nomeCom(k.comercial_id)||"— sem comercial —")}</td></tr>`).join("")||`<tr><td colspan="3">Nenhuma revenda cadastrada.</td></tr>`}</tbody></table></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px"><div class="metric"><span>Revendas sem responsável</span><strong>${semC}</strong><span class="meta">de ${C.length} do Conecta</span></div><div class="metric"><span>RCs sem responsável</span><strong>${semR}</strong><span class="meta">de ${RCs.length} RCs no portal</span></div><div class="metric"><span>Com o Comercial</span><strong>${Object.keys(resumo).filter(n=>!isNomes.has(n)).length}</strong><span class="meta">pessoas com carteira</span></div><div class="metric"><span>Com o Inside Sales</span><strong>${carteiraIS}</strong><span class="meta">revendas e RCs em ${nIS.length} ${nIS.length===1?"pessoa":"pessoas"}</span></div></div>
+  <section class="bloco"><h2 class="sec">Time Inside Sales${inf("Quem está no time de Inside Sales no portal (perfis Inside Sales e Assessor de Vendas Digital). A supervisão é quem acompanha a pessoa no dia a dia. Revendas e RCs podem ter alguém do time como responsável principal nas tabelas abaixo.")}</h2>
+    ${IS.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Função</th><th>Supervisão</th><th>Carteira</th></tr></thead><tbody>${IS.map(x=>{const sup=pf(x).includes("Inside Sales");const r=resumo[x.nome]||{c:[],r:[]};const opS=[...new Set([...IS.filter(q=>q.id!==x.id).map(q=>q.nome),...com.map(q=>q.nome),x.comercial_resp].filter(Boolean))];
+      return `<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${sup?"Supervisão do Inside Sales":"Assessora de vendas digital"}</td><td>${adm?`<select data-vincrc="${esc(x.id)}" aria-label="Supervisão de ${esc(x.nome)}"><option value="">—</option>${opS.map(d=>`<option ${x.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select>`:esc(x.comercial_resp||"—")}</td><td>${r.c.length+r.r.length?esc([r.c.length?r.c.length+(r.c.length===1?" revenda":" revendas"):"",r.r.length?r.r.length+(r.r.length===1?" RC":" RCs"):""].filter(Boolean).join(" · ")):`<span class="meta">nenhuma</span>`}</td></tr>`;}).join("")}</tbody></table></div>`:`<div class="vazio">Ninguém com perfil Inside Sales ou Assessor de Vendas Digital no portal.</div>`}</section>
+  <section class="bloco"><h2 class="sec">Revendas do Conecta${inf("Responsável principal pela revenda: alguém do Comercial ou do Inside Sales. Quem tem perfil Comercial Barenbrug passa a ver esta revenda no Conecta Revendas (painel, PGD e resultado); para as assessoras do Inside Sales o vínculo fica registrado, sem abrir os dados da revenda. Cada alteração é gravada na hora.")}</h2>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Revenda</th><th>Categoria</th><th>Responsável principal</th></tr></thead><tbody>${C.map(k=>`<tr><td><strong>${esc(k.nome)}</strong></td><td>${esc(k.tier||"")}</td><td>${adm?`<select data-vinccanal="${esc(k.id)}" aria-label="Responsável por ${esc(k.nome)}"><option value="">— sem responsável —</option><optgroup label="Comercial Barenbrug">${com.map(p=>`<option value="${esc(p.id)}" ${k.comercial_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</optgroup>${optIS(p=>`<option value="${esc(p.id)}" ${k.comercial_id===p.id?"selected":""}>${esc(p.nome)}</option>`)}</select>`:esc(nomeCom(k.comercial_id)||"— sem responsável —")+tagT(nomeCom(k.comercial_id))}</td></tr>`).join("")||`<tr><td colspan="3">Nenhuma revenda cadastrada.</td></tr>`}</tbody></table></div>
     ${!com.length?`<p class="dica">Nenhuma pessoa com perfil Comercial Barenbrug no portal ainda.</p>`:""}</section>
-  <section class="bloco"><h2 class="sec">RCs no portal${inf("O responsável comercial recebe as negociações que o RC envia pelo portal e acompanha o RC no Conecta RC. Cada alteração é gravada na hora.")}</h2>
-    <div class="tab"><table class="sim-t"><thead><tr><th>RC</th><th>Perfil</th><th>Responsável comercial</th></tr></thead><tbody>${RCs.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${esc((x.perfis||[x.perfil]).join(" + "))}</td><td>${adm?`<select data-vincrc="${esc(x.id)}" aria-label="Comercial de ${esc(x.nome)}"><option value="">— sem comercial —</option>${opRC.map(d=>`<option ${x.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select>`:esc(x.comercial_resp||"— sem comercial —")}</td></tr>`).join("")||`<tr><td colspan="3">Nenhum RC com acesso ao portal.</td></tr>`}</tbody></table></div></section>
-  <section class="bloco"><h2 class="sec">Carteira de cada comercial</h2>${Object.keys(resumo).sort().map(n=>`<div class="linha"><div><strong>${esc(n)}</strong><span class="meta">${resumo[n].c.length?"Revendas: "+esc(resumo[n].c.join(", ")):"Sem revenda"} · ${resumo[n].r.length?"RCs: "+esc(resumo[n].r.join(", ")):"sem RC"}</span></div></div>`).join("")||`<div class="vazio">Nenhum vínculo ainda.</div>`}</section>`;
+  <section class="bloco"><h2 class="sec">RCs no portal${inf("Responsável principal pelo RC: alguém do Comercial ou do Inside Sales. Ele recebe as negociações que o RC envia pelo portal e acompanha o RC no Conecta RC. Cada alteração é gravada na hora.")}</h2>
+    <div class="tab"><table class="sim-t"><thead><tr><th>RC</th><th>Perfil</th><th>Responsável principal</th></tr></thead><tbody>${RCs.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(pf(x).join(" + "))}</td><td>${adm?`<select data-vincrc="${esc(x.id)}" aria-label="Responsável por ${esc(x.nome)}"><option value="">— sem responsável —</option><optgroup label="Comercial Barenbrug">${opRC.map(d=>`<option ${x.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</optgroup>${optIS(p=>`<option ${x.comercial_resp===p.nome?"selected":""}>${esc(p.nome)}</option>`)}</select>`:esc(x.comercial_resp||"— sem responsável —")+tagT(x.comercial_resp)}</td></tr>`).join("")||`<tr><td colspan="3">Nenhum RC com acesso ao portal.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Carteira de cada responsável</h2>
+    ${Object.keys(resumo).length?`${Object.keys(resumo).filter(n=>!isNomes.has(n)).length?`<h3 class="sec" style="font-size:15px;margin:6px 0">Comercial</h3>${Object.keys(resumo).filter(n=>!isNomes.has(n)).sort().map(linhaCart).join("")}`:""}${nIS.length?`<h3 class="sec" style="font-size:15px;margin:12px 0 6px">Inside Sales</h3>${nIS.sort().map(linhaCart).join("")}`:""}`:`<div class="vazio">Nenhum vínculo ainda.</div>`}</section>`;
 }
 function gtCad(){
   return `  ${vSolic()}
@@ -5726,6 +5738,12 @@ const mkSem=a=>Array.isArray(a.sementes)?a.sementes:[];
 function mkSemPreco(c){const r=(typeof PRECOS!=="undefined"?PRECOS:[]).find(p=>p.cult===c);if(!r)return 0;const v=String(r.v[PRECOS_MES_ATUAL]||r.v[0]||"0").replace(/\./g,"").replace(",",".");return Number(v)||0;}
 const mkSemValor=x=>(Number(x.kg)||0)*(Number(x.preco)||mkSemPreco(x.cult));
 const mkSemTotal=a=>mkSem(a).reduce((t,x)=>t+mkSemValor(x),0);
+function vMkVitrines(a){
+  if(!veVit())return "";if(!S.vit&&!S.vitBusy)carregarVit();
+  const L=(S.vit||[]).filter(v=>v.mkt_acao_id===a.id);if(!L.length&&!ehMkt())return "";
+  return `<section class="bloco"><h2 class="sec">Áreas demonstrativas desta ação</h2>
+    ${L.length?`<div class="lista">${L.map(v=>`<div class="linha"><div style="min-width:0"><button class="link" data-a="mk-ir-vit" data-v="${v.id}"><strong>${esc(v.titulo)}</strong></button><span class="meta">${esc([v.status,[v.cidade,v.uf].filter(Boolean).join("/"),vitHa(v)?isNum(vitHa(v))+" ha":"",vitCults(v).map(x=>x.cult).join(", ")].filter(Boolean).join(" · "))}</span></div></div>`).join("")}</div>`:`<div class="vazio">${S.vit?"Nenhuma área ligada a esta ação.":"Carregando…"}</div>`}
+    ${ehMkt()?`<div class="acoes" style="margin-top:8px"><button class="btn sec" data-a="mk-nova-vit" data-v="${a.id}">+ Área demonstrativa para esta ação</button></div>`:""}</section>`;}
 function vMkSementes(a){
   const g=ehMkt(),L=mkSem(a);if(!g&&!L.length&&!a.pagamento)return "";
   if(g&&!S.precosOk&&!S._mkPrecoBusy){S._mkPrecoBusy=1;carregarPrecos().then(()=>render());}
@@ -5927,7 +5945,7 @@ function vAcoesCard(){
     <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
   </div>
   ${a.descricao||g?`<section class="bloco"><h2 class="sec">Descrição${g?` <button class="link" data-a="mk-editar" style="font-size:14px;margin-left:8px">editar</button>`:""}</h2>${a.descricao?`<p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p>`:`<div class="vazio">Sem descrição.</div>`}</section>`:""}
-  ${a.agrupador?"":vMkCustos(a)+vMkSementes(a)+vMkFonte(a)}${mkChecklistHTML(a)}
+  ${a.agrupador?"":vMkCustos(a)+vMkSementes(a)+vMkVitrines(a)+vMkFonte(a)}${mkChecklistHTML(a)}
   <section class="bloco"><h2 class="sec">Comentários</h2>
     ${S.mkCom==null?`<div class="carregando">Carregando…</div>`:S.mkCom.length?`<div class="mk-coms">${S.mkCom.map(c=>`<div class="mk-com"><div class="autor">${avatar(c.autor,c.autor_nome,32)}<div><strong>${esc(c.autor_nome||"")}</strong><span class="meta">${fmtDataHora(c.criado_em)}</span></div>${c.autor===S.user.id||g?`<span style="margin-left:auto;white-space:nowrap"><button class="link" data-a="mk-com-ed" data-v="${c.id}">editar</button> · <button class="link perigo" data-a="mk-com-del" data-v="${c.id}">apagar</button></span>`:""}</div>${S.mkComEd===c.id?`<form id="f-mk-com-ed" data-id="${c.id}" style="display:grid;gap:6px;margin-top:6px"><textarea id="mk_com_ed" rows="4" maxlength="4000">${esc(c.texto)}</textarea><div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="mk-com-ed" data-v="">Cancelar</button></div></form>`:`<p style="white-space:pre-wrap">${esc(c.texto)}</p>${c.editado_em?`<span class="meta">editado em ${fmtDataHora(c.editado_em)}</span>`:""}`}</div>`).join("")}</div>`:`<div class="vazio">Sem comentários.</div>`}
     <form id="f-mk-com" class="form-card" style="margin-top:8px"><label for="mk_com">Novo comentário</label><textarea id="mk_com" rows="3" maxlength="4000" required></textarea><div class="acoes"><button class="btn" type="submit">Comentar</button></div></form></section>
@@ -6160,7 +6178,8 @@ const veVit=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos
 async function carregarVit(){
   if(S.vitBusy)return;S.vitBusy=true;
   try{const [v,c,p]=await Promise.all([sb.from("vitrines").select("*").order("data_plantio",{ascending:false,nullsFirst:false}),sb.from("canais").select("id,nome").order("nome"),ehMkt()?sb.from("profiles").select("id,nome,perfil,perfis").eq("ativo",true).order("nome"):Promise.resolve({data:[]})]);
-    S.vit=v.data||[];S.vitCanais=c.data||[];S.vitPessoas=(p.data||[]).filter(x=>!["Gestor de Revenda","Vendedor de Revenda"].includes(x.perfil));}catch(e){S.vit=[];}
+    S.vit=v.data||[];S.vitCanais=c.data||[];
+    if(veAcoesMkt()){try{const {data}=await sb.from("mkt_acoes").select("id,titulo,status,tipo,inicio,fim,local,fin,valor_prev,valor_real,sementes,pagamento,agrupador").order("inicio",{ascending:false,nullsFirst:false});S.vitAcoes=(data||[]).filter(a=>!a.agrupador);}catch(e){S.vitAcoes=[];}}else S.vitAcoes=[];S.vitPessoas=(p.data||[]).filter(x=>!["Gestor de Revenda","Vendedor de Revenda"].includes(x.perfil));}catch(e){S.vit=[];}
   try{await carregarGeo();}catch(e){}
   S.vitBusy=false;render();
 }
@@ -6187,7 +6206,7 @@ function vVitLista(){
     <strong>${esc(v.titulo)}</strong><span class="meta">${esc([v.local_nome,v.cidade&&v.uf?v.cidade+"/"+v.uf:v.uf].filter(Boolean).join(" · ")||"local a definir")}</span>
     <span class="vit-cults">${vitCults(v).map(x=>`<span class="selo">${esc(x.cult)}${Number(x.ha)?" · "+isNum(x.ha)+" ha":""}</span>`).join("")||`<span class="meta">cultivares a definir</span>`}</span>
     <span class="meta">${vitHa(v)?isNum(vitHa(v))+" ha · ":""}plantio ${vitData(v.data_plantio)} · ${esc(vitParc(v))}</span>
-    <span class="meta">Responsável: ${esc(v.responsavel_nome||"—")}</span></button>`;
+    <span class="meta">Responsável: ${esc(v.responsavel_nome||"—")}</span>${vitAcao(v)?`<span class="meta">Ação: ${esc(vitAcao(v).titulo)}</span>`:""}</button>`;
   return `<div><h1 class="titulo">Áreas demonstrativas</h1><p class="sub">Vitrines de híbridos plantadas com revendas, RCs ou pela própria Barenbrug: onde estão, o que foi plantado, quem cuida e os documentos de cada uma.</p></div>
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px"><div class="metric"><span>Áreas</span><strong>${L.length}</strong><span class="meta">de ${(S.vit||[]).length} cadastradas</span></div><div class="metric"><span>Hectares</span><strong>${isNum(tot)} ha</strong></div><div class="metric"><span>Estados</span><strong>${new Set(L.map(v=>v.uf).filter(Boolean)).size}</strong></div><div class="metric"><span>Com revenda ou RC</span><strong>${L.filter(v=>v.parceiro_tipo&&v.parceiro_tipo!=="Institucional").length}</strong><span class="meta">${L.filter(v=>!v.parceiro_tipo||v.parceiro_tipo==="Institucional").length} institucionais</span></div></div>
   ${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn" data-a="vit-nova">+ Nova área demonstrativa</button></div>`:""}
@@ -6206,6 +6225,18 @@ function vVitMapa(){
     ${sem.length?`<p class="dica">${sem.length} ${sem.length===1?"área sem cidade reconhecida fica":"áreas sem cidade reconhecida ficam"} fora do mapa: ${sem.map(v=>esc(v.titulo)).join(", ")}.</p>`:""}</div>
   <section class="bloco" style="margin:0"><h2 class="sec">Por estado</h2>${(()=>{const o={};L.forEach(v=>{const u=v.uf||"Sem UF";(o[u]=o[u]||{n:0,ha:0});o[u].n++;o[u].ha+=vitHa(v);});return Object.entries(o).sort((a,b)=>b[1].n-a[1].n).map(([u,x])=>`<div class="linha"><div><strong>${esc(u)}</strong><span class="meta">${x.n} ${x.n===1?"área":"áreas"} · ${isNum(x.ha)} ha</span></div></div>`).join("")||`<div class="vazio">Nenhuma área.</div>`;})()}</section></div>`;
 }
+const vitAcao=v=>v&&v.mkt_acao_id?(S.vitAcoes||[]).find(a=>a.id===v.mkt_acao_id)||(S.mk||[]).find(a=>a.id===v.mkt_acao_id)||null:null;
+function vVitAcaoHTML(v){
+  if(!v.mkt_acao_id)return ehMkt()?`<section class="bloco"><h2 class="sec">Ação de marketing</h2><div class="vazio">Esta área não está ligada a nenhuma ação de marketing. Em Editar, escolha a ação para ver aqui a bonificação e os custos.</div></section>`:"";
+  const a=vitAcao(v);if(!a)return `<section class="bloco"><h2 class="sec">Ação de marketing</h2><div class="vazio">A ação ligada não está disponível para o seu acesso.</div></section>`;
+  if(!S.precosOk&&!S._vitPrecoBusy){S._vitPrecoBusy=1;carregarPrecos().then(()=>render()).catch(()=>{});}
+  const L=mkSem(a),kg=L.reduce((t,x)=>t+(Number(x.kg)||0),0),sem=mkSemTotal(a),din=mkCusto(a);
+  const kgArea=L.filter(x=>/demonstrativa/i.test(x.fin||"")).reduce((t,x)=>t+(Number(x.kg)||0),0);
+  return `<section class="bloco"><h2 class="sec">Ação de marketing</h2>
+    <div class="linha"><div style="min-width:0">${veAcoesMkt()?`<button class="link" data-a="vit-ir-acao" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>`:`<strong>${esc(a.titulo)}</strong>`}<span class="meta">${esc([a.tipo,a.status,a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local].filter(Boolean).join(" · "))}</span></div></div>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:8px"><div class="metric"><span>Em dinheiro</span><strong>${fmtK0(din)}</strong></div><div class="metric"><span>Em sementes</span><strong>${fmtK0(sem)}</strong><span class="meta">${kg?isNum(kg)+" kg":"nenhuma lançada"}${kgArea&&kgArea!==kg?" · "+isNum(kgArea)+" kg para área":""}</span></div><div class="metric"><span>Total da ação</span><strong>${fmtK0(din+sem)}</strong><span class="meta">${esc(a.pagamento||"")}</span></div></div>
+    ${L.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th>Para quê</th><th class="val">Quantidade</th><th class="val">Valor</th></tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.cult)}</strong></td><td>${esc(x.fin||"")}${x.obs?`<br><span class="meta">${esc(x.obs)}</span>`:""}</td><td class="val">${isNum(x.kg)} kg</td><td class="val">${fmtK0(mkSemValor(x))}</td></tr>`).join("")}</tbody></table></div>`:""}
+    <p class="meta">Valores da ação inteira, que pode ter outras áreas e custos além desta vitrine. As sementes usam o preço de tabela.</p></section>`;}
 function vVitCard(){
   const v=(S.vit||[]).find(x=>x.id===S.vitSel);if(!v)return `<div class="carregando">Carregando…</div>`;const g=ehMkt();const A=Array.isArray(v.anexos)?v.anexos:[];
   const lin=(r,t)=>`<div class="linha"><div><span class="meta">${r}</span><strong style="white-space:pre-wrap">${t}</strong></div></div>`;
@@ -6223,6 +6254,7 @@ function vVitCard(){
     ${lin("Motivo da vitrine",esc(v.motivo||"—"))}
     ${v.obs?lin("Observações",esc(v.obs)):""}
   </section>
+  ${vVitAcaoHTML(v)}
   <section class="bloco"><h2 class="sec">Documentos anexados</h2>
     ${A.length?`<div class="lista">${A.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"arquivo")}</strong><span class="meta">${x.tam?Math.round(x.tam/1024).toLocaleString("pt-BR")+" KB · ":""}${fmtDataHora(x.em)}</span></div><span><button class="link" data-a="vit-baixar" data-v="${esc(x.path)}">abrir</button>${g?` · <button class="link perigo" data-a="vit-rem-arq" data-v="${esc(x.path)}">remover</button>`:""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum documento.</div>`}
     ${g?`<div class="acoes" style="margin-top:8px"><input type="file" id="vit_arq" multiple><button class="btn sec" data-a="vit-anexar">Anexar</button></div><p class="meta">Fotos, croqui, laudo de solo, contrato, nota da bonificação. Até 50 MB por arquivo.</p>`:""}
@@ -6249,6 +6281,7 @@ function vVitForm(){
       <button type="button" class="btn sec" data-a="vit-cult-add" style="justify-self:start">+ Cultivar</button>
       <div><label for="vt_ha">Tamanho total da área (ha)</label><input id="vt_ha" inputmode="decimal" value="${v.area_ha!=null?esc(String(v.area_ha).replace(".",",")):""}" placeholder="Em branco: soma das cultivares"></div></fieldset>
     <div><label for="vt_mot">Motivo da vitrine</label><textarea id="vt_mot" rows="3" maxlength="2000">${esc(v.motivo||"")}</textarea></div>
+    <div><label for="vt_acao">Ação de marketing ligada</label><select id="vt_acao"><option value="">— nenhuma —</option>${(S.vitAcoes||[]).filter(a=>a.status!=="Cancelada"&&a.status!=="Recusada"||a.id===v.mkt_acao_id).map(a=>`<option value="${a.id}" ${v.mkt_acao_id===a.id?"selected":""}>${esc(a.titulo)}${a.inicio?" · "+mkData(a.inicio):""}</option>`).join("")}</select><span class="meta">A bonificação em sementes e os custos da ação aparecem na página da área.</span></div>
     <div class="dupla"><div><label for="vt_pv">PV do pedido da bonificação</label><input id="vt_pv" maxlength="60" value="${esc(v.pv_bonificacao||"")}" placeholder="Ex.: PV 12034"></div><div><label for="vt_obs">Observações</label><input id="vt_obs" maxlength="1000" value="${esc(v.obs||"")}"></div></div>
     <p class="meta">Os documentos são anexados depois de salvar, na página da área.</p>
     <div class="acoes"><button class="btn" type="submit">Salvar</button></div></form>`;
@@ -6261,7 +6294,7 @@ function vitLerForm(f){const val=id=>{const e=f.querySelector("#"+id);return e?e
     corresponsaveis:val("vt_cor").split(",").map(x=>x.trim()).filter(Boolean),local_nome:val("vt_loc")||null,cidade:val("vt_cid")||null,uf:val("vt_uf")||null,
     lat:ll.length===2&&ll.every(x=>isFinite(x))?ll[0]:null,lng:ll.length===2&&ll.every(x=>isFinite(x))?ll[1]:null,maps_url:val("vt_maps")||null,
     parceiro_tipo:pt,canal_id:pt==="Revenda"?(val("vt_canal")||null):null,parceiro_nome:pt==="Institucional"?null:(val("vt_pn")||null),
-    cultivares:cults,area_ha:num(val("vt_ha")),motivo:val("vt_mot")||null,pv_bonificacao:val("vt_pv")||null,obs:val("vt_obs")||null};}
+    cultivares:cults,area_ha:num(val("vt_ha")),motivo:val("vt_mot")||null,mkt_acao_id:val("vt_acao")?+val("vt_acao"):null,pv_bonificacao:val("vt_pv")||null,obs:val("vt_obs")||null};}
 function vVit(){if(!S.vit&&!S.vitBusy)carregarVit();return S.pag==="vit-mapa"?vVitMapa():S.pag==="vit-card"?vVitCard():S.pag==="vit-form"?vVitForm():vVitLista();}
 
 function subnavBrindes(){
@@ -6867,6 +6900,10 @@ document.addEventListener("click",async ev=>{
   if(a==="int-modf"){S.intModF=v;render();return;}
   if(a==="secao"&&v==="vitrines"){if(!veVit())return;S.secao=v;S.pag="vit-lista";render();window.scrollTo(0,0);return;}
   if(a==="vit-abrir"){S.vitVolta=S.pag==="vit-mapa"?"vit-mapa":(S.pag==="vit-card"||S.pag==="vit-form")?(S.vitVolta||"vit-lista"):"vit-lista";S.vitSel=+v;S.vitDel=false;S.pag="vit-card";render();window.scrollTo(0,0);return;}
+  if(a==="vit-ir-acao"){if(!veAcoesMkt())return;S.secao="acoes-mkt";if(!S.mk)await carregarMkt();S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
+  if(a==="mk-ir-vit"){if(!veVit())return;S.secao="vitrines";S.vitSel=+v;S.vitVolta="vit-lista";S.vitDel=false;S.pag="vit-card";render();window.scrollTo(0,0);return;}
+  if(a==="mk-nova-vit"){if(!ehMkt())return;const ac=(S.mk||[]).find(x=>x.id===+v);if(!ac)return;const cu=mkSem(ac).filter(x=>/demonstrativa/i.test(x.fin||"")).map(x=>({cult:x.cult,ha:null}));
+    S.secao="vitrines";if(!S.vit)await carregarVit();S.vitForm={mkt_acao_id:ac.id,titulo:"Vitrine · "+ac.titulo,status:"Planejada",cultivares:cu.length?cu:undefined,cidade:null};S.pag="vit-form";render();window.scrollTo(0,0);return;}
   if(a==="vit-nova"){if(!ehMkt())return;S.vitForm={};S.pag="vit-form";render();window.scrollTo(0,0);return;}
   if(a==="vit-editar"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x||!ehMkt())return;S.vitForm=JSON.parse(JSON.stringify(x));S.pag="vit-form";render();window.scrollTo(0,0);return;}
   if(a==="vit-cult-add"||a==="vit-cult-rm"){const f=document.getElementById("f-vit");if(!f)return;const id=(S.vitForm||{}).id;S.vitForm={...vitLerForm(f),id};const L=S.vitForm.cultivares.length?S.vitForm.cultivares:[{cult:"Sabiá",ha:null}];if(a==="vit-cult-add")L.push({cult:"Cayana",ha:null});else L.splice(+v,1);S.vitForm.cultivares=L;render();return;}
