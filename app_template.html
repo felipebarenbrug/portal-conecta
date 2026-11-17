@@ -1207,6 +1207,7 @@ async function carregarMfaInfo(id){S.mfaInfo=S.mfaInfo||{};if(S.mfaInfo[id]!==un
   try{const {data}=await sb.rpc("mfa_info",{p_user:id});S.mfaInfo[id]=data||{n:0};}catch(e){S.mfaInfo[id]={n:0};}S.mfaBusy=false;render();}
 async function mfaPrecisa(){
   try{const {data,error}=await sbReal.auth.mfa.getAuthenticatorAssuranceLevel();if(error||!data)return "erro";if(data.currentLevel==="aal2")return null;
+    try{const {data:pr,error:e2}=await sbReal.rpc("mfa_preciso");if(!e2&&pr===false)return null;}catch(e){}
     const {data:f}=await sbReal.auth.mfa.listFactors();const ver=((f&&f.totp)||[]).filter(x=>x.status==="verified");return ver.length?{modo:"verify",fator:ver[0].id}:{modo:"enroll"};}catch(e){return "erro";}
 }
 async function mfaIniciarCadastro(){
@@ -2542,6 +2543,9 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;if(t.data
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.vitf)return;(S.vitF||(S.vitF={}))[t.dataset.vitf]=t.value;render();});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.mfaexige||!ehAdmin())return;const id=t.dataset.mfaexige,ex=t.checked;t.disabled=true;
+  const {data,error}=await sb.rpc("adm_mfa_exigir",{p_user:id,p_exige:ex});t.disabled=false;if(error||data!==ex){t.checked=!ex;aviso("Esta alteração NÃO foi gravada. Tente de novo.");return;}
+  if(S.mfaInfo&&S.mfaInfo[id])S.mfaInfo[id].isento=!ex;render();aviso(ex?"Verificação em duas etapas exigida.":"Verificação em duas etapas desligada para esta pessoa.");});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!ehAdmin())return;
   if(t.dataset.vinccanal){const id=t.dataset.vinccanal,novo=t.value||null;const p=(S.equipe||[]).find(x=>x.id===novo);t.disabled=true;
     const {data,error}=await sb.from("canais").update({comercial_id:novo,...(p?{responsavel:p.nome}:{})}).eq("id",id).select("id,comercial_id").maybeSingle();t.disabled=false;
@@ -4505,7 +4509,10 @@ function vUsuarioAdmin(){
   </section>
   <section class="bloco"><h2 class="sec">Verificação em duas etapas</h2>
   ${(()=>{const I=(S.mfaInfo||{})[u.id];if(I===undefined){carregarMfaInfo(u.id);return `<div class="carregando">Verificando…</div>`;}
-    const ativo=I&&I.n>0;return `<div class="nota-admin">${ativo?`Autenticador ativo desde ${fmtDataHora(I.desde)}.`:"Autenticador ainda não configurado. A pessoa vai configurar no próximo login."} Resetar apaga o autenticador cadastrado: no próximo login a pessoa lê um QR Code novo. Use quando alguém trocar ou perder o celular, depois de confirmar a identidade.
+    const ativo=I&&I.n>0,isento=!!(I&&I.isento);
+    const exige=(ehEu||!ehAdmin())?"":`<div class="nota-admin" style="margin-bottom:8px"><label class="check" style="font-weight:700"><input type="checkbox" data-mfaexige="${esc(u.id)}" ${isento?"":"checked"}> Exigir verificação em duas etapas</label>
+      <span class="meta" style="display:block;margin-top:4px">${isento?"Desligada: esta pessoa entra só com e-mail e senha. Ligue de novo assim que possível.":"Ligada: todo cadastro novo começa assim. Desligue só em caso específico (por exemplo, quem não consegue usar o autenticador no celular); a pessoa passa a entrar só com e-mail e senha."}</span></div>`;
+    return exige+`<div class="nota-admin">${isento?"Verificação desligada para esta pessoa. ":""}${ativo?`Autenticador ativo desde ${fmtDataHora(I.desde)}.`:"Autenticador ainda não configurado. A pessoa vai configurar no próximo login."} Resetar apaga o autenticador cadastrado: no próximo login a pessoa lê um QR Code novo. Use quando alguém trocar ou perder o celular, depois de confirmar a identidade.
     ${ativo&&!ehEu?`<div class="acoes" style="margin-top:8px">${S.mfaReset===u.id?`<button class="btn perigo" data-a="mfa-reset-ok">Confirmar reset do autenticador</button><button class="btn sec" data-a="mfa-reset" data-v="">Cancelar</button>`:`<button class="btn sec" data-a="mfa-reset" data-v="${u.id}">Resetar autenticador</button>`}</div>`:""}</div>`;})()}
   </section>
   <section class="bloco"><h2 class="sec">Excluir acesso</h2>
