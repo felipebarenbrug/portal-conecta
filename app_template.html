@@ -2853,8 +2853,9 @@ function vMeuCRMPainel(X){
   const rows=X?[X.r]:(S.crm&&(ehAdmin()?S.crm.filter(x=>!String(x.dono).startsWith("IS: ")):S.crm));if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
   const adm=X?false:ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
   const fmtK=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
-  const alvo=X?X.r.dono:adm?(S.crmSel||(rows[0]&&rows[0].dono)):(S.profile&&S.profile.crm_dono);
-  const seletor=adm&&rows.length?`<div class="filtros">${rows.map(x=>`<button class="chip" data-a="crm-sel" data-v="${esc(x.dono)}" aria-pressed="${alvo===x.dono}">${esc(x.dono)}</button>`).join("")}</div>`:"";
+  const supIS=!X&&!adm&&S.profile&&S.profile.crm_dono&&rows.some(x=>x.dono==="Inside Sales");const opSup=supIS?[S.profile.crm_dono,"Inside Sales"].filter(d=>rows.some(x=>x.dono===d)):[];
+  const alvo=X?X.r.dono:adm?(S.crmSel||(rows[0]&&rows[0].dono)):supIS?(opSup.includes(S.crmSel)?S.crmSel:S.profile.crm_dono):(S.profile&&S.profile.crm_dono);
+  const seletor=supIS&&opSup.length>1?`<div class="filtros">${opSup.map(d=>`<button class="chip" data-a="crm-sel" data-v="${esc(d)}" aria-pressed="${alvo===d}">${d==="Inside Sales"?"Inside Sales · time":esc(d)}</button>`).join("")}</div>`:adm&&rows.length?`<div class="filtros">${rows.map(x=>`<button class="chip" data-a="crm-sel" data-v="${esc(x.dono)}" aria-pressed="${alvo===x.dono}">${esc(x.dono)}</button>`).join("")}</div>`:"";
   if(!adm&&!alvo)return `<div><h1 class="titulo">Meu CRM</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado ao seu nome no CRM. Peça ao administrador para fazer o vínculo e o seu painel aparece aqui.</p></section>`;
   const r=rows.find(x=>x.dono===alvo);
   if(!r)return `<div><h1 class="titulo">Meu CRM</h1></div>${seletor}<section class="bloco"><div class="vazio">Ainda não há dados do CRM para ${esc(alvo||"este acesso")}.</div></section>`;
