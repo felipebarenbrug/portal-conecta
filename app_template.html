@@ -617,6 +617,7 @@ main.largo{max-width:1120px}
 .mk-grp td{background:#f4f6f8}.mk-bon-cmp{display:grid;gap:8px;padding:12px;border:1px solid #e3e8ec;border-radius:12px;background:#fff}.mk-etapas{display:grid;gap:8px}.mk-etapa{display:grid;gap:4px;padding:10px 12px;border:1px solid #e3e8ec;border-radius:10px;background:#fff}.mk-etapa-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}.mk-et .tab,.bloco>.tab{min-width:0;overflow-x:auto}.mk-et summary{font-size:15px}
 .cob-canais{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}.cob-det-canal{display:grid;gap:8px;padding:12px;border:2px solid var(--vermelho,#c0392b);border-radius:12px;margin-bottom:12px;background:#fff}
 .reu{display:grid;gap:4px}.reu-txt{background:#f6f8fa;border-radius:8px;padding:8px 10px;font-size:14px}.reu-txt div{white-space:pre-wrap;margin-top:2px}
+.rvv-on td{background:#fff8d6}.rvv-t td,.rvv-t th{white-space:nowrap}.rvv-det{grid-template-columns:minmax(0,1fr);border:2px solid var(--amarelo,#ffdb00);border-radius:12px;padding:14px;background:#fff}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -3760,9 +3761,119 @@ function vRCEtapa(){
   <div class="acoes">${i+1<RC_CURSO.length?`<button class="btn" data-a="rc-abrir" data-v="${i+1}">Próximo vídeo →</button>`:`<button class="btn sec" data-a="pag" data-v="rc-apresentacao">Voltar à apresentação</button>`}</div>`;
 }
 /* ---------- Conecta Revendas ---------- */
+/* ===== Conecta Revendas · Validação (só administradores): IGDB e BF pelo BI de pedidos + Financeiro Analítico ===== */
+const RVV_HIB=["Sabiá","Cayana","Carcará"];
+async function carregarRVV(){if(S.rvvBusy)return;S.rvvBusy=true;try{const {data}=await sb.from("rv_validacao").select("*");S.rvv={};(data||[]).forEach(r=>{S.rvv[r.canal_id]=r;});}catch(e){S.rvv={};}S.rvvBusy=false;render();}
+function rvvNum(v){if(v==null||v==="")return 0;if(typeof v==="number")return v;const t=String(v).replace(/\s/g,"");return Number(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;}
+function rvvNF(v){if(v==null||v==="")return null;const n=parseInt(String(v).replace(/\D/g,""),10);return isNaN(n)?null:String(n);}
+function rvvData(v){if(!v)return null;if(v instanceof Date)return isNaN(v)?null:v;if(typeof v==="number")return new Date(Math.round((v-25569)*864e5)+12*36e5);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],+m[2]-1,+m[1]);const d=new Date(v);return isNaN(d)?null:d;}
+const rvvISO=d=>d?new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10):null;
+function rvvCalcular(ped,finRows,hoje,canais){
+  const fin={};
+  for(const r of finRows){const cod=parseInt(r.cod,10),nf=rvvNF(r.nf);if(!cod||!nf)continue;const k=cod+"|"+nf;const x=fin[k]||(fin[k]={cod,nf,valor:0,dev:0,desc:0,perm:0,juros:0,baixa:0,aberto:0,vencido:0,parcelas:0,emis:null,prox:null});
+    x.valor+=r.valor;x.dev+=r.dev;x.desc+=r.desc;x.perm+=r.perm;x.juros+=r.juros;x.baixa+=r.baixa;x.aberto+=r.aberto;x.parcelas++;
+    if(r.emis&&(!x.emis||r.emis<x.emis))x.emis=r.emis;if(r.aberto>.005){if(r.venc&&r.venc<hoje)x.vencido+=r.aberto;if(r.venc&&(!x.prox||r.venc<x.prox))x.prox=r.venc;}}
+  Object.values(fin).forEach(x=>{const base=x.valor-x.dev;x.share=base<=.005?1:Math.max(0,Math.min(1,(base-x.aberto)/base));});
+  const out={};
+  for(const c of canais){const g=RV_REGRA[c.tier]||RV_REGRA.Blue,meta=Number(c.meta_kg)||0;const rz=new Set((c.razoes_erp||[]).map(s=>String(s).trim().toUpperCase()));
+    const L=ped.filter(p=>rz.has(p.cliente)&&(p.status==="Invoiced"||p.status==="Order")).map(p=>{const f=fin[p.cod+"|"+p.nf];const share=p.status==="Order"||p.rs<0?0:(f?f.share:1);return {...p,hib:RVV_HIB.includes(p.cv),share,semTitulo:p.status==="Invoiced"&&!f};});
+    const sum=(fn,col)=>L.filter(fn).reduce((t,p)=>t+p[col],0),psum=(fn,col)=>L.filter(fn).reduce((t,p)=>t+p[col]*p.share,0);
+    const I=p=>p.status==="Invoiced",O=p=>p.status==="Order";
+    const v={fat_kg_h:sum(p=>I(p)&&p.hib,"kg"),fat_rs_h:sum(p=>I(p)&&p.hib,"rs"),fat_kg_c:sum(p=>I(p)&&!p.hib,"kg"),fat_rs_c:sum(p=>I(p)&&!p.hib,"rs"),
+      ord_kg_h:sum(p=>O(p)&&p.hib,"kg"),ord_rs_h:sum(p=>O(p)&&p.hib,"rs"),ord_kg_c:sum(p=>O(p)&&!p.hib,"kg"),ord_rs_c:sum(p=>O(p)&&!p.hib,"rs"),
+      pag_rs_h:psum(p=>I(p)&&p.hib,"rs"),pag_rs_c:psum(p=>I(p)&&!p.hib,"rs"),pag_kg_h:psum(p=>I(p)&&p.hib,"kg"),pag_kg_c:psum(p=>I(p)&&!p.hib,"kg")};
+    [["pag_rs_h","fat_rs_h"],["pag_rs_c","fat_rs_c"],["pag_kg_h","fat_kg_h"],["pag_kg_c","fat_kg_c"]].forEach(([a,b])=>{v[a]=Math.max(0,Math.min(v[a],v[b]));});
+    v.tot_kg_h=v.fat_kg_h+v.ord_kg_h;v.tot_rs_h=v.fat_rs_h+v.ord_rs_h;v.tot_kg_c=v.fat_kg_c+v.ord_kg_c;v.tot_rs_c=v.fat_rs_c+v.ord_rs_c;
+    const fator=a=>a>=1?1:a>=.9?.7:0;const sc={};
+    [["pago",v.pag_rs_h,v.pag_rs_c,v.pag_kg_h],["faturado",v.fat_rs_h,v.fat_rs_c,v.fat_kg_h],["total",v.tot_rs_h,v.tot_rs_c,v.tot_kg_h]].forEach(([k,rh,rc,kh])=>{const at=meta?kh/meta:0,ig=rh*g.ih+rc*g.ic,bf=rh*g.b*fator(at);sc[k]={igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:at,fator:fator(at),bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO};});
+    sc.bf_fat_meta_total=v.fat_rs_h*g.b*fator(meta?v.tot_kg_h/meta:0);
+    const nfSet=new Set(L.filter(I).map(p=>p.cod+"|"+p.nf)),nfs=[...nfSet].map(k=>fin[k]).filter(Boolean).sort((a,b)=>(a.emis||0)-(b.emis||0));
+    const F=nfs.reduce((t,x)=>{["valor","dev","desc","perm","juros","baixa","aberto","vencido"].forEach(k=>t[k]+=x[k]);return t;},{valor:0,dev:0,desc:0,perm:0,juros:0,baixa:0,aberto:0,vencido:0});F.n_nf=nfs.length;F.n_quit=nfs.filter(x=>x.aberto<=.005).length;
+    const lg={};L.forEach(p=>{const k=[p.status,p.nf,p.pv,p.cv,p.cod].join("|");const x=lg[k]||(lg[k]={st:p.status,pv:p.pv,nf:p.nf,cv:p.cv,cod:p.cod,kg:0,rs:0,pago_pct:p.share,dfat:rvvISO(p.dfat),stfin:p.stfin,sit:p.sit,semTitulo:p.semTitulo});x.kg+=p.kg;x.rs+=p.rs;});
+    const fil={};L.forEach(p=>{fil[p.cod]=p.fant;});
+    out[c.id]={canal_nome:c.nome,dados:{tier:c.tier,meta,g,codigos:[...new Set(L.map(p=>p.cod))].sort((a,b)=>a-b),v,sc,fin:F,fil,
+      nfs:nfs.map(x=>({nf:x.nf,cod:x.cod,emis:rvvISO(x.emis),valor:x.valor,dev:x.dev,desc:x.desc,perm:x.perm,juros:x.juros,aberto:x.aberto,vencido:x.vencido,pago_pct:x.share,parcelas:x.parcelas,prox_venc:rvvISO(x.prox)})),
+      linhas:Object.values(lg).sort((a,b)=>(a.st+String(a.dfat)).localeCompare(b.st+String(b.dfat))),
+      sem_titulo:Object.values(lg).filter(x=>x.semTitulo&&x.rs>0).length}};}
+  return out;
+}
+async function rvvLerArquivos(fPed,fFin){
+  await loLib();
+  const wp=XLSX.read(await fPed.arrayBuffer(),{type:"array",cellDates:true});const sp=wp.Sheets[wp.SheetNames[0]];
+  const P=XLSX.utils.sheet_to_json(sp,{defval:null});if(!P.length||!("Número Nota" in P[0])||!("Status" in P[0]))throw new Error("O relatório de pedidos não tem as colunas esperadas (Status, Número Nota, Nome Cliente).");
+  const ped=P.map(r=>({status:r["Status"],cliente:String(r["Nome Cliente"]||"").trim().toUpperCase(),fant:r["Fantasia Cliente"]||"",cod:parseInt(r["Código Cliente"],10)||null,nf:rvvNF(r["Número Nota"]),pv:r["PV"]==null?"":String(r["PV"]).replace(/\.0$/,""),cv:r["CV"]||"",kg:rvvNum(r["Sales (Kg)"]),rs:rvvNum(r["Faturamento R$"]),dfat:rvvData(r["Data Faturamento"]),stfin:r["Status Financeiro"]||null,sit:r["Situação"]||null}));
+  const wf=XLSX.read(await fFin.arrayBuffer(),{type:"array",cellDates:true});
+  let finRows=[],hoje=null;
+  const nomes=wf.SheetNames.slice().sort((a,b)=>(/posi/i.test(b)?1:0)-(/posi/i.test(a)?1:0));
+  for(const nm of nomes){const A=XLSX.utils.sheet_to_json(wf.Sheets[nm],{header:1,defval:null,raw:true});const hi=A.findIndex(r=>r&&r.includes("Número Doc.")&&r.includes("Saldo em Aberto")&&r.includes("Razão Social"));if(hi<0)continue;
+    const H=A[hi],ix=n=>n==="Código"?H.indexOf("Razão Social")-1:H.indexOf(n);
+    for(const r of A.slice(hi+1)){if(!r||r[ix("Código")]==null||r[ix("Número Doc.")]==null)continue;finRows.push({cod:r[ix("Código")],nf:r[ix("Número Doc.")],emis:rvvData(r[ix("Emissão")]),venc:rvvData(r[ix("Prorrogado")])||rvvData(r[ix("Vencimento")]),valor:rvvNum(r[ix("Valor")]),dev:rvvNum(r[ix("Devolução")]),desc:rvvNum(r[ix("Descontos")]),perm:rvvNum(r[ix("Permutas")]),juros:rvvNum(r[ix("Acréscimos")]),baixa:rvvNum(r[ix("Baixa")]),aberto:rvvNum(r[ix("Saldo em Aberto")])});}
+    break;}
+  for(const nm of wf.SheetNames){const A=XLSX.utils.sheet_to_json(wf.Sheets[nm],{header:1,defval:null});for(const r of A.slice(0,4)){const t=(r||[]).find(x=>/Situação em \d{1,2}\/\d{1,2}\/\d{4}/.test(String(x||"")));if(t){hoje=rvvData(String(t).match(/\d{1,2}\/\d{1,2}\/\d{4}/)[0]);break;}}if(hoje)break;}
+  if(!finRows.length)throw new Error("Não achei a aba de posição do Financeiro Analítico (colunas Número Doc. e Saldo em Aberto).");
+  return {ped,finRows,hoje:hoje||new Date()};
+}
+function rvvCompara(c){const m=metricasCanal(c);return {kgH:m.kgH,igdb:m.igdb,bonus:m.bonus,total:m.total};}
+function vRVValidacao(){
+  if(!ehAdmin())return `<div class="vazio">Área restrita aos administradores.</div>`;
+  if(S.rvv===undefined){carregarRVV();return `<div class="carregando">Carregando a validação…</div>`;}
+  const C=(S.canaisAll||S.canais||[]);const R=S.rvv||{};const lista=C.map(c=>({c,r:R[c.id]})).filter(x=>x.r);
+  const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0);const pc=n=>n==null?"—":pctTxt(n);
+  const sel=S.rvvSel&&R[S.rvvSel]?S.rvvSel:null;
+  const up=`<details class="lote" ${lista.length?"":"open"}><summary>Atualizar com novos relatórios</summary><div class="form-card" style="margin-top:8px">
+    <p class="meta" style="margin:0">Suba o relatório de pedidos do BI (data.xlsx, com Status Invoiced/Order e Número Nota) e o Financeiro Analítico (aba de posição com Número Doc. e Saldo em Aberto). O cálculo roda no seu navegador e grava só o resultado por canal.</p>
+    <div class="dupla"><div><label for="rvv_ped">Relatório de pedidos (BI)</label><input type="file" id="rvv_ped" accept=".xlsx,.xls"></div><div><label for="rvv_fin">Financeiro Analítico</label><input type="file" id="rvv_fin" accept=".xlsx,.xls"></div></div>
+    <div class="acoes"><button class="btn" data-a="rvv-calc">Calcular e gravar</button><span class="meta" id="rvv_prog"></span></div></div></details>`;
+  const regras=`<details class="lote"><summary>Como o cálculo é feito (para validar)</summary><ul class="meta" style="margin:8px 0 0;padding-left:18px;display:grid;gap:4px">
+    <li>Canal = clientes do relatório de pedidos com a razão social cadastrada no canal (${C.filter(c=>(c.razoes_erp||[]).length).length} canais com razão social).</li>
+    <li>Encarteirado = pedidos com status Order (ainda não faturados). Faturado = Invoiced. Valores em R$ líquidos do BI (coluna Faturamento R$); o Financeiro tem o valor da nota com impostos, cerca de 5% maior, por isso usamos só a proporção paga de cada nota.</li>
+    <li>Pago: para cada nota fiscal, (valor − devolução − saldo em aberto) ÷ (valor − devolução), somando todas as parcelas. Permutas e descontos de antecipação contam como pagos. Nota faturada sem título no Financeiro conta como quitada. Devoluções (linhas negativas do BI) reduzem o faturado e não contam como pagamento.</li>
+    <li>Híbridos = Sabiá, Cayana e Carcará; o resto é convencional. IGDB = % do tier sobre híbridos e sobre convencionais. Bônus de Performance = % do tier sobre híbridos, 100% com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%, medido em kg de híbridos. Teto de ${fmtK0(RV_TETO)} por canal.</li>
+    <li>Disponível hoje: IGDB sobre o que já foi pago. Se pagar o faturado: todas as notas emitidas quitadas. Potencial: faturar e pagar todos os pedidos encarteirados.</li></ul></details>`;
+  if(!lista.length)return `<div><h1 class="titulo">Validação do IGDB e do bônus</h1><p class="sub">Área de teste, visível só para administradores. Não muda o que os canais e o comercial veem hoje.</p></div>${up}${regras}`;
+  const r0=lista[0].r;
+  const T=k=>lista.reduce((t,x)=>t+(k(x.r.dados)||0),0);
+  const linha=({c,r})=>{const d=r.dados,v=d.v,s=d.sc,cp=rvvCompara(c);
+    return `<tr${sel===c.id?' class="rvv-on"':""}><td><button class="link" data-a="rvv-sel" data-v="${esc(sel===c.id?"":c.id)}" style="text-align:left"><strong>${esc(c.nome)}</strong></button><br><span class="meta">${esc(c.tier||"")} · meta ${kg(d.meta)}</span></td>
+      <td class="val">${kg(v.fat_kg_h)}<br><span class="meta">+${kg(v.ord_kg_h)} encart.</span></td><td class="val">${pc(s.total.ating)}<br><span class="meta">faturado ${pc(s.faturado.ating)}</span></td>
+      <td class="val">${rs(v.fat_rs_h+v.fat_rs_c)}<br><span class="meta">pago ${rs(v.pag_rs_h+v.pag_rs_c)}</span></td>
+      <td class="val"><strong>${rs(s.pago.igdb)}</strong></td><td class="val">${rs(s.faturado.igdb)}</td><td class="val">${rs(s.total.igdb)}</td>
+      <td class="val">${rs(s.faturado.bf)}</td><td class="val">${rs(s.total.bf)}</td><td class="val"><strong>${rs(s.total.total)}</strong>${s.total.teto?'<br><span class="meta">teto</span>':""}</td>
+      <td class="val"><span class="meta">${rs(cp.igdb+cp.bonus)}</span></td></tr>`;};
+  const det=sel?(()=>{const x=lista.find(y=>y.c.id===sel);const d=x.r.dados,v=d.v,s=d.sc,f=d.fin;const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
+    return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><h2 class="sec" style="margin:0">${esc(x.c.nome)}</h2><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
+      <p class="meta" style="margin:0">Códigos de cliente: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</p>
+      <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div class="metric"><span>Híbridos</span><strong>${kg(v.tot_kg_h)}</strong><span class="meta">faturado ${kg(v.fat_kg_h)} · encarteirado ${kg(v.ord_kg_h)} · pago ${kg(v.pag_kg_h)}</span></div>
+        <div class="metric"><span>Convencionais</span><strong>${kg(v.tot_kg_c)}</strong><span class="meta">faturado ${kg(v.fat_kg_c)} · encarteirado ${kg(v.ord_kg_c)}</span></div>
+        <div class="metric"><span>Notas faturadas</span><strong>${f.n_nf}</strong><span class="meta">${f.n_quit} quitadas · em aberto ${rs(f.aberto)}${f.vencido?" · vencido "+rs(f.vencido):""}</span></div>
+        <div class="metric"><span>Ajustes no Financeiro</span><strong style="font-size:17px">${rs(f.dev)} dev.</strong><span class="meta">permutas ${rs(f.perm)} · descontos ${rs(f.desc)} · juros ${rs(f.juros)}</span></div></div>
+      <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">IGDB híbridos</th><th class="val">IGDB conv.</th><th class="val">IGDB</th><th class="val">Atingimento</th><th class="val">Bônus</th><th class="val">Total</th></tr></thead><tbody>
+        ${[["Disponível hoje (pago)",s.pago],["Se pagar todo o faturado",s.faturado],["Potencial: faturar e pagar os encarteirados",s.total]].map(([t,z])=>`<tr><td>${t}</td><td class="val">${rs(z.igdb_h)}</td><td class="val">${rs(z.igdb_c)}</td><td class="val"><strong>${rs(z.igdb)}</strong></td><td class="val">${pc(z.ating)}</td><td class="val">${rs(z.bf)}${z.fator&&z.fator<1?" (70%)":""}</td><td class="val"><strong>${rs(z.total)}</strong></td></tr>`).join("")}
+        <tr><td colspan="7"><span class="meta">Bônus provisionado sobre o faturado, se a meta for batida com os encarteirados: ${rs(s.bf_fat_meta_total)}. No portal hoje (CRM): IGDB ${rs(rvvCompara(x.c).igdb)} · bônus ${rs(rvvCompara(x.c).bonus)} · híbridos ${kg(rvvCompara(x.c).kgH)}.</span></td></tr></tbody></table></div>
+      <h3 class="pgd-h">Notas fiscais e pagamento</h3>
+      ${d.nfs.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}
+      <h3 class="pgd-h">Pedidos (BI)</h3>
+      ${d.linhas.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}
+      </section>`;})():"";
+  return `<div><h1 class="titulo">Validação do IGDB e do bônus</h1><p class="sub">Área de teste, visível só para administradores. Cruza o relatório de pedidos do BI com o Financeiro Analítico para separar o que já foi pago, o que foi faturado e o que está encarteirado. Não muda o que os canais e o comercial veem hoje.</p>
+    <p class="meta">Situação do Financeiro em ${esc(String(r0.situacao_em||"").split("-").reverse().join("/"))} · gravado em ${fmtDataHora(r0.gerado_em)}</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px">
+    <div class="metric"><span>IGDB disponível hoje</span><strong>${rs(T(d=>d.sc.pago.igdb))}</strong><span class="meta">sobre o que os canais já pagaram</span></div>
+    <div class="metric"><span>Se pagarem todo o faturado</span><strong>${rs(T(d=>d.sc.faturado.total))}</strong><span class="meta">IGDB ${rs(T(d=>d.sc.faturado.igdb))} + bônus ${rs(T(d=>d.sc.faturado.bf))}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Potencial com os encarteirados</span><strong>${rs(T(d=>d.sc.total.total))}</strong><span class="meta">IGDB ${rs(T(d=>d.sc.total.igdb))} + bônus ${rs(T(d=>d.sc.total.bf))}</span></div>
+    <div class="metric"><span>Em aberto no Financeiro</span><strong>${rs(T(d=>d.fin.aberto))}</strong><span class="meta">notas da safra com impostos${T(d=>d.fin.vencido)?" · vencido "+rs(T(d=>d.fin.vencido)):" · nada vencido"}</span></div></div>
+  ${det}
+  <section class="bloco" style="grid-template-columns:minmax(0,1fr)"><h2 class="sec">Por canal</h2><p class="meta" style="margin:0">Toque no canal para ver as notas, os pagamentos e os pedidos.</p>
+    <div class="tab"><table class="sim-t fin-t rvv-t"><thead><tr><th>Canal</th><th class="val">Híbridos faturados</th><th class="val">Meta (com encart.)</th><th class="val">Faturado R$</th><th class="val">IGDB disponível</th><th class="val">IGDB se pagar faturado</th><th class="val">IGDB potencial</th><th class="val">Bônus se pagar faturado</th><th class="val">Bônus potencial</th><th class="val">Total potencial</th><th class="val">Portal hoje${inf("IGDB previsto + bônus que o Conecta Revendas mostra hoje, calculado pelos pedidos ganhos no CRM. Serve para comparar.")}</th></tr></thead><tbody>${lista.map(linha).join("")}</tbody>
+    <tfoot><tr><th>Total</th><th class="val">${kg(T(d=>d.v.fat_kg_h))}</th><th></th><th class="val">${rs(T(d=>d.v.fat_rs_h+d.v.fat_rs_c))}</th><th class="val">${rs(T(d=>d.sc.pago.igdb))}</th><th class="val">${rs(T(d=>d.sc.faturado.igdb))}</th><th class="val">${rs(T(d=>d.sc.total.igdb))}</th><th class="val">${rs(T(d=>d.sc.faturado.bf))}</th><th class="val">${rs(T(d=>d.sc.total.bf))}</th><th class="val">${rs(T(d=>d.sc.total.total))}</th><th class="val">${rs(lista.reduce((t,x)=>{const cp=rvvCompara(x.c);return t+cp.igdb+cp.bonus;},0))}</th></tr></tfoot></table></div></section>
+  ${up}${regras}`;
+}
+
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
   if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
+  if(ehAdmin())abas.push(["rv-validacao","Validação"]);
   else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -7007,10 +7118,11 @@ function renderApp(){
     return;
   }
   if(S.secao==="conecta-revendas"){
-    if(S.pag==="rv-canais"||S.pag==="rv-canal"||S.pag==="rv-painel"){
+    if(S.pag==="rv-validacao"&&!ehAdmin())S.pag="rv-painel";
+    if(S.pag==="rv-canais"||S.pag==="rv-canal"||S.pag==="rv-painel"||S.pag==="rv-validacao"){
       if(!veBarenbrugRV()){S.pag=ehRevenda()?"rv-meucanal":"rv-apresentacao";}
       else{
-        app.innerHTML=cabecalho()+subnavRV()+`<main>${S.pag==="rv-canal"?vRVCanal():S.pag==="rv-painel"?vRVPainel():vRVCanais()}</main>`;
+        app.innerHTML=cabecalho()+subnavRV()+`<main>${S.pag==="rv-validacao"?vRVValidacao():S.pag==="rv-canal"?vRVCanal():S.pag==="rv-painel"?vRVPainel():vRVCanais()}</main>`;
         if(!S.canais){carregarCanais().then(render);}
         return;
       }
@@ -7155,6 +7267,11 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
+  if(a==="rvv-sel"){S.rvvSel=v||null;render();if(v)window.scrollTo(0,0);return;}
+  if(a==="rvv-calc"){if(!ehAdmin())return;const fp=document.getElementById("rvv_ped"),ff=document.getElementById("rvv_fin"),pg=document.getElementById("rvv_prog");const a1=fp&&fp.files[0],a2=ff&&ff.files[0];if(!a1||!a2){aviso("Escolha os dois arquivos.");return;}
+    b.disabled=true;if(pg)pg.textContent="Lendo os arquivos…";try{const X=await rvvLerArquivos(a1,a2);if(!S.canaisAll)await carregarCanais();if(pg)pg.textContent="Calculando…";
+      const out=rvvCalcular(X.ped,X.finRows,X.hoje,S.canaisAll||[]);const rows=Object.entries(out).map(([id,o])=>({canal_id:id,canal_nome:o.canal_nome,dados:o.dados,situacao_em:rvvISO(X.hoje),fontes:a1.name+" + "+a2.name,gerado_em:new Date().toISOString()}));
+      const {error}=await sb.from("rv_validacao").upsert(rows);if(error)throw error;S.rvv=undefined;aviso("Validação recalculada para "+rows.length+" canais.");render();}catch(e){aviso("Não foi possível calcular: "+(e.message||e));}b.disabled=false;if(pg)pg.textContent="";return;}
   if(a==="mk-sol-f"){S.mkSolF=v||"";render();return;}
   if(a==="mk-limpa-f"){S.mkResp="";S.mkMes="";S.mkSitF="";S.mkTipo="Todos";S.mkBusca="";render();return;}
   if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
