@@ -610,6 +610,7 @@ main.largo{max-width:1120px}
 @media (max-width:420px){.calc-2{grid-template-columns:minmax(0,1fr)}}
 .mfa-ol{margin:0 0 6px;padding-left:20px;display:grid;gap:6px;font-size:15px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
+.mrc{min-width:0;grid-template-columns:minmax(0,1fr)}.mrc .tab{overflow-x:auto}.mrc summary{list-style:none;cursor:pointer;display:block;max-width:100%;white-space:normal;min-width:0}.mrc summary::-webkit-details-marker{display:none}.mrc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;min-width:0}.mrc-h>div:first-child{flex:1 1 auto;min-width:0}.mrc-h strong{display:block}.mrc-n{text-align:right;flex:0 1 auto;max-width:45%}.mrc-n strong{font-size:18px}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -2550,6 +2551,9 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
   if(t.dataset.vinccanal){const id=t.dataset.vinccanal,novo=t.value||null;const p=(S.equipe||[]).find(x=>x.id===novo);t.disabled=true;
     const {data,error}=await sb.from("canais").update({comercial_id:novo,...(p?{responsavel:p.nome}:{})}).eq("id",id).select("id,comercial_id").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_id||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const k=(S.canaisLista||[]).find(x=>x.id===id);if(k)k.comercial_id=novo;S.canais=null;aviso("Vínculo gravado.");}render();return;}
+  if(t.dataset.vincct){const id=t.dataset.vincct,novo=t.value||null;t.disabled=true;
+    const {data,error}=await sb.from("rc_contratos").update({comercial_nome:novo}).eq("codigo_erp",id).select("codigo_erp,comercial_nome").maybeSingle();t.disabled=false;
+    if(error||!data||(data.comercial_nome||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const c=(S.rcContr||[]).find(q=>String(q.codigo_erp)===String(id));if(c)c.comercial_nome=novo;S.mrc=null;aviso("Vínculo gravado.");}render();return;}
   if(t.dataset.vincrc){const id=t.dataset.vincrc,novo=t.value||null;t.disabled=true;
     const {data,error}=await sb.from("profiles").update({comercial_resp:novo}).eq("id",id).select("id,comercial_resp").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_resp||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const x=(S.equipe||[]).find(q=>q.id===id);if(x)x.comercial_resp=novo;aviso("Vínculo gravado.");}render();return;}});
@@ -3381,11 +3385,45 @@ let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 function subnavRC(){
   const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
+  if(veMeusRC())abas.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))abas.push(["rc-cobertura","Cobertura dos RCs"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
+}
+/* ===== Meus RCs: carteira de RCs do responsável comercial (pelo contrato), com ou sem acesso ao portal ===== */
+const veMeusRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
+const rcNorm=t=>finNorm(String(t||"")).replace(/[^a-z0-9 ]/g," ").replace(/\b(ltda|eireli|me|epp|s a|sa)\b/g," ").replace(/\s+/g," ").trim();
+async function carregarMeusRC(){if(S.mrcBusy)return;S.mrcBusy=true;
+  try{const [c,pd,m]=await Promise.all([sb.from("rc_contratos").select("codigo_erp,nome,crm_nomes,modelo,status,cidade,uf,regional,comercial_nome,assinado_em,core_venc"),sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt"),sb.from("crm_mapa").select("st,rep,nome,cidade,uf,kg_h,kg_c,rs,fat,dono").neq("rep","")]);
+    S.mrc={ct:c.data||[],ped:pd.data||[],neg:m.data||[]};}catch(e){S.mrc={ct:[],ped:[],neg:[]};}
+  if(!RC_RANKING.length){try{await carregarRanking();}catch(e){}}
+  S.mrcBusy=false;render();}
+function mrcNomes(c){const L=new Set((c.crm_nomes||[]).filter(Boolean));const alvo=rcNorm(c.nome);
+  [...(S.mrc.neg||[]).map(x=>x.rep),...(S.mrc.ped||[]).map(x=>x.rep),...RC_RANKING.map(x=>x.crm)].forEach(r=>{if(r&&rcNorm(r)===alvo)L.add(r);});return [...L];}
+function vRCMeus(){
+  if(!S.mrc){carregarMeusRC();return `<div class="carregando">Carregando os seus RCs…</div>`;}
+  const adm=ehAdmin();const eu=(S.profile&&S.profile.crm_dono)||"";
+  const coms=[...new Set(S.mrc.ct.map(c=>c.comercial_nome||"Sem responsável"))].sort((a,b)=>a.localeCompare(b));
+  const sel=adm?(S.mrcSel&&coms.includes(S.mrcSel)?S.mrcSel:(coms.includes(eu)?eu:coms[0]||"")):eu;
+  const L=S.mrc.ct.filter(c=>(c.comercial_nome||"Sem responsável")===sel).map(c=>{const nm=mrcNomes(c),ns=new Set(nm.map(repCanon));
+    const rk=RC_RANKING.filter(x=>ns.has(x.crm)).reduce((t,x)=>({fat:t.fat+x.fat,aFat:t.aFat+x.aFat,kg:t.kg+x.kg,cKg:t.cKg+x.cKg}),{fat:0,aFat:0,kg:0,cKg:0});
+    const ab=S.mrc.neg.filter(x=>x.st==="A"&&nm.includes(x.rep));const vd=S.mrc.neg.filter(x=>x.st==="V"&&nm.includes(x.rep));const pd=S.mrc.ped.filter(x=>nm.includes(x.rep));
+    return {c,nm,rk,ab,vd,pd,abKg:ab.reduce((t,x)=>t+(+x.kg_h||0),0),abRs:ab.reduce((t,x)=>t+(+x.rs||0),0)};}).sort((a,b)=>b.rk.kg-a.rk.kg||b.abKg-a.abKg||a.c.nome.localeCompare(b.c.nome));
+  const kg=n=>isNum(Math.round(Number(n)||0))+" kg";const tot=L.reduce((t,x)=>({kg:t.kg+x.rk.kg,af:t.af+x.rk.aFat,ab:t.ab+x.abKg,n:t.n+(x.rk.kg>0?1:0)}),{kg:0,af:0,ab:0,n:0});
+  const card=x=>{const c=x.c;const t=tierDoKg(x.rk.kg);
+    return `<details class="bloco mrc" style="margin:0"><summary><div class="mrc-h"><div style="min-width:0"><strong>${esc(c.nome)}</strong><span class="meta">${esc([c.modelo,[c.cidade,c.uf].filter(Boolean).join("/"),c.status].filter(Boolean).join(" · "))}</span></div>
+      <div class="mrc-n"><strong>${kg(x.rk.kg)}</strong><span class="meta">híbridos na safra · ${esc(t)}</span></div></div></summary>
+      <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:10px 0"><div class="metric"><span>Já faturou</span><strong>${kg(x.rk.fat)}</strong></div><div class="metric"><span>Vai faturar</span><strong>${kg(x.rk.aFat)}</strong></div><div class="metric"><span>Convencionais</span><strong>${kg(x.rk.cKg)}</strong></div><div class="metric"><span>Em negociação</span><strong>${kg(x.abKg)}</strong><span class="meta">${x.ab.length} ${x.ab.length===1?"negociação":"negociações"}${x.abRs?" · "+fmtK0(x.abRs):""}</span></div></div>
+      ${x.ab.length?`<h3 class="sec" style="font-size:15px;margin:6px 0">Negociações em aberto no CRM</h3><div class="tab"><table class="sim-t"><thead><tr><th>Cliente</th><th>Cidade</th><th class="val">Híbridos</th><th class="val">Valor</th><th>Previsão</th></tr></thead><tbody>${x.ab.sort((a,b)=>(+b.kg_h||0)-(+a.kg_h||0)).map(n=>`<tr><td>${esc(n.nome||"—")}</td><td>${esc([n.cidade,n.uf].filter(Boolean).join("/"))}</td><td class="val">${kg(n.kg_h)}</td><td class="val">${fmtK0(n.rs)}</td><td>${n.fat?esc(String(n.fat).slice(0,10).split("-").reverse().join("/")):"—"}</td></tr>`).join("")}</tbody></table></div>`:`<p class="meta">Nenhuma negociação em aberto no CRM com este RC.</p>`}
+      ${x.vd.length?`<p class="meta">${x.vd.length} ${x.vd.length===1?"venda ganha":"vendas ganhas"} na safra no CRM${x.pd.length?" · "+x.pd.length+" itens de pedido":""}.</p>`:""}
+      ${!x.nm.length?`<p class="dica">Este RC ainda não aparece no CRM com o mesmo nome do contrato, então as vendas não foram ligadas.</p>`:""}
+      <p class="meta">${c.assinado_em?"Contrato assinado em "+esc(String(c.assinado_em).slice(0,10).split("-").reverse().join("/"))+". ":""}${c.core_venc?"CORE vence em "+esc(String(c.core_venc).slice(0,10).split("-").reverse().join("/"))+".":""}</p></details>`;};
+  return `<div><h1 class="titulo">${adm?"RCs por comercial":"Meus RCs"}</h1><p class="sub">RCs com contrato em que ${adm?"cada comercial":"você"} é o responsável: vendas de híbridos da safra 26/27 pela data de faturamento, negociações em aberto e pedidos no CRM. Aparecem mesmo os RCs que ainda não têm acesso ao portal.</p></div>
+  ${adm?`<div class="filtros" style="margin-bottom:10px">${coms.map(n=>`<button class="chip" data-a="mrc-sel" data-v="${esc(n)}" aria-pressed="${sel===n}">${esc(n)}</button>`).join("")}</div>`:""}
+  ${!sel?`<div class="vazio">Seu acesso ainda não está ligado ao seu nome no CRM. Peça ao administrador para fazer o vínculo.</div>`:L.length?`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px"><div class="metric"><span>RCs</span><strong>${L.length}</strong><span class="meta">${tot.n} com venda na safra</span></div><div class="metric"><span>Híbridos na safra</span><strong>${kg(tot.kg)}</strong><span class="meta">${kg(tot.af)} a faturar</span></div><div class="metric"><span>Em negociação</span><strong>${kg(tot.ab)}</strong></div></div>
+  <div style="display:grid;gap:8px;grid-template-columns:minmax(0,1fr)">${L.map(card).join("")}</div>`:`<div class="vazio">Nenhum RC com contrato ligado a ${adm?esc(sel):"você"}. O vínculo fica em Painel de gerenciamento → Vínculos.</div>`}`;
 }
 function vRCRanking(){
   const rk=RC_RANKING;
@@ -3753,12 +3791,15 @@ function vRVEtapa(){
 /* ---------- Conecta Revendas — Painel de Canais (admin) ---------- */
 const fmtR=n=>"R$ "+(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtKg=n=>(Number(n)||0).toLocaleString("pt-BR")+" kg";
+/* No Conecta Revendas, quem é do Comercial (sem ser administrador) vê só as revendas vinculadas a ele. */
+const rvSoVinculo=()=>S.secao==="conecta-revendas"&&!ehAdmin()&&temPerfil("Comercial Barenbrug")&&!temPerfil("Gestor de Revenda")&&!temPerfil("Vendedor de Revenda");
+function canaisDaSecao(){const A=S.canaisAll||[];return rvSoVinculo()?A.filter(k=>S.user&&k.comercial_id===S.user.id):A;}
 async function carregarCanais(){
   const {data:cs}=await sb.from("canais").select("*");
   const {data:as}=await sb.from("acoes_pgd").select("*");
   const porCanal={};(as||[]).forEach(a=>{(porCanal[a.canal_id]=porCanal[a.canal_id]||[]).push(a);});
   const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
-  S.canais=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));
+  S.canaisAll=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));S.canais=canaisDaSecao();
   S.acoesCanal=porCanal;
   try{const {data:rs}=await sb.from("canal_resultado").select("*");S.canalRes={};(rs||[]).forEach(r=>{S.canalRes[r.canal_id]=r;});}catch(e){S.canalRes={};}
   if(temPerfil("Gestor de Revenda")&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
@@ -4367,6 +4408,8 @@ function gtVinc(){
     ${!com.length?`<p class="dica">Nenhuma pessoa com perfil Comercial Barenbrug no portal ainda.</p>`:""}</section>
   <section class="bloco"><h2 class="sec">RCs no portal${inf("Responsável principal pelo RC: alguém do Comercial ou do Inside Sales. Ele recebe as negociações que o RC envia pelo portal e acompanha o RC no Conecta RC. Cada alteração é gravada na hora.")}</h2>
     <div class="tab"><table class="sim-t"><thead><tr><th>RC</th><th>Perfil</th><th>Responsável principal</th></tr></thead><tbody>${RCs.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(pf(x).join(" + "))}</td><td>${adm?`<select data-vincrc="${esc(x.id)}" aria-label="Responsável por ${esc(x.nome)}"><option value="">— sem responsável —</option><optgroup label="Comercial Barenbrug">${opRC.map(d=>`<option ${x.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</optgroup>${optIS(p=>`<option ${x.comercial_resp===p.nome?"selected":""}>${esc(p.nome)}</option>`)}</select>`:esc(x.comercial_resp||"— sem responsável —")+tagT(x.comercial_resp)}</td></tr>`).join("")||`<tr><td colspan="3">Nenhum RC com acesso ao portal.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">RCs com contrato${inf("Todos os RCs com contrato, tenham ou não acesso ao portal. O responsável vê os dados de vendas, pedidos e negociações do RC em Conecta RC → Meus RCs. Cada alteração é gravada na hora.")}</h2>
+    ${S.rcContr==null?(carregarContratos().then(render),`<div class="carregando">Carregando contratos…</div>`):`<div class="tab"><table class="sim-t"><thead><tr><th>RC</th><th>Contrato</th><th>Responsável</th></tr></thead><tbody>${S.rcContr.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome))).map(c=>{const ops=[...new Set([...opRC,"Inside Sales",...IS.map(p=>p.nome),c.comercial_nome].filter(Boolean))];return `<tr><td><strong>${esc(c.nome)}</strong><br><span class="meta">${esc([c.cidade,c.uf].filter(Boolean).join("/"))}</span></td><td>${esc([c.modelo,c.status].filter(Boolean).join(" · "))}</td><td>${adm?`<select data-vincct="${esc(c.codigo_erp)}" aria-label="Responsável por ${esc(c.nome)}"><option value="">— sem responsável —</option>${ops.map(d=>`<option ${c.comercial_nome===d?"selected":""}>${esc(d)}</option>`).join("")}</select>`:esc(c.comercial_nome||"— sem responsável —")}</td></tr>`;}).join("")||`<tr><td colspan="3">Nenhum contrato.</td></tr>`}</tbody></table></div>`}</section>
   <section class="bloco"><h2 class="sec">Carteira de cada responsável</h2>
     ${Object.keys(resumo).length?`${Object.keys(resumo).filter(n=>!isNomes.has(n)).length?`<h3 class="sec" style="font-size:15px;margin:6px 0">Comercial</h3>${Object.keys(resumo).filter(n=>!isNomes.has(n)).sort().map(linhaCart).join("")}`:""}${nIS.length?`<h3 class="sec" style="font-size:15px;margin:12px 0 6px">Inside Sales</h3>${nIS.sort().map(linhaCart).join("")}`:""}`:`<div class="vazio">Nenhum vínculo ainda.</div>`}</section>`;
 }
@@ -6761,7 +6804,7 @@ function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forE
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -6796,6 +6839,8 @@ const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
 const semOcultas=abas=>{const o=abasOcultas();return abas.filter(([k])=>!o.includes(chaveAba(k)));};
 function renderApp(){
   const app=document.getElementById("app");
+  if(S.canais&&S.canaisAll)S.canais=canaisDaSecao();
+  if(S.canalSel&&rvSoVinculo()&&S.canais&&!S.canais.some(k=>k.id===S.canalSel))S.canalSel=null;
   if(S.mfa){app.innerHTML=vMFA();const c=document.getElementById("mfa_cod");if(c&&!c.value)c.focus();return;}
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
@@ -6817,7 +6862,8 @@ function renderApp(){
   }
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
+    if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
@@ -7084,6 +7130,7 @@ document.addEventListener("click",async ev=>{
   if(a==="solic-cadastrar"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;S.prefill={solicId:x.id,nome:x.nome,email:x.email,perfil:x.perfil,telefone:x.telefone};S.novoAcesso=null;S._erroCriar=null;render();const b=document.getElementById("bloco-criar");if(b)b.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="solic-recusar"){const {error}=await sb.from("solicitacoes_acesso").update({status:"Recusada"}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));render();aviso("Solicitação encerrada.");return;}
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
+  if(a==="mrc-sel"){S.mrcSel=v;render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
   if(a==="im-modo"){S.imModo=v;S.mapaPin=null;render();return;}
