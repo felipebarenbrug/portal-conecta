@@ -610,6 +610,7 @@ main.largo{max-width:1120px}
 @media (max-width:420px){.calc-2{grid-template-columns:minmax(0,1fr)}}
 .mfa-ol{margin:0 0 6px;padding-left:20px;display:grid;gap:6px;font-size:15px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
+.mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
 .pend-home{display:grid;gap:8px;box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)}.pend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pend-top strong{font-size:16px}summary.pend-top{cursor:pointer;list-style:none}summary.pend-top::-webkit-details-marker{display:none}summary.pend-top strong::before{content:'\25BE';display:inline-block;margin-right:8px;font-size:13px;transition:transform .15s}details.pend-home:not([open]) summary.pend-top strong::before{transform:rotate(-90deg)}details.pend-home:not([open]){gap:0}.pend-acts{display:flex;gap:8px}
@@ -1163,7 +1164,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117100307";
+const APP_VER="20261117100913";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1212,26 +1213,52 @@ async function mfaIniciarCadastro(){
   if(!S.mfa||S.mfa.modo!=="enroll"||S.mfa.qr||S.mfa.busy)return;S.mfa.busy=true;
   try{const {data:f}=await sbReal.auth.mfa.listFactors();for(const x of ((f&&f.all)||[]).filter(x=>x.status!=="verified")){try{await sbReal.auth.mfa.unenroll({factorId:x.id});}catch(e){}}
     const {data,error}=await sbReal.auth.mfa.enroll({factorType:"totp",friendlyName:"Portal Conecta "+new Date().toISOString().slice(0,16),issuer:"Portal Conecta Barenbrug"});
-    if(error||!data)throw error||new Error("sem dados");S.mfa.fator=data.id;S.mfa.qr=(q=>{q=String(q||"");const i=q.indexOf("<svg");return i>=0?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(q.slice(i)):q;})(data.totp.qr_code);S.mfa.secret=data.totp.secret;}
+    if(error||!data)throw error||new Error("sem dados");S.mfa.fator=data.id;S.mfa.qr=(q=>{q=String(q||"");const i=q.indexOf("<svg");return i>=0?"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(q.slice(i)):q;})(data.totp.qr_code);S.mfa.secret=data.totp.secret;S.mfa.uri=data.totp.uri||"";}
   catch(e){S.mfa.erro="Não foi possível gerar o QR Code agora. Saia e entre de novo.";}
   S.mfa.busy=false;render();
 }
+async function mfaChecaRelogio(){if(S.mfaRel!==undefined)return;S.mfaRel=null;
+  try{const t0=Date.now();const {data,error}=await sbReal.rpc("agora");const t1=Date.now();if(error||!data)return;const srv=new Date(data).getTime()+(t1-t0)/2;S.mfaRel=Math.round((t1-srv)/1000);render();}catch(e){}}
+function mfaRelTxt(d){const a=Math.abs(d),m=Math.round(a/60);return a<90?a+" segundos":m+" minutos"+(m>=55&&m<=65?" (cerca de 1 hora)":m>=115&&m<=125?" (cerca de 2 horas)":"");}
+function vMFAAjuda(cad){const M=S.mfa||{};const sec=M.secret?M.secret.replace(/(.{4})/g,"$1 ").trim():"";const abre=M.erros>0;
+  const rel=S.mfaRel;const relAviso=rel!=null&&Math.abs(rel)>=25?`<div class="erro" role="alert" style="margin:0">O relógio deste aparelho está ${mfaRelTxt(rel)} ${rel>0?"adiantado":"atrasado"} em relação ao horário oficial. Se você usa este mesmo aparelho para o código, ele vai dar inválido. Veja abaixo como acertar a hora automática.</div>`:"";
+  return `${relAviso}
+  ${cad?`<details class="mfa-aj" ${abre?"":"open"}><summary>Passo a passo, com calma</summary>
+    <p><strong>O que é isso?</strong> É uma segunda proteção, igual à do aplicativo do banco. Além da senha, o portal pede um código de 6 números que um aplicativo do seu celular gera e troca a cada 30 segundos. Você configura uma vez só; depois, em cada entrada, é só abrir o aplicativo e copiar o número.</p>
+    <p><strong>1. Instale o aplicativo autenticador (gratuito)</strong></p>
+    <ul><li><strong>Android:</strong> abra a <strong>Play Store</strong>, busque <strong>Google Authenticator</strong> e toque em Instalar.</li><li><strong>iPhone:</strong> abra a <strong>App Store</strong>, busque <strong>Google Authenticator</strong> e toque em Obter.</li><li>Também funciona o <strong>Microsoft Authenticator</strong>. Escolha um só.</li></ul>
+    <p><strong>2. Adicione o Portal Conecta no aplicativo</strong></p>
+    <ul><li><strong>Se você está entrando no portal pelo computador:</strong> abra o Google Authenticator no celular, toque no botão <strong>+</strong> (canto de baixo, à direita) e escolha <strong>Ler código QR</strong>. Aponte a câmera do celular para o QR Code desta tela.</li>
+      <li><strong>Se você está entrando pelo próprio celular</strong> (não dá para fotografar a própria tela): toque em <strong>Abrir no aplicativo autenticador</strong>, logo abaixo do QR Code. Se não abrir, use <strong>Copiar a chave</strong>, volte ao aplicativo, toque em <strong>+</strong>, escolha <strong>Inserir chave de configuração</strong>, cole a chave em "Chave", escreva "Portal Conecta" em "Conta", deixe o tipo <strong>Baseada no horário</strong> e toque em Adicionar.</li></ul>
+    <p><strong>3. Digite o código</strong></p>
+    <ul><li>O aplicativo passa a mostrar "Portal Conecta Barenbrug" com 6 números. Volte ao portal, digite esses números no campo abaixo e toque em <strong>Ativar e entrar</strong>.</li><li>O número muda a cada 30 segundos (o círculo ao lado mostra o tempo). Se estiver quase acabando, espere o próximo.</li></ul>
+    <p><strong>Nas próximas vezes:</strong> entre com e-mail e senha, abra o aplicativo autenticador e digite o número que estiver aparecendo. Não precisa ler o QR Code de novo.</p></details>`:""}
+  <details class="mfa-aj" ${abre||(rel!=null&&Math.abs(rel)>=25)?"open":""}><summary>O código dá inválido? Acerte a hora do celular</summary>
+    <p>O código depende da <strong>hora certa do celular</strong>, não do fuso. Quem está em Rondônia, Acre, Amazonas, Mato Grosso ou Mato Grosso do Sul pode usar o portal normalmente. O problema acontece quando o celular está com o fuso errado e a hora foi acertada à mão: o relógio parece certo, mas o celular fica uma hora fora do horário oficial e todo código sai inválido.</p>
+    <p><strong>Android:</strong> Configurações → Sistema (ou Gerenciamento geral) → Data e hora → ligue <strong>Data e hora automáticas</strong> e <strong>Fuso horário automático</strong>.</p>
+    <p><strong>iPhone:</strong> Ajustes → Geral → Data e Hora → ligue <strong>Definir Automaticamente</strong>.</p>
+    <p>Se o celular estiver sem sinal e a opção automática não acertar, escolha o fuso da sua cidade (ex.: <strong>Porto Velho</strong> para Rondônia, <strong>Rio Branco</strong> para o Acre, <strong>Manaus</strong>, <strong>Cuiabá</strong>, <strong>Campo Grande</strong>) e só depois confira a hora. Não troque o fuso para Brasília.</p>
+    <p>Feito isso, feche e abra o aplicativo autenticador e digite o código novo. No Google Authenticator antigo de Android, há também: menu (três pontinhos) → Configurações → Correção de horário para códigos → Sincronizar agora.</p></details>
+  <details class="mfa-aj"><summary>Troquei de celular, apaguei o aplicativo ou não aparece o Portal Conecta</summary>
+    <p>Peça ao Marketing Barenbrug (Felipe ou Thaís Mendonça) para <strong>resetar o seu autenticador</strong>. Na próxima entrada, o portal mostra um QR Code novo e você faz o passo a passo de novo.</p></details>`;}
 function vMFA(){
   const M=S.mfa,cad=M.modo==="enroll";
   if(cad&&!M.qr&&!M.erro)setTimeout(mfaIniciarCadastro,0);
+  if(S.mfaRel===undefined)setTimeout(mfaChecaRelogio,0);
   const sec=M.secret?M.secret.replace(/(.{4})/g,"$1 ").trim():"";
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
-    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">${cad?"Por segurança, o acesso ao portal usa verificação em duas etapas: sua senha e um código do celular.":"Verificação em duas etapas."}</p></div></div>
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">${cad?"Por segurança, o acesso ao portal usa verificação em duas etapas: sua senha e um código do celular. Leva uns 3 minutos e é feito uma vez só.":"Verificação em duas etapas."}</p></div></div>
     <form class="acesso-form" id="f-mfa"><h2>${cad?"Ative a verificação em duas etapas":"Digite o código do autenticador"}</h2>
-      ${cad?`<ol class="mfa-ol"><li>Instale no celular um aplicativo autenticador gratuito: <strong>Google Authenticator</strong> ou <strong>Microsoft Authenticator</strong>.</li>
-        <li>No aplicativo, toque em adicionar conta e escolha ler QR Code.</li><li>Aponte a câmera para o código abaixo e digite os 6 números que aparecerem.</li></ol>
+      ${cad?`<ol class="mfa-ol"><li>Instale no celular o <strong>Google Authenticator</strong> (Play Store ou App Store, gratuito).</li>
+        <li>No aplicativo, toque em <strong>+</strong> e em <strong>Ler código QR</strong>. Aponte para o código abaixo. Está no celular? Use o botão <strong>Abrir no aplicativo autenticador</strong>.</li><li>Digite os 6 números que aparecerem no aplicativo.</li></ol>
         <div class="mfa-qr">${M.qr?`<img src="${esc(M.qr)}" alt="QR Code para o aplicativo autenticador" width="200" height="200">`:M.erro?"":`<span class="meta">Gerando o QR Code…</span>`}</div>
-        ${sec?`<p class="meta">Não consegue ler o QR Code? No aplicativo, escolha digitar a chave e use: <strong class="mfa-sec">${esc(sec)}</strong></p>`:""}`
-      :`<p>Abra o aplicativo autenticador no seu celular e digite o código de 6 números do Portal Conecta Barenbrug.</p>`}
+        ${M.uri?`<div class="acoes" style="margin:0;justify-content:center"><a class="btn sec" href="${esc(M.uri)}">Abrir no aplicativo autenticador</a>${sec?`<button type="button" class="btn sec" data-a="mfa-copiar">Copiar a chave</button>`:""}</div>`:""}
+        ${sec?`<p class="meta">Chave para digitar no aplicativo, se preferir: <strong class="mfa-sec">${esc(sec)}</strong></p>`:""}`
+      :`<p>Abra o aplicativo autenticador no seu celular (Google ou Microsoft Authenticator) e digite o código de 6 números que aparece em "Portal Conecta Barenbrug".</p>`}
       <div><label for="mfa_cod">Código de 6 números</label><input id="mfa_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="000000"></div>
       ${M.erro?`<div class="erro" role="alert">${esc(M.erro)}</div>`:""}
       <button class="btn" type="submit" ${cad&&!M.qr?"disabled":""}>${cad?"Ativar e entrar":"Entrar"}</button>
-      <p class="dica">${cad?"O código muda a cada 30 segundos. Se trocar ou perder o celular, peça ao Marketing Barenbrug para resetar o autenticador.":"Trocou ou perdeu o celular? Peça ao Marketing Barenbrug para resetar o seu autenticador."}</p>
+      ${vMFAAjuda(cad)}
       <p class="dica"><button type="button" class="link" data-a="sair">Sair</button></p>
     </form></div>`;
 }
@@ -6941,6 +6968,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
+  if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="secao"){if(bloqueadoCurso()&&v!=="academia"&&v!=="mensagens"){aviso("Conclua o curso de Sabiá, Cayana e Carcará para liberar esta área.");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
@@ -7214,7 +7242,7 @@ document.addEventListener("submit",async ev=>{
     const cod=(f.querySelector("#mfa_cod").value||"").replace(/\D/g,"");if(cod.length!==6){S.mfa.erro="Digite os 6 números do aplicativo.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Verificando…";
     const {error}=await sbReal.auth.mfa.challengeAndVerify({factorId:S.mfa.fator,code:cod});
-    if(error){S.mfa.erro="Código inválido ou expirado. Confira o horário do celular e digite o código atual.";render();return;}
+    if(error){S.mfa.erros=(S.mfa.erros||0)+1;S.mfa.erro="Código inválido ou expirado. Na maioria das vezes é a hora do celular fora do horário oficial: veja abaixo como ligar a hora automática e tente com o código novo.";render();return;}
     const {data:{session}}=await sbReal.auth.getSession();S.mfa=null;iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();return;
   }
   if(f.id==="f-login"){
