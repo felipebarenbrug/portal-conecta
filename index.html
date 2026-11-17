@@ -1166,7 +1166,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117103920";
+const APP_VER="20261117105847";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6211,6 +6211,14 @@ function vAcoesGestao(){
   ${bloco("Realizadas",feitas,"Nenhuma ação concluída ainda.",feitaNaoPaga.length?`${feitaNaoPaga.length} realizadas ainda não estão como pagas: ${fmtK0(sumV(feitaNaoPaga))} que devem sair da verba.`:"")}
   <section class="bloco"><h2 class="sec">Por responsável</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Responsável</th><th class="val">Ações</th><th class="val">Realizadas</th><th class="val">Atrasadas</th><th class="val">Tarefas feitas</th><th class="val">Tarefas vencidas</th><th class="val">Valor</th></tr></thead><tbody>${Object.values(resp).sort((a,b)=>b.v-a.v).map(r=>`<tr><td>${esc(r.k)}</td><td class="val">${r.n}</td><td class="val">${r.feitas}</td><td class="val" style="${r.atr?"color:var(--vermelho);font-weight:700":""}">${r.atr}</td><td class="val">${r.tn?r.tf+" de "+r.tn:"—"}</td><td class="val" style="${r.tatr?"color:var(--vermelho);font-weight:700":""}">${r.tatr}</td><td class="val">${fmtK0(r.v)}</td></tr>`).join("")||`<tr><td colspan="7">Nenhuma ação.</td></tr>`}</tbody></table></div></section>`;
 }
+function mkBonifResumo(L){const R={rs:0,kg:0,n:0,cult:{},fin:{},acoes:[]};L.forEach(a=>{const it=mkSem(a);if(!it.length)return;R.n++;let rs=0,kg=0;it.forEach(i=>{const v=mkSemValor(i),k=Number(i.kg)||0;rs+=v;kg+=k;const c=R.cult[i.cult]||(R.cult[i.cult]={kg:0,rs:0});c.kg+=k;c.rs+=v;const f=/demonstrativa/i.test(i.fin||"")?"Plantio de área demonstrativa":"Bonificação (pagamento em produto)";const g=R.fin[f]||(R.fin[f]={kg:0,rs:0});g.kg+=k;g.rs+=v;});R.rs+=rs;R.kg+=kg;R.acoes.push({a,rs,kg});});R.acoes.sort((x,y)=>y.rs-x.rs);return R;}
+function vMkBonifSec(L){if(!S.precosOk&&!S._mkPrecoBusy){S._mkPrecoBusy=1;carregarPrecos().then(()=>render());}const B=mkBonifResumo(L);if(!B.n)return "";
+  const lin=o=>Object.entries(o).sort((x,y)=>y[1].rs-x[1].rs).map(([k,x])=>`<tr><td>${esc(k)}</td><td class="val">${isNum(x.kg)} kg</td><td class="val">${fmtK0(x.rs)}</td></tr>`).join("");
+  return `<section class="bloco"><h2 class="sec">Bonificação de produto · valor gerencial${inf("Soma das sementes lançadas como bonificação ou para área demonstrativa em todas as ações da safra (verba de Marketing e verba dos canais), a preço de tabela. É só para acompanhamento: não entra no comprometido nem tira do saldo da verba.")}</h2>
+    <p class="sub" style="margin:0">${fmtK0(B.rs)} em ${isNum(B.kg)} kg de sementes, em ${B.n} ${B.n===1?"ação":"ações"}. Não consome a verba disponível.</p>
+    <div class="dupla"><div style="min-width:0"><h3 class="pgd-h">Por cultivar</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Quantidade</th><th class="val">Valor</th></tr></thead><tbody>${lin(B.cult)}</tbody></table></div></div>
+      <div style="min-width:0"><h3 class="pgd-h">Por finalidade</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Quantidade</th><th class="val">Valor</th></tr></thead><tbody>${lin(B.fin)}</tbody></table></div></div></div>
+    <details class="lote"><summary>Ver as ${B.n} ${B.n===1?"ação":"ações"} com bonificação</summary><div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Status</th><th class="val">Quantidade</th><th class="val">Valor</th></tr></thead><tbody>${B.acoes.map(x=>`<tr><td><button class="link" data-a="mk-abrir" data-v="${x.a.id}" style="text-align:left">${esc(x.a.titulo)}</button></td><td>${esc(x.a.status||"")}</td><td class="val">${isNum(x.kg)} kg</td><td class="val">${fmtK0(x.rs)}</td></tr>`).join("")}</tbody><tfoot><tr><th colspan="2">Total</th><th class="val">${isNum(B.kg)} kg</th><th class="val">${fmtK0(B.rs)}</th></tr></tfoot></table></div></details></section>`;}
 function vAcoesPainel(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const V=mkVerbaTotal(),A=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)&&mkDaSafra(a)),ACAN=S.mk.filter(a=>mkConta(a)&&!mkVerbaMkt(a)&&mkDaSafra(a)),PROX=S.mk.filter(a=>mkConta(a)&&mkVerbaMkt(a)&&!mkDaSafra(a)&&mkSafraA(a)>mkSafra),SOL=S.mk.filter(a=>a.status==="Solicitada");
@@ -6234,10 +6242,11 @@ function vAcoesPainel(){
     <div class="metric"><span>Pago</span><strong>${fmtK0(vPag)}</strong><span class="meta">já saiu da verba</span></div>
     <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(vApr)}</strong><span class="meta">compromisso assumido</span></div>
     <div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong><span class="meta">reservado, ainda sem aprovação${(()=>{const ea=A.filter(a=>a.status==="Em análise");return ea.length?` · ${ea.length} em análise: ${fmtK0(ea.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}</span></div>
-    ${(()=>{const o={};A.forEach(x=>mkSem(x).forEach(i=>{o[i.cult]=(o[i.cult]||0)+(Number(i.kg)||0);}));const ks=Object.keys(o);return ks.length?`<div class="metric"><span>Sementes comprometidas</span><strong>${isNum(ks.reduce((t,k)=>t+o[k],0))} kg</strong><span class="meta">${ks.map(k=>k+" "+isNum(o[k])+" kg").join(" · ")} · ${fmtK0(A.reduce((t,x)=>t+mkSemTotal(x),0))} em produto, fora da verba em dinheiro</span></div>`:"";})()}
+    ${(()=>{const B=mkBonifResumo(S.mk.filter(a=>mkConta(a)&&mkDaSafra(a)));return B.rs?`<div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Bonificação de produto · gerencial</span><strong>${fmtK0(B.rs)}</strong><span class="meta">${isNum(B.kg)} kg em ${B.n} ${B.n===1?"ação":"ações"} · não sai da verba</span></div>`:"";})()}
     ${ACAN.length?`<div class="metric"><span>Com verba dos canais (Conecta)</span><strong>${fmtK0(ACAN.reduce((t,x)=>t+mkCusto(x),0))}</strong><span class="meta">${ACAN.length} ações pagas com IGDB ou bônus das revendas, fora da verba de Marketing</span></div>`:""}
     <div class="metric"><span>Saldo só com o aprovado</span><strong>${fmtK0(V-vPag-vApr)}</strong><span class="meta">verba menos pago e aprovado; com a provisão: ${fmtK0(saldo)}</span></div>
   </div>
+  ${vMkBonifSec(S.mk.filter(a=>mkConta(a)&&mkDaSafra(a)))}
   ${finBarra(V?comp/V:null,"da verba comprometida")}
   ${SOL.length?`<div class="nota-admin"><strong>${SOL.length} ${SOL.length===1?"solicitação aguarda":"solicitações aguardam"} sua análise</strong> · ${fmtK0(SOL.reduce((t,a)=>t+(Number(a.verba_pedida)||0),0))} de verba pedida, fora dos cenários até você aprovar. <button class="link" data-a="pag" data-v="acoes-solic">Ver solicitações</button></div>`:""}
   <section class="bloco"><h2 class="sec">Cenários da verba</h2><p class="sub" style="margin:0 0 8px">Paga: já debitada · Aprovada: a pagar · Provisionada: reservada, ainda não aprovada. Ações "Sem custo" não entram.</p>
