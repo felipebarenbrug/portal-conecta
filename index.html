@@ -1197,7 +1197,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117171952";
+const APP_VER="20261117172612";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1895,8 +1895,70 @@ function vISRfv(){
   ${rows.length>300?`<p class="dica">Mostrando 300 de ${rows.length}. Use os filtros.</p>`:""}</section>`;
 }
 
+/* ---------- Inside Sales: analise gerencial (breakeven) ---------- */
+const IS_GER_PAD={teto:.15,meta_kg:60000,plano_meta_kg:45000,plano_n:5,plano_be:1133531};
+function isGerCalc(){
+  const C=finCalc(),P=C.P,G={...IS_GER_PAD,...(P.is_ger||{})};const mesHoje=C.hoje.slice(0,7);
+  const nomes=(P.is_nomes&&P.is_nomes.length?P.is_nomes:C.iss.map(x=>x.nome));
+  const L=nomes.map(nome=>{const a=C.iss.find(x=>finNorm(x.nome)===finNorm(nome))||{nome,rs:0,hib:0,conv:0,com:0,kgHib:0,fatRs:0,n:0};
+    const mesesAj=FIN_MESES.filter(k=>finAjudaMes(P,k,nome)>0);const ini=mesesAj[0]||null;
+    const ajSafra=FIN_MESES.reduce((t,k)=>t+finAjudaMes(P,k,nome),0),ajAte=FIN_MESES.filter(k=>k<=mesHoje).reduce((t,k)=>t+finAjudaMes(P,k,nome),0);
+    const mesesAte=mesesAj.filter(k=>k<=mesHoje).length;
+    const taxa=a.rs>0?a.com/a.rs:(Number(P.is_hib)||.06);const marg=G.teto-taxa;
+    const beSafra=marg>0?ajSafra/marg:Infinity,beAte=marg>0?ajAte/marg:Infinity;
+    const custo=ajAte+a.com,custoPct=a.rs>0?custo/a.rs:null;
+    return {nome,ini,mesesAj:mesesAj.length,mesesAte,ajSafra,ajAte,rs:a.rs,fatRs:a.fatRs,kgHib:a.kgHib,hib:a.hib,com:a.com,n:a.n,taxa,beSafra,beAte,custo,custoPct,paga:a.rs>=beAte&&ajAte>0||(ajAte===0&&a.rs>0),pctAte:beAte>0&&isFinite(beAte)?a.rs/beAte:null,pctSafra:beSafra>0&&isFinite(beSafra)?a.rs/beSafra:null};});
+  const T=L.reduce((t,x)=>{["ajSafra","ajAte","rs","fatRs","kgHib","hib","com","beSafra","beAte","custo","n"].forEach(k=>t[k]+=x[k]);return t;},{ajSafra:0,ajAte:0,rs:0,fatRs:0,kgHib:0,hib:0,com:0,beSafra:0,beAte:0,custo:0,n:0});
+  T.custoPct=T.rs?T.custo/T.rs:null;T.pxH=T.kgHib?T.hib/T.kgHib:0;T.metaRs=G.meta_kg*T.pxH;
+  return {C,P,G,L,T,mesHoje};
+}
+function vISGer(){
+  if(!ehFin())return `<div class="vazio">Área restrita aos administradores e ao Financeiro.</div>`;
+  if(!S.fin)return `<div class="carregando">Carregando os números do Financeiro…</div>`;
+  if(S.fin.erro)return `<div class="vazio">Não foi possível carregar os números agora.</div>`;
+  const {G,L,T,mesHoje}=isGerCalc();const pc=x=>x==null||!isFinite(x)?"—":pctTxt(x);
+  const mx=Math.max(1,...L.map(x=>Math.max(x.rs,isFinite(x.beSafra)?x.beSafra:0)));
+  const barra=x=>`<div style="position:relative;height:14px;border-radius:7px;background:#eef1f3;overflow:visible;margin:6px 0 2px">
+     <i style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(100,x.rs/mx*100)}%;border-radius:7px;background:${x.paga?"#2E8B57":"#E0A800"}"></i>
+     ${isFinite(x.beAte)&&x.beAte>0?`<b title="Breakeven até hoje" style="position:absolute;top:-4px;bottom:-4px;width:2px;background:#1a1a1a;left:${Math.min(100,x.beAte/mx*100)}%"></b>`:""}
+     ${isFinite(x.beSafra)?`<b title="Breakeven da safra" style="position:absolute;top:-4px;bottom:-4px;width:2px;background:#c0392b;left:${Math.min(100,x.beSafra/mx*100)}%"></b>`:""}</div>`;
+  const card=x=>`<div class="raci-pc" style="cursor:default"><div style="display:flex;justify-content:space-between;gap:6px;align-items:baseline"><strong>${esc(x.nome)}</strong>${x.ajAte===0&&!x.rs?stTag("sem custo ainda","cinza"):x.paga?stTag("se pagando","verde"):stTag("abaixo do breakeven","amarelo")}</div>
+     <span class="meta">${x.ini?`desde ${finMesNome(x.ini)} · ${x.mesesAte} ${x.mesesAte===1?"mês":"meses"} na safra até agora`:"sem ajuda de custo na safra"}</span>
+     ${barra(x)}
+     <span class="meta">Vendido <strong>${fmtK0(x.rs)}</strong> · breakeven até hoje ${isFinite(x.beAte)?fmtK0(x.beAte):"—"} · da safra ${isFinite(x.beSafra)?fmtK0(x.beSafra):"—"}</span>
+     <span class="meta">Custo (ajuda + comissão) = <strong style="color:${x.custoPct!=null&&x.custoPct<=G.teto?"#2E8B57":"var(--vermelho)"}">${pc(x.custoPct)}</strong> do vendido, frente ao teto de ${pc(G.teto)} do RC de campo</span></div>`;
+  const rows=L.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${x.ini?"desde "+finMesNome(x.ini):"—"}</span></td><td class="val">${fmtK0(x.rs)}<br><span class="meta">${fmtKg(Math.round(x.kgHib))} híbr.</span></td><td class="val">${fmtK0(x.fatRs)}</td><td class="val">${pc(T.rs?x.rs/T.rs:null)}</td><td class="val">${fmtK0(x.com)}<br><span class="meta">${pc(x.taxa)} efetiva</span></td><td class="val">${fmtK0(x.ajAte)}<br><span class="meta">safra ${fmtK0(x.ajSafra)}</span></td><td class="val"><strong>${pc(x.custoPct)}</strong></td><td class="val">${isFinite(x.beAte)?fmtK0(x.beAte):"—"}<br><span class="meta">${pc(x.pctAte)} atingido</span></td><td class="val">${isFinite(x.beSafra)?fmtK0(x.beSafra):"—"}<br><span class="meta">${pc(x.pctSafra)} atingido</span></td></tr>`).join("");
+  const ativas=L.filter(x=>x.ajSafra>0).length,pagando=L.filter(x=>x.paga&&x.ajAte>0).length;
+  const adm=ehAdmin();
+  return `<div><h1 class="titulo">Inside Sales · análise gerencial</h1><p class="sub">Cada vendedora se paga? O custo do Inside Sales (ajuda de custo + comissão) comparado ao teto de ${pc(G.teto)} pago a um RC de campo. Breakeven é o quanto ela precisa vender para o custo dela ficar igual a esse teto: abaixo dele o canal custa mais que um RC; acima, custa menos. Vendas ganhas no CRM na safra 26/27, até ${finMesNome(mesHoje)}.</p></div>
+  <div class="metrics">
+    <div class="metric"><span>Vendido pelo time</span><strong>${fmtK0(T.rs)}</strong><span class="meta">${fmtKg(Math.round(T.kgHib))} de híbridos · faturado ${fmtK0(T.fatRs)}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px ${T.custoPct!=null&&T.custoPct<=G.teto?"#2E8B57":"var(--vermelho)"}"><span>Custo do time sobre o vendido${inf("Ajuda de custo paga até este mês mais a comissão sobre tudo o que foi vendido, dividido pelo vendido.")}</span><strong>${pc(T.custoPct)}</strong><span class="meta">${fmtK0(T.custo)} · teto do RC de campo ${pc(G.teto)}</span></div>
+    <div class="metric"><span>Breakeven do time até hoje</span><strong>${fmtK0(T.beAte)}</strong><span class="meta">${pagando} de ${ativas} vendedoras já se pagam</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Breakeven do time na safra</span><strong>${fmtK0(T.beSafra)}</strong><span class="meta">${pc(T.beSafra?T.rs/T.beSafra:null)} já vendido</span></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Planejado x realizado${inf("Plano apresentado em agosto de 2026: time de 5 vendedoras, meta de 45 t de híbridos e breakeven do time de R$ 1.133.531 na safra. Os parâmetros atuais podem ser ajustados pelo administrador.")}</h2>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Plano de agosto</th><th class="val">Hoje</th></tr></thead><tbody>
+      <tr><td>Vendedoras com ajuda de custo na safra</td><td class="val">${G.plano_n}</td><td class="val">${ativas}</td></tr>
+      <tr><td>Meta de híbridos</td><td class="val">${fmtKg(G.plano_meta_kg)}</td><td class="val">${fmtKg(G.meta_kg)}<br><span class="meta">vendido ${fmtKg(Math.round(T.kgHib))} · ${pc(G.meta_kg?T.kgHib/G.meta_kg:null)}</span></td></tr>
+      <tr><td>Breakeven do time na safra</td><td class="val">${fmtK0(G.plano_be)}</td><td class="val">${fmtK0(T.beSafra)}</td></tr>
+      <tr><td>Meta de híbridos em R$ frente ao breakeven</td><td class="val">${pc(G.plano_be?G.plano_meta_kg*30.85/G.plano_be:null)}<br><span class="meta">a R$ 30,85/kg</span></td><td class="val">${pc(T.beSafra?T.metaRs/T.beSafra:null)}<br><span class="meta">a ${fmtK0(T.pxH)}/kg, preço médio vendido</span></td></tr>
+    </tbody></table></div>
+    ${adm?(S.isGerEd?`<form id="f-isger" class="form-card" style="margin-top:10px"><strong>Parâmetros da análise</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
+      <div><label for="ig_teto">Teto do RC de campo (%)</label><input id="ig_teto" inputmode="decimal" value="${(G.teto*100).toLocaleString("pt-BR")}"></div>
+      <div><label for="ig_meta">Meta de híbridos hoje (kg)</label><input id="ig_meta" inputmode="numeric" value="${G.meta_kg}"></div>
+      <div><label for="ig_pn">Vendedoras no plano</label><input id="ig_pn" inputmode="numeric" value="${G.plano_n}"></div>
+      <div><label for="ig_pm">Meta no plano (kg)</label><input id="ig_pm" inputmode="numeric" value="${G.plano_meta_kg}"></div>
+      <div><label for="ig_pb">Breakeven no plano (R$)</label><input id="ig_pb" inputmode="numeric" value="${G.plano_be}"></div></div>
+      <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="isger-ed">Cancelar</button></div></form>`:`<div class="acoes" style="margin-top:8px"><button class="btn sec" data-a="isger-ed">Ajustar parâmetros</button><span class="meta">A ajuda de custo de cada vendedora e as comissões vêm das premissas do Marketing + Financeiro.</span></div>`):""}</section>
+  <section class="bloco"><h2 class="sec">Por vendedora${inf("Barra: vendido na safra. Traço preto: breakeven até hoje (ajuda de custo paga até este mês). Traço vermelho: breakeven da safra inteira. Verde: já se paga; amarelo: ainda abaixo do breakeven até hoje.")}</h2>
+    <div class="raci-p" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${L.map(card).join("")}</div>
+    <div class="tab" style="margin-top:12px"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th><th class="val">Vendido</th><th class="val">Faturado</th><th class="val">Participação no time</th><th class="val">Comissão</th><th class="val">Ajuda de custo até hoje</th><th class="val">Custo sobre o vendido</th><th class="val">Breakeven até hoje</th><th class="val">Breakeven da safra</th></tr></thead><tbody>${rows}
+      <tr><td><strong>Time</strong></td><td class="val"><strong>${fmtK0(T.rs)}</strong></td><td class="val">${fmtK0(T.fatRs)}</td><td class="val">100%</td><td class="val">${fmtK0(T.com)}</td><td class="val">${fmtK0(T.ajAte)}<br><span class="meta">safra ${fmtK0(T.ajSafra)}</span></td><td class="val"><strong>${pc(T.custoPct)}</strong></td><td class="val">${fmtK0(T.beAte)}</td><td class="val">${fmtK0(T.beSafra)}</td></tr></tbody></table></div>
+    <p class="precos-nota">Breakeven = ajuda de custo ÷ (teto de ${pc(G.teto)} − taxa de comissão efetiva da vendedora). Até hoje usa a ajuda paga até ${finMesNome(mesHoje)}; da safra usa a ajuda prevista até jun/27. A ajuda da Laura inclui a supervisão do time a partir de nov/26. Vendido = pedidos ganhos no CRM com faturamento na safra; faturado = só os já faturados.</p></section>`;
+}
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -5759,7 +5821,7 @@ function finCalc(){
       let cv=0;for(const k of ["inc","nua","temp"]){cv+=x.cat[k]*RP.conv[k][x.canal?1:0];a.conv+=x.cat[k];}
       a.n++;a.rs+=x.rs;a.kgHib+=x.kgHib;if(x.canal)a.hibC+=x.cat.hib;else a.hibP+=x.cat.hib;a.convCom+=cv;if(x.fat)a.fatRs+=x.rs;
       x.comRC=a.cons?x.rs*RP.cons:x.cat.hib*(x.canal?RP.tiers[0].rc:RP.tiers[0].rp)+cv;}
-    if(x.isN){const a=IS[x.isN]||(IS[x.isN]={nome:x.isN,n:0,rs:0,hib:0,conv:0,com:0,fatCom:0});
+    if(x.isN){const a=IS[x.isN]||(IS[x.isN]={nome:x.isN,n:0,rs:0,hib:0,conv:0,com:0,fatCom:0,kgHib:0,fatRs:0});a.kgHib+=x.kgHib;if(x.fat)a.fatRs+=x.rs;
       const h=x.cat.hib,c=x.cat.inc+x.cat.nua+x.cat.temp;x.comIS=h*(Number(P.is_hib)||0)+c*(Number(P.is_conv)||0);
       a.n++;a.rs+=x.rs;a.hib+=h;a.conv+=c;a.com+=x.comIS;if(x.fat)a.fatCom+=x.comIS;}
   }
@@ -7286,7 +7348,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -7361,6 +7423,7 @@ function renderApp(){
   }
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
@@ -7518,6 +7581,7 @@ document.addEventListener("click",async ev=>{
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
+  if(a==="isger-ed"){if(!ehAdmin())return;S.isGerEd=!S.isGerEd;render();return;}
   if(a==="raci-f"){const F=S.raciF||(S.raciF={area:"",p:""});const i=v.indexOf(":");const k=v.slice(0,i),val=v.slice(i+1);F[k]=F[k]===val&&k==="area"?"":val;render();return;}
   if(a==="prog-ir"){if(v==="perfil-campo"){const el=document.getElementById("prog-dados");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
     const [sc,pg]=v.split("|");if(sc==="academia"){S.secao="academia";S.pag="trilha";}else{S.secao=sc;S.pag=pg;}S.res=null;render();window.scrollTo(0,0);return;}
@@ -7940,6 +8004,9 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
+  if(f.id==="f-isger"){if(!ehAdmin()||!S.fin)return;const P0=S.fin.premissas||{};const n=id=>rvvNum(f.querySelector(id).value);
+    const g={teto:n("#ig_teto")/100,meta_kg:n("#ig_meta"),plano_n:n("#ig_pn"),plano_meta_kg:n("#ig_pm"),plano_be:n("#ig_pb")};if(!(g.teto>0&&g.teto<1)){aviso("Teto entre 0 e 100%.");return;}
+    const dados={...P0,is_ger:g};const {error}=await sb.from("fin_premissas").update({dados}).eq("id",1);if(error){aviso("Não foi possível salvar.");return;}S.fin.premissas=dados;S.finC=null;S.isGerEd=false;render();aviso("Parâmetros salvos.");return;}
   if(f.id==="f-rvv-ed"){if(!ehMaster())return;const id=f.dataset.v,r=(S.rvv||{})[id];if(!r)return;const c=(S.canaisAll||S.canais||[]).find(x=>x.id===id)||{};const d=JSON.parse(JSON.stringify(r.dados));const val=k=>{const el=f.querySelector("#rve_"+k);return el?rvvNum(el.value):0;};
     RVV_ED.forEach(([,L])=>L.forEach(([k])=>{d.v[k]=val(k);}));const v=d.v;
     if(v.pag_rs_h>v.fat_rs_h+.005||v.pag_rs_c>v.fat_rs_c+.005||v.pag_kg_h>v.fat_kg_h+.005||v.pag_kg_c>v.fat_kg_c+.005){aviso("O pago não pode ser maior que o faturado.");return;}
