@@ -1197,7 +1197,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117172612";
+const APP_VER="20261117181128";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1957,8 +1957,123 @@ function vISGer(){
       <tr><td><strong>Time</strong></td><td class="val"><strong>${fmtK0(T.rs)}</strong></td><td class="val">${fmtK0(T.fatRs)}</td><td class="val">100%</td><td class="val">${fmtK0(T.com)}</td><td class="val">${fmtK0(T.ajAte)}<br><span class="meta">safra ${fmtK0(T.ajSafra)}</span></td><td class="val"><strong>${pc(T.custoPct)}</strong></td><td class="val">${fmtK0(T.beAte)}</td><td class="val">${fmtK0(T.beSafra)}</td></tr></tbody></table></div>
     <p class="precos-nota">Breakeven = ajuda de custo ÷ (teto de ${pc(G.teto)} − taxa de comissão efetiva da vendedora). Até hoje usa a ajuda paga até ${finMesNome(mesHoje)}; da safra usa a ajuda prevista até jun/27. A ajuda da Laura inclui a supervisão do time a partir de nov/26. Vendido = pedidos ganhos no CRM com faturamento na safra; faturado = só os já faturados.</p></section>`;
 }
+/* ---------- regioes do Projeto Pioneiros (a confirmar com o consultor) ---------- */
+const REG_P=[["Sul",["SP","MS","PR","SC","RS"]],["Centro",["RO","MT","GO","DF","MG","ES","RJ"]],["Nordeste",["MA","PI","CE","RN","PB","PE","AL","SE","BA"]],["Norte",["AC","AM","RR","AP","PA","TO"]]];
+const regDe=uf=>{const u=String(uf||"").toUpperCase();const r=REG_P.find(([,L])=>L.includes(u));return r?r[0]:(u==="EX"?"Exportação":"Sem estado");};
+const regChips=()=>`<div class="rv-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px">${[["","Todas as regiões"],...REG_P.map(([r])=>[r,r])].map(([k,t])=>`<button class="chip" data-a="reg-f" data-v="${esc(k)}" aria-pressed="${(S.regF||"")===k}">${esc(t)}</button>`).join("")}<span class="meta" style="align-self:center">${inf("Regiões do Projeto Pioneiros: Sul (SP, MS, PR, SC, RS), Centro (RO, MT, GO, DF, MG, ES, RJ), Nordeste (MA, PI, CE, RN, PB, PE, AL, SE, BA) e Norte (AC, AM, RR, AP, PA, TO). Divisão lida no mapa do projeto, a confirmar com o consultor.")}</span></div>`;
+async function carregarISHist(){if(S.ihBusy)return;S.ihBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","is_hist").maybeSingle();S.isHist=data?data.dados:null;}catch(e){S.isHist=null;}S.ihBusy=false;render();}
+function vISHist(){
+  if(S.isHist===undefined){carregarISHist();return `<div class="carregando">Carregando o histórico…</div>`;}
+  if(S.isMapa===undefined){carregarISMapa();return `<div class="carregando">Carregando vendas do CRM…</div>`;}
+  const H=S.isHist;if(!H)return `<div class="vazio">Histórico não disponível para o seu perfil.</div>`;const N=x=>Number(x)||0;
+  const A=(S.isMapa||[]).filter(r=>r.st==="V"&&!r.exp&&r.uf!=="EX");const IS=A.filter(r=>r.dono==="Inside Sales");
+  const T=(S.isp&&S.isp["Time"]&&S.isp["Time"].dados)||{};const ltv=T.ltv||{};
+  const kgIS=IS.reduce((t,r)=>t+N(r.kg_h),0),rsIS=IS.reduce((t,r)=>t+N(r.rs),0);
+  const b2c=A.filter(r=>r.seg==="B2C"),b2cIS=b2c.filter(r=>r.dono==="Inside Sales");const kgB2C=b2c.reduce((t,r)=>t+N(r.kg_h),0),kgB2CIS=b2cIS.reduce((t,r)=>t+N(r.kg_h),0);
+  const veTudo=A.some(r=>r.dono!=="Inside Sales");const share=veTudo&&kgB2C?kgB2CIS/kgB2C:null;
+  const atual={s:"26/27",rs:rsIS,clientes:(ltv.s26||{}).clientes||null,kg_h:kgIS,share,atual:true,nota:"Safra em andamento, vendas ganhas no CRM até hoje"};
+  const L=[...(H.safras||[]),atual];const mx=Math.max(1,...L.map(x=>N(x.rs)));
+  const cres=(a,b)=>N(a)&&N(b)?(N(b)/N(a)-1):null;
+  const bars=L.map((x,i)=>{const h=Math.max(4,N(x.rs)/mx*180);const g=i?cres(L[i-1].rs,x.rs):null;return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0;flex:1"><span class="meta" style="font-weight:700;color:var(--azul-escuro,#00557f)">${fmtK0(x.rs)}</span>${g!=null?`<span class="meta">${g>=0?"+":""}${pctTxt(g)}${x.atual?" parcial":""}</span>`:`<span class="meta">&nbsp;</span>`}<div style="width:100%;max-width:90px;height:${h}px;border-radius:8px 8px 0 0;background:${x.atual?"repeating-linear-gradient(45deg,#00A8E1,#00A8E1 8px,#33bbe8 8px,#33bbe8 16px)":"#00557f"}"></div><strong>${esc(x.s)}</strong><span class="meta">${x.atual?"até hoje":""}</span></div>`;}).join("");
+  return `<div><h1 class="titulo">Inside Sales · evolução</h1><p class="sub">Como o canal cresceu safra a safra desde que começou a vender, e quanto ele representa hoje da venda de híbridos ao produtor (B2C) da Barenbrug.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Participação nos híbridos B2C${inf("Quilos de híbridos vendidos pelo Inside Sales ao produtor (segmento B2C no CRM) divididos por todos os híbridos B2C vendidos pela Barenbrug na safra 26/27, sem exportação.")}</span><strong>${share!=null?pctTxt(share):"—"}</strong><span class="meta">${share!=null?`${fmtKg(Math.round(kgB2CIS))} de ${fmtKg(Math.round(kgB2C))} na safra 26/27`:"visível para administradores"}</span></div>
+    <div class="metric"><span>Híbridos vendidos na safra 26/27</span><strong>${fmtKg(Math.round(kgIS))}</strong><span class="meta">${pctTxt(H.meta_2627_kg?kgIS/H.meta_2627_kg:0)} da meta de ${fmtKg(H.meta_2627_kg)} · 25/26 inteira: ${fmtKg(N((H.safras||[]).slice(-1)[0]?.kg_h))}</span></div>
+    <div class="metric"><span>Valor vendido na safra 26/27</span><strong>${fmtK0(rsIS)}</strong><span class="meta">${pctTxt((rsIS/(N((H.safras||[]).slice(-1)[0]?.rs)||1)))} do valor da safra 25/26 inteira</span></div>
+    <div class="metric"><span>Na safra 25/26</span><strong>${pctTxt(N((H.safras||[]).slice(-1)[0]?.share))}</strong><span class="meta">${esc((H.safras||[]).slice(-1)[0]?.share_txt||"")}</span></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Valor vendido por safra</h2>
+    <div style="display:flex;gap:12px;align-items:flex-end;height:260px;padding:8px 4px 0;border-bottom:2px solid var(--linha,#e3e8ec)">${bars}</div>
+    <div class="tab" style="margin-top:12px"><table class="sim-t"><thead><tr><th>Safra</th><th class="val">Valor vendido</th><th class="val">Crescimento</th><th class="val">Clientes</th><th class="val">Híbridos</th><th class="val">Participação</th><th>Leitura</th></tr></thead><tbody>${L.map((x,i)=>`<tr><td><strong>${esc(x.s)}</strong></td><td class="val">${fmtK0(x.rs)}</td><td class="val">${i&&cres(L[i-1].rs,x.rs)!=null?pctTxt(cres(L[i-1].rs,x.rs))+(x.atual?" (parcial)":""):"—"}</td><td class="val">${x.clientes||"—"}</td><td class="val">${x.kg_h?fmtKg(Math.round(x.kg_h)):"—"}</td><td class="val">${x.share!=null?pctTxt(x.share):"—"}${x.atual&&x.share!=null?'<br><span class="meta">dos híbridos B2C</span>':x.share!=null?'<br><span class="meta">da venda direta</span>':""}</td><td style="white-space:normal;min-width:180px"><span class="meta">${esc(x.nota||"")}</span></td></tr>`).join("")}</tbody></table></div>
+    <p class="precos-nota">${esc(H.fonte||"")} A participação de 25/26 é sobre a venda direta de híbridos (ERP); a de 26/27 é sobre os híbridos B2C no CRM. As safras contam pela data de faturamento.</p></section>`;
+}
+async function carregarISMapa(){if(S.isMapaBusy)return;S.isMapaBusy=true;try{const {data}=await sb.from("crm_mapa").select("dono,resp,uf,st,kg_h,kg_c,rs,fat,exp,seg").limit(5000);S.isMapa=data||[];}catch(e){S.isMapa=[];}S.isMapaBusy=false;render();}
+function vISReg(){
+  if(S.isMapa===undefined){carregarISMapa();return `<div class="carregando">Carregando vendas do CRM…</div>`;}
+  const A=S.isMapa||[],IS=A.filter(r=>r.dono==="Inside Sales"),V=IS.filter(r=>r.st==="V"),AB=IS.filter(r=>r.st==="A");const F=S.regF||"";const N=x=>Number(x)||0;
+  const tot=V.reduce((t,r)=>t+N(r.kg_h),0),totRs=V.reduce((t,r)=>t+N(r.rs),0);
+  const adm=ehAdmin();const BR=adm?A.filter(r=>r.st==="V"&&r.uf!=="EX"&&!r.exp):[];
+  const cards=REG_P.map(([reg])=>{const v=V.filter(r=>regDe(r.uf)===reg),a=AB.filter(r=>regDe(r.uf)===reg);const kg=v.reduce((t,r)=>t+N(r.kg_h),0),rs=v.reduce((t,r)=>t+N(r.rs),0),akg=a.reduce((t,r)=>t+N(r.kg_h),0);
+    const br=BR.filter(r=>regDe(r.uf)===reg).reduce((t,r)=>t+N(r.kg_h),0);
+    return `<button class="raci-pc ${F===reg?"sel":""}" data-a="reg-f" data-v="${F===reg?"":reg}"><strong>${reg}</strong><span class="meta">${v.length} vendas · ${pctTxt(tot?kg/tot:0)} dos híbridos do Inside Sales</span>
+      <span style="font-size:22px;font-weight:800">${fmtKg(Math.round(kg))}</span><span class="meta">de híbridos · ${fmtK0(rs)}</span>
+      <div class="raci-st"><i style="width:${tot?kg/tot*100:0}%;background:#00557f"></i></div>
+      <span class="meta">Funil aberto: ${fmtKg(Math.round(akg))} de híbridos em ${a.length} negociações${adm&&br?` · ${pctTxt(kg/br)} dos híbridos vendidos pela Barenbrug na região (CRM)`:""}</span></button>`;}).join("");
+  const sel=F?V.filter(r=>regDe(r.uf)===F):V,selA=F?AB.filter(r=>regDe(r.uf)===F):AB;
+  const porUF={};sel.forEach(r=>{const k=r.uf||"—";const o=porUF[k]||(porUF[k]={uf:k,n:0,kg:0,rs:0,akg:0});o.n++;o.kg+=N(r.kg_h);o.rs+=N(r.rs);});selA.forEach(r=>{const k=r.uf||"—";const o=porUF[k]||(porUF[k]={uf:k,n:0,kg:0,rs:0,akg:0});o.akg+=N(r.kg_h);});
+  const UF=Object.values(porUF).sort((a,b)=>b.kg-a.kg||b.rs-a.rs);
+  const pes=[...new Set(V.map(r=>r.resp||"—"))].sort();
+  const regs=F?[F]:REG_P.map(x=>x[0]);
+  const mat=pes.map(p=>`<tr><td><strong>${esc(p)}</strong></td>${regs.map(reg=>{const kg=V.filter(r=>(r.resp||"—")===p&&regDe(r.uf)===reg).reduce((t,r)=>t+N(r.kg_h),0);return `<td class="val">${kg?fmtKg(Math.round(kg)):"—"}</td>`;}).join("")}<td class="val"><strong>${fmtKg(Math.round(V.filter(r=>(r.resp||"—")===p&&(!F||regDe(r.uf)===F)).reduce((t,r)=>t+N(r.kg_h),0)))}</strong></td></tr>`).join("");
+  return `<div><h1 class="titulo">Inside Sales · regiões</h1><p class="sub">Quanto o Inside Sales vende em cada uma das 4 regiões do projeto: vendas ganhas no CRM na safra 26/27 (${V.length} vendas, ${fmtKg(Math.round(tot))} de híbridos, ${fmtK0(totRs)}) e o funil em aberto.</p></div>
+  ${regChips()}
+  <div class="raci-p" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">${cards}</div>
+  <section class="bloco"><h2 class="sec">${F?esc(F)+" · por estado":"Por estado"}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th>Região</th><th class="val">Vendas</th><th class="val">Híbridos vendidos</th><th class="val">Valor</th><th class="val">Funil aberto (híbridos)</th></tr></thead><tbody>${UF.map(o=>`<tr><td><strong>${esc(o.uf)}</strong></td><td>${esc(regDe(o.uf))}</td><td class="val">${o.n}</td><td class="val">${fmtKg(Math.round(o.kg))}</td><td class="val">${fmtK0(o.rs)}</td><td class="val">${o.akg?fmtKg(Math.round(o.akg)):"—"}</td></tr>`).join("")||`<tr><td colspan="6">Sem vendas na região.</td></tr>`}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Por vendedora e região${inf("Quilos de híbridos vendidos por cada pessoa do Inside Sales em cada região.")}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Vendedora</th>${regs.map(r=>`<th class="val">${esc(r)}</th>`).join("")}<th class="val">Total</th></tr></thead><tbody>${mat}</tbody></table></div>
+  <p class="precos-nota">Vendas ganhas no CRM com faturamento na safra 26/27, pelo estado do cliente. A divisão das regiões é a do mapa do Projeto Pioneiros (a confirmar).</p></section>`;
+}
+async function carregarPlanoGD(){if(S.gdBusy)return;S.gdBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","plano_gd").maybeSingle();S.planoGD=data?data.dados:null;}catch(e){S.planoGD=null;}S.gdBusy=false;render();}
+function vISGD(){
+  if(S.planoGD===undefined){carregarPlanoGD();return `<div class="carregando">Carregando o plano…</div>`;}
+  if(S.isMapa===undefined)carregarISMapa();
+  const D=S.planoGD;if(!D)return `<div class="vazio">Plano não disponível para o seu perfil.</div>`;
+  const F=S.regF||"";const N=x=>Number(x)||0;
+  const AC=(D.acoes||[]).map(a=>({rtv:a[0],acao:a[1],tipo:a[2],uf:a[3],custo:N(a[4]),fonte:a[5]||"",reg:regDe(a[3])}));
+  const L=F?AC.filter(a=>a.reg===F):AC;const totPlano=AC.reduce((t,a)=>t+a.custo,0);
+  const verbaMkt=(D.verbas||[]).reduce((t,v)=>t+N(v.valor),0);
+  // maquina digital
+  const T=(S.isp&&S.isp["Time"]&&S.isp["Time"].dados)||{};const M=T.mql||{};const meses=Object.keys(M).filter(k=>k>="2026-07").sort();
+  const sm=k=>meses.reduce((t,m)=>t+N((M[m]||{})[k]),0);const rec=sm("rec"),qual=sm("qual"),sql=sm("sql_lig"),ven=sm("venda"),vkg=sm("vkg"),vrs=sm("vrs");
+  const MN=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
+  // plano por regiao
+  const porReg=REG_P.map(([r])=>{const x=AC.filter(a=>a.reg===r);return {r,n:x.length,c:x.reduce((t,a)=>t+a.custo,0)};});const semUF=AC.filter(a=>a.reg==="Sem estado");
+  const IS=(S.isMapa||[]).filter(r=>r.dono==="Inside Sales"&&r.st==="V");const isKg=r=>IS.filter(x=>regDe(x.uf)===r).reduce((t,x)=>t+N(x.kg_h),0);
+  const tipos={};L.forEach(a=>{const o=tipos[a.tipo||"Outro"]||(tipos[a.tipo||"Outro"]={n:0,c:0});o.n++;o.c+=a.custo;});
+  const rtvs={};L.forEach(a=>{const o=rtvs[a.rtv]||(rtvs[a.rtv]={n:0,c:0,z:0,ufs:new Set()});o.n++;o.c+=a.custo;if(!a.custo)o.z++;if(a.uf)o.ufs.add(a.uf);});
+  const fontes={};L.forEach(a=>{const k=(D.fontes||{})[a.fonte]||"Sem fonte";fontes[k]=(fontes[k]||0)+a.custo;});
+  const mxR=Math.max(1,...porReg.map(x=>x.c));
+  return `<div><h1 class="titulo">Plano de geração de demanda</h1><p class="sub">Como a Barenbrug gera demanda na safra 26/27: a verba do Marketing, a máquina digital que abastece o Inside Sales e o plano de campo dos RTVs, região por região.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Plano de geração de demanda aprovado</span><strong>${fmtK0(D.plano_aprovado)}</strong><span class="meta">safra 26/27, fora da verba operacional do Marketing</span></div>
+    <div class="metric"><span>Verba do Marketing</span><strong>${fmtK0(verbaMkt)}</strong><span class="meta">${(D.verbas||[]).map(v=>`${esc(v.conta)} ${esc(v.nome)} ${fmtK0(v.valor)}`).join(" · ")}</span></div>
+    <div class="metric"><span>Verba regional</span><strong>${fmtK0((D.regional||{}).valor)}</strong><span class="meta">${N((D.regional||{}).projetos)} projetos · ${esc((D.regional||{}).regra||"")}</span></div>
+    <div class="metric"><span>Plano de campo dos RTVs</span><strong>${fmtK0(totPlano)}</strong><span class="meta">${AC.length} ações submetidas por ${Object.keys(AC.reduce((o,a)=>(o[a.rtv]=1,o),{})).length} RTVs</span></div>
+  </div>
+  <section class="bloco"><h2 class="sec">Máquina digital do Inside Sales${inf("Leads que chegam pela mídia digital e pelo site (MQL), qualificados e trabalhados pelo Inside Sales até a venda. Safra 26/27, pelo mês de entrada do lead.")}</h2>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <div class="metric"><span>Leads recebidos</span><strong>${rec.toLocaleString("pt-BR")}</strong><span class="meta">desde jul/26</span></div>
+      <div class="metric"><span>Qualificados</span><strong>${qual.toLocaleString("pt-BR")}</strong><span class="meta">${pctTxt(rec?qual/rec:0)} dos leads</span></div>
+      <div class="metric"><span>Viraram negociação</span><strong>${sql.toLocaleString("pt-BR")}</strong><span class="meta">${pctTxt(rec?sql/rec:0)} dos leads</span></div>
+      <div class="metric"><span>Vendas</span><strong>${ven.toLocaleString("pt-BR")}</strong><span class="meta">${fmtKg(Math.round(vkg))} de híbridos · ${fmtK0(vrs)}</span></div>
+    </div>
+    ${meses.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Mês do lead</th><th class="val">Leads</th><th class="val">Qualificados</th><th class="val">Negociações</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Valor</th></tr></thead><tbody>${meses.map(m=>{const x=M[m]||{};return `<tr><td>${MN(m)}</td><td class="val">${N(x.rec)}</td><td class="val">${N(x.qual)}</td><td class="val">${N(x.sql_lig)}</td><td class="val">${N(x.venda)}</td><td class="val">${fmtKg(Math.round(N(x.vkg)))}</td><td class="val">${fmtK0(x.vrs)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
+    <p class="meta" style="margin:6px 0 0">Mídia digital da conta 1119: ${fmtK0(((D.verbas||[]).find(v=>v.conta==="1119")||{itens:[]}).itens.find(i=>/digital/i.test(i[0]))?.[1]||0)} na safra. Custo por lead e por venda na aba Retorno da mídia.</p></section>
+  <section class="bloco"><h2 class="sec">Plano de campo por região${inf("Ações de geração de demanda submetidas pelos RTVs no plano 26/27 (versão 2, jun/26), pela UF de cada ação, comparadas com os híbridos que o Inside Sales já vendeu na região.")}</h2>
+    ${regChips()}
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Região</th><th class="val">Ações</th><th class="val">Investimento planejado</th><th style="min-width:120px"></th><th class="val">Inside Sales vendeu (híbridos)</th></tr></thead><tbody>${porReg.map(x=>`<tr style="${F&&F!==x.r?"opacity:.35":""}"><td><strong>${x.r}</strong></td><td class="val">${x.n}</td><td class="val">${fmtK0(x.c)}</td><td><div class="raci-st"><i style="width:${x.c/mxR*100}%;background:#00557f"></i></div></td><td class="val">${fmtKg(Math.round(isKg(x.r)))}</td></tr>`).join("")}${semUF.length?`<tr><td>Sem estado definido</td><td class="val">${semUF.length}</td><td class="val">${fmtK0(semUF.reduce((t,a)=>t+a.custo,0))}</td><td></td><td></td></tr>`:""}</tbody></table></div>
+    <div class="int-2" style="margin-top:10px"><div style="min-width:0"><h3 class="pgd-h">Por tipo de ação${F?" · "+esc(F):""}</h3><div class="tab"><table class="sim-t"><tbody>${Object.entries(tipos).sort((a,b)=>b[1].c-a[1].c||b[1].n-a[1].n).map(([k,o])=>`<tr><td>${esc(k)}</td><td class="val">${o.n}</td><td class="val">${fmtK0(o.c)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div style="min-width:0"><h3 class="pgd-h">Por RTV${F?" · "+esc(F):""}</h3><div class="tab"><table class="sim-t"><tbody>${Object.entries(rtvs).sort((a,b)=>b[1].c-a[1].c).map(([k,o])=>`<tr><td>${esc(k)}<br><span class="meta">${[...o.ufs].join(", ")||"—"}</span></td><td class="val">${o.n} ações${o.z?`<br><span class="meta">${o.z} sem custo</span>`:""}</td><td class="val">${fmtK0(o.c)}</td></tr>`).join("")}</tbody></table></div></div></div>
+    <p class="meta" style="margin:8px 0 0">Por fonte de verba${F?" ("+esc(F)+")":""}: ${Object.entries(fontes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${fmtK0(v)}`).join(" · ")}. A execução e o resultado de cada ação ficam em Ações de Marketing.</p></section>`;
+}
+async function carregarImpulso(){if(S.impBusy)return;S.impBusy=true;try{const {data}=await sb.from("is_impulso").select("id,edicao,data,titulo,assunto,foco,enviados,html").order("edicao",{ascending:false});S.impulso=data||[];}catch(e){S.impulso=[];}S.impBusy=false;render();}
+function vISImp(){
+  if(S.impulso===undefined){carregarImpulso();return `<div class="carregando">Carregando as edições…</div>`;}
+  const L=S.impulso||[],adm=ehAdmin();const dt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
+  const ult=L[0];const ver=L.find(x=>x.id===S.impVer)||null;
+  const fr=x=>x.html?`<iframe title="Impulso ${x.edicao}" sandbox="allow-popups allow-popups-to-escape-sandbox" style="width:100%;max-width:560px;height:720px;border:1px solid #e3e8ec;border-radius:10px;background:#fff;display:block;margin:8px auto 0" srcdoc="${esc(x.html)}"></iframe>`:`<div class="vazio" style="margin-top:8px">O HTML desta edição ainda não foi anexado.${adm?" Use \"Anexar HTML\".":""}</div>`;
+  const upl=x=>adm?`<label class="btn sec pgd-up">${x.html?"Trocar HTML":"Anexar HTML"}<input type="file" accept=".html,.htm,text/html" data-impup="${x.id}"></label>`:"";
+  const dias=L.length>1?Math.round((Date.parse(L[0].data)-Date.parse(L[L.length-1].data))/864e5):0;
+  return `<div><h1 class="titulo">Impulso Inside Sales</h1><p class="sub">Relatório semanal do Marketing para o time de Inside Sales: mercado da pecuária, como estamos na meta, o funil de cada uma, as tarefas da semana e a objeção da semana. Enviado por e-mail pelo RD Station Marketing e guardado aqui, edição por edição.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>Edições enviadas</span><strong>${L.length}</strong><span class="meta">${L.length?`de ${dt(L[L.length-1].data)} a ${dt(L[0].data)}`:""}</span></div><div class="metric"><span>Última edição</span><strong>${ult?"#"+String(ult.edicao).padStart(2,"0"):"—"}</strong><span class="meta">${ult?dt(ult.data):""}</span></div><div class="metric"><span>Cadência</span><strong>${L.length>1?Math.round(dias/(L.length-1)):"—"} dias</strong><span class="meta">em média entre edições</span></div></div>
+  ${ult?`<section class="bloco" style="border:2px solid var(--amarelo,#ffdb00)"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><div style="min-width:0"><span class="rot">Fixado · edição mais recente</span><h2 class="sec" style="margin:2px 0">#${String(ult.edicao).padStart(2,"0")} · ${esc(ult.titulo||ult.assunto||"")}</h2><span class="meta">Enviada em ${dt(ult.data)}${ult.enviados?` para ${ult.enviados} destinatários`:""}</span></div>${upl(ult)}</div>${ult.foco?`<p class="meta" style="margin:6px 0 0">${esc(ult.foco)}</p>`:""}${fr(ult)}</section>`:""}
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Todas as edições</h2>${adm?`<button class="btn sec" data-a="imp-nova">+ Nova edição</button>`:""}</div>
+    ${adm&&S.impNova?`<form id="f-imp" class="form-card" style="margin-top:8px"><div class="dupla"><div><label for="im_ed">Edição</label><input id="im_ed" inputmode="numeric" required value="${(L[0]?L[0].edicao:0)+1}"></div><div><label for="im_dt">Data do envio</label><input id="im_dt" type="date" required value="${new Date().toISOString().slice(0,10)}"></div></div>
+      <div><label for="im_tit">Manchete</label><input id="im_tit" maxlength="200"></div><div><label for="im_ass">Assunto do e-mail</label><input id="im_ass" maxlength="200"></div><div><label for="im_foco">Foco da edição</label><input id="im_foco" maxlength="500"></div><div class="dupla"><div><label for="im_env">Destinatários</label><input id="im_env" inputmode="numeric"></div><div><label for="im_html">HTML da edição</label><input id="im_html" type="file" accept=".html,.htm,text/html"></div></div>
+      <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar edição</button><button class="btn sec" type="button" data-a="imp-nova">Cancelar</button></div></form>`:""}
+    <div class="lista" style="margin-top:8px">${L.map(x=>`<div class="linha"><div style="min-width:0"><strong>#${String(x.edicao).padStart(2,"0")} · ${dt(x.data)}${x.titulo?" · "+esc(x.titulo):""}</strong><span class="meta">${esc(x.assunto||"")}${x.enviados?` · ${x.enviados} destinatários`:""}</span>${x.foco?`<span class="meta">${esc(x.foco)}</span>`:""}</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${x.html?`<button class="link" data-a="imp-ver" data-v="${x.id}">${S.impVer===x.id?"fechar":"ler edição"}</button>`:`<span class="meta">sem HTML</span>`}${upl(x)}</div></div>${S.impVer===x.id?`<div>${fr(x)}</div>`:""}`).join("")}</div></section>`;
+}
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-gd","Geração de demanda"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-imp","Impulso semanal"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -2681,6 +2796,7 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
   const {data,error}=await sb.rpc("adm_mfa_exigir",{p_user:id,p_exige:ex});t.disabled=false;if(error||data!==ex){t.checked=!ex;aviso("Esta alteração NÃO foi gravada. Tente de novo.");return;}
   if(S.mfaInfo&&S.mfaInfo[id])S.mfaInfo[id].isento=!ex;render();aviso(ex?"Verificação em duas etapas exigida.":"Verificação em duas etapas desligada para esta pessoa.");});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!ehAdmin())return;
+  if(t.dataset.impup){if(!ehAdmin())return;const fl=t.files&&t.files[0];if(!fl)return;const html=await fl.text();const {error}=await sb.from("is_impulso").update({html,atualizado_em:new Date().toISOString()}).eq("id",+t.dataset.impup);if(error){aviso("Não foi possível anexar.");return;}const x=(S.impulso||[]).find(i=>i.id===+t.dataset.impup);if(x)x.html=html;render();aviso("HTML anexado.");return;}
   if(t.dataset.msgregra){if(!ehAdmin())return;const [ga,gb]=t.dataset.msgregra.split("|");t.disabled=true;const {error}=await sb.from("msg_regras").upsert({ga,gb,modo:t.value,atualizado_por:S.user.id,atualizado_em:new Date().toISOString()});t.disabled=false;
     if(error){aviso("Não foi possível gravar a regra.");return;}const r=(S.msgRegras||[]).find(x=>x.ga===ga&&x.gb===gb);if(r)r.modo=t.value;else S.msgRegras.push({ga,gb,modo:t.value});S.msgCont=undefined;aviso("Regra gravada.");return;}
   if(t.dataset.vinccanal){const id=t.dataset.vinccanal,novo=t.value||null;const p=(S.equipe||[]).find(x=>x.id===novo);t.disabled=true;
@@ -4311,7 +4427,8 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales"||sc==="meu-crm")return true;
+  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist"].includes(pg);
+  if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
   return false;
@@ -7348,7 +7465,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","is-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -7422,7 +7539,8 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
-    if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(S.pag==="is-reg"||S.pag==="is-gd"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():S.pag==="is-gd"?vISGD():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
     if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
@@ -7581,6 +7699,9 @@ document.addEventListener("click",async ev=>{
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
+  if(a==="reg-f"){S.regF=v||"";render();return;}
+  if(a==="imp-ver"){S.impVer=S.impVer===+v?null:+v;render();return;}
+  if(a==="imp-nova"){if(!ehAdmin())return;S.impNova=!S.impNova;render();return;}
   if(a==="isger-ed"){if(!ehAdmin())return;S.isGerEd=!S.isGerEd;render();return;}
   if(a==="raci-f"){const F=S.raciF||(S.raciF={area:"",p:""});const i=v.indexOf(":");const k=v.slice(0,i),val=v.slice(i+1);F[k]=F[k]===val&&k==="area"?"":val;render();return;}
   if(a==="prog-ir"){if(v==="perfil-campo"){const el=document.getElementById("prog-dados");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
@@ -8004,6 +8125,9 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
+  if(f.id==="f-imp"){if(!ehAdmin())return;const g=id=>f.querySelector(id).value.trim();const fl=f.querySelector("#im_html").files[0];const html=fl?await fl.text():null;
+    const r={edicao:parseInt(g("#im_ed"),10),data:g("#im_dt"),titulo:g("#im_tit")||null,assunto:g("#im_ass")||null,foco:g("#im_foco")||null,enviados:parseInt(g("#im_env"),10)||null,atualizado_em:new Date().toISOString()};if(html)r.html=html;if(!r.edicao||!r.data){aviso("Informe edição e data.");return;}
+    const {error}=await sb.from("is_impulso").upsert(r,{onConflict:"edicao"});if(error){aviso("Não foi possível salvar.");return;}S.impNova=false;S.impulso=undefined;render();aviso("Edição salva.");return;}
   if(f.id==="f-isger"){if(!ehAdmin()||!S.fin)return;const P0=S.fin.premissas||{};const n=id=>rvvNum(f.querySelector(id).value);
     const g={teto:n("#ig_teto")/100,meta_kg:n("#ig_meta"),plano_n:n("#ig_pn"),plano_meta_kg:n("#ig_pm"),plano_be:n("#ig_pb")};if(!(g.teto>0&&g.teto<1)){aviso("Teto entre 0 e 100%.");return;}
     const dados={...P0,is_ger:g};const {error}=await sb.from("fin_premissas").update({dados}).eq("id",1);if(error){aviso("Não foi possível salvar.");return;}S.fin.premissas=dados;S.finC=null;S.isGerEd=false;render();aviso("Parâmetros salvos.");return;}
