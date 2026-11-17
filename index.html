@@ -1197,7 +1197,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117181543";
+const APP_VER="20261117181836";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6204,7 +6204,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -6868,12 +6868,95 @@ function vAcoesMkt(){
   if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
+  if(S.pag==="acoes-eventos")return vAcoesEventos();
   if(S.pag==="acoes-solic")return vAcoesSolic();
   if(S.pag==="acoes-solic-nova"&&mkPodeSolic())return vAcoesSolicNova();
   if(S.pag==="acoes-gestao"&&ehMkt())return vAcoesGestao();
   return vAcoesQuadro();
 }
 
+/* ---------- Eventos e resultado (CRM) ---------- */
+const EV_ST={ganha:["Vendida","#2E8B57"],aberta:["Em negociação","#0090D0"],pausada:["Pausada","#E0A800"],perdida:["Perdida","#8A8F98"]};
+async function carregarEventos(){if(S.evBusy)return;S.evBusy=true;try{const {data,error}=await sb.from("eventos_crm").select("*").order("data_ini",{ascending:false});S.ev=error?[]:(data||[]);}catch(e){S.ev=[];}S.evBusy=false;render();}
+function evCalc(e){const R=e.resultado||{};const st=R.st||{};const N=x=>Number(x)||0;const g=st.ganha||{},a=st.aberta||{},pz=st.pausada||{},pd=st.perdida||{};const custo=N(e.custo);
+  return {R,n:N(R.n),gerado:N(R.rs),t:N(R.kg)/1000,vend:N(g.rs),vendN:N(g.n),vendKg:N(g.kg),aberto:N(a.rs)+N(pz.rs),abertoN:N(a.n)+N(pz.n),perdN:N(pd.n),perdRs:N(pd.rs),custo,ret:custo?(N(g.rs)-custo)/custo:null,mult:custo?N(g.rs)/custo:null,conv:(N(g.n)+N(pd.n))?N(g.n)/(N(g.n)+N(pd.n)):null};}
+function vAcoesEventos(){
+  if(S.ev===undefined){carregarEventos();return `<div class="carregando">Carregando os eventos…</div>`;}
+  const E=S.ev||[];const adm=ehAdmin()&&!S.demo,mk=ehMkt();
+  const C=E.map(e=>[e,evCalc(e)]);const tot=C.reduce((t,[e,c])=>({custo:t.custo+c.custo,vend:t.vend+c.vend,aberto:t.aberto+c.aberto,n:t.n+c.n,gerado:t.gerado+c.gerado}),{custo:0,vend:0,aberto:0,n:0,gerado:0});
+  const atu=E.map(e=>e.atualizado_em).filter(Boolean).sort().pop();
+  const novo=S.evEd==="novo";
+  return `<div><h1 class="titulo">Eventos e resultado</h1><p class="sub">Por que a Barenbrug participa de cada evento e o que ele gerou de venda. As negociações saem do CRM (funil de vendas) pela fonte, pela campanha ou pelo nome com o evento, e o painel se atualiza todo dia.</p></div>
+  ${E.length?`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+    <div class="metric"><span>Investido nos eventos</span><strong>${fmtK0(tot.custo)}</strong><span class="meta">${E.length} evento${E.length>1?"s":""} medido${E.length>1?"s":""}</span></div>
+    <div class="metric"><span>Negociações geradas</span><strong>${tot.n}</strong><span class="meta">${fmtK0(tot.gerado)} em propostas</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Vendido até hoje${inf("Soma das negociações ganhas no CRM atribuídas aos eventos. Retorno = (vendido − investido) ÷ investido.")}</span><strong>${fmtK0(tot.vend)}</strong><span class="meta">${tot.custo?`retorno de ${pctTxt((tot.vend-tot.custo)/tot.custo)} · R$ ${(tot.vend/tot.custo).toLocaleString("pt-BR",{maximumFractionDigits:1})} vendidos por R$ 1 investido`:""}</span></div>
+    <div class="metric"><span>Ainda em negociação</span><strong>${fmtK0(tot.aberto)}</strong><span class="meta">pode somar ao vendido</span></div>
+  </div>`:""}
+  <div class="acoes" style="margin:4px 0 14px;align-items:center">${adm?`<button class="btn" data-a="ev-atualizar" ${S.evAtu?"disabled":""}>${S.evAtu?"Atualizando do CRM…":"Atualizar do CRM agora"}</button><button class="btn sec" data-a="ev-ed" data-v="novo">Novo evento</button>`:""}<span class="meta">${atu?"Última leitura do CRM: "+new Date(atu).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Ainda sem leitura do CRM."}</span></div>
+  ${novo&&adm?evForm({}):""}
+  ${C.map(([e,c])=>evCard(e,c,adm,mk)).join("")||`<div class="vazio">Nenhum evento cadastrado.</div>`}
+  <p class="precos-nota">Como a conta é feita: entram as negociações do funil de vendas cuja fonte, campanha ou nome cita o evento (o termo de busca de cada evento fica no cadastro). Uma venda de evento sem essa marcação no CRM não aparece aqui. Por isso vale marcar a fonte do evento em toda negociação que nasce dele, inclusive as dos RTVs e representantes.</p>`;
+}
+function evForm(e){const k=e.criterios||{};const v=x=>esc(x==null?"":String(x));
+  return `<form id="f-ev" class="form-card" data-v="${v(e.id||"")}"><strong>${e.id?"Editar evento":"Novo evento"}</strong>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px">
+   <div><label for="ev_nome">Nome</label><input id="ev_nome" required value="${v(e.nome)}"></div>
+   <div><label for="ev_quando">Quando (texto)</label><input id="ev_quando" value="${v(e.quando)}" placeholder="23 e 24 de setembro de 2026"></div>
+   <div><label for="ev_ini">Data de início</label><input id="ev_ini" type="date" value="${v(e.data_ini)}"></div>
+   <div><label for="ev_local">Local</label><input id="ev_local" value="${v(e.local)}"></div>
+   <div><label for="ev_org">Organizador</label><input id="ev_org" value="${v(e.organizador)}"></div>
+   <div><label for="ev_pub">Público estimado</label><input id="ev_pub" inputmode="numeric" value="${v(e.publico)}"></div>
+   <div><label for="ev_custo">Investimento (R$)</label><input id="ev_custo" inputmode="decimal" value="${e.custo!=null?Number(e.custo).toLocaleString("pt-BR"):""}"></div>
+   <div><label for="ev_re">Termo de busca no CRM${inf("Texto procurado na fonte, na campanha e no nome da negociação. Use | para mais de um termo, por exemplo: beefday|beef day")}</label><input id="ev_re" required value="${v(k.re)}"></div>
+   <div><label for="ev_desde">Negociações criadas a partir de</label><input id="ev_desde" type="date" required value="${v(k.desde)}"></div></div>
+  <label for="ev_pq">Por que participamos</label><textarea id="ev_pq" rows="3">${v(e.por_que)}</textarea>
+  <label for="ev_mos">O que mostramos</label><textarea id="ev_mos" rows="2">${v(e.mostramos)}</textarea>
+  <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="ev-ed" data-v="">Cancelar</button></div></form>`;}
+function evCard(e,c,adm,mk){
+  const R=c.R;const foto=(e.midia||{}).foto;const ed=S.evEd===e.id;
+  const barra=["ganha","aberta","pausada","perdida"].map(k=>{const x=(R.st||{})[k]||{};return x.n?`<div title="${EV_ST[k][0]}: ${x.n}" style="flex:${x.n};background:${EV_ST[k][1]};min-width:6px"></div>`:"";}).join("");
+  const leg=["ganha","aberta","pausada","perdida"].map(k=>{const x=(R.st||{})[k]||{};return `<span class="meta" style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><i style="width:10px;height:10px;border-radius:2px;background:${EV_ST[k][1]};display:inline-block"></i>${EV_ST[k][0]}: ${x.n||0} · ${fmtK0(x.rs)}</span>`;}).join("");
+  const can=Object.entries(R.canal||{});
+  const cult=Object.entries(R.cult||{}).sort((a,b)=>b[1]-a[1]);
+  const perd=Object.entries(Object.entries(R.perdas||{}).reduce((o,[k,v])=>{const m=/^optou pel/i.test(k)?"Optou por concorrente":k;o[m]=(o[m]||0)+v;return o;},{})).sort((a,b)=>b[1]-a[1]);
+  const D=R.deals||[];
+  return `<section class="bloco" style="border-top:4px solid var(--azul-escuro,#00557f);padding-top:14px">
+   <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start"><div style="min-width:0"><h2 class="sec" style="margin:0">${esc(e.nome)}</h2>
+    <p class="meta" style="margin:2px 0 0">${[e.quando,e.local,e.organizador,e.publico?Number(e.publico).toLocaleString("pt-BR")+" pessoas":""].filter(Boolean).map(esc).join(" · ")}</p></div>
+    ${adm&&!ed?`<button class="btn sec" data-a="ev-ed" data-v="${esc(e.id)}">Editar</button>`:""}</div>
+   ${ed&&adm?evForm(e):""}
+   <div class="int-2" style="margin-top:10px"><div><strong>Por que participamos</strong><p style="margin:4px 0 0">${esc(e.por_que||"—")}</p></div><div><strong>O que mostramos</strong><p style="margin:4px 0 0">${esc(e.mostramos||"—")}</p>${(e.midia||{}).videos?`<p class="meta" style="margin:6px 0 0">${esc(e.midia.videos)}</p>`:""}</div></div>
+   ${e.resultado?`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:12px">
+    <div class="metric"><span>Investimento</span><strong>${c.custo?fmtK0(c.custo):"—"}</strong><span class="meta">${e.publico&&c.custo?"R$ "+(c.custo/e.publico).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+" por pessoa alcançada":""}</span></div>
+    <div class="metric"><span>Negociações geradas</span><strong>${c.n}</strong><span class="meta">${fmtK0(c.gerado)} · ${c.t.toLocaleString("pt-BR",{maximumFractionDigits:1})} t</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Vendido</span><strong>${fmtK0(c.vend)}</strong><span class="meta">${c.vendN} venda${c.vendN===1?"":"s"} · ${fmtKg(c.vendKg)}</span></div>
+    <div class="metric"><span>Retorno até hoje${inf("(Vendido − investimento) ÷ investimento. Não conta o que ainda está em negociação nem a venda que o evento puxa nos canais sem passar pelo CRM.")}</span><strong>${c.ret!=null?pctTxt(c.ret):"—"}</strong><span class="meta">${c.mult!=null?"R$ "+c.mult.toLocaleString("pt-BR",{maximumFractionDigits:1})+" vendidos por R$ 1":""}</span></div>
+    <div class="metric"><span>Em negociação</span><strong>${fmtK0(c.aberto)}</strong><span class="meta">${c.abertoN} aberta${c.abertoN===1?"":"s"} · ${c.perdN} perdida${c.perdN===1?"":"s"}${c.conv!=null?" · conversão "+pctTxt(c.conv):""}</span></div>
+   </div>
+   <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin:6px 0">${barra}</div><div>${leg}</div>
+   <div class="int-2" style="margin-top:12px">
+    <div class="tab"><table class="sim-t"><thead><tr><th>Quem atendeu</th><th class="val">Negociações</th><th class="val">Vendido</th><th class="val">Em aberto</th></tr></thead><tbody>${can.map(([k,x])=>`<tr><td>${esc(k)}</td><td class="val">${x.n}</td><td class="val">${fmtK0(x.ganha_rs)}<br><span class="meta">${x.ganha_n} venda${x.ganha_n===1?"":"s"}</span></td><td class="val">${fmtK0(x.aberta_rs)}</td></tr>`).join("")}</tbody></table></div>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Cultivar nas propostas</th><th class="val">Volume</th></tr></thead><tbody>${cult.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="val">${fmtKg(v)}</td></tr>`).join("")}${perd.length?`<tr><td colspan="2"><strong>Por que perdemos</strong><br><span class="meta">${perd.map(([k,v])=>esc(k)+": "+v).join(" · ")}</span></td></tr>`:""}</tbody></table></div>
+   </div>
+   ${mk&&D.length?`<details style="margin-top:10px"><summary><strong>As ${D.length} negociações</strong></summary><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Negociação</th><th>Situação</th><th>Responsável</th><th class="val">Valor</th><th class="val">Volume</th><th>Faturamento</th><th>Achada por</th></tr></thead><tbody>${D.map(d=>`<tr><td style="white-space:normal;min-width:200px">${esc(d.nome)}${d.uf?` <span class="meta">${esc(d.uf)}</span>`:""}</td><td><span style="color:${EV_ST[d.st][1]};font-weight:700">${EV_ST[d.st][0]}</span>${d.etapa&&d.st!=="ganha"&&d.st!=="perdida"?`<br><span class="meta">${esc(d.etapa)}</span>`:""}</td><td>${esc(d.resp)}<br><span class="meta">${esc(d.canal)}</span></td><td class="val">${fmtK0(d.rs)}</td><td class="val">${fmtKg(d.kg)}</td><td>${d.fat?intData(d.fat):"—"}</td><td><span class="meta">${esc(d.por)}</span></td></tr>`).join("")}</tbody></table></div></details>`:""}
+   ${foto?`<p class="precos-nota">No ${esc(foto.fonte)} (posição de ${esc(foto.data)}) o evento tinha ${foto.neg} negociações, ${String(foto.t).replace(".",",")} t e ${fmtK0(foto.gerado)} gerados, com ${fmtK0(foto.vendido)} vendidos, ${fmtK0(foto.aberto)} em negociação e retorno de ${pctTxt(foto.retorno)}. ${Math.abs(c.vend-foto.vendido)>foto.vendido*0.05?`Hoje o CRM mostra ${fmtK0(c.vend)} vendidos: negociações podem ter mudado de situação ou perdido a marcação do evento desde então. Vale conferir.`:"Os números de hoje confirmam a leitura do relatório."}</p>`:""}`
+   :`<p class="meta" style="margin-top:10px">Ainda sem leitura do CRM para este evento.</p>`}
+  </section>`;
+}
+document.addEventListener("click",async ev=>{const b=ev.target.closest("[data-a^='ev-']");if(!b)return;const a=b.dataset.a;
+  if(a==="ev-ed"){if(!ehAdmin())return;S.evEd=b.dataset.v||null;render();return;}
+  if(a==="ev-atualizar"){if(!ehAdmin()||S.evAtu)return;S.evAtu=true;render();try{const {data,error}=await sb.functions.invoke("crm-eventos",{body:{}});if(error||!data||data.error)aviso("O CRM não respondeu agora. Tente de novo em alguns minutos.");else aviso("Eventos atualizados com o CRM.");}catch(e){aviso("O CRM não respondeu agora.");}S.evAtu=false;S.ev=undefined;render();return;}
+});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-ev")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehAdmin())return;
+  const g=id=>f.querySelector(id).value.trim();const num=x=>{const t=String(x).replace(/[^\d,.-]/g,"").replace(/\./g,"").replace(",",".");return t===""?null:Number(t);};
+  const re=g("#ev_re");try{new RegExp(re,"i");}catch(e){aviso("O termo de busca tem um caractere inválido.");return;}
+  const id0=f.dataset.v;const atual=(S.ev||[]).find(x=>x.id===id0)||{};
+  const row={nome:g("#ev_nome"),quando:g("#ev_quando")||null,data_ini:g("#ev_ini")||null,local:g("#ev_local")||null,organizador:g("#ev_org")||null,publico:num(g("#ev_pub")),custo:num(g("#ev_custo")),por_que:g("#ev_pq")||null,mostramos:g("#ev_mos")||null,criterios:{...(atual.criterios||{}),re,desde:g("#ev_desde")}};
+  let r;if(id0)r=await sb.from("eventos_crm").update(row).eq("id",id0);else{row.id=(row.nome||"evento").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)+"-"+Date.now().toString(36).slice(-4);r=await sb.from("eventos_crm").insert(row);}
+  if(r.error){aviso("Não foi possível salvar.");return;}
+  S.evEd=null;S.ev=undefined;render();aviso("Evento salvo. Clique em Atualizar do CRM para recalcular o resultado.");
+});
 /* ---------- Brindes de Marketing ---------- */
 /* ===== Áreas demonstrativas (vitrines) ===== */
 const VIT_ST=["Planejada","Plantada","Em formação","Aberta para visitas","Encerrada"];
@@ -7441,7 +7524,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ra
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -7462,7 +7545,7 @@ const ABA_DESC={
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
  "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
- "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
+ "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
  "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","is-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
