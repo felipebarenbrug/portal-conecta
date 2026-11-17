@@ -1208,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117202950";
+const APP_VER="20261117203353";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6116,7 +6116,7 @@ const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará, Mulato II e Barmi
 
 /* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||temPerfil("Financeiro")||temAcessoExtra("financeiro");
-const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-premissas","Premissas"]];
+const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-invest","Investimento do Marketing"],["fin-premissas","Premissas"]];
 function subnavFin(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Marketing + Financeiro">${semOcultas(FIN_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -6227,7 +6227,7 @@ function vFin(){
   if(!S.fin)return `<div class="carregando">Carregando os números…</div>`;
   if(S.fin.erro)return `<div><h1 class="titulo">Marketing + Financeiro</h1></div><section class="bloco"><p class="sub" style="margin:0">Não foi possível carregar os dados agora. Se o painel acabou de ser criado, a ativação no banco ainda está pendente.</p><div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="fin-recarregar">Tentar de novo</button></div></section>`;
   const C=finCalc();
-  const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-premissas"?vFinPremissas(C):vFinResumo(C);
+  const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-premissas"?vFinPremissas(C):S.pag==="fin-invest"?vFinInvest(C):vFinResumo(C);
   return v;
 }
 function vFinResumo(C){
@@ -6372,6 +6372,40 @@ function vFinConecta(C){
   ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB previsto</th><th class="val">IGDB já faturado</th><th class="val">IGDB liberado (pago)${inf("Só para revendas validadas pelo Marketing: IGDB sobre o valor que a revenda já pagou, conferido nota a nota no Financeiro.")}</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Todo IGDB + BF atual</th><th class="val">Full (meta batida)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
   <p class="precos-nota">IGDB previsto: percentual do tier sobre o sell-in de híbridos e convencionais. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. Só vira pagamento pelas ações de PGD submetidas, aprovadas e comprovadas, por trimestre, até o limite do IGDB do canal (coluna IGDB aprovado). Potencial: quanto seria com todo o IGDB aprovado. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section>`;
 }
+
+async function carregarMInv(){if(S.minvBusy)return;S.minvBusy=true;try{const {data,error}=await sb.rpc("mkt_investimento");S.minv=error?{erro:1}:(data||{});}catch(e){S.minv={erro:1};}S.minvBusy=false;render();}
+function vFinInvest(C){
+  if(S.minv===undefined){carregarMInv();return `<div class="carregando">Carregando o investimento do Marketing…</div>`;}
+  const I=S.minv||{};if(I.erro)return `<div class="vazio">Não foi possível ler o orçamento do Marketing agora.</div>`;
+  const ct=((I.verba||{}).contas)||[];const conta=n=>ct.find(c=>c.num===n)||{};const o=c=>Number(c.orcado)||0;
+  const pub=conta("1119"),ev=conta("1108");const midiaOrc=((pub.sub||[]).find(x=>x.midia)||{}).valor;
+  const evReal=(I.eventos||[]).reduce((t,e)=>t+(Number(e.custo)||0),0);const meta=Number((I.midia||{}).gasto)||0;const metaAte=(I.midia||{}).ate;
+  const brOrc=Number(I.brinde_orc)||0,brReal=Number(I.brinde_baixas)||0;
+  const vendas=C.tot,plano=C.plano?C.plano.vendasRs:0;
+  const G=[
+   {g:"Geração de demanda",d:"Verba para gerar demanda no campo: o IGDB dos canais do Conecta Revendas e a verba de eventos.",it:[
+     {n:"IGDB dos canais (Conecta Revendas)",v:C.rv.igdb,r:C.rv.aprovIG,rl:"em ações de PGD aprovadas",f:"Previsto pela regra do programa sobre os pedidos dos canais na safra (% do tier sobre híbridos e convencionais)."},
+     {n:"Verba de eventos (conta 1108)",v:o(ev),r:evReal,rl:"custo dos eventos registrados",f:"Orçado da conta 1108 Eventos e viagens de evento na safra."}]},
+   {g:"Rebate",d:"Premiação dos vendedores das revendas: o Bônus de Performance do Conecta Revendas.",it:[
+     {n:"Bônus de Performance (Conecta Revendas)",v:C.rv.bonus,r:0,rl:"pago só no fim da safra",f:`Previsto hoje, só para os canais com 90% ou mais da meta. Se todos baterem a meta: ${fmtK0(C.rv.mBonus)}.`}]},
+   {g:"Outras ações",d:"Publicidade e brindes.",it:[
+     {n:"Publicidade (conta 1119)",v:o(pub),r:meta,rl:`mídia Meta Ads${metaAte?" até "+String(metaAte).split("-").reverse().join("/"):""}`,f:`Orçado da conta 1119 Publicidade e propaganda${midiaOrc?`, dos quais ${fmtK0(+midiaOrc)} em mídia digital (Meta Ads)`:""}.`},
+     {n:"Brindes (conta 1221)",v:brOrc,r:brReal,rl:"brindes baixados no painel",f:"Orçado da conta 1221 Brindes na safra."}]}];
+  G.forEach(x=>{x.v=x.it.reduce((t,i)=>t+(Number(i.v)||0),0);x.r=x.it.reduce((t,i)=>t+(Number(i.r)||0),0);});
+  const T=G.reduce((t,x)=>t+x.v,0),TR=G.reduce((t,x)=>t+x.r,0);
+  const pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"—";
+  const cols=`<th class="val">Disponibilizado na safra</th><th class="val">% das vendas no CRM${inf("Pedidos ganhos na safra 26/27, faturados e a faturar: "+fmtK0(vendas)+".")}</th>${plano?`<th class="val">% do plano de vendas${inf("Plano de vendas da safra (junho de 2026): "+fmtK0(plano)+".")}</th>`:""}<th class="val">Usado até hoje</th>`;
+  const row=(n,v,r,rl,f,b)=>`<tr${b?' style="font-weight:700"':""}><td style="white-space:normal;min-width:200px">${n}${f?`<br><span class="meta" style="font-weight:400">${f}</span>`:""}</td><td class="val">${fmtK0(v)}</td><td class="val">${pc(v,vendas)}</td>${plano?`<td class="val">${pc(v,plano)}</td>`:""}<td class="val">${fmtK0(r)}${rl?`<br><span class="meta" style="font-weight:400">${rl}</span>`:""}</td></tr>`;
+  return `<div><h1 class="titulo">Investimento do Marketing</h1><p class="sub">Quanto o Marketing disponibiliza na safra 26/27 para geração de demanda, rebate e outras ações, e quanto isso representa das vendas.</p></div>
+  ${finAvisoTopo(C)}
+  <div class="metrics">
+   ${G.map(x=>`<div class="metric"><span>${x.g}</span><strong>${fmtK0(x.v)}</strong><span class="meta">${pc(x.v,vendas)} das vendas no CRM${plano?` · ${pc(x.v,plano)} do plano`:""}</span></div>`).join("")}
+   <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total disponibilizado</span><strong>${fmtK0(T)}</strong><span class="meta">${pc(T,vendas)} das vendas no CRM${plano?` · ${pc(T,plano)} do plano`:""}</span></div></div>
+  <section class="bloco"><h2 class="sec">Por tipo de investimento</h2>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th>${cols}</tr></thead><tbody>
+   ${G.map(x=>`<tr><td colspan="${plano?5:4}" style="background:var(--azul-claro)"><strong>${x.g}</strong> <span class="meta">${x.d}</span></td></tr>${x.it.map(i=>row(i.n,i.v,i.r,i.rl,i.f)).join("")}${x.it.length>1?row("Subtotal "+x.g.toLowerCase(),x.v,x.r,"","",true):""}`).join("")}
+   ${row("Total",T,TR,"","",true)}</tbody></table></div>
+   <p class="precos-nota">Como ler: IGDB e Bônus de Performance são previstos pelas regras do Conecta Revendas sobre os pedidos já no CRM e crescem com as vendas; eventos, publicidade e brindes são o orçado da safra inteira. Por isso a porcentagem sobre as vendas no CRM cai ao longo da safra, à medida que as vendas entram, e a porcentagem sobre o plano de vendas é a referência para a safra completa. O IGDB só vira pagamento com PGD aprovado e notas pagas; o bônus, só no fechamento da safra. Fontes: pedidos ganhos do RD Station CRM; orçamento das contas em Ações de Marketing; mídia do Meta Ads; eventos registrados em Ações; Painel de brindes.</p></section>`;}
 function vFinPremissas(C){
   const P=C.P,adm=ehAdmin();
   const n=(id,lbl,v,dica)=>`<div><label for="${id}">${lbl}</label><input id="${id}" type="text" inputmode="decimal" value="${esc(((Number(v)||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:3}))}" ${adm?"":"disabled"}><span class="meta">${dica}</span></div>`;
