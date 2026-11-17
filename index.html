@@ -1143,7 +1143,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261116224845";
+const APP_VER="20261116230317";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4466,7 +4466,7 @@ function szVendasMes(){
   const R=S.intMapa||[];const ini="2026-07";const meses=[];for(let i=0;i<12;i++){const d=new Date(2026,6+i,1);meses.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));}
   const z=()=>({hib:0,ruzi:0,temp:0,out:0});const ped={},fat={};meses.forEach(m=>{ped[m]=z();fat[m]=z();});
   const gr=n=>{const l=finNorm(n);const c=cultivarDe(n);if(ehHibrida(c)||INT_HIB_EXTRA.test(l))return "hib";if(c==="Azevém"||c==="Trevo"||/aveia|lolium|trifol/.test(l))return "temp";if(c==="Ruziziensis")return "ruzi";return "out";};
-  for(const r of R){if(r.uf==="EX")continue;const mp=String(r.cl||r.fat||"").slice(0,7),mf=String(r.fat||"").slice(0,7);
+  for(const r of R){if(r.uf==="EX"||r.seg!=="B2C")continue;const mp=String(r.cl||r.fat||"").slice(0,7),mf=String(r.fat||"").slice(0,7);
     for(const [nm,kg] of (Array.isArray(r.itens)?r.itens:[])){const q=+kg||0;if(!q)continue;const g=gr(nm);if(mp&&ped[mp<ini?ini:mp])ped[mp<ini?ini:mp][g]+=q;if(fat[mf])fat[mf][g]+=q;}}
   return {meses,ped,fat};
 }
@@ -4486,7 +4486,7 @@ function vIntSaz(){
   const neste=`<section class="bloco sz-agora"><h2 class="sec">Em ${["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][mi]}${inf("Leitura do mês escolhido, montada a partir das tabelas abaixo.")}</h2>
     <p class="meta" style="margin:0 0 8px">Chuva: ${chuvaN.c} regiões em estação chuvosa, ${chuvaN.t} em transição e ${chuvaN.s} na seca.</p>
     <div class="sz-col"><div><h3 class="pgd-h">Plantio ideal</h3><ul class="obj-lista">${agrupa(plantIdeal)||"<li>Nenhuma cultivar em janela ideal.</li>"}</ul>${plantPoss.length?`<h3 class="pgd-h">Plantio possível</h3><ul class="obj-lista">${agrupa(plantPoss)}</ul>`:""}</div>
-    <div><h3 class="pgd-h">Quem está comprando</h3><ul class="obj-lista">${janL||"<li>Sem janela de compra marcada.</li>"}</ul></div>
+    <div><h3 class="pgd-h">Quando o produtor compra</h3><ul class="obj-lista">${janL||"<li>Sem janela de compra marcada.</li>"}</ul></div>
     <div><h3 class="pgd-h">Agenda comercial</h3><ul class="obj-lista">${calL||"<li>Sem ação marcada.</li>"}</ul></div></div></section>`;
   // grids
   const grade=(titulo,L,ini,dica,nKey)=>{const cols=ini===6?[...SZ_M.slice(6),...SZ_M.slice(0,6)]:SZ_M;const atual=ini===6?(mi+6)%12:mi;let g0=null;
@@ -4495,7 +4495,7 @@ function vIntSaz(){
   const V=szVendasMes();const mx=Math.max(1,...V.meses.map(m=>{const a=V.ped[m],b=V.fat[m];return Math.max(a.hib+a.ruzi+a.temp+a.out,b.hib+b.ruzi+b.temp+b.out);}));
   const barra=o=>{const t=o.hib+o.ruzi+o.temp+o.out;return `<div class="sz-bar" title="${(t/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})} t">${[["hib","Híbridos"],["ruzi","Ruziziensis"],["temp","Temperadas"],["out","Outras"]].map(([k])=>o[k]?`<i class="sz-${k}" style="height:${(o[k]/mx*100).toFixed(1)}%"></i>`:"").join("")}</div>`;};
   const tt=o=>((o.hib+o.ruzi+o.temp+o.out)/1000).toLocaleString("pt-BR",{maximumFractionDigits:0});
-  const vend=`<section class="bloco"><h2 class="sec">O que os pedidos desta safra mostram${inf("Pedidos ganhos no CRM na safra 26/27, por mês em que o pedido foi fechado e por mês de faturamento programado. Exportação fica fora.")}</h2>
+  const vend=`<section class="bloco"><h2 class="sec">Quando o produtor comprou nesta safra${inf("Vendas diretas ao produtor (B2C: Inside Sales e representantes) ganhas no CRM na safra 26/27, por mês de fechamento e por mês de faturamento programado. Vendas a canal, sell-in e exportação ficam fora, porque as compras antecipadas do canal distorcem a sazonalidade real.")}</h2>
     <div class="sz-leg"><span><i class="sz-hib"></i>Híbridos</span><span><i class="sz-ruzi"></i>Ruziziensis</span><span><i class="sz-temp"></i>Temperadas</span><span><i class="sz-out"></i>Outras</span></div>
     <div class="tab"><div class="sz-graf">${V.meses.map(m=>`<div class="sz-mcol"><div class="sz-par">${barra(V.ped[m])}${barra(V.fat[m])}</div><span class="sz-ml">${SZ_M[+m.slice(5)-1]}</span><span class="meta">${tt(V.ped[m])} · ${tt(V.fat[m])} t</span></div>`).join("")}</div></div>
     <p class="meta" style="margin:6px 0 0">Em cada mês, a barra da esquerda é o volume fechado e a da direita, o volume com faturamento programado. Pedidos fechados antes de julho entram em julho.</p></section>`;
@@ -4504,11 +4504,11 @@ function vIntSaz(){
   ${sel}${neste}${vend}
   <section class="bloco"><h2 class="sec">O que aprender com o calendário</h2><ul class="obj-lista">${(d.insights||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul>
   <h3 class="pgd-h" style="margin-top:10px">Como a Barenbrug age</h3><ul class="obj-lista">${(d.acoes||[]).map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
-  ${grade("Janela de compra: produtor e canal",G.jan||[],0,"Quando o canal compra da Barenbrug (sell-in) e quando o produtor compra do canal, por região.",2)}
-  ${grade("Plantio das tropicais por estado",G.trop||[],0,"Janela ideal e possível de plantio de cada cultivar. Antecip. = compra antecipada para a safra seguinte.",2)}
+  ${grade("Janela de compra do produtor",G.jan||[],0,"Quando o produtor compra semente, por região e cultivar. Só venda ao produtor; o calendário de compra do canal não entra.",2)}
+  ${grade("Plantio das tropicais por estado",G.trop||[],0,"Janela ideal e possível de plantio de cada cultivar, por estado.",2)}
   ${grade("Plantio das temperadas e sobressemeadura",G.temp||[],0,"Azevém, aveia e trevo no Sul e sobressemeadura em pasto tropical.",2)}
   ${grade("Regime de chuvas e potencial por estado",G.chuva||[],0,"Chuva acima de 100 mm/mês, transição de 60 a 100 mm e seca abaixo de 60 mm (climatologia INMET). O número é o potencial de mercado de semente em toneladas.",2)}
-  ${grade("Calendário comercial da safra (julho a junho)",G.cal||[],6,"Ações de sell-in, sell-out, plantio, eventos e planejamento ao longo da safra.",1)}
+  ${grade("Calendário comercial da safra (julho a junho)",G.cal||[],6,"Ações comerciais e de marketing voltadas ao produtor ao longo da safra: campanhas, eventos, plantio e planejamento.",1)}
   <p class="meta" style="margin-top:10px">Fontes: ${esc((d.fontes||[]).join("; "))}.</p>`;
 }
 /* ===== Inteligência: perfil dos canais por segmento ===== */
@@ -6163,7 +6163,7 @@ const ABA_DESC={
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
- "int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando produtor e canal compram, por região, com os pedidos da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-modelos":"Modelos de representação comercial.",
+ "int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
