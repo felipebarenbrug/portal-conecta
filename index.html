@@ -1153,7 +1153,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117064740";
+const APP_VER="20261117065014";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4911,7 +4911,7 @@ function vIntCobB2B(){
   return `<div><h1 class="titulo">Cobertura B2B</h1><p class="sub">Onde estão os canais (distribuidores, revendas, cooperativas e contas-chave) com pedido na safra 26/27 ou negociação em andamento, e a área de alcance de cada um. Cada ponto é um cliente B2B, do tamanho do volume; ponto vazado é canal só com negociação em aberto, ainda sem pedido. O círculo em volta é o raio de alcance escolhido e a cor é o responsável comercial. Exportação fica fora.</p></div>
   ${imFiltros("cobb-f",F)}
   <div class="filtros" style="margin-bottom:6px">${chips("fil",["sim","não"],F.fil||"sim",o=>o==="sim"?"Mostrar filiais dos canais do Conecta":"Esconder filiais")}${inf("Losango: loja ou filial de um canal do Conecta Revendas, pelo cadastro das empresas no CRM e pelos sites das revendas. Mostra onde o canal pode atender mesmo sem pedido daquela filial.")}</div>
-  <div class="filtros" style="margin-bottom:10px">${chips("raio",["50","100","150"],F.raio,o=>"Raio de "+o+" km")}${inf("Raio de alcance presumido de cada canal: até onde ele costuma vender. É uma hipótese de leitura, não um dado do CRM.")}</div>
+  <div class="filtros" style="margin-bottom:10px">${chips("raio",["50","100","150","200","300"],F.raio,o=>"Raio de "+o+" km")}${inf("Raio de alcance presumido de cada canal: até onde ele costuma vender. É uma hipótese de leitura, não um dado do CRM.")}</div>
   <div class="metrics" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
     <div class="metric"><span>Clientes B2B</span><strong>${vis.length}</strong><span class="meta">${vis.filter(c=>c.kgV).length} com pedido · ${vis.filter(c=>!c.kgV).length} só em aberto · ${IM_T(tot)}${vis.length-comLL.length?" · "+(vis.length-comLL.length)+" sem cidade reconhecida":""}</span></div>
     <div class="metric"><span>Filiais dos canais do Conecta</span><strong>${FIL.length}</strong><span class="meta">${F.dono?"escondidas no filtro por responsável":(S.imFil===null?"carregando…":"losangos no mapa")}</span></div>
