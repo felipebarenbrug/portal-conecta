@@ -445,6 +445,8 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .mk-capa{display:block;margin:-10px -12px 6px;height:110px;overflow:hidden;border-radius:8px 8px 0 0}.mk-capa img{width:100%;height:100%;object-fit:cover}
 .mk-capa-g{max-height:260px;overflow:hidden;border-radius:8px}.mk-capa-g img{width:100%;object-fit:cover}
 .mk-anexar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.nav .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#C8102E;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;margin-left:4px}
+.gt-filtros{display:flex;flex-wrap:wrap;gap:8px}.gt-filtros input{flex:2 1 220px;min-width:0}.gt-filtros select{flex:1 1 180px;min-width:0}
 .mk-link{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 320px;min-width:0}.mk-link input{flex:1 1 160px;min-width:0}
 .mk-coms{display:flex;flex-direction:column;gap:8px}.mk-com{background:var(--branco);border-radius:8px;padding:10px 12px}.mk-com p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .mk-pessoas{max-height:240px;overflow:auto}
@@ -1133,8 +1135,9 @@ const TOURS={
     ["Curso","Dois vídeos para entender e operar o Conecta Revendas no dia a dia."]
   ]},
   gestao:{t:"Painel de gerenciamento",p:[
-    ["Pessoas","Cadastre acessos, defina perfil e seções, e acompanhe quem está evoluindo."],
-    ["Evolução e último acesso","Veja módulos concluídos, o acerto por cultivar (Sabiá, Cayana, Carcará) e o último acesso de cada pessoa para medir a usabilidade."]
+    ["Visão geral","O que precisa da sua atenção: solicitações pendentes, quem nunca entrou, acessos parados e revendas sem ninguém."],
+    ["Cadastro e Pessoas","Aprove solicitações, cadastre pessoas uma a uma ou em lote e encontre qualquer pessoa pela busca para editar o acesso."],
+    ["Times e Ranking","Veja cada time (revendas, RCs, comercial, Inside Sales) e a evolução de cada pessoa nos cursos."]
   ]}
 };
 const tourVisto=k=>{try{return localStorage.getItem("pc_tour_"+k)==="1";}catch(e){return true;}};
@@ -1153,7 +1156,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117065014";
+const APP_VER="20261117080001";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2423,6 +2426,7 @@ async function propBaixar(x){
   catch(e){aviso("Não foi possível gerar o PDF. Use Ver a proposta e salve pelo navegador.");}
 }
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.id||!/^gt-(q|perfil|acesso)$/.test(t.id))return;const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});F[t.id.slice(3)]=t.value;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="gt-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest&&ev.target.closest("[data-a^='prop-']");if(!b)return;const a=b.dataset.a,v=b.dataset.v;ev.preventDefault();ev.stopPropagation();
@@ -2915,7 +2919,7 @@ function vMercado(){
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Painel de gerenciamento"><button data-a="pag" data-v="gestao-home" ${S.pag==="gestao-home"||S.pag==="usuario"?'aria-current="page"':""}>Pessoas</button></nav>
+    <nav class="nav" aria-label="Painel de gerenciamento">${GT_ABAS.map(([k,t])=>{const cur=S.pag===k||(S.pag==="usuario"&&(S.gtVolta||"gestao-pessoas")===k);const n=k==="gestao-cad"?(S.solic||[]).length:0;return `<button data-a="pag" data-v="${k}" ${cur?'aria-current="page"':""}>${t}${n?` <span class="badge">${n}</span>`:""}</button>`;}).join("")}</nav>
     <span class="secao-nome">Painel de gerenciamento</span></div></div>`;
 }
 function heroHub(){
@@ -4138,25 +4142,85 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-rank","Ranking e evolução"]];
+const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC","Assessor de Vendas Digital"],"Representantes comerciais e assessores de vendas digitais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Quem administra o portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
+const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
+function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_acesso);return d!=null&&d<=7;}).length,a30=E.filter(x=>{const d=gtDias(x.ultimo_acesso);return d!=null&&d<=30;}).length,nunca=E.filter(x=>!x.ultimo_acesso).length;
+  const conc=E.filter(x=>HIB_CORE.every(id=>x.cult&&x.cult[id]!=null)).length;const cc=E.filter(x=>x.conhecimento!=null);const med=cc.length?Math.round(cc.reduce((s,x)=>s+x.conhecimento,0)/cc.length):null;
+  return {n:E.length,a7,a30,nunca,conc,med,pend:(S.solic||[]).length};}
 function vAcomp(){
+  if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
+  const R=gtResumo();
+  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
+  const sub={"gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
+  const corpo=S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
+  return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
+}
+function gtHome(R){
+  const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";
+  const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id).length;const comGente=new Set(S.equipe.filter(x=>x.canal_id).map(x=>x.canal_id));const semNing=(S.canaisLista||[]).filter(k=>!comGente.has(k.id)).length;
+  const parados=S.equipe.filter(x=>{const d=gtDias(x.ultimo_acesso);return d!=null&&d>30;}).length;
+  const at=[];
+  if(R.pend)at.push(`<div class="linha"><div><strong>${R.pend} ${R.pend===1?"solicitação de acesso pendente":"solicitações de acesso pendentes"}</strong><span class="meta">Aprovar ou recusar no Cadastro.</span></div><button class="btn" data-a="pag" data-v="gestao-cad">Ver</button></div>`);
+  if(R.nunca)at.push(`<div class="linha"><div><strong>${R.nunca} ${R.nunca===1?"pessoa nunca entrou":"pessoas nunca entraram"} no portal</strong><span class="meta">Vale reenviar o acesso ou lembrar a pessoa.</span></div><button class="btn sec" data-a="gt-filtro" data-v="nunca">Ver quem</button></div>`);
+  if(parados)at.push(`<div class="linha"><div><strong>${parados} ${parados===1?"pessoa sem entrar":"pessoas sem entrar"} há mais de 30 dias</strong><span class="meta">Acesso parado.</span></div><button class="btn sec" data-a="gt-filtro" data-v="30">Ver quem</button></div>`);
+  if(soltos)at.push(`<div class="linha"><div><strong>${soltos} ${soltos===1?"pessoa de revenda sem revenda vinculada":"pessoas de revenda sem revenda vinculada"}</strong><span class="meta">Sem o vínculo, a pessoa não vê o painel da revenda.</span></div><button class="btn sec" data-a="pag" data-v="gestao-times">Ver</button></div>`);
+  if(semNing)at.push(`<div class="linha"><div><strong>${semNing} ${semNing===1?"revenda do Conecta sem ninguém":"revendas do Conecta sem ninguém"} no portal</strong><span class="meta">Cadastre o gestor da revenda.</span></div><button class="btn sec" data-a="pag" data-v="gestao-times">Ver</button></div>`);
+  const top=S.equipe.slice(0,5);
+  const porTime=GT_TIMES.map(([t,ps])=>{const xs=S.equipe.filter(x=>ps.includes(x.perfil));return {t,n:xs.length,a30:xs.filter(x=>{const d=gtDias(x.ultimo_acesso);return d!=null&&d<=30;}).length};}).filter(o=>o.n);
+  return `<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px">
+    <div class="metric"><span>Pessoas com acesso</span><strong>${R.n}</strong></div>
+    <div class="metric"><span>Entraram nos últimos 7 dias</span><strong>${R.a7}</strong><span class="meta">${R.a30} nos últimos 30</span></div>
+    <div class="metric"><span>Nunca entraram</span><strong>${R.nunca}</strong></div>
+    <div class="metric"><span>Concluíram os cursos dos híbridos</span><strong>${R.conc}</strong>${R.med!=null?`<span class="meta">conhecimento médio ${R.med}%</span>`:""}</div></div>
+  <section class="bloco"><h2 class="sec">Precisa da sua atenção</h2>${at.join("")||`<div class="vazio">Nada pendente.</div>`}</section>
+  <div class="int-2"><section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Uso por time</h2><div class="tab"><table class="sim-t"><thead><tr><th>Time</th><th class="val">Pessoas</th><th class="val">Ativas em 30 dias</th></tr></thead><tbody>${porTime.map(o=>`<tr><td><button class="link" data-a="gt-time" data-v="${esc(o.t)}">${esc(o.t)}</button></td><td class="val">${o.n}</td><td class="val">${o.a30} (${Math.round(o.a30/o.n*100)}%)</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Primeiros do ranking</h2>${top.map((x,i)=>`<div class="linha"><div><strong>${i+1}º ${esc(x.nome)}</strong><span class="meta">${esc(x.perfil||"")} · ${x.feitas} de ${ORDEM.length} módulos${x.conhecimento!=null?" · "+x.conhecimento+"% de acerto":""}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`).join("")}<button class="btn sec" data-a="pag" data-v="gestao-rank" style="margin-top:8px">Ver o ranking completo</button></section></div>`;
+}
+function gtCad(){
+  return `  ${vSolic()}
+  ${S.senhaReset&&S.senhaReset.viaSolic?(S.senhaReset.alerta?`<div class="aviso-bloq">${esc(S.senhaReset.alerta)}</div>`:"")+caixaCred(S.senhaReset):""}
+  ${vCriarAcesso()}`;
+}
+function gtPessoas(){
+  const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});
+  const q=normGeo(F.q||"");
+  const ok=x=>{if(F.perfil&&x.perfil!==F.perfil)return false;const d=gtDias(x.ultimo_acesso);if(F.acesso==="nunca"&&x.ultimo_acesso)return false;if(F.acesso==="7"&&!(d!=null&&d<=7))return false;if(F.acesso==="30"&&!(d!=null&&d>30))return false;if(q&&!normGeo((x.nome||"")+" "+(x.email||"")).includes(q))return false;return true;};
+  const L=S.equipe.filter(ok).slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
+  const nomeCanal={};(S.canaisLista||[]).forEach(k=>nomeCanal[k.id]=k.nome);
+  const perfis=PERFIS.filter(p=>S.equipe.some(x=>x.perfil===p));
+  return `<section class="bloco"><div class="gt-filtros"><input type="search" id="gt-q" placeholder="Buscar por nome ou e-mail" value="${esc(F.q||"")}" aria-label="Buscar pessoa">
+    <select id="gt-perfil" aria-label="Perfil"><option value="">Todos os perfis</option>${perfis.map(p=>`<option ${F.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>
+    <select id="gt-acesso" aria-label="Último acesso"><option value="">Qualquer último acesso</option><option value="7" ${F.acesso==="7"?"selected":""}>Entrou nos últimos 7 dias</option><option value="30" ${F.acesso==="30"?"selected":""}>Sem entrar há mais de 30 dias</option><option value="nunca" ${F.acesso==="nunca"?"selected":""}>Nunca entrou</option></select></div>
+    <p class="meta" style="margin:8px 0">${L.length} de ${S.equipe.length} pessoas</p>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Perfil</th><th>Revenda</th><th class="val">Módulos</th><th>Último acesso</th><th></th></tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil||"")}</td><td>${esc(nomeCanal[x.canal_id]||"—")}</td><td class="val">${x.feitas} de ${ORDEM.length}</td><td>${x.ultimo_acesso?fmtDataHora(x.ultimo_acesso):"nunca entrou"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")||`<tr><td colspan="6">Ninguém com esses filtros.</td></tr>`}</tbody></table></div></section>`;
+}
+function gtTimes(){
+  const sel=S.gtTime||"Revendas";
+  const tabs=`<div class="mk-link" style="gap:6px;margin:0 0 12px;flex-wrap:wrap">${GT_TIMES.map(([t,ps])=>{const n=S.equipe.filter(x=>ps.includes(x.perfil)).length;return `<button class="btn ${sel===t?"":"sec"}" data-a="gt-time" data-v="${esc(t)}">${esc(t)} · ${n}</button>`;}).join("")}</div>`;
+  if(sel==="Revendas")return tabs+gtRevendas();
+  const T=GT_TIMES.find(x=>x[0]===sel)||GT_TIMES[1];const xs=S.equipe.filter(x=>T[1].includes(x.perfil)).sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
+  const a30=xs.filter(x=>{const d=gtDias(x.ultimo_acesso);return d!=null&&d<=30;}).length;const conc=xs.filter(x=>HIB_CORE.every(id=>x.cult&&x.cult[id]!=null)).length;
+  return tabs+`<section class="bloco"><h2 class="sec">${esc(T[0])}</h2><p class="sub" style="margin:0 0 10px">${esc(T[2])} ${xs.length} ${xs.length===1?"pessoa":"pessoas"} · ${a30} ativas nos últimos 30 dias · ${conc} concluíram os cursos dos híbridos.</p>
+    ${xs.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Perfil</th><th class="val">Módulos</th><th class="val">Acerto</th><th>Último acesso</th><th></th></tr></thead><tbody>${xs.map(x=>`<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${esc(x.perfil)}</td><td class="val">${x.feitas} de ${ORDEM.length}</td><td class="val">${x.conhecimento!=null?x.conhecimento+"%":"—"}</td><td>${x.ultimo_acesso?fmtDataHora(x.ultimo_acesso):"nunca entrou"}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Ninguém neste time ainda.</div>`}</section>`;
+}
+function gtRevendas(){
+  return `  ${(()=>{const L=S.canaisLista||[];const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";const por={};S.equipe.filter(x=>x.canal_id).forEach(x=>{(por[x.canal_id]=por[x.canal_id]||[]).push(x);});
+    const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id);const com=L.filter(k=>por[k.id]),sem=L.filter(k=>!por[k.id]);
+    const pessoa=x=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.perfil)} · ${esc(x.email||"")} · ${x.feitas} de ${ORDEM.length} módulos · último acesso ${fmtDataHora(x.ultimo_acesso)}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`;
+    return `<section class="bloco"><h2 class="sec">Pessoas por revenda</h2><p class="sub" style="margin:0">A equipe de cada revenda do Conecta que já tem acesso ao portal. Toque na revenda para ver as pessoas.</p>
+    ${soltos.length?`<div class="aviso-bloq" style="margin:0"><strong>${soltos.length} ${soltos.length===1?"pessoa de revenda está":"pessoas de revenda estão"} sem revenda vinculada:</strong> ${soltos.map(x=>`<button class="link" data-a="verusuario" data-v="${x.id}">${esc(x.nome)}</button>`).join(" · ")}. Abra cada uma e escolha a revenda.</div>`:""}
+    ${com.length?com.map(k=>{const P=por[k.id].slice().sort((a,b)=>(a.perfil==="Gestor de Revenda"?0:1)-(b.perfil==="Gestor de Revenda"?0:1)||a.nome.localeCompare(b.nome));const g=P.filter(x=>x.perfil==="Gestor de Revenda").length;return `<details class="lote"><summary>${esc(k.nome)} · ${P.length} ${P.length===1?"pessoa":"pessoas"}${g?` (${g} ${g===1?"gestor":"gestores"})`:" (sem gestor)"}</summary><div class="lista" style="margin-top:8px">${P.map(pessoa).join("")}</div></details>`;}).join(""):`<div class="vazio">Nenhuma revenda tem pessoas cadastradas ainda. No cadastro acima, escolha o perfil Gestor ou Vendedor de Revenda e a revenda.</div>`}
+    ${sem.length?`<p class="dica">Revendas do Conecta ainda sem ninguém no portal: ${sem.map(k=>esc(k.nome)).join(" · ")}.</p>`:""}</section>`;})()}`;
+}
+function gtRanking(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS_ON[x.feitas]?ETAPAS_ON[x.feitas].n:"—");
   const conc=S.equipe.filter(x=>HIB_CORE.every(id=>x.cult&&x.cult[id]!=null)).length;
   const medal=i=>`${i+1}º`;
   const comConhec=S.equipe.filter(x=>x.conhecimento!=null);
   const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
-  return `<div><h1 class="titulo">Painel de gerenciamento</h1><p class="sub">${S.equipe.length} pessoas com acesso · ${conc} concluíram os cursos dos híbridos${mediaConhec!=null?` · conhecimento médio ${mediaConhec}%`:""}.</p></div>
-  ${vSolic()}
-  ${S.senhaReset&&S.senhaReset.viaSolic?(S.senhaReset.alerta?`<div class="aviso-bloq">${esc(S.senhaReset.alerta)}</div>`:"")+caixaCred(S.senhaReset):""}
-  ${vCriarAcesso()}
-  ${(()=>{const L=S.canaisLista||[];const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";const por={};S.equipe.filter(x=>x.canal_id).forEach(x=>{(por[x.canal_id]=por[x.canal_id]||[]).push(x);});
-    const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id);const com=L.filter(k=>por[k.id]),sem=L.filter(k=>!por[k.id]);
-    const pessoa=x=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.perfil)} · ${esc(x.email||"")} · ${x.feitas} de ${ORDEM.length} módulos · último acesso ${fmtDataHora(x.ultimo_acesso)}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`;
-    return `<section class="bloco"><h2 class="sec">Pessoas por revenda</h2><p class="sub" style="margin:0">A equipe de cada revenda do Conecta que já tem acesso ao portal. Toque na revenda para ver as pessoas.</p>
-    ${soltos.length?`<div class="aviso-bloq" style="margin:0"><strong>${soltos.length} ${soltos.length===1?"pessoa de revenda está":"pessoas de revenda estão"} sem revenda vinculada:</strong> ${soltos.map(x=>`<button class="link" data-a="verusuario" data-v="${x.id}">${esc(x.nome)}</button>`).join(" · ")}. Abra cada uma e escolha a revenda.</div>`:""}
-    ${com.length?com.map(k=>{const P=por[k.id].slice().sort((a,b)=>(a.perfil==="Gestor de Revenda"?0:1)-(b.perfil==="Gestor de Revenda"?0:1)||a.nome.localeCompare(b.nome));const g=P.filter(x=>x.perfil==="Gestor de Revenda").length;return `<details class="lote"><summary>${esc(k.nome)} · ${P.length} ${P.length===1?"pessoa":"pessoas"}${g?` (${g} ${g===1?"gestor":"gestores"})`:" (sem gestor)"}</summary><div class="lista" style="margin-top:8px">${P.map(pessoa).join("")}</div></details>`;}).join(""):`<div class="vazio">Nenhuma revenda tem pessoas cadastradas ainda. No cadastro acima, escolha o perfil Gestor ou Vendedor de Revenda e a revenda.</div>`}
-    ${sem.length?`<p class="dica">Revendas do Conecta ainda sem ninguém no portal: ${sem.map(k=>esc(k.nome)).join(" · ")}.</p>`:""}</section>`;})()}
-  <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
+  return `  <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
   <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th>${ETAPAS_ATIVAS.map(id=>`<th>${esc(({melhoramento:"Melhoramento",qualcapim:"Qual capim"})[id]||ETAPAS.find(e=>e.id===id).n)}</th>`).join("")}<th>Geral</th><th>Pontos</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td>${ETAPAS_ATIVAS.map(id=>`<td>${cel(id)}</td>`).join("")}<td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td>${x.pontos?`<strong>${x.pontos}</strong>`:'<span class="meta">—</span>'}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>
   ${(()=>{const pu=S.progPorUser||{},nome={};S.equipe.forEach(x=>{nome[x.id]=x;});
@@ -4209,7 +4273,7 @@ function vUsuarioAdmin(){
   const admF=afTem("Administrador")||S.adminForm.nivel==="Administrador";
   const pelPerfil=admF?SECOES_ACESSO.map(x=>x[0]):[...(afTem("Comercial Barenbrug")?["inteligencia","acoes-mkt","brindes"]:[]),...(afTem("Marketing")?["acoes-mkt","brindes"]:[]),...(afTem("Financeiro")?["financeiro"]:[])];
   const secAbas=[...new Set([...ac,...pelPerfil])].filter(id=>ABAS_REG[id]&&ABAS_REG[id].length);
-  return `<button class="voltar" data-a="pag" data-v="gestao-home">‹ Painel de gerenciamento</button>
+  return `<button class="voltar" data-a="pag" data-v="${S.gtVolta||"gestao-pessoas"}">‹ ${esc((GT_ABAS.find(x=>x[0]===(S.gtVolta||"gestao-pessoas"))||["","Pessoas"])[1])}</button>
   <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
   ${evolucaoHTML(u.id)}
   ${(afTem("RC")||afTem("Assessor de Vendas Digital")||afTem("Inside Sales"))?(S.rcContr?(contratoCard(contratoDe(S.adminForm.rc_crm||S.adminForm.nome,u.email),"Contrato 26/27 (mapeamento)")||`<div class="nota-admin">Nenhum contrato 26/27 mapeado para este usuário. O vínculo é pelo nome no CRM ou pelo e-mail do contrato.</div>`):(carregarContratos(),"")):""}
@@ -6624,7 +6688,9 @@ document.addEventListener("click",async ev=>{
     if(t==="r"){const r=await sb.from("duvida_respostas").delete().eq("id",id).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir a resposta.");render();return;}await carregarDuvidas();render();aviso("Resposta excluída.");return;}
     return;}
   if(a==="post-del"){await sb.from("posts").delete().eq("id",v);S.posts=null;render();aviso("Publicação excluída.");return;}
-  if(a==="verusuario"){abrirUsuario(v);}
+  if(a==="verusuario"){if(S.pag&&S.pag.startsWith("gestao-"))S.gtVolta=S.pag;abrirUsuario(v);}
+  if(a==="gt-filtro"){S.gtF={q:"",perfil:"",acesso:v};S.pag="gestao-pessoas";render();return;}
+  if(a==="gt-time"){S.gtTime=v;S.pag="gestao-times";render();return;}
   if(a==="acesso-modo"){S.acessoModo=v;S._erro=null;render();window.scrollTo(0,0);return;}
   if(a==="copiar"){const t=(S.copias||{})[v]||"";try{await navigator.clipboard.writeText(t);aviso("Mensagem copiada.");}catch(e){aviso("Não deu para copiar automaticamente. Selecione o texto e copie.");}return;}
   if(a==="mfa-reset"){S.mfaReset=v||null;render();return;}
@@ -6673,7 +6739,7 @@ document.addEventListener("click",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível excluir.";}catch(_){erro="Não foi possível excluir. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erro=erro;S.confirmExcluir=false;render();return;}
-    S.equipe=null;S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S.formAlvo="form";S.pag="gestao-home";render();aviso("Acesso de "+nome+" excluído.");
+    S.equipe=null;S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S.formAlvo="form";S.pag=S.gtVolta||"gestao-pessoas";render();aviso("Acesso de "+nome+" excluído.");
   }
 });
 document.addEventListener("change",async ev=>{
