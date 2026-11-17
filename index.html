@@ -680,6 +680,11 @@ main.largo{max-width:1120px}
 .raci-t td.c{text-align:center;width:84px}.raci-t th:first-child,.raci-t td:first-child{position:sticky;left:0;background:#fff;text-align:left;z-index:1;min-width:250px;max-width:360px}
 .raci-t tr.ar td{background:#f3f6f8;font-weight:800;color:#00557f;padding-top:12px}.raci-t tr.ar td:first-child{background:#f3f6f8}.raci-t tr.dim td{opacity:.28}
 .raci-t .nm{font-weight:700}.raci-t .ds{display:block;font-size:12px;color:#56636b;line-height:1.35;margin-top:2px}
+.dir-t td,.dir-t th{white-space:normal!important;min-width:90px}.dir-hero{background:var(--azul-escuro,#00557f);color:#fff;border-radius:14px;padding:18px 20px}.dir-hero p{margin:6px 0;max-width:70ch}.dir-kicker{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--amarelo,#ffdb00);font-weight:700}.dir-frase{font-size:clamp(20px,3.4vw,28px);font-weight:800;line-height:1.2;text-wrap:balance}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.dir-card{background:#fff;border:1px solid #e3e8ec;border-radius:12px;padding:14px;min-width:0}.dir-card p{margin:6px 0 0}.dir-ruim{border-left:4px solid #b4232a}.dir-bom{border-left:4px solid #2E8B57}
+.dir-passos{counter-reset:p;list-style:none;padding:0;margin:0;display:grid;gap:8px}.dir-passos li{counter-increment:p;display:grid;grid-template-columns:34px 1fr;gap:4px 10px;background:#fff;border:1px solid #e3e8ec;border-radius:12px;padding:12px}.dir-passos li::before{content:counter(p);grid-row:span 2;width:30px;height:30px;border-radius:50%;background:var(--amarelo,#ffdb00);color:#00334d;font-weight:800;display:grid;place-items:center}.dir-passos span{grid-column:2}
+.dir-obj details{background:#fff;border:1px solid #e3e8ec;border-radius:12px;padding:12px 14px;margin-bottom:8px}.dir-obj summary{font-weight:700;cursor:pointer}.dir-obj p{margin:8px 0 0}
+.dir-check{list-style:none;padding:0;margin:0;display:grid;gap:6px}.dir-check li{background:#fff;border:1px solid #e3e8ec;border-radius:10px;padding:10px 12px 10px 36px;position:relative}.dir-check li::before{content:"";position:absolute;left:12px;top:12px;width:14px;height:14px;border:2px solid var(--azul-escuro,#00557f);border-radius:4px}
 </style>
 </head>
 <body>
@@ -1197,7 +1202,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117181836";
+const APP_VER="20261117182323";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1473,7 +1478,7 @@ function subnavAcademia(){
 }
 function subnavEnxoval(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Enxoval de Marketing"><button data-a="pag" data-v="enxoval" aria-current="page">Materiais</button></nav>
+    <nav class="nav" aria-label="Enxoval de Marketing"><button data-a="pag" data-v="enxoval" ${S.pag!=="enx-diretriz"?'aria-current="page"':""}>Materiais</button><button data-a="pag" data-v="enx-diretriz" ${S.pag==="enx-diretriz"?'aria-current="page"':""}>Como comunicar</button></nav>
     <span class="secao-nome">Enxoval de Marketing</span></div></div>`;
 }
 async function carregarEnxoval(){try{const {data}=await sb.from("materiais_mkt").select("*").order("ordem",{ascending:true});S.mkt=data||[];}catch(e){S.mkt=[];}}
@@ -1489,6 +1494,45 @@ function vMktForm(){
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="mkt-cancel">Cancelar</button></div>
   </form></section>`;
+}
+/* ---------- Diretriz de comunicação: valor, não preço ---------- */
+function vDiretriz(){
+  const card=(t,b)=>`<div class="dir-card"><strong>${t}</strong><p>${b}</p></div>`;
+  const P=[
+   ["1. Valor antes do preço","Só fale de preço depois de entender a fazenda: área, lotação de hoje, sistema (cria, recria, engorda, leite), objetivo e prazo. Preço dito cedo vira comparação de saco com saco. Preço dito depois do diagnóstico vira investimento com retorno."],
+   ["2. A conta é por hectare, não por saco","O híbrido se paga em lotação: mais animais por hectare, mais arroba por hectare. Mostre a conta com os números do produtor na Calculadora de rentabilidade do portal. A semente se dilui em várias safras e pesa pouco no custo da arroba produzida."],
+   ["3. Toda afirmação tem prova","Use dado de ensaio oficial, pesquisa e resultado de cliente real, sempre com a fonte. Sem dado, não afirme. Prova de campo (raiz, rebrota, pasto verde na seca) vale mais do que adjetivo."],
+   ["4. Fale do nosso, nunca do outro","Não cite, compare pelo nome ou desqualifique concorrente nem cultivar de outra empresa. Quando o produtor trouxer a comparação, devolva para a conta dele: quanto ele produz hoje por hectare e quanto pode produzir."],
+   ["5. Premium é o jeito de atender","Responder rápido, mandar proposta organizada, orientar a implantação e acompanhar depois do plantio (germinação, primeiro pastejo). É isso que justifica o preço e traz a recompra."]];
+  const R=[
+   ["Entender","Perguntar antes de oferecer: quantos hectares vai formar ou reformar? Qual a lotação hoje? Qual capim tem? O que mais incomoda: seca, cigarrinha, encharcamento, rebrota lenta?"],
+   ["Diagnosticar","Ligar a dor à solução: cada híbrido tem um papel (Sabiá, Cayana, Carcará). Indicar um, com o motivo técnico, em vez de oferecer o catálogo."],
+   ["Mostrar a conta","Abrir a calculadora com a área, a lotação e o preço da arroba dele. O número que importa é a arroba a mais por hectare e o lucro extra na área toda."],
+   ["Provar","Mostrar o ensaio, o vídeo de campo ou o caso de um cliente da região. O Enxoval tem as peças prontas."],
+   ["Propor","Proposta escrita, com volume pela taxa de semeadura certa, prazo de entrega e condição. Valor primeiro, preço junto da condição."],
+   ["Acompanhar","Ligar na semeadura, na germinação e no primeiro pastejo. Produtor bem acompanhado vira caso de sucesso e indica."]];
+  const O=[
+   ["“O saco é caro.” / “O capim comum sai por um terço do preço.”","Concordo que o saco custa mais. A pergunta é quanto ele custa em cada arroba que o senhor vai produzir. A semente dura várias safras e o híbrido segura mais animal por hectare. Posso fazer a conta com a sua área e o seu preço da arroba? Em geral, o que parece caro no saco fica pequeno no custo da arroba."],
+   ["“Vou esperar o preço baixar.”","Cada safra com o pasto como está é arroba que deixa de sair da mesma área. Vamos ver quanto isso representa na sua fazenda e decidir com o número na mão."],
+   ["“Meu vizinho plantou e não pegou.”","Formação de pasto depende de época, preparo, taxa e profundidade de semeadura. Eu te passo a recomendação para a sua área e acompanho a implantação com você."],
+   ["“Me dá um desconto.”","Em vez de mexer no preço, vamos ver o que deixa a compra melhor para você: prazo, entrega, volume certo para a área e acompanhamento técnico. Desconto não forma pasto; implantação bem feita forma."],
+   ["“Qual a diferença para o outro híbrido?”","Prefiro te mostrar o que o nosso entrega na sua condição: o resultado de ensaio, o caso de quem já usa na região e a conta da sua área. A escolha fica com você, com dado na mão."]];
+  const U=[["investimento, retorno, resultado","barato, promoção, queima, imperdível"],["arroba por hectare, lotação, custo da arroba","preço do saco como primeiro assunto"],["híbrido Barenbrug, genética, prova de campo","“igual ao”, “melhor que o X”, nome de concorrente"],["capim convencional (para o produtor)","“commodity” (termo interno, não usar com o produtor)"],["dado com fonte: ensaio, pesquisa, cliente","promessa sem número (“o melhor do Brasil”)"],["Cultive Confiança","desconto como chamada de anúncio ou de mensagem"]];
+  const X=[["Antes","“Tenho Sabiá a um preço ótimo, fecha hoje que te faço um desconto.”"],["Depois","“Seu Antônio, com 1,5 cabeça por hectare hoje, o Sabiá pode te dar mais arroba na mesma área. Te mando a conta com os seus números e o vídeo de um cliente aqui da região. Posso te ligar amanhã às 9h?”"]];
+  return `<div><h1 class="titulo">Como comunicar os híbridos</h1><p class="sub">Diretriz para quem fala com o pecuarista em nome da Barenbrug: Inside Sales, RCs, revendas e Marketing. Venda consultiva e premium: mostrar o valor do híbrido na fazenda do produtor, não o preço do saco.</p></div>
+  <section class="bloco dir-hero"><p class="dir-kicker">A ideia central</p><p class="dir-frase">Compare em R$ por hectare, não em R$ por saco.</p><p>O pecuarista não compra semente: compra mais arroba na mesma área, com menos risco. Nosso papel é ajudar a fazer essa conta e provar o resultado. Quem entende o valor discute condição, não preço.</p></section>
+  <section class="bloco"><h2 class="sec">Os cinco princípios</h2><div class="dir-grid">${P.map(x=>card(...x)).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">A conversa consultiva, passo a passo</h2><ol class="dir-passos">${R.map(([t,b])=>`<li><strong>${t}</strong><span>${b}</span></li>`).join("")}</ol></section>
+  <section class="bloco"><h2 class="sec">Provas que podemos usar</h2><div class="tab"><table class="sim-t dir-t"><thead><tr><th>Híbrido</th><th>O que mostrar</th><th>Fonte</th></tr></thead><tbody>
+   <tr><td><strong>Sabiá</strong></td><td>+36% de produtividade animal frente ao Marandu; +56% de raízes</td><td>Ensaio oficial VCU; estudo do IFTO</td></tr>
+   <tr><td><strong>Cayana</strong></td><td>+42,2% de produtividade animal frente ao Marandu</td><td>VCU, UFU Capim Branco (2015 a 2017)</td></tr>
+   <tr><td><strong>Carcará</strong></td><td>+4,4 arrobas por hectare por ano frente ao Mombaça</td><td>Ensaios VCU</td></tr>
+   <tr><td><strong>Barenbrug</strong></td><td>NPS 63,6, zona de excelência; suporte técnico com nota 9,3</td><td>Pesquisa com clientes, auditada por terceiros</td></tr></tbody></table></div>
+   <p class="precos-nota">Resultados variam com manejo, solo e clima. Diga sempre a fonte e não arredonde para cima. A Academia de Híbridos tem o detalhe técnico de cada cultivar.</p></section>
+  <section class="bloco"><h2 class="sec">Objeções: como responder</h2><div class="dir-obj">${O.map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Palavras: use e evite</h2><div class="tab"><table class="sim-t dir-t"><thead><tr><th>Use</th><th>Evite</th></tr></thead><tbody>${U.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Na prática: a mesma mensagem, de dois jeitos</h2><div class="dir-grid">${X.map(([t,b],i)=>`<div class="dir-card ${i?"dir-bom":"dir-ruim"}"><strong>${t}</strong><p>${b}</p></div>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Antes de enviar uma mensagem, peça ou proposta</h2><ul class="dir-check">${["Falei da fazenda dele antes de falar de preço?","A conta está em R$ por hectare ou por arroba, não por saco?","Cada número tem fonte?","Não citei nem comparei concorrente pelo nome?","Indiquei um híbrido com o motivo, em vez de mandar o catálogo?","Deixei um próximo passo com dia e hora?","A peça tem a marca e o Cultive Confiança?"].map(x=>`<li>${x}</li>`).join("")}</ul></section>`;
 }
 function vEnxoval(){
   const admin=ehAdmin()||temPerfil("Comercial Barenbrug");
@@ -5241,7 +5285,28 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-marca","Marca, mídia e IAs"],["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+async function carregarMarca(){if(S.marcaBusy)return;S.marcaBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","marca").maybeSingle();S.marca=data?data.dados:null;}catch(e){S.marca=null;}S.marcaBusy=false;render();}
+function vIntMarca(){
+  if(S.marca===undefined){carregarMarca();return `<div class="carregando">Carregando…</div>`;}
+  const M=S.marca;if(!M)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
+  const ig=(M.instagram||{}).perfis||[];const mx=Math.max(1,...ig.map(x=>x[1]));const mg=Math.max(1,...ig.map(x=>x[2]));
+  return `<div><h1 class="titulo">Marca, mídia e IAs</h1><p class="sub">Como a marca Barenbrug chega ao pecuarista, como a mídia vira contato e venda, e como aparecemos quando o produtor pergunta para uma IA. ${esc(M.periodo||"")}.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">${(M.numeros||[]).map(([t,v,m])=>`<div class="metric"><span>${esc(t)}</span><strong>${esc(v)}</strong><span class="meta">${esc(m)}</span></div>`).join("")}</div>
+  <section class="bloco"><h2 class="sec">Da marca à venda</h2><ol class="dir-passos">${(M.funil||[]).map(([t,c,r])=>`<li><strong>${esc(t)}</strong><span>${esc(c)}. <b>${esc(r)}</b>.</span></li>`).join("")}</ol>
+   <p class="precos-nota">${esc(M.retorno||"")}</p></section>
+  <section class="bloco"><h2 class="sec">Onde a verba de mídia vai</h2><div class="tab"><table class="sim-t dir-t"><thead><tr><th>Nível</th><th>Estados</th><th>Papel da mídia</th></tr></thead><tbody>${(M.prioridade||[]).map(r=>`<tr><td><strong>${esc(r[0])}</strong></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Como a Barenbrug aparece nas IAs</h2>
+   <div class="dir-grid">${((M.ias||{}).perguntas||[]).map(([q,rs])=>`<div class="dir-card"><span class="meta">Pergunta feita às IAs</span><strong style="display:block;margin:4px 0 8px">“${esc(q)}”</strong>${rs.map(([ia,r])=>`<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e3e8ec;padding:6px 0"><span>${esc(ia)}</span><b>${esc(r)}</b></div>`).join("")}</div>`).join("")}</div>
+   <p class="meta" style="margin-top:8px">Por que importa: ${((M.ias||{}).contexto||[]).map(esc).join(" · ")}. Teste feito em ${esc((M.ias||{}).data||"")}; vale repetir a cada trimestre com as mesmas perguntas.</p></section>
+  <section class="bloco"><h2 class="sec">Instagram frente às principais marcas</h2><p class="meta">Janela de ${esc((M.instagram||{}).janela||"")}.</p>
+   <div class="int-2"><div><strong>Seguidores</strong>${ig.map(([n,v])=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${v.toLocaleString("pt-BR")}</b></div><div style="height:8px;background:#e3e8ec;border-radius:4px"><div style="height:8px;width:${v/mx*100}%;background:${n==="Barenbrug"?"#00557f":"#9aa7b2"};border-radius:4px"></div></div></div>`).join("")}</div>
+   <div><strong>Novos seguidores no período</strong>${ig.map(([n,,g])=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>+${g.toLocaleString("pt-BR")}</b></div><div style="height:8px;background:#e3e8ec;border-radius:4px"><div style="height:8px;width:${g/mg*100}%;background:${n==="Barenbrug"?"#ffdb00":"#9aa7b2"};border-radius:4px"></div></div></div>`).join("")}</div></div>
+   <p class="precos-nota">${esc((M.instagram||{}).nota||"")}</p></section>
+  <section class="bloco"><h2 class="sec">Conteúdos que seguem colhendo</h2><p class="meta">Produzidos antes da safra e ainda entre os mais vistos: o custo de produção já foi pago e cada mês traz alcance novo.</p>
+   <div class="dir-grid">${(M.perenes||[]).map(([t,n,v])=>`<div class="dir-card"><span class="meta">${esc(t)}</span><strong style="display:block;margin-top:4px">${esc(n)}</strong><p class="meta">${esc(v)}</p></div>`).join("")}</div></section>
+  <p class="precos-nota">Fonte: ${esc(M.fonte||"")}</p>`;
+}
 async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados,atualizado_em").eq("id","raci").maybeSingle();S.raci=data?data.dados:null;S.raciEm=data?data.atualizado_em:null;}catch(e){S.raci=null;}S.raciBusy=false;render();}
 const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
 function vIntRaci(){
@@ -7543,7 +7608,7 @@ const ABA_DESC={
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
- "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
+ "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-marca":"Alcance da marca, como a mídia vira venda e como a Barenbrug aparece nas IAs.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
@@ -7614,7 +7679,7 @@ function renderApp(){
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
-  if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
+  if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
     app.innerHTML=cabecalho()+subnavLeads()+`<main>${vLeads()}</main>`;
     if(!S.leadsCache&&!temPerfil("RC")){carregarLeads().then(render);}
@@ -7650,11 +7715,11 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():S.pag==="int-marca"?vIntMarca():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
-      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci")carregarCanais().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
   }
