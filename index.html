@@ -1202,7 +1202,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117185929";
+const APP_VER="20261117190323";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5296,9 +5296,9 @@ function potCalc(D,P){const pr=D.prem||{},br=D.br||{};const kg=pr.kg_ha||10,vig=
 function vIntPot(){
   if(S.potD===undefined){carregarPot();return `<div class="carregando">Carregando o potencial de mercado…</div>`;}
   const D=S.potD;if(!D)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
-  const P=S.potP||(S.potP={ua:0.71,lot:1,ren:0.08,ilp:true});const PC=potCalc(D,P);const V=S.potV||{};
+  const P=S.potP||(S.potP={ua:0.71,lot:1,ren:0.08,ilp:true,hib:3600});if(!P.hib)P.hib=3600;const PC=potCalc(D,P);const V=S.potV||{};
   const fT=n=>Math.round(Number(n)||0).toLocaleString("pt-BR")+" t";const fM=n=>((Number(n)||0)/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" M ha";const p1=x=>((x||0)*100).toLocaleString("pt-BR",{maximumFractionDigits:(Math.abs(x||0)<0.1?2:1)})+"%";
-  const rows=PC.rows.map(r=>{const v=V[r.uf]||{};const kv=Number(v.kg_v)||0,ka=Number(v.kg_a)||0;return {...r,kv,ka,pen:r.A?kv/1000/r.A:0};});
+  const rows=PC.rows.map(r=>{const v=V[r.uf]||{};const kv=Number(v.kg_v)||0,ka=Number(v.kg_a)||0;const H=PC.A?P.hib*r.A/PC.A:0;return {...r,kv,ka,H,pen:r.A?kv/1000/r.A:0,shr:H?kv/1000/H:0};});
   const hv=rows.reduce((a,r)=>a+r.kv,0),ha=rows.reduce((a,r)=>a+r.ka,0);const pen=PC.A?hv/1000/PC.A:0;const tot=PC.A+PC.ilp;const mx=Math.max(PC.A,PC.B,PC.C,1);
   const REGS=["Centro-Oeste","Sudeste","Sul","Norte","Nordeste"];const cmax=Math.max(.01,...rows.map(r=>Math.min(r.pen,1.5)));
   const bar=(w,c)=>`<div style="height:8px;background:#e3e8ec;border-radius:4px"><div style="height:8px;width:${Math.min(100,w*100).toFixed(1)}%;background:${c||"#00557f"};border-radius:4px"></div></div>`;
@@ -5306,8 +5306,24 @@ function vIntPot(){
   let body="";for(const reg of REGS){const a=rows.filter(r=>r.reg===reg).sort((x,y)=>y.A-x.A);if(!a.length)continue;const S2=k=>a.reduce((x,r)=>x+(r[k]||0),0);const A=S2("A"),pa=S2("past"),ef=S2("efet");
     body+=`<tr style="background:#eef4f8"><td><strong>${reg}</strong></td><td class="val">${fM(pa)}</td><td class="val">${fM(ef)}<br><span class="meta">${p1(1-ef/pa)} sem boi</span></td><td class="val"><strong>${fT(A)}</strong><br><span class="meta">${p1(A/PC.A)} do Brasil</span></td><td class="val">${fT(S2("B"))}</td><td class="val">${fT(S2("C"))}</td><td class="val">${fmtKg(Math.round(S2("kv")))}</td><td>${A?p1(S2("kv")/1000/A):"—"}</td><td class="val">${fT(S2("ilp"))}</td></tr>`+a.map(line).join("");}
   const sel=(id,opts,v)=>`<select id="${id}" data-potp="${id}">${opts.map(o=>`<option value="${o}" ${+o===+v?"selected":""}>${String(o).replace(".",",")}</option>`).join("")}</select>`;
+  const hibH=`  <section class="bloco" style="border-top:4px solid var(--amarelo,#ffdb00);padding-top:12px"><h2 class="sec" style="margin-top:0">Recorte de híbridos</h2>
+   <p class="sub" style="margin:0 0 8px">O mercado de braquiária e panicum híbridos de pastejo, sem o Tamani, distribuído pelos estados na proporção do pasto com boi tecnificado (leitura A), que é onde o híbrido entra. A penetração das híbridas da Barenbrug é medida contra esse recorte.</p>
+   <div class="form-card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end"><div><label for="pothib">Mercado anual de híbridos (t)${inf("Estimativa Barenbrug do volume anual de semente de híbridos no Brasil, sem o Tamani. Ajuste aqui para simular outro tamanho de mercado.")}</label>${sel("pothib",[2500,3000,3600,4000,5000,6000],P.hib)}</div><span class="meta">Equivale a ${p1(P.hib/PC.A)} do potencial de pasto com boi (A) e a ${p1(P.hib/tot)} do potencial total de semente.</span></div>
+   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Mercado de híbridos</span><strong>${fT(P.hib)}/ano</strong><span class="meta">sem o Tamani · estimativa Barenbrug</span></div>
+    <div class="metric"><span>Barenbrug na safra 26/27</span><strong>${fmtKg(Math.round(hv))}</strong><span class="meta">híbridas vendidas (CRM, sem exportação)</span></div>
+    <div class="metric"><span>Participação no mercado de híbridos</span><strong>${p1(hv/1000/P.hib)}</strong><span class="meta">safra em andamento</span></div>
+    <div class="metric"><span>Em negociação</span><strong>${fmtKg(Math.round(ha))}</strong><span class="meta">se fechar tudo: ${p1((hv+ha)/1000/P.hib)}</span></div>
+   </div>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Região · UF</th><th class="val">Mercado de híbridos</th><th class="val">Vendido 26/27</th><th>Participação</th><th class="val">Em negociação</th><th class="val">Espaço livre</th></tr></thead><tbody>${REGS.map(reg=>{const a=rows.filter(r=>r.reg===reg).sort((x,y)=>y.H-x.H);if(!a.length)return "";const H=a.reduce((x,r)=>x+r.H,0),kv=a.reduce((x,r)=>x+r.kv,0),ka=a.reduce((x,r)=>x+r.ka,0);
+     return `<tr style="background:#eef4f8"><td><strong>${reg}</strong></td><td class="val"><strong>${fT(H)}</strong></td><td class="val">${fmtKg(Math.round(kv))}</td><td>${p1(H?kv/1000/H:0)}</td><td class="val">${fmtKg(Math.round(ka))}</td><td class="val">${fT(Math.max(0,H-kv/1000))}</td></tr>`+a.filter(r=>r.H>=1||r.kv>0).map(r=>`<tr><td>${r.uf} <span class="meta">${esc(r.nome)}</span></td><td class="val">${fT(r.H)}</td><td class="val">${fmtKg(Math.round(r.kv))}</td><td style="min-width:110px">${bar(Math.min(r.shr,1))}<span class="meta">${r.shr>=10?"> 1000%":p1(r.shr)}</span></td><td class="val">${fmtKg(Math.round(r.ka))}</td><td class="val">${fT(Math.max(0,r.H-r.kv/1000))}</td></tr>`).join("");}).join("")}
+    <tr style="font-weight:700"><td>Brasil</td><td class="val">${fT(P.hib)}</td><td class="val">${fmtKg(Math.round(hv))}</td><td>${p1(hv/1000/P.hib)}</td><td class="val">${fmtKg(Math.round(ha))}</td><td class="val">${fT(Math.max(0,P.hib-hv/1000))}</td></tr></tbody></table></div>
+   <p class="precos-nota">Como o recorte é feito: mercado de híbridos × (pasto com boi da UF ÷ pasto com boi do Brasil). As vendas contam pela data de faturamento da safra 26/27 e incluem a venda a canais (B2B) na UF do canal; distribuidor que compra num estado e revende em outro pode deixar a participação acima de 100% numa UF e abaixo em outra. Abaixo, o modelo geral de onde vem a régua.</p></section>
+`;
   const SG=D.sigef||{};const G=SG.grupo||{};const ult=(SG.safras||[]).length-2;
-  return `<div><h1 class="titulo">Potencial de mercado</h1><p class="sub">Quanto de semente forrageira o Brasil pode consumir, quanto disso é mercado de híbrida de pastejo e quanto a Barenbrug já ocupa em cada estado. Modelo do Mapa Comercial 26/27, com premissas que você pode ajustar.</p></div>
+  return `<div><h1 class="titulo">Potencial de mercado</h1><p class="sub">O mercado de híbridos por estado e quanto a Barenbrug já ocupa, seguido do modelo geral de semente forrageira (Mapa Comercial 26/27) que serve de régua, com premissas que você pode ajustar.</p></div>
+  ${hibH}
+  <h2 class="sec">Modelo geral de semente forrageira</h2>
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
    <div class="metric"><span>${P.ilp?"Potencial total de semente":"Potencial só da pecuária"}</span><strong>${fT(P.ilp?tot:PC.A)}/ano</strong><span class="meta">${P.ilp?"pasto com boi + lavoura com forrageira (ILP)":"lavoura (ILP) fora"}</span></div>
    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Pasto com boi (A)${inf("A régua das híbridas: pastagem ocupada por rebanho, em municípios tecnificados, reformada a 8% ao ano com 10 kg/ha. Toda penetração é medida contra ela.")}</span><strong>${fT(PC.A)}/ano</strong><span class="meta">a régua das híbridas</span></div>
@@ -5351,7 +5367,7 @@ function vIntPot(){
    <p class="precos-nota">Uso interno. Estimativas de trabalho, não substituem avaliação comercial.</p></section>`;
 }
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.potp)return;const P=S.potP||(S.potP={ua:0.71,lot:1,ren:0.08,ilp:true});const k=t.dataset.potp;
-  if(k==="potua")P.ua=+t.value;else if(k==="potlot")P.lot=+t.value;else if(k==="potren")P.ren=+t.value/100;else if(k==="potilp")P.ilp=t.checked;render();});
+  if(k==="potua")P.ua=+t.value;else if(k==="potlot")P.lot=+t.value;else if(k==="potren")P.ren=+t.value/100;else if(k==="potilp")P.ilp=t.checked;else if(k==="pothib")P.hib=+t.value;render();});
 async function carregarMarca(){if(S.marcaBusy)return;S.marcaBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","marca").maybeSingle();S.marca=data?data.dados:null;}catch(e){S.marca=null;}S.marcaBusy=false;render();}
 function vIntMarca(){
   if(S.marca===undefined){carregarMarca();return `<div class="carregando">Carregando…</div>`;}
