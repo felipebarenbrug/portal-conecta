@@ -1961,17 +1961,16 @@ function vISGer(){
 const REG_P=[["Sul",["SP","MS","PR","SC","RS"]],["Centro",["RO","MT","GO","DF","MG","ES","RJ"]],["Nordeste",["MA","PI","CE","RN","PB","PE","AL","SE","BA"]],["Norte",["AC","AM","RR","AP","PA","TO"]]];
 const regDe=uf=>{const u=String(uf||"").toUpperCase();const r=REG_P.find(([,L])=>L.includes(u));return r?r[0]:(u==="EX"?"Exportação":"Sem estado");};
 const regChips=()=>`<div class="rv-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px">${[["","Todas as regiões"],...REG_P.map(([r])=>[r,r])].map(([k,t])=>`<button class="chip" data-a="reg-f" data-v="${esc(k)}" aria-pressed="${(S.regF||"")===k}">${esc(t)}</button>`).join("")}<span class="meta" style="align-self:center">${inf("Regiões do Projeto Pioneiros: Sul (SP, MS, PR, SC, RS), Centro (RO, MT, GO, DF, MG, ES, RJ), Nordeste (MA, PI, CE, RN, PB, PE, AL, SE, BA) e Norte (AC, AM, RR, AP, PA, TO). Divisão lida no mapa do projeto, a confirmar com o consultor.")}</span></div>`;
-async function carregarISHist(){if(S.ihBusy)return;S.ihBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","is_hist").maybeSingle();S.isHist=data?data.dados:null;}catch(e){S.isHist=null;}S.ihBusy=false;render();}
+async function carregarISHist(){if(S.ihBusy)return;S.ihBusy=true;try{const [a,b]=await Promise.all([sb.from("mkt_mapa").select("dados").eq("id","is_hist").maybeSingle(),S.demo?Promise.resolve({data:null}):sb.rpc("is_share_b2c")]);S.isHist=a.data?a.data.dados:null;S.isShare=b.data||null;}catch(e){S.isHist=null;S.isShare=null;}S.ihBusy=false;render();}
 function vISHist(){
   if(S.isHist===undefined){carregarISHist();return `<div class="carregando">Carregando o histórico…</div>`;}
-  if(S.isMapa===undefined){carregarISMapa();return `<div class="carregando">Carregando vendas do CRM…</div>`;}
+  if(S.isp==null){if(!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return `<div class="carregando">Carregando vendas do CRM…</div>`;}
   const H=S.isHist;if(!H)return `<div class="vazio">Histórico não disponível para o seu perfil.</div>`;const N=x=>Number(x)||0;
-  const A=(S.isMapa||[]).filter(r=>r.st==="V"&&!r.exp&&r.uf!=="EX");const IS=A.filter(r=>r.dono==="Inside Sales");
-  const T=(S.isp&&S.isp["Time"]&&S.isp["Time"].dados)||{};const ltv=T.ltv||{};
-  const kgIS=IS.reduce((t,r)=>t+N(r.kg_h),0),rsIS=IS.reduce((t,r)=>t+N(r.rs),0);
-  const b2c=A.filter(r=>r.seg==="B2C"),b2cIS=b2c.filter(r=>r.dono==="Inside Sales");const kgB2C=b2c.reduce((t,r)=>t+N(r.kg_h),0),kgB2CIS=b2cIS.reduce((t,r)=>t+N(r.kg_h),0);
-  const veTudo=A.some(r=>r.dono!=="Inside Sales");const share=veTudo&&kgB2C?kgB2CIS/kgB2C:null;
-  const atual={s:"26/27",rs:rsIS,clientes:(ltv.s26||{}).clientes||null,kg_h:kgIS,share,atual:true,nota:"Safra em andamento, vendas ganhas no CRM até hoje"};
+  const Tp=S.isp&&S.isp["Time"];const T=(Tp&&Tp.dados)||{};const ltv=T.ltv||{};const RL=T.real||{};
+  const kgIS=N(RL.kgh),rsIS=N(RL.rs);
+  const SH=S.isShare||{};const kgB2C=N(SH.b2c_tot),kgB2CIS=N(SH.b2c_is);const share=S.isShare&&kgB2C?kgB2CIS/kgB2C:null;
+  const atu=Tp&&Tp.atualizado_em?new Date(Tp.atualizado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+  const atual={s:"26/27",rs:rsIS,clientes:(ltv.s26||{}).clientes||null,kg_h:kgIS,share,atual:true,nota:`Safra em andamento: ${N(RL.n)} vendas ganhas no CRM, pela data de faturamento${atu?" · atualizado em "+atu:""}`};
   const L=[...(H.safras||[]),atual];const mx=Math.max(1,...L.map(x=>N(x.rs)));
   const cres=(a,b)=>N(a)&&N(b)?(N(b)/N(a)-1):null;
   const bars=L.map((x,i)=>{const h=Math.max(4,N(x.rs)/mx*180);const g=i?cres(L[i-1].rs,x.rs):null;return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0;flex:1"><span class="meta" style="font-weight:700;color:var(--azul-escuro,#00557f)">${fmtK0(x.rs)}</span>${g!=null?`<span class="meta">${g>=0?"+":""}${pctTxt(g)}${x.atual?" parcial":""}</span>`:`<span class="meta">&nbsp;</span>`}<div style="width:100%;max-width:90px;height:${h}px;border-radius:8px 8px 0 0;background:${x.atual?"repeating-linear-gradient(45deg,#00A8E1,#00A8E1 8px,#33bbe8 8px,#33bbe8 16px)":"#00557f"}"></div><strong>${esc(x.s)}</strong><span class="meta">${x.atual?"até hoje":""}</span></div>`;}).join("");
