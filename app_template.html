@@ -3745,6 +3745,23 @@ const RV_REGRA={"Blue":{ih:.02,ic:.0075,b:.02},"Yellow":{ih:.025,ic:.01,b:.025},
 const RV_TETO=300000,RV_PISO_KG=5000;
 const fmtK0=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
 const pctTxt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+function vCanalAbertas(m){
+  const A=m.abertas||[];
+  const dt=v=>v?String(v).slice(0,10).split("-").reverse().join("/"):"sem data";
+  if(!A.length)return `<section class="bloco"><h2 class="sec">Pedidos em negociação${inf("Negociações em andamento entre a Barenbrug e esta revenda que ainda não viraram pedido ganho.")}</h2><div class="vazio">Nenhum pedido em negociação agora.</div></section>`;
+  const ganhoAt=m.pAting!=null&&m.ating!=null?m.pAting-m.ating:null;
+  return `<section class="bloco"><h2 class="sec">Pedidos em negociação · ${A.length}${inf("Negociações em andamento entre a Barenbrug e esta revenda que ainda não viraram pedido ganho. A simulação mostra quanto a revenda teria de IGDB e de Bônus de Performance se todos esses pedidos fossem fechados nesta safra, com as mesmas regras do programa: só Sabiá, Cayana e Carcará contam para a meta e para o bônus; o bônus só existe com 90% ou mais da meta.")}</h2>
+    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Pedido</th><th>Faturamento previsto</th><th class="val">Híbridos</th><th class="val">Convencionais</th><th class="val">Valor</th></tr></thead><tbody>${A.map(x=>`<tr><td style="white-space:normal;min-width:220px">${esc(x.nome||"")}</td><td>${dt(x.fat)}</td><td class="val">${Number(x.kg_h)?fmtKg(x.kg_h):"—"}</td><td class="val">${Number(x.kg_c)?fmtKg(x.kg_c):"—"}</td><td class="val">${fmtK0(x.rs)}</td></tr>`).join("")}
+      <tr><td colspan="2"><strong>Total em negociação</strong></td><td class="val"><strong>${fmtKg(m.abKgH)}</strong></td><td class="val"><strong>${fmtKg(m.abKgC)}</strong></td><td class="val"><strong>${fmtK0(m.abertoRs)}</strong></td></tr></tbody></table></div>
+    <h3 class="pgd-h" style="margin-top:12px">Se fechar tudo</h3>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+      <div class="metric"><span>Híbridos na safra</span><strong>${fmtKg(m.pKgH)}</strong><span class="meta">${m.meta?`${pctTxt(m.pAting)} da meta${ganhoAt>0?` · +${pctTxt(ganhoAt)}`:""}`:"sem meta definida"}</span></div>
+      <div class="metric"><span>IGDB potencial</span><strong>${fmtK0(m.pIgdb)}</strong><span class="meta">hoje ${fmtK0(m.igdb)} · +${fmtK0(m.pIgdb-m.igdb)} com os pedidos em negociação</span></div>
+      <div class="metric"><span>Bônus de Performance potencial</span><strong>${fmtK0(m.pBonus)}</strong><span class="meta">${m.pFator===1?"meta batida com estes pedidos":m.pFator?"entre 90% e 99% da meta: 70% do bônus":m.meta?`ainda abaixo de 90% da meta: faltariam ${fmtKg(Math.max(0,m.meta*.9-m.pKgH))} de híbridos para destravar`:"sem meta definida"}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Total potencial (IGDB + bônus)</span><strong>${fmtK0(m.pTotal)}</strong><span class="meta">${m.pTeto?"limitado ao teto do programa · ":""}hoje ${fmtK0(m.total)}</span></div>
+    </div>
+    <p class="meta" style="margin:6px 0 0">Simulação: o IGDB só vira pagamento com ações de PGD aprovadas, e o bônus, com a meta atingida e as notas liquidadas.</p></section>`;
+}
 function metricasCanal(c){
   const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r=(S.canalRes||{})[c.id]||{};
   const N=k=>Number(r[k])||0;const meta=Number(c.meta_kg)||0;
@@ -3767,6 +3784,8 @@ function metricasCanal(c){
   const igdbAprov=Math.min(igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
   return {igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
+    abKgH:N("aberto_kg_hib"),abKgC:N("aberto_kg_conv"),abRsH:N("aberto_rs_hib"),abRsC:N("aberto_rs_conv"),abertas:Array.isArray(r.abertas)?r.abertas:[],
+    ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;return {pKgH:kH,pAting:pAt,pFator:pF,pIgdb,pBonus,pTotal:Math.min(RV_TETO,pIgdb+pBonus),pTeto:pIgdb+pBonus>RV_TETO};})(),
     aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,aprovIG:som("Aprovado",false),aprovBP:som("Aprovado",true),analiseIG:som("Em Análise",false),saldo:igdb-som("Aprovado",false),faltaKg,soma:aprov+analise};
 }
 function vPlanoXIgdb(m){
@@ -4026,7 +4045,7 @@ function vRVCanal(){
     <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(m.meta)}</strong></div>
     <div class="metric"><span>Híbridos comprados</span><strong>${fmtKg(m.kgH)}</strong><span class="meta">${fmtK0(m.rsH)} · ${fmtKg(m.fatKgH)} já faturados</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Atingimento da meta</span><strong>${m.ating==null?"—":pctTxt(m.ating)}</strong><span class="meta">${m.faltaKg?`faltam ${fmtKg(m.faltaKg)}`:m.ating!=null?"meta batida":""}</span></div>
-    <div class="metric"><span>Convencionais comprados</span><strong>${fmtK0(m.rsC)}</strong></div>
+    <div class="metric"><span>Convencionais comprados</span><strong>${fmtKg(m.kgC)}</strong><span class="meta">${fmtK0(m.rsC)}</span></div>
   </div>
   ${barraMeta(m)}
   <div class="metrics" style="margin-top:10px">
@@ -4037,6 +4056,7 @@ function vRVCanal(){
     <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprovIG)} · em análise ${fmtK0(m.analiseIG)}</span></div>
   </div>
   <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB gerado até aqui.":""}</div>
+  ${vCanalAbertas(m)}
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
   ${vPlanoXIgdb(m)}
