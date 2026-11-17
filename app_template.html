@@ -4090,14 +4090,7 @@ function vCanalAbertas(m){
   return `<section class="bloco"><h2 class="sec">Pedidos em negociação · ${A.length}${inf("Negociações em andamento entre a Barenbrug e esta revenda que ainda não viraram pedido ganho. A simulação mostra quanto a revenda teria de IGDB e de Bônus de Performance se todos esses pedidos fossem fechados nesta safra, com as mesmas regras do programa: só Sabiá, Cayana e Carcará contam para a meta e para o bônus; o bônus só existe com 90% ou mais da meta.")}</h2>
     <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Pedido</th><th>Faturamento previsto</th><th class="val">Híbridos</th><th class="val">Convencionais</th><th class="val">Valor</th></tr></thead><tbody>${A.map(x=>`<tr><td style="white-space:normal;min-width:220px">${esc(x.nome||"")}</td><td>${dt(x.fat)}</td><td class="val">${Number(x.kg_h)?fmtKg(x.kg_h):"—"}</td><td class="val">${Number(x.kg_c)?fmtKg(x.kg_c):"—"}</td><td class="val">${fmtK0(x.rs)}</td></tr>`).join("")}
       <tr><td colspan="2"><strong>Total em negociação</strong></td><td class="val"><strong>${fmtKg(m.abKgH)}</strong></td><td class="val"><strong>${fmtKg(m.abKgC)}</strong></td><td class="val"><strong>${fmtK0(m.abertoRs)}</strong></td></tr></tbody></table></div>
-    <h3 class="pgd-h" style="margin-top:12px">Se fechar tudo</h3>
-    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
-      <div class="metric"><span>Híbridos na safra</span><strong>${fmtKg(m.pKgH)}</strong><span class="meta">${m.meta?`${pctTxt(m.pAting)} da meta${ganhoAt>0?` · +${pctTxt(ganhoAt)}`:""}`:"sem meta definida"}</span></div>
-      <div class="metric"><span>IGDB potencial</span><strong>${fmtK0(m.pIgdb)}</strong><span class="meta">hoje ${fmtK0(m.igdb)} · +${fmtK0(m.pIgdb-m.igdb)} com os pedidos em negociação</span></div>
-      <div class="metric"><span>Bônus de Performance potencial</span><strong>${fmtK0(m.pBonus)}</strong><span class="meta">${m.pFator===1?"meta batida com estes pedidos":m.pFator?"entre 90% e 99% da meta: 70% do bônus":m.meta?`ainda abaixo de 90% da meta: faltariam ${fmtKg(Math.max(0,m.meta*.9-m.pKgH))} de híbridos para destravar`:"sem meta definida"}</span></div>
-      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Total potencial (IGDB + bônus)</span><strong>${fmtK0(m.pTotal)}</strong><span class="meta">${m.pTeto?"limitado ao teto do programa · ":""}hoje ${fmtK0(m.total)}</span></div>
-    </div>
-    <p class="meta" style="margin:6px 0 0">Simulação: o IGDB só vira pagamento com ações de PGD aprovadas, e o bônus, com a meta atingida e as notas liquidadas.</p></section>`;
+    </section>`;
 }
 function metricasCanal(c){
   const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r0=(S.canalRes||{})[c.id]||{};const pub=(S.rvPub||{})[c.id];
