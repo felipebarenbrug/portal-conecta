@@ -3824,37 +3824,44 @@ async function rvvLerArquivos(fPed,fFin){
   return {ped,finRows,hoje:hoje||new Date()};
 }
 function rvvCompara(c){const m=metricasCanal(c);return {kgH:m.kgH,igdb:m.igdb,bonus:m.bonus,total:m.total};}
-function rvvDetalhe(c,r){
-  const d=r.dados,v=d.v,s=d.sc,f=d.fin,g=d.g;const pub=(S.rvPub||{})[c.id];const cp=rvvCompara(c);
+function rvvBlocos(d,g,rev){
+  const v=d.v,s=d.sc;
   const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0),pc=n=>n==null?"—":pctTxt(n),pt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
   const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
   const q=(n,t,tip,body)=>`<div class="rvv-q"><h3><span class="rvv-n">${n}</span>${t}${inf(tip)}</h3>${body}</div>`;
-  const pagoPct=(v.fat_rs_h+v.fat_rs_c)?(v.pag_rs_h+v.pag_rs_c)/(v.fat_rs_h+v.fat_rs_c):0;
-  const q1=q(1,"Pedidos da safra 26/27 (relatório de pedidos do BI)","Encarteirado = pedido com status Order, ainda não faturado. Faturado = Invoiced, com nota fiscal emitida. Valores em R$ líquidos do BI.",
+  const q1=n=>q(n,rev?"Pedidos da safra 26/27":"Pedidos da safra 26/27 (relatório de pedidos do BI)",rev?"Encarteirado = pedido ainda não faturado. Faturado = nota fiscal emitida. Valores em R$ líquidos, sem impostos.":"Encarteirado = pedido com status Order, ainda não faturado. Faturado = Invoiced, com nota fiscal emitida. Valores em R$ líquidos do BI.",
     `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Encarteirado</th><th class="val">Faturado</th><th class="val">Total</th></tr></thead><tbody>
       <tr><td><strong>Híbridos</strong><br><span class="meta">Sabiá, Cayana, Carcará</span></td><td class="val">${kg(v.ord_kg_h)}<br><span class="meta">${rs(v.ord_rs_h)}</span></td><td class="val">${kg(v.fat_kg_h)}<br><span class="meta">${rs(v.fat_rs_h)}</span></td><td class="val"><strong>${kg(v.tot_kg_h)}</strong><br><span class="meta">${rs(v.tot_rs_h)}</span></td></tr>
       <tr><td><strong>Convencionais</strong></td><td class="val">${kg(v.ord_kg_c)}<br><span class="meta">${rs(v.ord_rs_c)}</span></td><td class="val">${kg(v.fat_kg_c)}<br><span class="meta">${rs(v.fat_rs_c)}</span></td><td class="val"><strong>${kg(v.tot_kg_c)}</strong><br><span class="meta">${rs(v.tot_rs_c)}</span></td></tr>
       <tr><td><strong>Total</strong></td><td class="val">${rs(v.ord_rs_h+v.ord_rs_c)}</td><td class="val">${rs(v.fat_rs_h+v.fat_rs_c)}</td><td class="val"><strong>${rs(v.tot_rs_h+v.tot_rs_c)}</strong></td></tr></tbody></table></div>`);
-  const q2=q(2,"Pagamento das notas faturadas (Financeiro Analítico)","Cada nota do BI é cruzada pelo número com o Financeiro. Pago = (valor − devolução − saldo em aberto) ÷ (valor − devolução). Permutas e descontos de antecipação contam como pagos. O valor do Financeiro inclui impostos, por isso o pago em R$ líquido usa o percentual de cada nota.",
-    `<div class="rvv-kv"><div><span>Notas emitidas</span><strong>${f.n_nf}</strong><em>${f.n_quit} quitadas</em></div><div><span>Valor das notas (com impostos)</span><strong>${rs(f.valor)}</strong><em>devolução ${rs(f.dev)} · permutas ${rs(f.perm)} · descontos ${rs(f.desc)}</em></div><div><span>Em aberto</span><strong>${rs(f.aberto)}</strong><em>${f.vencido?"vencido "+rs(f.vencido):"nada vencido"}</em></div>
-      <div class="rvv-dest"><span>Pago (R$ líquido do BI)</span><strong>${rs(v.pag_rs_h+v.pag_rs_c)}</strong><em>${pc(pagoPct)} do faturado · híbridos ${rs(v.pag_rs_h)} (${kg(v.pag_kg_h)})</em></div></div>`);
   const barra=(t,a,cor)=>`<div class="rvv-bar"><span>${t}</span><div><i style="width:${Math.min(100,(a||0)*100)}%;background:${cor}"></i><b style="left:90%"></b><b style="left:100%"></b></div><strong>${pc(a)}</strong></div>`;
-  const q3=q(3,"Meta de híbridos","A meta é em kg de híbridos. Bônus de Performance: 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. As marcas na barra são 90% e 100%.",
+  const q3=n=>q(n,"Meta de híbridos","A meta é em kg de híbridos. Bônus de Performance: 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. As marcas na barra são 90% e 100%.",
     `<p class="meta" style="margin:0 0 6px">Meta: <strong>${kg(d.meta)}</strong> · tier ${esc(d.tier)} (IGDB ${pt(g.ih)} híbridos, ${pt(g.ic)} convencionais; bônus ${pt(g.b)} híbridos)</p>
      ${barra("Pago",s.pago.ating,"#2E8B57")}${barra("Faturado",s.faturado.ating,"#0090D0")}${barra("Com os encarteirados",s.total.ating,"#E0A800")}`);
   const cen=[["Disponível hoje","IGDB sobre o que o canal já pagou. É o que pode ser usado agora nas ações de PGD.",s.pago,v.pag_rs_h,v.pag_rs_c,"rvv-c1"],["Se pagar todo o faturado","Todas as notas já emitidas quitadas.",s.faturado,v.fat_rs_h,v.fat_rs_c,"rvv-c2"],["Potencial","Faturar e pagar também os pedidos encarteirados.",s.total,v.tot_rs_h,v.tot_rs_c,"rvv-c3"]];
-  const q4=q(4,"IGDB por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Não depende de bater a meta: é gerado sobre o que for faturado e pago.",
+  const q4=n=>q(n,"IGDB por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Não depende de bater a meta: é gerado sobre o que for faturado e pago.",
     `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">${e}</span>
       <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.ih)}</span><strong>${rs(z.igdb_h)}</strong></div>
       <div class="rvv-l"><span>Convencionais</span><span>${rs(rc)} × ${pt(g.ic)}</span><strong>${rs(z.igdb_c)}</strong></div>
       <div class="rvv-l rvv-tot"><span>IGDB</span><span></span><strong>${rs(z.igdb_h+z.igdb_c)}</strong></div></div>`).join("")}</div>`);
-  const q5=q(5,"Bônus de Performance por cenário","Bônus = % do tier × R$ de híbridos × fator da meta (100% com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%). IGDB + bônus ficam limitados ao teto do programa.",
+  const q5=n=>q(n,"Bônus de Performance por cenário","Bônus = % do tier × R$ de híbridos × fator da meta (100% com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%). IGDB + bônus ficam limitados ao teto do programa.",
     `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">Meta atingida neste cenário: ${pc(z.ating)}</span>
       <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.b)}</span><strong>${rs(rh*g.b)}</strong></div>
       <div class="rvv-l"><span>Fator da meta</span><span>${z.fator===1?"meta batida":z.fator?"entre 90% e 99,99%":"abaixo de 90%"}</span><strong>${z.fator===1?"100%":z.fator?"70%":"0%"}</strong></div>
       <div class="rvv-l rvv-tot"><span>Bônus</span><span></span><strong>${rs(z.bf)}</strong></div>
       <div class="rvv-l"><span>IGDB + bônus</span><span>${z.teto?"limitado ao teto":""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
      ${s.bf_fat_meta_total&&s.faturado.fator<1?`<p class="meta" style="margin:6px 0 0">Se a meta for batida com os encarteirados, o bônus sobre o já faturado seria ${rs(s.bf_fat_meta_total)}.</p>`:""}`);
+  return {q1,q3,q4,q5};
+}
+function rvvDetalhe(c,r){
+  const d=r.dados,v=d.v,s=d.sc,f=d.fin,g=d.g;const pub=(S.rvPub||{})[c.id];const cp=rvvCompara(c);const B=rvvBlocos(d,g);
+  const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0),pc=n=>n==null?"—":pctTxt(n),pt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+  const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
+  const q=(n,t,tip,body)=>`<div class="rvv-q"><h3><span class="rvv-n">${n}</span>${t}${inf(tip)}</h3>${body}</div>`;
+  const pagoPct=(v.fat_rs_h+v.fat_rs_c)?(v.pag_rs_h+v.pag_rs_c)/(v.fat_rs_h+v.fat_rs_c):0;
+  const q2=q(2,"Pagamento das notas faturadas (Financeiro Analítico)","Cada nota do BI é cruzada pelo número com o Financeiro. Pago = (valor − devolução − saldo em aberto) ÷ (valor − devolução). Permutas e descontos de antecipação contam como pagos. O valor do Financeiro inclui impostos, por isso o pago em R$ líquido usa o percentual de cada nota.",
+    `<div class="rvv-kv"><div><span>Notas emitidas</span><strong>${f.n_nf}</strong><em>${f.n_quit} quitadas</em></div><div><span>Valor das notas (com impostos)</span><strong>${rs(f.valor)}</strong><em>devolução ${rs(f.dev)} · permutas ${rs(f.perm)} · descontos ${rs(f.desc)}</em></div><div><span>Em aberto</span><strong>${rs(f.aberto)}</strong><em>${f.vencido?"vencido "+rs(f.vencido):"nada vencido"}</em></div>
+      <div class="rvv-dest"><span>Pago (R$ líquido do BI)</span><strong>${rs(v.pag_rs_h+v.pag_rs_c)}</strong><em>${pc(pagoPct)} do faturado · híbridos ${rs(v.pag_rs_h)} (${kg(v.pag_kg_h)})</em></div></div>`);
   const dif=(a,b)=>{const x=a-b;return x?` <span class="meta" style="color:${x>0?"#2E8B57":"var(--vermelho)"}">(${x>0?"+":""}${fmtK0(x)})</span>`:"";};
   const q6=q(6,"Comparação com o que o canal vê hoje","Hoje a página do canal calcula pelos pedidos ganhos no CRM. Depois de publicado, passa a usar estes números validados.",
     `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">${pub?"Publicado":"Portal hoje (CRM)"}</th><th class="val">Validado agora</th></tr></thead><tbody>
@@ -3866,7 +3873,7 @@ function rvvDetalhe(c,r){
       <span class="meta">${pub?`Validado por ${esc(pub.validado_nome||"—")} em ${fmtDataHora(pub.validado_em)} (Financeiro de ${dt(pub.situacao_em)}). A revenda e o comercial veem estes números.`:"A página do canal continua com os números do CRM. Confira os quadros abaixo e publique quando estiver certo."}</span></div>
       <div class="acoes" style="margin:0"><label class="check"><input type="checkbox" id="rvv_ok"> Conferi os números deste canal</label><button class="btn" data-a="rvv-pub" data-v="${esc(c.id)}">${pub?"Publicar de novo":"Validar e publicar"}</button>${pub?`<button class="link perigo" data-a="rvv-despub" data-v="${esc(c.id)}">voltar para os números do CRM</button>`:""}</div></div>`;
   return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><div><span class="rot">Validação</span><h2 class="sec" style="margin:0">${esc(c.nome)}</h2><span class="meta">Códigos de cliente no ERP: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</span></div><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
-    ${pubBox}${q1}${q2}${q3}${q4}${q5}${q6}
+    ${pubBox}${B.q1(1)}${q2}${B.q3(3)}${B.q4(4)}${B.q5(5)}${q6}
     <details class="lote"><summary>Notas fiscais e pagamento · ${d.nfs.length}</summary>${d.nfs.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}</details>
     <details class="lote"><summary>Pedidos do BI · ${d.linhas.length} linhas</summary>${d.linhas.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}</details></section>`;
 }
@@ -4179,7 +4186,7 @@ const AVISO_CRM_TXT=`<strong>Dados estimados, puxados do CRM</strong><p>As quant
 function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
-  if(sc==="conecta-revendas")return /^rv-(painel|canais|canal|meucanal)$/.test(pg);
+  if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
   if(sc==="inside-sales"||sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
@@ -4327,23 +4334,8 @@ function vCanalPrecos(c){
     <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="preco-novo" data-v="0">Cancelar</button></div></form>`:"";
   return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Preço praticado pelo canal</h2><button class="btn sec" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>${form}${rows}</section>`;
 }
-function vRVCanal(){
-  const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
-  if(!c) return `<div class="carregando">Carregando…</div>`;
-  const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
-  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
-    <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
-    <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
-    ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
-    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
-  const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
-  const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
-  const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
-  return `${B?`<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>`:""}
-  <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
-    <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}${m.r.atualizado_em?` · vendas atualizadas em ${fmtDataHora(m.r.atualizado_em)}`:""}</p></div>
-  ${avisoValoresRV()}
-  <div class="metrics">
+function vCanalCRM(c,m){
+  return `  <div class="metrics">
     <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(m.meta)}</strong></div>
     <div class="metric"><span>Híbridos em pedidos encarteirados${inf("Pedidos de híbridos ganhos no CRM para a safra 26/27 (data de faturamento de julho de 2026 a junho de 2027). Pedido encarteirado ainda não é compra concluída: só conta de verdade depois de faturado e pago.")}</span><strong>${fmtKg(m.kgH)}</strong><span class="meta">${fmtK0(m.rsH)} · ${fmtKg(m.fatKgH)} já faturados</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Atingimento da meta</span><strong>${m.ating==null?"—":pctTxt(m.ating)}</strong><span class="meta">${m.faltaKg?`faltam ${fmtKg(m.faltaKg)}`:m.ating!=null?"meta batida":""}</span></div>
@@ -4364,11 +4356,49 @@ function vRVCanal(){
     <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprovIG)} · em análise ${fmtK0(m.analiseIG)}</span></div>
   </div>
   <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB previsto até aqui.":""}</div>
-  ${vCanalNaMeta(m)}
+  ${vCanalNaMeta(m)}`;
+}
+function vCanalValidado(c,m){
+  const pub=(S.rvPub||{})[c.id];const d=pub.dados||{};const g=d.g||RV_REGRA[d.tier]||RV_REGRA[c.tier]||RV_REGRA.Blue;const B=rvvBlocos(d,g,true);const s=d.sc||{};
+  const sit=String(m.pub.sit||"").slice(0,10).split("-").reverse().join("/");
+  const lib=m.pub.igdbPago,apr=m.aprovIG||0,ana=m.analiseIG||0;
+  return `<div class="rvv-pub on" style="margin-top:4px"><div style="min-width:0"><strong>Números validados pelo Marketing</strong><span class="meta">Pedidos e pagamentos da sua revenda conferidos pelo Marketing Barenbrug com a situação de ${esc(sit)} (validado em ${fmtDataHora(m.pub.em)}). Os valores mudam a cada nova validação.</span></div></div>
+  <section class="bloco"><h2 class="sec">Resultado da safra 26/27</h2><p class="sub" style="margin:0 0 10px">Do pedido ao IGDB e ao Bônus de Performance, em três cenários: o que já está pago, o que já foi faturado e o potencial com os pedidos encarteirados.</p>
+    <div style="display:grid;gap:10px">${B.q1(1)}${B.q3(2)}${B.q4(3)}${B.q5(4)}</div></section>
+  <section class="bloco"><h2 class="sec">IGDB e Bônus para o PGD</h2>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. É o que pode ser reembolsado agora pelas ações de PGD aprovadas e comprovadas.")}</span><strong>${fmtK0(lib)}</strong><span class="meta">sobre o valor pago</span></div>
+    <div class="metric"><span>IGDB potencial${inf("Se todos os pedidos encarteirados forem faturados e pagos.")}</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">faturado e encarteirado</span></div>
+    <div class="metric"><span>Ações de IGDB aprovadas</span><strong>${fmtK0(apr)}</strong><span class="meta">${m.nAprov||0} ${(m.nAprov||0)===1?"aprovada":"aprovadas"} · em análise ${fmtK0(ana)}</span></div>
+    <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para novas ações${inf("IGDB potencial menos as ações já aprovadas.")}</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">${apr>lib?`aprovado acima do liberado: o reembolso de ${fmtK0(apr-lib)} depende dos pagamentos`:"dentro do IGDB já liberado"}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Bônus de Performance previsto${inf("Pelo cenário potencial. Só é pago com 90% ou mais da meta de híbridos no fechamento da safra.")}</span><strong>${fmtK0((s.total||{}).bf||0)}</strong><span class="meta">${(s.total||{}).fator===1?"meta batida com os encarteirados":(s.total||{}).fator?"entre 90% e 99,99% da meta":"abaixo de 90% da meta"}</span></div>
+  </div>
+  <div class="precos-nota">O IGDB e o Bônus só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. O IGDB é reembolsado pelas ações de PGD aprovadas e comprovadas. ${statusBonus(m)}.</div></section>
+  ${(s.total||{}).fator<1?vCanalNaMeta(m):""}
+`;}
+function vRVCanal(){
+  const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
+  if(!c) return `<div class="carregando">Carregando…</div>`;
+  const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
+  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
+    <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
+    <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
+    ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
+  const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
+  const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
+  const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
+  return `${B?`<button class="voltar" data-a="pag" data-v="rv-canais">‹ Canais</button>`:""}
+  <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
+    <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}${m.r.atualizado_em?` · vendas atualizadas em ${fmtDataHora(m.r.atualizado_em)}`:""}</p></div>
+  ${m.pub?"":avisoValoresRV()}
+  ${m.pub?vCanalValidado(c,m):vCanalCRM(c,m)}
   ${vCanalAbertas(m)}
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
-  ${vPlanoXIgdb(m)}
+  ${acIG.length?(()=>{const st=k=>acIG.filter(a=>(a.status||"Em Análise")===k);const t=L=>fmtK0(L.reduce((x,a)=>x+(Number(a.valor_igdb)||0),0));const A=st("Aprovado"),E=st("Em Análise"),R=st("Reprovado");
+    return `<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:0 0 10px"><div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>Aprovadas</span><strong>${A.length}</strong><span class="meta">${t(A)}</span></div><div class="metric"><span>Em análise</span><strong>${E.length}</strong><span class="meta">${t(E)}</span></div><div class="metric"><span>Não aprovadas</span><strong>${R.length}</strong><span class="meta">${t(R)}</span></div></div>`;})():""}
+  ${m.pub?"":vPlanoXIgdb(m)}
   ${S.editCanal?vCanalEditor(c):""}
   ${S.novaAcao&&S.novaAcao!=="bp"?vNovaAcao():""}
   ${acIG.length?`<div class="acoes-grid">${acIG.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma ação de IGDB cadastrada.</div>`}
