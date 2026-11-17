@@ -664,6 +664,22 @@ main.largo{max-width:1120px}
 .pgd-x{border:1px solid var(--linha);border-radius:8px;padding:12px;margin:0 0 12px;background:var(--branco)}.pgd-x.neg{border-color:#e6b0aa;background:#fdf3f2}.pgd-x-msg{margin:10px 0 0;line-height:1.5}
 .tp-ed input{padding:6px 8px;font-size:13px;min-width:0;width:100%}.tp-ed td{padding:4px}.tp-oculto{opacity:.45}
 .mk-dec{border-left:4px solid var(--azul)}.mk-dec-l{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}.mk-dec-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mk-dec-f input{width:140px}.mk-dec-f input#msit_o{width:200px}
+.raci-leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 4px}.raci-leg span{display:flex;align-items:center;gap:6px;font-size:13px}
+.rb{display:inline-grid;place-items:center;min-width:26px;height:24px;padding:0 5px;border-radius:6px;font-weight:800;font-size:12px;letter-spacing:.02em}
+.rb-R{background:#00557f;color:#fff}.rb-A{background:#ffdb00;color:#1a1a1a}.rb-C{background:#d9efe2;color:#1d6b42;box-shadow:inset 0 0 0 1px #9fd1b4}.rb-I{background:#eef1f3;color:#56636b;box-shadow:inset 0 0 0 1px #cfd6db}
+.org{display:flex;overflow-x:auto;padding:6px 0 4px}.org>ul{margin:0 auto!important}.org ul{display:flex;justify-content:center;padding:18px 0 0;margin:0;position:relative;list-style:none}
+.org>ul{padding-top:0}.org li{display:flex;flex-direction:column;align-items:center;position:relative;padding:18px 8px 0}
+.org li::before,.org li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:18px;border-top:2px solid #b9c4cc}.org li::after{right:auto;left:50%;border-left:2px solid #b9c4cc}
+.org li:only-child::before,.org li:only-child::after{display:none}.org li:only-child{padding-top:0}.org li:first-child::before,.org li:last-child::after{border:0}.org li:last-child::before{border-right:2px solid #b9c4cc;border-radius:0 6px 0 0}.org li:first-child::after{border-radius:6px 0 0 0}
+.org ul ul::before{content:"";position:absolute;top:0;left:50%;height:18px;border-left:2px solid #b9c4cc}
+.org-box{display:grid;gap:2px;width:190px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #dfe5e9;border-top:4px solid var(--azul,#0090D0);text-align:left;font:inherit;cursor:pointer}
+.org-box strong{font-size:14px}.org-box .meta{font-size:12px;line-height:1.35}.org-box.top{border-top-color:#1a1a1a}.org-box.mk{border-top-color:#00557f}.org-box.isx{border-top-color:#2E8B57}.org-box.aus{border-style:dashed;opacity:.8}.org-box.sel{box-shadow:0 0 0 3px #ffdb00}
+.raci-p{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.raci-pc{display:grid;gap:6px;padding:10px;border-radius:10px;border:1px solid #e3e8ec;background:#fff;text-align:left;font:inherit;cursor:pointer;min-width:0}.raci-pc.sel{box-shadow:0 0 0 3px #ffdb00}
+.raci-st{display:flex;height:8px;border-radius:5px;overflow:hidden;background:#eef1f3}.raci-st i{display:block;height:100%}
+.raci-t{border-collapse:separate;border-spacing:0;width:100%;min-width:760px}.raci-t th,.raci-t td{padding:8px 6px;border-bottom:1px solid #edf0f2;vertical-align:top}.raci-t th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#56636b;text-align:center}
+.raci-t td.c{text-align:center;width:84px}.raci-t th:first-child,.raci-t td:first-child{position:sticky;left:0;background:#fff;text-align:left;z-index:1;min-width:250px;max-width:360px}
+.raci-t tr.ar td{background:#f3f6f8;font-weight:800;color:#00557f;padding-top:12px}.raci-t tr.ar td:first-child{background:#f3f6f8}.raci-t tr.dim td{opacity:.28}
+.raci-t .nm{font-weight:700}.raci-t .ds{display:block;font-size:12px;color:#56636b;line-height:1.35;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1180,7 +1196,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117164351";
+const APP_VER="20261117165831";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5027,7 +5043,45 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados,atualizado_em").eq("id","raci").maybeSingle();S.raci=data?data.dados:null;S.raciEm=data?data.atualizado_em:null;}catch(e){S.raci=null;}S.raciBusy=false;render();}
+const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
+function vIntRaci(){
+  if(S.raci===undefined){carregarRaci();return `<div class="carregando">Carregando o mapa do Marketing…</div>`;}
+  const D=S.raci;if(!D)return `<div><h1 class="titulo">Mapa do Marketing</h1></div><div class="vazio">O mapa não está disponível para o seu perfil.</div>`;
+  const F=S.raciF||(S.raciF={area:"",p:""});const P=Object.fromEntries(D.pessoas.map(x=>[x.id,x]));
+  const nomeC=id=>id==="is"?"Inside Sales":(P[id]?P[id].nome.split(" ")[0]:id);
+  const badge=(l)=>l.split("").map(x=>`<span class="rb rb-${x}" title="${esc(RACI_TXT[x])}">${x}</span>`).join(" ");
+  const cont=id=>{const o={R:0,A:0,C:0,I:0};D.ativ.forEach(a=>{(a.r[id]||"").split("").forEach(x=>{o[x]++;});});return o;};
+  // hierarquia
+  const filhos=id=>D.pessoas.filter(x=>x.chefe===id);
+  const box=x=>{const cls=x.id==="gustavo"?"top":(x.id==="mayane"||x.id==="laura"||x.id==="is")?"isx":"mk";
+    return `<button class="org-box ${cls} ${x.ausente?"aus":""} ${F.p===x.id?"sel":""}" data-a="raci-f" data-v="p:${x.id==="mayane"?"":esc(x.id)}"><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.papel)}${x.desde?" · "+esc(x.desde):""}</span>${x.ausente?`<span class="meta" style="color:var(--vermelho,#c0392b)">${esc(x.ausente)}</span>`:""}${x.cobre?`<span class="meta"><strong>Cobre a supervisão do Inside Sales</strong></span>`:""}</button>`;};
+  const arv=x=>{const f=filhos(x.id);return `<li>${box(x)}${f.length?`<ul>${f.map(arv).join("")}</ul>`:""}</li>`;};
+  const raiz=D.pessoas.filter(x=>!x.chefe);
+  // cards por pessoa
+  const cores={R:"#00557f",A:"#ffdb00",C:"#9fd1b4",I:"#cfd6db"};
+  const cards=D.cols.map(id=>{const o=cont(id),t=o.R+o.A+o.C+o.I||1;const pp=P[id]||{};
+    return `<button class="raci-pc ${F.p===id?"sel":""}" data-a="raci-f" data-v="p:${F.p===id?"":esc(id)}"><strong>${esc(id==="is"?"Assessoras do Inside Sales":pp.nome)}</strong><span class="meta">${esc(pp.papel||"")}</span>
+      <div class="raci-st">${["R","A","C","I"].map(k=>o[k]?`<i style="width:${o[k]/t*100}%;background:${cores[k]}"></i>`:"").join("")}</div>
+      <span class="meta">${["R","A","C","I"].filter(k=>o[k]).map(k=>`${badge(k)} ${o[k]}`).join(" &nbsp; ")}</span></button>`;}).join("");
+  const areaOk=a=>!F.area||a.area===F.area;const pOk=a=>!F.p||!!a.r[F.p];
+  const L=D.ativ.filter(areaOk);const nVis=L.filter(pOk).length;
+  const linhas=D.areas.filter(ar=>!F.area||ar===F.area).map(ar=>{const A=L.filter(a=>a.area===ar);if(!A.length)return "";
+    return `<tr class="ar"><td colspan="${D.cols.length+2}">${esc(ar)} · ${A.length}</td></tr>`+A.map(a=>`<tr class="${pOk(a)?"":"dim"}"><td><span class="nm">${esc(a.nome)}</span>${a.conf?` ${stTag("a confirmar","amarelo")}`:""}<span class="ds">${esc(a.oque)}${a.freq?` · <strong>${esc(a.freq)}</strong>`:""}</span></td>${D.cols.map(id=>`<td class="c">${a.r[id]?badge(a.r[id]):""}</td>`).join("")}<td style="font-size:12px;min-width:120px">${(a.outros||[]).map(([l,n])=>`${badge(l)} ${esc(n)}`).join("<br>")}</td></tr>`).join("");}).join("");
+  const chips=[["","Todas"],...D.areas.map(a=>[a,a])].map(([k,t])=>`<button class="chip" data-a="raci-f" data-v="area:${esc(k)}" aria-pressed="${F.area===k}">${esc(t)}</button>`).join("");
+  const nA=D.ativ.length,nConf=D.ativ.filter(a=>a.conf).length;
+  return `<div><h1 class="titulo">Mapa do Marketing</h1><p class="sub">Tudo o que o Marketing da Barenbrug faz, quem faz, quem aprova e quem apoia: ${nA} atividades em ${D.areas.length} frentes. Versão de ${esc(D.versao||"")}${nConf?`, com ${nConf} ${nConf===1?"ponto":"pontos"} a confirmar`:""}.</p></div>
+  <section class="bloco"><h2 class="sec">Quem é quem${inf("O Marketing responde ao Gerente Comercial. Felipe e Thais tocam juntos o marketing institucional, a comunicação e a inteligência. O Inside Sales é um comercial dentro do marketing. Toque numa pessoa para ver só as atividades dela no mapa.")}</h2>
+    <div class="org"><ul>${raiz.map(arv).join("")}</ul></div></section>
+  <section class="bloco"><h2 class="sec">Como ler o RACI</h2><div class="raci-leg">${["R","A","C","I"].map(k=>`<span>${badge(k)} ${esc(RACI_TXT[k])}</span>`).join("")}</div>
+    <p class="meta" style="margin:6px 0 0">Toda atividade tem um único dono que aprova (A). Quando a mesma pessoa faz e aprova, aparece R A.</p></section>
+  <section class="bloco"><h2 class="sec">Carga por pessoa${inf("Quantas atividades cada pessoa faz (R), aprova (A), apoia (C) ou acompanha (I). Toque para filtrar o mapa.")}</h2><div class="raci-p">${cards}</div></section>
+  <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Mapa de atividades e RACI</h2><span class="meta">${F.p?`Destacando ${esc(F.p==="is"?"Inside Sales":(P[F.p]||{}).nome||"")}: ${nVis} de ${L.length} atividades · <button class="link" data-a="raci-f" data-v="p:">ver todos</button>`:`${L.length} atividades`}</span></div>
+    <div class="rv-chips" style="margin:8px 0 10px;display:flex;flex-wrap:wrap;gap:6px">${chips}</div>
+    <div class="tab" style="overflow-x:auto"><table class="raci-t"><thead><tr><th>Atividade</th>${D.cols.map(id=>`<th>${esc(nomeC(id))}</th>`).join("")}<th>Outros</th></tr></thead><tbody>${linhas}</tbody></table></div></section>
+  ${(D.aberto||[]).length?`<section class="bloco"><h2 class="sec">Em aberto: o que ainda precisamos fechar</h2><div class="lista">${D.aberto.map((t,i)=>`<div class="linha"><div><strong>${i+1}. ${esc(t.split(":")[0])}</strong><span class="meta">${esc(t.split(":").slice(1).join(":").trim())}</span></div></div>`).join("")}</div></section>`:""}`;
+}
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inteligência de Marketing">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -7206,7 +7260,7 @@ const ABA_DESC={
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
- "int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
+ "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
@@ -7311,11 +7365,11 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
-      else if(!an&&!S.canais&&S.pag!=="int-concorrentes")carregarCanais().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
   }
@@ -7441,6 +7495,7 @@ document.addEventListener("click",async ev=>{
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
+  if(a==="raci-f"){const F=S.raciF||(S.raciF={area:"",p:""});const i=v.indexOf(":");const k=v.slice(0,i),val=v.slice(i+1);F[k]=F[k]===val&&k==="area"?"":val;render();return;}
   if(a==="prog-ir"){if(v==="perfil-campo"){const el=document.getElementById("prog-dados");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
     const [sc,pg]=v.split("|");if(sc==="academia"){S.secao="academia";S.pag="trilha";}else{S.secao=sc;S.pag=pg;}S.res=null;render();window.scrollTo(0,0);return;}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
