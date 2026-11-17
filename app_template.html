@@ -618,6 +618,13 @@ main.largo{max-width:1120px}
 .cob-canais{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}.cob-det-canal{display:grid;gap:8px;padding:12px;border:2px solid var(--vermelho,#c0392b);border-radius:12px;margin-bottom:12px;background:#fff}
 .reu{display:grid;gap:4px}.reu-txt{background:#f6f8fa;border-radius:8px;padding:8px 10px;font-size:14px}.reu-txt div{white-space:pre-wrap;margin-top:2px}
 .rvv-on td{background:#fff8d6}.rvv-t td,.rvv-t th{white-space:nowrap}.rvv-det{grid-template-columns:minmax(0,1fr);border:2px solid var(--amarelo,#ffdb00);border-radius:12px;padding:14px;background:#fff}
+.rvv-q{display:grid;gap:8px;padding:12px;border:1px solid #e3e8ec;border-radius:10px;background:#fff;min-width:0}.rvv-q h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}.rvv-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--azul-escuro,#00557f);color:#fff;font-size:13px;flex-shrink:0}
+.rvv-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.rvv-kv>div{display:grid;gap:2px;padding:8px 10px;background:#f6f8fa;border-radius:8px}.rvv-kv span{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#5b6670}.rvv-kv strong{font-size:18px}.rvv-kv em{font-style:normal;font-size:13px;color:#5b6670}.rvv-kv .rvv-dest{box-shadow:inset 0 0 0 2px #2E8B57;background:#eef8f1}
+.rvv-bar{display:grid;grid-template-columns:150px 1fr 60px;gap:8px;align-items:center;font-size:14px}.rvv-bar>div{position:relative;height:12px;background:#e3e8ec;border-radius:6px}.rvv-bar i{display:block;height:100%;border-radius:6px}.rvv-bar b{position:absolute;top:-3px;width:2px;height:18px;background:#1e1e1e;opacity:.5}.rvv-bar strong{text-align:right}
+.rvv-cen{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}.rvv-c{display:grid;gap:4px;padding:10px;border-radius:10px;border:1px solid #e3e8ec;border-top:4px solid #999}.rvv-c1{border-top-color:#2E8B57}.rvv-c2{border-top-color:#0090D0}.rvv-c3{border-top-color:#E0A800}.rvv-ct{font-weight:800}
+.rvv-l{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px;padding:4px 0;border-top:1px solid #eef1f4}.rvv-l span:nth-child(2){grid-column:1;color:#5b6670;font-size:12px}.rvv-l strong{grid-column:2;grid-row:1/3;align-self:center}.rvv-tot strong{font-size:17px}
+.rvv-pub{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:12px;border-radius:10px;background:#fff8d6;border:1px solid #f0d36b}.rvv-pub.on{background:#eef8f1;border-color:#9fd3b0}.rvv-pub strong{display:block}
+@media(max-width:600px){.rvv-bar{grid-template-columns:90px 1fr 50px}}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -3814,6 +3821,47 @@ async function rvvLerArquivos(fPed,fFin){
   return {ped,finRows,hoje:hoje||new Date()};
 }
 function rvvCompara(c){const m=metricasCanal(c);return {kgH:m.kgH,igdb:m.igdb,bonus:m.bonus,total:m.total};}
+function rvvDetalhe(c,r){
+  const d=r.dados,v=d.v,s=d.sc,f=d.fin,g=d.g;const pub=(S.rvPub||{})[c.id];const cp=rvvCompara(c);
+  const kg=n=>fmtKg(Math.round(Number(n)||0)),rs=n=>fmtK0(Number(n)||0),pc=n=>n==null?"—":pctTxt(n),pt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+  const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
+  const q=(n,t,tip,body)=>`<div class="rvv-q"><h3><span class="rvv-n">${n}</span>${t}${inf(tip)}</h3>${body}</div>`;
+  const pagoPct=(v.fat_rs_h+v.fat_rs_c)?(v.pag_rs_h+v.pag_rs_c)/(v.fat_rs_h+v.fat_rs_c):0;
+  const q1=q(1,"Pedidos da safra 26/27 (relatório de pedidos do BI)","Encarteirado = pedido com status Order, ainda não faturado. Faturado = Invoiced, com nota fiscal emitida. Valores em R$ líquidos do BI.",
+    `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Encarteirado</th><th class="val">Faturado</th><th class="val">Total</th></tr></thead><tbody>
+      <tr><td><strong>Híbridos</strong><br><span class="meta">Sabiá, Cayana, Carcará</span></td><td class="val">${kg(v.ord_kg_h)}<br><span class="meta">${rs(v.ord_rs_h)}</span></td><td class="val">${kg(v.fat_kg_h)}<br><span class="meta">${rs(v.fat_rs_h)}</span></td><td class="val"><strong>${kg(v.tot_kg_h)}</strong><br><span class="meta">${rs(v.tot_rs_h)}</span></td></tr>
+      <tr><td><strong>Convencionais</strong></td><td class="val">${kg(v.ord_kg_c)}<br><span class="meta">${rs(v.ord_rs_c)}</span></td><td class="val">${kg(v.fat_kg_c)}<br><span class="meta">${rs(v.fat_rs_c)}</span></td><td class="val"><strong>${kg(v.tot_kg_c)}</strong><br><span class="meta">${rs(v.tot_rs_c)}</span></td></tr>
+      <tr><td><strong>Total</strong></td><td class="val">${rs(v.ord_rs_h+v.ord_rs_c)}</td><td class="val">${rs(v.fat_rs_h+v.fat_rs_c)}</td><td class="val"><strong>${rs(v.tot_rs_h+v.tot_rs_c)}</strong></td></tr></tbody></table></div>`);
+  const q2=q(2,"Pagamento das notas faturadas (Financeiro Analítico)","Cada nota do BI é cruzada pelo número com o Financeiro. Pago = (valor − devolução − saldo em aberto) ÷ (valor − devolução). Permutas e descontos de antecipação contam como pagos. O valor do Financeiro inclui impostos, por isso o pago em R$ líquido usa o percentual de cada nota.",
+    `<div class="rvv-kv"><div><span>Notas emitidas</span><strong>${f.n_nf}</strong><em>${f.n_quit} quitadas</em></div><div><span>Valor das notas (com impostos)</span><strong>${rs(f.valor)}</strong><em>devolução ${rs(f.dev)} · permutas ${rs(f.perm)} · descontos ${rs(f.desc)}</em></div><div><span>Em aberto</span><strong>${rs(f.aberto)}</strong><em>${f.vencido?"vencido "+rs(f.vencido):"nada vencido"}</em></div>
+      <div class="rvv-dest"><span>Pago (R$ líquido do BI)</span><strong>${rs(v.pag_rs_h+v.pag_rs_c)}</strong><em>${pc(pagoPct)} do faturado · híbridos ${rs(v.pag_rs_h)} (${kg(v.pag_kg_h)})</em></div></div>`);
+  const barra=(t,a,cor)=>`<div class="rvv-bar"><span>${t}</span><div><i style="width:${Math.min(100,(a||0)*100)}%;background:${cor}"></i><b style="left:90%"></b><b style="left:100%"></b></div><strong>${pc(a)}</strong></div>`;
+  const q3=q(3,"Meta de híbridos","A meta é em kg de híbridos. Bônus de Performance: 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. As marcas na barra são 90% e 100%.",
+    `<p class="meta" style="margin:0 0 6px">Meta: <strong>${kg(d.meta)}</strong> · tier ${esc(d.tier)} (IGDB ${pt(g.ih)} híbridos, ${pt(g.ic)} convencionais; bônus ${pt(g.b)} híbridos)</p>
+     ${barra("Pago",s.pago.ating,"#2E8B57")}${barra("Faturado",s.faturado.ating,"#0090D0")}${barra("Com os encarteirados",s.total.ating,"#E0A800")}`);
+  const cen=[["Disponível hoje","IGDB sobre o que o canal já pagou. É o que pode ser usado agora nas ações de PGD.",s.pago,v.pag_rs_h,v.pag_rs_c,"rvv-c1"],["Se pagar todo o faturado","Todas as notas já emitidas quitadas.",s.faturado,v.fat_rs_h,v.fat_rs_c,"rvv-c2"],["Potencial","Faturar e pagar também os pedidos encarteirados.",s.total,v.tot_rs_h,v.tot_rs_c,"rvv-c3"]];
+  const q4=q(4,"IGDB e Bônus de Performance por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Bônus = % do tier × R$ de híbridos × fator da meta. Total limitado ao teto do programa.",
+    `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">${e}</span>
+      <div class="rvv-l"><span>IGDB híbridos</span><span>${rs(rh)} × ${pt(g.ih)}</span><strong>${rs(z.igdb_h)}</strong></div>
+      <div class="rvv-l"><span>IGDB convencionais</span><span>${rs(rc)} × ${pt(g.ic)}</span><strong>${rs(z.igdb_c)}</strong></div>
+      <div class="rvv-l"><span>Bônus</span><span>${rs(rh)} × ${pt(g.b)} × ${z.fator===1?"100%":z.fator?"70%":"0% (abaixo de 90%)"}</span><strong>${rs(z.bf)}</strong></div>
+      <div class="rvv-l rvv-tot"><span>Total</span><span>${z.teto?"limitado ao teto":""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
+     ${s.bf_fat_meta_total&&s.faturado.fator<1?`<p class="meta" style="margin:6px 0 0">Se a meta for batida com os encarteirados, o bônus sobre o já faturado seria ${rs(s.bf_fat_meta_total)}.</p>`:""}`);
+  const dif=(a,b)=>{const x=a-b;return x?` <span class="meta" style="color:${x>0?"#2E8B57":"var(--vermelho)"}">(${x>0?"+":""}${fmtK0(x)})</span>`:"";};
+  const q5=q(5,"Comparação com o que o canal vê hoje","Hoje a página do canal calcula pelos pedidos ganhos no CRM. Depois de publicado, passa a usar estes números validados.",
+    `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">${pub?"Publicado":"Portal hoje (CRM)"}</th><th class="val">Validado agora</th></tr></thead><tbody>
+      <tr><td>Híbridos na safra (kg)</td><td class="val">${kg(cp.kgH)}</td><td class="val">${kg(v.tot_kg_h)}</td></tr>
+      <tr><td>IGDB previsto</td><td class="val">${rs(cp.igdb)}</td><td class="val">${rs(s.total.igdb)}${dif(s.total.igdb,cp.igdb)}</td></tr>
+      <tr><td>Bônus de Performance previsto</td><td class="val">${rs(cp.bonus)}</td><td class="val">${rs(s.total.bf)}${dif(s.total.bf,cp.bonus)}</td></tr>
+      <tr><td>IGDB disponível (pago)</td><td class="val">${pub?rs(pub.dados.sc.pago.igdb):"—"}</td><td class="val">${rs(s.pago.igdb)}</td></tr></tbody></table></div>`);
+  const pubBox=`<div class="rvv-pub ${pub?"on":""}"><div style="min-width:0"><strong>${pub?"Publicado na página do canal":"Ainda não publicado"}</strong>
+      <span class="meta">${pub?`Validado por ${esc(pub.validado_nome||"—")} em ${fmtDataHora(pub.validado_em)} (Financeiro de ${dt(pub.situacao_em)}). A revenda e o comercial veem estes números.`:"A página do canal continua com os números do CRM. Confira os quadros abaixo e publique quando estiver certo."}</span></div>
+      <div class="acoes" style="margin:0"><label class="check"><input type="checkbox" id="rvv_ok"> Conferi os números deste canal</label><button class="btn" data-a="rvv-pub" data-v="${esc(c.id)}">${pub?"Publicar de novo":"Validar e publicar"}</button>${pub?`<button class="link perigo" data-a="rvv-despub" data-v="${esc(c.id)}">voltar para os números do CRM</button>`:""}</div></div>`;
+  return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><div><span class="rot">Validação</span><h2 class="sec" style="margin:0">${esc(c.nome)}</h2><span class="meta">Códigos de cliente no ERP: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</span></div><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
+    ${pubBox}${q1}${q2}${q3}${q4}${q5}
+    <details class="lote"><summary>Notas fiscais e pagamento · ${d.nfs.length}</summary>${d.nfs.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}</details>
+    <details class="lote"><summary>Pedidos do BI · ${d.linhas.length} linhas</summary>${d.linhas.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}</details></section>`;
+}
 function vRVValidacao(){
   if(!ehAdmin())return `<div class="vazio">Área restrita aos administradores.</div>`;
   if(S.rvv===undefined){carregarRVV();return `<div class="carregando">Carregando a validação…</div>`;}
@@ -3840,22 +3888,7 @@ function vRVValidacao(){
       <td class="val"><strong>${rs(s.pago.igdb)}</strong></td><td class="val">${rs(s.faturado.igdb)}</td><td class="val">${rs(s.total.igdb)}</td>
       <td class="val">${rs(s.faturado.bf)}</td><td class="val">${rs(s.total.bf)}</td><td class="val"><strong>${rs(s.total.total)}</strong>${s.total.teto?'<br><span class="meta">teto</span>':""}</td>
       <td class="val"><span class="meta">${rs(cp.igdb+cp.bonus)}</span></td></tr>`;};
-  const det=sel?(()=>{const x=lista.find(y=>y.c.id===sel);const d=x.r.dados,v=d.v,s=d.sc,f=d.fin;const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
-    return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><h2 class="sec" style="margin:0">${esc(x.c.nome)}</h2><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
-      <p class="meta" style="margin:0">Códigos de cliente: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</p>
-      <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-        <div class="metric"><span>Híbridos</span><strong>${kg(v.tot_kg_h)}</strong><span class="meta">faturado ${kg(v.fat_kg_h)} · encarteirado ${kg(v.ord_kg_h)} · pago ${kg(v.pag_kg_h)}</span></div>
-        <div class="metric"><span>Convencionais</span><strong>${kg(v.tot_kg_c)}</strong><span class="meta">faturado ${kg(v.fat_kg_c)} · encarteirado ${kg(v.ord_kg_c)}</span></div>
-        <div class="metric"><span>Notas faturadas</span><strong>${f.n_nf}</strong><span class="meta">${f.n_quit} quitadas · em aberto ${rs(f.aberto)}${f.vencido?" · vencido "+rs(f.vencido):""}</span></div>
-        <div class="metric"><span>Ajustes no Financeiro</span><strong style="font-size:17px">${rs(f.dev)} dev.</strong><span class="meta">permutas ${rs(f.perm)} · descontos ${rs(f.desc)} · juros ${rs(f.juros)}</span></div></div>
-      <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">IGDB híbridos</th><th class="val">IGDB conv.</th><th class="val">IGDB</th><th class="val">Atingimento</th><th class="val">Bônus</th><th class="val">Total</th></tr></thead><tbody>
-        ${[["Disponível hoje (pago)",s.pago],["Se pagar todo o faturado",s.faturado],["Potencial: faturar e pagar os encarteirados",s.total]].map(([t,z])=>`<tr><td>${t}</td><td class="val">${rs(z.igdb_h)}</td><td class="val">${rs(z.igdb_c)}</td><td class="val"><strong>${rs(z.igdb)}</strong></td><td class="val">${pc(z.ating)}</td><td class="val">${rs(z.bf)}${z.fator&&z.fator<1?" (70%)":""}</td><td class="val"><strong>${rs(z.total)}</strong></td></tr>`).join("")}
-        <tr><td colspan="7"><span class="meta">Bônus provisionado sobre o faturado, se a meta for batida com os encarteirados: ${rs(s.bf_fat_meta_total)}. No portal hoje (CRM): IGDB ${rs(rvvCompara(x.c).igdb)} · bônus ${rs(rvvCompara(x.c).bonus)} · híbridos ${kg(rvvCompara(x.c).kgH)}.</span></td></tr></tbody></table></div>
-      <h3 class="pgd-h">Notas fiscais e pagamento</h3>
-      ${d.nfs.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}
-      <h3 class="pgd-h">Pedidos (BI)</h3>
-      ${d.linhas.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}
-      </section>`;})():"";
+  const det=sel?(()=>{const x=lista.find(y=>y.c.id===sel);return rvvDetalhe(x.c,x.r);})():"";
   return `<div><h1 class="titulo">Validação do IGDB e do bônus</h1><p class="sub">Área de teste, visível só para administradores. Cruza o relatório de pedidos do BI com o Financeiro Analítico para separar o que já foi pago, o que foi faturado e o que está encarteirado. Não muda o que os canais e o comercial veem hoje.</p>
     <p class="meta">Situação do Financeiro em ${esc(String(r0.situacao_em||"").split("-").reverse().join("/"))} · gravado em ${fmtDataHora(r0.gerado_em)}</p></div>
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px">
@@ -3936,6 +3969,7 @@ async function carregarCanais(){
   if(temPerfil("Gestor de Revenda")&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
+    try{const {data:pb}=await sb.from("rv_publicado").select("*");S.rvPub={};(pb||[]).forEach(x=>{S.rvPub[x.canal_id]=x;});}catch(e){S.rvPub={};}
     try{const {data:ru}=await sb.from("canal_reunioes").select("*").order("data",{ascending:false});S.canalReun=grp(ru);}catch(e){S.canalReun={};}
     const [co,fi,es,pr]=await Promise.all([
       sb.from("canal_contatos").select("*"),
@@ -3983,7 +4017,8 @@ function vCanalAbertas(m){
     <p class="meta" style="margin:6px 0 0">Simulação: o IGDB só vira pagamento com ações de PGD aprovadas, e o bônus, com a meta atingida e as notas liquidadas.</p></section>`;
 }
 function metricasCanal(c){
-  const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r=(S.canalRes||{})[c.id]||{};
+  const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r0=(S.canalRes||{})[c.id]||{};const pub=(S.rvPub||{})[c.id];
+  const r=pub&&pub.dados&&pub.dados.v?(()=>{const v=pub.dados.v;return {...r0,kg_hib:v.tot_kg_h,kg_conv:v.tot_kg_c,rs_hib:v.tot_rs_h,rs_conv:v.tot_rs_c,fat_kg_hib:v.fat_kg_h,fat_rs_hib:v.fat_rs_h,fat_rs_conv:v.fat_rs_c};})():r0;
   const N=k=>Number(r[k])||0;const meta=Number(c.meta_kg)||0;
   const ating=meta?N("kg_hib")/meta:null;
   const fator=ating==null?0:ating>=1?1:ating>=.9?.7:0;
@@ -4002,7 +4037,8 @@ function metricasCanal(c){
   /* IGDB so e devido com PGD submetido e aprovado: o compromisso e o aprovado, limitado ao IGDB do canal. BF so com 90%+ da meta. */
   const aprovIGr=som("Aprovado",false);
   const igdbAprov=Math.min(igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
-  return {igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+  const pv=pub&&pub.dados&&pub.dados.v;const pubInfo=pv?{em:pub.validado_em,por:pub.validado_nome,sit:pub.situacao_em,pagRs:(pv.pag_rs_h||0)+(pv.pag_rs_c||0),fatRs:(pv.fat_rs_h||0)+(pv.fat_rs_c||0),ordKgH:pv.ord_kg_h||0,igdbPago:(pv.pag_rs_h||0)*g.ih+(pv.pag_rs_c||0)*g.ic,aberto:(pub.dados.fin||{}).aberto||0,vencido:(pub.dados.fin||{}).vencido||0}:null;
+  return {pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     abKgH:N("aberto_kg_hib"),abKgC:N("aberto_kg_conv"),abRsH:N("aberto_rs_hib"),abRsC:N("aberto_rs_conv"),abertas:Array.isArray(r.abertas)?r.abertas:[],
     ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;const apIG=ac.filter(a=>(a.status||"Em Análise")==="Aprovado"&&!ehBPa(a)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);const pIgdbAprov=Math.min(pIgdb,apIG);
@@ -4306,6 +4342,12 @@ function vRVCanal(){
     <div class="metric"><span>Convencionais em pedidos encarteirados</span><strong>${fmtKg(m.kgC)}</strong><span class="meta">${fmtK0(m.rsC)}</span></div>
   </div>
   ${barraMeta(m)}
+  ${m.pub?`<div class="rvv-pub on" style="margin-top:10px"><div style="min-width:0"><strong>Números validados pelo Marketing</strong><span class="meta">Pedidos do BI e pagamentos do Financeiro de ${esc(String(m.pub.sit||"").split("-").reverse().join("/"))}, validados em ${fmtDataHora(m.pub.em)}. Híbridos = faturados + pedidos encarteirados (${fmtKg(Math.round(m.pub.ordKgH))} ainda a faturar).</span></div></div>
+  <div class="metrics" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+    <div class="metric"><span>Faturado na safra</span><strong>${fmtK0(m.pub.fatRs)}</strong><span class="meta">R$ líquido das notas emitidas</span></div>
+    <div class="metric"><span>Já pago pela revenda</span><strong>${fmtK0(m.pub.pagRs)}</strong><span class="meta">${m.pub.fatRs?pctTxt(m.pub.pagRs/m.pub.fatRs)+" do faturado":""}</span></div>
+    <div class="metric"><span>Notas em aberto</span><strong>${fmtK0(m.pub.aberto)}</strong><span class="meta">${m.pub.vencido?"vencido "+fmtK0(m.pub.vencido):"nada vencido"} · valor com impostos</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. É o valor que pode ser usado agora nas ações de PGD aprovadas.")}</span><strong>${fmtK0(m.pub.igdbPago)}</strong><span class="meta">sobre o valor pago</span></div></div>`:""}
   <div class="metrics" style="margin-top:10px">
     <div class="metric"><span>IGDB previsto${inf("Calculado sobre os pedidos encarteirados. Não é garantido: o IGDB só vira direito quando o pedido é faturado e a revenda paga a nota, e só é reembolsado pelas ações de PGD aprovadas e comprovadas.")}</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)} · sobre o já faturado: ${fmtK0(m.igdbFat||0)}</span></div>
     <div class="metric"><span>IGDB aprovado</span><strong>${fmtK0(m.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(m.aprovIG)}${m.aprovIG>m.igdb?", acima do IGDB previsto":""}</span></div>
@@ -7268,6 +7310,10 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
   if(a==="rvv-sel"){S.rvvSel=v||null;render();if(v)window.scrollTo(0,0);return;}
+  if(a==="rvv-pub"){if(!ehAdmin())return;const ok=document.getElementById("rvv_ok");if(!ok||!ok.checked){aviso("Marque \"Conferi os números deste canal\" antes de publicar.");return;}const r=(S.rvv||{})[v];if(!r)return;b.disabled=true;
+    const row={canal_id:v,dados:{v:r.dados.v,sc:r.dados.sc,fin:{n_nf:r.dados.fin.n_nf,n_quit:r.dados.fin.n_quit,aberto:r.dados.fin.aberto,vencido:r.dados.fin.vencido},meta:r.dados.meta,tier:r.dados.tier},situacao_em:r.situacao_em,validado_por:S.user.id,validado_nome:(S.profile&&S.profile.nome)||null,validado_em:new Date().toISOString()};
+    const {data,error}=await sb.from("rv_publicado").upsert(row).select().maybeSingle();b.disabled=false;if(error||!data){aviso("Não foi possível publicar.");return;}(S.rvPub||(S.rvPub={}))[v]=data;render();aviso("Publicado. A página do canal já mostra os números validados.");return;}
+  if(a==="rvv-despub"){if(!ehAdmin())return;const {error}=await sb.from("rv_publicado").delete().eq("canal_id",v);if(error){aviso("Não foi possível voltar.");return;}if(S.rvPub)delete S.rvPub[v];render();aviso("O canal voltou a usar os números do CRM.");return;}
   if(a==="rvv-calc"){if(!ehAdmin())return;const fp=document.getElementById("rvv_ped"),ff=document.getElementById("rvv_fin"),pg=document.getElementById("rvv_prog");const a1=fp&&fp.files[0],a2=ff&&ff.files[0];if(!a1||!a2){aviso("Escolha os dois arquivos.");return;}
     b.disabled=true;if(pg)pg.textContent="Lendo os arquivos…";try{const X=await rvvLerArquivos(a1,a2);if(!S.canaisAll)await carregarCanais();if(pg)pg.textContent="Calculando…";
       const out=rvvCalcular(X.ped,X.finRows,X.hoje,S.canaisAll||[]);const rows=Object.entries(out).map(([id,o])=>({canal_id:id,canal_nome:o.canal_nome,dados:o.dados,situacao_em:rvvISO(X.hoje),fontes:a1.name+" + "+a2.name,gerado_em:new Date().toISOString()}));
