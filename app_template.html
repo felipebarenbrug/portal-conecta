@@ -552,6 +552,7 @@ main.largo{max-width:1120px}
 .orc-c{border:1px solid var(--linha);border-radius:8px;padding:12px 14px;background:var(--branco);display:flex;flex-direction:column;gap:6px;min-width:0}
 .orc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}.orc-l{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
 .bm-l{display:flex;flex-direction:column;gap:8px}.bm-i{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) auto 40px;gap:10px;align-items:center;padding:6px 8px;border-radius:8px}.bm-nos{background:var(--amarelo-claro)}.bm-n{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}.bm-b{background:var(--azul-claro);height:10px;border-radius:5px;overflow:hidden}.bm-b i{display:block;height:10px;background:var(--azul);border-radius:5px}.bm-nos .bm-b i{background:var(--preto)}.bm-i strong{font-variant-numeric:tabular-nums;white-space:nowrap}.bm-p{text-align:right}@media(max-width:560px){.bm-i{grid-template-columns:minmax(0,1fr) auto}.bm-b{grid-column:1/-1;order:3}.bm-p{display:none}}
+.icp-ps{display:grid;grid-template-columns:1fr;gap:14px}.icp-p{border:1px solid var(--linha,#e5e5e5);border-radius:12px;padding:14px;background:var(--branco,#fff);border-top:5px solid var(--azul);min-width:0}.icp-c1{border-top-color:var(--amarelo,#FEDC00)}.icp-c2{border-top-color:#2E7D32}.icp-c3{border-top-color:#E6A800}.icp-c4{border-top-color:#7A7A7A}.icp-p header h3{margin:2px 0 4px;font-size:18px}.icp-p header p{margin:0;color:var(--cinza-esc,#555);font-size:14px}.icp-n{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cinza-esc,#555);font-weight:700}.icp-num{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0}.icp-num div{background:var(--papel,#f6f6f2);border-radius:8px;padding:6px 8px;min-width:0}.icp-num span{display:block;font-size:11px;color:var(--cinza-esc,#555)}.icp-num strong{font-size:15px;font-variant-numeric:tabular-nums}.icp-p blockquote{margin:8px 0;padding:6px 10px;border-left:3px solid var(--amarelo,#FEDC00);background:var(--amarelo-claro);font-style:italic;font-size:14px}.icp-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}@media(max-width:900px){.icp-g{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.icp-g{grid-template-columns:1fr}}.icp-g h4{margin:6px 0 4px;font-size:13px}.icp-g ul{margin:0;padding-left:18px;font-size:13.5px}.icp-g li{margin:2px 0}.icp-ev{font-size:13px;margin:8px 0 0;color:var(--vermelho)}.icp-ideal{border-left:5px solid var(--amarelo,#FEDC00)}.icp-passos{padding-left:20px}.icp-passos li{margin:4px 0}
 .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-top:12px}.pf-ufs{display:flex;flex-direction:column;gap:4px}tr.pf-on td{background:var(--papel)}@media(max-width:760px){.pf-cols{grid-template-columns:1fr}}
 .orc-l span{min-width:0}.orc-l .meta{display:block;font-size:12px}.orc-l strong{white-space:nowrap;font-variant-numeric:tabular-nums}
 .orc-tot{border-top:1px solid var(--linha);padding-top:6px;margin-top:2px}.orc-tot strong{font-size:17px;color:var(--azul-escuro)}.orc-tot.neg strong{color:var(--vermelho)}
@@ -1690,7 +1691,7 @@ function vISRfv(){
 }
 
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -1890,6 +1891,37 @@ function vISVend(cfg){
     <p class="dica">Vendas, híbridos, convencionais, valor e % da meta: safra inteira (contribuição de cada pessoa para as ${isT(meta)} do time). MQL, SQL → Venda, lead → venda e atribuição: período escolhido acima. SQL → Venda mostra ganhas × perdidas. Taxa em cinza: menos de 10 casos, não serve para ranquear. Toque no nome para abrir o painel da pessoa.</p></section>`;
 }
 
+function vISIcp(){
+  if(S.isIcp===undefined){S.isIcp=null;(async()=>{try{const {data}=await sb.from("is_relatorios").select("*").eq("chave","personas").maybeSingle();S.isIcp=data||false;}catch(e){S.isIcp=false;}if(S.pag==="is-icp")render();})();}
+  if(S.isIcp===null)return `<div class="carregando">Carregando ICP e personas…</div>`;
+  if(!S.isIcp)return `<div><h1 class="titulo">ICP e personas do produtor</h1></div><section class="bloco"><div class="vazio">A análise ainda não foi publicada no banco do portal.</div></section>`;
+  const d=S.isIcp.dados||{},M=d.metodo||{};const L=x=>(x||[]).map(t=>`<li>${esc(t)}</li>`).join("");
+  const tab=(cols,rows,cls)=>`<div class="tab"><table class="sim-t fin-t ${cls||""}"><thead><tr>${cols.map((c,i)=>`<th${i?' class="val"':""}>${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>`<td${i?' class="val"':""}>${i===0?`<strong>${esc(v)}</strong>`:esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const per=(p,i)=>`<article class="icp-p icp-c${i%5}"><header><span class="icp-n">${esc(p.rotulo||"")}</span><h3>${esc(p.nome)}</h3><p>${esc(p.quem||"")}</p></header>
+    ${(p.numeros||[]).length?`<div class="icp-num">${p.numeros.map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("")}</div>`:""}
+    ${p.frase?`<blockquote>${esc(p.frase)}</blockquote>`:""}
+    <div class="icp-g">
+      <div><h4>O que ele busca</h4><ul>${L(p.busca)}</ul></div>
+      <div><h4>O que trava</h4><ul>${L(p.objecoes)}</ul></div>
+      <div><h4>Onde encontrar</h4><ul>${L(p.onde)}</ul></div>
+      <div><h4>Como abordar</h4><ul>${L(p.abordagem)}</ul></div>
+    </div>
+    ${(p.evitar||[]).length?`<p class="icp-ev"><strong>Evitar:</strong> ${esc(p.evitar.join(" · "))}</p>`:""}</article>`;
+  return `<div><h1 class="titulo">ICP e personas do produtor</h1><p class="sub">${esc(d.sub||"")}</p></div>
+  ${(d.kpis||[]).length?`<div class="metrics">${d.kpis.map(([a,b,c])=>`<div class="metric"><span>${esc(a)}</span><strong>${esc(b)}</strong><span class="meta">${esc(c||"")}</span></div>`).join("")}</div>`:""}
+  ${d.icp?`<section class="bloco icp-ideal"><h2 class="sec">${esc(d.icp.titulo||"ICP ideal")}</h2><p>${esc(d.icp.texto||"")}</p><div class="icp-num">${(d.icp.linhas||[]).map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("")}</div>${d.icp.nota?`<p class="dica" style="margin-top:8px">${esc(d.icp.nota)}</p>`:""}</section>`:""}
+  ${d.segmentos?`<section class="bloco"><h2 class="sec">${esc(d.segmentos.titulo||"Os perfis de comprador")}</h2>${d.segmentos.intro?`<p class="dica" style="margin:0 0 8px">${esc(d.segmentos.intro)}</p>`:""}${tab(d.segmentos.cols||[],d.segmentos.linhas||[])}${d.segmentos.nota?`<p class="meta" style="margin:6px 0 0">${esc(d.segmentos.nota)}</p>`:""}</section>`:""}
+  <section class="bloco"><h2 class="sec">Personas</h2><div class="icp-ps">${(d.personas||[]).map(per).join("")}</div></section>
+  ${(d.lead||[]).length?`<section class="bloco"><h2 class="sec">${esc(d.lead_titulo||"O que o lead declara no formulário")}</h2>${tab(d.lead_cols||[],d.lead)}${d.lead_nota?`<p class="meta" style="margin:6px 0 0">${esc(d.lead_nota)}</p>`:""}</section>`:""}
+  ${(d.mercado||[]).length?`<section class="bloco"><h2 class="sec">Leitura de mercado: o pecuarista brasileiro</h2><ul class="obj-lista">${d.mercado.map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ul></section>`:""}
+  ${(d.campanhas||[]).length?`<section class="bloco"><h2 class="sec">O que isso muda nas campanhas e na abordagem</h2>${tab(d.campanhas_cols||["Persona","Onde","Mensagem","Oferta"],d.campanhas)}</section>`:""}
+  <section class="bloco icp-met"><h2 class="sec">Como chegamos a este cruzamento</h2><p>${esc(M.texto||"")}</p>
+    ${(M.bases||[]).length?`<h3 class="pgd-h">Bases cruzadas</h3>${tab(["Base","Volume","O que trouxe"],M.bases)}`:""}
+    ${(M.passos||[]).length?`<h3 class="pgd-h" style="margin-top:12px">Etapas da composição</h3><ol class="icp-passos">${M.passos.map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x)}</li>`).join("")}</ol>`:""}
+    ${(M.limites||[]).length?`<h3 class="pgd-h" style="margin-top:12px">Limites da leitura</h3><ul class="obj-lista">${L(M.limites)}</ul>`:""}
+    ${(d.fontes||[]).length?`<h3 class="pgd-h" style="margin-top:12px">Fontes de mercado</h3><ul class="obj-lista">${d.fontes.map(([t,u])=>`<li><a class="link" href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("")}</ul>`:""}
+    <p class="meta" style="margin-top:10px">Atualizado em ${esc(new Date(S.isIcp.atualizado_em).toLocaleDateString("pt-BR"))}. Nomes de clientes não aparecem nesta leitura.</p></section>`;
+}
 function vISObjecoes(){
   if(S.isObj===undefined){S.isObj=null;(async()=>{try{const {data}=await sb.from("is_relatorios").select("*").eq("chave","objecoes").maybeSingle();S.isObj=data||false;}catch(e){S.isObj=false;}if(S.pag==="is-obj")render();})();}
   if(S.isObj===null)return `<div class="carregando">Carregando análise…</div>`;
@@ -1914,6 +1946,7 @@ function vISObjecoes(){
 }
 function vInsideSales(){
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
+  if(S.pag==="is-icp"&&veTimeIS())return vISIcp();
   if(S.pag==="is-rfv"&&veTimeIS())return vISRfv();
   if(S.isp==null)return `<div class="carregando">Carregando indicadores…</div>`;
   const T=S.isp["Time"];const cfg=(T&&T.dados&&T.dados.cfg)||{};const manager=veTimeIS();
@@ -6090,7 +6123,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
-    if(["is-time","is-vend","is-neg","is-obj","is-rfv","is-cac"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
+    if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
