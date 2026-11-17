@@ -5946,13 +5946,21 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
-  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const fr=S.mkResp||"",fd=S.mkMes||"";
+  const resps=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>a.responsavel_nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const meses=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>String(a.inicio||"").slice(0,7)).filter(Boolean))].sort();
+  const mesNome=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
+  const okData=a=>{if(!fd)return true;if(fd==="sem")return !a.inicio;if(fd==="passou")return !!a.inicio&&String(a.fim||a.inicio)<mkHoje();if(fd==="vem")return !!a.inicio&&String(a.fim||a.inicio)>=mkHoje();const i=String(a.inicio||"").slice(0,7),f=String(a.fim||a.inicio||"").slice(0,7);return !!i&&i<=fd&&f>=fd;};
+  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&okData(a)&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
   const verCanc=!!S.mkCanc;const cols=MK_STATUS.filter(s=>s!=="Cancelada"||verCanc);
   const tot=L.filter(mkConta).reduce((t,a)=>t+mkCusto(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
   <div class="mk-barra">
     <input type="search" id="mk_busca" placeholder="Buscar ação, local ou pessoa" value="${esc(S.mkBusca||"")}" aria-label="Buscar">
     <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...MK_TIPOS].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="mk_resp_f" aria-label="Responsável"><option value="">Todos os responsáveis</option><option value="sem" ${fr==="sem"?"selected":""}>Sem responsável</option>${resps.map(n=>`<option ${fr===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
+    <select id="mk_mes_f" aria-label="Data da ação"><option value="">Qualquer data</option><option value="vem" ${fd==="vem"?"selected":""}>Daqui para a frente</option><option value="passou" ${fd==="passou"?"selected":""}>Já passaram</option>${meses.map(m=>`<option value="${m}" ${fd===m?"selected":""}>${mesNome(m)}</option>`).join("")}<option value="sem" ${fd==="sem"?"selected":""}>Sem data</option></select>
+    ${fr||fd||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
     <label class="check"><input type="checkbox" data-a="mk-canc" ${verCanc?"checked":""}> Mostrar canceladas</label>
     ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}
   </div>
@@ -6185,6 +6193,8 @@ function vAcoesGestao(){
   const feitas=A.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));
   const atr=A.filter(mkAtrasada),andam=A.filter(a=>a.status==="Em andamento"&&!mkAtrasada(a));
   const prox=A.filter(a=>a.status==="A fazer"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
+  const emAn=A.filter(a=>a.status==="Em análise"&&!mkAtrasada(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9")));
+  const solic=S.mk.filter(a=>a.status==="Solicitada"&&!a.mae_id),outras=S.mk.filter(a=>mkConta(a)&&!mkDaSafra(a)).sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9"))),fora=S.mk.filter(a=>a.status==="Cancelada"||a.status==="Recusada");
   const tAtr=A.flatMap(a=>mkChk(a).atr.map(i=>({a,i})));const tAbertas=A.reduce((t,a)=>{const c=mkChk(a);return t+c.n-c.f;},0);
   const AV=A.filter(mkVerbaMkt);const pag=AV.filter(a=>mkFin(a)==="Paga"),apr=AV.filter(a=>mkFin(a)==="Aprovada"),prov=AV.filter(a=>mkFin(a)==="Provisionada");
   const feitaNaoPaga=feitas.filter(a=>mkFin(a)!=="Paga"&&mkFin(a)!=="Sem custo");
@@ -6195,6 +6205,7 @@ function vAcoesGestao(){
     <div class="metric"><span>Realizadas</span><strong>${feitas.length}</strong><span class="meta">${fmtK0(sumV(feitas))}${feitaNaoPaga.length?` · ${feitaNaoPaga.length} ainda sem pagamento`:""}</span></div>
     <div class="metric"><span>Em andamento</span><strong>${andam.length}</strong><span class="meta">${fmtK0(sumV(andam))}</span></div>
     <div class="metric"><span>Próximas</span><strong>${prox.length}</strong><span class="meta">${fmtK0(sumV(prox))}</span></div>
+    <div class="metric"><span>Em análise</span><strong>${emAn.length}</strong><span class="meta">${fmtK0(sumV(emAn))} · aguardando decisão</span></div>
     <div class="metric" style="${atr.length?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Atrasadas</span><strong>${atr.length}</strong><span class="meta">${tAtr.length} tarefas de checklist vencidas · ${tAbertas} em aberto</span></div>
   </div>
   <section class="bloco"><h2 class="sec">Verba · o que já debitou e o que não</h2>
@@ -6207,8 +6218,12 @@ function vAcoesGestao(){
   ${atr.length?bloco("Atrasadas",atr,"",""):""}
   ${tAtr.length?`<section class="bloco"><h2 class="sec">Tarefas de checklist vencidas · ${tAtr.length}</h2><div class="lista">${tAtr.sort((x,y)=>String(x.i.prazo).localeCompare(String(y.i.prazo))).slice(0,60).map(({a,i})=>`<div class="linha"><div style="min-width:0"><strong>${esc(i.t)}</strong><span class="meta">${esc(i.resp||"sem responsável")} · prazo ${mkData(i.prazo)} · ${esc(a.titulo)}</span></div><button class="link" data-a="mk-abrir" data-v="${a.id}">Abrir ação</button></div>`).join("")}</div></section>`:""}
   ${bloco("Em andamento",andam,"Nada em andamento.")}
+  ${bloco("Em análise",emAn,"Nenhuma ação em análise.","Ações que ainda aguardam decisão do Marketing. Entram na verba como provisionadas.")}
   ${bloco("Próximas",prox,"Nada programado.")}
   ${bloco("Realizadas",feitas,"Nenhuma ação concluída ainda.",feitaNaoPaga.length?`${feitaNaoPaga.length} realizadas ainda não estão como pagas: ${fmtK0(sumV(feitaNaoPaga))} que devem sair da verba.`:"")}
+  ${solic.length?`<section class="bloco"><h2 class="sec">Solicitações ainda não analisadas · ${solic.length}</h2><p class="sub" style="margin:0 0 8px">Pedidos que chegaram e ainda não foram para o quadro. <button class="link" data-a="pag" data-v="acoes-solic">Abrir Solicitações</button></p><div class="lista">${solic.map(mkSolLinha).join("")}</div></section>`:""}
+  ${outras.length?bloco("Outras safras",outras,"","Ações com data a partir de julho de 2027 (ou de safras anteriores). Não entram na verba de "+esc(mkSafra)+"."):""}
+  ${fora.length?`<p class="meta">${fora.length} ${fora.length===1?"ação cancelada ou recusada fica":"ações canceladas ou recusadas ficam"} fora desta tela.</p>`:""}
   <section class="bloco"><h2 class="sec">Por responsável</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Responsável</th><th class="val">Ações</th><th class="val">Realizadas</th><th class="val">Atrasadas</th><th class="val">Tarefas feitas</th><th class="val">Tarefas vencidas</th><th class="val">Valor</th></tr></thead><tbody>${Object.values(resp).sort((a,b)=>b.v-a.v).map(r=>`<tr><td>${esc(r.k)}</td><td class="val">${r.n}</td><td class="val">${r.feitas}</td><td class="val" style="${r.atr?"color:var(--vermelho);font-weight:700":""}">${r.atr}</td><td class="val">${r.tn?r.tf+" de "+r.tn:"—"}</td><td class="val" style="${r.tatr?"color:var(--vermelho);font-weight:700":""}">${r.tatr}</td><td class="val">${fmtK0(r.v)}</td></tr>`).join("")||`<tr><td colspan="7">Nenhuma ação.</td></tr>`}</tbody></table></div></section>`;
 }
 function mkBonifResumo(L){const R={rs:0,kg:0,n:0,cult:{},fin:{},acoes:[]};L.forEach(a=>{const it=mkSem(a);if(!it.length)return;R.n++;let rs=0,kg=0;it.forEach(i=>{const v=mkSemValor(i),k=Number(i.kg)||0;rs+=v;kg+=k;const c=R.cult[i.cult]||(R.cult[i.cult]={kg:0,rs:0});c.kg+=k;c.rs+=v;const f=/demonstrativa/i.test(i.fin||"")?"Plantio de área demonstrativa":"Bonificação (pagamento em produto)";const g=R.fin[f]||(R.fin[f]={kg:0,rs:0});g.kg+=k;g.rs+=v;});R.rs+=rs;R.kg+=kg;R.acoes.push({a,rs,kg});});R.acoes.sort((x,y)=>y.rs-x.rs);return R;}
@@ -6664,6 +6679,8 @@ document.addEventListener("input",ev=>{
 document.addEventListener("change",async ev=>{
   const t=ev.target;if(!t)return;
   if(t.id==="mk_tipo"){S.mkTipo=t.value;render();return;}
+  if(t.id==="mk_resp_f"){S.mkResp=t.value;render();return;}
+  if(t.id==="mk_mes_f"){S.mkMes=t.value;render();return;}
   if(t.id==="bd_cat"){S.bdCat=t.value;render();return;}
   if(t.id==="bd_loc"){S.bdLoc=t.value;render();return;}
   if(t.id==="bd_vis"){S.bdVis=t.value;render();return;}
@@ -7044,6 +7061,7 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
+  if(a==="mk-limpa-f"){S.mkResp="";S.mkMes="";S.mkTipo="Todos";S.mkBusca="";render();return;}
   if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
