@@ -616,6 +616,7 @@ main.largo{max-width:1120px}
 .mk-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--cinza,#5b6670)}.mk-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .mk-grp td{background:#f4f6f8}.mk-etapas{display:grid;gap:8px}.mk-etapa{display:grid;gap:4px;padding:10px 12px;border:1px solid #e3e8ec;border-radius:10px;background:#fff}.mk-etapa-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}.mk-et .tab,.bloco>.tab{min-width:0;overflow-x:auto}.mk-et summary{font-size:15px}
 .cob-canais{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}.cob-det-canal{display:grid;gap:8px;padding:12px;border:2px solid var(--vermelho,#c0392b);border-radius:12px;margin-bottom:12px;background:#fff}
+.reu{display:grid;gap:4px}.reu-txt{background:#f6f8fa;border-radius:8px;padding:8px 10px;font-size:14px}.reu-txt div{white-space:pre-wrap;margin-top:2px}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -3824,6 +3825,7 @@ async function carregarCanais(){
   if(temPerfil("Gestor de Revenda")&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
+    try{const {data:ru}=await sb.from("canal_reunioes").select("*").order("data",{ascending:false});S.canalReun=grp(ru);}catch(e){S.canalReun={};}
     const [co,fi,es,pr]=await Promise.all([
       sb.from("canal_contatos").select("*"),
       sb.from("canal_filiais").select("*"),
@@ -4106,6 +4108,30 @@ function vCanalContatos(c){
     <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="contato-novo" data-v="0">Cancelar</button></div></form>`:"";
   return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Quem responde pelo canal</h2><button class="btn sec" data-a="contato-novo" data-v="1">+ Contato</button></div>${form}${porPapel}</section>`;
 }
+const REU_FORMATO=["Presencial","Online","Telefone"];
+function vCanalReunioes(c){
+  const L=(S.canalReun&&S.canalReun[c.id])||[];const B=veBarenbrugRV();const ed=S.reuEd;const dt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
+  const pode=r=>ehAdmin()||(B&&r.criado_por===S.user.id);
+  const nomesCanal=[...new Set([...((S.canalContatos&&S.canalContatos[c.id])||[]).map(x=>x.nome),...(S.equipeCanal||[]).map(x=>x.nome)].filter(Boolean))];
+  const form=r=>`<form class="form-card" id="f-reu" data-id="${r.id||""}"><h3 class="sec">${r.id?"Editar reunião":"Registrar reunião"}</h3>
+    <div class="dupla"><div><label for="ru_dt">Quando *</label><input id="ru_dt" type="date" required value="${esc(r.data||new Date().toISOString().slice(0,10))}"></div><div><label for="ru_fmt">Formato</label><select id="ru_fmt">${REU_FORMATO.map(f=>`<option ${(r.formato||"Presencial")===f?"selected":""}>${f}</option>`).join("")}</select></div></div>
+    <div class="dupla"><div><label for="ru_bb">Quem participou pela Barenbrug *</label><input id="ru_bb" required value="${esc((r.pela_barenbrug||[S.profile&&S.profile.nome].filter(Boolean)).join(", "))}" placeholder="Nomes separados por vírgula"></div>
+      <div><label for="ru_cn">Quem participou pelo canal</label><input id="ru_cn" list="ru_cn_l" value="${esc((r.pelo_canal||[]).join(", "))}" placeholder="Nomes separados por vírgula"><datalist id="ru_cn_l">${nomesCanal.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div></div>
+    <div><label for="ru_pa">Pauta</label><input id="ru_pa" maxlength="300" value="${esc(r.pauta||"")}" placeholder="Ex.: metas da safra, PGD, estoque, campanha de verão"></div>
+    <div><label for="ru_al">O que ficou alinhado *</label><textarea id="ru_al" rows="5" required maxlength="5000" placeholder="Decisões, combinados, números e condições acertadas">${esc(r.alinhado||"")}</textarea></div>
+    <div><label for="ru_px">Próximos passos e responsáveis</label><textarea id="ru_px" rows="3" maxlength="3000" placeholder="Ex.: Barenbrug envia proposta até 30/11; canal confirma pedido de Sabiá">${esc(r.proximos||"")}</textarea></div>
+    <label class="check"><input type="checkbox" id="ru_int" ${r.interna?"checked":""}> Registro interno: a revenda não vê esta reunião</label>
+    <div class="acoes"><button class="btn" type="submit">Salvar</button><button type="button" class="btn sec" data-a="reu-ed" data-v="">Cancelar</button></div></form>`;
+  const card=r=>ed===String(r.id)?form(r):`<div class="neg reu"><div class="l1"><span>${dt(r.data)}${r.formato?" · "+esc(r.formato):""}${r.pauta?" · "+esc(r.pauta):""}</span><span>${r.interna?stTag("Interna","cinza"):""}</span></div>
+    <span class="meta"><strong>Pela Barenbrug:</strong> ${esc((r.pela_barenbrug||[]).join(", ")||"—")}</span>
+    <span class="meta"><strong>Pelo canal:</strong> ${esc((r.pelo_canal||[]).join(", ")||"—")}</span>
+    <div class="reu-txt"><strong>O que ficou alinhado</strong><div>${esc(r.alinhado||"")}</div></div>
+    ${r.proximos?`<div class="reu-txt"><strong>Próximos passos</strong><div>${esc(r.proximos)}</div></div>`:""}
+    <span class="meta">Registrado por ${esc(r.criado_nome||"—")}${r.atualizado_em?" · editado em "+dt(r.atualizado_em):""}${pode(r)?` · <button class="link" data-a="reu-ed" data-v="${r.id}">editar</button> · ${S.reuDel===String(r.id)?`<button class="link perigo" data-a="reu-del-ok" data-v="${r.id}">confirmar exclusão</button>`:`<button class="link perigo" data-a="reu-del" data-v="${r.id}">excluir</button>`}`:""}</span></div>`;
+  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Reuniões de alinhamento (${L.length})${inf("Registro das reuniões entre a Barenbrug e o canal: quando foi, quem participou e o que ficou combinado. A revenda vê as reuniões que não forem marcadas como internas.")}</h2>${B&&ed!=="novo"?`<button class="btn sec" data-a="reu-ed" data-v="novo">+ Registrar reunião</button>`:""}</div>
+    ${ed==="novo"?form({}):""}
+    ${L.length?`<div class="lista">${L.map(card).join("")}</div>`:ed==="novo"?"":`<div class="vazio">Nenhuma reunião registrada${B?". Use \"+ Registrar reunião\" depois de cada conversa com o canal.":"."}</div>`}</section>`;
+}
 function vCanalFiliais(c){
   const lst=(S.canalFiliais&&S.canalFiliais[c.id])||[];
   const rows=lst.length?`<div class="tab"><table><thead><tr><th>Filial</th><th>Cidade/UF</th><th>Responsável</th><th>Contato</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(x.nome||"—")}</td><td>${esc((x.cidade||"")+(x.uf?" / "+x.uf:""))}</td><td>${esc(x.responsavel||"—")}</td><td>${esc(x.contato||"—")}</td><td><button class="link" data-a="filial-del" data-v="${x.id}">excluir</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma filial cadastrada.</div>`;
@@ -4182,6 +4208,7 @@ function vRVCanal(){
   ${sel&&ehBP(sel)?(adm?vAcaoEditor(sel):podePgdArq()?vAcaoArquivos(sel):""):""}
   </section>
   ${eq.length||!B?`<section class="bloco"><h2 class="sec">Equipe da revenda no portal (${eq.length})</h2>${eq.length?`<div class="lista">${eq.map(p=>`<div class="linha"><div><strong>${esc(p.nome||"—")}</strong><span class="meta">${esc(p.perfil||"")} · último acesso ${fmtDataHora(p.ultimo_acesso)}</span></div><span class="selo">${p.modulos||0} módulos do curso</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum vendedor da revenda com acesso ainda. Peça os acessos à Barenbrug.</div>`}</section>`:""}
+  ${vCanalReunioes(c)}
   ${vCanalContatos(c)}
   ${vCanalFiliais(c)}
   ${vCanalEstoque(c)}
@@ -7108,6 +7135,9 @@ document.addEventListener("click",async ev=>{
   if(a==="estoque-novo"){S.novoEstoque=v==="1";render();return;}
   if(a==="preco-novo"){S.novoPreco=v==="1";render();return;}
   if(a==="contato-del"){await sb.from("canal_contatos").delete().eq("id",v);S.canais=null;render();return;}
+  if(a==="reu-ed"){S.reuEd=v||null;S.reuDel=null;render();return;}
+  if(a==="reu-del"){S.reuDel=v;render();return;}
+  if(a==="reu-del-ok"){const {error}=await sb.from("canal_reunioes").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}const L=(S.canalReun||{})[S.canalSel]||[];S.canalReun[S.canalSel]=L.filter(r=>String(r.id)!==String(v));S.reuDel=null;render();aviso("Reunião excluída.");return;}
   if(a==="filial-del"){await sb.from("canal_filiais").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="estoque-del"){await sb.from("canal_estoque").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="preco-del"){await sb.from("canal_precos").delete().eq("id",v);S.canais=null;render();return;}
@@ -7536,6 +7566,12 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
   if(f.id==="f-cob-fil"){if(!ehAdmin())return;const F=S.cobB||{};const r={canal_id:F.canal,cidade:f.querySelector("#cf_cid").value.trim(),uf:f.querySelector("#cf_uf").value,nome:f.querySelector("#cf_nome").value.trim()||null,fonte:"Cadastro manual"};if(!r.canal_id||!r.cidade||!r.uf){aviso("Preencha cidade e UF.");return;}
     const {data,error}=await sb.from("canal_filiais").insert(r).select("id,canal_id,nome,cidade,uf,fonte").maybeSingle();if(error||!data){aviso("Não foi possível salvar a filial.");return;}const c=(S.imCanais||[]).find(x=>x.id===r.canal_id);S.imFil=[...(S.imFil||[]),{...data,canal:c?c.nome:"Canal"}];S.canais=null;render();aviso(geoLL(r.uf,r.cidade)?"Filial adicionada.":"Filial adicionada, mas a cidade não foi encontrada no mapa. Confira a grafia.");return;}
+  if(f.id==="f-reu"){const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const lst=t=>t.split(",").map(x=>x.trim()).filter(Boolean);
+    const d={canal_id:S.canalSel,data:val("ru_dt"),formato:val("ru_fmt"),pela_barenbrug:lst(val("ru_bb")),pelo_canal:lst(val("ru_cn")),pauta:val("ru_pa")||null,alinhado:val("ru_al"),proximos:val("ru_px")||null,interna:f.querySelector("#ru_int").checked};
+    if(!d.data||!d.alinhado||!d.pela_barenbrug.length){aviso("Preencha a data, quem participou pela Barenbrug e o que ficou alinhado.");return;}if(btn)btn.disabled=true;const id=f.dataset.id;
+    const q=id?sb.from("canal_reunioes").update({...d,atualizado_em:new Date().toISOString()}).eq("id",+id).select().maybeSingle():sb.from("canal_reunioes").insert({...d,criado_nome:(S.profile&&S.profile.nome)||null}).select().maybeSingle();
+    const {data,error}=await q;if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar. Só quem é responsável pelo canal (ou administrador) registra reuniões.");return;}
+    const m=S.canalReun||(S.canalReun={});const L=(m[S.canalSel]||[]).filter(r=>r.id!==data.id);L.push(data);L.sort((a,b)=>String(b.data).localeCompare(String(a.data)));m[S.canalSel]=L;S.reuEd=null;render();aviso(id?"Reunião atualizada.":"Reunião registrada.");return;}
   if(f.id==="f-filial"){const r={canal_id:S.canalSel,nome:f.querySelector("#fl_nome").value.trim(),cidade:f.querySelector("#fl_cidade").value.trim(),uf:f.querySelector("#fl_uf").value.trim().toUpperCase(),endereco:f.querySelector("#fl_end").value.trim(),responsavel:f.querySelector("#fl_resp").value.trim(),contato:f.querySelector("#fl_contato").value.trim()};const {error}=await sb.from("canal_filiais").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novaFilial=false;S.canais=null;render();aviso("Filial adicionada.");return;}
   if(f.id==="f-estoque"){const r={canal_id:S.canalSel,cultivar:f.querySelector("#es_cult").value.trim(),quantidade_kg:+f.querySelector("#es_qtd").value||0,data:f.querySelector("#es_data").value||null,obs:f.querySelector("#es_obs").value.trim()};const {error}=await sb.from("canal_estoque").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoEstoque=false;S.canais=null;render();aviso("Estoque registrado.");return;}
   if(f.id==="f-preco"){const cs=f.querySelector("#pr_canal");const r={canal_id:cs?cs.value:S.canalSel,cultivar:f.querySelector("#pr_cult").value.trim(),preco:+f.querySelector("#pr_preco").value||0,data_pesquisa:f.querySelector("#pr_data").value||null,fonte:f.querySelector("#pr_fonte").value.trim()||"Cliente oculto"};const {error}=await sb.from("canal_precos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoPreco=false;S.canais=null;render();aviso("Preço registrado.");return;}
