@@ -1196,7 +1196,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117165831";
+const APP_VER="20261117170507";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3871,10 +3871,10 @@ function rvvBlocos(d,g,rev){
   const dt=t=>t?String(t).slice(0,10).split("-").reverse().join("/"):"—";
   const q=(n,t,tip,body)=>`<div class="rvv-q"><h3><span class="rvv-n">${n}</span>${t}${inf(tip)}</h3>${body}</div>`;
   const q1=n=>q(n,rev?"Pedidos da safra 26/27":"Pedidos da safra 26/27 (relatório de pedidos do BI)",rev?"Encarteirado = pedido ainda não faturado. Faturado = nota fiscal emitida. Valores em R$ líquidos, sem impostos.":"Encarteirado = pedido com status Order, ainda não faturado. Faturado = Invoiced, com nota fiscal emitida. Valores em R$ líquidos do BI.",
-    `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Encarteirado</th><th class="val">Faturado</th><th class="val">Total</th></tr></thead><tbody>
-      <tr><td><strong>Híbridos</strong><br><span class="meta">Sabiá, Cayana, Carcará</span></td><td class="val">${kg(v.ord_kg_h)}<br><span class="meta">${rs(v.ord_rs_h)}</span></td><td class="val">${kg(v.fat_kg_h)}<br><span class="meta">${rs(v.fat_rs_h)}</span></td><td class="val"><strong>${kg(v.tot_kg_h)}</strong><br><span class="meta">${rs(v.tot_rs_h)}</span></td></tr>
-      <tr><td><strong>Convencionais</strong></td><td class="val">${kg(v.ord_kg_c)}<br><span class="meta">${rs(v.ord_rs_c)}</span></td><td class="val">${kg(v.fat_kg_c)}<br><span class="meta">${rs(v.fat_rs_c)}</span></td><td class="val"><strong>${kg(v.tot_kg_c)}</strong><br><span class="meta">${rs(v.tot_rs_c)}</span></td></tr>
-      <tr><td><strong>Total</strong></td><td class="val">${rs(v.ord_rs_h+v.ord_rs_c)}</td><td class="val">${rs(v.fat_rs_h+v.fat_rs_c)}</td><td class="val"><strong>${rs(v.tot_rs_h+v.tot_rs_c)}</strong></td></tr></tbody></table></div>`);
+    `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Encarteirado</th><th class="val">Faturado</th><th class="val">Total</th><th class="val">Pago${inf("Parte do que já foi faturado e que a revenda já pagou, conferida nota a nota no Financeiro. Valores em R$ líquidos, proporcionais ao que foi quitado em cada nota.")}</th></tr></thead><tbody>
+      <tr><td><strong>Híbridos</strong><br><span class="meta">Sabiá, Cayana, Carcará</span></td><td class="val">${kg(v.ord_kg_h)}<br><span class="meta">${rs(v.ord_rs_h)}</span></td><td class="val">${kg(v.fat_kg_h)}<br><span class="meta">${rs(v.fat_rs_h)}</span></td><td class="val"><strong>${kg(v.tot_kg_h)}</strong><br><span class="meta">${rs(v.tot_rs_h)}</span></td><td class="val" style="color:#2E8B57">${kg(v.pag_kg_h)}<br><span class="meta">${rs(v.pag_rs_h)}</span></td></tr>
+      <tr><td><strong>Convencionais</strong></td><td class="val">${kg(v.ord_kg_c)}<br><span class="meta">${rs(v.ord_rs_c)}</span></td><td class="val">${kg(v.fat_kg_c)}<br><span class="meta">${rs(v.fat_rs_c)}</span></td><td class="val"><strong>${kg(v.tot_kg_c)}</strong><br><span class="meta">${rs(v.tot_rs_c)}</span></td><td class="val" style="color:#2E8B57">${kg(v.pag_kg_c)}<br><span class="meta">${rs(v.pag_rs_c)}</span></td></tr>
+      <tr><td><strong>Total</strong></td><td class="val">${rs(v.ord_rs_h+v.ord_rs_c)}</td><td class="val">${rs(v.fat_rs_h+v.fat_rs_c)}</td><td class="val"><strong>${rs(v.tot_rs_h+v.tot_rs_c)}</strong></td><td class="val" style="color:#2E8B57"><strong>${rs((v.pag_rs_h||0)+(v.pag_rs_c||0))}</strong><br><span class="meta">${(v.fat_rs_h+v.fat_rs_c)?pc(((v.pag_rs_h||0)+(v.pag_rs_c||0))/(v.fat_rs_h+v.fat_rs_c))+" do faturado":""}</span></td></tr></tbody></table></div>`);
   const barra=(t,a,cor)=>`<div class="rvv-bar"><span>${t}</span><div><i style="width:${Math.min(100,(a||0)*100)}%;background:${cor}"></i><b style="left:90%"></b><b style="left:100%"></b></div><strong>${pc(a)}</strong></div>`;
   const q3=n=>q(n,"Meta de híbridos","A meta é em kg de híbridos. Bônus de Performance: 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%. As marcas na barra são 90% e 100%.",
     `<p class="meta" style="margin:0 0 6px">Meta: <strong>${kg(d.meta)}</strong> · tier ${esc(d.tier)} (IGDB ${pt(g.ih)} híbridos, ${pt(g.ic)} convencionais; bônus ${pt(g.b)} híbridos)</p>
