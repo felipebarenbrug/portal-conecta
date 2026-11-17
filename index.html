@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.cepea.org.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://czebmkqbapltmjuhywkd.supabase.co wss://czebmkqbapltmjuhywkd.supabase.co https://servicodados.ibge.gov.br https://www.cepea.org.br; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://maps.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="bingbot" content="noindex, nofollow, noarchive">
@@ -536,6 +538,7 @@ main.largo{max-width:1120px}
 .rodape-in{max-width:1100px;margin:0 auto;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:6px;font-size:13px;color:var(--apagado);line-height:1.5}
 .rodape-in p{margin:0}
 .rodape-in .mkt-c+.mkt-c::before{content:" · "}
+.seg-nota{display:flex;align-items:baseline;gap:6px}.seg-nota b{font-size:34px;line-height:1;color:var(--azul)}.seg-cat{display:grid;gap:10px}.seg-it{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:8px 0;border-top:1px solid #e3e8ec}.seg-it:first-of-type{border-top:0}.seg-st{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}.seg-ok{background:#e6f4ec;color:#1f6b43}.seg-par{background:#fff4e0;color:#8a5a00}.seg-pen{background:#fdeaea;color:#a12a2a}.seg-it p{margin:2px 0 0;font-size:14px}.seg-ref{font-size:12px;color:var(--apagado)}.seg-barra{height:8px;background:#e3e8ec;border-radius:4px;overflow:hidden}.seg-barra i{display:block;height:100%;background:var(--azul)}
 .cx h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado);font-weight:700}
 .areas{display:grid}
 .area-b{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--linha);padding:11px 2px;font:inherit;font-weight:700;color:var(--azul-escuro);cursor:pointer}
@@ -1202,7 +1205,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117192146";
+const APP_VER="20261117193357";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7691,10 +7694,80 @@ const EMBAIXADOR={nome:"Augusto Nascimento",email:"anascimento@barenbrug.com.br"
 const ehEmb=()=>!!S.souEmb;
 const moderaDuv=()=>ehAdmin()||ehEmb();
 const mktContatosHTML=()=>MKT_CONTATOS.map(c=>`<span class="mkt-c"><strong>${esc(c.nome)}</strong>${c.email?` · <a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}</span>`).join("");
+
+const SEG_VERIF="17/11/2026";
+const SEG_SENHA_VAZADA=false;
+async function carregarSeg(){if(S.segBusy)return;S.segBusy=true;try{const {data,error}=await sb.rpc("seg_status");S.segSt=error?null:data;}catch(e){S.segSt=null;}S.segBusy=false;render();}
+function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
+  const ok="ok",par="par",pen="pen";
+  return [
+  {k:"Acesso aos dados",w:25,ref:"OWASP ASVS 4.0 V4 (controle de acesso) · Supabase Production Checklist",it:[
+    [L.com_rls===L.tabelas?ok:pen,"Regra de acesso por linha (RLS) em todas as tabelas",`${L.com_rls} de ${L.tabelas} tabelas com RLS ligada e ${L.politicas} regras de acesso. Quem decide o que cada pessoa lê é o banco, não a tela: mesmo chamando a API direto, ninguém vê além do seu perfil.`],
+    [L.anon_tabelas===0?ok:pen,"Sem login, nenhuma tabela é legível",`${L.anon_tabelas} tabelas legíveis por visitante sem login. A única permissão de visitante é enviar o pedido de acesso.`],
+    [L.anon_funcoes===0?ok:pen,"Sem login, nenhuma função privilegiada é executável",`${L.anon_funcoes} funções privilegiadas executáveis sem login.`],
+    [ok,"Funções privilegiadas checam o perfil antes de responder","As consultas consolidadas (painéis, CRM, leads, mensagens) conferem o usuário logado e o perfil dele dentro do próprio banco."],
+    [ok,"Menor privilégio por perfil","Cada perfil vê só a sua área. Concorrentes aparecem anonimizados nas telas de Inside Sales; RC não vê menções do CRM; revenda não vê preço nem conteúdo interno de concorrência. Validação e importação de arquivos são só do administrador master."]]},
+  {k:"Login e identidade",w:20,ref:"OWASP ASVS 4.0 V2 (autenticação) · NIST SP 800-63B",it:[
+    [ok,"Login gerenciado com sessão assinada","Supabase Auth com token JWT de validade curta e renovação automática. Senhas guardadas com hash pelo provedor; o portal nunca vê a senha."],
+    [ok,"Verificação em duas etapas (MFA) disponível e exigível","O administrador pode exigir MFA por pessoa; quem é exigido não acessa dados sem o segundo fator."],
+    [mfa>=0.9?ok:mfa>=0.5?par:pen,"Cobertura de MFA nos usuários ativos",`${L.com_mfa} de ${L.ativos} usuários ativos com MFA (${Math.round(mfa*100)}%). Meta: 100%.`],
+    [ok,"Troca de senha obrigatória no primeiro acesso","Senha provisória criada pelo administrador precisa ser trocada antes de qualquer uso."],
+    [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Ainda desligado. Liga no painel do Supabase: Authentication, configurações de senha, Leaked password protection."]]},
+  {k:"Segredos e integrações",w:15,ref:"OWASP Top 10 2021 A02 e A05",it:[
+    [ok,"Tokens só no cofre do servidor","O token do RD Station CRM e as chaves de serviço ficam em secrets do Supabase. Nunca chegam ao navegador nem ao código."],
+    [ok,"Funções de servidor exigem login","8 de 8 Edge Functions com verificação de JWT ligada; as que mexem no CRM ou em usuários aceitam só administrador."],
+    [ok,"Código público sem segredo nem dado",`O repositório tem só a interface. Varredura de ${SEG_VERIF}: nenhuma chave de serviço, token, dado de CRM, cliente, preço ou SQL.`],
+    [ok,"Biblioteca de terceiros com verificação de integridade","A biblioteca do Supabase é carregada com hash SRI: se o arquivo na CDN mudar, o navegador recusa."]]},
+  {k:"Aplicação web",w:15,ref:"OWASP Top 10 2021 A03 e A05 · Mozilla Observatory",it:[
+    [ok,"HTTPS em todo o tráfego","Domínio próprio com certificado; navegador e banco só conversam por TLS."],
+    [ok,"Política de conteúdo (CSP)","O navegador só deixa o portal mandar dados para o banco do portal e para o IBGE, e só carrega scripts de origens listadas. Plugins bloqueados."],
+    [ok,"Conteúdo de terceiros isolado","Impulso (HTML de e-mail) e o widget do Cepea rodam em quadro isolado (sandbox), sem acesso à sessão."],
+    [ok,"Texto digitado é escapado antes de exibir","Todo texto vindo de usuário ou do CRM passa por escape antes de virar tela, o que evita injeção de script."],
+    [par,"Cabeçalhos HTTP de segurança (HSTS, anti-clickjacking)","A hospedagem atual (GitHub Pages) não permite cabeçalhos próprios. A CSP vai na página; HSTS e bloqueio de enquadramento exigiriam um CDN na frente (ex.: Cloudflare)."],
+    [ok,"Fora dos buscadores","Página marcada para não ser indexada nem arquivada."]]},
+  {k:"Rastreabilidade",w:10,ref:"OWASP ASVS 4.0 V7 (registros)",it:[
+    [ok,"Registro de ações administrativas",`Criação e exclusão de usuário, redefinição de senha, exigência de MFA, importações e premissas financeiras ficam registradas com quem e quando. ${L.audit_30d} registros nos últimos 30 dias.`],
+    [ok,"Acesso a contato de lead registrado",`Telefone e e-mail de lead aparecem um a um, por clique, e cada abertura fica registrada. ${L.views_lead_30d} aberturas nos últimos 30 dias.`],
+    [ok,"Histórico de tabela de preços","Cada alteração de preço fica registrada."]]},
+  {k:"Privacidade e LGPD",w:10,ref:"Lei 13.709/2018 (LGPD), arts. 6º, 37 e 46",it:[
+    [ok,"Dados hospedados no Brasil","Banco na região sa-east-1 (São Paulo)."],
+    [ok,"Dado pessoal mínimo e sob demanda","Contato de lead só por clique, para quem tem a área e a UF; o resto das telas mostra dado agregado."],
+    [L.buckets_pub&&!/^(avatares|mural)(, (avatares|mural))?$/.test(L.buckets_pub)?par:ok,"Arquivos privados com link temporário",`${L.buckets_priv} pastas de arquivo privadas, abertas só por link que expira em minutos. Públicas: ${esc(L.buckets_pub||"nenhuma")} (fotos de perfil e imagens do mural).`],
+    [pen,"Aviso de privacidade no portal","Falta um aviso de privacidade e termo de uso visível no login, dizendo que dados são tratados e para quê."]]},
+  {k:"Infraestrutura e continuidade",w:5,ref:"Supabase Security Advisor · CIS Controls v8 (11, 16)",it:[
+    [ok,"Banco gerenciado e atualizado",`PostgreSQL ${esc(L.pg)} gerenciado pelo Supabase, com criptografia em trânsito e em repouso.`],
+    [par,"Backup e restauração","Depende do plano contratado no Supabase: o plano gratuito não inclui backup restaurável; o Pro inclui backup diário. Confirmar o plano no painel e testar uma restauração."],
+    [L.sem_search_path===0?ok:par,"Funções com caminho de busca fixo",`${L.sem_search_path} funções sem search_path fixo.`],
+    [par,"Extensão pg_net no schema público","Aviso do verificador do Supabase. A extensão não deixa ser movida sem recriar; as funções dela ficam no schema net e não ficam expostas. Risco aceito."]]}];}
+function vSeguranca(){
+  if(S.segSt===undefined){carregarSeg();return `<div class="carregando">Carregando os indicadores de segurança…</div>`;}
+  const L=S.segSt;if(!L)return `<div class="vazio">Não foi possível ler os indicadores agora. Só administradores veem esta página.</div>`;
+  const V={ok:1,par:0.5,pen:0};const C=segCats(L).map(c=>({...c,n:10*c.it.reduce((a,x)=>a+V[x[0]],0)/c.it.length}));
+  const G=C.reduce((a,c)=>a+c.n*c.w,0)/C.reduce((a,c)=>a+c.w,0);const f1=v=>v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+  const fx=g=>g>=9?"Referência de mercado":g>=7.5?"Bom, aderente às boas práticas":g>=6?"Adequado, com pontos a fechar":"Atenção";
+  const ST={ok:["seg-ok","Atendido"],par:["seg-par","Parcial"],pen:["seg-pen","Pendente"]};
+  const pend=C.flatMap(c=>c.it.filter(x=>x[0]!=="ok").map(x=>({c:c.k,s:x[0],t:x[1],d:x[2]})));
+  const em=new Date(L.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+  return `<div><h1 class="titulo">Segurança e proteção de dados</h1><p class="sub">Como o Portal Conecta protege os dados, com nota por área e as pendências. Os números do banco são lidos ao vivo (${esc(em)}); os demais itens foram verificados em ${SEG_VERIF}. Uso interno, só administradores.</p></div>
+  <section class="bloco"><div class="dir-grid">
+   <div class="dir-card"><span class="meta">NOTA GERAL</span><div class="seg-nota"><b>${f1(G)}</b><span>/ 10</span></div><p><strong>${fx(G)}</strong></p><div class="seg-barra" aria-hidden="true"><i style="width:${G*10}%"></i></div></div>
+   <div class="dir-card" style="grid-column:span 2;min-width:0"><strong>Resposta curta para o TI</strong><p>O portal não guarda dado no código: a página é só interface. Os dados ficam num banco PostgreSQL gerenciado (Supabase), hospedado em São Paulo, com regra de acesso por linha em todas as tabelas: cada pessoa só lê o que o perfil dela permite, mesmo chamando a API direto. Integrações com o CRM rodam no servidor, com o token em cofre de segredos e só para usuário autenticado. Login com MFA, e acesso a dado pessoal de lead registrado por clique.</p></div></div></section>
+  <section class="bloco"><h2 class="sec">Nota por área</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Área</th><th class="val">Peso</th><th class="val">Nota</th><th>Referência usada</th></tr></thead><tbody>${C.map(c=>`<tr><td>${esc(c.k)}</td><td class="val">${c.w}%</td><td class="val"><strong>${f1(c.n)}</strong></td><td style="white-space:normal;min-width:220px"><span class="meta">${esc(c.ref)}</span></td></tr>`).join("")}<tr style="font-weight:700"><td>Nota geral (média ponderada)</td><td class="val">100%</td><td class="val">${f1(G)}</td><td></td></tr></tbody></table></div>
+   <p class="precos-nota">Como a nota é feita: cada área tem itens de controle tirados das referências ao lado. Item atendido vale 1, parcial vale 0,5 e pendente vale 0; a nota da área é a soma dividida pelo número de itens, vezes 10. A nota geral pesa mais o que protege dado diretamente (acesso e login). Escala: 9 a 10, referência de mercado; 7,5 a 8,9, bom e aderente às boas práticas; 6 a 7,4, adequado com pontos a fechar; abaixo de 6, atenção. É uma autoavaliação técnica contra padrões públicos (OWASP ASVS e Top 10, NIST 800-63B, checklist de produção do Supabase, LGPD), não uma auditoria externa nem um teste de invasão.</p></section>
+  ${pend.length?`<section class="bloco"><h2 class="sec">O que falta para subir a nota</h2><div class="dir-grid">${pend.map(x=>`<div class="dir-card ${x.s==="pen"?"dir-ruim":""}"><span class="seg-st ${ST[x.s][0]}">${ST[x.s][1]}</span> <span class="meta">${esc(x.c)}</span><p><strong>${esc(x.t)}</strong></p><p>${x.d}</p></div>`).join("")}</div></section>`:""}
+  ${C.map(c=>`<section class="bloco"><h2 class="sec">${esc(c.k)} · ${f1(c.n)}</h2><p class="seg-ref">Referência: ${esc(c.ref)}</p><div class="seg-cat">${c.it.map(x=>`<div class="seg-it"><span class="seg-st ${ST[x[0]][0]}">${ST[x[0]][1]}</span><div><strong>${esc(x[1])}</strong><p>${x[2]}</p></div></div>`).join("")}</div></section>`).join("")}
+  <section class="bloco"><h2 class="sec">Perguntas que o TI costuma fazer</h2><div class="dir-grid">
+   <div class="dir-card"><strong>Onde ficam os dados?</strong><p>Em um PostgreSQL gerenciado pelo Supabase, na região de São Paulo (sa-east-1), com criptografia em trânsito e em repouso. O site em si (GitHub Pages) só entrega a interface.</p></div>
+   <div class="dir-card"><strong>O código é público. Isso é um risco?</strong><p>Não guarda segredo nem dado. A única chave no navegador é a pública do Supabase, feita para ser exposta: sozinha não abre nada, porque as regras de acesso estão no banco. Sem login, ${L.anon_tabelas} tabelas legíveis.</p></div>
+   <div class="dir-card"><strong>E se alguém pegar a sessão de um usuário?</strong><p>Vê só o que aquele perfil vê, por tempo limitado (o token expira). Com MFA, senha sozinha não basta. O administrador pode desativar ou excluir o usuário na Gestão de pessoas.</p></div>
+   <div class="dir-card"><strong>Como o CRM é acessado?</strong><p>Só por funções no servidor, com o token do RD Station guardado no cofre do Supabase e exigência de login de administrador. O navegador nunca fala direto com o CRM.</p></div>
+   <div class="dir-card"><strong>Quem pode ver dado pessoal?</strong><p>Contato de lead só aparece por clique, para quem tem a área e a UF, e cada abertura fica registrada com quem e quando.</p></div>
+   <div class="dir-card"><strong>Tem backup?</strong><p>Depende do plano do Supabase: o Pro faz backup diário; o gratuito não tem backup restaurável. Está nas pendências para confirmar.</p></div></div></section>
+  <p class="precos-nota">Fontes: indicadores ao vivo do banco do portal (função seg_status, só administrador); verificador de segurança do Supabase; configuração das Edge Functions e varredura do repositório em ${SEG_VERIF}. Referências: OWASP ASVS 4.0.3, OWASP Top 10 2021, NIST SP 800-63B, Supabase Production Checklist, CIS Controls v8, Lei 13.709/2018.</p>`;}
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
-  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p></div>`;
+  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
@@ -7748,6 +7821,7 @@ function renderApp(){
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"){S.secao="academia";S.pag="trilha";}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
+  if(S.pag==="seguranca"){if(!ehAdmin()){S.pag="hub";}else{app.innerHTML=cabecalho()+`<main>${vSeguranca()}</main>`;return;}}
   if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
   talvezTour(S.secao);
   if(S.secao==="gestao"){
@@ -7971,6 +8045,7 @@ document.addEventListener("click",async ev=>{
   if(a==="prog-ir"){if(v==="perfil-campo"){const el=document.getElementById("prog-dados");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
     const [sc,pg]=v.split("|");if(sc==="academia"){S.secao="academia";S.pag="trilha";}else{S.secao=sc;S.pag=pg;}S.res=null;render();window.scrollTo(0,0);return;}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
+  if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
