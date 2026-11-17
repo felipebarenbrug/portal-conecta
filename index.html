@@ -446,6 +446,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .mk-capa-g{max-height:260px;overflow:hidden;border-radius:8px}.mk-capa-g img{width:100%;object-fit:cover}
 .mk-anexar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .nav .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#C8102E;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;margin-left:4px}
+.chip[aria-pressed="true"] .meta{color:inherit;opacity:.8}
 .gt-filtros{display:flex;flex-wrap:wrap;gap:8px}.gt-filtros input{flex:2 1 220px;min-width:0}.gt-filtros select{flex:1 1 180px;min-width:0}
 .mk-link{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 320px;min-width:0}.mk-link input{flex:1 1 160px;min-width:0}
 .mk-coms{display:flex;flex-direction:column;gap:8px}.mk-com{background:var(--branco);border-radius:8px;padding:10px 12px}.mk-com p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -1054,6 +1055,10 @@ const qtdFeitas=()=>feitasOrdenadas().length;
 const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORDEM[i]))return i;}return ORDEM.length;};
 const estadoEt=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador"||(!S.demo&&S.nivel==="Administrador");
+const ehGestor=()=>!S.demo&&S.nivel==="Gestor";
+const gerePessoas=()=>ehAdmin()||ehGestor();
+const NIVEL_NOME={"Padrão":"Padrão","Gestor":"Gestor de acessos","Administrador":"Administrador master"};
+const alvoAdm=u=>!!u&&(u.perfil==="Administrador"||u.nivel==="Administrador"||u.nivel==="Gestor"||(Array.isArray(u.perfis)&&u.perfis.includes("Administrador")));
 // Perfil: o que a pessoa faz (pode ter mais de um). Nivel de acesso: Administrador ou Padrao.
 const temPerfil=x=>S.perfil===x||(!S.demo&&Array.isArray(S.perfis)&&S.perfis.includes(x));
 const aplicaPerfis=pr=>{S.perfis=Array.isArray(pr&&pr.perfis)&&pr.perfis.length?pr.perfis.filter(Boolean):[S.perfil];S.nivel=(pr&&pr.nivel)||(S.perfil==="Administrador"?"Administrador":"Padrão");};
@@ -1156,7 +1161,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117080001";
+const APP_VER="20261117084315";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1444,9 +1449,86 @@ function vLeadRCsCfg(){const R=S.leadRCs||[],on=R.filter(r=>r.recebe).length;
       <div class="uf-grid" ${r.recebe?"":'style="opacity:.45"'}>${UF_LISTA.map(u=>`<button type="button" class="chip uf-chip" data-a="rc-uf" data-v="${esc(r.id+"|"+u)}" aria-pressed="${U.has(u)}">${u}</button>`).join("")}</div>
       <span class="meta">${r.recebe?(U.size?"Vê leads de: "+[...U].join(", "):"Sem estado marcado: recebe os leads da sede"+(r.uf_base?" ("+esc(r.uf_base)+")":", mas a sede não está no cadastro")):"Não recebe leads"}</span></div>`;}).join("")||`<div class="vazio">Nenhum RC ativo no portal.</div>`}</div></details>`;}
 async function rcLeadsSalva(id,recebe,ufs){const {error}=await sb.rpc("adm_rc_leads_set",{p_id:id,p_recebe:recebe,p_ufs:ufs});if(error){aviso("Esta alteração NÃO foi gravada. Tente de novo.");return false;}const r=(S.leadRCs||[]).find(x=>x.id===id);if(r){r.recebe=recebe;r.ufs_leads=ufs;}S.leadRcAberto=true;render();return true;}
+/* ===== LeadsBaren · Prospecção (outbound) ===== */
+const LO_SITS=["Sem vínculo no CRM","Negociação perdida no CRM","Com negociação no CRM (verificar)","Cliente (já comprou)"];
+const LO_PERFIS=["Produtor","Revendedor","Revendedor (a confirmar)","Consultor","Gerente de Propriedade Rural","Técnico de Propriedade Rural","Estudante","Outros","Sem perfil informado"];
+async function loLista(mais){
+  const F=S.loF||(S.loF={uf:"",perfil:"",sit:"",st:"Em aberto",q:""});const off=mais?(S.loRows||[]).length:0;
+  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off});
+  if(error){S.loErro="Não foi possível carregar a prospecção.";return;}
+  S.loRows=(mais?(S.loRows||[]):[]).concat(data||[]);S.loTotal=data&&data.length?+data[0].total:(mais?S.loTotal:0);
+}
+async function carregarLeadOut(){
+  if(S.loBusy)return;S.loBusy=true;S.loErro=null;
+  try{const {data}=await sb.rpc("lead_out_resumo");S.loRes=data||{total:0,ufs:[],perfis:[]};}catch(e){S.loRes={total:0,ufs:[],perfis:[]};}
+  await loLista(false);
+  if(ehAdmin()){try{const [a,b,c]=await Promise.all([sb.rpc("adm_lead_out_stats"),sb.rpc("adm_lead_out_acessos"),sb.from("profiles").select("id,nome,perfil,email").eq("ativo",true).order("nome")]);S.loStats=a.data||{};S.loAcc=b.data||[];S.loPessoas=c.data||[];}catch(e){S.loStats={};S.loAcc=[];S.loPessoas=[];}}
+  S.loBusy=false;S.loOk=true;if(S.pag==="leads-outbound")render();
+}
+function loAdmin(){
+  const st=S.loStats||{},A=S.loAcc||[];const ed=S.loEd||(S.loEd={});
+  const ja=new Set(A.map(x=>x.user_id));const cand=(S.loPessoas||[]).filter(p=>!ja.has(p.id)&&!ed[p.id]);
+  const linhas=[...A.map(x=>({...x,...(ed[x.user_id]||{})})),...Object.entries(ed).filter(([id])=>!ja.has(id)).map(([id,e])=>{const p=(S.loPessoas||[]).find(q=>q.id===id)||{};return {user_id:id,nome:p.nome,perfil:p.perfil,email:p.email,perfis:[],ufs:[],situacoes:["Sem vínculo no CRM"],so_pediu:false,ativo:true,novo:true,...e};})];
+  const nUf=st.ufs||{},nPf=st.perfis||{},nSt=st.sits||{};
+  const chips=(id,campo,ops,sel,cont)=>ops.map(o=>`<button type="button" class="chip${campo==="ufs"?" uf-chip":""}" data-a="lo-tg" data-v="${esc(id+"|"+campo+"|"+o)}" aria-pressed="${(sel||[]).includes(o)}">${esc(o)}${cont&&cont[o]!=null?` <span class="meta">${Number(cont[o]).toLocaleString("pt-BR")}</span>`:""}</button>`).join("");
+  return `<details class="lote" ${S.loCfgAberto?"open":""} data-locfg><summary>Base e quem vê a prospecção · ${Number(st.total||0).toLocaleString("pt-BR")} leads · ${A.filter(x=>x.ativo).length} ${A.filter(x=>x.ativo).length===1?"pessoa liberada":"pessoas liberadas"}</summary>
+    <div style="display:grid;gap:14px;margin-top:10px">
+    <div class="nota-admin"><strong>Importar ou atualizar a base.</strong> Escolha a planilha da base de leads (.xlsx, aba "Leads limpos", ou .csv com as mesmas colunas). Leads com o mesmo e-mail são atualizados, sem duplicar; o andamento já registrado pelo time é mantido.${st.importado?` Última importação: ${fmtDataHora(st.importado)}.`:""}
+      <div class="acoes" style="margin-top:8px"><input type="file" id="lo_arq" accept=".xlsx,.xls,.csv"><button class="btn" data-a="lo-importar">Importar</button><span class="meta" id="lo_prog"></span></div></div>
+    <div><h3 class="pgd-h">Quem vê a prospecção</h3><p class="meta" style="margin:0 0 8px">Para cada pessoa, marque os estados (obrigatório), os perfis e a situação no CRM que ela pode ver. Sem perfil marcado, vale todos os perfis; sem situação marcada, vale todas. O número ao lado de cada opção é o total da base. Telefone e e-mail só aparecem quando a pessoa clica em "Ver contato", e o clique fica registrado.</p>
+    <div class="lista">${linhas.map(x=>`<div class="neg"><div class="l1"><span>${esc(x.nome||"Pessoa")} <span class="meta">${esc(x.perfil||"")}</span></span><span>${x.novo?"nova":`${Number(x.qtd||0).toLocaleString("pt-BR")} leads`}</span></div>
+      <p class="meta" style="margin:6px 0 2px">Estados</p><div class="uf-grid">${chips(x.user_id,"ufs",UF_LISTA,x.ufs,nUf)}</div>
+      <p class="meta" style="margin:8px 0 2px">Perfis do lead</p><div class="filtros">${chips(x.user_id,"perfis",LO_PERFIS,x.perfis,nPf)}</div>
+      <p class="meta" style="margin:8px 0 2px">Situação no CRM</p><div class="filtros">${chips(x.user_id,"situacoes",LO_SITS,x.situacoes,nSt)}</div>
+      <div class="filtros" style="margin-top:8px"><label class="check"><input type="checkbox" data-lochk="${esc(x.user_id+"|so_pediu")}" ${x.so_pediu?"checked":""}> Só quem pediu atendimento</label><label class="check"><input type="checkbox" data-lochk="${esc(x.user_id+"|ativo")}" ${x.ativo!==false?"checked":""}> Liberado</label></div>
+      <div class="acoes" style="margin-top:8px">${ed[x.user_id]?`<button class="btn" data-a="lo-salvar" data-v="${esc(x.user_id)}">Salvar</button><button class="btn sec" data-a="lo-desfaz" data-v="${esc(x.user_id)}">Descartar</button>`:`<span class="meta">Gravado</span>`}${x.novo?"":`<button class="link perigo" data-a="lo-remover" data-v="${esc(x.user_id)}">Remover acesso</button>`}</div></div>`).join("")||`<div class="vazio">Ninguém liberado ainda.</div>`}</div>
+    <div class="acoes" style="margin-top:8px"><select id="lo_add" aria-label="Pessoa"><option value="">Liberar para…</option>${cand.map(p=>`<option value="${esc(p.id)}">${esc(p.nome||p.email)} · ${esc(p.perfil||"")}</option>`).join("")}</select><button class="btn sec" data-a="lo-add">Adicionar</button></div></div></div></details>`;
+}
+function vLeadsOut(){
+  if(!S.loOk){carregarLeadOut();return `<div class="carregando">Carregando a prospecção…</div>`;}
+  const F=S.loF,R=S.loRes||{},rows=S.loRows||[];const adm=ehAdmin();
+  const cab=`<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Contatos da base do RD Marketing liberados para você prospectar${R.total?`: ${Number(R.total).toLocaleString("pt-BR")} leads`:""}. Ligue primeiro para quem pediu atendimento.</p></div>`;
+  if(!adm&&!R.total)return cab+`<section class="bloco"><div class="vazio">A prospecção ainda não foi liberada para você. O Marketing libera por estado e perfil de lead.</div></section>`;
+  const sel=(id,ops,v,todos)=>`<select id="${id}" data-lof="${id.slice(3)}"><option value="">${todos}</option>${ops.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";
+    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}<span class="selo">${esc(st)}</span></span></div>
+      <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
+      ${l.ha_faixa||l.ha_usar?`<span class="meta">${l.ha_faixa?"<strong>Propriedade:</strong> "+esc(l.ha_faixa):""}${l.ha_faixa&&l.ha_usar?" · ":""}${l.ha_usar?"<strong>Quer formar:</strong> "+esc(l.ha_usar):""}</span>`:""}
+      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}${l.ult_conversao?" · última interação "+dia(l.ult_conversao):""}</span>
+      ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${esc(l.atendido_por)} em ${dia(l.atendido_em)}${l.obs?" · "+esc(l.obs):""}</span>`:""}
+      ${v?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${v.telefone===undefined?"carregando…":tel(v.telefone)} · <strong>E-mail:</strong> ${v.email?esc(v.email):v.telefone===undefined?"":"não informado"}</span>
+        <div style="display:grid;gap:6px;margin-top:6px"><input id="lo_obs_${l.id}" placeholder="Anotação do atendimento (opcional)" value="">
+        <div class="filtros">${["Em atendimento","Virou negociação","Sem sucesso","Novo"].filter(x=>x!==st).map(x=>`<button class="chip" data-a="lo-status" data-v="${l.id}" data-st="${esc(x)}">${x==="Novo"?"Devolver para a fila":"Marcar: "+x}</button>`).join("")}</div></div>`
+       :`<div><button class="btn sec" data-a="lo-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">${l.tem_tel?"Ver contato e atender":"Ver e-mail e atender"}</button></div>`}</div>`;};
+  return cab+(adm?loAdmin():"")+`
+  <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome ou cidade" value="${esc(F.q||"")}">
+    ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
+    <select id="lo_st" data-lof="st">${["Em aberto","Novo","Em atendimento","Virou negociação","Sem sucesso","Todos"].map(o=>`<option ${F.st===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} leads neste filtro`}</p>
+    <div class="lista">${rows.map(card).join("")||`<div class="vazio">Nenhum lead neste filtro.</div>`}</div>
+    ${rows.length<(S.loTotal||0)?`<div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="lo-mais">Carregar mais 100</button></div>`:""}
+    <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados só para a prospecção comercial da Barenbrug.</p></section>`;
+}
+function loLib(){if(window.XLSX)return Promise.resolve();if(S._xl)return S._xl;S._xl=new Promise((ok,er)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>ok();sc.onerror=()=>{S._xl=null;er();};document.head.append(sc);});return S._xl;}
+async function loImportar(arq,prog){
+  await loLib();const wb=XLSX.read(await arq.arrayBuffer(),{type:"array",cellDates:false});
+  const nome=wb.SheetNames.find(n=>/leads limpos/i.test(n))||wb.SheetNames.find(n=>{const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,range:0})[0]||[];return r.some(c=>/^e-?mail$/i.test(String(c||"").trim()));});
+  if(!nome)throw new Error("Não achei a aba com a coluna Email.");
+  const L=XLSX.utils.sheet_to_json(wb.Sheets[nome],{defval:null,raw:true});
+  const g=(r,...ks)=>{for(const k of ks){if(r[k]!=null&&r[k]!=="")return r[k];}return null;};
+  const b=v=>v===true||/^(true|sim|verdadeiro|1)$/i.test(String(v||""));
+  const txt=v=>v==null?null:String(v);
+  const M=L.map(r=>({email:txt(g(r,"Email","E-mail","email")),nome:txt(g(r,"Nome")),telefone:txt(g(r,"Telefone","Celular")),uf:txt(g(r,"UF","Estado")),cidade:txt(g(r,"Cidade")),perfil:txt(g(r,"Perfil")),area:txt(g(r,"Area_atuacao")),
+    ha_faixa:txt(g(r,"Ha_propriedade_faixa")),ha_usar:txt(g(r,"Ha_a_usar_informado")),pediu:b(g(r,"Pediu_atendimento")),status_crm:txt(g(r,"Status_CRM_export")),responsavel_crm:txt(g(r,"Responsavel_CRM")),etapa_crm:txt(g(r,"Etapa_CRM")),motivo:txt(g(r,"Motivo_perda")),
+    ult_venda:txt(g(r,"Data_ultima_venda")),ult_conversao:txt(g(r,"Data_ultima_conversao")),origem:txt(g(r,"Origem_primeira_conversao")),elegivel:b(g(r,"Elegivel_portal_sugerido")),possivel_rep:b(g(r,"Possivel_representante"))})).filter(x=>x.email);
+  let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_importar",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Importando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
+  return n;
+}
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
-  if(!inbound)return `<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Base de produtores do RD Marketing da sua região para prospecção ativa.</p></div><section class="bloco"><div class="aviso-bloq">Em construção. Esta aba será ligada à base do RD Station Marketing, com acesso restrito por estado.</div></section>`;
+  if(!inbound)return vLeadsOut();
   if(temPerfil("RC"))return vLeadsRC();
   if(S.leadsCache==null)return `<div class="carregando">Carregando leads…</div>`;
   const interno=ehAdmin()||temPerfil("Comercial Barenbrug");const minhas=S.leadUfs||[];const daRevenda=temPerfil("Gestor de Revenda")||temPerfil("Vendedor de Revenda");
@@ -2123,7 +2205,7 @@ async function carregarFeed(){
     (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
     (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("acoes_pgd").select("id,canal_id,tipo,categoria,cidade,valor_igdb,verba,criado_em,canais(nome)").eq("status","Em Análise").order("criado_em");S.pgdHome=data||[];}catch(e){}})(),
     (async()=>{if(S.demo||!ehMkt())return;try{const {data}=await sb.from("mkt_acoes").select("id,titulo,solicitante_nome,criado_em,verba_pedida,inicio").eq("status","Solicitada").order("criado_em");S.mkSolHome=data||[];}catch(e){}})(),
-    (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
+    (async()=>{if(S.demo||!gerePessoas())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
 }
 function pedirFeed(){if(S.feedBusy)return;if(S.posts!=null&&S.duvidas!=null&&S.dir)return;S.feedBusy=true;carregarFeed().then(()=>{S.feedBusy=false;render();}).catch(()=>{S.feedBusy=false;});}
@@ -2133,7 +2215,7 @@ function novidades(){
   const perg=(S.duvidas||[]).filter(q=>q.autor!==eu&&!q.oculto&&d(q.criado_em)>vv);
   const resp=(S.duvResp||[]).filter(r=>r.autor!==eu&&!r.oculto&&d(r.criado_em)>vv);
   const minhas=new Set((S.duvidas||[]).filter(q=>q.autor===eu).map(q=>q.id));
-  const aModerar=moderaDuv()?(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto).length:0,solic=ehAdmin()?(S.solic||[]).length:0;
+  const aModerar=moderaDuv()?(S.duvidas||[]).filter(q=>!q.publicada&&!q.oculto).length:0,solic=gerePessoas()?(S.solic||[]).length:0;
   return {posts:posts.length,perg:perg.length,resp:resp.length,respMinhas:resp.filter(r=>minhas.has(r.duvida_id)).length,aModerar,solic,total:posts.length+perg.length+resp.length+aModerar+solic,vv};
 }
 function marcarFeedVisto(){
@@ -2426,6 +2508,10 @@ async function propBaixar(x){
   catch(e){aviso("Não foi possível gerar o PDF. Use Ver a proposta e salve pelo navegador.");}
 }
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;if(t.dataset&&t.dataset.lochk){const [id,k]=t.dataset.lochk.split("|");const ed=S.loEd||(S.loEd={});const base=(S.loAcc||[]).find(x=>x.user_id===id)||{perfis:[],ufs:[],situacoes:[],so_pediu:false,ativo:true};const e=ed[id]||(ed[id]={perfis:[...(base.perfis||[])],ufs:[...(base.ufs||[])],situacoes:[...(base.situacoes||[])],so_pediu:base.so_pediu,ativo:base.ativo!==false});e[k]=t.checked;S.loCfgAberto=true;render();return;}
+  if(t.dataset&&t.dataset.lof&&t.tagName==="SELECT"){const F=S.loF||(S.loF={});F[t.dataset.lof]=t.value;loLista(false).then(render);}});
+let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.dataset&&d.dataset.locfg!==undefined)S.loCfgAberto=d.open;},true);
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.id||!/^gt-(q|perfil|acesso)$/.test(t.id))return;const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});F[t.id.slice(3)]=t.value;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="gt-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
 document.addEventListener("click",async ev=>{
@@ -2934,7 +3020,7 @@ function vHub(){
   const bloq=bloqueadoCurso();
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
-  const areas=(ehAdmin()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
+  const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
     if(!x.ativo)return `<button class="area-b" disabled><span>${x.nome}</span><span class="meta">em breve</span></button>`;
     if(bloq&&x.id!=="academia")return `<button class="area-b" disabled title="Conclua o curso de híbridos para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
@@ -2972,7 +3058,7 @@ function pendAberto(k){try{return localStorage.getItem("pc_pend_"+k)!=="0";}catc
 document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.classList&&d.classList.contains("pend-home")&&d.dataset.pk){try{localStorage.setItem("pc_pend_"+d.dataset.pk,d.open?"1":"0");}catch(e){}}},true);
 function vPendenciasHome(){
   const out=[];
-  if(ehAdmin()&&(S.solic||[]).length){const L=S.solic;const nS=L.filter(x=>x.tipo==="senha").length,nA=L.length-nS;
+  if(gerePessoas()&&(S.solic||[]).length){const L=S.solic;const nS=L.filter(x=>x.tipo==="senha").length,nA=L.length-nS;
     out.push(`<details class="bloco cx pend-home" data-pk="92240" ${pendAberto("92240")?"open":""}><summary class="pend-top"><strong>Solicitações pendentes (${L.length})</strong><span class="pend-acts"><button class="btn" data-a="secao" data-v="gestao">Atender no painel</button></span></summary>
       <p class="meta" style="margin:0">${[nS?`${nS} ${nS===1?"pedido":"pedidos"} de nova senha`:"",nA?`${nA} ${nA===1?"pedido":"pedidos"} de acesso`:""].filter(Boolean).join(" · ")}</p>
       <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></details>`);}
@@ -4113,7 +4199,7 @@ function vCriarAcesso(){
   <form class="form-card" id="f-criar">
     <div><label for="n_nome">Nome completo *</label><input id="n_nome" required value="${esc(p.nome||"")}"></div>
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required value="${esc(p.email||"")}"></div>
-    <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(x=>`<option value="${esc(x)}" ${x===perfilSel?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
+    <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.filter(x=>ehAdmin()||x!=="Administrador").map(x=>`<option value="${esc(x)}" ${x===perfilSel?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}${inf(secDesc(id))}</label>`).join("")}</div></div>
     ${cadAbasHTML("n")}
     <div><label for="n_canal">Revenda do Conecta <span class="meta">— obrigatório para Gestor de Revenda e Vendedor de Revenda</span></label><select id="n_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}${k.tier?" · "+esc(k.tier):""}</option>`).join("")}</select><span class="meta">Só entram no portal pessoas de revendas que estão no programa Conecta. Se a revenda não está na lista, cadastre-a antes em Conecta Revendas.</span></div>
@@ -4243,7 +4329,7 @@ async function carregarEquipe(){
   const falhou=(u,id)=>tent.some(t=>t.user_id===u&&t.prova===id&&(!quando[u]||!quando[u][id]||t.criado_em<quando[u][id]));
   S.pontosPorUser={};Object.entries(porUser).forEach(([u,rs])=>{const o={};ETAPAS_ATIVAS.forEach(id=>{if(rs[id]!=null)o[id]=rs[id]*10+(falhou(u,id)?0:20);});S.pontosPorUser[u]=o;});
   try{const {data:so}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=so||[];}catch(e){S.solic=[];}
-  try{const {data:cd}=await sb.from("crm_painel").select("dono").order("dono");S.crmDonos=(cd||[]).map(x=>x.dono);}catch(e){S.crmDonos=[];}
+  try{const {data:cd}=await sb.rpc("crm_donos");S.crmDonos=(cd||[]).map(x=>typeof x==="string"?x:(x.crm_donos||x.dono)).filter(Boolean);}catch(e){S.crmDonos=[];}
   S.equipe=(profs||[]).map(p=>{
     const rs=porUser[p.id]||{};
     const feitasAtivas=ETAPAS_ATIVAS.filter(id=>rs[id]!=null);
@@ -4266,8 +4352,22 @@ function evolucaoHTML(uid){
     <div class="lista">${linhas}${extra}</div></section>`;
 }
 const afTem=x=>!!S.adminForm&&(S.adminForm.perfil===x||(Array.isArray(S.adminForm.perfis)&&S.adminForm.perfis.includes(x)));
+function vUsuarioGestor(){
+  const u=S.adminUser,F=S.adminForm||{},ehEu=u.id===S.user.id;const nomeSec=id=>(SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1];
+  const prot=alvoAdm(Object.assign({},u,F));
+  return `<button class="voltar" data-a="pag" data-v="${S.gtVolta||"gestao-pessoas"}">‹ ${esc((GT_ABAS.find(x=>x[0]===(S.gtVolta||"gestao-pessoas"))||["","Pessoas"])[1])}</button>
+  <div><h1 class="titulo">${esc(F.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(F.perfil||u.perfil)}</strong>${(F.perfis||[]).filter(x=>x!==F.perfil).length?" + "+esc(F.perfis.filter(x=>x!==F.perfil).join(", ")):""} · nível <strong>${esc(NIVEL_NOME[F.nivel||"Padrão"]||F.nivel||"Padrão")}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>.</p></div>
+  <div class="nota-admin">Como gestor de acessos, você vê os dados desta pessoa, mas não altera perfil, nível nem seções de quem já está cadastrado. Para mudar algo, fale com o administrador master.</div>
+  <section class="bloco"><h2 class="sec">Seções liberadas</h2><p style="margin:0">${(Array.isArray(F.acessos)?F.acessos:[]).map(nomeSec).map(esc).join(" · ")||"Nenhuma seção extra."}</p></section>
+  ${evolucaoHTML(u.id)}
+  <section class="bloco"><h2 class="sec">Senha</h2>
+  ${ehEu?`<div class="nota-admin">Para trocar a sua própria senha, use "Meu perfil".</div>`:prot?`<div class="nota-admin">A senha de administradores e gestores só é redefinida pelo administrador master.</div>`
+    :`<div class="nota-admin">Gera uma senha provisória nova, encerra as sessões abertas da pessoa e obriga a criar uma senha própria no próximo acesso.<div class="acoes" style="margin-top:8px"><button class="btn" data-a="reset-senha">Redefinir senha</button></div></div>${S.senhaReset&&S.senhaReset.id===u.id?caixaCred(S.senhaReset):""}`}
+  </section>`;
+}
 function vUsuarioAdmin(){
   if(!S.adminUser)return `<div class="carregando">Carregando…</div>`;
+  if(!ehAdmin())return vUsuarioGestor();
   const u=S.adminUser,ehEu=u.id===S.user.id;
   const ac=Array.isArray(S.adminForm.acessos)?S.adminForm.acessos:[];
   const admF=afTem("Administrador")||S.adminForm.nivel==="Administrador";
@@ -4280,7 +4380,7 @@ function vUsuarioAdmin(){
   <form class="form-card" id="f-usuario">
     <div><label for="f_perfil">${"nivel" in u?"Perfil principal *":"Perfil de acesso *"}</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.filter(p=>!("nivel" in u)||p!=="Administrador"||S.adminForm.perfil===p).map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>${"nivel" in u?`<span class="meta">O que a pessoa faz. Define o cadastro e como ela aparece no portal.</span>`:""}</div>
     ${"nivel" in u?`<div><label>Outros perfis</label><span class="meta">Marque se a pessoa também atua em outra frente. Ela passa a ver o que cada perfil marcado vê.</span><div class="checks">${PERFIS.filter(p=>p!=="Administrador"&&p!==S.adminForm.perfil).map(p=>`<label class="check"><input type="checkbox" data-perfis="${esc(p)}" ${(S.adminForm.perfis||[]).includes(p)?"checked":""}> ${esc(p)}</label>`).join("")}</div></div>
-    <div><label for="f_nivel">Nível de acesso *</label><select id="f_nivel" data-fk="nivel">${["Padrão","Administrador"].map(n=>`<option ${(S.adminForm.nivel||"Padrão")===n?"selected":""}>${n}</option>`).join("")}</select><span class="meta">Administrador vê tudo, gerencia usuários, aprova ações e altera premissas. Padrão vê só o que os perfis e as áreas liberadas permitem.</span></div>`:""}
+    <div><label for="f_nivel">Nível de acesso *</label><select id="f_nivel" data-fk="nivel">${["Padrão","Gestor","Administrador"].map(n=>`<option value="${n}" ${(S.adminForm.nivel||"Padrão")===n?"selected":""}>${NIVEL_NOME[n]}</option>`).join("")}</select><span class="meta">Gestor de acessos: entra no Painel de gerenciamento, vê todas as pessoas e cadastra pessoas novas, mas não altera perfil, nível nem seções de quem já está cadastrado, não exclui e não vê as áreas do marketing.</span><span class="meta">Administrador vê tudo, gerencia usuários, aprova ações e altera premissas. Padrão vê só o que os perfis e as áreas liberadas permitem.</span></div>`:""}
     <div><label>Acesso às seções</label><span class="meta">Marque para liberar uma seção extra para esta pessoa. As marcadas "pelo perfil" já vêm do perfil ou do nível de acesso.</span><div class="checks">${SECOES_ACESSO.map(([id,nome])=>{const pp=pelPerfil.includes(id);return `<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)||pp?"checked":""} ${pp?"disabled":""}> ${nome}${inf(secDesc(id))}${pp?' <span class="meta">pelo perfil</span>':""}</label>`;}).join("")}</div></div>
     ${secAbas.length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver. Cada marcação é gravada na hora.</span>${secAbas.map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminForm.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}${inf(ABA_DESC[k])}</label>`;}).join("")}</div>`).join("")}</div>`:""}
     ${afTem("Comercial Barenbrug")&&S.canais==null&&!S._canBusyU?(S._canBusyU=1,carregarCanais().then(()=>{S._canBusyU=0;render();}),""):""}${afTem("Comercial Barenbrug")?`<div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">No Conecta Revendas ele vê só as revendas marcadas aqui. Cada marcação é gravada na hora. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canais||[]).map(k=>{const meu=k.comercial_id===u.id;const outro=k.comercial_id&&!meu;return `<label class="check"><input type="checkbox" data-rev="${esc(k.id)}" ${meu?"checked":""}> ${esc(k.nome)}${outro?' <span class="meta">(hoje com outro comercial)</span>':""}</label>`;}).join("")||(S.canais&&!S.canais.length?'<span class="meta">Nenhuma revenda cadastrada.</span>':'<span class="meta">Carregando as revendas…</span>')}</div></div>`:""}
@@ -6456,7 +6556,7 @@ function renderApp(){
   if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
   talvezTour(S.secao);
   if(S.secao==="gestao"){
-    if(!ehAdmin()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();return;}
+    if(!gerePessoas()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();return;}
     if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
     app.innerHTML=cabecalho()+subnavGestao()+`<main>${vAcomp()}</main>`;
     if(!S.equipe){carregarEquipe().then(render);}
@@ -6688,6 +6788,15 @@ document.addEventListener("click",async ev=>{
     if(t==="r"){const r=await sb.from("duvida_respostas").delete().eq("id",id).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir a resposta.");render();return;}await carregarDuvidas();render();aviso("Resposta excluída.");return;}
     return;}
   if(a==="post-del"){await sb.from("posts").delete().eq("id",v);S.posts=null;render();aviso("Publicação excluída.");return;}
+  if(a==="lo-tg"){const [id,campo,o]=v.split("|");const ed=S.loEd||(S.loEd={});const base=(S.loAcc||[]).find(x=>x.user_id===id)||{perfis:[],ufs:[],situacoes:["Sem vínculo no CRM"],so_pediu:false,ativo:true};const e=ed[id]||(ed[id]={perfis:[...(base.perfis||[])],ufs:[...(base.ufs||[])],situacoes:[...(base.situacoes||[])],so_pediu:base.so_pediu,ativo:base.ativo!==false});const L=e[campo];const i=L.indexOf(o);if(i>=0)L.splice(i,1);else L.push(o);S.loCfgAberto=true;render();return;}
+  if(a==="lo-add"){const sl=document.getElementById("lo_add");if(!sl||!sl.value)return;(S.loEd||(S.loEd={}))[sl.value]={perfis:["Produtor"],ufs:[],situacoes:["Sem vínculo no CRM"],so_pediu:false,ativo:true};S.loCfgAberto=true;render();return;}
+  if(a==="lo-desfaz"){if(S.loEd)delete S.loEd[v];S.loCfgAberto=true;render();return;}
+  if(a==="lo-salvar"){const e=(S.loEd||{})[v];if(!e)return;if(!e.ufs.length){aviso("Marque pelo menos um estado.");return;}b.disabled=true;const {error}=await sb.rpc("adm_lead_out_acesso_set",{p_user:v,p_perfis:e.perfis,p_ufs:e.ufs,p_sit:e.situacoes,p_so_pediu:!!e.so_pediu,p_ativo:e.ativo!==false});if(error){b.disabled=false;aviso("Não foi gravado. Tente de novo.");return;}delete S.loEd[v];const r=await sb.rpc("adm_lead_out_acessos");S.loAcc=r.data||[];S.loCfgAberto=true;render();aviso("Acesso à prospecção gravado.");return;}
+  if(a==="lo-remover"){b.disabled=true;const {error}=await sb.rpc("adm_lead_out_acesso_set",{p_user:v,p_perfis:null,p_ufs:null,p_sit:null,p_so_pediu:null,p_ativo:null});if(error){b.disabled=false;aviso("Não foi possível remover.");return;}const r=await sb.rpc("adm_lead_out_acessos");S.loAcc=r.data||[];S.loCfgAberto=true;render();aviso("Acesso removido.");return;}
+  if(a==="lo-importar"){const inp=document.getElementById("lo_arq"),pg=document.getElementById("lo_prog");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a planilha.");return;}b.disabled=true;try{const n=await loImportar(arq,pg);S.loOk=false;S.loCfgAberto=true;aviso(n.toLocaleString("pt-BR")+" leads importados ou atualizados.");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
+  if(a==="lo-mais"){b.disabled=true;await loLista(true);render();return;}
+  if(a==="lo-ver"){S.loVistos=S.loVistos||{};S.loVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_out_contato",{p_id:+v});if(error)throw error;S.loVistos[v]=data||{telefone:null,email:null};}catch(e){delete S.loVistos[v];aviso("Não foi possível abrir o contato.");}render();return;}
+  if(a==="lo-status"){const st=b.dataset.st;const o=document.getElementById("lo_obs_"+v);const {error}=await sb.rpc("lead_out_marcar",{p_id:+v,p_status:st,p_obs:o?o.value:null});if(error){aviso("Não foi possível gravar.");return;}const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r){r.status=st;r.atendido_por=st==="Novo"?null:(S.profile.nome||"");r.atendido_em=st==="Novo"?null:new Date().toISOString();r.obs=o&&o.value?o.value:null;}render();aviso("Gravado.");return;}
   if(a==="verusuario"){if(S.pag&&S.pag.startsWith("gestao-"))S.gtVolta=S.pag;abrirUsuario(v);}
   if(a==="gt-filtro"){S.gtF={q:"",perfil:"",acesso:v};S.pag="gestao-pessoas";render();return;}
   if(a==="gt-time"){S.gtTime=v;S.pag="gestao-times";render();return;}
@@ -6695,7 +6804,7 @@ document.addEventListener("click",async ev=>{
   if(a==="copiar"){const t=(S.copias||{})[v]||"";try{await navigator.clipboard.writeText(t);aviso("Mensagem copiada.");}catch(e){aviso("Não deu para copiar automaticamente. Selecione o texto e copie.");}return;}
   if(a==="mfa-reset"){S.mfaReset=v||null;render();return;}
   if(a==="mfa-reset-ok"){if(!ehAdmin()||!S.adminUser)return;b.disabled=true;const id=S.adminUser.id;const {error}=await sb.rpc("mfa_resetar",{p_user:id});S.mfaReset=null;if(error){aviso("Não foi possível resetar o autenticador.");render();return;}S.mfaInfo=S.mfaInfo||{};delete S.mfaInfo[id];render();aviso("Autenticador resetado. No próximo login a pessoa cadastra um novo.");return;}
-  if(a==="reset-senha"){if(!ehAdmin()||!S.adminUser)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(S.adminUser);render();if(ok)aviso("Senha redefinida.");return;}
+  if(a==="reset-senha"){if(!gerePessoas()||!S.adminUser||(!ehAdmin()&&alvoAdm(S.adminUser)))return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(S.adminUser);render();if(ok)aviso("Senha redefinida.");return;}
   if(a==="prefill-limpar"){S.prefill=null;render();return;}
   if(a==="solic-cadastrar"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;S.prefill={solicId:x.id,nome:x.nome,email:x.email,perfil:x.perfil,telefone:x.telefone};S.novoAcesso=null;S._erroCriar=null;render();const b=document.getElementById("bloco-criar");if(b)b.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="solic-recusar"){const {error}=await sb.from("solicitacoes_acesso").update({status:"Recusada"}).eq("id",v);if(error){aviso("Não foi possível atualizar.");return;}S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));render();aviso("Solicitação encerrada.");return;}
