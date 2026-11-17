@@ -1152,7 +1152,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117062707";
+const APP_VER="20261117063132";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4870,12 +4870,16 @@ function vIntMapa(){
   if(modo==="vendas")return tabs+vMapaGeo("b2b");
   return tabs+(modo==="cobertura"?vIntCobB2B():vIntCruz());
 }
-function imPontos(st){
-  const so=st==="Todas"?()=>true:r=>r.st==="V";
-  const L=[];for(const r of (S.mapa||[])){if(r.uf==="EX"||!so(r))continue;const ll=geoLL(r.uf,r.cidade);L.push({r,ll,kg:(+r.kg_h||0)+(+r.kg_c||0),kgH:+r.kg_h||0});}
+function imPontos(st,grp){
+  const so=st==="V"?r=>r.st==="V":st==="A"?r=>r.st==="A":()=>true;
+  const L=[];for(const r of (S.mapa||[])){if(r.uf==="EX"||!so(r))continue;if(grp==="Híbridos"&&!(+r.kg_h>0))continue;const ll=geoLL(r.uf,r.cidade);L.push({r,ll,kg:grp==="Híbridos"?(+r.kg_h||0):(+r.kg_h||0)+(+r.kg_c||0),kgH:+r.kg_h||0});}
   return L;
 }
 const imCid=t=>String(t||"").trim().toLowerCase().replace(/(^|[\s-])(\S)/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos|E)\b/g,x=>x.toLowerCase());
+const IM_SIT=[["Ambos","Vendidos e em aberto"],["V","Só vendidos"],["A","Só em aberto"]];
+function imFiltros(act,F){const ch=(campo,ops,v)=>ops.map(([o,l])=>`<button class="chip" data-a="${act}" data-v="${esc(campo+"|"+o)}" aria-pressed="${v===o}">${esc(l)}</button>`).join("");
+  return `<div class="filtros" style="margin-bottom:6px">${ch("st",IM_SIT,F.st)}${inf("Vendidos: pedidos ganhos com faturamento na safra 26/27. Em aberto: negociações em andamento no funil do CRM. Um canal com negociação em aberto já indica presença na região, mesmo antes do primeiro pedido.")}</div>
+  <div class="filtros" style="margin-bottom:10px">${ch("grp",[["Todos","Todos os produtos"],["Híbridos","Com híbridos"]],F.grp)}${inf("Com híbridos: só negociações que têm Sabiá, Cayana ou Carcará, e o volume passa a ser só o de híbridos.")}</div>`;}
 const IM_KG=n=>Math.round(Number(n)||0).toLocaleString("pt-BR")+" kg";
 const IM_T=n=>((Number(n)||0)/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t";
 function imBase(svgIn,extra){let s=`<svg class="mp-svg" viewBox="0 0 ${GEO.W.toFixed(1)} ${GEO.H.toFixed(1)}" role="img" aria-label="${esc(extra)}">`;
@@ -4883,35 +4887,34 @@ function imBase(svgIn,extra){let s=`<svg class="mp-svg" viewBox="0 0 ${GEO.W.toF
   for(const e of GEO.st)s+=`<text class="mp-stl" x="${e.cx.toFixed(1)}" y="${(e.cy+.4).toFixed(1)}">${e.uf}</text>`;
   return s+svgIn+`</svg>`;}
 function vIntCobB2B(){
-  const F=S.cobB||(S.cobB={st:"Vendidas",raio:"100",dono:null,grp:"Todos"});
-  const P=imPontos(F.st).filter(p=>p.r.seg==="B2B"&&(F.grp==="Todos"||p.kgH>0));
-  const cli={};P.forEach(p=>{const k=(p.r.org||pfNomeCli(p.r.nome))+"|"+(p.r.uf||"")+"|"+normGeo(p.r.cidade||"");const c=cli[k]||(cli[k]={k,nome:pfNomeCli(p.r.nome),uf:p.r.uf,cidade:p.r.cidade,ll:p.ll,dono:String(p.r.dono||"—"),kg:0,kgH:0,rs:0,n:0});c.kg+=p.kg;c.kgH+=p.kgH;c.rs+=+p.r.rs||0;c.n++;});
+  const F=S.cobB||(S.cobB={st:"Ambos",raio:"100",dono:null,grp:"Todos"});if(!["Ambos","V","A"].includes(F.st))F.st="Ambos";
+  const P=imPontos(F.st,F.grp).filter(p=>p.r.seg==="B2B");
+  const cli={};P.forEach(p=>{const k=(p.r.org||pfNomeCli(p.r.nome))+"|"+(p.r.uf||"")+"|"+normGeo(p.r.cidade||"");const c=cli[k]||(cli[k]={k,nome:pfNomeCli(p.r.nome),uf:p.r.uf,cidade:p.r.cidade,ll:p.ll,dono:String(p.r.dono||"—"),kg:0,kgH:0,kgV:0,kgA:0,rs:0,n:0});c.kg+=p.kg;c.kgH+=p.kgH;if(p.r.st==="V")c.kgV+=p.kg;else c.kgA+=p.kg;c.rs+=+p.r.rs||0;c.n++;});
   const C=Object.values(cli).sort((a,b)=>b.kg-a.kg);
   const donos=[...new Set(C.map(c=>c.dono))].sort((a,b)=>a.localeCompare(b));const cor={};donos.forEach((d,i)=>cor[d]=COB_CORES[i%COB_CORES.length]);
   const R=+F.raio;const kmX=(km,lat)=>km/(111.32*Math.cos(lat*Math.PI/180)),kmY=km=>km/110.57*Math.cos(15*Math.PI/180);
   const vis=C.filter(c=>!F.dono||c.dono===F.dono);const comLL=vis.filter(c=>c.ll);
   const vmax=Math.max(1,...comLL.map(c=>c.kg));
   let g="";for(const c of comLL){g+=`<ellipse cx="${GEO.px(c.ll[1]).toFixed(2)}" cy="${GEO.py(c.ll[0]).toFixed(2)}" rx="${kmX(R,c.ll[0]).toFixed(2)}" ry="${kmY(R).toFixed(2)}" fill="${cor[c.dono]}" fill-opacity=".12" stroke="${cor[c.dono]}" stroke-opacity=".55" stroke-width=".05" style="pointer-events:none"/>`;}
-  for(const c of comLL.slice().reverse()){const r=.14+.5*Math.sqrt(c.kg/vmax);g+=`<circle cx="${GEO.px(c.ll[1]).toFixed(2)}" cy="${GEO.py(c.ll[0]).toFixed(2)}" r="${r.toFixed(2)}" fill="${cor[c.dono]}" stroke="#fff" stroke-width=".08"><title>${esc(c.nome)} · ${esc(c.cidade||"")}/${esc(c.uf||"")} · ${IM_KG(c.kg)} · ${esc(c.dono)}</title></circle>`;}
+  for(const c of comLL.slice().reverse()){const r=.14+.5*Math.sqrt(c.kg/vmax);const so=!c.kgV;g+=`<circle cx="${GEO.px(c.ll[1]).toFixed(2)}" cy="${GEO.py(c.ll[0]).toFixed(2)}" r="${r.toFixed(2)}" fill="${so?"#fff":cor[c.dono]}" stroke="${so?cor[c.dono]:"#fff"}" stroke-width="${so?".12":".08"}"><title>${esc(c.nome)} · ${esc(c.cidade||"")}/${esc(c.uf||"")} · vendido ${IM_KG(c.kgV)} · em aberto ${IM_KG(c.kgA)} · ${esc(c.dono)}</title></circle>`;}
   const ufC=new Set(vis.map(c=>c.uf).filter(Boolean)),falta=UF_LISTA.filter(u=>!ufC.has(u));
   const chips=(campo,ops,v,lab)=>ops.map(o=>`<button class="chip" data-a="cobb-f" data-v="${esc(campo+"|"+o)}" aria-pressed="${v===o}">${esc(lab?lab(o):o)}</button>`).join("");
   const porDono=donos.map(d=>{const xs=C.filter(c=>c.dono===d);return {d,n:xs.length,kg:xs.reduce((t,c)=>t+c.kg,0),ufs:[...new Set(xs.map(c=>c.uf).filter(Boolean))].sort()};}).sort((a,b)=>b.kg-a.kg);
   const tot=vis.reduce((t,c)=>t+c.kg,0);
-  return `<div><h1 class="titulo">Cobertura B2B</h1><p class="sub">Onde estão os canais (distribuidores, revendas, cooperativas e contas-chave) que compraram da Barenbrug na safra 26/27 e a área de alcance de cada um. Cada ponto é um cliente B2B, do tamanho do volume; o círculo em volta é o raio de alcance escolhido. A cor é o responsável comercial. Exportação fica fora.</p></div>
-  <div class="filtros" style="margin-bottom:6px">${chips("st",["Vendidas","Todas"],F.st,o=>o==="Todas"?"Vendidas e em aberto":o)}</div>
-  <div class="filtros" style="margin-bottom:6px">${chips("grp",["Todos","Híbridos"],F.grp,o=>o==="Todos"?"Todos os produtos":"Só quem comprou híbridos")}</div>
+  return `<div><h1 class="titulo">Cobertura B2B</h1><p class="sub">Onde estão os canais (distribuidores, revendas, cooperativas e contas-chave) com pedido na safra 26/27 ou negociação em andamento, e a área de alcance de cada um. Cada ponto é um cliente B2B, do tamanho do volume; ponto vazado é canal só com negociação em aberto, ainda sem pedido. O círculo em volta é o raio de alcance escolhido e a cor é o responsável comercial. Exportação fica fora.</p></div>
+  ${imFiltros("cobb-f",F)}
   <div class="filtros" style="margin-bottom:10px">${chips("raio",["50","100","150"],F.raio,o=>"Raio de "+o+" km")}${inf("Raio de alcance presumido de cada canal: até onde ele costuma vender. É uma hipótese de leitura, não um dado do CRM.")}</div>
   <div class="metrics" style="margin-bottom:12px">
-    <div class="metric"><span>Clientes B2B</span><strong>${vis.length}</strong><span class="meta">${IM_T(tot)}${vis.length-comLL.length?" · "+(vis.length-comLL.length)+" sem cidade reconhecida":""}</span></div>
+    <div class="metric"><span>Clientes B2B</span><strong>${vis.length}</strong><span class="meta">${vis.filter(c=>c.kgV).length} com pedido · ${vis.filter(c=>!c.kgV).length} só em aberto · ${IM_T(tot)}${vis.length-comLL.length?" · "+(vis.length-comLL.length)+" sem cidade reconhecida":""}</span></div>
     <div class="metric"><span>Estados com canal</span><strong>${ufC.size}</strong><span class="meta">${esc([...ufC].sort().join(", "))}</span></div>
     <div class="metric"><span>Estados sem canal</span><strong>${falta.length}</strong><span class="meta">${esc(falta.join(", ")||"nenhum")}</span></div></div>
   <div class="mp-grid"><div style="display:grid;gap:8px;min-width:0">${imBase(g,"Mapa do Brasil com os clientes B2B e o raio de alcance")}</div>
   <section class="bloco" style="margin:0"><h2 class="sec">Por responsável comercial</h2><div class="cob-lista">${porDono.map(x=>`<button class="cob-i${F.dono===x.d?" on":""}" data-a="cobb-f" data-v="${esc("dono|"+(F.dono===x.d?"":x.d))}"><span class="cob-dot" style="background:${cor[x.d]}"></span><span class="cob-t"><strong>${esc(x.d)}</strong><span class="meta">${x.n} ${x.n===1?"cliente":"clientes"} · ${IM_T(x.kg)} · ${esc(x.ufs.join(", "))}</span></span></button>`).join("")}</div>
-    <h3 class="pgd-h" style="margin-top:12px">Maiores clientes B2B${F.dono?" · "+esc(F.dono):""}</h3><div class="lista">${vis.slice(0,12).map(c=>`<div class="neg"><div class="l1"><span>${esc(c.nome)}</span><span>${IM_KG(c.kg)}</span></div><span class="meta">${esc(imCid(c.cidade)||"cidade não informada")}/${esc(c.uf||"?")} · ${esc(c.dono)} · ${c.kg?Math.round(c.kgH/c.kg*100):0}% híbridos</span></div>`).join("")}</div></section></div>`;
+    <h3 class="pgd-h" style="margin-top:12px">Maiores clientes B2B${F.dono?" · "+esc(F.dono):""}</h3><div class="lista">${vis.slice(0,12).map(c=>`<div class="neg"><div class="l1"><span>${esc(c.nome)}</span><span>${IM_KG(c.kg)}</span></div><span class="meta">${esc(imCid(c.cidade)||"cidade não informada")}/${esc(c.uf||"?")} · ${esc(c.dono)} · ${c.kgV&&c.kgA?"vendido "+IM_KG(c.kgV)+" e em aberto "+IM_KG(c.kgA):c.kgV?"vendido":"só em aberto"}${F.grp==="Híbridos"?"":" · "+(c.kg?Math.round(c.kgH/c.kg*100):0)+"% híbridos"}</span></div>`).join("")}</div></section></div>`;
 }
 function vIntCruz(){
-  const F=S.cruzF||(S.cruzF={st:"Vendidas"});
-  const P=imPontos(F.st);const B=P.filter(p=>p.r.seg==="B2B"&&p.ll),Cc=P.filter(p=>p.r.seg!=="B2B");
+  const F=S.cruzF||(S.cruzF={st:"Ambos",grp:"Todos"});if(!["Ambos","V","A"].includes(F.st))F.st="Ambos";if(!F.grp)F.grp="Todos";
+  const P=imPontos(F.st,F.grp);const B=P.filter(p=>p.r.seg==="B2B"&&p.ll),Cc=P.filter(p=>p.r.seg!=="B2B");
   const faixa=d=>d==null?"sem":d<=50?"perto":d<=150?"area":"longe";
   const FX={perto:["Perto de um canal","até 50 km do canal B2B mais próximo","var(--vermelho)"],area:["Na área de um canal","de 50 a 150 km","var(--amarelo)"],longe:["Longe de canal","mais de 150 km: espaço para novo canal","#2E8B57"],sem:["Sem cidade reconhecida","","var(--bloqueado)"]};
   Cc.forEach(p=>{if(!p.ll){p.d=null;return;}let m=Infinity;for(const b of B){const d=kmEntre(p.ll,b.ll);if(d<m)m=d;}p.d=B.length?m:null;p.fx=faixa(p.d);});
@@ -4929,9 +4932,8 @@ function vIntCruz(){
   const U=Object.values(uf).sort((a,b)=>(b.b2b+b.b2c)-(a.b2b+a.b2c));
   const opp=CI.filter(c=>c.fx==="longe").sort((a,b)=>b.b2c-a.b2c).slice(0,15);
   const conf=CI.filter(c=>c.fx==="perto"&&c.b2c>0).sort((a,b)=>b.b2c-a.b2c).slice(0,10);
-  const chips=ops=>ops.map(o=>`<button class="chip" data-a="cruz-f" data-v="${o}" aria-pressed="${F.st===o}">${o==="Todas"?"Vendidas e em aberto":o}</button>`).join("");
-  return `<div><h1 class="titulo">B2B x B2C</h1><p class="sub">Onde a Barenbrug vende ao canal e onde vende direto ao produtor, na safra 26/27. Os quadrados azuis são cidades com cliente B2B; os círculos são cidades com venda direta ao produtor, coloridos pela distância até o canal B2B mais próximo. Exportação fica fora.</p></div>
-  <div class="filtros" style="margin-bottom:10px">${chips(["Vendidas","Todas"])}</div>
+  return `<div><h1 class="titulo">B2B x B2C</h1><p class="sub">Onde a Barenbrug vende ao canal e onde vende direto ao produtor, na safra 26/27, com pedidos e negociações em andamento conforme o filtro. Os quadrados azuis são cidades com cliente B2B; os círculos são cidades com venda direta ao produtor, coloridos pela distância até o canal B2B mais próximo. Exportação fica fora.</p></div>
+  ${imFiltros("cruz-f",F)}
   <div class="metrics par-m" style="margin-bottom:12px">${["perto","area","longe"].map(k=>`<div class="metric"><span>${FX[k][0]}${k==="perto"?inf("Venda direta ao produtor a até 50 km de um cliente B2B. Vale conferir se não concorre com o canal da região."):k==="longe"?inf("Venda direta ao produtor a mais de 150 km de qualquer cliente B2B. Onde isso se repete, há demanda sem canal: candidato a nova revenda."):""}</span><strong>${parPct(sum(grp[k],"kg")/totC)}</strong><span class="meta">${IM_T(sum(grp[k],"kg"))} · ${grp[k].length} vendas · ${FX[k][1]}</span></div>`).join("")}</div>
   <div class="mp-grid"><div style="display:grid;gap:8px;min-width:0">${imBase(g,"Mapa do Brasil cruzando vendas ao canal e vendas ao produtor")}
     <div class="mp-leg"><span><i style="background:var(--azul-escuro);border-radius:1px"></i>Canal (B2B)</span>${["perto","area","longe"].map(k=>`<span><i style="background:${FX[k][2]}"></i>Produtor ${FX[k][0].toLowerCase()}</span>`).join("")}</div>
@@ -6619,8 +6621,8 @@ document.addEventListener("click",async ev=>{
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
   if(a==="im-modo"){S.imModo=v;S.mapaPin=null;render();return;}
-  if(a==="cobb-f"){const i=v.indexOf("|");const F=S.cobB||(S.cobB={st:"Vendidas",raio:"100",dono:null,grp:"Todos"});const k=v.slice(0,i),x=v.slice(i+1);F[k]=k==="dono"?(x||null):x;render();return;}
-  if(a==="cruz-f"){(S.cruzF||(S.cruzF={})).st=v;render();return;}
+  if(a==="cobb-f"){const i=v.indexOf("|");const F=S.cobB||(S.cobB={st:"Ambos",raio:"100",dono:null,grp:"Todos"});const k=v.slice(0,i),x=v.slice(i+1);F[k]=k==="dono"?(x||null):x;render();return;}
+  if(a==="cruz-f"){const i=v.indexOf("|");const F=S.cruzF||(S.cruzF={st:"Ambos",grp:"Todos"});F[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="mapa-f"){const i=v.indexOf("|");const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F[v.slice(0,i)]=v.slice(i+1);S.mapaPin=null;render();return;}
   if(a==="mapa-uf"){const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F.uf=F.uf===v?"":v;S.mapaPin=null;render();return;}
   if(a==="mapa-pin"){S.mapaPin=S.mapaPin===v?null:(v||null);render();if(S.mapaPin){const e=document.getElementById("mapa_pin");if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"});}return;}
