@@ -1205,7 +1205,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117200931";
+const APP_VER="20261117201611";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4074,6 +4074,7 @@ function rvvCalcular(ped,finRows,hoje,canais){
     const v={fat_kg_h:sum(p=>I(p)&&p.hib,"kg"),fat_rs_h:sum(p=>I(p)&&p.hib,"rs"),fat_kg_c:sum(p=>I(p)&&!p.hib,"kg"),fat_rs_c:sum(p=>I(p)&&!p.hib,"rs"),
       ord_kg_h:sum(p=>O(p)&&p.hib,"kg"),ord_rs_h:sum(p=>O(p)&&p.hib,"rs"),ord_kg_c:sum(p=>O(p)&&!p.hib,"kg"),ord_rs_c:sum(p=>O(p)&&!p.hib,"rs"),
       pag_rs_h:psum(p=>I(p)&&p.hib,"rs"),pag_rs_c:psum(p=>I(p)&&!p.hib,"rs"),pag_kg_h:psum(p=>I(p)&&p.hib,"kg"),pag_kg_c:psum(p=>I(p)&&!p.hib,"kg")};
+    const MU=p=>/mulato/i.test(p.cv||"");v.mul_fat_kg=sum(p=>I(p)&&MU(p),"kg");v.mul_fat_rs=sum(p=>I(p)&&MU(p),"rs");v.mul_ord_kg=sum(p=>O(p)&&MU(p),"kg");v.mul_ord_rs=sum(p=>O(p)&&MU(p),"rs");v.mul_pag_rs=Math.max(0,Math.min(psum(p=>I(p)&&MU(p),"rs"),v.mul_fat_rs));v.mul_tot_kg=v.mul_fat_kg+v.mul_ord_kg;v.mul_tot_rs=v.mul_fat_rs+v.mul_ord_rs;
     [["pag_rs_h","fat_rs_h"],["pag_rs_c","fat_rs_c"],["pag_kg_h","fat_kg_h"],["pag_kg_c","fat_kg_c"]].forEach(([a,b])=>{v[a]=Math.max(0,Math.min(v[a],v[b]));});
     v.tot_kg_h=v.fat_kg_h+v.ord_kg_h;v.tot_rs_h=v.fat_rs_h+v.ord_rs_h;v.tot_kg_c=v.fat_kg_c+v.ord_kg_c;v.tot_rs_c=v.fat_rs_c+v.ord_rs_c;
     const sc=rvvCen(v,meta,g);
@@ -4320,9 +4321,20 @@ function vCanalAbertas(m){
       <tr><td colspan="2"><strong>Total em negociação</strong></td><td class="val"><strong>${fmtKg(m.abKgH)}</strong></td><td class="val"><strong>${fmtKg(m.abKgC)}</strong></td><td class="val"><strong>${fmtK0(m.abertoRs)}</strong></td></tr></tbody></table></div>
     </section>`;
 }
-function metricasCanal(c){
-  const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r0=(S.canalRes||{})[c.id]||{};const pub=(S.rvPub||{})[c.id];
-  const r=pub&&pub.dados&&pub.dados.v?(()=>{const v=pub.dados.v;return {...r0,kg_hib:v.tot_kg_h,kg_conv:v.tot_kg_c,rs_hib:v.tot_rs_h,rs_conv:v.tot_rs_c,fat_kg_hib:v.fat_kg_h,fat_rs_hib:v.fat_rs_h,fat_rs_conv:v.fat_rs_c};})():r0;
+function rvMul(c){const r0=(S.canalRes||{})[c.id]||{};const pub=(S.rvPub||{})[c.id];const v=pub&&pub.dados&&pub.dados.v;const n=x=>Number(x)||0;
+  return v?{kg:n(v.mul_tot_kg),rs:n(v.mul_tot_rs),fk:n(v.mul_fat_kg),fr:n(v.mul_fat_rs),pr:n(v.mul_pag_rs),ak:0,ar:0,pub:true}:{kg:n(r0.mul_kg),rs:n(r0.mul_rs),fk:n(r0.fat_mul_kg),fr:n(r0.fat_mul_rs),pr:0,ak:n(r0.ab_mul_kg),ar:n(r0.ab_mul_rs),pub:false};}
+
+function rvMulatoHTML(c,m){const s=metricasCanal(c,{sem:true});const B=veBarenbrugRV();
+  const L=[["Híbridos na meta",x=>fmtKg(x.kgH)],["Atingimento da meta",x=>x.ating==null?"—":pctTxt(x.ating)],["Com o que está em negociação",x=>x.pAting==null?"—":pctTxt(x.pAting)],["IGDB previsto",x=>fmtK0(x.igdb)],["Bônus de Performance",x=>fmtK0(x.bonus)+(x.bonus<x.bonusCheio?`<br><span class="meta">${fmtK0(x.bonusCheio)} com a meta batida</span>`:"")],["Total estimado",x=>`<strong>${fmtK0(x.total)}</strong>`]];
+  return `<section class="bloco" style="border-left:4px solid var(--amarelo,#ffdb00)"><h2 class="sec">Ressalva: Mulato II conta como híbrido</h2><p style="margin:0 0 8px">${esc(c.ressalva||"Nesta revenda o Mulato II conta como híbrido no Conecta Revendas.")} A tabela abaixo compara com o cenário sem o Mulato II, pela regra geral do programa.</p>
+   <p class="meta" style="margin:0 0 8px">Mulato II na safra: ${fmtKg(m.mul.kg)} em pedidos ganhos (${fmtK0(m.mul.rs)})${m.mul.ak?`, mais ${fmtKg(m.mul.ak)} em negociação`:""}. Os números do restante da página já usam o cenário com o Mulato II.</p>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Com Mulato II<br><span class="meta">vale para esta revenda</span></th><th class="val">Sem Mulato II<br><span class="meta">regra geral do Conecta</span></th>${B?`<th class="val">Diferença</th>`:""}</tr></thead><tbody>${L.map(([t,f])=>`<tr><td>${t}</td><td class="val">${f(m)}</td><td class="val">${f(s)}</td>${B?`<td class="val">${t==="Híbridos na meta"?fmtKg(m.kgH-s.kgH):t.startsWith("Atingimento")||t.startsWith("Com o que")?"":fmtK0(t==="IGDB previsto"?m.igdb-s.igdb:t==="Total estimado"?m.total-s.total:m.bonus-s.bonus)}</td>`:""}</tr>`).join("")}</tbody></table></div></section>`;}
+function metricasCanal(c,o){o=o||{};
+  const g=RV_REGRA[c.tier]||RV_REGRA.Blue;const r0=(S.canalRes||{})[c.id]||{};const pub0=(S.rvPub||{})[c.id];
+  const mulOn=!!c.mulato_hibrido&&!o.sem;const MU=rvMul(c);
+  const pub=pub0&&pub0.dados&&pub0.dados.v&&mulOn?{...pub0,dados:{...pub0.dados,v:{...pub0.dados.v,tot_kg_h:pub0.dados.v.tot_kg_h+MU.kg,tot_kg_c:pub0.dados.v.tot_kg_c-MU.kg,tot_rs_h:pub0.dados.v.tot_rs_h+MU.rs,tot_rs_c:pub0.dados.v.tot_rs_c-MU.rs,fat_kg_h:pub0.dados.v.fat_kg_h+MU.fk,fat_rs_h:pub0.dados.v.fat_rs_h+MU.fr,fat_rs_c:pub0.dados.v.fat_rs_c-MU.fr,ord_kg_h:(pub0.dados.v.ord_kg_h||0)+(MU.kg-MU.fk),pag_rs_h:(pub0.dados.v.pag_rs_h||0)+MU.pr,pag_rs_c:(pub0.dados.v.pag_rs_c||0)-MU.pr}}}:pub0;
+  const rA=mulOn&&!MU.pub?{...r0,kg_hib:(+r0.kg_hib||0)+MU.kg,kg_conv:(+r0.kg_conv||0)-MU.kg,rs_hib:(+r0.rs_hib||0)+MU.rs,rs_conv:(+r0.rs_conv||0)-MU.rs,fat_kg_hib:(+r0.fat_kg_hib||0)+MU.fk,fat_rs_hib:(+r0.fat_rs_hib||0)+MU.fr,fat_rs_conv:(+r0.fat_rs_conv||0)-MU.fr,aberto_kg_hib:(+r0.aberto_kg_hib||0)+MU.ak,aberto_kg_conv:(+r0.aberto_kg_conv||0)-MU.ak,aberto_rs_hib:(+r0.aberto_rs_hib||0)+MU.ar,aberto_rs_conv:(+r0.aberto_rs_conv||0)-MU.ar,abertas:Array.isArray(r0.abertas)?r0.abertas.map(x=>({...x,kg_h:(+x.kg_h||0)+(+x.kg_mul||0),kg_c:(+x.kg_c||0)-(+x.kg_mul||0)})):r0.abertas}:r0;
+  const r=pub&&pub.dados&&pub.dados.v?(()=>{const v=pub.dados.v;return {...rA,kg_hib:v.tot_kg_h,kg_conv:v.tot_kg_c,rs_hib:v.tot_rs_h,rs_conv:v.tot_rs_c,fat_kg_hib:v.fat_kg_h,fat_rs_hib:v.fat_rs_h,fat_rs_conv:v.fat_rs_c};})():rA;
   const N=k=>Number(r[k])||0;const meta=Number(c.meta_kg)||0;
   const ating=meta?N("kg_hib")/meta:null;
   const fator=ating==null?0:ating>=1?1:ating>=.9?.7:0;
@@ -4342,7 +4354,7 @@ function metricasCanal(c){
   const aprovIGr=som("Aprovado",false);
   const igdbAprov=Math.min(igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
   const pv=pub&&pub.dados&&pub.dados.v;const pubInfo=pv?{em:pub.validado_em,por:pub.validado_nome,sit:pub.situacao_em,pagRs:(pv.pag_rs_h||0)+(pv.pag_rs_c||0),fatRs:(pv.fat_rs_h||0)+(pv.fat_rs_c||0),ordKgH:pv.ord_kg_h||0,igdbPago:(pv.pag_rs_h||0)*g.ih+(pv.pag_rs_c||0)*g.ic,aberto:(pub.dados.fin||{}).aberto||0,vencido:(pub.dados.fin||{}).vencido||0}:null;
-  return {pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+  return {mulOn,mul:MU,pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     abKgH:N("aberto_kg_hib"),abKgC:N("aberto_kg_conv"),abRsH:N("aberto_rs_hib"),abRsC:N("aberto_rs_conv"),abertas:Array.isArray(r.abertas)?r.abertas:[],
     ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;const apIG=ac.filter(a=>(a.status||"Em Análise")==="Aprovado"&&!ehBPa(a)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);const pIgdbAprov=Math.min(pIgdb,apIG);
@@ -4453,6 +4465,7 @@ function vRVMeuCanal(){
     if(S.meuCanalProg===undefined)return `<div class="carregando">Carregando o seu canal…</div>`;
     const p=S.meuCanalProg;
     if(!p)return `<div><h1 class="titulo">Meu canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
+    if(p.mulato_hibrido&&!p._mul){p.kg_hib=(Number(p.kg_hib)||0)+(Number(p.mul_kg)||0);p._mul=true;}
     const at=p.meta_kg?p.kg_hib/p.meta_kg:null;const ac=S.meuCanalAcoes||[];
     return `<div><span class="rot">Conecta Revendas · ${esc(p.tier||"")}</span><h1 class="titulo">${esc(p.nome)}</h1><p class="sub">Como a sua revenda está na meta de híbridos da safra 26/27 e quais ações de geração de demanda estão aprovadas para você aproveitar na venda.</p></div>
     <div class="metrics">
@@ -4462,6 +4475,7 @@ function vRVMeuCanal(){
       <div class="metric"><span>Falta para a meta</span><strong>${p.meta_kg?fmtKg(Math.max(0,p.meta_kg-p.kg_hib)):"—"}</strong></div>
     </div>
     ${barraMeta({ating:at})}
+    ${p.mulato_hibrido?`<p class="precos-nota">${esc(p.ressalva||"Nesta revenda o Mulato II conta como híbrido na meta do Conecta.")} Mulato II incluído acima: ${fmtKg(p.mul_kg)}.</p>`:""}
     <section class="bloco"><h2 class="sec">Ações aprovadas na sua região (${ac.length})</h2>
     ${ac.length?`<div class="lista">${ac.map(a=>`<div class="linha"><div><strong>${esc(a.tipo||"Ação")}</strong><span class="meta">${esc(a.cidade||"")}${a.data_acao?" · "+esc(a.data_acao):""}</span><span class="meta">${esc((a.descricao||"").slice(0,160))}</span></div></div>`).join("")}</div>`:`<div class="vazio">Ainda não há ações aprovadas. Fale com o gestor da sua revenda.</div>`}</section>
     <section class="bloco"><h2 class="sec">O que fazer agora</h2><div class="lista"><div class="linha"><div><strong>Conclua o curso dos híbridos</strong><span class="meta">Sabiá, Cayana e Carcará: argumento de venda e posicionamento.</span></div><button class="btn sec" data-a="secao" data-v="academia">Abrir a Academia</button></div><div class="linha"><div><strong>Tire dúvidas com o time técnico</strong><span class="meta">Pergunte e veja respostas validadas pela Barenbrug.</span></div><button class="btn sec" data-a="secao" data-v="duvidas">Tira-Dúvidas</button></div></div></section>`;
@@ -4546,6 +4560,8 @@ function vCanalEditor(c){
     <div><label>Responsável legal (contrato)</label><input id="c_legal" value="${esc(c.responsavel_legal||"")}"></div>
     <div class="dupla"><div><label>Meta de híbridos (kg)</label><input id="c_meta" type="number" value="${Number(c.meta_kg)||0}"></div>
       <div><label>Valor médio do kg (R$)</label><input id="c_valor" type="number" step="0.01" value="${Number(c.valor_kg)||0}"></div></div>
+    <div><label class="chk"><input type="checkbox" id="c_mul" ${c.mulato_hibrido?"checked":""}> Ressalva: Mulato II conta como híbrido nesta revenda</label></div>
+    <div><label for="c_ress">Texto da ressalva (aparece para a revenda)</label><textarea id="c_ress" rows="3" maxlength="600">${esc(c.ressalva||"")}</textarea></div>
     <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="editarcanal">Cancelar</button></div></form>`;
 }
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
@@ -4681,6 +4697,7 @@ function vRVCanal(){
   <div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">${esc(c.nome)}</h1>
     <p class="sub">Responsável legal: <strong>${esc(c.responsavel_legal||"— (do contrato)")}</strong> · Responsável Barenbrug: ${esc(c.responsavel||"—")}${m.r.atualizado_em?` · vendas atualizadas em ${fmtDataHora(m.r.atualizado_em)}`:""}</p></div>
   ${m.pub?"":avisoValoresRV()}
+  ${c.mulato_hibrido?rvMulatoHTML(c,m):""}
   ${m.pub?vCanalValidado(c,m):vCanalCRM(c,m)}
   ${vCanalAbertas(m)}
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
@@ -8301,7 +8318,7 @@ document.addEventListener("submit",async ev=>{
     const elCom=f.querySelector("#c_com");const comId=elCom&&!elCom.disabled?(elCom.value||null):undefined;const comNome=comId?((S.rvComerciais||[]).find(x=>x.id===comId)||{}).nome:null;
     let respTxt=f.querySelector("#c_resp").value.trim();const cAnt=(S.canais||[]).find(x=>x.id===S.canalSel)||{};
     if(comId!==undefined&&comId!==cAnt.comercial_id&&comNome&&(!respTxt||respTxt===cAnt.responsavel))respTxt=comNome;
-    const dados={tier:f.querySelector("#c_tier").value,responsavel:respTxt,...(comId!==undefined?{comercial_id:comId}:{}),responsavel_legal:f.querySelector("#c_legal").value.trim(),meta_kg:+f.querySelector("#c_meta").value||0,valor_kg:+f.querySelector("#c_valor").value||0};
+    const dados={tier:f.querySelector("#c_tier").value,responsavel:respTxt,...(comId!==undefined?{comercial_id:comId}:{}),responsavel_legal:f.querySelector("#c_legal").value.trim(),meta_kg:+f.querySelector("#c_meta").value||0,valor_kg:+f.querySelector("#c_valor").value||0,mulato_hibrido:!!(f.querySelector("#c_mul")||{}).checked,ressalva:((f.querySelector("#c_ress")||{}).value||"").trim()||null};
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("canais").update(dados).eq("id",S.canalSel);
     if(error){aviso("Erro ao salvar.");render();return;}
