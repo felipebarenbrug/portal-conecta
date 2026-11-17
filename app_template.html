@@ -1508,8 +1508,13 @@ async function carregarMidia(forca){
   render();
 }
 const BM_NOMES={barenbrugdobrasil:"Barenbrug",milagroagrobrasil:"Milagro",wolfsementes:"Wolf Sementes",safrasulsementes:"Safrasul",sementesoesp:"Sementes Oesp",papalotlasementes:"Papalotla"};
-function vMdBench(){
-  const B=(S.md&&S.md.bm)||[];if(!B.length)return "";
+function vIntRedes(){
+  if(S.bmInt===undefined){S.bmInt=null;(async()=>{try{const {data}=await sb.from("social_benchmark").select("*").order("foto_em",{ascending:false});S.bmInt=data||[];}catch(e){S.bmInt=[];}if(S.pag==="int-redes")render();})();}
+  if(S.bmInt===null)return `<div class="carregando">Carregando o benchmarking…</div>`;
+  return `<div><h1 class="titulo">Concorrentes nas redes</h1><p class="sub">Como a Barenbrug está frente aos concorrentes no Instagram: seguidores, crescimento e publicações, a partir do Benchmarking do Instagram.</p></div>${vMdBench(S.bmInt)}`;
+}
+function vMdBench(B){
+  B=B||[];if(!B.length)return `<section class="bloco"><div class="vazio">Nenhuma foto de benchmarking registrada ainda.</div></section>`;
   const redes=[...new Set(B.map(x=>x.rede))];const rede=S.bmRede&&redes.includes(S.bmRede)?S.bmRede:redes[0];
   const R=B.filter(x=>x.rede===rede);const datas=[...new Set(R.map(x=>x.foto_em))].sort().reverse();const ult=datas[0],ant=datas[1];
   const met=[["seguidores","Total de seguidores"],["seg_liq","Seguidores líquidos"],["reels","Reels"],["posts","Posts"]].filter(([k])=>R.some(x=>x.foto_em===ult&&x[k]!=null));
@@ -1597,7 +1602,7 @@ function vAcoesDigital(){
     <p class="meta" style="margin:6px 0 0">Alcance é de pessoas únicas por campanha; não some o alcance de campanhas diferentes. Leads são os registros de formulário contados pelo Meta.</p></section>
   <section class="bloco"><h2 class="sec">Onde o dinheiro está indo · por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th class="val">Gasto</th><th style="min-width:140px">% do gasto</th><th class="val">Pessoas alcançadas</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Custo por mil pessoas</th></tr></thead>
     <tbody>${RG.map(x=>{const p=totR?(Number(x.gasto)||0)/totR*100:0;return `<tr><td>${esc(x.uf)} · ${esc(x.regiao||"")}</td><td class="val">${isR(x.gasto)}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:var(--azul-claro);height:8px;border-radius:4px"><div style="width:${p.toFixed(1)}%;background:var(--azul);height:8px;border-radius:4px"></div></div><span class="meta" style="min-width:42px;text-align:right">${p.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</span></div></td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.impressoes)}</td><td class="val">${isN(x.cliques)}</td><td class="val">${x.alcance?mdR2((Number(x.gasto)||0)/x.alcance*1000):"—"}</td></tr>`;}).join("")}</tbody></table></div>
-    <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>${vMdBench()}`;
+    <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>`;
 }
 
 /* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
@@ -4055,6 +4060,11 @@ function vSolic(){
     return `<div class="linha"><div><strong>${senha?"Nova senha":"Novo acesso"} · ${esc(senha?(u?u.nome:x.email):x.nome)}</strong><span class="meta">${esc(x.email)}${x.telefone?" · "+esc(x.telefone):""}${!senha&&x.empresa?" · "+esc(x.empresa):""}${!senha&&x.perfil?" · "+esc(x.perfil):""}${!senha&&x.uf?" · "+esc(x.uf):""} · ${fmtDataHora(x.criado_em)}</span>${!senha&&x.mensagem?`<span class="meta">Indicação: ${esc(x.mensagem)}</span>`:""}${senha&&!u?`<span class="meta" style="color:#c0392b">Este e-mail não tem acesso cadastrado no portal.</span>`:""}</div>
     <div class="acoes">${senha?(u?`<button class="btn" data-a="solic-senha" data-v="${x.id}">Gerar senha</button>`:""):`<button class="btn" data-a="solic-cadastrar" data-v="${x.id}">Cadastrar</button>`}<button class="btn sec" data-a="solic-recusar" data-v="${x.id}">${senha?"Dispensar":"Recusar"}</button></div></div>`;}).join("")}</div></section>`;
 }
+function cadSecPerfil(perfil){if(perfil==="Administrador")return SECOES_ACESSO.map(x=>x[0]);return [...(perfil==="Comercial Barenbrug"?["inteligencia","acoes-mkt","brindes"]:[]),...(perfil==="Marketing"?["acoes-mkt","brindes"]:[]),...(perfil==="Financeiro"?["financeiro"]:[])];}
+function cadAbasHTML(pre){return `<div class="cad-abas" data-cadabas="${pre}"><label>O que aparece dentro de cada seção</label><span class="meta">Aparecem aqui as seções marcadas acima e as que vêm do perfil. Desmarque o que a pessoa não deve ver.</span>${SECOES_ACESSO.filter(([id])=>ABAS_REG[id]&&ABAS_REG[id].length).map(([id,nome])=>`<div data-cadsec="${id}" hidden><p class="meta" style="margin:10px 0 4px"><strong>${esc(nome)}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>`<label class="check"><input type="checkbox" class="${pre}_aba" data-aba="${k==="precos"?id+":precos":k}" checked> ${esc(t)}</label>`).join("")}</div></div>`).join("")}<p class="meta cad-vazio">Marque uma seção que tenha abas para escolher o que aparece dentro dela.</p></div>`;}
+function cadAbasSync(f){if(!f)return;const pre=f.id==="f-lote"?"l":"n";const box=f.querySelector("[data-cadabas]");if(!box)return;const ps=f.querySelector(pre==="l"?"#l_perfil":"#n_perfil");const on=new Set([...f.querySelectorAll("."+pre+"_acesso:checked")].map(c=>c.value).concat(cadSecPerfil(ps?ps.value:"")));let n=0;box.querySelectorAll("[data-cadsec]").forEach(d=>{const v=on.has(d.dataset.cadsec);d.hidden=!v;if(v)n++;});const vz=box.querySelector(".cad-vazio");if(vz)vz.hidden=n>0;}
+function cadAbasOcultas(f,pre){return [...f.querySelectorAll("[data-cadsec]:not([hidden]) ."+pre+"_aba")].filter(c=>!c.checked).map(c=>c.dataset.aba);}
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.closest)return;const f=t.closest("#f-criar,#f-lote");if(f&&(t.classList.contains("n_acesso")||t.classList.contains("l_acesso")||t.id==="n_perfil"||t.id==="l_perfil"))cadAbasSync(f);});
 function vCriarAcesso(){
   const r=S.novoAcesso,p=S.prefill||{};
   const perfilSel=PERFIS.includes(p.perfil)?p.perfil:PERFIS[0];
@@ -4067,6 +4077,7 @@ function vCriarAcesso(){
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required value="${esc(p.email||"")}"></div>
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.map(x=>`<option value="${esc(x)}" ${x===perfilSel?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    ${cadAbasHTML("n")}
     <div><label for="n_canal">Revenda do Conecta <span class="meta">— obrigatório para Gestor de Revenda e Vendedor de Revenda</span></label><select id="n_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}${k.tier?" · "+esc(k.tier):""}</option>`).join("")}</select><span class="meta">Só entram no portal pessoas de revendas que estão no programa Conecta. Se a revenda não está na lista, cadastre-a antes em Conecta Revendas.</span></div>
     <div><label for="n_rccrm">Vínculo no ranking (nome no CRM) <span class="meta">— para RC e Assessor de Vendas Digital</span></label><select id="n_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}">${esc(x.nome)}</option>`).join("")}</select></div>
     <div><label for="n_crmdono">Nome no CRM (painel Meu CRM) <span class="meta">— para Comercial Barenbrug</span></label><select id="n_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA])].map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select></div>
@@ -4081,6 +4092,7 @@ function vCriarAcesso(){
     <div><label for="l_canal">Revenda do Conecta <span class="meta">— vale para todos os gestores e vendedores de revenda do lote</span></label><select id="l_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}</option>`).join("")}</select></div>
     <div><label for="l_perfil">Perfil padrão</label><select id="l_perfil">${PERFIS.filter(x=>x!=="Administrador").map(x=>`<option>${esc(x)}</option>`).join("")}</select></div>
     <div><label>Acesso às seções (vale para todos do lote)</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="l_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}</label>`).join("")}</div></div>
+    ${cadAbasHTML("l")}
     <div><label class="check"><input type="checkbox" id="l_exige" checked> Exige concluir o curso de híbridos em ${PRAZO_CURSO_DIAS} dias</label></div>
     ${S._erroLote?`<div class="erro" role="alert">${esc(S._erroLote)}</div>`:""}
     <div><button class="btn" type="submit">Criar acessos em lote</button></div>
@@ -4362,7 +4374,7 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-perfil","Perfil dos canais"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]];
+const INT_ABAS=[["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]];
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inteligência de Marketing">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -6045,9 +6057,10 @@ function rodapeMkt(){
   f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p></div>`;
   app.append(f);
 }
-function render(){renderApp();injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
+  "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
@@ -6150,7 +6163,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       const an=["int-vendas","int-rc","int-seg","int-perfil"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-redes"?vIntRedes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
@@ -6542,6 +6555,7 @@ document.addEventListener("submit",async ev=>{
     const linhas=f.querySelector("#l_txt").value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
     const perfilPad=f.querySelector("#l_perfil").value;
     const acessos=[...f.querySelectorAll(".l_acesso:checked")].map(c=>c.value);
+    const abasOcL=cadAbasOcultas(f,"l");
     const exige=f.querySelector("#l_exige").checked;
     S.loteAberto=true;S._erroLote=null;
     if(!linhas.length){S._erroLote="Cole pelo menos uma linha.";render();return;}
@@ -6556,7 +6570,7 @@ document.addEventListener("submit",async ev=>{
       try{const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome:it.nome,email:it.email,perfil:it.perfil}});
         if(error){try{const bd=await error.context.json();it.erro=bd.error||"Não foi possível criar.";}catch(_){it.erro="Não foi possível criar.";}}
         else if(data&&data.error){it.erro=data.error;}
-        else{it.senha=data.senha;await sb.from("profiles").update({acessos,exige_curso:exige}).eq("email",it.email);if(canalLote&&revP(it.perfil))await sb.from("profiles").update({canal_id:canalLote}).eq("email",it.email);}
+        else{it.senha=data.senha;await sb.from("profiles").update({acessos,exige_curso:exige,abas_ocultas:abasOcL}).eq("email",it.email);if(canalLote&&revP(it.perfil))await sb.from("profiles").update({canal_id:canalLote}).eq("email",it.email);}
       }catch(e){it.erro="Não foi possível criar.";}
     }
     S.loteRes=itens;S.equipe=null;render();return;
@@ -6618,6 +6632,7 @@ document.addEventListener("submit",async ev=>{
     const email=f.querySelector("#n_email").value.trim();
     const perfil=f.querySelector("#n_perfil").value;
     const acessos=[...f.querySelectorAll(".n_acesso:checked")].map(c=>c.value);
+    const abasOc=cadAbasOcultas(f,"n");
     const rcCrm=(perfil==="RC"||perfil==="Assessor de Vendas Digital")?(f.querySelector("#n_rccrm").value||null):null;
     const exigeCurso=!!(f.querySelector("#n_exige_curso")&&f.querySelector("#n_exige_curso").checked);
     S._erroCriar=null;
@@ -6630,7 +6645,7 @@ document.addEventListener("submit",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
-    await sb.from("profiles").update({acessos,exige_curso:exigeCurso}).eq("email",email);
+    await sb.from("profiles").update({acessos,exige_curso:exigeCurso,abas_ocultas:abasOc}).eq("email",email);
     if(canalId){const rc=await sb.from("profiles").update({canal_id:canalId}).eq("email",email).select("canal_id").maybeSingle();if(rc.error||!rc.data||rc.data.canal_id!==canalId)aviso("Acesso criado, mas a revenda não foi vinculada. Abra a pessoa e escolha a revenda.");}
     const elCdN=f.querySelector("#n_crmdono");if(perfil==="Comercial Barenbrug"&&elCdN&&elCdN.value){await sb.from("profiles").update({crm_dono:elCdN.value}).eq("email",email);}
     if(S.prefill&&S.prefill.solicId){await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",S.prefill.solicId);}
