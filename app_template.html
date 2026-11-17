@@ -404,7 +404,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .par-pb2c{fill:var(--azul)}.par-pb2b{fill:var(--azul-escuro)}
 .par-kb2c{background:var(--azul)!important}.par-kb2b{background:var(--azul-escuro)!important}.par-k80{background:var(--amarelo)!important}
 .par-bar{height:8px;background:var(--papel);border-radius:4px;overflow:hidden}.par-bar i{display:block;height:100%;background:var(--azul)}
-.par-t td{white-space:normal}
+.par-t td:nth-child(2){white-space:normal;min-width:180px}
 .par-m{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.par-m .metric{min-width:0;padding:10px}@media(max-width:520px){.par-m{grid-template-columns:minmax(0,1fr)!important}}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:760px){.int-2{grid-template-columns:minmax(0,1fr)}}
@@ -4820,6 +4820,45 @@ function vIntPareto(C){
   <section class="bloco"><h2 class="sec">Os maiores clientes de cada segmento</h2>
     <h3 class="pgd-h">B2C · produtor</h3><div class="tab">${lista("B2C")}</div><h3 class="pgd-h" style="margin-top:14px">B2B · canal</h3><div class="tab">${lista("B2B")}</div></section>`;
 }
+/* ===== B2C e B2B: carteira em risco (safra anterior x atual) ===== */
+async function carregarHist(){
+  if(S.histBusy)return;S.histBusy=true;
+  try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_hist").select("did,safra,dono,rep,org,nome,uf,seg,kg_h,kg_c,rs,fat,cl,itens").eq("safra","25/26").order("did").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}
+    t.forEach(r=>{const u=cliCanon(r);if(u){r.org="u:"+u;r.nome=u+" - "+r.nome;}});S.hist=t;
+    let a=[];de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("org,nome,rs,seg,dono").eq("st","A").order("id").range(de,de+999);if(error||!data)break;a=a.concat(data);if(data.length<1000)break;de+=1000;}
+    a.forEach(r=>{const u=cliCanon(r);if(u){r.org="u:"+u;r.nome=u+" - "+r.nome;}});S.histAb=a;}
+  catch(e){S.hist=[];S.histAb=[];}
+  S.histBusy=false;if(S.pag==="int-seg")render();
+}
+function vIntRisco(C){
+  if(S.hist===undefined){S.hist=null;carregarHist();}
+  if(S.hist===null)return `<section class="bloco"><h2 class="sec">Carteira em risco</h2><div class="carregando">Carregando a safra 25/26…</div></section>`;
+  if(!S.hist.length)return `<section class="bloco"><h2 class="sec">Carteira em risco</h2><div class="vazio">A safra 25/26 ainda não foi carregada do CRM.</div></section>`;
+  const fx=x=>x.seg==="B2B"?"B2B":"B2C";
+  const atual={};C.L.filter(x=>x.uf!=="EX").forEach(x=>{const a=atual[x.cli]||(atual[x.cli]={rs:0,kgH:0});a.rs+=x.rs;a.kgH+=x.kgH;});
+  const ab={};(S.histAb||[]).forEach(r=>{const k=intCli(r);ab[k]=(ab[k]||0)+(Number(r.rs)||0);});
+  const ant={};S.hist.filter(r=>r.uf!=="EX").forEach(r=>{const k=intCli(r);const a=ant[k]||(ant[k]={cli:k,nome:parNome(r),uf:r.uf||"",seg:fx(r),dono:String(r.dono||"—").trim(),rs:0,kgH:0,ult:null});a.rs+=Number(r.rs)||0;a.kgH+=Number(r.kg_h)||0;const f=r.fat||r.cl;if(f&&(!a.ult||f>a.ult))a.ult=f;});
+  const sel=S.riscoSeg||"B2C";
+  const L=Object.values(ant).filter(a=>a.seg===sel&&a.rs>0).sort((a,b)=>b.rs-a.rs);
+  const tot=L.reduce((t,a)=>t+a.rs,0)||1;
+  const volt=L.filter(a=>atual[a.cli]),nao=L.filter(a=>!atual[a.cli]),menos=volt.filter(a=>atual[a.cli].rs<a.rs*0.5);
+  const sm=xs=>xs.reduce((t,a)=>t+a.rs,0);
+  const dBr=v=>v?String(v).slice(0,10).split("-").reverse().join("/"):"—";
+  const tg=`<div class="mk-link" style="gap:6px;margin:0 0 12px">${["B2C","B2B"].map(k=>`<button class="btn ${sel===k?"":"sec"}" data-a="risco-seg" data-v="${k}">${k==="B2C"?"B2C · produtor":"B2B · canal"}</button>`).join("")}</div>`;
+  const linha=(a,i,extra)=>`<tr><td class="val">${i+1}</td><td>${esc(a.nome)}</td><td>${esc(a.uf||"—")}</td><td>${esc(a.dono)}</td><td class="val">${fmtK0(a.rs)}</td><td class="val">${a.kgH?fmtKg(Math.round(a.kgH)):"—"}</td>${extra(a)}</tr>`;
+  const tN=nao.slice(0,25),tM=menos.sort((a,b)=>(b.rs-atual[b.cli].rs)-(a.rs-atual[a.cli].rs)).slice(0,15);
+  return `<section class="bloco"><h2 class="sec">Carteira em risco${inf("Clientes que compraram na safra 25/26 comparados com os pedidos ganhos da safra 26/27. As duas safras contam pela data de faturamento, de 1º de julho a 30 de junho. Bonificações e exportação ficam fora. A safra 26/27 ainda está em andamento: quem não comprou ainda pode comprar.")}</h2>${tg}
+    <div class="metrics par-m">
+      <div class="metric"><span>Clientes na 25/26</span><strong>${L.length}</strong><span class="meta">${fmtK0(sm(L))} faturados</span></div>
+      <div class="metric"><span>Já compraram de novo</span><strong>${volt.length}</strong><span class="meta">${parPct(volt.length/(L.length||1))} dos clientes · ${parPct(sm(volt)/tot)} do valor da 25/26</span></div>
+      <div class="metric"><span>Ainda não compraram</span><strong>${nao.length}</strong><span class="meta">${fmtK0(sm(nao))} na 25/26 · ${nao.filter(a=>ab[a.cli]).length} com negociação em aberto</span></div></div>
+    <h3 class="pgd-h" style="margin-top:14px">Ainda não compraram nesta safra${inf("Ordenados pelo valor faturado na 25/26. A coluna de negociação em aberto soma o que o cliente tem hoje no funil do CRM.")}</h3>
+    <div class="tab"><table class="sim-t fin-t par-t"><thead><tr><th class="val">#</th><th>Cliente</th><th>UF</th><th>Responsável na 25/26</th><th class="val">Valor 25/26</th><th class="val">Híbridos 25/26</th><th class="val">Último faturamento</th><th class="val">Em aberto agora</th></tr></thead><tbody>${tN.map((a,i)=>linha(a,i,a=>`<td class="val">${dBr(a.ult)}</td><td class="val">${ab[a.cli]?fmtK0(ab[a.cli]):"—"}</td>`)).join("")||`<tr><td colspan="8">Todos os clientes da 25/26 já compraram.</td></tr>`}</tbody></table></div>
+    ${nao.length>25?`<p class="meta" style="margin:4px 0 0">Mais ${nao.length-25} clientes, que somam ${fmtK0(sm(nao.slice(25)))} na 25/26.</p>`:""}
+    ${tM.length?`<h3 class="pgd-h" style="margin-top:14px">Compraram, mas menos da metade da 25/26${inf("Clientes que já têm pedido ganho na 26/27, mas com valor abaixo de 50% do que faturaram na 25/26.")}</h3>
+    <div class="tab"><table class="sim-t fin-t par-t"><thead><tr><th class="val">#</th><th>Cliente</th><th>UF</th><th>Responsável na 25/26</th><th class="val">Valor 25/26</th><th class="val">Híbridos 25/26</th><th class="val">Valor 26/27</th><th class="val">Em aberto agora</th></tr></thead><tbody>${tM.map((a,i)=>linha(a,i,a=>`<td class="val">${fmtK0(atual[a.cli].rs)}</td><td class="val">${ab[a.cli]?fmtK0(ab[a.cli]):"—"}</td>`)).join("")}</tbody></table></div>`:""}
+    <p class="meta" style="margin:8px 0 0">O cliente é reconhecido pelo cadastro da empresa no CRM. Se o mesmo cliente comprou por cadastros diferentes nas duas safras, ele pode aparecer como não recomprado.</p></section>`;
+}
 function vIntSeg(C){
   const vias=["Inside Sales","RC","Comercial Barenbrug"];
   const seg=s=>C.H.filter(x=>x.seg===s);
@@ -4840,6 +4879,7 @@ function vIntSeg(C){
   return `<div><h1 class="titulo">B2C e B2B</h1><p class="sub">B2B: distribuidores, cooperativas e venda para canal (sell-in). B2C: venda ao produtor. Só pedidos de híbridos ganhos (vendidos) no CRM na safra 26/27, já faturados ou com faturamento programado. Negociações em andamento ficam fora.${INT_HIB_NOTA}</p></div>
   <section class="bloco"><h2 class="sec">Híbridos: B2C x B2B</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Segmento</th><th class="val">Pedidos</th><th class="val">Clientes</th><th class="val">Kg</th><th class="val">Valor</th><th class="val">Preço médio (R$/kg)${inf("Faturado dividido pelos kg dos itens com preço; bonificações ficam fora.")}</th><th class="val">Ticket médio</th></tr></thead><tbody>${lin(seg("B2C"),"B2C · produtor")}${lin(seg("B2B"),"B2B · canal")}</tbody></table></div></section>
   ${vIntPareto(C)}
+  ${vIntRisco(C)}
   <section class="bloco"><h2 class="sec">Por onde vendemos</h2><div class="int-2"><div style="min-width:0"><h3 class="pgd-h">B2C</h3><div class="tab">${viaT("B2C")}</div></div><div style="min-width:0"><h3 class="pgd-h">B2B</h3><div class="tab">${viaT("B2B")}</div></div></div></section>
   <section class="bloco"><h2 class="sec">Perfil do cliente B2C de híbridos</h2>
     <div class="metrics"><div class="metric"><span>Clientes B2C</span><strong>${nCli}</strong><span class="meta">${rec} compraram mais de uma vez</span></div><div class="metric"><span>Kg por cliente</span><strong>${nCli?fmtKg(Math.round(totB/nCli)):"—"}</strong><span class="meta">média da safra</span></div>
@@ -6459,6 +6499,7 @@ document.addEventListener("click",async ev=>{
   if(a==="cob-f"){const i=v.indexOf("|");S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF[v.slice(0,i)]=v.slice(i+1);render();return;}
   if(a==="saz-mes"){S.sazMes=+v;render();return;}
   if(a==="bm-met"){S.bmMet=v;render();return;}
+  if(a==="risco-seg"){S.riscoSeg=v;render();return;}
   if(a==="par-med"){S.parMed=v;render();return;}
   if(a==="pf-vis"){S.pfVis=v;S.pfSel=null;render();return;}
   if(a==="pf-sel"){S.pfSel=v||null;render();if(v)setTimeout(()=>{const e=document.querySelector(".pf-det");if(e)e.scrollIntoView({behavior:"smooth",block:"start"});},50);return;}
