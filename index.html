@@ -1073,6 +1073,7 @@ const qtdFeitas=()=>feitasOrdenadas().length;
 const indiceAtual=()=>{for(let i=0;i<ORDEM.length;i++){if(!S.feitas.includes(ORDEM[i]))return i;}return ORDEM.length;};
 const estadoEt=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq";};
 const ehAdmin=()=>S.perfil==="Administrador"||(!S.demo&&S.nivel==="Administrador");
+const ehMaster=()=>S.demo?S.perfil==="Administrador":S.nivel==="Administrador";
 const ehGestor=()=>!S.demo&&S.nivel==="Gestor";
 const gerePessoas=()=>ehAdmin()||ehGestor();
 const NIVEL_NOME={"Padrão":"Padrão","Gestor":"Gestor de acessos","Administrador":"Administrador master"};
@@ -1179,7 +1180,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117161210";
+const APP_VER="20261117162119";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1469,7 +1470,7 @@ function vEnxoval(){
     <h1 class="titulo" style="color:#fff">Tudo para divulgar os híbridos Barenbrug</h1>
     <p>Marca, artes para redes sociais, banners, folders, banco de imagens e vídeo institucional — reunidos para você usar no dia a dia comercial.</p></div></section>
   ${admin?`<p class="precos-nota" style="margin:12px 0">Você é administrador: use "+ Adicionar" em cada bloco para publicar os links e materiais. Eles aparecem para todos que têm acesso a esta seção.</p>`:""}
-  ${ehAdmin()?`<section class="bloco"><h2 class="sec">Importar uma pasta inteira</h2><p class="sub" style="margin:0 0 8px">Escolha a pasta "Enxoval de Marketing" do seu computador. O portal envia os arquivos e organiza cada um na seção certa pelo nome da subpasta. Arquivos de edição (.psd) e maiores que 50 MB ficam de fora.</p><input type="file" id="mkt_pasta" webkitdirectory multiple><p class="meta" id="mkt_prog" style="margin-top:8px">${esc(S.mktImp||"")}</p></section>`:""}
+  ${ehMaster()?`<section class="bloco"><h2 class="sec">Importar uma pasta inteira</h2><p class="sub" style="margin:0 0 8px">Escolha a pasta "Enxoval de Marketing" do seu computador. O portal envia os arquivos e organiza cada um na seção certa pelo nome da subpasta. Arquivos de edição (.psd) e maiores que 50 MB ficam de fora.</p><input type="file" id="mkt_pasta" webkitdirectory multiple><p class="meta" id="mkt_prog" style="margin-top:8px">${esc(S.mktImp||"")}</p></section>`:""}
   ${S.mktNovo!=null?vMktForm():""}
   ${carregando||ENXOVAL.map(bloco).join("")}`;
 }
@@ -1557,7 +1558,7 @@ function vLeadsOut(){
         <div><button class="btn sec" data-a="lo-status" data-v="${l.id}" data-st="${esc(st==="Novo"?"Prospectando":st)}" style="padding:8px 14px">Salvar anotação</button></div>
         ${N===undefined?"":N.length?`<div class="lo-notas">${N.map(n=>`<div><span class="meta">${new Date(n.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})} · ${esc(n.nome||"")}${n.status?" · "+loTag(n.status):""}</span>${n.texto?`<div>${esc(n.texto)}</div>`:""}</div>`).join("")}</div>`:""}</div>`
        :`<div><button class="btn sec" data-a="lo-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">${l.tem_tel?"Ver contato e atender":"Ver e-mail e atender"}</button></div>`}</div>`;};
-  return cab+(adm?loAdmin():"")+`
+  return cab+(ehMaster()?loAdmin():"")+`
   <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome ou cidade" value="${esc(F.q||"")}">
     ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
     <select id="lo_st" data-lof="st">${["Em aberto",...LO_ST,"Todos"].map(o=>`<option ${F.st===o?"selected":""} value="${esc(o)}">${o==="Em aberto"?"Em aberto (novos e prospectando)":o==="Todos"?"Todas as etiquetas":o}</option>`).join("")}</select>
@@ -2227,7 +2228,7 @@ function msgListaHTML(){const L=S.msgConv||[];if(!L.length)return `<div class="v
 function vMensagens(){
   if(S.msgConv===undefined||S.msgCont===undefined){if(!S.msgBusy){S.msgBusy=true;carregarMsgs().then(()=>{S.msgBusy=false;render();});}return `<div class="carregando">Carregando…</div>`;}
   const cont=S.msgCont||[];const conv=(S.msgConv||[]).find(c=>c.id===S.msgAberta);
-  const grupos=[["marketing","Marketing"],["embaixador","Embaixador técnico"],["comercial","Responsável comercial"],["externo","RCs e revendas"]];
+  const grupos=MSG_G;
   const nova=`<div class="msg-topo"><button class="link" data-a="msg-voltar">‹ Conversas</button><strong>Nova conversa</strong></div><div class="msg-cont">${cont.length?grupos.map(([k,t])=>{const xs=cont.filter(c=>c.papel===k);return xs.length?`<h3>${t}</h3>${xs.map(c=>`<button class="msg-item" data-a="msg-com" data-v="${c.id}">${avatar(c.id,c.nome,36)}<span class="msg-item-t"><strong>${esc(c.nome)}</strong><span class="meta">${esc(c.detalhe||"")}</span></span></button>`).join("")}`:"";}).join(""):`<div class="vazio">Você ainda não tem com quem conversar por aqui.</div>`}</div>`;
   const fio=conv?`<div class="msg-topo"><button class="link msg-so-mob" data-a="msg-voltar">‹ Conversas</button>${avatar(conv.outro,conv.nome,36)}<span><strong>${esc(conv.nome)}</strong><span class="meta">${esc(conv.detalhe||"")}</span></span></div>
     <div class="msg-fio" aria-live="polite">${S.msgFio==null?`<div class="carregando">Carregando…</div>`:S.msgFio.length?S.msgFio.map(msgBolha).join(""):`<div class="vazio">Escreva a primeira mensagem.</div>`}</div>
@@ -2576,6 +2577,8 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
   const {data,error}=await sb.rpc("adm_mfa_exigir",{p_user:id,p_exige:ex});t.disabled=false;if(error||data!==ex){t.checked=!ex;aviso("Esta alteração NÃO foi gravada. Tente de novo.");return;}
   if(S.mfaInfo&&S.mfaInfo[id])S.mfaInfo[id].isento=!ex;render();aviso(ex?"Verificação em duas etapas exigida.":"Verificação em duas etapas desligada para esta pessoa.");});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!ehAdmin())return;
+  if(t.dataset.msgregra){if(!ehAdmin())return;const [ga,gb]=t.dataset.msgregra.split("|");t.disabled=true;const {error}=await sb.from("msg_regras").upsert({ga,gb,modo:t.value,atualizado_por:S.user.id,atualizado_em:new Date().toISOString()});t.disabled=false;
+    if(error){aviso("Não foi possível gravar a regra.");return;}const r=(S.msgRegras||[]).find(x=>x.ga===ga&&x.gb===gb);if(r)r.modo=t.value;else S.msgRegras.push({ga,gb,modo:t.value});S.msgCont=undefined;aviso("Regra gravada.");return;}
   if(t.dataset.vinccanal){const id=t.dataset.vinccanal,novo=t.value||null;const p=(S.equipe||[]).find(x=>x.id===novo);t.disabled=true;
     const {data,error}=await sb.from("canais").update({comercial_id:novo,...(p?{responsavel:p.nome}:{})}).eq("id",id).select("id,comercial_id").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_id||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const k=(S.canaisLista||[]).find(x=>x.id===id);if(k)k.comercial_id=novo;S.canais=null;aviso("Vínculo gravado.");}render();return;}
@@ -3911,7 +3914,7 @@ function vRVValidacao(){
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
   if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
-  if(ehAdmin())abas.push(["rv-validacao","Validação"]);
+  if(ehMaster())abas.push(["rv-validacao","Validação"]);
   else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -4562,7 +4565,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-rank","Ranking e evolução"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC","Assessor de Vendas Digital"],"Representantes comerciais e assessores de vendas digitais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -4572,9 +4575,9 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
-  const sub={"gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
-  const corpo=S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
+  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
+  const sub={"gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
+  const corpo=S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
 function gtHome(R){
@@ -4597,6 +4600,34 @@ function gtHome(R){
   <section class="bloco"><h2 class="sec">Precisa da sua atenção</h2>${at.join("")||`<div class="vazio">Nada pendente.</div>`}</section>
   <div class="int-2"><section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Uso por time</h2><div class="tab"><table class="sim-t"><thead><tr><th>Time</th><th class="val">Pessoas</th><th class="val">Ativas em 30 dias</th></tr></thead><tbody>${porTime.map(o=>`<tr><td><button class="link" data-a="gt-time" data-v="${esc(o.t)}">${esc(o.t)}</button></td><td class="val">${o.n}</td><td class="val">${o.a30} (${Math.round(o.a30/o.n*100)}%)</td></tr>`).join("")}</tbody></table></div></section>
   <section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Primeiros do ranking</h2>${top.map((x,i)=>`<div class="linha"><div><strong>${i+1}º ${esc(x.nome)}</strong><span class="meta">${esc(x.perfil||"")} · ${x.feitas} de ${ORDEM.length} módulos${x.conhecimento!=null?" · "+x.conhecimento+"% de acerto":""}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`).join("")}<button class="btn sec" data-a="pag" data-v="gestao-rank" style="margin-top:8px">Ver o ranking completo</button></section></div>`;
+}
+const MSG_G=[["marketing","Marketing"],["embaixador","Embaixador técnico"],["comercial","Comercial Barenbrug"],["inside","Inside Sales"],["revenda","Revendas"],["rc","RCs"]];
+const MSG_GD={marketing:"Perfil Marketing.",embaixador:"Quem está como embaixador técnico.",comercial:"Comercial Barenbrug e administradores.",inside:"Inside Sales e assessoras de vendas digitais.",revenda:"Gestores e vendedores das revendas.",rc:"Representantes comerciais."};
+const MSG_VINC={"comercial|revenda":"só com o responsável principal da revenda (Vínculos)","inside|revenda":"só com o responsável principal da revenda (Vínculos)","comercial|rc":"só com o responsável principal do RC (Vínculos)","inside|rc":"só com o responsável principal do RC (Vínculos)","revenda|revenda":"só pessoas da mesma revenda"};
+async function carregarMsgPerm(){const [r,e]=await Promise.all([sb.from("msg_regras").select("*"),sb.from("msg_excecoes").select("*").order("criado_em",{ascending:false})]);S.msgRegras=r.data||[];S.msgExc=e.data||[];}
+function gtMsg(){
+  if(!ehAdmin())return `<div class="vazio">Somente administradores.</div>`;
+  if(S.msgRegras===undefined){if(!S.msgPermBusy){S.msgPermBusy=true;carregarMsgPerm().then(()=>{S.msgPermBusy=false;render();});}return `<div class="carregando">Carregando…</div>`;}
+  if(!S.equipe&&!S.eqBusyMsg){S.eqBusyMsg=true;carregarEquipe().then(()=>{S.eqBusyMsg=false;render();});}
+  const E=(S.equipe||[]).filter(x=>x.ativo!==false&&!x.demo).slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));const nm=id=>(E.find(x=>x.id===id)||{}).nome||"—";
+  const modo=(a,b)=>(S.msgRegras.find(r=>r.ga===a&&r.gb===b)||{}).modo||"nao";
+  const pares=[];MSG_G.forEach(([a],i)=>MSG_G.slice(i).forEach(([b])=>pares.push([a,b])));
+  const lab=Object.fromEntries(MSG_G);
+  const linha=([a,b])=>{const k=a+"|"+b,m=modo(a,b),vc=MSG_VINC[k];
+    return `<tr><td><strong>${esc(lab[a])}</strong> ↔ <strong>${esc(lab[b])}</strong>${a===b?'<br><span class="meta">entre si</span>':""}</td><td><select data-msgregra="${k}" aria-label="${esc(lab[a]+" com "+lab[b])}">
+      <option value="todos" ${m==="todos"?"selected":""}>Todos conversam</option>${vc?`<option value="vinculo" ${m==="vinculo"?"selected":""}>Só com vínculo: ${esc(vc)}</option>`:""}<option value="nao" ${m==="nao"||(m==="vinculo"&&!vc)?"selected":""}>Não conversam</option></select></td></tr>`;};
+  const exc=S.msgExc||[];
+  const sel=(id,ph)=>`<select id="${id}"><option value="">${ph}</option>${E.map(x=>`<option value="${esc(x.id)}">${esc(x.nome)}${x.perfil?" · "+esc(x.perfil):""}</option>`).join("")}</select>`;
+  const ver=S.msgVer;
+  return `<section class="bloco"><h2 class="sec">Regras por grupo${inf("Vale para todo o portal. Cada pessoa entra em um grupo pelo perfil. A conversa só abre se a regra do par permitir, ou se houver uma exceção para as duas pessoas. A alteração é gravada na hora e vale no próximo carregamento das mensagens.")}</h2>
+    <p class="meta" style="margin:0 0 8px">${MSG_G.map(([k,t])=>`<strong>${esc(t)}</strong>: ${esc(MSG_GD[k])}`).join(" · ")}</p>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Quem com quem</th><th>Pode conversar?</th></tr></thead><tbody>${pares.map(linha).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Exceções por pessoa${inf("Uma exceção vale só para aquelas duas pessoas e passa por cima da regra do grupo: libera uma conversa que a regra bloqueia, ou bloqueia uma que a regra libera.")}</h2>
+    <form id="f-msgexc" class="gt-filtros" style="align-items:flex-end">${sel("mx_a","Pessoa 1")}${sel("mx_b","Pessoa 2")}<select id="mx_p"><option value="1">Liberar a conversa</option><option value="0">Bloquear a conversa</option></select><input id="mx_obs" placeholder="Motivo (opcional)" maxlength="200"><button class="btn" type="submit">Salvar exceção</button></form>
+    ${exc.length?`<div class="lista" style="margin-top:10px">${exc.map(x=>`<div class="linha"><div><strong>${esc(nm(x.a))} ↔ ${esc(nm(x.b))}</strong><span class="meta">${x.permitido?stTag("Liberada","verde"):stTag("Bloqueada","vermelho")}${x.obs?" · "+esc(x.obs):""} · ${fmtDataHora(x.criado_em)}</span></div><button class="link perigo" data-a="msgexc-rm" data-v="${x.id}">remover</button></div>`).join("")}</div>`:`<div class="vazio" style="margin-top:10px">Nenhuma exceção. Todo mundo segue a regra do grupo.</div>`}</section>
+  <section class="bloco"><h2 class="sec">Conferir uma pessoa${inf("Mostra com quem a pessoa consegue conversar hoje, juntando as regras e as exceções.")}</h2>
+    <div class="gt-filtros">${sel("mx_ver","Escolha a pessoa").replace(`value="${esc(ver||"")}"`,`value="${esc(ver||"")}" selected`)}<button class="btn sec" data-a="gmsg-ver">Conferir</button></div>
+    ${ver&&S.msgVerRes?`<p class="meta" style="margin:8px 0 4px"><strong>${esc(nm(ver))}</strong> conversa com ${S.msgVerRes.length} ${S.msgVerRes.length===1?"pessoa":"pessoas"}:</p>${S.msgVerRes.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Grupo</th><th>Por</th></tr></thead><tbody>${S.msgVerRes.map(r=>`<tr><td>${esc(r.nome)}</td><td>${esc(r.grupo)}</td><td>${r.por==="exceção"?stTag("exceção","amarelo"):"regra do grupo"}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Ninguém.</div>`}`:""}</section>`;
 }
 function gtVinc(){
   const adm=ehAdmin();const C=(S.canaisLista||[]).slice();const pf=x=>x.perfis&&x.perfis.length?x.perfis:[x.perfil];
@@ -7165,7 +7196,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="conecta-revendas"){
-    if(S.pag==="rv-validacao"&&!ehAdmin())S.pag="rv-painel";
+    if(S.pag==="rv-validacao"&&!ehMaster())S.pag="rv-painel";
     if(S.pag==="rv-canais"||S.pag==="rv-canal"||S.pag==="rv-painel"||S.pag==="rv-validacao"){
       if(!veBarenbrugRV()){S.pag=ehRevenda()?"rv-meucanal":"rv-apresentacao";}
       else{
@@ -7315,11 +7346,11 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
   if(a==="rvv-sel"){S.rvvSel=v||null;render();if(v)window.scrollTo(0,0);return;}
-  if(a==="rvv-pub"){if(!ehAdmin())return;const ok=document.getElementById("rvv_ok");if(!ok||!ok.checked){aviso("Marque \"Conferi os números deste canal\" antes de publicar.");return;}const r=(S.rvv||{})[v];if(!r)return;b.disabled=true;
+  if(a==="rvv-pub"){if(!ehMaster())return;const ok=document.getElementById("rvv_ok");if(!ok||!ok.checked){aviso("Marque \"Conferi os números deste canal\" antes de publicar.");return;}const r=(S.rvv||{})[v];if(!r)return;b.disabled=true;
     const row={canal_id:v,dados:{v:r.dados.v,sc:r.dados.sc,fin:{n_nf:r.dados.fin.n_nf,n_quit:r.dados.fin.n_quit,aberto:r.dados.fin.aberto,vencido:r.dados.fin.vencido},meta:r.dados.meta,tier:r.dados.tier},situacao_em:r.situacao_em,validado_por:S.user.id,validado_nome:(S.profile&&S.profile.nome)||null,validado_em:new Date().toISOString()};
     const {data,error}=await sb.from("rv_publicado").upsert(row).select().maybeSingle();b.disabled=false;if(error||!data){aviso("Não foi possível publicar.");return;}(S.rvPub||(S.rvPub={}))[v]=data;render();aviso("Publicado. A página do canal já mostra os números validados.");return;}
-  if(a==="rvv-despub"){if(!ehAdmin())return;const {error}=await sb.from("rv_publicado").delete().eq("canal_id",v);if(error){aviso("Não foi possível voltar.");return;}if(S.rvPub)delete S.rvPub[v];render();aviso("O canal voltou a usar os números do CRM.");return;}
-  if(a==="rvv-calc"){if(!ehAdmin())return;const fp=document.getElementById("rvv_ped"),ff=document.getElementById("rvv_fin"),pg=document.getElementById("rvv_prog");const a1=fp&&fp.files[0],a2=ff&&ff.files[0];if(!a1||!a2){aviso("Escolha os dois arquivos.");return;}
+  if(a==="rvv-despub"){if(!ehMaster())return;const {error}=await sb.from("rv_publicado").delete().eq("canal_id",v);if(error){aviso("Não foi possível voltar.");return;}if(S.rvPub)delete S.rvPub[v];render();aviso("O canal voltou a usar os números do CRM.");return;}
+  if(a==="rvv-calc"){if(!ehMaster())return;const fp=document.getElementById("rvv_ped"),ff=document.getElementById("rvv_fin"),pg=document.getElementById("rvv_prog");const a1=fp&&fp.files[0],a2=ff&&ff.files[0];if(!a1||!a2){aviso("Escolha os dois arquivos.");return;}
     b.disabled=true;if(pg)pg.textContent="Lendo os arquivos…";try{const X=await rvvLerArquivos(a1,a2);if(!S.canaisAll)await carregarCanais();if(pg)pg.textContent="Calculando…";
       const out=rvvCalcular(X.ped,X.finRows,X.hoje,S.canaisAll||[]);const rows=Object.entries(out).map(([id,o])=>({canal_id:id,canal_nome:o.canal_nome,dados:o.dados,situacao_em:rvvISO(X.hoje),fontes:a1.name+" + "+a2.name,gerado_em:new Date().toISOString()}));
       const {error}=await sb.from("rv_validacao").upsert(rows);if(error)throw error;S.rvv=undefined;aviso("Validação recalculada para "+rows.length+" canais.");render();}catch(e){aviso("Não foi possível calcular: "+(e.message||e));}b.disabled=false;if(pg)pg.textContent="";return;}
@@ -7421,11 +7452,13 @@ document.addEventListener("click",async ev=>{
   if(a==="lo-desfaz"){if(S.loEd)delete S.loEd[v];S.loCfgAberto=true;render();return;}
   if(a==="lo-salvar"){const e=(S.loEd||{})[v];if(!e)return;if(!e.ufs.length){aviso("Marque pelo menos um estado.");return;}b.disabled=true;const {error}=await sb.rpc("adm_lead_out_acesso_set",{p_user:v,p_perfis:e.perfis,p_ufs:e.ufs,p_sit:e.situacoes,p_so_pediu:!!e.so_pediu,p_ativo:e.ativo!==false});if(error){b.disabled=false;aviso("Não foi gravado. Tente de novo.");return;}delete S.loEd[v];const r=await sb.rpc("adm_lead_out_acessos");S.loAcc=r.data||[];S.loCfgAberto=true;render();aviso("Acesso à prospecção gravado.");return;}
   if(a==="lo-remover"){b.disabled=true;const {error}=await sb.rpc("adm_lead_out_acesso_set",{p_user:v,p_perfis:null,p_ufs:null,p_sit:null,p_so_pediu:null,p_ativo:null});if(error){b.disabled=false;aviso("Não foi possível remover.");return;}const r=await sb.rpc("adm_lead_out_acessos");S.loAcc=r.data||[];S.loCfgAberto=true;render();aviso("Acesso removido.");return;}
-  if(a==="lo-importar"){const inp=document.getElementById("lo_arq"),pg=document.getElementById("lo_prog");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a planilha.");return;}b.disabled=true;try{const n=await loImportar(arq,pg);S.loOk=false;S.loCfgAberto=true;aviso(n.toLocaleString("pt-BR")+" leads importados ou atualizados.");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
+  if(a==="lo-importar"){if(!ehMaster())return;const inp=document.getElementById("lo_arq"),pg=document.getElementById("lo_prog");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a planilha.");return;}b.disabled=true;try{const n=await loImportar(arq,pg);S.loOk=false;S.loCfgAberto=true;aviso(n.toLocaleString("pt-BR")+" leads importados ou atualizados.");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
   if(a==="lo-mais"){b.disabled=true;await loLista(true);render();return;}
   if(a==="lo-ver"){S.loVistos=S.loVistos||{};S.loVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_out_contato",{p_id:+v});if(error)throw error;S.loVistos[v]=data||{telefone:null,email:null};const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r&&(!r.status||r.status==="Novo")){r.status="Prospectando";r.atendido_por=S.profile.nome||"";r.meu=true;r.atendido_em=new Date().toISOString();}}catch(e){delete S.loVistos[v];aviso("Não foi possível abrir o contato.");}render();loCarregaNotas(v);return;}
   if(a==="lo-status"){const st=b.dataset.st;const o=document.getElementById("lo_obs_"+v);const {error}=await sb.rpc("lead_out_marcar",{p_id:+v,p_status:st,p_obs:o?o.value:null});if(error){aviso("Não foi possível gravar.");return;}const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r){r.status=st;r.atendido_por=st==="Novo"?null:(S.profile.nome||"");r.atendido_em=st==="Novo"?null:new Date().toISOString();if(o&&o.value.trim())r.obs=o.value.trim();else if(st==="Novo")r.obs=null;r.meu=st!=="Novo";}render();loCarregaNotas(v);aviso(st==="Novo"?"Lead devolvido para a fila.":"Gravado: "+st+".");return;}
   if(a==="verusuario"){if(S.pag&&S.pag.startsWith("gestao-"))S.gtVolta=S.pag;abrirUsuario(v);}
+  if(a==="msgexc-rm"){if(!ehAdmin())return;const {error}=await sb.from("msg_excecoes").delete().eq("id",v);if(error){aviso("Não foi possível remover.");return;}S.msgExc=(S.msgExc||[]).filter(x=>String(x.id)!==String(v));S.msgCont=undefined;S.msgVerRes=null;render();return;}
+  if(a==="gmsg-ver"){const id=(document.getElementById("mx_ver")||{}).value;if(!id)return;b.disabled=true;const {data,error}=await sb.rpc("adm_contatos_de",{p:id});b.disabled=false;if(error){aviso("Não foi possível conferir.");return;}S.msgVer=id;S.msgVerRes=data||[];render();return;}
   if(a==="gt-filtro"){S.gtF={q:"",perfil:"",acesso:v};S.pag="gestao-pessoas";render();return;}
   if(a==="gt-time"){S.gtTime=v;S.pag="gestao-times";render();return;}
   if(a==="acesso-modo"){S.acessoModo=v;S._erro=null;render();window.scrollTo(0,0);return;}
@@ -7772,6 +7805,9 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
+  if(f.id==="f-msgexc"){if(!ehAdmin())return;const x=f.querySelector("#mx_a").value,y=f.querySelector("#mx_b").value;if(!x||!y||x===y){aviso("Escolha duas pessoas diferentes.");return;}
+    const r={a:x<y?x:y,b:x<y?y:x,permitido:f.querySelector("#mx_p").value==="1",obs:f.querySelector("#mx_obs").value.trim()||null,criado_por:S.user.id,criado_em:new Date().toISOString()};
+    const {error}=await sb.from("msg_excecoes").upsert(r,{onConflict:"a,b"});if(error){aviso("Não foi possível salvar a exceção.");return;}await carregarMsgPerm();S.msgCont=undefined;S.msgVerRes=null;render();aviso("Exceção salva.");return;}
   if(f.id==="f-cob-fil"){if(!ehAdmin())return;const F=S.cobB||{};const r={canal_id:F.canal,cidade:f.querySelector("#cf_cid").value.trim(),uf:f.querySelector("#cf_uf").value,nome:f.querySelector("#cf_nome").value.trim()||null,fonte:"Cadastro manual"};if(!r.canal_id||!r.cidade||!r.uf){aviso("Preencha cidade e UF.");return;}
     const {data,error}=await sb.from("canal_filiais").insert(r).select("id,canal_id,nome,cidade,uf,fonte").maybeSingle();if(error||!data){aviso("Não foi possível salvar a filial.");return;}const c=(S.imCanais||[]).find(x=>x.id===r.canal_id);S.imFil=[...(S.imFil||[]),{...data,canal:c?c.nome:"Canal"}];S.canais=null;render();aviso(geoLL(r.uf,r.cidade)?"Filial adicionada.":"Filial adicionada, mas a cidade não foi encontrada no mapa. Confira a grafia.");return;}
   if(f.id==="f-reu"){const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const lst=t=>t.split(",").map(x=>x.trim()).filter(Boolean);
