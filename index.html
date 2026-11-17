@@ -1171,7 +1171,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117132115";
+const APP_VER="20261117132706";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3843,6 +3843,17 @@ const RV_REGRA={"Blue":{ih:.02,ic:.0075,b:.02},"Yellow":{ih:.025,ic:.01,b:.025},
 const RV_TETO=300000,RV_PISO_KG=5000;
 const fmtK0=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
 const pctTxt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+function vCanalNaMeta(m){
+  if(!m.meta||m.ating==null||m.ating>=1)return "";
+  const falta=Math.max(0,m.meta-m.kgH),rs90=Math.max(m.rsH,m.meta*.9*(m.pxH||0)),bf90=rs90*m.g.b*.7;
+  return `<section class="bloco"><h2 class="sec">Se bater a meta de híbridos${inf("Simulação: quanto a revenda teria de IGDB e de Bônus de Performance se os pedidos de híbridos chegassem à meta da safra. Usa o preço médio de híbridos do canal para valorizar o que falta e mantém os convencionais já em pedido. Não é garantido: depende dos pedidos, do faturamento e do pagamento das notas.")}</h2>
+    ${m.semPreco?`<div class="vazio">Sem preço de híbridos para estimar o valor da meta.</div>`:`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+      <div class="metric"><span>Falta para a meta</span><strong>${fmtKg(falta)}</strong><span class="meta">${pctTxt(m.ating)} atingido · cerca de ${fmtK0(falta*(m.pxH||0))} em pedidos</span></div>
+      <div class="metric"><span>IGDB na meta</span><strong>${fmtK0(m.mIgdb)}</strong><span class="meta">previsto hoje ${fmtK0(m.igdb)} · +${fmtK0(Math.max(0,m.mIgdb-m.igdb))}</span></div>
+      <div class="metric"><span>Bônus de Performance na meta</span><strong>${fmtK0(m.mBonus)}</strong><span class="meta">hoje ${fmtK0(m.bonus)}${m.ating<.9?` · com 90% da meta: ${fmtK0(bf90)} (70%)`:""}</span></div>
+      <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Total na meta (IGDB + bônus)</span><strong>${fmtK0(m.mTotal)}</strong><span class="meta">${m.mTeto?"limitado ao teto do programa · ":""}previsto hoje ${fmtK0(m.total)}</span></div>
+    </div>`}</section>`;
+}
 function vCanalAbertas(m){
   const A=m.abertas||[];
   const dt=v=>v?String(v).slice(0,10).split("-").reverse().join("/"):"sem data";
@@ -4192,6 +4203,7 @@ function vRVCanal(){
     <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para o PGD</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">aprovado ${fmtK0(m.aprovIG)} · em análise ${fmtK0(m.analiseIG)}</span></div>
   </div>
   <div class="precos-nota">Valores estimados, a confirmar pelo Financeiro. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. ${statusBonus(m)}.${!m.piso?" Ainda abaixo do piso de entrada de 5 t de híbridos.":""}${m.abertoN?` Em negociação no CRM: ${m.abertoN} pedidos, ${fmtK0(m.abertoRs)}.`:""}${m.saldo<0?" O PGD aprovado está acima do IGDB previsto até aqui.":""}</div>
+  ${vCanalNaMeta(m)}
   ${vCanalAbertas(m)}
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
