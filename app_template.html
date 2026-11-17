@@ -538,7 +538,7 @@ main.largo{max-width:1120px}
 .rodape-in{max-width:1100px;margin:0 auto;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:6px;font-size:13px;color:var(--apagado);line-height:1.5}
 .rodape-in p{margin:0}
 .rodape-in .mkt-c+.mkt-c::before{content:" · "}
-.seg-nota{display:flex;align-items:baseline;gap:6px}.seg-nota b{font-size:34px;line-height:1;color:var(--azul)}.seg-cat{display:grid;gap:10px}.seg-it{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:8px 0;border-top:1px solid #e3e8ec}.seg-it:first-of-type{border-top:0}.seg-st{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}.seg-ok{background:#e6f4ec;color:#1f6b43}.seg-par{background:#fff4e0;color:#8a5a00}.seg-pen{background:#fdeaea;color:#a12a2a}.seg-it p{margin:2px 0 0;font-size:14px}.seg-ref{font-size:12px;color:var(--apagado)}.seg-barra{height:8px;background:#e3e8ec;border-radius:4px;overflow:hidden}.seg-barra i{display:block;height:100%;background:var(--azul)}
+.priv-txt{max-width:72ch}.priv-txt .mkt-c+.mkt-c::before{content:" · "}.priv-txt p{margin:6px 0 0}.priv-txt ul{margin:6px 0 0;padding-left:20px}.seg-nota{display:flex;align-items:baseline;gap:6px}.seg-nota b{font-size:34px;line-height:1;color:var(--azul)}.seg-cat{display:grid;gap:10px}.seg-it{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:8px 0;border-top:1px solid #e3e8ec}.seg-it:first-of-type{border-top:0}.seg-st{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}.seg-ok{background:#e6f4ec;color:#1f6b43}.seg-par{background:#fff4e0;color:#8a5a00}.seg-pen{background:#fdeaea;color:#a12a2a}.seg-it p{margin:2px 0 0;font-size:14px}.seg-ref{font-size:12px;color:var(--apagado)}.seg-barra{height:8px;background:#e3e8ec;border-radius:4px;overflow:hidden}.seg-barra i{display:block;height:100%;background:var(--azul)}
 .cx h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado);font-weight:700}
 .areas{display:grid}
 .area-b{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--linha);padding:11px 2px;font:inherit;font-weight:700;color:var(--azul-escuro);cursor:pointer}
@@ -1365,6 +1365,7 @@ function vLogin(erro){
       <div><label for="sq_perfil">Você é</label><select id="sq_perfil">${PERFIS.filter(p=>p!=="Administrador").map(p=>`<option>${esc(p)}</option>`).join("")}</select></div>
       <div><label for="sq_uf">Estado (UF)</label><input id="sq_uf" maxlength="2" autocapitalize="characters" placeholder="Ex.: MT"></div>
       <div><label for="sq_msg">Quem da Barenbrug te indicou? (opcional)</label><input id="sq_msg" maxlength="200"></div>
+      <p class="meta">Seus dados são usados para analisar e liberar o seu acesso. Veja o <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button>.</p>
       ${err}<button class="btn" type="submit">Enviar solicitação</button>${voltar}</form>`;
   else form=`<form class="acesso-form" id="f-login"><h2>Entrar</h2><p>Use o e-mail e a senha que você recebeu.</p>
       <div><label for="email">E-mail</label><input id="email" type="email" required autocomplete="email"></div>
@@ -1372,6 +1373,7 @@ function vLogin(erro){
       ${err}
       <button class="btn" type="submit">Entrar</button>
       <div class="acesso-links"><button type="button" class="link" data-a="acesso-modo" data-v="esqueci">Esqueci minha senha</button><button type="button" class="link" data-a="acesso-modo" data-v="solicitar">Ainda não tenho acesso — solicitar</button></div>
+      <p class="meta">Veja como tratamos seus dados no <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button>.</p>
     </form>`;
   return `<div class="acesso">${marca}${form}</div>`;
 }
@@ -7695,6 +7697,24 @@ const ehEmb=()=>!!S.souEmb;
 const moderaDuv=()=>ehAdmin()||ehEmb();
 const mktContatosHTML=()=>MKT_CONTATOS.map(c=>`<span class="mkt-c"><strong>${esc(c.nome)}</strong>${c.email?` · <a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}</span>`).join("");
 
+
+const PRIV_VER="Versão 1 · 17/11/2026";
+function vPrivacidade(){
+  const sec=(t,h)=>`<section class="bloco"><h2 class="sec">${t}</h2>${h}</section>`;
+  return `<div><p><button type="button" class="link" data-a="priv-voltar">‹ Voltar</button></p><h1 class="titulo">Aviso de privacidade</h1><p class="sub">Como o Portal Conecta Barenbrug trata os dados pessoais de quem usa o portal e dos contatos comerciais que passam por ele, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018). ${PRIV_VER}.</p></div>
+  <div class="priv-txt">
+  ${sec("1. Quem trata os dados",`<p>A Barenbrug do Brasil é a controladora dos dados tratados no Portal Conecta. O portal é mantido pelo Marketing Barenbrug e serve a revendas, representantes comerciais (RCs), time comercial e parceiros convidados.</p>`)}
+  ${sec("2. Que dados usamos",`<p><strong>Seu cadastro:</strong> nome, e-mail, WhatsApp, cidade e UF, função, empresa ou revenda, CNPJ e razão social quando você representa uma empresa, região de atuação, formação, marcas com que trabalha e foto de perfil, que é opcional.</p>
+   <p><strong>Seu uso do portal:</strong> data do último acesso, progresso e respostas nos cursos e provas, mensagens, dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
+   <p><strong>Contatos comerciais:</strong> dados de produtores e clientes que pediram atendimento à Barenbrug (nome, telefone, e-mail, cidade e o histórico da negociação), vindos do CRM da Barenbrug, para que a pessoa certa faça o atendimento.</p>`)}
+  ${sec("3. Para que usamos",`<ul><li>Liberar, controlar e proteger o seu acesso.</li><li>Oferecer treinamento, provas e certificados.</li><li>Operar os programas de relacionamento Conecta RC e Conecta Revendas, com metas, ranking e materiais.</li><li>Direcionar contatos de clientes interessados ao atendimento comercial da sua região.</li><li>Apoiar a venda, com tabela de preços, propostas e informações de mercado.</li><li>Cumprir obrigações legais e registrar ações para segurança e auditoria.</li></ul>`)}
+  ${sec("4. Bases legais",`<p>Tratamos os dados para executar a relação comercial com você ou com a empresa que você representa (art. 7º, V), pelo legítimo interesse da Barenbrug em treinar e apoiar a sua rede comercial e em atender quem pediu contato (art. 7º, IX), para cumprir obrigações legais (art. 7º, II) e, para a foto de perfil e outros dados opcionais, com o seu consentimento (art. 7º, I), que você pode retirar quando quiser.</p>`)}
+  ${sec("5. Com quem compartilhamos",`<p>Dentro do portal, cada pessoa vê só o que o perfil dela permite. Os dados não são vendidos. Usamos prestadores que tratam dados em nome da Barenbrug: Supabase (banco de dados, hospedado em São Paulo), RD Station (CRM e marketing da Barenbrug) e GitHub (hospedagem da interface do site, sem dados pessoais). Vídeos do YouTube exibidos no portal seguem a política de privacidade do YouTube.</p>`)}
+  ${sec("6. Como protegemos",`<p>Acesso só com login, verificação em duas etapas exigida pelo administrador conforme o perfil, regras de acesso por perfil aplicadas no banco de dados, tráfego criptografado, contato de cliente exibido só sob demanda e registro de quem abriu, e chaves de integração guardadas no servidor. O portal não usa cookies de publicidade nem ferramentas de rastreamento de terceiros; o navegador guarda apenas a sua sessão de login.</p>`)}
+  ${sec("7. Por quanto tempo guardamos",`<p>Enquanto o seu acesso estiver ativo. Quando o acesso é encerrado, os dados de cadastro são excluídos ou anonimizados, exceto o que precisa ser mantido por obrigação legal, para defesa em processos ou nos registros de segurança, pelo prazo necessário a esses fins.</p>`)}
+  ${sec("8. Seus direitos",`<p>Você pode pedir a qualquer momento: confirmação de que tratamos seus dados, acesso a eles, correção, anonimização, bloqueio ou eliminação do que for desnecessário, portabilidade, informação sobre com quem compartilhamos e revisão do consentimento (art. 18). Parte do seu cadastro você mesmo corrige em Meu perfil.</p><p>Para pedir, fale com o Marketing Barenbrug, que encaminha ao encarregado de dados da empresa: ${mktContatosHTML()}</p>`)}
+  ${sec("9. Mudanças neste aviso",`<p>Este aviso pode ser atualizado. A versão e a data ficam no topo da página.</p>`)}
+  </div>`;}
 const SEG_VERIF="17/11/2026";
 const SEG_SENHA_VAZADA=false;
 async function carregarSeg(){if(S.segBusy)return;S.segBusy=true;try{const {data,error}=await sb.rpc("seg_status");S.segSt=error?null:data;}catch(e){S.segSt=null;}S.segBusy=false;render();}
@@ -7733,7 +7753,7 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Dados hospedados no Brasil","Banco na região sa-east-1 (São Paulo)."],
     [ok,"Dado pessoal mínimo e sob demanda","Contato de lead só por clique, para quem tem a área e a UF; o resto das telas mostra dado agregado."],
     [L.buckets_pub&&!/^(avatares|mural)(, (avatares|mural))?$/.test(L.buckets_pub)?par:ok,"Arquivos privados com link temporário",`${L.buckets_priv} pastas de arquivo privadas, abertas só por link que expira em minutos. Públicas: ${esc(L.buckets_pub||"nenhuma")} (fotos de perfil e imagens do mural).`],
-    [pen,"Aviso de privacidade no portal","Falta um aviso de privacidade e termo de uso visível no login, dizendo que dados são tratados e para quê."]]},
+    [par,"Aviso de privacidade no portal","Publicado no login, no pedido de acesso e no rodapé (versão 1, 17/11/2026): que dados, para quê, bases legais, compartilhamento, retenção e direitos do titular. Falta a validação do jurídico, que também define o contato do encarregado de dados."]]},
   {k:"Infraestrutura e continuidade",w:5,ref:"Supabase Security Advisor · CIS Controls v8 (11, 16)",it:[
     [ok,"Banco gerenciado e atualizado",`PostgreSQL ${esc(L.pg)} gerenciado pelo Supabase, com criptografia em trânsito e em repouso.`],
     [par,"Backup e restauração","Depende do plano contratado no Supabase: o plano gratuito não inclui backup restaurável; o Pro inclui backup diário. Confirmar o plano no painel e testar uma restauração."],
@@ -7767,7 +7787,7 @@ function vSeguranca(){
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
-  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
+  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
@@ -7813,6 +7833,7 @@ function renderApp(){
   if(S.canalSel&&rvSoVinculo()&&S.canais&&!S.canais.some(k=>k.id===S.canalSel))S.canalSel=null;
   if(S.mfa){app.innerHTML=vMFA();const c=document.getElementById("mfa_cod");if(c&&!c.value)c.focus();return;}
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
+  if(S.pag==="privacidade"){app.innerHTML=(S.user&&S.profile?cabecalho():"")+`<main>${vPrivacidade()}</main>`;return;}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
   if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
   if(S.pag!=="usuario")S.formAlvo="form";
@@ -8120,6 +8141,8 @@ document.addEventListener("click",async ev=>{
   if(a==="gmsg-ver"){const id=(document.getElementById("mx_ver")||{}).value;if(!id)return;b.disabled=true;const {data,error}=await sb.rpc("adm_contatos_de",{p:id});b.disabled=false;if(error){aviso("Não foi possível conferir.");return;}S.msgVer=id;S.msgVerRes=data||[];render();return;}
   if(a==="gt-filtro"){S.gtF={q:"",perfil:"",acesso:v};S.pag="gestao-pessoas";render();return;}
   if(a==="gt-time"){S.gtTime=v;S.pag="gestao-times";render();return;}
+  if(a==="priv-abrir"){S.privDe={secao:S.secao,pag:S.pag};S.secao=null;S.pag="privacidade";render();window.scrollTo(0,0);return;}
+  if(a==="priv-voltar"){const d=S.privDe||{};S.secao=d.secao||null;S.pag=d.pag&&d.pag!=="privacidade"?d.pag:"hub";S.privDe=null;render();window.scrollTo(0,0);return;}
   if(a==="acesso-modo"){S.acessoModo=v;S._erro=null;render();window.scrollTo(0,0);return;}
   if(a==="copiar"){const t=(S.copias||{})[v]||"";try{await navigator.clipboard.writeText(t);aviso("Mensagem copiada.");}catch(e){aviso("Não deu para copiar automaticamente. Selecione o texto e copie.");}return;}
   if(a==="mfa-reset"){S.mfaReset=v||null;render();return;}
