@@ -1179,7 +1179,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117151638";
+const APP_VER="20261117161210";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3840,15 +3840,20 @@ function rvvDetalhe(c,r){
     `<p class="meta" style="margin:0 0 6px">Meta: <strong>${kg(d.meta)}</strong> · tier ${esc(d.tier)} (IGDB ${pt(g.ih)} híbridos, ${pt(g.ic)} convencionais; bônus ${pt(g.b)} híbridos)</p>
      ${barra("Pago",s.pago.ating,"#2E8B57")}${barra("Faturado",s.faturado.ating,"#0090D0")}${barra("Com os encarteirados",s.total.ating,"#E0A800")}`);
   const cen=[["Disponível hoje","IGDB sobre o que o canal já pagou. É o que pode ser usado agora nas ações de PGD.",s.pago,v.pag_rs_h,v.pag_rs_c,"rvv-c1"],["Se pagar todo o faturado","Todas as notas já emitidas quitadas.",s.faturado,v.fat_rs_h,v.fat_rs_c,"rvv-c2"],["Potencial","Faturar e pagar também os pedidos encarteirados.",s.total,v.tot_rs_h,v.tot_rs_c,"rvv-c3"]];
-  const q4=q(4,"IGDB e Bônus de Performance por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Bônus = % do tier × R$ de híbridos × fator da meta. Total limitado ao teto do programa.",
+  const q4=q(4,"IGDB por cenário","IGDB = % do tier × R$ de híbridos + % do tier × R$ de convencionais. Não depende de bater a meta: é gerado sobre o que for faturado e pago.",
     `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">${e}</span>
-      <div class="rvv-l"><span>IGDB híbridos</span><span>${rs(rh)} × ${pt(g.ih)}</span><strong>${rs(z.igdb_h)}</strong></div>
-      <div class="rvv-l"><span>IGDB convencionais</span><span>${rs(rc)} × ${pt(g.ic)}</span><strong>${rs(z.igdb_c)}</strong></div>
-      <div class="rvv-l"><span>Bônus</span><span>${rs(rh)} × ${pt(g.b)} × ${z.fator===1?"100%":z.fator?"70%":"0% (abaixo de 90%)"}</span><strong>${rs(z.bf)}</strong></div>
-      <div class="rvv-l rvv-tot"><span>Total</span><span>${z.teto?"limitado ao teto":""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
+      <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.ih)}</span><strong>${rs(z.igdb_h)}</strong></div>
+      <div class="rvv-l"><span>Convencionais</span><span>${rs(rc)} × ${pt(g.ic)}</span><strong>${rs(z.igdb_c)}</strong></div>
+      <div class="rvv-l rvv-tot"><span>IGDB</span><span></span><strong>${rs(z.igdb_h+z.igdb_c)}</strong></div></div>`).join("")}</div>`);
+  const q5=q(5,"Bônus de Performance por cenário","Bônus = % do tier × R$ de híbridos × fator da meta (100% com a meta batida, 70% entre 90% e 99,99%, zero abaixo de 90%). IGDB + bônus ficam limitados ao teto do programa.",
+    `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">Meta atingida neste cenário: ${pc(z.ating)}</span>
+      <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.b)}</span><strong>${rs(rh*g.b)}</strong></div>
+      <div class="rvv-l"><span>Fator da meta</span><span>${z.fator===1?"meta batida":z.fator?"entre 90% e 99,99%":"abaixo de 90%"}</span><strong>${z.fator===1?"100%":z.fator?"70%":"0%"}</strong></div>
+      <div class="rvv-l rvv-tot"><span>Bônus</span><span></span><strong>${rs(z.bf)}</strong></div>
+      <div class="rvv-l"><span>IGDB + bônus</span><span>${z.teto?"limitado ao teto":""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
      ${s.bf_fat_meta_total&&s.faturado.fator<1?`<p class="meta" style="margin:6px 0 0">Se a meta for batida com os encarteirados, o bônus sobre o já faturado seria ${rs(s.bf_fat_meta_total)}.</p>`:""}`);
   const dif=(a,b)=>{const x=a-b;return x?` <span class="meta" style="color:${x>0?"#2E8B57":"var(--vermelho)"}">(${x>0?"+":""}${fmtK0(x)})</span>`:"";};
-  const q5=q(5,"Comparação com o que o canal vê hoje","Hoje a página do canal calcula pelos pedidos ganhos no CRM. Depois de publicado, passa a usar estes números validados.",
+  const q6=q(6,"Comparação com o que o canal vê hoje","Hoje a página do canal calcula pelos pedidos ganhos no CRM. Depois de publicado, passa a usar estes números validados.",
     `<div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">${pub?"Publicado":"Portal hoje (CRM)"}</th><th class="val">Validado agora</th></tr></thead><tbody>
       <tr><td>Híbridos na safra (kg)</td><td class="val">${kg(cp.kgH)}</td><td class="val">${kg(v.tot_kg_h)}</td></tr>
       <tr><td>IGDB previsto</td><td class="val">${rs(cp.igdb)}</td><td class="val">${rs(s.total.igdb)}${dif(s.total.igdb,cp.igdb)}</td></tr>
@@ -3858,7 +3863,7 @@ function rvvDetalhe(c,r){
       <span class="meta">${pub?`Validado por ${esc(pub.validado_nome||"—")} em ${fmtDataHora(pub.validado_em)} (Financeiro de ${dt(pub.situacao_em)}). A revenda e o comercial veem estes números.`:"A página do canal continua com os números do CRM. Confira os quadros abaixo e publique quando estiver certo."}</span></div>
       <div class="acoes" style="margin:0"><label class="check"><input type="checkbox" id="rvv_ok"> Conferi os números deste canal</label><button class="btn" data-a="rvv-pub" data-v="${esc(c.id)}">${pub?"Publicar de novo":"Validar e publicar"}</button>${pub?`<button class="link perigo" data-a="rvv-despub" data-v="${esc(c.id)}">voltar para os números do CRM</button>`:""}</div></div>`;
   return `<section class="bloco rvv-det"><div class="mk-link" style="justify-content:space-between"><div><span class="rot">Validação</span><h2 class="sec" style="margin:0">${esc(c.nome)}</h2><span class="meta">Códigos de cliente no ERP: ${d.codigos.map(k=>esc(k+" ("+(d.fil[k]||"")+")")).join(" · ")||"nenhum pedido na safra"}</span></div><button class="link" data-a="rvv-sel" data-v="">fechar</button></div>
-    ${pubBox}${q1}${q2}${q3}${q4}${q5}
+    ${pubBox}${q1}${q2}${q3}${q4}${q5}${q6}
     <details class="lote"><summary>Notas fiscais e pagamento · ${d.nfs.length}</summary>${d.nfs.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>NF</th><th>Emissão</th><th class="val">Valor (com impostos)</th><th class="val">Devolução</th><th class="val">Permuta</th><th class="val">Em aberto</th><th class="val">Pago</th><th>Próx. vencimento</th></tr></thead><tbody>${d.nfs.map(n=>`<tr><td>${esc(n.nf)}<br><span class="meta">${n.parcelas} parc.</span></td><td>${dt(n.emis)}</td><td class="val">${rs(n.valor)}</td><td class="val">${n.dev?rs(n.dev):"—"}</td><td class="val">${n.perm?rs(n.perm):"—"}</td><td class="val">${n.aberto?rs(n.aberto):"—"}${n.vencido?`<br><span class="meta" style="color:var(--vermelho)">vencido ${rs(n.vencido)}</span>`:""}</td><td class="val">${pc(n.pago_pct)}</td><td>${dt(n.prox_venc)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma nota da safra.</div>`}</details>
     <details class="lote"><summary>Pedidos do BI · ${d.linhas.length} linhas</summary>${d.linhas.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Situação</th><th>PV</th><th>NF</th><th>Cultivar</th><th class="val">kg</th><th class="val">R$ (líquido)</th><th class="val">Pago</th><th>Faturamento</th></tr></thead><tbody>${d.linhas.map(l=>`<tr><td>${l.st==="Order"?stTag("Encarteirado","amarelo"):stTag("Faturado","azul")}${l.sit?`<br><span class="meta">${esc(l.sit)}</span>`:""}</td><td>${esc(l.pv)}</td><td>${esc(l.nf||"—")}${l.semTitulo?'<br><span class="meta">sem título</span>':""}</td><td>${esc(l.cv)}${RVV_HIB.includes(l.cv)?" "+stTag("híbrido","verde"):""}</td><td class="val">${kg(l.kg)}</td><td class="val">${rs(l.rs)}</td><td class="val">${l.st==="Order"?"—":pc(l.pago_pct)}</td><td>${dt(l.dfat)}${l.stfin&&l.stfin!=="Liberado"?`<br><span class="meta">${esc(l.stfin)}</span>`:""}</td></tr>`).join("")}</tbody></table></div>`:""}</details></section>`;
 }
