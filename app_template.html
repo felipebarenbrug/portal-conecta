@@ -985,13 +985,13 @@ const SECOES=[
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
   {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
-  {id:"inteligencia",nome:"Inteligência de Marketing",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
+  {id:"inteligencia",nome:"Inteligência",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"acoes-mkt",nome:"Ações de Marketing",desc:"Quadro das ações de marketing institucionais: cartões com valores, arquivos, links e comentários; verba e saldo da safra.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
-const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência de Marketing"],["financeiro","Marketing + Financeiro"]];
+const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência"],["financeiro","Marketing + Financeiro"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
@@ -5443,8 +5443,8 @@ function vIntRaci(){
 }
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inteligência de Marketing">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Inteligência de Marketing</span></div></div>`;
+    <nav class="nav" aria-label="Inteligência">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Inteligência</span></div></div>`;
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
@@ -5477,7 +5477,7 @@ function vIntCanais(){
   ${vIntAudCanais(nome)}`;
 }
 
-/* ---------- Inteligência de Marketing: análises de venda ---------- */
+/* ---------- Inteligência: análises de venda ---------- */
 async function carregarIntMapa(){
   if(S.intBusy)return;S.intBusy=true;
   try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}t.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);const u=cliCanon(r);if(u){r.org="u:"+u;r.nome=u+" - "+r.nome;}});S.intMapa=t;S.pfC=null;}catch(e){S.intMapa=[];}
