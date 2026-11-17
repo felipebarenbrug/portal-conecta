@@ -1360,7 +1360,7 @@ function cabecalho(){
 }
 function veCalcRent(){const ac=Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];return ehAdmin()||ac.includes("calculadora");}
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],...(veConc()?[["concorrentes","Concorrentes"]]:[])];
+  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -3953,7 +3953,7 @@ function vRVCanal(){
 /* ===== Concorrentes em híbridos (conteúdo no banco, uso interno) ===== */
 const veConc=()=>S.user&&!S.demo&&(ehAdmin()||!ehRevenda());
 function vConcorrentes(){
-  if(S.conc===undefined){S.conc=null;(async()=>{try{const {data}=await sb.from("academia_conteudo").select("*").eq("chave","concorrentes").maybeSingle();S.conc=data||false;}catch(e){S.conc=false;}if(S.pag==="concorrentes")render();})();}
+  if(S.conc===undefined){S.conc=null;(async()=>{try{const {data}=await sb.from("academia_conteudo").select("*").eq("chave","concorrentes").maybeSingle();S.conc=data||false;}catch(e){S.conc=false;}if(S.pag==="int-hibridos")render();})();}
   if(S.conc===null)return `<div class="carregando">Carregando…</div>`;
   if(!S.conc)return `<div><h1 class="titulo">Concorrentes em híbridos</h1></div><section class="bloco"><div class="vazio">Conteúdo indisponível para o seu acesso.</div></section>`;
   const d=S.conc.dados||{};
@@ -4398,7 +4398,7 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]];
+const INT_ABAS=[["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]];
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inteligência de Marketing">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -6137,7 +6137,7 @@ function rodapeMkt(){
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["concorrentes","Concorrentes"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
   "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
@@ -6158,12 +6158,12 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   document.addEventListener("keydown",ev=>{if(ev.key==="Escape")fecha();});
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
- trilha:"Cursos por cultivar com provas de certificação.",concorrentes:"Quem são os concorrentes em híbridos, genética, posicionamento e preço. Não aparece para revendas.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
+ trilha:"Cursos por cultivar com provas de certificação.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
- "int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando produtor e canal compram, por região, com os pedidos da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-modelos":"Modelos de representação comercial.",
+ "int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando produtor e canal compram, por região, com os pedidos da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
@@ -6226,7 +6226,7 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,concorrentes:()=>veConc()?vConcorrentes():vTrilha(),calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
     app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
   }
@@ -6264,7 +6264,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-redes"?vIntRedes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-redes"?vIntRedes():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
