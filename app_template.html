@@ -447,6 +447,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .mk-anexar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .nav .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#C8102E;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;margin-left:4px}
 .chip[aria-pressed="true"] .meta{color:inherit;opacity:.8}
+.vit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.vit-card{display:grid;gap:6px;text-align:left;background:var(--branco,#fff);border:1px solid var(--linha);border-radius:12px;padding:14px;cursor:pointer;font:inherit;color:inherit;min-width:0}.vit-card:hover{border-color:var(--azul)}.vit-card strong{font-size:16px}.vit-st{justify-self:start;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}.vit-cults{display:flex;flex-wrap:wrap;gap:4px}.vit-fs{border:1px solid var(--linha);border-radius:10px;padding:10px 12px;display:grid;gap:8px;min-width:0}.vit-fs legend{font-weight:700;padding:0 4px}
 .gt-filtros{display:flex;flex-wrap:wrap;gap:8px}.gt-filtros input{flex:2 1 220px;min-width:0}.gt-filtros select{flex:1 1 180px;min-width:0}
 .mk-link{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 320px;min-width:0}.mk-link input{flex:1 1 160px;min-width:0}
 .mk-coms{display:flex;flex-direction:column;gap:8px}.mk-com{background:var(--branco);border-radius:8px;padding:10px 12px}.mk-com p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -949,10 +950,11 @@ const SECOES=[
   {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
   {id:"inteligencia",nome:"Inteligência de Marketing",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"acoes-mkt",nome:"Ações de Marketing",desc:"Quadro das ações de marketing institucionais: cartões com valores, arquivos, links e comentários; verba e saldo da safra.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
+  {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência de Marketing"],["financeiro","Marketing + Financeiro"]];
+const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência de Marketing"],["financeiro","Marketing + Financeiro"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
@@ -2510,6 +2512,8 @@ async function propBaixar(x){
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;if(t.dataset&&t.dataset.lochk){const [id,k]=t.dataset.lochk.split("|");const ed=S.loEd||(S.loEd={});const base=(S.loAcc||[]).find(x=>x.user_id===id)||{perfis:[],ufs:[],situacoes:[],so_pediu:false,ativo:true};const e=ed[id]||(ed[id]={perfis:[...(base.perfis||[])],ufs:[...(base.ufs||[])],situacoes:[...(base.situacoes||[])],so_pediu:base.so_pediu,ativo:base.ativo!==false});e[k]=t.checked;S.loCfgAberto=true;render();return;}
   if(t.dataset&&t.dataset.lof&&t.tagName==="SELECT"){const F=S.loF||(S.loF={});F[t.dataset.lof]=t.value;loLista(false).then(render);}});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.vitf)return;(S.vitF||(S.vitF={}))[t.dataset.vitf]=t.value;render();});
+let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!ehAdmin())return;
   if(t.dataset.vinccanal){const id=t.dataset.vinccanal,novo=t.value||null;const p=(S.equipe||[]).find(x=>x.id===novo);t.disabled=true;
@@ -3023,7 +3027,7 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
+  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu o curso de Sabiá, Cayana e Carcará. Conclua a trilha e a prova na Academia de Híbridos para liberar as demais áreas.</div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
@@ -6148,6 +6152,118 @@ function vAcoesMkt(){
 }
 
 /* ---------- Brindes de Marketing ---------- */
+/* ===== Áreas demonstrativas (vitrines) ===== */
+const VIT_ST=["Planejada","Plantada","Em formação","Aberta para visitas","Encerrada"];
+const VIT_COR={"Planejada":"#8A8F98","Plantada":"#2E8B57","Em formação":"#E0A800","Aberta para visitas":"#0090D0","Encerrada":"#5B3A8E"};
+const VIT_CULT=["Sabiá","Cayana","Carcará","Mulato II","Outra"];
+const veVit=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("vitrines"));
+async function carregarVit(){
+  if(S.vitBusy)return;S.vitBusy=true;
+  try{const [v,c,p]=await Promise.all([sb.from("vitrines").select("*").order("data_plantio",{ascending:false,nullsFirst:false}),sb.from("canais").select("id,nome").order("nome"),ehMkt()?sb.from("profiles").select("id,nome,perfil,perfis").eq("ativo",true).order("nome"):Promise.resolve({data:[]})]);
+    S.vit=v.data||[];S.vitCanais=c.data||[];S.vitPessoas=(p.data||[]).filter(x=>!["Gestor de Revenda","Vendedor de Revenda"].includes(x.perfil));}catch(e){S.vit=[];}
+  try{await carregarGeo();}catch(e){}
+  S.vitBusy=false;render();
+}
+function subnavVit(){const abas=[["vit-lista","Áreas"],["vit-mapa","Mapa"]];
+  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
+    <nav class="nav" aria-label="Áreas demonstrativas">${abas.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="vit-lista"&&/^vit-(card|form)/.test(S.pag))?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <span class="secao-nome">Áreas demonstrativas</span></div></div>`;}
+const vitHa=v=>Number(v.area_ha)||(Array.isArray(v.cultivares)?v.cultivares.reduce((t,x)=>t+(Number(x.ha)||0),0):0);
+const vitCults=v=>(Array.isArray(v.cultivares)?v.cultivares:[]).filter(x=>x&&x.cult);
+const vitLL=v=>(v.lat!=null&&v.lng!=null&&v.lat!==""&&v.lng!=="")?[+v.lat,+v.lng]:geoLL(v.uf,v.cidade);
+const vitParc=v=>v.parceiro_tipo==="Institucional"||!v.parceiro_tipo?"Institucional (sem parceiro)":v.parceiro_tipo==="Revenda"?"Revenda: "+(((S.vitCanais||[]).find(k=>k.id===v.canal_id)||{}).nome||v.parceiro_nome||"—"):"RC: "+(v.parceiro_nome||"—");
+const vitData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
+function vitFiltrados(){const F=S.vitF||(S.vitF={uf:"",st:"",cult:"",q:""});const q=finNorm(F.q||"");
+  return (S.vit||[]).filter(v=>(!F.uf||v.uf===F.uf)&&(!F.st||v.status===F.st)&&(!F.cult||vitCults(v).some(x=>x.cult===F.cult))&&(!q||finNorm([v.titulo,v.local_nome,v.cidade,v.responsavel_nome,v.parceiro_nome,(v.corresponsaveis||[]).join(" ")].join(" ")).includes(q)));}
+function vitFiltrosHTML(){const F=S.vitF||(S.vitF={uf:"",st:"",cult:"",q:""});const ufs=[...new Set((S.vit||[]).map(v=>v.uf).filter(Boolean))].sort();
+  return `<div class="gt-filtros" style="margin-bottom:10px"><input type="search" id="vit_q" placeholder="Buscar por nome, fazenda, cidade ou responsável" value="${esc(F.q||"")}">
+    <select data-vitf="uf"><option value="">Todos os estados</option>${ufs.map(u=>`<option ${F.uf===u?"selected":""}>${u}</option>`).join("")}</select>
+    <select data-vitf="cult"><option value="">Todas as cultivares</option>${VIT_CULT.map(c=>`<option ${F.cult===c?"selected":""}>${c}</option>`).join("")}</select>
+    <select data-vitf="st"><option value="">Todas as situações</option>${VIT_ST.map(c=>`<option ${F.st===c?"selected":""}>${c}</option>`).join("")}</select></div>`;}
+function vVitLista(){
+  if(!S.vit)return `<div class="carregando">Carregando as áreas…</div>`;
+  const L=vitFiltrados(),g=ehMkt();const tot=L.reduce((t,v)=>t+vitHa(v),0);
+  const card=v=>`<button class="vit-card" data-a="vit-abrir" data-v="${v.id}"><span class="vit-st" style="background:${VIT_COR[v.status]||"#8A8F98"}">${esc(v.status||"Planejada")}</span>
+    <strong>${esc(v.titulo)}</strong><span class="meta">${esc([v.local_nome,v.cidade&&v.uf?v.cidade+"/"+v.uf:v.uf].filter(Boolean).join(" · ")||"local a definir")}</span>
+    <span class="vit-cults">${vitCults(v).map(x=>`<span class="selo">${esc(x.cult)}${Number(x.ha)?" · "+isNum(x.ha)+" ha":""}</span>`).join("")||`<span class="meta">cultivares a definir</span>`}</span>
+    <span class="meta">${vitHa(v)?isNum(vitHa(v))+" ha · ":""}plantio ${vitData(v.data_plantio)} · ${esc(vitParc(v))}</span>
+    <span class="meta">Responsável: ${esc(v.responsavel_nome||"—")}</span></button>`;
+  return `<div><h1 class="titulo">Áreas demonstrativas</h1><p class="sub">Vitrines de híbridos plantadas com revendas, RCs ou pela própria Barenbrug: onde estão, o que foi plantado, quem cuida e os documentos de cada uma.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px"><div class="metric"><span>Áreas</span><strong>${L.length}</strong><span class="meta">de ${(S.vit||[]).length} cadastradas</span></div><div class="metric"><span>Hectares</span><strong>${isNum(tot)} ha</strong></div><div class="metric"><span>Estados</span><strong>${new Set(L.map(v=>v.uf).filter(Boolean)).size}</strong></div><div class="metric"><span>Com revenda ou RC</span><strong>${L.filter(v=>v.parceiro_tipo&&v.parceiro_tipo!=="Institucional").length}</strong><span class="meta">${L.filter(v=>!v.parceiro_tipo||v.parceiro_tipo==="Institucional").length} institucionais</span></div></div>
+  ${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn" data-a="vit-nova">+ Nova área demonstrativa</button></div>`:""}
+  ${vitFiltrosHTML()}
+  ${L.length?`<div class="vit-grid">${L.map(card).join("")}</div>`:`<div class="vazio">${(S.vit||[]).length?"Nenhuma área com esses filtros.":"Nenhuma área cadastrada ainda."+(g?" Use \"+ Nova área demonstrativa\".":"")}</div>`}`;
+}
+function vVitMapa(){
+  if(!S.vit)return `<div class="carregando">Carregando o mapa…</div>`;
+  if(!GEO)return `<div class="vazio">Não foi possível carregar o mapa. Recarregue a página.</div>`;
+  const L=vitFiltrados();const com=L.filter(v=>vitLL(v)),sem=L.filter(v=>!vitLL(v));const mx=Math.max(1,...com.map(vitHa));
+  let g="";for(const v of com.slice().sort((a,b)=>vitHa(b)-vitHa(a))){const [la,lo]=vitLL(v);const r=.22+.5*Math.sqrt((vitHa(v)||1)/mx);g+=`<circle cx="${GEO.px(lo).toFixed(2)}" cy="${GEO.py(la).toFixed(2)}" r="${r.toFixed(2)}" fill="${VIT_COR[v.status]||"#8A8F98"}" stroke="#fff" stroke-width=".07" style="cursor:pointer" data-a="vit-abrir" data-v="${v.id}"><title>${esc(v.titulo)} · ${esc(v.cidade||"")}/${esc(v.uf||"")} · ${vitHa(v)?isNum(vitHa(v))+" ha · ":""}${esc(v.status||"")}</title></circle>`;}
+  return `<div><h1 class="titulo">Mapa das áreas demonstrativas</h1><p class="sub">Cada ponto é uma área, do tamanho da área plantada e na cor da situação. Toque no ponto para abrir a área. Quando a área tem coordenadas, o ponto fica no lugar exato; sem elas, fica na cidade.</p></div>
+  ${vitFiltrosHTML()}
+  <div class="mp-grid"><div style="display:grid;gap:8px;min-width:0">${imBase(g,"Mapa do Brasil com as áreas demonstrativas")}
+    <div class="mp-leg">${VIT_ST.map(s=>`<span><i style="background:${VIT_COR[s]}"></i>${s}</span>`).join("")}</div>
+    ${sem.length?`<p class="dica">${sem.length} ${sem.length===1?"área sem cidade reconhecida fica":"áreas sem cidade reconhecida ficam"} fora do mapa: ${sem.map(v=>esc(v.titulo)).join(", ")}.</p>`:""}</div>
+  <section class="bloco" style="margin:0"><h2 class="sec">Por estado</h2>${(()=>{const o={};L.forEach(v=>{const u=v.uf||"Sem UF";(o[u]=o[u]||{n:0,ha:0});o[u].n++;o[u].ha+=vitHa(v);});return Object.entries(o).sort((a,b)=>b[1].n-a[1].n).map(([u,x])=>`<div class="linha"><div><strong>${esc(u)}</strong><span class="meta">${x.n} ${x.n===1?"área":"áreas"} · ${isNum(x.ha)} ha</span></div></div>`).join("")||`<div class="vazio">Nenhuma área.</div>`;})()}</section></div>`;
+}
+function vVitCard(){
+  const v=(S.vit||[]).find(x=>x.id===S.vitSel);if(!v)return `<div class="carregando">Carregando…</div>`;const g=ehMkt();const A=Array.isArray(v.anexos)?v.anexos:[];
+  const lin=(r,t)=>`<div class="linha"><div><span class="meta">${r}</span><strong style="white-space:pre-wrap">${t}</strong></div></div>`;
+  const ll=vitLL(v);
+  return `<button class="voltar" data-a="pag" data-v="${S.vitVolta||"vit-lista"}">‹ ${S.vitVolta==="vit-mapa"?"Mapa":"Áreas"}</button>
+  <div><span class="rot">Área demonstrativa · <span style="color:${VIT_COR[v.status]||"#8A8F98"}">${esc(v.status||"Planejada")}</span></span><h1 class="titulo">${esc(v.titulo)}</h1><p class="sub">${esc([v.local_nome,v.cidade&&v.uf?v.cidade+"/"+v.uf:v.uf].filter(Boolean).join(" · ")||"Local a definir")}</p></div>
+  ${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="vit-editar">Editar</button>${S.vitDel?`<button class="btn perigo" data-a="vit-excluir">Confirmar exclusão</button><button class="link" data-a="vit-del" data-v="0">não excluir</button>`:`<button class="link perigo" data-a="vit-del" data-v="1">Excluir</button>`}</div>`:""}
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>Área</span><strong>${vitHa(v)?isNum(vitHa(v))+" ha":"—"}</strong></div><div class="metric"><span>Data do plantio</span><strong>${vitData(v.data_plantio)}</strong></div><div class="metric"><span>PV da bonificação</span><strong>${esc(v.pv_bonificacao||"—")}</strong></div><div class="metric"><span>Parceiro</span><strong style="font-size:18px">${esc(vitParc(v))}</strong></div></div>
+  <section class="bloco"><h2 class="sec">Dados da área</h2>
+    ${lin("Responsável",esc(v.responsavel_nome||"—"))}
+    ${lin("Corresponsáveis",esc((v.corresponsaveis||[]).join(", ")||"—"))}
+    ${lin("Localização",esc([v.local_nome,v.cidade,v.uf].filter(Boolean).join(" · ")||"—")+(v.lat!=null&&v.lng!=null?` <span class="meta">(${v.lat}, ${v.lng})</span>`:"")+(v.maps_url?` · <a class="link" href="${esc(v.maps_url)}" target="_blank" rel="noopener">abrir no mapa</a>`:ll?` · <a class="link" href="https://www.google.com/maps?q=${ll[0]},${ll[1]}" target="_blank" rel="noopener">ver no Google Maps</a>`:""))}
+    ${lin("Revenda ou RC parceiro",esc(vitParc(v)))}
+    ${lin("Cultivares plantadas",vitCults(v).map(x=>esc(x.cult)+(Number(x.ha)?" · "+isNum(x.ha)+" ha":"")).join("<br>")||"—")}
+    ${lin("Motivo da vitrine",esc(v.motivo||"—"))}
+    ${v.obs?lin("Observações",esc(v.obs)):""}
+  </section>
+  <section class="bloco"><h2 class="sec">Documentos anexados</h2>
+    ${A.length?`<div class="lista">${A.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"arquivo")}</strong><span class="meta">${x.tam?Math.round(x.tam/1024).toLocaleString("pt-BR")+" KB · ":""}${fmtDataHora(x.em)}</span></div><span><button class="link" data-a="vit-baixar" data-v="${esc(x.path)}">abrir</button>${g?` · <button class="link perigo" data-a="vit-rem-arq" data-v="${esc(x.path)}">remover</button>`:""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum documento.</div>`}
+    ${g?`<div class="acoes" style="margin-top:8px"><input type="file" id="vit_arq" multiple><button class="btn sec" data-a="vit-anexar">Anexar</button></div><p class="meta">Fotos, croqui, laudo de solo, contrato, nota da bonificação. Até 50 MB por arquivo.</p>`:""}
+  </section>`;
+}
+function vVitForm(){
+  const v=S.vitForm||{};const P=S.vitPessoas||[];const C=S.vitCanais||[];const cu=Array.isArray(v.cultivares)&&v.cultivares.length?v.cultivares:[{cult:"Sabiá",ha:""}];
+  return `<button class="voltar" data-a="${v.id?"vit-abrir":"pag"}" data-v="${v.id?v.id:"vit-lista"}">‹ Voltar</button>
+  <div><h1 class="titulo">${v.id?"Editar área demonstrativa":"Nova área demonstrativa"}</h1><p class="sub">Preencha o que já tiver; o resto pode ser completado depois.</p></div>
+  <form id="f-vit" class="form-card">
+    <div><label for="vt_tit">Nome da área *</label><input id="vt_tit" required maxlength="140" value="${esc(v.titulo||"")}" placeholder="Ex.: Vitrine Fazenda Boa Vista · Tractor Terra"></div>
+    <div class="dupla"><div><label for="vt_st">Situação</label><select id="vt_st">${VIT_ST.map(s=>`<option ${(v.status||"Planejada")===s?"selected":""}>${s}</option>`).join("")}</select></div><div><label for="vt_dt">Data do plantio</label><input id="vt_dt" type="date" value="${esc(v.data_plantio||"")}"></div></div>
+    <div class="dupla"><div><label for="vt_resp">Responsável</label><select id="vt_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${v.responsavel_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></div>
+      <div><label for="vt_cor">Corresponsáveis</label><input id="vt_cor" list="vt_pessoas" value="${esc((v.corresponsaveis||[]).join(", "))}" placeholder="Nomes separados por vírgula"><datalist id="vt_pessoas">${P.map(p=>`<option value="${esc(p.nome)}">`).join("")}</datalist></div></div>
+    <fieldset class="vit-fs"><legend>Localização</legend>
+      <div><label for="vt_loc">Fazenda ou endereço</label><input id="vt_loc" maxlength="160" value="${esc(v.local_nome||"")}"></div>
+      <div class="dupla"><div><label for="vt_cid">Cidade</label><input id="vt_cid" maxlength="80" value="${esc(v.cidade||"")}"></div><div><label for="vt_uf">Estado</label><select id="vt_uf"><option value="">—</option>${UF_LISTA.map(u=>`<option ${v.uf===u?"selected":""}>${u}</option>`).join("")}</select></div></div>
+      <div class="dupla"><div><label for="vt_ll">Coordenadas (opcional)</label><input id="vt_ll" value="${v.lat!=null&&v.lng!=null?esc(v.lat+", "+v.lng):""}" placeholder="Ex.: -10.8812, -61.9504"><span class="meta">No Google Maps, clique com o botão direito no ponto e copie os números.</span></div><div><label for="vt_maps">Link do mapa (opcional)</label><input id="vt_maps" maxlength="500" value="${esc(v.maps_url||"")}" placeholder="https://maps.google.com/…"></div></div></fieldset>
+    <fieldset class="vit-fs"><legend>Revenda ou RC parceiro</legend>
+      <div class="filtros">${["Revenda","RC","Institucional"].map(t=>`<label class="check"><input type="radio" name="vt_pt" value="${t}" ${(v.parceiro_tipo||"Institucional")===t?"checked":""}> ${t==="Institucional"?"Institucional (sem parceiro)":t}</label>`).join("")}</div>
+      <div class="dupla"><div><label for="vt_canal">Revenda do Conecta</label><select id="vt_canal"><option value="">— outra revenda (escrever ao lado) —</option>${C.map(k=>`<option value="${esc(k.id)}" ${v.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select></div><div><label for="vt_pn">Nome do RC ou da revenda</label><input id="vt_pn" maxlength="140" value="${esc(v.parceiro_nome||"")}" placeholder="Preencha para RC ou revenda fora do Conecta"></div></div></fieldset>
+    <fieldset class="vit-fs"><legend>Cultivares plantadas</legend>
+      <div id="vt_cults" style="display:grid;gap:6px">${cu.map((x,i)=>`<div class="mk-custo-l" data-vtc><div><label>Cultivar</label><select class="vt_c">${VIT_CULT.map(c=>`<option ${x.cult===c?"selected":""}>${c}</option>`).join("")}</select></div><div><label>Hectares</label><input class="vt_h" inputmode="decimal" value="${x.ha!=null?esc(String(x.ha).replace(".",",")):""}"></div>${cu.length>1?`<button type="button" class="link perigo" data-a="vit-cult-rm" data-v="${i}">remover</button>`:""}</div>`).join("")}</div>
+      <button type="button" class="btn sec" data-a="vit-cult-add" style="justify-self:start">+ Cultivar</button>
+      <div><label for="vt_ha">Tamanho total da área (ha)</label><input id="vt_ha" inputmode="decimal" value="${v.area_ha!=null?esc(String(v.area_ha).replace(".",",")):""}" placeholder="Em branco: soma das cultivares"></div></fieldset>
+    <div><label for="vt_mot">Motivo da vitrine</label><textarea id="vt_mot" rows="3" maxlength="2000">${esc(v.motivo||"")}</textarea></div>
+    <div class="dupla"><div><label for="vt_pv">PV do pedido da bonificação</label><input id="vt_pv" maxlength="60" value="${esc(v.pv_bonificacao||"")}" placeholder="Ex.: PV 12034"></div><div><label for="vt_obs">Observações</label><input id="vt_obs" maxlength="1000" value="${esc(v.obs||"")}"></div></div>
+    <p class="meta">Os documentos são anexados depois de salvar, na página da área.</p>
+    <div class="acoes"><button class="btn" type="submit">Salvar</button></div></form>`;
+}
+function vitLerForm(f){const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const num=t=>{t=String(t||"").replace(/\./g,"").replace(",",".");return t===""?null:(Number(t)||0);};
+  const cults=[...f.querySelectorAll("[data-vtc]")].map(r=>({cult:r.querySelector(".vt_c").value,ha:num(r.querySelector(".vt_h").value)})).filter(x=>x.cult);
+  const ll=val("vt_ll").split(/[,;\s]+/).filter(Boolean).map(Number);const resp=(S.vitPessoas||[]).find(p=>p.id===val("vt_resp"));
+  const pt=(f.querySelector("[name=vt_pt]:checked")||{}).value||"Institucional";
+  return {titulo:val("vt_tit"),status:val("vt_st"),data_plantio:val("vt_dt")||null,responsavel_id:resp?resp.id:null,responsavel_nome:resp?resp.nome:null,
+    corresponsaveis:val("vt_cor").split(",").map(x=>x.trim()).filter(Boolean),local_nome:val("vt_loc")||null,cidade:val("vt_cid")||null,uf:val("vt_uf")||null,
+    lat:ll.length===2&&ll.every(x=>isFinite(x))?ll[0]:null,lng:ll.length===2&&ll.every(x=>isFinite(x))?ll[1]:null,maps_url:val("vt_maps")||null,
+    parceiro_tipo:pt,canal_id:pt==="Revenda"?(val("vt_canal")||null):null,parceiro_nome:pt==="Institucional"?null:(val("vt_pn")||null),
+    cultivares:cults,area_ha:num(val("vt_ha")),motivo:val("vt_mot")||null,pv_bonificacao:val("vt_pv")||null,obs:val("vt_obs")||null};}
+function vVit(){if(!S.vit&&!S.vitBusy)carregarVit();return S.pag==="vit-mapa"?vVitMapa():S.pag==="vit-card"?vVitCard():S.pag==="vit-form"?vVitForm():vVitLista();}
+
 function subnavBrindes(){
   const g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length;
   const empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
@@ -6456,6 +6572,9 @@ document.addEventListener("submit",async ev=>{
     S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(ok?"Solicitação aprovada. Ela está no quadro como A fazer.":"Solicitação recusada.");return;}
   if(f.id==="f-mk-chk"){const t=val("mkc_t");if(!t)return;if(btn)btn.disabled=true;const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:"add",p_id:null,p_txt:t,p_resp:val("mkc_r")||null,p_prazo:val("mkc_p")||null});
     if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
+  if(f.id==="f-vit"){if(!ehMkt())return;const d=vitLerForm(f);if(!d.titulo){aviso("Dê um nome à área.");return;}if(btn)btn.disabled=true;const id=(S.vitForm||{}).id;
+    const q=id?sb.from("vitrines").update(d).eq("id",id).select().maybeSingle():sb.from("vitrines").insert(d).select().maybeSingle();const {data,error}=await q;
+    if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a área.");return;}S.vit=id?S.vit.map(x=>x.id===id?data:x):[data,...(S.vit||[])];S.vitSel=data.id;S.vitForm=null;S.pag="vit-card";render();window.scrollTo(0,0);aviso(id?"Área salva.":"Área criada. Agora anexe os documentos.");return;}
   if(f.id==="f-mk-com-ed"){const tx=val("mk_com_ed");if(!tx)return;if(btn)btn.disabled=true;const {data,error}=await sb.from("mkt_comentarios").update({texto:tx.slice(0,4000),editado_em:new Date().toISOString()}).eq("id",+f.dataset.id).select("id").maybeSingle();if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar o comentário.");return;}S.mkComEd=null;carregarMkCard(S.mkSel);aviso("Comentário editado.");return;}
   if(f.id==="f-mk-com"){const tx=val("mk_com");if(!tx)return;if(btn)btn.disabled=true;const {error}=await sb.from("mkt_comentarios").insert({acao_id:S.mkSel,texto:tx.slice(0,4000)});if(error){if(btn)btn.disabled=false;aviso("Não foi possível comentar.");return;}carregarMkCard(S.mkSel);return;}
   if(f.id==="f-mk-link"){const u=val("mk_lurl");if(!/^https?:\/\//i.test(u)){aviso("Use um link começando com https://");return;}const {error}=await sb.rpc("mkt_anexar",{p_acao:S.mkSel,p_path:null,p_nome:val("mk_lnome")||null,p_tipo:null,p_tam:null,p_url:u});if(error){aviso("Não foi possível adicionar o link.");return;}S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Link adicionado.");return;}
@@ -6711,6 +6830,10 @@ function renderApp(){
     if(veAcoesMkt()){if(!/^acoes-/.test(S.pag))S.pag="acoes-quadro";app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vAcoesMkt()}</main>`;if(!S.mk)carregarMkt();return;}
     S.secao=null;S.pag="hub";
   }
+  if(S.secao==="vitrines"){
+    if(veVit()){if(!/^vit-/.test(S.pag))S.pag="vit-lista";app.innerHTML=cabecalho()+subnavVit()+`<main class="largo">${vVit()}</main>`;return;}
+    S.secao=null;S.pag="hub";
+  }
   if(S.secao==="brindes"){
     if(veBrindes()){if(!/^brindes-/.test(S.pag))S.pag="brindes-catalogo";app.innerHTML=cabecalho()+subnavBrindes()+`<main class="largo">${vBrindes()}</main>`;if(!S.bd)carregarBrindes();return;}
     S.secao=null;S.pag="hub";
@@ -6742,6 +6865,19 @@ document.addEventListener("click",async ev=>{
   if(a==="int-rod"){S.intRod=v==="todas"?"todas":+v;render();return;}
   if(a==="int-perfil"){S.intPerfil=v;render();return;}
   if(a==="int-modf"){S.intModF=v;render();return;}
+  if(a==="secao"&&v==="vitrines"){if(!veVit())return;S.secao=v;S.pag="vit-lista";render();window.scrollTo(0,0);return;}
+  if(a==="vit-abrir"){S.vitVolta=S.pag==="vit-mapa"?"vit-mapa":(S.pag==="vit-card"||S.pag==="vit-form")?(S.vitVolta||"vit-lista"):"vit-lista";S.vitSel=+v;S.vitDel=false;S.pag="vit-card";render();window.scrollTo(0,0);return;}
+  if(a==="vit-nova"){if(!ehMkt())return;S.vitForm={};S.pag="vit-form";render();window.scrollTo(0,0);return;}
+  if(a==="vit-editar"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x||!ehMkt())return;S.vitForm=JSON.parse(JSON.stringify(x));S.pag="vit-form";render();window.scrollTo(0,0);return;}
+  if(a==="vit-cult-add"||a==="vit-cult-rm"){const f=document.getElementById("f-vit");if(!f)return;const id=(S.vitForm||{}).id;S.vitForm={...vitLerForm(f),id};const L=S.vitForm.cultivares.length?S.vitForm.cultivares:[{cult:"Sabiá",ha:null}];if(a==="vit-cult-add")L.push({cult:"Cayana",ha:null});else L.splice(+v,1);S.vitForm.cultivares=L;render();return;}
+  if(a==="vit-del"){S.vitDel=v==="1";render();return;}
+  if(a==="vit-excluir"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x)return;const {error}=await sb.from("vitrines").delete().eq("id",x.id);if(error){aviso("Não foi possível excluir.");return;}const arqs=(x.anexos||[]).map(q=>q.path).filter(Boolean);if(arqs.length){try{await sb.storage.from("vitrines").remove(arqs);}catch(e){}}S.vit=S.vit.filter(q=>q.id!==x.id);S.pag="vit-lista";render();aviso("Área excluída.");return;}
+  if(a==="vit-baixar"){try{const {data}=await sb.storage.from("vitrines").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
+  if(a==="vit-anexar"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);const inp=document.getElementById("vit_arq");const fs=inp&&inp.files?[...inp.files]:[];if(!x||!fs.length){aviso("Escolha os arquivos.");return;}b.disabled=true;b.textContent="Enviando…";let A=[...(x.anexos||[])],ok=0;
+    for(const f of fs){if(f.size>50*1024*1024){aviso(f.name+" passa de 50 MB.");continue;}const path=x.id+"/"+Date.now().toString(36)+"_"+f.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w.-]+/g,"_").slice(-80);
+      const up=await sb.storage.from("vitrines").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false});if(up.error){aviso("Não foi possível enviar "+f.name+".");continue;}A.push({path,nome:f.name.slice(0,160),tipo:f.type,tam:f.size,em:new Date().toISOString()});ok++;}
+    const {data,error}=await sb.from("vitrines").update({anexos:A}).eq("id",x.id).select().maybeSingle();if(error||!data){aviso("Os arquivos subiram, mas a lista não foi gravada. Tente de novo.");}else{S.vit=S.vit.map(q=>q.id===x.id?data:q);if(ok)aviso(ok+(ok===1?" arquivo anexado.":" arquivos anexados."));}render();return;}
+  if(a==="vit-rem-arq"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x)return;const A=(x.anexos||[]).filter(q=>q.path!==v);const {data,error}=await sb.from("vitrines").update({anexos:A}).eq("id",x.id).select().maybeSingle();if(error||!data){aviso("Não foi possível remover.");return;}try{await sb.storage.from("vitrines").remove([v]);}catch(e){}S.vit=S.vit.map(q=>q.id===x.id?data:q);render();return;}
   if(a==="secao"&&v==="financeiro"){if(!ehFin())return;S.secao=v;S.pag="fin-resumo";S.fin=null;render();window.scrollTo(0,0);return;}
   if(a==="fila-pegar"){b.disabled=true;b.textContent="Pegando…";const {data,error}=await sb.rpc("rc_pegar");
     if(error){aviso(/finalize/i.test(String(error.message||""))?"Finalize o lead atual antes de pegar outro.":/vazia/i.test(String(error.message||""))?"A fila ficou vazia agora.":"Não foi possível pegar o lead. Tente de novo.");}
