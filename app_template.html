@@ -551,6 +551,7 @@ main.largo{max-width:1120px}
 .orc-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:10px;margin:10px 0}
 .orc-c{border:1px solid var(--linha);border-radius:8px;padding:12px 14px;background:var(--branco);display:flex;flex-direction:column;gap:6px;min-width:0}
 .orc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}.orc-l{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
+.bm-l{display:flex;flex-direction:column;gap:8px}.bm-i{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) auto 40px;gap:10px;align-items:center;padding:6px 8px;border-radius:8px}.bm-nos{background:var(--amarelo-claro)}.bm-n{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}.bm-b{background:var(--azul-claro);height:10px;border-radius:5px;overflow:hidden}.bm-b i{display:block;height:10px;background:var(--azul);border-radius:5px}.bm-nos .bm-b i{background:var(--preto)}.bm-i strong{font-variant-numeric:tabular-nums;white-space:nowrap}.bm-p{text-align:right}@media(max-width:560px){.bm-i{grid-template-columns:minmax(0,1fr) auto}.bm-b{grid-column:1/-1;order:3}.bm-p{display:none}}
 .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-top:12px}.pf-ufs{display:flex;flex-direction:column;gap:4px}tr.pf-on td{background:var(--papel)}@media(max-width:760px){.pf-cols{grid-template-columns:1fr}}
 .orc-l span{min-width:0}.orc-l .meta{display:block;font-size:12px}.orc-l strong{white-space:nowrap;font-variant-numeric:tabular-nums}
 .orc-tot{border-top:1px solid var(--linha);padding-top:6px;margin-top:2px}.orc-tot strong{font-size:17px;color:var(--azul-escuro)}.orc-tot.neg strong{color:var(--vermelho)}
@@ -1500,9 +1501,30 @@ async function carregarMidia(forca){
     sb.from("midia_atualizacoes").select("*").order("feito_em",{ascending:false}).limit(5),
     sb.from("midia_contas").select("*"),
     sb.from("midia_campanha_mes").select("campanha_id,mes,objetivo,gasto,alcance,impressoes,leads")]);
-    S.md={d:d.data||[],c:c.data||[],r:r.data||[],a:a.data||[],ct:ct.data||[],cm:cm.data||[]};}
-  catch(e){S.md={d:[],c:[],r:[],a:[],ct:[],cm:[]};}
+    let bm=[];try{const x=await sb.from("social_benchmark").select("*").order("foto_em",{ascending:false});bm=x.data||[];}catch(e){}
+    S.md={d:d.data||[],c:c.data||[],r:r.data||[],a:a.data||[],ct:ct.data||[],cm:cm.data||[],bm};}
+  catch(e){S.md={d:[],c:[],r:[],a:[],ct:[],cm:[],bm:[]};}
   render();
+}
+const BM_NOMES={barenbrugdobrasil:"Barenbrug",milagroagrobrasil:"Milagro",wolfsementes:"Wolf Sementes",safrasulsementes:"Safrasul",sementesoesp:"Sementes Oesp",papalotlasementes:"Papalotla"};
+function vMdBench(){
+  const B=(S.md&&S.md.bm)||[];if(!B.length)return "";
+  const redes=[...new Set(B.map(x=>x.rede))];const rede=S.bmRede&&redes.includes(S.bmRede)?S.bmRede:redes[0];
+  const R=B.filter(x=>x.rede===rede);const datas=[...new Set(R.map(x=>x.foto_em))].sort().reverse();const ult=datas[0],ant=datas[1];
+  const met=[["seguidores","Total de seguidores"],["seg_liq","Seguidores líquidos"],["reels","Reels"],["posts","Posts"]].filter(([k])=>R.some(x=>x.foto_em===ult&&x[k]!=null));
+  const mk=met.find(([k])=>k===S.bmMet)?S.bmMet:(met[0]||["seguidores"])[0];
+  const L=R.filter(x=>x.foto_em===ult).sort((a,b)=>(Number(b[mk])||0)-(Number(a[mk])||0));const nos=L.find(x=>x.nosso)||{};
+  const max=Math.max(1,...L.map(x=>Number(x[mk])||0)),tot=L.reduce((t,x)=>t+(Number(x[mk])||0),0);
+  const vAnt=p=>{if(!ant)return null;const a=R.find(x=>x.foto_em===ant&&x.perfil===p);return a&&a[mk]!=null?Number(a[mk]):null;};
+  const nm=p=>BM_NOMES[p]||p,num=v=>v==null?"—":Number(v).toLocaleString("pt-BR");
+  const pos=L.indexOf(nos)+1,seg=L[pos]||null,prim=L[0];const ml=((met.find(m=>m[0]===mk)||[,""])[1]).toLowerCase();
+  const lead=nos.perfil?(pos===1?`A Barenbrug lidera em ${esc(ml)}${seg?`, ${num((Number(nos[mk])||0)-(Number(seg[mk])||0))} à frente de ${esc(nm(seg.perfil))}`:""}.`:`A Barenbrug é a ${pos}ª em ${esc(ml)}, ${num((Number(prim[mk])||0)-(Number(nos[mk])||0))} atrás de ${esc(nm(prim.perfil))}.`):"";
+  return `<section class="bloco"><h2 class="sec">Nós x concorrentes · ${esc(rede)}</h2>
+    <p class="meta" style="margin:0 0 8px">${esc((L[0]||{}).periodo||"")} · foto de ${mdData(ult)}${ant?` · comparado com ${mdData(ant)}`:""} · fonte: ${esc((L[0]||{}).fonte||"")}</p>
+    ${met.length>1?`<div class="mk-link" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${met.map(([k,l])=>`<button class="btn ${k===mk?"":"sec"}" data-a="bm-met" data-v="${k}">${l}</button>`).join("")}</div>`:""}
+    <div class="bm-l">${L.map(x=>{const v=Number(x[mk])||0,a=vAnt(x.perfil),d=a==null?"":` <span class="meta">${v-a>=0?"+":""}${num(v-a)}</span>`;return `<div class="bm-i${x.nosso?" bm-nos":""}"><span class="bm-n">${esc(nm(x.perfil))}<br><span class="meta">@${esc(x.perfil)}</span></span><span class="bm-b"><i style="width:${(v/max*100).toFixed(1)}%"></i></span><strong>${num(x[mk])}${d}</strong><span class="meta bm-p">${tot?Math.round(v/tot*100)+"%":""}</span></div>`;}).join("")}</div>
+    ${lead?`<p class="dica" style="margin-top:10px">${lead}</p>`:""}
+    <p class="meta" style="margin:6px 0 0">Os números vêm do Benchmarking do Instagram, que o Meta não libera por API. A atualização é manual: mande o print das abas e eu registro com a data. O percentual é a fatia de cada perfil na soma do grupo.</p></section>`;
 }
 function mdVerbaDigital(){return ((S.md||{}).ct||[]).reduce((t,c)=>t+(Number(c.verba_safra)||0),0);}
 function mdResumo(){
@@ -1574,7 +1596,7 @@ function vAcoesDigital(){
     <p class="meta" style="margin:6px 0 0">Alcance é de pessoas únicas por campanha; não some o alcance de campanhas diferentes. Leads são os registros de formulário contados pelo Meta.</p></section>
   <section class="bloco"><h2 class="sec">Onde o dinheiro está indo · por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th class="val">Gasto</th><th style="min-width:140px">% do gasto</th><th class="val">Pessoas alcançadas</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Custo por mil pessoas</th></tr></thead>
     <tbody>${RG.map(x=>{const p=totR?(Number(x.gasto)||0)/totR*100:0;return `<tr><td>${esc(x.uf)} · ${esc(x.regiao||"")}</td><td class="val">${isR(x.gasto)}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:var(--azul-claro);height:8px;border-radius:4px"><div style="width:${p.toFixed(1)}%;background:var(--azul);height:8px;border-radius:4px"></div></div><span class="meta" style="min-width:42px;text-align:right">${p.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</span></div></td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.impressoes)}</td><td class="val">${isN(x.cliques)}</td><td class="val">${x.alcance?mdR2((Number(x.gasto)||0)/x.alcance*1000):"—"}</td></tr>`;}).join("")}</tbody></table></div>
-    <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>`;
+    <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>${vMdBench()}`;
 }
 
 /* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
@@ -6222,6 +6244,7 @@ document.addEventListener("click",async ev=>{
   if(a==="is-abrir"){S.isSel=v;S.pag="is-painel";render();window.scrollTo(0,0);return;}
   if(a==="cob-sel"){S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF.sel=v||null;render();return;}
   if(a==="cob-f"){const i=v.indexOf("|");S.cobF=S.cobF||{mod:"Todos",st:"Vendidas",sel:null};S.cobF[v.slice(0,i)]=v.slice(i+1);render();return;}
+  if(a==="bm-met"){S.bmMet=v;render();return;}
   if(a==="pf-vis"){S.pfVis=v;S.pfSel=null;render();return;}
   if(a==="pf-sel"){S.pfSel=v||null;render();if(v)setTimeout(()=>{const e=document.querySelector(".pf-det");if(e)e.scrollIntoView({behavior:"smooth",block:"start"});},50);return;}
   if(a==="rfv-f"){const i=v.indexOf("|");S.rfvF=S.rfvF||{seg:"Todos",quem:"Todas",uf:"Todos"};S.rfvF[v.slice(0,i)]=v.slice(i+1);render();return;}
