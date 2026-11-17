@@ -611,6 +611,7 @@ main.largo{max-width:1120px}
 .mfa-ol{margin:0 0 6px;padding-left:20px;display:grid;gap:6px;font-size:15px}
 .mfa-qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;min-height:120px;align-items:center}.mfa-qr img{width:200px;height:200px}
 .mrc{min-width:0;grid-template-columns:minmax(0,1fr)}.mrc .tab{overflow-x:auto}.mrc summary{list-style:none;cursor:pointer;display:block;max-width:100%;white-space:normal;min-width:0}.mrc summary::-webkit-details-marker{display:none}.mrc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;min-width:0}.mrc-h>div:first-child{flex:1 1 auto;min-width:0}.mrc-h strong{display:block}.mrc-n{text-align:right;flex:0 1 auto;max-width:45%}.mrc-n strong{font-size:18px}
+.lo-notas{display:grid;gap:6px;border-left:3px solid var(--amarelo,#ffd700);padding-left:10px;margin-top:4px}.lo-notas div{font-size:14px}
 .mfa-aj{border:1px solid var(--linha,#dde3ea);border-radius:10px;padding:8px 12px;background:#fff;font-size:14px}.mfa-aj summary{cursor:pointer;font-weight:700;color:var(--azul-esc,#00557f)}.mfa-aj p{margin:8px 0}.mfa-aj ul{margin:4px 0 8px;padding-left:20px;display:grid;gap:4px}
 .mfa-sec{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;word-break:break-all;color:var(--preto)}
 #mfa_cod{font-size:24px;letter-spacing:.3em;text-align:center;font-weight:700}
@@ -1483,9 +1484,15 @@ async function rcLeadsSalva(id,recebe,ufs){const {error}=await sb.rpc("adm_rc_le
 /* ===== LeadsBaren · Prospecção (outbound) ===== */
 const LO_SITS=["Sem vínculo no CRM","Negociação perdida no CRM","Com negociação no CRM (verificar)","Cliente (já comprou)"];
 const LO_PERFIS=["Produtor","Revendedor","Revendedor (a confirmar)","Consultor","Gerente de Propriedade Rural","Técnico de Propriedade Rural","Estudante","Outros","Sem perfil informado"];
+const LO_ST=["Novo","Prospectando","Já prospectei","Virou negociação","Sem sucesso"];
+const LO_ST_COR={"Novo":["#eef1f4","#4a5560"],"Prospectando":["#fff4cc","#7a5b00"],"Já prospectei":["#e6f6fc","#00557f"],"Virou negociação":["#e3f5e9","#1d6b3a"],"Sem sucesso":["#fbe9e7","#a33a2b"]};
+const LO_DT=[["","Qualquer data de cadastro"],["30","Cadastro nos últimos 30 dias"],["90","Últimos 3 meses"],["180","Últimos 6 meses"],["365","Último ano"],["730","Últimos 2 anos"],["+730","Cadastro há mais de 2 anos"]];
+function loDatas(k){if(!k)return [null,null];const d=new Date();const n=parseInt(String(k).replace("+",""),10);d.setDate(d.getDate()-n);const iso=d.toISOString().slice(0,10);return String(k).startsWith("+")?[null,iso]:[iso,null];}
+const loTag=st=>{const c=LO_ST_COR[st]||LO_ST_COR.Novo;return `<span class="selo" style="background:${c[0]};color:${c[1]}">${esc(st)}</span>`;};
 async function loLista(mais){
   const F=S.loF||(S.loF={uf:"",perfil:"",sit:"",st:"Em aberto",q:""});const off=mais?(S.loRows||[]).length:0;
-  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off});
+  const D=loDatas(F.dt);
+  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off,p_meus:F.meus==="1",p_desde:D[0],p_ate:D[1]});
   if(error){S.loErro="Não foi possível carregar a prospecção.";return;}
   S.loRows=(mais?(S.loRows||[]):[]).concat(data||[]);S.loTotal=data&&data.length?+data[0].total:(mais?S.loTotal:0);
 }
@@ -1523,25 +1530,32 @@ function vLeadsOut(){
   const sel=(id,ops,v,todos)=>`<select id="${id}" data-lof="${id.slice(3)}"><option value="">${todos}</option>${ops.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
   const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
-  const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";
-    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}<span class="selo">${esc(st)}</span></span></div>
+  const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";const N=(S.loNotas||{})[l.id];
+    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
       ${l.ha_faixa||l.ha_usar?`<span class="meta">${l.ha_faixa?"<strong>Propriedade:</strong> "+esc(l.ha_faixa):""}${l.ha_faixa&&l.ha_usar?" · ":""}${l.ha_usar?"<strong>Quer formar:</strong> "+esc(l.ha_usar):""}</span>`:""}
-      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}${l.ult_conversao?" · última interação "+dia(l.ult_conversao):""}</span>
-      ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${esc(l.atendido_por)} em ${dia(l.atendido_em)}${l.obs?" · "+esc(l.obs):""}</span>`:""}
+      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}</span>${l.ult_conversao?`<span class="meta"><strong>Último cadastro na base:</strong> ${dia(l.ult_conversao)}</span>`:""}
+      ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${l.meu?"você":esc(l.atendido_por)} em ${dia(l.atendido_em)}</span>`:""}
+      ${l.obs&&!v?`<span class="meta"><strong>Última anotação:</strong> ${esc(l.obs)}</span>`:""}
       ${v?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${v.telefone===undefined?"carregando…":tel(v.telefone)} · <strong>E-mail:</strong> ${v.email?esc(v.email):v.telefone===undefined?"":"não informado"}</span>
-        <div style="display:grid;gap:6px;margin-top:6px"><input id="lo_obs_${l.id}" placeholder="Anotação do atendimento (opcional)" value="">
-        <div class="filtros">${["Em atendimento","Virou negociação","Sem sucesso","Novo"].filter(x=>x!==st).map(x=>`<button class="chip" data-a="lo-status" data-v="${l.id}" data-st="${esc(x)}">${x==="Novo"?"Devolver para a fila":"Marcar: "+x}</button>`).join("")}</div></div>`
+        <div style="display:grid;gap:6px;margin-top:6px"><span class="meta"><strong>Etiqueta:</strong> toque para trocar</span>
+        <div class="filtros">${LO_ST.filter(x=>x!=="Novo").map(x=>`<button class="chip" data-a="lo-status" data-v="${l.id}" data-st="${esc(x)}" aria-pressed="${st===x}">${esc(x)}</button>`).join("")}${st!=="Novo"?`<button class="chip" data-a="lo-status" data-v="${l.id}" data-st="Novo">Devolver para a fila</button>`:""}</div>
+        <textarea id="lo_obs_${l.id}" rows="2" maxlength="1000" placeholder="Anotação: o que conversou, quando retornar, interesse…"></textarea>
+        <div><button class="btn sec" data-a="lo-status" data-v="${l.id}" data-st="${esc(st==="Novo"?"Prospectando":st)}" style="padding:8px 14px">Salvar anotação</button></div>
+        ${N===undefined?"":N.length?`<div class="lo-notas">${N.map(n=>`<div><span class="meta">${new Date(n.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})} · ${esc(n.nome||"")}${n.status?" · "+loTag(n.status):""}</span>${n.texto?`<div>${esc(n.texto)}</div>`:""}</div>`).join("")}</div>`:""}</div>`
        :`<div><button class="btn sec" data-a="lo-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">${l.tem_tel?"Ver contato e atender":"Ver e-mail e atender"}</button></div>`}</div>`;};
   return cab+(adm?loAdmin():"")+`
   <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome ou cidade" value="${esc(F.q||"")}">
     ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
-    <select id="lo_st" data-lof="st">${["Em aberto","Novo","Em atendimento","Virou negociação","Sem sucesso","Todos"].map(o=>`<option ${F.st===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <select id="lo_st" data-lof="st">${["Em aberto",...LO_ST,"Todos"].map(o=>`<option ${F.st===o?"selected":""} value="${esc(o)}">${o==="Em aberto"?"Em aberto (novos e prospectando)":o==="Todos"?"Todas as etiquetas":o}</option>`).join("")}</select>
+    <select id="lo_dt" data-lof="dt">${LO_DT.map(([k,t])=>`<option value="${k}" ${(F.dt||"")===k?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="lo_meus" data-lof="meus"><option value="">Leads de todos</option><option value="1" ${F.meus==="1"?"selected":""}>Só os que eu atendi</option></select></div>
     <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} leads neste filtro`}</p>
     <div class="lista">${rows.map(card).join("")||`<div class="vazio">Nenhum lead neste filtro.</div>`}</div>
     ${rows.length<(S.loTotal||0)?`<div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="lo-mais">Carregar mais 100</button></div>`:""}
     <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados só para a prospecção comercial da Barenbrug.</p></section>`;
 }
+async function loCarregaNotas(id){try{const {data}=await sb.rpc("lead_out_notas_de",{p_id:+id});(S.loNotas||(S.loNotas={}))[id]=data||[];}catch(e){(S.loNotas||(S.loNotas={}))[id]=[];}render();}
 function loLib(){if(window.XLSX)return Promise.resolve();if(S._xl)return S._xl;S._xl=new Promise((ok,er)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>ok();sc.onerror=()=>{S._xl=null;er();};document.head.append(sc);});return S._xl;}
 async function loImportar(arq,prog){
   await loLib();const wb=XLSX.read(await arq.arrayBuffer(),{type:"array",cellDates:false});
@@ -7116,8 +7130,8 @@ document.addEventListener("click",async ev=>{
   if(a==="lo-remover"){b.disabled=true;const {error}=await sb.rpc("adm_lead_out_acesso_set",{p_user:v,p_perfis:null,p_ufs:null,p_sit:null,p_so_pediu:null,p_ativo:null});if(error){b.disabled=false;aviso("Não foi possível remover.");return;}const r=await sb.rpc("adm_lead_out_acessos");S.loAcc=r.data||[];S.loCfgAberto=true;render();aviso("Acesso removido.");return;}
   if(a==="lo-importar"){const inp=document.getElementById("lo_arq"),pg=document.getElementById("lo_prog");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a planilha.");return;}b.disabled=true;try{const n=await loImportar(arq,pg);S.loOk=false;S.loCfgAberto=true;aviso(n.toLocaleString("pt-BR")+" leads importados ou atualizados.");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
   if(a==="lo-mais"){b.disabled=true;await loLista(true);render();return;}
-  if(a==="lo-ver"){S.loVistos=S.loVistos||{};S.loVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_out_contato",{p_id:+v});if(error)throw error;S.loVistos[v]=data||{telefone:null,email:null};}catch(e){delete S.loVistos[v];aviso("Não foi possível abrir o contato.");}render();return;}
-  if(a==="lo-status"){const st=b.dataset.st;const o=document.getElementById("lo_obs_"+v);const {error}=await sb.rpc("lead_out_marcar",{p_id:+v,p_status:st,p_obs:o?o.value:null});if(error){aviso("Não foi possível gravar.");return;}const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r){r.status=st;r.atendido_por=st==="Novo"?null:(S.profile.nome||"");r.atendido_em=st==="Novo"?null:new Date().toISOString();r.obs=o&&o.value?o.value:null;}render();aviso("Gravado.");return;}
+  if(a==="lo-ver"){S.loVistos=S.loVistos||{};S.loVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_out_contato",{p_id:+v});if(error)throw error;S.loVistos[v]=data||{telefone:null,email:null};const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r&&(!r.status||r.status==="Novo")){r.status="Prospectando";r.atendido_por=S.profile.nome||"";r.meu=true;r.atendido_em=new Date().toISOString();}}catch(e){delete S.loVistos[v];aviso("Não foi possível abrir o contato.");}render();loCarregaNotas(v);return;}
+  if(a==="lo-status"){const st=b.dataset.st;const o=document.getElementById("lo_obs_"+v);const {error}=await sb.rpc("lead_out_marcar",{p_id:+v,p_status:st,p_obs:o?o.value:null});if(error){aviso("Não foi possível gravar.");return;}const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r){r.status=st;r.atendido_por=st==="Novo"?null:(S.profile.nome||"");r.atendido_em=st==="Novo"?null:new Date().toISOString();if(o&&o.value.trim())r.obs=o.value.trim();else if(st==="Novo")r.obs=null;r.meu=st!=="Novo";}render();loCarregaNotas(v);aviso(st==="Novo"?"Lead devolvido para a fila.":"Gravado: "+st+".");return;}
   if(a==="verusuario"){if(S.pag&&S.pag.startsWith("gestao-"))S.gtVolta=S.pag;abrirUsuario(v);}
   if(a==="gt-filtro"){S.gtF={q:"",perfil:"",acesso:v};S.pag="gestao-pessoas";render();return;}
   if(a==="gt-time"){S.gtTime=v;S.pag="gestao-times";render();return;}
