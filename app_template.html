@@ -5657,6 +5657,9 @@ const mkPodeSolic=()=>!S.demo&&(ehMkt()||ehAdmin()||temPerfil("Comercial Barenbr
 const MK_FORA=["Cancelada","Solicitada","Recusada"];const mkConta=a=>!MK_FORA.includes(a.status);
 const veBrindes=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("brindes"));
 const MK_STATUS=["Em análise","A fazer","Em andamento","Concluída","Cancelada"];
+const MK_COLS=["Em análise","Pausada","A fazer","Em andamento","Concluída","Cancelada"];
+const MK_SIT_F=[["","Todas as situações"],["aprovadas","Aprovadas (verba aprovada ou paga)"],["analise","Em análise (provisionadas)"],["pausadas","Pausadas (provisionadas)"],["prov","Todas as provisionadas"],["pagas","Pagas"]];
+const mkSitOk=(a,k)=>!k||(k==="aprovadas"?(mkFin(a)==="Aprovada"||mkFin(a)==="Paga"):k==="analise"?a.status==="Em análise":k==="pausadas"?a.status==="Pausada":k==="prov"?mkFin(a)==="Provisionada":k==="pagas"?mkFin(a)==="Paga":true);
 const MK_TIPOS=["Evento","Dia de campo","Feira","Patrocínio","Mídia e conteúdo","Material e brindes","Ação com revenda","Treinamento","Outro"];
 const MK_MIMES=["image/jpeg","image/png","image/webp","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.ms-powerpoint","application/vnd.openxmlformats-officedocument.presentationml.presentation","text/plain"];
 const BD_LOCAIS=["Estoque UPI Guaíra","Escritório RP"];
@@ -5935,16 +5938,17 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
 function mkDecisaoHTML(a){
   if(!ehMkt()||a.agrupador||a.status==="Solicitada"||a.status==="Em análise")return "";
   const aprov=["A fazer","Em andamento","Concluída"].includes(a.status)&&(mkFin(a)==="Aprovada"||mkFin(a)==="Paga"||mkFin(a)==="Sem custo");
-  const sit=a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):aprov?stTag("Aprovada","verde"):stTag("Planejada, verba ainda não aprovada","amarelo");
+  const sit=a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):a.status==="Pausada"?stTag("Pausada","cinza"):aprov?stTag("Aprovada","verde"):stTag("Planejada, verba ainda não aprovada","amarelo");
   return `<section class="bloco mk-dec"><div class="mk-dec-l"><span>Decisão: ${sit} ${stTag(mkFin(a),MK_FIN_COR[mkFin(a)]||"cinza")}${a.decidido_nome?` <span class="meta">por ${esc(a.decidido_nome)} em ${fmtDataHora(a.decidido_em)}</span>`:""}</span>
     <form id="f-mk-sit" class="mk-dec-f"><input id="msit_v" inputmode="decimal" aria-label="Verba (R$)" value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}" placeholder="Verba (R$)"><input id="msit_o" maxlength="300" placeholder="Motivo (opcional)" aria-label="Motivo">
-    ${aprov?"":`<button class="btn" type="submit" data-s="aprovar">Aprovar</button>`}<button class="btn sec" type="submit" data-s="analise">Voltar para em análise</button>${a.status!=="Recusada"?`<button class="btn sec perigo-t" type="submit" data-s="recusar">Recusar</button>`:""}</form></div>
-    <p class="meta" style="margin:6px 0 0">Situação e financeiro são separados. Provisionada = valor reservado na verba, ainda sem aprovação. Aprovada = compromisso assumido. Paga = já saiu da verba. Cada mudança fica registrada nos comentários.</p></section>`;
+    ${aprov?"":`<button class="btn" type="submit" data-s="aprovar">Aprovar</button>`}<button class="btn sec" type="submit" data-s="analise">${a.status==="Pausada"?"Retomar (em análise)":"Voltar para em análise"}</button>${a.status!=="Pausada"&&a.status!=="Concluída"?`<button class="btn sec" type="submit" data-s="pausar">Pausar</button>`:""}${a.status!=="Recusada"?`<button class="btn sec perigo-t" type="submit" data-s="recusar">Recusar</button>`:""}</form></div>
+    ${a.status==="Pausada"&&a.decisao_obs?`<p class="meta" style="margin:6px 0 0"><strong>Motivo da pausa:</strong> ${esc(a.decisao_obs)}</p>`:""}
+    <p class="meta" style="margin:6px 0 0">Situação e financeiro são separados. Pausada = adiada porque depende de uma situação específica; o valor continua reservado. Provisionada = valor reservado na verba, ainda sem aprovação. Aprovada = compromisso assumido. Paga = já saiu da verba. Cada mudança fica registrada nos comentários.</p></section>`;
 }
 document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-mk-sit")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehMkt())return;
   const s=(ev.submitter&&ev.submitter.dataset.s)||"aprovar";const v=mkNum(f.querySelector("#msit_v").value);const o=f.querySelector("#msit_o").value.trim()||null;
   const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:s,p_valor:v||null,p_obs:o});if(error){aviso("Não foi possível registrar.");return;}
-  S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":"Recusada. Saiu da verba.");},true);
+  S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(s==="aprovar"?"Aprovada. A verba passou para aprovada.":s==="analise"?"Voltou para em análise, com a verba provisionada.":s==="pausar"?"Pausada. O valor continua reservado na verba como provisionado.":"Recusada. Saiu da verba.");},true);
 /* ---------- Ações: fonte da verba (Marketing ou verba do canal no Conecta) ---------- */
 const MK_FONTES_MKT=["Marketing (Eventos)","Marketing (Publicidade e Propaganda)"];
 const MK_FONTES=[...MK_FONTES_MKT,"IGDB do canal (Conecta)","Bônus de Performance do canal (Conecta)"];
@@ -5995,8 +5999,8 @@ function vAcoesQuadro(){
   const meses=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>String(a.inicio||"").slice(0,7)).filter(Boolean))].sort();
   const mesNome=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
   const okData=a=>{if(!fd)return true;if(fd==="sem")return !a.inicio;if(fd==="passou")return !!a.inicio&&String(a.fim||a.inicio)<mkHoje();if(fd==="vem")return !!a.inicio&&String(a.fim||a.inicio)>=mkHoje();const i=String(a.inicio||"").slice(0,7),f=String(a.fim||a.inicio||"").slice(0,7);return !!i&&i<=fd&&f>=fd;};
-  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&okData(a)&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
-  const verCanc=!!S.mkCanc;const cols=MK_STATUS.filter(s=>s!=="Cancelada"||verCanc);
+  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const verCanc=!!S.mkCanc;const cols=MK_COLS.filter(s=>s!=="Cancelada"||verCanc);
   const tot=L.filter(mkConta).reduce((t,a)=>t+mkCusto(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
   <div class="mk-barra">
@@ -6004,7 +6008,8 @@ function vAcoesQuadro(){
     <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...MK_TIPOS].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
     <select id="mk_resp_f" aria-label="Responsável"><option value="">Todos os responsáveis</option><option value="sem" ${fr==="sem"?"selected":""}>Sem responsável</option>${resps.map(n=>`<option ${fr===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
     <select id="mk_mes_f" aria-label="Data da ação"><option value="">Qualquer data</option><option value="vem" ${fd==="vem"?"selected":""}>Daqui para a frente</option><option value="passou" ${fd==="passou"?"selected":""}>Já passaram</option>${meses.map(m=>`<option value="${m}" ${fd===m?"selected":""}>${mesNome(m)}</option>`).join("")}<option value="sem" ${fd==="sem"?"selected":""}>Sem data</option></select>
-    ${fr||fd||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
+    <select id="mk_sit_f" aria-label="Situação">${MK_SIT_F.map(([k,t])=>`<option value="${k}" ${(S.mkSitF||"")===k?"selected":""}>${t}</option>`).join("")}</select>
+    ${fr||fd||S.mkSitF||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
     <label class="check"><input type="checkbox" data-a="mk-canc" ${verCanc?"checked":""}> Mostrar canceladas</label>
     ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}
   </div>
@@ -6018,7 +6023,7 @@ function mkFormHTML(a){
     <h2 class="sec">${a.id?"Editar ação":"Nova ação"}</h2>
     <div><label for="mk_tit">Título *</label><input id="mk_tit" required maxlength="160" value="${esc(a.titulo||"")}"></div>
     <div class="dupla"><div><label for="mk_tp">Tipo</label><select id="mk_tp">${MK_TIPOS.map(t=>`<option ${t===(a.tipo||"Evento")?"selected":""}>${t}</option>`).join("")}</select></div>
-      <div><label for="mk_st">Status</label><select id="mk_st">${MK_STATUS.map(t=>`<option ${t===(a.status||"A fazer")?"selected":""}>${t}</option>`).join("")}</select></div></div>
+      <div><label for="mk_st">Status</label><select id="mk_st">${MK_COLS.map(t=>`<option ${t===(a.status||"A fazer")?"selected":""}>${t}</option>`).join("")}</select></div></div>
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim">Data de fim</label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
     <div><label for="mk_loc">Local</label><input id="mk_loc" maxlength="160" value="${esc(a.local||"")}" placeholder="Cidade/UF, fazenda, revenda…"></div>
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
@@ -6041,17 +6046,20 @@ function mkSolLinha(a){if(a.agrupador){const R=mkGrupoResumo(a);return `<div cla
 function vAcoesSolic(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),L=S.mk.filter(a=>!a.mae_id&&(a.solicitante||a.solicitante_nome||a.status==="Solicitada"||a.agrupador));
-  const stG=a=>{if(!a.agrupador)return a.status;const R=mkGrupoResumo(a);return R.pend.length?"Solicitada":R.F.some(x=>x.status==="Em análise")?"Em análise":R.F.length&&R.F.every(x=>x.status==="Recusada"||x.status==="Cancelada")?"Recusada":"A fazer";};
-  const ag=L.filter(a=>stG(a)==="Solicitada"),an=L.filter(a=>stG(a)==="Em análise"),ok=L.filter(a=>!["Solicitada","Em análise","Recusada","Cancelada"].includes(stG(a))),nao=L.filter(a=>a.status==="Recusada"||a.status==="Cancelada");
+  const stG=a=>{if(!a.agrupador)return a.status;const R=mkGrupoResumo(a);return R.pend.length?"Solicitada":R.F.some(x=>x.status==="Em análise")?"Em análise":R.F.length&&R.F.every(x=>x.status==="Pausada")?"Pausada":R.F.length&&R.F.every(x=>x.status==="Recusada"||x.status==="Cancelada")?"Recusada":"A fazer";};
+  const ag=L.filter(a=>stG(a)==="Solicitada"),an=L.filter(a=>stG(a)==="Em análise"),pz=L.filter(a=>stG(a)==="Pausada"),ok=L.filter(a=>!["Solicitada","Em análise","Pausada","Recusada","Cancelada"].includes(stG(a))),nao=L.filter(a=>a.status==="Recusada"||a.status==="Cancelada");
   const nao2=L.filter(a=>["Recusada","Cancelada"].includes(stG(a)));
   const bl=(t,xs,v)=>`<section class="bloco"><h2 class="sec">${t} · ${xs.length}</h2>${xs.length?`<div class="lista">${xs.map(mkSolLinha).join("")}</div>`:`<div class="vazio">${v}</div>`}</section>`;
   return `<div><h1 class="titulo">Solicitações de ação de marketing</h1><p class="sub">${g?"Pedidos de apoio e verba do time comercial e dos RCs. Abra a solicitação para conversar, aprovar com o valor e registrar a decisão. Aprovada, ela vira uma ação no quadro.":"Peça apoio do Marketing Barenbrug para uma ação, como um dia de campo, um evento ou material para clientes. Você acompanha o status e conversa com o Marketing pelos comentários da solicitação."} ${temPerfil("Comercial Barenbrug")&&!g?"Você também vê as solicitações dos RCs que supervisiona.":""}</p></div>
   ${mkPodeSolic()?`<div class="mk-barra"><button class="btn" data-a="pag" data-v="acoes-solic-nova">+ Nova solicitação</button></div>`:""}
   <p class="meta" style="margin:0">Revendas do Conecta Revendas pedem apoio pelo PGD, usando a verba do IGDB, dentro do Conecta Revendas.</p>
-  ${bl(g?"Aguardando sua análise":"Aguardando o Marketing",ag,"Nada aguardando.")}
-  ${an.length?bl(g?"Em análise pelo Marketing · já no quadro, etapa Em análise":"Em análise pelo Marketing",an,""):""}
-  ${bl("Aprovadas",ok,"Nenhuma aprovada ainda.")}
-  ${nao2.length?bl("Recusadas e canceladas",nao2,""):""}`;
+  ${(()=>{const F=S.mkSolF||"";const op=[["","Todas",L.length],["ag","Aguardando",ag.length],["an","Em análise",an.length],["pz","Pausadas",pz.length],["ok","Aprovadas",ok.length],["no","Recusadas e canceladas",nao2.length]];
+    return `<div class="filtros" style="margin:4px 0 0">${op.map(([k,t,n])=>`<button class="chip" data-a="mk-sol-f" data-v="${k}" aria-pressed="${F===k}">${t} · ${n}</button>`).join("")}</div>`;})()}
+  ${(!S.mkSolF||S.mkSolF==="ag")?bl(g?"Aguardando sua análise":"Aguardando o Marketing",ag,"Nada aguardando."):""}
+  ${(!S.mkSolF&&an.length)||S.mkSolF==="an"?bl(g?"Em análise pelo Marketing · já no quadro, etapa Em análise":"Em análise pelo Marketing",an,"Nada em análise."):""}
+  ${(!S.mkSolF&&pz.length)||S.mkSolF==="pz"?bl("Pausadas · o valor segue reservado na verba",pz,"Nenhuma pausada."):""}
+  ${!S.mkSolF||S.mkSolF==="ok"?bl("Aprovadas",ok,"Nenhuma aprovada ainda."):""}
+  ${(!S.mkSolF&&nao2.length)||S.mkSolF==="no"?bl("Recusadas e canceladas",nao2,"Nenhuma."):""}`;
 }
 function vAcoesSolicNova(){
   return `<button class="voltar" data-a="pag" data-v="acoes-solic">‹ Solicitações</button>
@@ -6112,9 +6120,10 @@ function mkSolBlocoHTML(a){
     ${a.brindes_pedidos?`<p style="margin:4px 0 0"><strong>Brindes pedidos:</strong> ${esc(a.brindes_pedidos)}</p>`:""}
     ${a.status==="Solicitada"||(a.status==="Em análise"&&g)?(g?`<form id="f-mk-decidir" class="form-card" style="margin-top:8px"><div class="dupla"><div><label for="md_val">Verba aprovada (R$)</label><input id="md_val" inputmode="decimal" value="${a.verba_pedida?esc(String(a.verba_pedida).replace(".",",")):""}"></div><div><label for="md_obs">Mensagem para quem pediu</label><input id="md_obs" maxlength="500" placeholder="Opcional: condições, próximos passos"></div></div>
         <div class="mk-custo-l"><div><label for="md_sc">Bonificação em sementes (opcional)</label><select id="md_sc"><option value="">Sem bonificação</option>${MK_SEM_CULT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sf">Para quê</label><select id="md_sf">${MK_SEM_FIN.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sk">Quantidade (kg)</label><input id="md_sk" inputmode="numeric" placeholder="Ex.: 50"></div></div>
-        <div class="acoes"><button class="btn" type="submit" data-ok="1">Aprovar</button>${a.status==="Solicitada"?`<button class="btn sec" type="submit" data-ok="an">Em análise</button>`:""}<button class="btn sec perigo-t" type="submit" data-ok="0">Recusar</button></div><p class="meta">${a.status==="Em análise"?`Colocada em análise ${a.decidido_nome?"por "+esc(a.decidido_nome)+" ":""}em ${fmtDataHora(a.decidido_em||a.atualizado_em)}${a.decisao_obs?": "+esc(a.decisao_obs):""}. Ela já está no quadro, na etapa Em análise, e com ${fmtK0(a.valor_prev)} reservados na verba (provisionado). Aprovar muda para "A fazer" com a verba aprovada.`:`Aprovar: vai para o quadro como "A fazer", com a verba aprovada. Em análise: vai para o quadro na coluna "Em análise", com o valor reservado na verba como provisionado, enquanto depende de outras definições. A decisão entra nos comentários.`}</p></form>`
+        <div class="acoes"><button class="btn" type="submit" data-ok="1">Aprovar</button>${a.status==="Solicitada"?`<button class="btn sec" type="submit" data-ok="an">Em análise</button>`:""}<button class="btn sec" type="submit" data-ok="pausa">Pausar</button><button class="btn sec perigo-t" type="submit" data-ok="0">Recusar</button></div><p class="meta" style="margin:0">Pausar: a ação vai demorar ou depende de uma situação específica. Ela sai da fila de decisão, fica na coluna "Pausada" e o valor continua reservado na verba (provisionado). Use a mensagem para dizer do que ela depende.</p><p class="meta">${a.status==="Em análise"?`Colocada em análise ${a.decidido_nome?"por "+esc(a.decidido_nome)+" ":""}em ${fmtDataHora(a.decidido_em||a.atualizado_em)}${a.decisao_obs?": "+esc(a.decisao_obs):""}. Ela já está no quadro, na etapa Em análise, e com ${fmtK0(a.valor_prev)} reservados na verba (provisionado). Aprovar muda para "A fazer" com a verba aprovada.`:`Aprovar: vai para o quadro como "A fazer", com a verba aprovada. Em análise: vai para o quadro na coluna "Em análise", com o valor reservado na verba como provisionado, enquanto depende de outras definições. A decisão entra nos comentários.`}</p></form>`
       :`<div class="nota-admin" style="margin-top:8px">Aguardando análise do Marketing. Use os comentários abaixo para conversar e os anexos para mandar orçamento ou proposta.${eu?` <button class="link perigo" data-a="mk-sol-canc" data-v="${a.id}">Cancelar solicitação</button>`:""}</div>`)
     :a.status==="Em análise"?`<div class="nota-admin" style="margin-top:8px">Em análise pelo Marketing${a.decidido_nome?" ("+esc(a.decidido_nome)+")":""} desde ${fmtDataHora(a.decidido_em||a.atualizado_em)}. A decisão final sai depois da análise; acompanhe pelos comentários.</div>`
+    :a.status==="Pausada"?`<div class="nota-admin" style="margin-top:8px">Pausada pelo Marketing${a.decidido_nome?" ("+esc(a.decidido_nome)+")":""} em ${fmtDataHora(a.decidido_em||a.atualizado_em)}${a.decisao_obs?": "+esc(a.decisao_obs):"."} A ação depende de uma situação específica; o valor continua reservado na verba.${g?" Para retomar ou aprovar, use o bloco de decisão abaixo.":""}</div>`
     :a.status==="Recusada"?`<div class="nota-admin" style="margin-top:8px">Recusada por ${esc(a.decidido_nome||"")} em ${fmtDataHora(a.decidido_em)}${a.decisao_obs?": "+esc(a.decisao_obs):"."}</div>`
     :a.status==="Cancelada"?`<div class="nota-admin" style="margin-top:8px">Solicitação cancelada.</div>`
     :`<div class="nota-admin" style="margin-top:8px">Aprovada por ${esc(a.decidido_nome||"")} em ${fmtDataHora(a.decidido_em)} com verba de ${fmtK0(a.valor_prev)}${a.decisao_obs?". "+esc(a.decisao_obs):"."}</div>`}
@@ -6233,6 +6242,7 @@ function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
 const MK_ETAPAS=[
   {k:"sol",t:"Solicitadas",cor:"cinza",d:"Pedidos que chegaram (de RCs, comerciais ou revendas) e o Marketing ainda não analisou. Não reservam verba.",f:a=>a.status==="Solicitada"},
   {k:"ana",t:"Em análise",cor:"amarelo",d:"O Marketing está avaliando. O valor fica reservado na verba até a decisão, mas ainda não está aprovado.",f:a=>a.status==="Em análise"},
+  {k:"pau",t:"Pausadas",cor:"cinza",d:"Adiadas porque dependem de uma situação específica. O valor continua reservado na verba até a ação ser retomada, aprovada ou recusada.",f:a=>a.status==="Pausada"},
   {k:"apr",t:"Aprovadas, a realizar",cor:"azul",d:"Aprovadas pelo Marketing e com data marcada (a fazer ou em andamento). O valor é compromisso assumido.",f:a=>a.status==="A fazer"||a.status==="Em andamento"},
   {k:"rea",t:"Realizadas",cor:"verde",d:"A ação já aconteceu. O valor sai da verba quando o pagamento é marcado como pago.",f:a=>a.status==="Concluída"}];
 function vAcoesGestao(){
@@ -6259,7 +6269,7 @@ function vAcoesGestao(){
   const outras=S.mk.filter(a=>!a.agrupador&&mkConta(a)&&!mkDaSafra(a));const fora=S.mk.filter(a=>!a.agrupador&&(a.status==="Cancelada"||a.status==="Recusada"));
   const tile=(t,v,m,tip,st)=>`<div class="metric" ${st?`style="${st}"`:""}><span>${t}${inf(tip)}</span><strong>${fmtK0(v)}</strong><span class="meta">${m}</span></div>`;
   return `<div><h1 class="titulo">Gestão das ações · safra ${mkSafra}</h1>
-    <p class="sub">Como ler: cada ação passa por quatro etapas: <strong>solicitada → em análise → aprovada → realizada</strong>. A verba em dinheiro é uma coisa; as sementes da bonificação são outra, só para acompanhamento, e não descontam da verba. Pedidos agrupados, como os eventos de um RC, aparecem juntos, mas cada evento conta separado.</p></div>
+    <p class="sub">Como ler: cada ação passa por quatro etapas: <strong>solicitada → em análise → aprovada → realizada</strong>. Uma ação também pode ficar <strong>pausada</strong> quando depende de algo específico; o valor dela segue reservado. A verba em dinheiro é uma coisa; as sementes da bonificação são outra, só para acompanhamento, e não descontam da verba. Pedidos agrupados, como os eventos de um RC, aparecem juntos, mas cada evento conta separado.</p></div>
   <section class="bloco" style="grid-template-columns:minmax(0,1fr)"><h2 class="sec">1. Verba de Marketing em dinheiro${inf("Só ações pagas com a verba de Marketing desta safra (julho de 2026 a junho de 2027). Ações pagas com IGDB ou bônus das revendas não entram aqui.")}</h2>
     <div class="mk-barra-verba" role="img" aria-label="Uso da verba"><i style="width:${pct(pag)}%;background:#2E8B57" title="Pago"></i><i style="width:${pct(apr)}%;background:#0090D0" title="Aprovado, a pagar"></i><i style="width:${pct(res)}%;background:#E0A800" title="Reservado em análise"></i></div>
     <div class="mk-leg"><span><i style="background:#2E8B57"></i>Pago</span><span><i style="background:#0090D0"></i>Aprovado, a pagar</span><span><i style="background:#E0A800"></i>Reservado (em análise)</span><span><i style="background:#dfe5ea"></i>Livre</span></div>
@@ -6267,7 +6277,7 @@ function vAcoesGestao(){
       ${tile("Verba da safra",V,`<button class="link" data-a="pag" data-v="acoes-painel">editar e ver cenários</button>`,"Valor total que o Marketing tem para as ações desta safra.")}
       ${tile("Pago",pag,V?pctTxt(pag/V)+" da verba":"","Já saiu da verba: o pagamento foi feito.")}
       ${tile("Aprovado, a pagar",apr,V?pctTxt(apr/V)+" da verba":"","O Marketing aprovou e a Barenbrug se comprometeu a pagar, mas o pagamento ainda não saiu.")}
-      ${tile("Reservado",res,V?pctTxt(res/V)+" da verba":"","Valor das ações ainda em análise ou sem aprovação financeira. Fica separado para não estourar a verba, mas pode cair se a ação for recusada.")}
+      ${tile("Reservado",res,(V?pctTxt(res/V)+" da verba":"")+(()=>{const pz=AV.filter(a=>a.status==="Pausada"&&mkFin(a)==="Provisionada");return pz.length?` · ${fmtK0(pz.reduce((t,a)=>t+mkCusto(a),0))} de ${pz.length} pausada${pz.length>1?"s":""}`:"";})(),"Valor das ações em análise ou pausadas, ainda sem aprovação financeira. Fica separado para não estourar a verba, mas pode cair se a ação for recusada.")}
       ${(()=>{const bm=mkBonifResumo(AV).rs,tt=pag+apr+res+bm;return bm?tile("Dinheiro + bonificação",tt,V?`${pctTxt(tt/V)} da verba · ${tt>V?"passaria em "+fmtK0(tt-V):"sobraria "+fmtK0(V-tt)}`:"","Conta gerencial: dinheiro comprometido somado ao valor das sementes bonificadas nas ações da verba de Marketing. Mostra se, contando o produto, o total caberia na verba aprovada. O saldo oficial continua só em dinheiro.",tt>V?"box-shadow:inset 0 0 0 2px var(--vermelho)":""):"";})()}
       ${tile("Livre para novas ações",livre,livre<0?"acima da verba":"verba − pago − a pagar − reservado","Quanto ainda dá para aprovar sem passar da verba, já descontando o que está reservado.",livre<0?"box-shadow:inset 0 0 0 2px var(--vermelho)":"box-shadow:inset 0 0 0 2px var(--amarelo)")}
     </div>
@@ -6325,7 +6335,7 @@ function vAcoesPainel(){
   <div class="metrics" style="margin-top:10px">
     <div class="metric"><span>Pago</span><strong>${fmtK0(vPag)}</strong><span class="meta">já saiu da verba</span></div>
     <div class="metric"><span>Aprovado, a pagar</span><strong>${fmtK0(vApr)}</strong><span class="meta">compromisso assumido</span></div>
-    <div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong><span class="meta">reservado, ainda sem aprovação${(()=>{const ea=A.filter(a=>a.status==="Em análise");return ea.length?` · ${ea.length} em análise: ${fmtK0(ea.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}</span></div>
+    <div class="metric"><span>Provisionado</span><strong>${fmtK0(vProv)}</strong><span class="meta">reservado, ainda sem aprovação${(()=>{const ea=A.filter(a=>a.status==="Em análise");return ea.length?` · ${ea.length} em análise: ${fmtK0(ea.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}${(()=>{const pz=A.filter(a=>a.status==="Pausada");return pz.length?` · ${pz.length} pausada${pz.length>1?"s":""}: ${fmtK0(pz.reduce((t,a)=>t+mkCusto(a),0))}`:"";})()}</span></div>
     ${(()=>{const B=mkBonifResumo(S.mk.filter(a=>mkConta(a)&&mkDaSafra(a)));return B.rs?`<div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Bonificação de produto · gerencial</span><strong>${fmtK0(B.rs)}</strong><span class="meta">${isNum(B.kg)} kg em ${B.n} ${B.n===1?"ação":"ações"} · não sai da verba</span></div>`:"";})()}
     ${ACAN.length?`<div class="metric"><span>Com verba dos canais (Conecta)</span><strong>${fmtK0(ACAN.reduce((t,x)=>t+mkCusto(x),0))}</strong><span class="meta">${ACAN.length} ações pagas com IGDB ou bônus das revendas, fora da verba de Marketing</span></div>`:""}
     <div class="metric"><span>Saldo só com o aprovado</span><strong>${fmtK0(V-vPag-vApr)}</strong><span class="meta">verba menos pago e aprovado; com a provisão: ${fmtK0(saldo)}</span></div>
@@ -6750,6 +6760,7 @@ document.addEventListener("change",async ev=>{
   if(t.id==="mk_tipo"){S.mkTipo=t.value;render();return;}
   if(t.id==="mk_resp_f"){S.mkResp=t.value;render();return;}
   if(t.id==="mk_mes_f"){S.mkMes=t.value;render();return;}
+  if(t.id==="mk_sit_f"){S.mkSitF=t.value;render();return;}
   if(t.id==="bd_cat"){S.bdCat=t.value;render();return;}
   if(t.id==="bd_loc"){S.bdLoc=t.value;render();return;}
   if(t.id==="bd_vis"){S.bdVis=t.value;render();return;}
@@ -6786,6 +6797,8 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-mk-decidir"){if(!ehMkt())return;const okv=(ev.submitter&&ev.submitter.dataset.ok);const ok=okv==="1";const v=mkNum(val("md_val"));
     const sc=val("md_sc"),sk=parseInt(String(val("md_sk")).replace(/\D/g,""))||0;if(sc&&!sk&&okv!=="0"){aviso("Informe a quantidade de sementes em kg.");return;}
     if(sc&&sk&&okv!=="0"){const a0=(S.mk||[]).find(x=>x.id===S.mkSel);if(a0){if(!S.precosOk)await carregarPrecos();const L=[...mkSem(a0),{id:Date.now().toString(36),cult:sc,fin:val("md_sf"),kg:sk,preco:mkSemPreco(sc)||null,obs:""}];const pt={sementes:L};if(!a0.pagamento)pt.pagamento=(v||0)>0?"Dinheiro e produto":"Produto (bonificação)";const {error:e2}=await sb.from("mkt_acoes").update(pt).eq("id",S.mkSel);if(e2){aviso("A bonificação não foi gravada. Lance de novo em Bonificação de produto.");}}}
+    if(okv==="pausa"){const {error}=await sb.rpc("mkt_situacao",{p_id:S.mkSel,p_acao:"pausar",p_valor:v||null,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível pausar: "+(error.message||"erro"));return;}
+      S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Pausada. O valor continua reservado na verba como provisionado.");return;}
     if(okv==="an"){const {error}=await sb.rpc("mkt_em_analise",{p_id:S.mkSel,p_valor:v||0,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar: "+(error.message||"erro"));return;}
       S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso("Em análise. Ela entrou no quadro e o valor ficou reservado na verba como provisionado.");return;}
     const {error}=await sb.rpc("mkt_decidir",{p_id:S.mkSel,p_ok:ok,p_valor:ok?(v||0):null,p_obs:val("md_obs")||null});if(error){aviso("Não foi possível registrar a decisão.");return;}
@@ -7130,7 +7143,8 @@ document.addEventListener("click",async ev=>{
   if(a==="tour-prev"){if(S.tour&&S.tour.i>0)S.tour.i--;render();return;}
   if(a==="tour-ajuda"){abrirTour(S.secao||"portal");return;}
   if(a==="sair"&&S.mfa){S.mfa=null;try{await sbReal.auth.signOut();}catch(e){}render();return;}
-  if(a==="mk-limpa-f"){S.mkResp="";S.mkMes="";S.mkTipo="Todos";S.mkBusca="";render();return;}
+  if(a==="mk-sol-f"){S.mkSolF=v||"";render();return;}
+  if(a==="mk-limpa-f"){S.mkResp="";S.mkMes="";S.mkSitF="";S.mkTipo="Todos";S.mkBusca="";render();return;}
   if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
