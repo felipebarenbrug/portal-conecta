@@ -2098,7 +2098,8 @@ function vISGD(){
     <div style="min-width:0"><h3 class="pgd-h">Por RTV${F?" · "+esc(F):""}</h3><div class="tab"><table class="sim-t"><tbody>${Object.entries(rtvs).sort((a,b)=>b[1].c-a[1].c).map(([k,o])=>`<tr><td>${esc(k)}<br><span class="meta">${[...o.ufs].join(", ")||"—"}</span></td><td class="val">${o.n} ações${o.z?`<br><span class="meta">${o.z} sem custo</span>`:""}</td><td class="val">${fmtK0(o.c)}</td></tr>`).join("")}</tbody></table></div></div></div>
     <p class="meta" style="margin:8px 0 0">Por fonte de verba${F?" ("+esc(F)+")":""}: ${Object.entries(fontes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${fmtK0(v)}`).join(" · ")}. A execução e o resultado de cada ação ficam em Ações de Marketing.</p></section>`;
 }
-async function carregarImpulso(){if(S.impBusy)return;S.impBusy=true;try{const {data}=await sb.from("is_impulso").select("id,edicao,data,titulo,assunto,foco,enviados,html").order("edicao",{ascending:false});S.impulso=data||[];}catch(e){S.impulso=[];}S.impBusy=false;render();}
+async function impDescomp(t){try{if(!t||!t.startsWith("gz:"))return t;const bin=Uint8Array.from(atob(t.slice(3)),c=>c.charCodeAt(0));const ds=new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));const h=await new Response(ds).text();return h.split("__LOGO__").join(location.origin+"/materiais/logo-barenbrug-email.png");}catch(e){return null;}}
+async function carregarImpulso(){if(S.impBusy)return;S.impBusy=true;try{const {data}=await sb.from("is_impulso").select("id,edicao,data,titulo,assunto,foco,enviados,html").order("edicao",{ascending:false});const L=data||[];for(const x of L)x.html=await impDescomp(x.html);S.impulso=L;}catch(e){S.impulso=[];}S.impBusy=false;render();}
 function vISImp(){
   if(S.impulso===undefined){carregarImpulso();return `<div class="carregando">Carregando as edições…</div>`;}
   const L=S.impulso||[],adm=ehAdmin();const dt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
@@ -5285,7 +5286,7 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-marca","Marca, mídia e IAs"],["int-perfil","Perfil dos canais"],["int-redes","Concorrentes nas redes"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-marca","Marca, mídia e IAs"],["int-perfil","Perfil dos canais"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
 async function carregarMarca(){if(S.marcaBusy)return;S.marcaBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","marca").maybeSingle();S.marca=data?data.dados:null;}catch(e){S.marca=null;}S.marcaBusy=false;render();}
 function vIntMarca(){
   if(S.marca===undefined){carregarMarca();return `<div class="carregando">Carregando…</div>`;}
@@ -5299,10 +5300,10 @@ function vIntMarca(){
   <section class="bloco"><h2 class="sec">Como a Barenbrug aparece nas IAs</h2>
    <div class="dir-grid">${((M.ias||{}).perguntas||[]).map(([q,rs])=>`<div class="dir-card"><span class="meta">Pergunta feita às IAs</span><strong style="display:block;margin:4px 0 8px">“${esc(q)}”</strong>${rs.map(([ia,r])=>`<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e3e8ec;padding:6px 0"><span>${esc(ia)}</span><b>${esc(r)}</b></div>`).join("")}</div>`).join("")}</div>
    <p class="meta" style="margin-top:8px">Por que importa: ${((M.ias||{}).contexto||[]).map(esc).join(" · ")}. Teste feito em ${esc((M.ias||{}).data||"")}; vale repetir a cada trimestre com as mesmas perguntas.</p></section>
-  <section class="bloco"><h2 class="sec">Instagram frente às principais marcas</h2><p class="meta">Janela de ${esc((M.instagram||{}).janela||"")}.</p>
-   <div class="int-2"><div><strong>Seguidores</strong>${ig.map(([n,v])=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${v.toLocaleString("pt-BR")}</b></div><div style="height:8px;background:#e3e8ec;border-radius:4px"><div style="height:8px;width:${v/mx*100}%;background:${n==="Barenbrug"?"#00557f":"#9aa7b2"};border-radius:4px"></div></div></div>`).join("")}</div>
-   <div><strong>Novos seguidores no período</strong>${ig.map(([n,,g])=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>+${g.toLocaleString("pt-BR")}</b></div><div style="height:8px;background:#e3e8ec;border-radius:4px"><div style="height:8px;width:${g/mg*100}%;background:${n==="Barenbrug"?"#ffdb00":"#9aa7b2"};border-radius:4px"></div></div></div>`).join("")}</div></div>
-   <p class="precos-nota">${esc((M.instagram||{}).nota||"")}</p></section>
+  <section class="bloco"><h2 class="sec">Instagram frente às principais marcas</h2>
+   ${S.bmInt===undefined?(()=>{S.bmInt=null;(async()=>{try{const {data}=await sb.from("social_benchmark").select("*").order("foto_em",{ascending:false});S.bmInt=data||[];}catch(e){S.bmInt=[];}if(S.pag==="int-marca")render();})();return "";})():""}
+   ${S.bmInt&&S.bmInt.length?vMdBench(S.bmInt):`<div class="carregando">Carregando o benchmarking…</div>`}
+   <p class="precos-nota">No Q1 (${esc((M.instagram||{}).janela||"")}) a Barenbrug ganhou ${ig.map(([n,,g])=>`${esc(n)} +${g.toLocaleString("pt-BR")}`).join(" · ")} seguidores. ${esc((M.instagram||{}).nota||"")}</p></section>
   <section class="bloco"><h2 class="sec">Conteúdos que seguem colhendo</h2><p class="meta">Produzidos antes da safra e ainda entre os mais vistos: o custo de produção já foi pago e cada mês traz alcance novo.</p>
    <div class="dir-grid">${(M.perenes||[]).map(([t,n,v])=>`<div class="dir-card"><span class="meta">${esc(t)}</span><strong style="display:block;margin-top:4px">${esc(n)}</strong><p class="meta">${esc(v)}</p></div>`).join("")}</div></section>
   <p class="precos-nota">Fonte: ${esc(M.fonte||"")}</p>`;
@@ -7715,7 +7716,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():S.pag==="int-marca"?vIntMarca():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
