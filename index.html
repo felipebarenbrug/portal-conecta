@@ -1055,7 +1055,8 @@ const OPC={
 const BASE_CAMPOS=[
   {k:"nome",l:"Nome completo",t:"text",req:true},
   {k:"email",l:"E-mail",t:"email_fixo"},
-  {k:"telefone",l:"Celular / WhatsApp",t:"tel",req:true}
+  {k:"telefone",l:"Celular / WhatsApp",t:"tel",req:true},
+  {k:"nascimento",l:"Data de nascimento",t:"date",reqNovo:true}
 ];
 const SCHEMAS={
   "RC":[...BASE_CAMPOS,
@@ -1207,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117202451";
+const APP_VER="20261117202950";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1424,8 +1425,10 @@ function campoHTML(c){
     return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" ${dis} ${c.req?"required":""}>${inner}</select></div>`;
   }
   if(c.t==="select") return `<div>${lbl}<select id="f_${c.k}" data-fk="${c.k}" ${c.req?"required":""}><option value="">Selecione…</option>${c.o.map(o=>`<option value="${esc(o)}" ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+  if(c.t==="date"){const ob=c.reqNovo&&S.formAlvo==="form"&&!cadastroCompleto();return `<div><label for="f_${c.k}">${c.l}${ob?" *":""}</label><input id="f_${c.k}" data-fk="${c.k}" type="date" min="1920-01-01" max="${new Date().toISOString().slice(0,10)}" value="${esc(String(v).slice(0,10))}" ${ob?"required":""}><span class="meta">Usada só para planejamento interno do Marketing, como ações de relacionamento.</span></div>`;}
   return `<div>${lbl}<input id="f_${c.k}" data-fk="${c.k}" type="${c.t==="tel"?"tel":"text"}" value="${esc(v)}" ${c.req?"required":""}></div>`;
 }
+const valCampo=(c,v)=>c.t==="date"?(/^\d{4}-\d{2}-\d{2}$/.test(String(v||"").slice(0,10))?String(v).slice(0,10):null):String(v||"").trim();
 const camposPerfil=perfil=>schemaDoPerfil(perfil).map(campoHTML).join("");
 function vCadastroObrig(){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
@@ -1440,7 +1443,7 @@ function vCadastroObrig(){
 function progItens(){
   if(!S.profile)return [];const P=S.profile,I=[];const cheio=v=>Array.isArray(v)?v.length>0:v!=null&&String(v).trim()!=="";
   I.push({g:"Cadastro",t:"Foto de perfil",ok:!!P.foto_url,ir:"perfil",d:"Aparece nas mensagens, perguntas e comunicados."});
-  schemaDoPerfil(S.perfil).filter(c=>c.req&&c.t!=="email_fixo").forEach(c=>I.push({g:"Cadastro",t:c.l,ok:cheio(P[c.k]),ir:"perfil"}));
+  schemaDoPerfil(S.perfil).filter(c=>(c.req||c.reqNovo)&&c.t!=="email_fixo").forEach(c=>I.push({g:"Cadastro",t:c.l,ok:cheio(P[c.k]),ir:"perfil"}));
   const nomeEt=id=>(ETAPAS.find(e=>e.id===id)||{}).n||id;
   HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os três híbridos liberam o certificado."}));
   ETAPAS_ATIVAS.filter(id=>!HIB_CORE.includes(id)).forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia"}));
@@ -2628,7 +2631,9 @@ function cartaoPost(p){
     const r=(S.postReac&&S.postReac[p.id])||{total:0,mine:null,tipos:{}};
     const bv=p.tipo==="boas-vindas";
     const pub=admin&&p.publico&&!p.publico.includes("todos")?` · <span class="meta">para ${p.publico.map(k=>esc(pubLabel(k))).join(", ")}</span>`:"";
-    const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}">${e} ${r.tipos[k]||0}</button>`).join("");
+    const Q=r.quem||{};const reacts=REACOES.map(([k,e])=>`<button class="chip" data-a="post-react" data-p="${p.id}" data-v="${k}" aria-pressed="${r.mine===k}" title="${esc((Q[k]||[]).join(", "))}">${e} ${r.tipos[k]||0}</button>`).join("");
+    const lsQ=REACOES.filter(([k])=>(Q[k]||[]).length).map(([k,e])=>{const L=[...Q[k]].sort((a,b)=>a==="Você"?-1:b==="Você"?1:0);const pn=x=>x==="Você"?x:String(x).trim().split(/\s+/).slice(0,2).join(" ");const vis=L.slice(0,3).map(pn);const resto=L.length-vis.length;return `<strong>${e}:</strong> ${esc(vis.join(", "))}${resto?` e mais ${resto}`:""}${resto?` <button type="button" class="link" data-a="reac-todos" data-p="${p.id}" data-v="${k}">ver todos</button>`:""}`;});
+    const quemHTML=lsQ.length?`<p class="meta" style="margin:4px 0 0">${lsQ.join(" · ")}</p>${S.reacTodos&&S.reacTodos.startsWith(p.id+"|")?`<p class="meta" style="margin:4px 0 0">${esc((Q[S.reacTodos.split("|")[1]]||[]).join(", "))}</p>`:""}`:"";
     return `<section class="bloco cx" ${p.fixado?'style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"':''}>
       ${p.fixado?'<span class="card-tag">Fixado</span> ':''}${bv?'<span class="card-tag">Novo integrante</span>':''}
       <div class="autor" style="margin-top:4px">${avatar(p.autor||p.ref_user,p.autor_nome||"Barenbrug",40)}<div><span><strong>${esc(p.autor_nome||"Barenbrug")}</strong>${perfilTxt(p.autor)} ${bv?"":"publicou"} ${novoDesde&&new Date(p.criado_em).getTime()>novoDesde&&p.autor!==S.user.id?'<span class="tag-novo">Novo</span>':""}</span><span class="meta">${fmtDataHora(p.criado_em)}${pub}</span></div></div>
@@ -2636,6 +2641,7 @@ function cartaoPost(p){
       ${p.imagem_url?`<img src="${esc(urlOk(p.imagem_url))}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
       ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(urlOk(p.anexo_url))}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
       <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>
+      ${quemHTML}
       ${comentariosPost(p)}
     </section>`;
 }
@@ -3258,8 +3264,8 @@ const pubLabel=k=>{const f=PUBLICOS.find(y=>y[0]===k);return f?f[1]:k;};
 async function carregarPosts(){try{
   const {data}=await sb.from("posts").select("*").order("fixado",{ascending:false}).order("criado_em",{ascending:false});
   S.posts=data||[];
-  const rc={};const {data:rs}=await sb.from("post_reacoes").select("post_id,tipo,user_id");
-  (rs||[]).forEach(r=>{const o=(rc[r.post_id]=rc[r.post_id]||{total:0,mine:null,tipos:{}});o.total++;o.tipos[r.tipo]=(o.tipos[r.tipo]||0)+1;if(r.user_id===S.user.id)o.mine=r.tipo;});
+  const rc={};const {data:rs}=await sb.from("post_reacoes").select("post_id,tipo,user_id,nome");
+  (rs||[]).forEach(r=>{const o=(rc[r.post_id]=rc[r.post_id]||{total:0,mine:null,tipos:{},quem:{}});o.total++;o.tipos[r.tipo]=(o.tipos[r.tipo]||0)+1;(o.quem[r.tipo]=o.quem[r.tipo]||[]).push(r.user_id===S.user.id?"Você":(r.nome||"Alguém"));if(r.user_id===S.user.id)o.mine=r.tipo;});
   S.postReac=rc;
   const {data:cs}=await sb.from("post_comentarios").select("*").order("criado_em",{ascending:true});
   const cm={};(cs||[]).forEach(c=>{(cm[c.post_id]=cm[c.post_id]||[]).push(c);});S.postCom=cm;
@@ -3367,7 +3373,7 @@ function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
-  const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2].toLowerCase()})`).join("; ");
+  const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
   const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
@@ -7749,10 +7755,10 @@ function vPrivacidade(){
   return `<div><p><button type="button" class="link" data-a="priv-voltar">‹ Voltar</button></p><h1 class="titulo">Aviso de privacidade</h1><p class="sub">Como o Portal Conecta Barenbrug trata os dados pessoais de quem usa o portal e dos contatos comerciais que passam por ele, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018). ${PRIV_VER}.</p></div>
   <div class="priv-txt">
   ${sec("1. Quem trata os dados",`<p>A Barenbrug do Brasil é a controladora dos dados tratados no Portal Conecta. O portal é mantido pelo Marketing Barenbrug e serve a revendas, representantes comerciais (RCs), time comercial e parceiros convidados.</p>`)}
-  ${sec("2. Que dados usamos",`<p><strong>Seu cadastro:</strong> nome, e-mail, WhatsApp, cidade e UF, função, empresa ou revenda, CNPJ e razão social quando você representa uma empresa, região de atuação, formação, marcas com que trabalha e foto de perfil, que é opcional.</p>
+  ${sec("2. Que dados usamos",`<p><strong>Seu cadastro:</strong> nome, e-mail, WhatsApp, data de nascimento, cidade e UF, função, empresa ou revenda, CNPJ e razão social quando você representa uma empresa, região de atuação, formação, marcas com que trabalha e foto de perfil, que é opcional.</p>
    <p><strong>Seu uso do portal:</strong> data do último acesso, progresso e respostas nos cursos e provas, mensagens, dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
    <p><strong>Contatos comerciais:</strong> dados de produtores e clientes que pediram atendimento à Barenbrug (nome, telefone, e-mail, cidade e o histórico da negociação), vindos do CRM da Barenbrug, para que a pessoa certa faça o atendimento.</p>`)}
-  ${sec("3. Para que usamos",`<ul><li>Liberar, controlar e proteger o seu acesso.</li><li>Oferecer treinamento, provas e certificados.</li><li>Operar os programas de relacionamento Conecta RC e Conecta Revendas, com metas, ranking e materiais.</li><li>Direcionar contatos de clientes interessados ao atendimento comercial da sua região.</li><li>Apoiar a venda, com tabela de preços, propostas e informações de mercado.</li><li>Cumprir obrigações legais e registrar ações para segurança e auditoria.</li></ul>`)}
+  ${sec("3. Para que usamos",`<ul><li>Liberar, controlar e proteger o seu acesso.</li><li>Oferecer treinamento, provas e certificados.</li><li>Operar os programas de relacionamento Conecta RC e Conecta Revendas, com metas, ranking e materiais, e planejar ações de relacionamento, como datas comemorativas.</li><li>Direcionar contatos de clientes interessados ao atendimento comercial da sua região.</li><li>Apoiar a venda, com tabela de preços, propostas e informações de mercado.</li><li>Cumprir obrigações legais e registrar ações para segurança e auditoria.</li></ul>`)}
   ${sec("4. Bases legais",`<p>Tratamos os dados para executar a relação comercial com você ou com a empresa que você representa (art. 7º, V), pelo legítimo interesse da Barenbrug em treinar e apoiar a sua rede comercial e em atender quem pediu contato (art. 7º, IX), para cumprir obrigações legais (art. 7º, II) e, para a foto de perfil e outros dados opcionais, com o seu consentimento (art. 7º, I), que você pode retirar quando quiser.</p>`)}
   ${sec("5. Com quem compartilhamos",`<p>Dentro do portal, cada pessoa vê só o que o perfil dela permite. Os dados não são vendidos. Usamos prestadores que tratam dados em nome da Barenbrug: Supabase (banco de dados, hospedado em São Paulo), RD Station (CRM e marketing da Barenbrug) e GitHub (hospedagem da interface do site, sem dados pessoais). Vídeos do YouTube exibidos no portal seguem a política de privacidade do YouTube.</p>`)}
   ${sec("6. Como protegemos",`<p>Acesso só com login, verificação em duas etapas exigida pelo administrador conforme o perfil, regras de acesso por perfil aplicadas no banco de dados, tráfego criptografado, contato de cliente exibido só sob demanda e registro de quem abriu, e chaves de integração guardadas no servidor. O portal não usa cookies de publicidade nem ferramentas de rastreamento de terceiros; o navegador guarda apenas a sua sessão de login.</p>`)}
@@ -8158,6 +8164,7 @@ document.addEventListener("click",async ev=>{
   if(a==="lead-ver"){S.leadVistos=S.leadVistos||{};S.leadVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_contato",{p_id:+v});if(error)throw error;S.leadVistos[v]=data||{telefone:null,email:null};}catch(e){delete S.leadVistos[v];aviso("Não foi possível abrir o contato deste lead.");}render();return;}
   if(a==="lead-status"){const obs=(document.getElementById("lead_obs_"+v)||{}).value||null;const {error}=await sb.rpc("lead_marcar",{p_id:+v,p_status:b.dataset.st,p_obs:obs});if(error){aviso("Não foi possível gravar. Tente de novo.");return;}await carregarLeads();render();aviso("Lead atualizado.");return;}
   if(a==="leads-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{const e=document.getElementById("lead_prog");if(e)e.textContent=t;};const r=await atualizarLeads(prog);await carregarLeads();render();aviso("Leads atualizados: "+r.replace("leads: ",""));return;}
+  if(a==="reac-todos"){const k=b.dataset.p+"|"+v;S.reacTodos=S.reacTodos===k?null:k;const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(a==="post-react"){const pid=b.dataset.p,cur=((S.postReac||{})[pid]||{}).mine;await sb.from("post_reacoes").delete().eq("post_id",pid).eq("user_id",S.user.id);if(cur!==v){await sb.from("post_reacoes").insert({post_id:pid,user_id:S.user.id,tipo:v});}S.posts=null;render();return;}
   if(a==="post-com-abrir"){S.postComAberto=v;render();return;}
   if(a==="post-com-del"){const r=await sb.from("post_comentarios").delete().eq("id",v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o comentário.");return;}await carregarPosts();render();aviso("Comentário excluído.");return;}
@@ -8469,9 +8476,10 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-cadastro"){
     const schema=schemaDoPerfil(S.perfil);
-    if(schema.some(c=>c.req&&!((S.form[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
-    const dados={};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.form[c.k]||"").trim();});
     const eraObrig=!cadastroCompleto();
+    if(schema.some(c=>(c.req||(c.reqNovo&&eraObrig))&&!valCampo(c,S.form[c.k]))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
+    const dados={};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=valCampo(c,S.form[c.k]);});
+    if(dados.nascimento){const a=+dados.nascimento.slice(0,4),y=new Date().getFullYear();if(a<1920||a>y-14){S._erro="Confira a data de nascimento.";render();window.scrollTo(0,0);return;}}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("profiles").update(dados).eq("id",S.user.id);
     if(error){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
@@ -8490,7 +8498,7 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-usuario"){
     const perfil=S.adminForm.perfil;const schema=schemaDoPerfil(perfil);
     if(schema.some(c=>c.req&&!((S.adminForm[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
-    const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=(S.adminForm[c.k]||"").trim();});
+    const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=valCampo(c,S.adminForm[c.k]);});
     if("nivel" in S.adminUser){dados.perfis=[perfil,...(S.adminForm.perfis||[]).filter(x=>x!==perfil&&x!=="Administrador")];const nv=f.querySelector("#f_nivel");dados.nivel=nv?nv.value:"Padrão";}
     dados.acessos=[...new Set([...f.querySelectorAll("[data-acesso]:checked:not(:disabled)")].map(c=>c.getAttribute("data-acesso")).concat([...f.querySelectorAll("[data-acesso]:disabled")].map(c=>c.getAttribute("data-acesso")).filter(id=>(S.adminForm.acessos||[]).includes(id))))];
     dados.cursos_obrig=cursosObrigDe(S.adminForm);dados.exige_curso=dados.cursos_obrig.includes("hibridos");
