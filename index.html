@@ -1391,7 +1391,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117224158";
+const APP_VER="20261117224448";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1664,7 +1664,7 @@ function cabecalho(){
 }
 function veCalcRent(){const ac=Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];return ehAdmin()||ac.includes("calculadora");}
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"]];
+  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -1689,6 +1689,44 @@ function vMktForm(){
   </form></section>`;
 }
 /* ---------- Diretriz de comunicação: valor, não preço ---------- */
+/* ===== Academia: Comunicação e encantamento ===== */
+const COM_MAT={
+ casos:["Casos de sucesso","pag","casos"],apost:["Apostila de vendas","pag","apostilas"],calc:["Calculadora de rentabilidade","pag","calc"],manejo:["Guia de manejo","pag","manejo"],
+ faq:["Perguntas e respostas","pag","faq"],base:["Base de conhecimento","pag","base"],enx:["Enxoval de Marketing","secao","enxoval"],duv:["Tira-Dúvidas","secao","duvidas"]};
+const comBtn=k=>{const m=COM_MAT[k];if(!m)return "";if(k==="calc"&&!veCalcRent())return "";return `<button type="button" class="btn sec" style="padding:6px 10px;font-size:.85rem" data-a="${m[1]}" data-v="${m[2]}">${m[0]}</button>`;};
+function vComunicar(){
+  const M=[
+   ["Primeiro contato","O produtor chegou pelo anúncio, pelo WhatsApp ou na loja.","Apresente-se, pergunte da fazenda antes de falar de produto e combine o próximo passo.",["Um vídeo curto de um caso de sucesso da mesma região, para abrir a conversa","Nada de tabela de preço nesse momento"],["casos"]],
+   ["Entender a fazenda","Você ainda não sabe a área, a lotação nem a dor dele.","Pergunte: quantos hectares vai formar ou reformar, que capim tem, qual a lotação hoje e o que mais incomoda (seca, cigarrinha, encharcamento, rebrota lenta).",["Ainda não mande material: anote as respostas, elas escolhem o que enviar depois"],[]],
+   ["Indicar o híbrido","Você já sabe a dor e o sistema (cria, recria, engorda, leite).","Indique um híbrido, com o motivo técnico, em vez de oferecer o catálogo.",["A apostila de vendas do híbrido indicado, aberta no capítulo do diferencial que resolve a dor","As respostas prontas de Perguntas e respostas para as dúvidas técnicas"],["apost","faq"]],
+   ["Mostrar a conta","O produtor quer saber se compensa.","Abra a calculadora com a área, a lotação e a arroba dele. Fale em arroba a mais por hectare, não em preço do saco.",["O print da conta da calculadora com os números dele","A tabela de ganho por hectare da apostila"],["calc","apost"]],
+   ["Provar","Ele gostou, mas quer ver para crer.","Mostre quem já usa perto dele e o dado de ensaio, sempre com a fonte.",["O vídeo do caso de sucesso do estado ou da região dele","Peças do Enxoval com o dado de ensaio (posts e banners do híbrido)","A apresentação de híbridos do Enxoval, se for uma reunião"],["casos","enx"]],
+   ["Objeção de preço","“O saco é caro.” “O comum sai por um terço.”","Concorde que o saco custa mais e mude a régua para o custo da arroba produzida. Use o roteiro de conversa da apostila.",["A página da objeção de preço da apostila (a semente se paga com menos de uma arroba)","A conta da calculadora com o preço da arroba da praça dele"],["apost","calc"]],
+   ["“Meu vizinho plantou e não pegou”","A desconfiança é na formação do pasto, não no híbrido.","Explique que formação depende de época, preparo, taxa e profundidade, e ofereça acompanhar a implantação.",["O Guia de manejo, na parte de implantação","O podcast ou as 60 perguntas do híbrido, na Base de conhecimento"],["manejo","base"]],
+   ["Dúvida técnica que você não sabe","A pergunta não está na apostila nem nas respostas prontas.","Não improvise dado técnico. Anote, diga que volta com a resposta certa e volte no prazo combinado.",["Leve a pergunta ao Tira-Dúvidas e responda o produtor com o que o time técnico mandar"],["duv","faq"]],
+   ["Proposta","Ele quer o número.","Proposta escrita, com o volume pela taxa de semeadura certa para a área, prazo de entrega e condição. Valor primeiro, preço junto da condição.",["A proposta organizada, num único documento","O resumo da conta por hectare junto da proposta"],["calc"]]];
+  const E=[
+   ["Na compra","Agradeça e combine as datas: entrega, semeadura e primeira visita ou ligação.","O Guia de manejo da implantação, para ele preparar a área"],
+   ["Na semeadura","Ligue ou mande mensagem no dia: profundidade de 1 a 2 cm, taxa certa, solo preparado.","O trecho de implantação do Guia de manejo"],
+   ["Na germinação (15 a 30 dias)","Peça uma foto da área. Avise que o híbrido investe primeiro na raiz e o arranque pode ser mais lento.","A resposta pronta sobre o arranque, de Perguntas e respostas"],
+   ["No primeiro pastejo (60 a 90 dias)","Lembre de entrar com animais leves, só para despontar, e da altura de entrada e saída.","A ficha de manejo do pastejo da apostila"],
+   ["Na primeira seca","Pergunte como o pasto está segurando. É a hora em que o híbrido mostra a diferença.","Um vídeo de caso de sucesso sobre seca, para ele comparar com a área dele"],
+   ["Resultado bom","Peça a foto, o depoimento ou a visita. Produtor bem acompanhado vira caso de sucesso e indica.","Avise o Marketing pelo Tira-Dúvidas ou pelas Mensagens: o caso pode virar vídeo da região"]];
+  const PER=[
+   ["Produtor convicto","Já entendeu o valor e quer saber como fazer certo.","Técnica e manejo: apostila, Guia de manejo e respostas técnicas. Prazo e entrega bem combinados.",["apost","manejo","faq"]],
+   ["Produtor em adoção","Viu resultado, mas tem dúvida se vai pegar e se compensa.","Prova e acompanhamento: caso de sucesso da região, a conta da calculadora e a promessa de acompanhar a implantação.",["casos","calc","manejo"]],
+   ["Produtor sensível a preço","Compara o preço do kg com o convencional.","A conta por hectare e o custo da arroba, nunca desconto como chamada. Se não for o momento, deixe a porta aberta com um caso de sucesso.",["calc","apost","casos"]]];
+  const dir=vDiretriz().replace(/^\s*<div><h1 class="titulo">[\s\S]*?<\/div>/,"");
+  return `<div><h1 class="titulo">Comunicação e encantamento</h1><p class="sub">Como falar do híbrido com o pecuarista e o que enviar em cada momento da conversa, da primeira mensagem ao primeiro pastejo. Vale para revendas, RCs, Inside Sales e o time comercial. Todos os materiais citados estão no portal: o botão leva direto para eles.</p></div>
+  <section class="bloco"><h2 class="sec">O que enviar em cada momento</h2><p class="sub" style="margin:0 0 10px">Mande uma coisa de cada vez, a que responde à dúvida do momento. Material demais confunde; o material certo na hora certa convence.</p>
+   <div class="dir-grid">${M.map(([t,q,d,env,b])=>`<div class="dir-card" style="display:grid;gap:6px;align-content:start"><span class="meta">${esc(q)}</span><strong style="font-size:16px">${esc(t)}</strong><p style="margin:0">${esc(d)}</p><div><strong style="font-size:.85rem">O que enviar</strong><ul style="margin:4px 0 0;padding-left:18px">${env.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>${b.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${b.map(comBtn).join("")}</div>`:""}</div>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Encantar depois da venda</h2><p class="sub" style="margin:0 0 10px">O premium está no acompanhamento. Cada contato abaixo é curto, pode ser por WhatsApp, e é o que traz a recompra e a indicação.</p>
+   <ol class="dir-passos">${E.map(([t,d,env])=>`<li><strong>${esc(t)}</strong><span>${esc(d)} <em>Envie:</em> ${esc(env)}.</span></li>`).join("")}</ol>
+   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${["manejo","faq","casos","duv"].map(comBtn).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">O que mostrar para cada perfil de produtor</h2><div class="dir-grid">${PER.map(([t,q,d,b])=>`<div class="dir-card" style="display:grid;gap:6px;align-content:start"><strong style="font-size:16px">${esc(t)}</strong><span class="meta">${esc(q)}</span><p style="margin:0">${esc(d)}</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${b.map(comBtn).join("")}</div></div>`).join("")}</div></section>
+  <h2 class="sec" style="margin:18px 0 8px">A diretriz de comunicação</h2>
+  ${dir}`;
+}
 function vDiretriz(){
   const card=(t,b)=>`<div class="dir-card"><strong>${t}</strong><p>${b}</p></div>`;
   const P=[
@@ -8580,7 +8618,7 @@ function rodapeMkt(){
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
@@ -8601,7 +8639,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   document.addEventListener("keydown",ev=>{if(ev.key==="Escape")fecha();});
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
- trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
+ trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
@@ -8676,9 +8714,9 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"?' class="largo"':""}>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"?' class="largo"':""}>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
