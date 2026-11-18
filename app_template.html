@@ -896,6 +896,7 @@ body.prot-sel main input,body.prot-sel main textarea,body.prot-sel main select,b
 #app-modal{position:fixed;inset:0;z-index:9990;background:rgba(20,20,20,.55);display:flex;align-items:center;justify-content:center;padding:20px}
 #app-modal .prot-box{background:#fff;border-radius:14px;max-width:480px;padding:22px;display:grid;gap:10px;border-top:6px solid var(--amarelo)}
 
+.crm-lnk{display:inline-block;margin-top:4px;font-size:.82rem;font-weight:600;color:var(--azul,#003c71);text-decoration:none;border-bottom:1px solid currentColor;align-self:flex-start}.crm-lnk:hover{opacity:.8}
 </style>
 </head>
 <body>
@@ -2653,7 +2654,7 @@ function isListaHTML(L,mostraDono){
   return `<div class="filtros">${chips}</div>${rows.length?`<div class="lista">${rows.slice(0,200).map(x=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${isR(x.rs)}</span></div>
     <span class="meta">${mostraDono?esc(x.p)+" · ":""}${esc(x.etapa)} · ${est(x.r)} · ${x.fat?"faturamento "+x.fat.split("-").reverse().join("/"):"sem data de faturamento"} · ${x.kgh?isT(x.kgh)+" de híbrido":"sem híbrido"}${x.kgc?" · "+isN(x.kgc)+" kg convencional":""}</span>
     <span class="meta">${x.orig==="carteira"?"carteira Forecast":"funil próprio"} · ${x.tarefa?"próxima tarefa "+x.tarefa.split("-").reverse().join("/"):"sem tarefa"} · atualizada há ${isN(x.upd)} dias${x.fora?" · fatura depois da safra":""}</span>
-    ${(x.al||[]).length?`<span class="meta" style="color:#c0392b">${(x.al||[]).map(k=>IS_AL[k]||k).join(" · ")}</span>`:""}</div>`).join("")}</div>${rows.length>200?`<p class="dica">Mostrando 200 de ${rows.length}.</p>`:""}`:`<div class="vazio">Nenhuma negociação neste filtro.</div>`}`;
+    ${(x.al||[]).length?`<span class="meta" style="color:#c0392b">${(x.al||[]).map(k=>IS_AL[k]||k).join(" · ")}</span>`:""}${crmLnk(x.id)}</div>`).join("")}</div>${rows.length>200?`<p class="dica">Mostrando 200 de ${rows.length}.</p>`:""}`:`<div class="vazio">Nenhuma negociação neste filtro.</div>`}`;
 }
 function vISVend(cfg){
   const ms=isPeriodo(cfg);const meta=+cfg.meta_kg||60000;const P=cfg.pessoas||[];
@@ -3212,6 +3213,8 @@ const ST_NEG={"Enviado":"selo-pend","No CRM":"selo-ok","Devolvido":"selo-pend"};
 async function carregarRCNeg(){try{const {data}=await sb.from("rc_negociacoes").select("*").order("criado_em",{ascending:false}).limit(200);S.rcNeg=data||[];}catch(e){S.rcNeg=[];}}
 const docLimpo=v=>String(v||"").replace(/\D/g,"");
 const docFmt=v=>{const d=docLimpo(v);return d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,"$1.$2.$3/$4-$5"):d.length===11?d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4"):v||"";};
+/* link direto para a negociacao no RD Station CRM (abre ja na negociacao se a pessoa estiver logada no CRM) */
+const crmLnk=id=>id&&/^[a-f0-9]{24}$/i.test(String(id))?`<a class="crm-lnk" href="https://crm.rdstation.com/app/deals/${esc(String(id))}" target="_blank" rel="noopener">Abrir no CRM ›</a>`:"";
 function cartaoNeg(x,gestor){
   const it=Array.isArray(x.itens)?x.itens:[];
   return `<div class="neg"><div class="l1"><span>${esc(x.cliente_nome)}</span><span>${x.valor_total?"R$ "+Math.round(x.valor_total).toLocaleString("pt-BR"):""}</span></div>
@@ -3221,6 +3224,7 @@ function cartaoNeg(x,gestor){
     ${x.anotacao?`<span class="meta">Anotação: ${esc(x.anotacao)}</span>`:""}
     ${Array.isArray(x.anexos)&&x.anexos.length?`<span class="meta">Anexos: ${x.anexos.map(a=>`<button class="link" data-a="neg-anexo" data-v="${esc(a.path)}">${esc(a.nome)}</button>`).join(" · ")}</span>`:""}
     <div class="mini" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="${ST_NEG[x.status]||"selo-pend"}">${esc(x.status==="Enviado"?"Aguardando o comercial":x.status==="No CRM"?"Lançada no CRM":x.status)}</span>${x.crm_erro?`<span class="meta" style="color:#c0392b">${esc(x.crm_erro)}</span>`:""}
+    ${gestor&&x.crm_deal_id?crmLnk(x.crm_deal_id):""}
     ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-crm" data-v="${x.id}">Lançar no CRM agora</button><button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Já lancei à mão</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
 }
 /* ===== Propostas do RC ===== */
@@ -3310,7 +3314,7 @@ function propCartao(x,gestor){
 }
 function propSitHTML(x,gestor){const m=(S.propSit||{})[x.deal_id];
   const sit=m?(m.st==="V"?"Venda fechada":"Em negociação"):x.deal_id?"Em negociação":x.crm_status==="erro"?"Em análise":"Em análise";
-  return `<span class="meta">Situação: <strong>${sit}</strong>${m&&m.fat?" · faturamento "+mkData(m.fat):""}${gestor&&ehAdmin()?(x.deal_id?` · CRM: ${esc(x.deal_nome||"negociação")}`:x.crm_status==="erro"?` · <span style="color:#c0392b">CRM: ${esc(x.crm_erro||"erro")}</span>`:" · ainda fora do CRM"):""}</span>`;}
+  return `<span class="meta">Situação: <strong>${sit}</strong>${m&&m.fat?" · faturamento "+mkData(m.fat):""}${gestor&&ehAdmin()?(x.deal_id?` · CRM: ${esc(x.deal_nome||"negociação")} ${crmLnk(x.deal_id)}`:x.crm_status==="erro"?` · <span style="color:#c0392b">CRM: ${esc(x.crm_erro||"erro")}</span>`:" · ainda fora do CRM"):""}</span>`;}
 function propPronta(){const x=(S.props||[]).find(p=>p.id===S.propVista);if(!x)return "";
   return `<section class="bloco" style="box-shadow:inset 0 0 0 2px var(--azul)"><h2 class="sec">Proposta P-${x.id} pronta</h2><p class="sub" style="margin:0 0 8px">${esc(x.cliente_nome)} · ${propBRL(x.total)}${x.desconto_status==="pendente"?" · com preço de tabela até o desconto ser aprovado":""}</p>
     <div class="acoes" style="margin:0"><button class="btn" data-a="prop-baixar" data-v="${x.id}">Baixar PDF</button><button class="btn sec" data-a="prop-pdf" data-v="${x.id}">Ver a proposta</button><button class="btn sec" data-a="prop-fecha">Fechar</button></div></section>`;}
@@ -3520,14 +3524,14 @@ function montaPainelCRM(dono,deals,perdMes){
     q.pondh+=h*w;q.pondc=(q.pondc||0)+c*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
     if(b&&b>=new Date(hoje.getFullYear(),hoje.getMonth(),1)){const k=iso(b).slice(0,7);const m=meses[k]||(meses[k]={m:k,rs:0,pond:0,n:0});m.rs+=tp;m.pond+=tp*w;m.n++;}
     const x=rc(rp);x.an++;x.ars+=tp;if(dias>15)x.sem++;if(venc)x.venc++;if(b&&(b-hoje)/864e5>=0&&(b-hoje)/864e5<=30){x.b30++;x.b30rs+=tp;}
-    ab.push({n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
+    ab.push({id:String(d.id||""),n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
   }
   const br=x=>x.dt?iso(x.dt).split("-").reverse().join("/"):null;
   R.fat_meses=Object.values(meses).sort((a,b)=>a.m.localeCompare(b.m)).slice(0,9).map(m=>({...m,rs:Math.round(m.rs),pond:Math.round(m.pond)}));
-  R.top=ab.slice().sort((a,b)=>b.rs-a.rs).slice(0,8).map(x=>({n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg}));
-  R.desat=ab.filter(x=>x.dias>15).sort((a,b)=>b.dias-a.dias).slice(0,10).map(x=>({n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg,dias:x.dias,venc:x.venc}));
+  R.top=ab.slice().sort((a,b)=>b.rs-a.rs).slice(0,8).map(x=>({id:x.id,n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg}));
+  R.desat=ab.filter(x=>x.dias>15).sort((a,b)=>b.dias-a.dias).slice(0,10).map(x=>({id:x.id,n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg,dias:x.dias,venc:x.venc}));
   R.rcs=Object.values(rcs).sort((a,b)=>(b.ars+b.vrs)-(a.ars+a.vrs)).slice(0,16).map(x=>({...x,vrs:Math.round(x.vrs),ars:Math.round(x.ars),b30rs:Math.round(x.b30rs)}));
-  R.abertas=ab.map(x=>[x.n,x.rs,iso(x.dt),x.rep,x.rt,x.h,x.c]);
+  R.abertas=ab.map(x=>[x.n,x.rs,iso(x.dt),x.rep,x.rt,x.h,x.c,x.id]);
   R.vend_cult=q.vcult;R.qtd=q;["vendido_rs","aberto_rs","ponderado_rs"].forEach(k=>{R[k]=Math.round(R[k]);});R.atualizado_em=new Date().toISOString();
   return R;
 }
@@ -3735,7 +3739,7 @@ function vMeuCRMPainel(X){
   const top=Array.isArray(r.top)?r.top:[];const des=Array.isArray(r.desat)?r.desat:[];
   const Q=r.qtd&&typeof r.qtd==="object"&&("vh" in r.qtd)?r.qtd:null;const ton=k=>((Number(k)||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";
   const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
-  const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}</div>`;
+  const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}${crmLnk(x.id)}</div>`;
   return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: "+IS_TIME.map(x=>x[0]).join(", ")+". ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
@@ -3763,7 +3767,7 @@ function vMeuCRMPainel(X){
     return `<section class="bloco"><h2 class="sec">Híbridos vendidos na safra · ${ton(tt)}</h2><div class="metrics">${ks.map(k=>`<div class="metric"><span>${esc(k)}</span><strong>${ton(vc[k])}</strong><span class="meta">${Math.round(100*vc[k]/tt)}% do volume</span></div>`).join("")}</div><p class="dica" style="margin-top:8px">Toneladas de Sabiá, Cayana e Carcará em pedidos ganhos com faturamento na safra. As demais cultivares e o volume das negociações em aberto entram com a atualização automática do CRM.</p></section>`;})()}
   ${(()=>{const A=Array.isArray(r.abertas)?r.abertas:[];if(!A.length)return "";const hoje=new Date();hoje.setHours(0,0,0,0);const dd=x=>x[2]?Math.round((new Date(x[2]+"T00:00:00")-hoje)/864e5):null;
     const fx=[["Vencidas (data já passou)",x=>dd(x)!=null&&dd(x)<0],["Faturam em até 30 dias",x=>dd(x)!=null&&dd(x)>=0&&dd(x)<=30],["De 31 a 60 dias",x=>dd(x)>30&&dd(x)<=60],["De 61 a 90 dias",x=>dd(x)>60&&dd(x)<=90]];
-    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):"venda direta"} · ${estr(x[4])}</span>${(x[5]||x[6])?`<span class="meta">${x[5]?"híbridos "+fmtN(x[5])+" kg":""}${x[5]&&x[6]?" · ":""}${x[6]?"convencionais "+fmtN(x[6])+" kg":""}</span>`:""}</div>`;
+    const lin=x=>`<div class="neg"><div class="l1"><span>${esc(x[0])}</span><span>${fmtK(x[1])}</span></div><span class="meta">${x[2]?"faturamento "+x[2].split("-").reverse().join("/"):"sem data de faturamento"} · ${x[3]?esc(x[3]):"venda direta"} · ${estr(x[4])}</span>${(x[5]||x[6])?`<span class="meta">${x[5]?"híbridos "+fmtN(x[5])+" kg":""}${x[5]&&x[6]?" · ":""}${x[6]?"convencionais "+fmtN(x[6])+" kg":""}</span>`:""}${crmLnk(x[7])}</div>`;
     const bloco=(t,L,aberto)=>L.length?`<details class="lote" ${aberto?"open":""}><summary>${t} · ${L.length} negociações · ${fmtK(L.reduce((s,x)=>s+x[1],0))}${Q?` · ${ton(L.reduce((s,x)=>s+(x[5]||0)+(x[6]||0),0))}`:""}</summary><div class="lista" style="margin-top:8px">${L.slice().sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9")||b[1]-a[1]).map(lin).join("")}</div></details>`:"";
     const sr=A.filter(x=>!x[3]);
     return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
@@ -8716,7 +8720,7 @@ function vPrivacidade(){
   </div>`;}
 const SEG_VERIF="17/11/2026";
 const SEG_SENHA_VAZADA=false;
-async function carregarSeg(){if(S.segBusy)return;S.segBusy=true;try{const {data,error}=await sb.rpc("seg_status");S.segSt=error?null:data;}catch(e){S.segSt=null;}S.segBusy=false;render();}
+async function carregarSeg(){if(S.segBusy)return;S.segBusy=true;try{const {data,error}=await sb.rpc("seg_status");S.segSt=error?null:data;}catch(e){S.segSt=null;}try{const {data}=await sb.rpc("seg_eventos_lista",{p_dias:90});S.segEv=data||[];}catch(e){S.segEv=[];}S.segBusy=false;render();}
 function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
   const ok="ok",par="par",pen="pen";
   return [
@@ -8777,6 +8781,8 @@ function vSeguranca(){
    <p class="precos-nota">Como a nota é feita: cada área tem itens de controle tirados das referências ao lado. Item atendido vale 1, parcial vale 0,5 e pendente vale 0; a nota da área é a soma dividida pelo número de itens, vezes 10. A nota geral pesa mais o que protege dado diretamente (acesso e login). Escala: 9 a 10, referência de mercado; 7,5 a 8,9, bom e aderente às boas práticas; 6 a 7,4, adequado com pontos a fechar; abaixo de 6, atenção. É uma autoavaliação técnica contra padrões públicos (OWASP ASVS e Top 10, NIST 800-63B, checklist de produção do Supabase, LGPD), não uma auditoria externa nem um teste de invasão.</p></section>
   ${pend.length?`<section class="bloco"><h2 class="sec">O que falta para subir a nota</h2><div class="dir-grid">${pend.map(x=>`<div class="dir-card ${x.s==="pen"?"dir-ruim":""}"><span class="seg-st ${ST[x.s][0]}">${ST[x.s][1]}</span> <span class="meta">${esc(x.c)}</span><p><strong>${esc(x.t)}</strong></p><p>${x.d}</p></div>`).join("")}</div></section>`:""}
   ${C.map(c=>`<section class="bloco"><h2 class="sec">${esc(c.k)} · ${f1(c.n)}</h2><p class="seg-ref">Referência: ${esc(c.ref)}</p><div class="seg-cat">${c.it.map(x=>`<div class="seg-it"><span class="seg-st ${ST[x[0]][0]}">${ST[x[0]][1]}</span><div><strong>${esc(x[1])}</strong><p>${x[2]}</p></div></div>`).join("")}</div></section>`).join("")}
+  <section class="bloco" id="seg-eventos"><h2 class="sec">Tentativas de print, cópia e impressão · 90 dias (${(S.segEv||[]).length})</h2><p class="sub" style="margin:0 0 6px">Quem acionou a proteção, quando e em que tela. A cada registro o administrador recebe uma notificação de segurança (no máximo uma por pessoa a cada 10 minutos). No computador o portal detecta a tecla Print Screen, Ctrl+P, cópia e recorte; print pelo botão do celular (iPhone e Android) não é detectável por nenhum site, por isso a marca d'água com o nome de quem está logado fica na tela.</p>
+   ${(S.segEv||[]).length?`<div class="tab"><table class="sim-t"><thead><tr><th>Quando</th><th>Quem</th><th>Perfil</th><th>O que</th><th>Tela</th></tr></thead><tbody>${S.segEv.map(e=>`<tr><td>${esc(new Date(e.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}))}</td><td><strong>${esc(e.nome||"—")}</strong></td><td>${esc(e.perfil||"")}</td><td>${esc(/print/i.test(e.tipo)?"Print da tela":/impr/i.test(e.tipo)?"Impressão":/cop|cort/i.test(e.tipo)?"Cópia":e.tipo)}</td><td>${esc(e.pagina||"")}</td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma tentativa registrada nos últimos 90 dias.</div>`}</section>
   <section class="bloco"><h2 class="sec">Perguntas que o TI costuma fazer</h2><div class="dir-grid">
    <div class="dir-card"><strong>Onde ficam os dados?</strong><p>Em um PostgreSQL gerenciado pelo Supabase, na região de São Paulo (sa-east-1), com criptografia em trânsito e em repouso. O site em si (GitHub Pages) só entrega a interface.</p></div>
    <div class="dir-card"><strong>O código é público. Isso é um risco?</strong><p>Não guarda segredo nem dado. A única chave no navegador é a pública do Supabase, feita para ser exposta: sozinha não abre nada, porque as regras de acesso estão no banco. Sem login, ${L.anon_tabelas} tabelas legíveis.</p></div>
@@ -8847,7 +8853,7 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
   return `<section class="bloco"><h2 class="sec">Notificações</h2><p class="sub" style="margin:0 0 8px">${txt}</p>${e==="ios-instalar"?pushPassosIOS():""}
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
-function pushAbrirPendente(){if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
+function pushAbrirPendente(){if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin());
 let PROT_LOG=0;
