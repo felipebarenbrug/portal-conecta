@@ -391,11 +391,11 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .rk-mini strong{font-size:17px;color:var(--azul-escuro)}
 @media (max-width:420px){.rk-l{grid-template-columns:36px minmax(0,1fr) auto}.rk-av{display:none}}
 .acao-capa{margin:-14px -14px 4px;aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px 8px 0 0;overflow:hidden}
-.acao-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.acao-capa img{width:100%;height:100%;object-fit:contain;display:block}
 .pgd-arq{display:grid;gap:10px;min-width:0}
 .pgd-capa-box{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:12px;align-items:start}
 .pgd-capa{aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px;overflow:hidden;display:grid;place-items:center}
-.pgd-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.pgd-capa img{width:100%;height:100%;object-fit:contain;display:block}.pgd-capa a{display:block;width:100%;height:100%;cursor:zoom-in}
 .pgd-capa-acoes{display:grid;gap:6px;justify-items:start}
 .pgd-up{position:relative;overflow:hidden;cursor:pointer}
 .pgd-up input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
@@ -9499,7 +9499,7 @@ function vAcaoArquivos(a,emb){
   return `<div class="pgd-arq${emb?"":" form-card"}"${emb?"":' style="box-shadow:inset 0 0 0 2px var(--azul)"'} data-acao="${esc(a.id)}">
     ${emb?`<label>Fotos e documentos da ação</label>`:`<h3 class="sec">${esc(a.tipo||"Ação")} · fotos e documentos</h3><p class="meta" style="margin:0">${esc(a.cidade||"")}${a.data_acao?" · "+esc(a.data_acao):""} · ${stBadge(a.status)}</p>`}
     <div class="pgd-capa-box">
-      <div class="pgd-capa">${a.foto_path?(capa?`<img src="${esc(capa)}" alt="Foto de capa da ação">`:`<span class="meta">Carregando a foto…</span>`):`<span class="meta">Sem foto de capa</span>`}</div>
+      <div><div class="pgd-capa">${a.foto_path?(capa?`<a href="${esc(capa)}" target="_blank" rel="noopener" title="Abrir em tamanho real"><img src="${esc(capa)}" alt="Foto de capa da ação"></a>`:`<span class="meta">Carregando a foto…</span>`):`<span class="meta">Sem foto de capa</span>`}</div>${capa?`<div style="display:flex;gap:12px;margin-top:6px;font-size:13px"><a class="link" href="${esc(capa)}" target="_blank" rel="noopener">Ver em tamanho real ↗</a><a class="link" href="${esc(capa+(capa.includes("?")?"&":"?")+"download="+encodeURIComponent(String(a.foto_path).split("/").pop()))}">Baixar</a></div>`:""}</div>
       ${pode?`<div class="pgd-capa-acoes"><label class="btn sec pgd-up">${a.foto_path?"Trocar foto de capa":"Enviar foto de capa"}<input type="file" accept="image/jpeg,image/png,image/webp" data-pgd="capa" data-v="${esc(a.id)}"></label>${a.foto_path?del(a.foto_path):""}<span class="meta">JPG, PNG ou WEBP. Aparece no cartão da ação.</span></div>`:""}
     </div>
     <h4 class="pgd-h">Documentos que comprovam a ação (${arq.length+links.length})</h4>
