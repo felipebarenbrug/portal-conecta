@@ -2845,6 +2845,7 @@ async function propBaixar(x){
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;if(t.dataset&&t.dataset.lochk){const [id,k]=t.dataset.lochk.split("|");const ed=S.loEd||(S.loEd={});const base=(S.loAcc||[]).find(x=>x.user_id===id)||{perfis:[],ufs:[],situacoes:[],so_pediu:false,ativo:true};const e=ed[id]||(ed[id]={perfis:[...(base.perfis||[])],ufs:[...(base.ufs||[])],situacoes:[...(base.situacoes||[])],so_pediu:base.so_pediu,ativo:base.ativo!==false});e[k]=t.checked;S.loCfgAberto=true;render();return;}
   if(t.dataset&&t.dataset.lof&&t.tagName==="SELECT"){const F=S.loF||(S.loF={});F[t.dataset.lof]=t.value;loLista(false).then(render);}});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.szp)return;S.szP=S.szP||{ant:2,acao:1};S.szP[t.dataset.szp]=+t.value;const y=window.scrollY;render();window.scrollTo(0,y);});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.icpov||!ehAdmin())return;const n=t.dataset.icpov,v=t.value;const {data,error}=await sb.from("cliente_icp").upsert({nome_erp:n,icp:v,atualizado_em:new Date().toISOString()},{onConflict:"nome_erp"}).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o perfil.");return;}S.icpOv=S.icpOv||{};S.icpOv[n]=data;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Perfil do canal atualizado.");});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.vitf)return;(S.vitF||(S.vitF={}))[t.dataset.vitf]=t.value;render();});
 let _cobT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="cob_cq")return;S.cobCq=t.value;clearTimeout(_cobT);_cobT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("cob_cq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
@@ -5349,10 +5350,12 @@ const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos da semana"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
   ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"]]],
-  ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
+  ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]],
+  ["Execução",[["int-ader","Inteligência × execução"]]]];
 const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
-const INT_PROP={"int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
+const INT_PROP={"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
+  "int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
   "int-pot":["Onde está o mercado de híbridos que a Barenbrug ainda não ocupa?","Escolher os estados para campanha regional, mídia segmentada e prospecção de revendas."],
   "int-hh":["Quem já comprou híbrido e parou, e como os canais do Conecta evoluem?","Montar a lista de reativação por RTV e a rodada regional de conversão do Mulato II."],
   "int-mapa":["Onde estão os clientes e as revendas que compram hoje?","Definir rotas de dia de campo, eventos e visitas, e os raios de mídia."],
@@ -5552,6 +5555,43 @@ function vIntICP(){
     <p class="meta" style="margin:0"><strong>Externas:</strong></p><ul class="meta" style="margin:4px 0 0;padding-left:18px">${(I.ctx||[]).map(x=>`<li><a class="link" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} · ${esc(x.f)}</a>${x.u2?` · <a class="link" href="${esc(x.u2)}" target="_blank" rel="noopener">segunda fonte</a>`:""}</li>`).join("")}</ul></section>`;
   return `<div><h1 class="titulo">ICPs e personas</h1><p class="sub">Para quem a Barenbrug vende e como cada perfil quer ser atendido: canais (B2B), produtores (B2C) e representantes comerciais. Cada persona traz o que exige, as objeções, o que o portal e os programas já entregam, as lacunas e a linguagem.</p></div>
   ${metodo}<div class="filtros" style="margin:10px 0">${tabs}</div>${corpo}${ctx}${fontes}`;}
+
+const UF_RE=/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
+async function carregarAder(){if(S.aderBusy)return;S.aderBusy=true;try{const t=[];if(!S.insOk)t.push(carregarInsumos());if(!S.icpOk)t.push(carregarICP());if(!S.mk)t.push(carregarMkt());
+  if(S.sazD===undefined)t.push((async()=>{const {data}=await sb.from("academia_conteudo").select("*").eq("chave","sazonalidade").maybeSingle();S.sazD=data||false;})());await Promise.all(t);}catch(e){}S.aderOk=true;S.aderBusy=false;render();}
+function vIntAder(){
+  if(!S.aderOk){carregarAder();return `<div class="carregando">Cruzando a inteligência com as ações…</div>`;}
+  const d=S.sazD&&S.sazD.dados;const PL=d?szPlano(d,S.szP||{ant:2,acao:1}):[];const ufP=uf=>PL.find(x=>x.uf===uf||x.uf.split(/[\s/]/).includes(uf));
+  const C=S.icpOk?icpClassifica():{L:[],ufs:[]};const H=S.hh?hhCalc():null;
+  const prio={};C.ufs.slice(0,6).forEach(u=>{prio[u.uf]=(prio[u.uf]||[]).concat("espaço livre no mercado de híbridos");});
+  if(H)H.porReg.filter(r=>r.pk-r.hoje>=5000).forEach(r=>r.ufs.forEach(u=>{prio[u]=(prio[u]||[]).concat("canais a reativar");}));
+  const janela=(uf,iso)=>{const p=ufP(uf);if(!p||!iso)return null;const mes=+String(iso).slice(5,7)-1;const oo=x=>(x-p.evI+12)%12;const e=oo(mes),dc=oo(p.dec),pl=oo(p.pi);return e<=dc?"na":e<pl?"tarde":"fora";};
+  const iso=v=>{const t=String(v||"");if(/^\d{4}-\d{2}/.test(t))return t.slice(0,10);const m=t.match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:null;};
+  const ler=(uf,dt)=>{const pr=uf&&prio[uf],jn=uf?janela(uf,dt):null;let n=0,motivos=[];if(pr){n++;motivos.push("estado prioritário ("+[...new Set(pr)].join(", ")+")");}if(jn==="na"){n++;motivos.push("antes da decisão de compra");}else if(jn==="tarde")motivos.push("depois da decisão de compra");else if(jn==="fora")motivos.push("fora da janela do estado");if(!uf)motivos.push("sem estado no cadastro");
+    return {n,motivos,rot:n>=2?["Aderente","seg-ok"]:n===1?["Parcial","seg-par"]:["Fora do mapa","seg-pen"]};};
+  const MK=(S.mk||[]).filter(a=>!a.agrupador&&!/Cancelada/.test(a.status||"")&&(a.safra==="26/27"||(a.inicio||"")>="2026-07-01")).map(a=>{const uf=(String(a.local||"").toUpperCase().match(UF_RE)||[])[1]||null;return {a,uf,L:ler(uf,a.inicio)};});
+  const canUF={};(S.canais||[]).forEach(k=>{canUF[k.id]=k.uf||((C.L.find(c=>c.conecta===k.nome)||{}).uf)||null;});const canICP={};(S.canais||[]).forEach(k=>{const c=C.L.find(x=>x.conecta===k.nome);canICP[k.id]=c?c.k:null;});
+  const PG=Object.entries(S.acoesCanal||{}).flatMap(([cid,L])=>(L||[]).filter(a=>!/Reprovad/.test(a.status||"")).map(a=>{const uf=canUF[cid]||(String(a.cidade||"").toUpperCase().match(UF_RE)||[])[1]||null;const dt=iso(a.data_acao);const L0=ler(uf,dt);const k=(S.canais||[]).find(x=>x.id===cid)||{};return {a,uf,dt,k,icp:canICP[cid],L:L0};}));
+  const ins=S.insCache&&S.insCache.length?S.insCache:(S.insOk?insumosCalc():[]);const insF=ins.filter(x=>x.feito),insN=ins.filter(x=>!x.feito);
+  const cont=L=>({a:L.filter(x=>x.L.rot[0]==="Aderente").length,p:L.filter(x=>x.L.rot[0]==="Parcial").length,f:L.filter(x=>x.L.rot[0]==="Fora do mapa").length});
+  const cM=cont(MK),cP=cont(PG);
+  const ufsCom=new Set([...MK.map(x=>x.uf),...PG.map(x=>x.uf)].filter(Boolean));
+  const gaps=Object.entries(prio).filter(([u])=>!ufsCom.has(u)).map(([u,m])=>({u,m:[...new Set(m)],p:ufP(u)}));
+  const prox=PL.filter(x=>/Hora de agir|Preparar/.test(x.fase)).filter(x=>!MK.some(m=>m.uf&&x.uf.split(/[\s/]/).includes(m.uf)&&m.L.motivos.includes("antes da decisão de compra")));
+  const tabA=(L,cols)=>`<div class="tab"><table class="sim-t fin-t"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${L}</tbody></table></div>`;
+  return `<div><h1 class="titulo">Inteligência × execução <span class="seg-st seg-par" style="vertical-align:middle">em implantação</span></h1><p class="sub">Cruza o que a inteligência aponta (estados prioritários, canais a reativar, janela de decisão de compra e insumos da semana) com as ações de marketing e as ações de IGDB dos canais. Mostra o que está aderente, o que está fora do mapa e onde falta executar.</p></div>
+  <div class="metrics">
+   <div class="metric"><span>Insumos que viraram ação</span><strong>${insF.length} de ${ins.length}</strong><span class="meta">${insN.length} ainda sem ação</span></div>
+   <div class="metric"><span>Ações de marketing da safra</span><strong>${MK.length}</strong><span class="meta">${cM.a} aderentes · ${cM.p} parciais · ${cM.f} fora do mapa</span></div>
+   <div class="metric"><span>Ações de IGDB dos canais</span><strong>${PG.length}</strong><span class="meta">${cP.a} aderentes · ${cP.p} parciais · ${cP.f} fora do mapa</span></div>
+   <div class="metric" style="${gaps.length?"box-shadow:inset 0 0 0 2px var(--vermelho)":""}"><span>Estados prioritários sem ação</span><strong>${gaps.length}</strong><span class="meta">${gaps.map(g=>g.u).join(", ")||"nenhum"}</span></div></div>
+  ${gaps.length||prox.length||insN.length?`<section class="bloco"><h2 class="sec">Onde falta executar</h2><div class="dir-grid">
+    ${gaps.map(g=>`<div class="dir-card" style="border-left:4px solid var(--vermelho,#b4232a)"><strong>${esc(g.u)}: prioritário e sem ação na safra</strong><p>${esc(g.m.join(" e "))}.${g.p?` Ação de demanda em ${SZ_M[g.p.ac]}, decisão em ${SZ_M[g.p.dec]}.`:""}</p></div>`).join("")}
+    ${prox.map(x=>`<div class="dir-card" style="border-left:4px solid #E0A800"><strong>${esc(x.uf)}: ${esc(x.fase.toLowerCase())}</strong><p>Nenhuma ação de marketing marcada antes da decisão de compra (${SZ_M[x.dec]}). Planejar dia de campo, vitrine ou mídia para ${SZ_M[x.ac]}.</p></div>`).join("")}
+    ${insN.slice(0,6).map(x=>`<div class="dir-card"><strong>${esc(x.titulo)}</strong><p>${esc(x.valTxt)}</p><div class="mk-link"><button type="button" class="btn sec" data-a="ins-acao" data-v="${esc(x.k)}">Transformar em ação</button></div></div>`).join("")}</div></section>`:""}
+  <section class="bloco"><h2 class="sec">Ações de marketing contra a inteligência</h2>${MK.length?tabA(MK.sort((x,y)=>String(x.a.inicio||"").localeCompare(String(y.a.inicio||""))).map(x=>`<tr><td style="white-space:normal;min-width:200px"><button type="button" class="link" data-a="ins-ver" data-v="${x.a.id}">${esc(x.a.titulo||"")}</button><br><span class="meta">${esc(x.a.tipo||"")} · ${esc(x.a.status||"")}${x.a.origem?" · veio de um insumo":""}</span></td><td>${x.a.inicio?esc(x.a.inicio.split("-").reverse().join("/")):"—"}</td><td>${esc(x.uf||"—")}</td><td><span class="seg-st ${x.L.rot[1]}">${x.L.rot[0]}</span></td><td style="white-space:normal;min-width:200px"><span class="meta">${esc(x.L.motivos.join("; "))}</span></td></tr>`).join(""),["Ação","Data","Estado","Leitura","Por quê"]):`<div class="vazio">Nenhuma ação de marketing na safra.</div>`}</section>
+  <section class="bloco"><h2 class="sec">Ações de IGDB dos canais contra a inteligência</h2>${PG.length?tabA(PG.sort((x,y)=>String(x.dt||"").localeCompare(String(y.dt||""))).map(x=>`<tr><td style="white-space:normal;min-width:180px"><strong>${esc(x.a.tipo||"Ação")}</strong><br><span class="meta">${esc(x.k.nome||"")} · ${esc(x.a.status||"")}</span></td><td>${x.dt?esc(x.dt.split("-").reverse().join("/")):"—"}</td><td>${esc(x.uf||"—")}</td><td>${x.icp?esc(ICP_NOMES[x.icp]):"—"}</td><td><span class="seg-st ${x.L.rot[1]}">${x.L.rot[0]}</span></td><td style="white-space:normal;min-width:180px"><span class="meta">${esc(x.L.motivos.join("; "))}</span></td></tr>`).join(""),["Ação","Data","Estado","Perfil do canal","Leitura","Por quê"]):`<div class="vazio">Nenhuma ação de PGD cadastrada.</div>`}</section>
+  <p class="precos-nota">Como a leitura é feita: uma ação é aderente quando acontece num estado prioritário pela inteligência (espaço livre no mercado de híbridos ou canais a reativar) e antes da decisão de compra do estado (Calendário de plantio). Atende a um dos dois: parcial. Nenhum: fora do mapa. O estado vem do local da ação ou da revenda. Esta aba está em implantação: os critérios vão ganhar perfil do canal (ICP), resultado das ações e verba usada.</p>`;}
 function vIntPot(){
   if(S.potD===undefined){carregarPot();return `<div class="carregando">Carregando o potencial de mercado…</div>`;}
   const D=S.potD;if(!D)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
@@ -5772,6 +5812,43 @@ function szVendasMes(){
     for(const [nm,kg] of (Array.isArray(r.itens)?r.itens:[])){const q=+kg||0;if(!q)continue;const g=gr(nm);if(mp&&ped[mp<ini?ini:mp])ped[mp<ini?ini:mp][g]+=q;if(fat[mf])fat[mf][g]+=q;}}
   return {meses,ped,fat};
 }
+
+/* plano de geração de demanda a partir da janela de plantio: o produtor decide a compra N meses antes do plantio; a ação vem antes da decisão */
+function szPlano(d,P){const G=d.grids||{};const A=P.ant,B=P.acao;const so=m=>(m+6)%12;const de=i=>(i+6)%12; // so: mês do calendário -> índice da safra (jul=0); de: o inverso
+  const pot={};(G.chuva||[]).forEach(r=>{const uf=String(r.k[0]||"").split(/\s*[—-]\s*/)[0].trim();pot[uf]=Number(String(r.k[1]||"").replace(/\./g,""))||0;});
+  const reg={};(G.jan||[]).filter(r=>/tropica/i.test(r.k[0])).forEach(r=>{const m=(r.g||"").match(/\(([^)]+)\)/);const ufs=m?m[1].split(/[,\s/]+/).filter(Boolean):(/PR NORTE/.test(r.g)?["PR N"]:[]);const pico=r.m.map((v,i)=>/pico/i.test(v)?i:-1).filter(i=>i>=0);ufs.forEach(u=>{reg[u]=pico;});});
+  const ufs={};(G.trop||[]).filter(r=>/SABI|CAYANA|CARCAR/i.test(r.k[1])).forEach(r=>{const u=r.k[0];const o=ufs[u]||(ufs[u]={uf:u,cv:new Set(),ideal:new Set(),poss:new Set()});o.cv.add(String(r.k[1]).split(" ")[0]);r.m.forEach((v,i)=>{if(/ideal/i.test(v))o.ideal.add(so(i));else if(/poss/i.test(v))o.poss.add(so(i));});});
+  const hoje=so(new Date().getMonth());
+  return Object.values(ufs).filter(o=>o.ideal.size).map(o=>{const id=[...o.ideal].sort((a,b)=>a-b);const pi=id[0],pf=id[id.length-1];const dec=(pi-A+12)%12,acI=(dec-B+12)%12,evI=(dec-4+12)%12;
+    const oo=x=>(x-acI+12)%12;const oH=oo(hoje),oDec=oo(dec),oPi=oo(pi),oPf=oo(pf);let fase,cls;
+    if(oH<oDec){fase="Hora de agir: ações de demanda agora";cls="seg-ok";}
+    else if(oH<oPi){fase="Decisão de compra acontecendo: oferta e follow-up";cls="seg-ok";}
+    else if(oH<=oPf){fase="Plantio: suporte técnico e entrega";cls="seg-par";}
+    else if(12-oH<=3){fase=`Preparar: ações em ${12-oH} ${12-oH===1?"mês":"meses"}`;cls="seg-par";}
+    else{fase="Fora da janela: planejar e nutrir";cls="";}
+    const dist=x=>(x-hoje+12)%12;
+    const potK=Object.keys(pot).find(k=>k===o.uf||k.replace(/\s/g,"")===o.uf.replace(/\s/g,""));
+    return {uf:o.uf,cv:[...o.cv].join(", "),pi:de(pi),pf:de(pf),dec:de(dec),ac:de(acI),evI:de(evI),pico:reg[o.uf]||reg[o.uf.split(" ")[0]]||[],pot:potK?pot[potK]:0,fase,cls,dAc:dist(acI)};}).sort((a,b)=>b.pot-a.pot);}
+function szPlanoHTML(d){const P=S.szP||(S.szP={ant:2,acao:1});const L=szPlano(d,P);if(!L.length)return "";const M=SZ_M;
+  const rng=(a,b)=>a===b?M[a]:`${M[a]} a ${M[b]}`;
+  const agora=L.filter(x=>x.cls==="seg-ok"),prox=L.filter(x=>x.cls==="seg-par"&&/Preparar/.test(x.fase));
+  return `<section class="bloco" style="border-top:4px solid var(--amarelo,#ffdb00);padding-top:12px"><h2 class="sec" style="margin-top:0">O que fazer e quando: geração de demanda por estado</h2>
+   <p class="sub" style="margin:0 0 8px">A janela de plantio dos híbridos diz quando o produtor decide a compra. As ações de geração de demanda (dia de campo, vitrine, evento, mídia, Inside Sales) precisam acontecer antes dessa decisão, não depois.</p>
+   <div class="form-card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end"><div><label for="szp_ant">O produtor decide a compra quantos meses antes do plantio?</label><select id="szp_ant" data-szp="ant">${[1,2,3].map(n=>`<option value="${n}" ${P.ant===n?"selected":""}>${n} ${n===1?"mês":"meses"}</option>`).join("")}</select></div><div><label for="szp_ac">A ação de demanda vem quantos meses antes da decisão?</label><select id="szp_ac" data-szp="acao">${[1,2].map(n=>`<option value="${n}" ${P.acao===n?"selected":""}>${n} ${n===1?"mês":"meses"}</option>`).join("")}</select></div></div>
+   ${agora.length||prox.length?`<div class="dir-grid" style="margin:10px 0">${agora.length?`<div class="dir-card" style="border-left:4px solid #2E8B57"><strong>Agora</strong><p>${agora.map(x=>`<strong>${esc(x.uf)}</strong>: ${esc(x.fase.toLowerCase())}`).join("<br>")}</p></div>`:""}${prox.length?`<div class="dir-card" style="border-left:4px solid #E0A800"><strong>Próximos meses</strong><p>${prox.map(x=>`<strong>${esc(x.uf)}</strong>: ${esc(x.fase.toLowerCase())}`).join("<br>")}</p></div>`:""}</div>`:""}
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th class="val">Potencial de semente</th><th>Dia de campo, vitrine e mídia</th><th>Decisão de compra</th><th>Plantio ideal</th><th>Eventos com prioridade</th><th>Agora</th></tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.uf)}</strong><br><span class="meta">${esc(x.cv)}</span></td><td class="val">${x.pot?x.pot.toLocaleString("pt-BR")+" t":"—"}</td><td><strong>${M[x.ac]}</strong></td><td>${M[x.dec]}${x.pico.length?`<br><span class="meta">pico na tabela: ${x.pico.map(i=>M[i]).join(", ")}</span>`:""}</td><td>${rng(x.pi,x.pf)}</td><td>${rng(x.evI,x.dec)}</td><td>${x.cls?`<span class="seg-st ${x.cls}">${esc(x.fase)}</span>`:`<span class="meta">${esc(x.fase)}</span>`}</td></tr>`).join("")}</tbody></table></div>
+   <div class="dir-grid" style="margin-top:10px">
+    <div class="dir-card"><strong>Regra das ações</strong><p>Dia de campo, vitrine aberta e mídia regional no mês indicado, para chegar ao produtor antes da decisão. No mês da decisão: oferta, Inside Sales e follow-up das negociações. No plantio: suporte técnico e entrega no prazo.</p></div>
+    <div class="dir-card"><strong>Regra dos eventos</strong><p>Eventos de pecuária têm prioridade no pré-safra, quando o produtor está com poder de compra e ainda vai decidir: de abril a outubro, e dentro dessa faixa o mais perto da decisão do estado. Eventos depois da decisão perdem prioridade: o produtor já comprou ou já gastou.</p></div>
+    <div class="dir-card"><strong>Como foi calculado</strong><p>Plantio ideal dos híbridos (Sabiá, Cayana, Carcará) por estado, da tabela de janela de plantio abaixo. Decisão = início do plantio ideal menos a antecedência escolhida; ação = decisão menos a antecedência da ação. O pico de compra da tabela regional aparece ao lado para conferir. Potencial em toneladas de semente, da tabela de chuvas e potencial.</p></div></div></section>`;}
+function szAgendaHTML(d){const L=szPlano(d,S.szP||{ant:2,acao:1});const A=(S.mk||[]).filter(a=>a.inicio&&!/Cancelada/.test(a.status||"")&&/evento|feira|dia de campo|patroc/i.test((a.tipo||"")+" "+(a.titulo||"")));if(!A.length)return "";
+  const ufDe=a=>{const m=String(a.local||"").toUpperCase().match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);return m?m[1]:null;};
+  const rows=A.map(a=>{const mes=+a.inicio.slice(5,7)-1;const uf=ufDe(a);const p=uf&&L.find(x=>x.uf===uf||x.uf.startsWith(uf)||(x.uf.includes(uf)));let st="Sem estado no local",cls="";
+    if(p){const oo=x=>(x-p.evI+12)%12;const e=oo(mes),dc=oo(p.dec),pl=oo(p.pi),pf=oo(p.pf);if(e<=dc){st="Na janela: antes da decisão";cls="seg-ok";}else if(e<pl){st="Tarde: decisão já tomada";cls="seg-pen";}else if(e<=pf){st="Durante o plantio: baixa prioridade";cls="seg-pen";}else if(e>=10){st="Cedo: produtor ainda longe da decisão";cls="seg-par";}else{st="Depois do plantio: baixa prioridade";cls="seg-pen";}}
+    else{const pre=mes>=3&&mes<=9;st=pre?"Pré-safra (abr a out): boa época":"Fora do pré-safra: menor prioridade";cls=pre?"seg-ok":"seg-par";}
+    return {a,uf,st,cls};}).sort((x,y)=>x.a.inicio.localeCompare(y.a.inicio));
+  return `<section class="bloco"><h2 class="sec">Agenda de eventos e dias de campo contra a janela</h2><p class="sub" style="margin:0 0 8px">Ações de Marketing do tipo evento, feira, dia de campo e patrocínio, conferidas com a janela de decisão do estado (pelo local da ação). Serve para priorizar e para mudar a data quando der.</p>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Ação</th><th>Data</th><th>Estado</th><th>Leitura</th></tr></thead><tbody>${rows.map(r=>`<tr><td style="white-space:normal;min-width:200px"><button type="button" class="link" data-a="ins-ver" data-v="${r.a.id}">${esc(r.a.titulo||"")}</button><br><span class="meta">${esc(r.a.tipo||"")} · ${esc(r.a.status||"")}</span></td><td>${esc(r.a.inicio.split("-").reverse().join("/"))}</td><td>${esc(r.uf||"—")}</td><td><span class="seg-st ${r.cls}">${esc(r.st)}</span></td></tr>`).join("")}</tbody></table></div></section>`;}
 function vIntSaz(){
   if(S.sazD===undefined){S.sazD=null;(async()=>{try{const {data}=await sb.from("academia_conteudo").select("*").eq("chave","sazonalidade").maybeSingle();S.sazD=data||false;}catch(e){S.sazD=false;}if(S.pag==="int-saz")render();})();}
   if(S.sazD===null||!S.intMapa)return `<div class="carregando">Carregando o calendário…</div>`;
@@ -5803,6 +5880,7 @@ function vIntSaz(){
     <p class="meta" style="margin:6px 0 0">Em cada mês, a barra da esquerda é o volume fechado e a da direita, o volume com faturamento programado. Pedidos fechados antes de julho entram em julho.</p></section>`;
   return `<div><h1 class="titulo">${esc(d.titulo||"Calendário de plantio e compra")}</h1><p class="sub">${esc(d.sub||"")}</p></div>
   <div class="sz-cadeia">${(d.cadeia||[]).map((c,i)=>`<span>${esc(c)}</span>${i<d.cadeia.length-1?'<b aria-hidden="true">›</b>':""}`).join("")}</div>
+  ${szPlanoHTML(d)}${(S.mk===undefined||S.mk===null)?(ehMkt()&&!S.mkLoading?(S.mkLoading=1,carregarMkt().then(()=>{S.mkLoading=0;if(S.pag==="int-saz")render();}),""):""):szAgendaHTML(d)}
   ${sel}${neste}
   ${grade("Ciclo do produtor na safra: quando compra e quando planta (julho a junho)",G.cal||[],6,"Resumo do ciclo do produtor por grupo de cultivar: meses de compra e janela de plantio. Ideal é a melhor época de plantio; possível é a janela com mais risco de falta ou excesso de chuva.",1)}
   ${grade("Janela de plantio das tropicais por estado",G.trop||[],0,"Janela ideal e possível de plantio de cada cultivar, por estado, conforme o regime de chuvas.",2)}
@@ -8198,11 +8276,11 @@ function renderApp(){
       if(S.pag==="int-raci"){S.secao="acoes-mkt";S.pag="acoes-raci";render();return;}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-icp"?vIntICP():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-icp"?vIntICP():S.pag==="int-ader"?vIntAder():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${corpo}</main>`;if(!S.insOk&&S.pag!=="int-insumos")carregarInsumos();
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
-      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh"&&S.pag!=="int-insumos"&&S.pag!=="int-diretriz"&&S.pag!=="int-icp")carregarCanais().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh"&&S.pag!=="int-insumos"&&S.pag!=="int-diretriz"&&S.pag!=="int-icp"&&S.pag!=="int-ader")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
   }
