@@ -1208,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117213729";
+const APP_VER="20261117213813";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5394,7 +5394,7 @@ function potCalc(D,P){const pr=D.prem||{},br=D.br||{};const kg=pr.kg_ha||10,vig=
   return {rows,past:T("past"),efet:T("efet"),sub:T("sub"),A:T("A"),B:T("B"),C:T("C"),ilp:T("ilp"),reb:T("reb"),ua:T("ua")};}
 
 async function gzJson(t){const bin=Uint8Array.from(atob(t),c=>c.charCodeAt(0));const ds=new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));return JSON.parse(await new Response(ds).text());}
-async function carregarHH(){if(S.hhBusy)return;S.hhBusy=true;try{const [a,b]=await Promise.all([sb.from("mkt_mapa").select("dados").eq("id","hib_hist").maybeSingle(),S.demo?Promise.resolve({data:null}):sb.rpc("hib_2627")]);
+async function carregarHH(){if(S.hhBusy)return;S.hhBusy=true;try{const [a,b,ci]=await Promise.all([sb.from("mkt_mapa").select("dados").eq("id","hib_hist").maybeSingle(),S.demo?Promise.resolve({data:null}):sb.rpc("hib_2627"),sb.from("cliente_inativo").select("nome_erp,motivo,inativado_em")]);S.hhInat={};(ci.data||[]).forEach(x=>{S.hhInat[x.nome_erp]=x;});
   const d=a.data&&a.data.dados;S.hh=d?(d.gz?await gzJson(d.gz):d):null;S.hh27=b.data||{cv:[],seg:[],uf:[],org:[]};}catch(e){S.hh=null;}S.hhBusy=false;render();}
 const HH_REG={Norte:["AC","AM","AP","PA","RO","RR","TO"],Nordeste:["AL","BA","CE","MA","PB","PE","PI","RN","SE"],"Centro-Oeste":["DF","GO","MS","MT"],Sudeste:["ES","MG","RJ","SP"],Sul:["PR","RS","SC"]};
 const hhReg=uf=>Object.keys(HH_REG).find(k=>HH_REG[k].includes(uf))||"Outros";
@@ -5411,10 +5411,11 @@ function hhCalc(){const D=S.hh,Z=S.hh27||{};const SF=D.safras.slice(0,4),S27="26
     return {...c,kg,a27,pk,ps,mul:cvT?Math.max(0,(c.cv||{})["Mulato II"]||0)/cvT:0,hoje:Math.max(c.kg["25/26"]||0,k27+a27)};});
   const con=C.filter(c=>c.conecta).sort((a,b)=>(b.kg[S27]+b.a27)-(a.kg[S27]+a.a27));
   const conT={};ALL.forEach(s=>{conT[s]=con.reduce((t,c)=>t+(c.kg[s]||0),0);});
-  const reat=C.filter(c=>c.pk>=3000&&c.hoje<.35*c.pk).sort((a,b)=>b.pk-a.pk);
+  const INA=S.hhInat||{};const inat=C.filter(c=>INA[c.n]).map(c=>({...c,motivo:INA[c.n].motivo,em:INA[c.n].inativado_em}));
+  const reat=C.filter(c=>!INA[c.n]&&c.pk>=3000&&c.hoje<.35*c.pk).sort((a,b)=>b.pk-a.pk);
   const porUF={};reat.forEach(c=>{const u=c.uf||"—";const x=porUF[u]||(porUF[u]={uf:u,reg:hhReg(u),n:0,pk:0,hoje:0,mul:0,resp:{},cid:new Set()});x.n++;x.pk+=c.pk;x.hoje+=c.hoje;x.mul+=c.pk*c.mul;if(c.resp)x.resp[c.resp]=(x.resp[c.resp]||0)+1;if(c.cid)x.cid.add(String(c.cid).split(" / ")[0]);});
   const porReg={};Object.values(porUF).forEach(u=>{const r=porReg[u.reg]||(porReg[u.reg]={reg:u.reg,n:0,pk:0,hoje:0,mul:0,ufs:[]});r.n+=u.n;r.pk+=u.pk;r.hoje+=u.hoje;r.mul+=u.mul;r.ufs.push(u.uf);});
-  return {D,SF,S27,ALL,tot,cv,CVS,seg,C,con,conT,reat,porUF:Object.values(porUF).sort((a,b)=>b.pk-a.pk),porReg:Object.values(porReg).sort((a,b)=>b.pk-a.pk)};}
+  return {D,SF,S27,ALL,tot,cv,CVS,seg,C,con,conT,reat,inat,porUF:Object.values(porUF).sort((a,b)=>b.pk-a.pk),porReg:Object.values(porReg).sort((a,b)=>b.pk-a.pk)};}
 function vIntHH(){
   if(S.hh===undefined){carregarHH();return `<div class="carregando">Carregando o histórico de híbridos…</div>`;}
   if(!S.hh)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
@@ -5432,7 +5433,8 @@ function vIntHH(){
   const trend=c=>{const a=c.kg[S27]+c.a27,b=c.kg["25/26"]||0;return a>b*1.2?["Crescendo","seg-ok"]:a<b*.6?["Caindo","seg-pen"]:["Estável","seg-par"];};
   const conTab=H.con.map(c=>{const [tl,tc]=trend(c);return `<tr><td><strong>${esc(c.conecta)}</strong><br><span class="meta">${esc(c.tier||"")} · ${esc(c.uf||"")}</span></td>${SF.map(s=>`<td class="val">${fT(c.kg[s])}</td>`).join("")}<td class="val"><strong>${fT(c.kg[S27])}</strong>${c.a27?`<br><span class="meta">+${fT(c.a27)} em negociação</span>`:""}</td><td><span class="seg-st ${tc}">${tl}</span></td></tr>`;}).join("");
   const sug=c=>c.mul>=.5?"Comprava sobretudo Mulato II: oferta de conversão para Cayana ou Sabiá, com dia de campo":c.kg[S27]+c.a27>0?"Voltou a comprar pouco: plano de retomada com o RTV e meta de volume":c.tipo==="Cooperativa"?"Retomar com a cooperativa: treinamento da equipe técnica e campanha com os cooperados":"Sem compra recente: visita do RTV e convite ao Conecta Revendas";
-  const reTab=H.reat.slice(0,40).map(c=>`<tr><td style="white-space:normal;min-width:180px"><strong>${esc(c.conecta||c.n)}</strong><br><span class="meta">${esc(c.conecta?"Conecta "+(c.tier||""):c.tipo||"")}</span></td><td>${esc(c.cid||c.uf||"")}</td><td class="val"><strong>${fT(c.pk)}</strong><br><span class="meta">${esc(c.ps||"")}</span></td><td class="val">${fT(c.kg["25/26"])}</td><td class="val">${fT(c.kg[S27])}${c.a27?`<br><span class="meta">+${fT(c.a27)} neg.</span>`:""}</td><td class="val">${Math.round(c.mul*100)}%</td><td>${esc(String(c.resp||"—").replace(/\*|INATIVO|EQUIPE/g,"").trim()||"—")}</td><td style="white-space:normal;min-width:200px"><span class="meta">${sug(c)}</span></td></tr>`).join("");
+  const reTab=H.reat.slice(0,40).map(c=>`<tr><td style="white-space:normal;min-width:180px"><strong>${esc(c.conecta||c.n)}</strong><br><span class="meta">${esc(c.conecta?"Conecta "+(c.tier||""):c.tipo||"")}</span></td><td>${esc(c.cid||c.uf||"")}</td><td class="val"><strong>${fT(c.pk)}</strong><br><span class="meta">${esc(c.ps||"")}</span></td><td class="val">${fT(c.kg["25/26"])}</td><td class="val">${fT(c.kg[S27])}${c.a27?`<br><span class="meta">+${fT(c.a27)} neg.</span>`:""}</td><td class="val">${Math.round(c.mul*100)}%</td><td>${esc(String(c.resp||"—").replace(/\*|INATIVO|EQUIPE/g,"").trim()||"—")}</td><td style="white-space:normal;min-width:200px"><span class="meta">${sug(c)}</span>${ehAdmin()?(S.hhInEd===c.n?`<form id="f-hh-inat" data-v="${esc(c.n)}" style="display:grid;gap:4px;margin-top:6px"><input id="hhi_m" maxlength="200" placeholder="Motivo (ex.: inadimplência)" required><span><button class="btn sec" type="submit">Inativar</button> <button type="button" class="link" data-a="hh-inat" data-v="">cancelar</button></span></form>`:`<br><button type="button" class="link" data-a="hh-inat" data-v="${esc(c.n)}">inativar</button>`):""}</td></tr>`).join("");
+  const inTab=H.inat.map(c=>`<tr><td><strong>${esc(c.conecta||c.n)}</strong><br><span class="meta">${esc(c.tipo||"")}</span></td><td>${esc(c.cid||c.uf||"")}</td><td class="val">${fT(c.pk)}</td><td style="white-space:normal;min-width:200px">${esc(c.motivo||"—")}<br><span class="meta">desde ${esc(String(c.em||"").slice(0,10).split("-").reverse().join("/"))}</span></td><td>${ehAdmin()?`<button type="button" class="link" data-a="hh-reativar" data-v="${esc(c.n)}">tirar da lista de inativos</button>`:""}</td></tr>`).join("");
   const regTab=H.porReg.map(r=>`<tr><td><strong>${r.reg}</strong><br><span class="meta">${r.ufs.join(", ")}</span></td><td class="val">${r.n}</td><td class="val">${fT(r.pk)}</td><td class="val">${fT(r.hoje)}</td><td class="val"><strong>${fT(r.pk-r.hoje)}</strong></td><td class="val">${r.pk?Math.round(r.mul/r.pk*100):0}%</td></tr>`).join("");
   const ufTab=H.porUF.map(u=>`<tr><td><strong>${esc(u.uf)}</strong></td><td class="val">${u.n}</td><td class="val">${fT(u.pk)}</td><td class="val">${fT(u.pk-u.hoje)}</td><td style="white-space:normal;min-width:180px"><span class="meta">${esc([...u.cid].slice(0,6).join(", "))}</span></td><td style="white-space:normal"><span class="meta">${esc(Object.keys(u.resp).map(x=>x.replace(/\*|INATIVO|EQUIPE/g,"").trim()).filter(Boolean).join(", ")||"—")}</span></td></tr>`).join("");
   const R1=H.porReg[0],R2=H.porReg[1];const gap_=H.reat.reduce((t,c)=>t+c.pk-c.hoje,0);const nMul=H.reat.filter(c=>c.mul>=.5).length;
@@ -5457,7 +5459,8 @@ function vIntHH(){
    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th>${SF.map(s=>`<th class="val">${s}</th>`).join("")}<th class="val">26/27*</th><th>Tendência</th></tr></thead><tbody>${conTab}
    <tr style="font-weight:700"><td>Total Conecta</td>${SF.map(s=>`<td class="val">${fT(H.conT[s])}</td>`).join("")}<td class="val">${fT(H.conT[S27])}</td><td></td></tr></tbody></table></div></section>
   <section class="bloco"><h2 class="sec">Canais que perderam o foco · chance de reativação</h2><p class="sub" style="margin:0 0 8px">Canais B2B que já compraram 3 t ou mais de híbridos em uma safra e hoje (o maior entre 25/26 e 26/27, com negociações) estão abaixo de 35% desse pico. ${H.reat.length>40?"Mostrando os 40 maiores.":""}</p>
-   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th><th>Cidade</th><th class="val">Pico</th><th class="val">25/26</th><th class="val">26/27*</th><th class="val">Mulato II no histórico</th><th>RTV do histórico</th><th>Sugestão</th></tr></thead><tbody>${reTab||`<tr><td colspan="8" class="meta">Nenhum canal nesse critério.</td></tr>`}</tbody></table></div></section>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th><th>Cidade</th><th class="val">Pico</th><th class="val">25/26</th><th class="val">26/27*</th><th class="val">Mulato II no histórico</th><th>RTV do histórico</th><th>Sugestão</th></tr></thead><tbody>${reTab||`<tr><td colspan="8" class="meta">Nenhum canal nesse critério.</td></tr>`}</tbody></table></div>
+   ${inTab?`<details class="lote" style="margin-top:8px"><summary>Inativados · fora da reativação · ${H.inat.length}</summary><p class="meta" style="margin:6px 0">Canais que a Barenbrug decidiu não reativar, por inadimplência, relacionamento ou outro motivo. Não entram na lista, no mapa de áreas nem nos insumos.</p><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th><th>Cidade</th><th class="val">Pico</th><th>Motivo</th><th></th></tr></thead><tbody>${inTab}</tbody></table></div></details>`:""}</section>
   <section class="bloco"><h2 class="sec">Mapa de áreas para a ação</h2>
    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Região</th><th class="val">Canais a reativar</th><th class="val">Volume no pico</th><th class="val">Volume hoje</th><th class="val">Espaço a recuperar</th><th class="val">Mulato II no pico</th></tr></thead><tbody>${regTab}</tbody></table></div>
    <details class="lote" style="margin-top:8px"><summary>Por estado, com cidades e RTVs</summary><div class="tab" style="margin-top:6px"><table class="sim-t fin-t"><thead><tr><th>UF</th><th class="val">Canais</th><th class="val">Pico</th><th class="val">A recuperar</th><th>Cidades</th><th>RTVs do histórico</th></tr></thead><tbody>${ufTab}</tbody></table></div></details></section>
@@ -8292,6 +8295,8 @@ document.addEventListener("click",async ev=>{
     const d={titulo:x.titulo,tipo:MK_TIPOS.includes(x.tipo)?x.tipo:"Outro",status:"Em análise",descricao:`${x.leitura}\n\nAção sugerida: ${x.acao}\n\nQuanto vale: ${x.valTxt}\n\nOrigem: Inteligência › ${x.area} (Insumos da semana, ${new Date().toLocaleDateString("pt-BR")}).`,valor_prev:0,valor_real:0,fin:"Provisionada",safra:mkSafra,origem:org};
     const {data,error}=await sb.from("mkt_acoes").insert(d).select("id,titulo,status,origem").maybeSingle();if(error||!data){b.disabled=false;aviso("Não foi possível criar a ação.");return;}
     S.insFeitos=S.insFeitos||{};S.insFeitos[org]=data;S.mk=null;render();aviso("Ação criada em Ações de Marketing, com status Em análise.");return;}
+  if(a==="hh-inat"){if(!ehAdmin())return;S.hhInEd=v||null;const y=window.scrollY;render();window.scrollTo(0,y);const i=document.getElementById("hhi_m");if(i)i.focus();return;}
+  if(a==="hh-reativar"){if(!ehAdmin())return;const {error}=await sb.from("cliente_inativo").delete().eq("nome_erp",v);if(error){aviso("Não foi possível alterar.");return;}delete (S.hhInat||{})[v];S.insOk=false;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Canal voltou para a análise de reativação.");return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
@@ -8526,6 +8531,7 @@ document.addEventListener("submit",async ev=>{
     if(error){aviso("Erro ao salvar a ação.");render();return;}
     S.canais=null;render();aviso("Ação atualizada.");return;
   }
+  if(f.id==="f-hh-inat"){if(!ehAdmin())return;const n=f.dataset.v,m=f.querySelector("#hhi_m").value.trim();if(!m){aviso("Informe o motivo.");return;}const {data,error}=await sb.from("cliente_inativo").upsert({nome_erp:n,motivo:m,inativado_em:new Date().toISOString()},{onConflict:"nome_erp"}).select().maybeSingle();if(error||!data){aviso("Não foi possível inativar.");return;}S.hhInat=S.hhInat||{};S.hhInat[n]=data;S.hhInEd=null;S.insOk=false;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Canal inativado: sai da lista de reativação.");return;}
   if(f.id==="f-canal"){
     const elCom=f.querySelector("#c_com");const comId=elCom&&!elCom.disabled?(elCom.value||null):undefined;const comNome=comId?((S.rvComerciais||[]).find(x=>x.id===comId)||{}).nome:null;
     let respTxt=f.querySelector("#c_resp").value.trim();const cAnt=(S.canais||[]).find(x=>x.id===S.canalSel)||{};
