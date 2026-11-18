@@ -1208,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117213206";
+const APP_VER="20261117213729";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5346,7 +5346,7 @@ const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos da semana"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
-  ["Como comunicar",[["int-marca","Marca, mídia e IAs"]]],
+  ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"]]],
   ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
 const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
@@ -5359,12 +5359,13 @@ const INT_PROP={"int-pot":["Onde está o mercado de híbridos que a Barenbrug ai
   "int-concorrentes":["Quanto o concorrente cobra e para onde o preço está indo?","Reagir a quedas de preço com argumento de custo por hectare e condição comercial."],
   "int-hibridos":["O que os concorrentes oferecem em híbridos?","Escolher os pontos de diferenciação de Sabiá, Cayana e Carcará nos materiais."],
   "int-vendas":["Quanto custa colocar o produto em cada região?","Priorizar regiões onde preço com frete é competitivo para campanhas."],
+  "int-diretriz":["Como a Barenbrug deve falar com cada público, com que tom, palavras e provas?","Escrever campanhas, posts, e-mails, Impulso e materiais no padrão da marca, e revisar o que o time e as agências produzem."],
   "int-marca":["Como a marca aparece nas redes, na mídia e nas IAs?","Ajustar pauta de conteúdo, verba de mídia e o que publicar para aparecer nas respostas das IAs."],
   "int-rc":["Quem vende, onde e quanto?","Direcionar leads, treinamento e apoio de marketing a cada RC e ao Inside Sales."],
   "int-seg":["Quanto vem do produtor direto e quanto vem do canal?","Equilibrar a verba entre geração de demanda no produtor e apoio ao canal."],
   "int-modelos":["Como estão desenhados os contratos de representação?","Apoiar a revisão dos modelos e os materiais de integração dos representantes."]};
 function intPropHTML(pag){const P=INT_PROP[pag];if(!P)return "";let L=[];try{if(S.insOk)L=insumosCalc().filter(x=>x.aba===pag);}catch(e){}S.insCache=S.insCache||[];L.forEach(x=>{if(!S.insCache.some(y=>y.k===x.k))S.insCache.push(x);});
-  return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Para que serve esta aba</strong><p>${esc(P[0])} Use para: ${esc(P[1])}</p>${L.length?`<div style="display:grid;gap:8px;margin-top:6px">${L.map(x=>`<div><strong>${esc(x.titulo)}</strong> <span class="meta">· ${esc(x.valTxt)}</span><br><span class="meta">${esc(x.acao)}</span><div class="mk-link" style="margin-top:4px">${x.feito?`<span class="seg-st seg-ok">Virou ação: ${esc(x.feito.status||"")}</span> <button type="button" class="link" data-a="ins-ver" data-v="${x.feito.id}">abrir</button>`:`<button type="button" class="btn sec" data-a="ins-acao" data-v="${esc(x.k)}">Transformar em ação</button>`}</div></div>`).join("")}</div>`:`<p class="meta" style="margin:6px 0 0">${S.insOk?"Nenhum insumo automático desta aba acima dos limites agora.":`<button type="button" class="link" data-a="pag" data-v="int-insumos">Ver os insumos da semana</button>`}</p>`}</div>`;}
+  return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Para que serve esta aba</strong><p>${esc(P[0])} Use para: ${esc(P[1])}</p>${L.length?`<div style="display:grid;gap:8px;margin-top:6px">${L.map(x=>`<div><strong>${esc(x.titulo)}</strong> <span class="meta">· ${esc(x.valTxt)}</span><br><span class="meta">${esc(x.acao)}</span><div class="mk-link" style="margin-top:4px">${x.feito?`<span class="seg-st seg-ok">Virou ação: ${esc(x.feito.status||"")}</span> <button type="button" class="link" data-a="ins-ver" data-v="${x.feito.id}">abrir</button>`:`<button type="button" class="btn sec" data-a="ins-acao" data-v="${esc(x.k)}">Transformar em ação</button>`}</div></div>`).join("")}</div>`:["int-pot","int-hh","int-concorrentes"].includes(pag)?`<p class="meta" style="margin:6px 0 0">${S.insOk?"Nenhum insumo automático desta aba acima dos limites agora.":`<button type="button" class="link" data-a="pag" data-v="int-insumos">Ver os insumos da semana</button>`}</p>`:""}</div>`;}
 /* ---------- Potencial de mercado (modelo do Mapa Comercial) ---------- */
 /* Participação em valor: volume do estudo × preço médio por kg do cliente oculto */
 const VS_MAP={"Mavuno":{m:"Wolf",p:/^mavuno/i},"Dunamis":{m:"Milagro",p:/^dunamis/i},"Camello":{m:"Papalotla",p:/^camello/i},"Cayman":{m:"Papalotla",p:/^cayman/i},"Sabiá":{m:"Barenbrug",p:/^sabi/i},"Cayana":{m:"Barenbrug",p:/^cayana/i},"Carcará":{m:"Barenbrug",p:/^carcar/i},"Supremo":{m:"Safrasul",p:/^supremo/i}};
@@ -8147,11 +8148,11 @@ function renderApp(){
       if(S.pag==="int-raci"){S.secao="acoes-mkt";S.pag="acoes-raci";render();return;}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${corpo}</main>`;if(!S.insOk&&S.pag!=="int-insumos")carregarInsumos();
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
-      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh"&&S.pag!=="int-insumos")carregarCanais().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh"&&S.pag!=="int-insumos"&&S.pag!=="int-diretriz")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
   }
