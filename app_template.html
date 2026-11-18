@@ -844,6 +844,33 @@ main.largo{max-width:1120px}
 .ap-fim-tx .ap-k{color:#fff;opacity:.85}
 @media (max-width:760px){.ap-hero,.ap-cap,.ap-duo,.ap-duo.l62,.ap-fim{grid-template-columns:minmax(0,1fr)}.ap-hero-im{min-height:200px}.ap-cap-im{min-height:140px}.ap-ens .r{grid-template-columns:1fr 60px 56px}.ap-ens .r .nm{grid-column:1/-1}.ap-mat .cab{display:none}.ap-mat .r{grid-template-columns:1fr;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--linha)}.ap-barra{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ap-barra .ap-pdf{margin-left:0;white-space:nowrap}.ap-ficha td{display:block;width:auto!important;border-bottom:0;padding:2px 14px}.ap-ficha td:first-child{padding-top:10px}.ap-ficha td:last-child{padding-bottom:10px;border-bottom:1px solid var(--linha)}.ap-lista{grid-template-columns:1fr;gap:8px}.ap-item{flex-direction:row;align-items:center}.ap-item .ap-item-im{width:84px;flex:0 0 84px;aspect-ratio:4/3}.ap-dlg .m{max-width:100%}}
 
+/* ===== Inside Sales: fluxo da negociação ===== */
+.fx{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.fx-trilho{display:flex;flex-direction:column;align-items:stretch}
+.fx-no{background:#fff;border:1px solid var(--linha);border-left:5px solid var(--azul);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fx-no.mkt{border-left-color:var(--amarelo)}.fx-no.is{border-left-color:var(--azul)}.fx-no.ven{border-left-color:#1d8a4e}.fx-no.can{border-left-color:var(--azul-escuro)}
+.fx-no h3{font-size:1rem}
+.fx-no p,.fx-no li{font-size:.92rem}
+.fx-no ul{margin:2px 0 0;padding-left:18px}
+.fx-quem{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--apagado)}
+.fx-seta{align-self:center;width:2px;height:22px;background:var(--bloqueado);position:relative;margin:2px 0}
+.fx-seta::after{content:"";position:absolute;bottom:-2px;left:-5px;border:6px solid transparent;border-top-color:var(--bloqueado)}
+.fx-seta span{position:absolute;left:12px;top:2px;white-space:nowrap;font-size:.75rem;color:var(--apagado)}
+.fx-dec{align-self:center;background:var(--amarelo);border-radius:999px;padding:8px 18px;font-weight:700;text-align:center;max-width:100%}
+.fx-ramos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:4px}
+.fx-ramo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fx-ramo>.fx-tag{align-self:flex-start;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;background:#eef1f3}
+.fx-ramo>.fx-tag.sim{background:#d9f0e3;color:#135c34}.fx-ramo>.fx-tag.nao{background:#fde8e8;color:var(--vermelho)}
+.fx-par{border:1px dashed var(--azul);border-radius:10px;padding:10px 12px;background:var(--azul-claro);font-size:.9rem}
+.fx-novo{display:inline-block;background:var(--azul);color:#fff;font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.fx-lado{display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
+.fx-regra{background:var(--amarelo-claro);border:1px solid var(--amarelo);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.fx-regra b{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}
+.fx-leg{display:flex;flex-wrap:wrap;gap:10px;font-size:.82rem;margin:0 0 12px}
+.fx-leg span{display:inline-flex;align-items:center;gap:6px}.fx-leg i{width:12px;height:12px;border-radius:2px;display:inline-block}
+@media (max-width:860px){.fx{grid-template-columns:minmax(0,1fr)}.fx-lado{position:static}}
+@media (max-width:520px){.fx-ramos{grid-template-columns:minmax(0,1fr)}}
+
 </style>
 </head>
 <body>
@@ -2315,7 +2342,7 @@ function vISImp(){
     <div class="lista" style="margin-top:8px">${L.map(x=>`<div class="linha"><div style="min-width:0"><strong>#${String(x.edicao).padStart(2,"0")} · ${dt(x.data)}${x.titulo?" · "+esc(x.titulo):""}</strong><span class="meta">${esc(x.assunto||"")}${x.enviados?` · ${x.enviados} destinatários`:""}</span>${x.foco?`<span class="meta">${esc(x.foco)}</span>`:""}</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${x.html?`<button class="link" data-a="imp-ver" data-v="${x.id}">${S.impVer===x.id?"fechar":"ler edição"}</button>`:`<span class="meta">sem HTML</span>`}${upl(x)}</div></div>${S.impVer===x.id?`<div>${fr(x)}</div>`:""}`).join("")}</div></section>`;
 }
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-imp","Impulso semanal"]];
+  const abas=veTimeIS()?[["is-fluxo","Como a negociação acontece"],["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-imp","Impulso semanal"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -2568,6 +2595,44 @@ function vISObjecoes(){
   <section class="bloco"><h2 class="sec">O que fazer já, com o que temos</h2><ul class="obj-lista">${(d.recomendacoes||d.playbook||[]).map(([t,x])=>`<li><strong>${esc(t.replace(/\.$/,""))}.</strong> ${esc(x)}</li>`).join("")}</ul></section>
   ${ehAdmin()&&(d.playbook_guardado||[]).length?`<details class="lote"><summary>Guardado para o playbook (só admins veem)</summary><ul class="obj-lista" style="margin-top:8px">${d.playbook_guardado.map(([t,x])=>`<li><strong>${esc(t)}.</strong> ${esc(x||"")}</li>`).join("")}</ul></details>`:""}
   <p class="precos-nota">Como foi feita: ${esc(d.metodo||"")} Atualizado em ${esc(String(d.atualizado||R.atualizado_em||"").slice(0,10).split("-").reverse().join("/"))}.</p>`;
+}
+function vISFluxo(){
+  const no=(c,quem,t,corpo)=>`<div class="fx-no ${c}"><span class="fx-quem">${quem}</span><h3>${t}</h3>${corpo}</div>`;
+  const seta=t=>`<div class="fx-seta" aria-hidden="true">${t?`<span>${t}</span>`:""}</div>`;
+  const ul=a=>`<ul>${a.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+  return `<div><h1 class="titulo">Como a negociação acontece</h1><p class="sub">O caminho do lead, da campanha do Marketing até a venda, e as regras de quando o Inside Sales atende e quando passa para o canal ou o RC.</p></div>
+  <div class="fx-leg"><span><i style="background:var(--amarelo)"></i>Marketing</span><span><i style="background:var(--azul)"></i>Inside Sales</span><span><i style="background:var(--azul-escuro)"></i>Canal ou RC</span><span><i style="background:#1d8a4e"></i>Venda</span></div>
+  <div class="fx"><div class="fx-trilho">
+    ${no("mkt","Marketing · 1","Geração de demanda","<p>Campanhas direcionadas nas plataformas de anúncios, por região e perfil de produtor.</p>")}
+    ${seta("clique no anúncio")}
+    ${no("mkt","Marketing · 2","Página de captura","<p>O lead conhece o híbrido e deixa os dados no formulário.</p>")}
+    ${seta("envia o cadastro")}
+    ${no("mkt","Marketing · 3","Página de obrigado",`<p>O lead escolhe como quer seguir:</p><div class="fx-ramos"><div class="fx-par"><strong>Falar com a Barenbrug</strong><br>Abre uma conversa no WhatsApp e é atendido direto pelo Inside Sales.</div><div class="fx-par"><strong>Achar um canal ou RC perto</strong><br>Digita o CEP e vê a revenda ou o RC mais próximo, com os dados de contato.</div></div><p style="margin-top:6px"><strong>Nos dois casos</strong>, o lead entra no CRM.</p>`)}
+    ${seta("todo lead entra no CRM")}
+    <div class="fx-ramos" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
+      ${no("is","Inside Sales · 4","Funil de MQL no CRM","<p>O lead chega como MQL na fila das assessoras de vendas.</p>")}
+      ${no("mkt","Marketing · em paralelo","Nutrição",ul(["E-mail e WhatsApp com informações das cultivares","Reenvio da página para encontrar o canal mais perto"]))}
+    </div>
+    ${seta()}
+    <div class="fx-dec">O lead é de região de canal Yellow Master?</div>
+    <div class="fx-ramos">
+      <div class="fx-ramo"><span class="fx-tag sim">Sim</span>${no("can","Canal Yellow Master","Vai para o funil do canal","<p>A assessora não atende. O lead é enviado ao funil de vendas do canal Yellow Master, agora pelo Portal Conecta, na aba Cotações (inbound)<span class=\"fx-novo\">novo</span>.</p>")}</div>
+      <div class="fx-ramo"><span class="fx-tag nao">Não</span>${no("is","Inside Sales · 5","Assessora qualifica",ul(["Tenta contato e conversa com o lead","Passa todas as informações técnicas","Pergunta se ele já está em contato com alguém (canal ou RC)","Passa preço pela política comercial e a tabela de preços"]))}</div>
+    </div>
+    ${seta()}
+    <div class="fx-dec">Gostou da parte técnica e quer proposta?</div>
+    <div class="fx-ramos">
+      <div class="fx-ramo"><span class="fx-tag sim">Sim</span>${no("is","Inside Sales · 6","Vira SQL","<p>Sai do funil de MQL e entra no funil de vendas Barenbrug, com proposta.</p>")}</div>
+      <div class="fx-ramo"><span class="fx-tag nao">Ainda não</span>${no("mkt","Marketing","Segue na nutrição","<p>Continua recebendo conteúdo e a página do canal mais perto, até estar pronto.</p>")}</div>
+    </div>
+    ${seta("negociação")}
+    ${no("ven","Inside Sales · 7","Venda","<p>A assessora executa a venda e registra tudo no CRM.</p>")}
+  </div>
+  <aside class="fx-lado">
+    <div class="fx-regra"><b>Regra 1 · atendimento perto</b><p>Se durante a negociação o lead pedir para ser atendido por alguém perto, a assessora tem o compromisso de passar o contato do RC ou da revenda mais próxima.</p></div>
+    <div class="fx-regra"><b>Regra 2 · lead não atendido</b><p>Se o lead foi passado para a revenda ou o RC e volta dizendo que não foi atendido, mesmo em região de canal Yellow Master, o Inside Sales avança na negociação.</p><p><strong>Condição:</strong> ter registrado no CRM que o lead não foi atendido.</p></div>
+    <div class="fx-regra" style="background:#fff;border-color:var(--linha)"><b>Em breve</b><p>As páginas de captura e de obrigado e os e-mails de nutrição vão entrar aqui, em cada etapa do fluxo.</p></div>
+  </aside></div>`;
 }
 function vInsideSales(){
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
@@ -4714,7 +4779,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist"].includes(pg);
+  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
@@ -8492,7 +8557,7 @@ function rodapeMkt(){
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["cert","Certificado"]],
-  "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
+  "inside-sales":[["is-fluxo","Como a negociação acontece"],["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
@@ -8521,7 +8586,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -8600,6 +8665,7 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-fluxo"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISFluxo()}</main>`;return;}
     if(S.pag==="is-reg"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
     if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
