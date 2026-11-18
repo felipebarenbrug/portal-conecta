@@ -346,7 +346,8 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .rent-proj strong{font-size:14px}
 .rent-arg{margin:4px 0 10px;padding:12px;border-radius:8px;background:var(--papel);font-size:15px;line-height:1.5}
 .rent-ol{margin:0;padding-left:20px;display:grid;gap:6px}
-.rent-wrap{display:grid;gap:14px}.rent-form{grid-template-columns:1fr;align-items:start}.rent-form>*{min-width:0}.rent-form .calc-grupo,.rent-form .calc-kg{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:14px;align-items:end}.rent-form .calc-grupo>:not(.rent-c),.rent-form .calc-kg>*{grid-column:1/-1}.rent-c{display:grid;gap:4px;min-width:0}
+.rent-wrap{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}.rent-form{grid-template-columns:minmax(0,1fr);align-items:start}.rent-form>*{min-width:0}.rent-form .calc-grupo,.rent-form .calc-kg{grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));column-gap:14px;row-gap:12px;align-items:stretch}.rent-form .calc-grupo>:not(.rent-c),.rent-form .calc-kg>*{grid-column:1/-1}.rent-c{display:flex;flex-direction:column;gap:4px;min-width:0}.rent-c>input,.rent-c>select{margin-top:auto}
+.rent-kv{display:grid;gap:1px;padding:7px 0;border-bottom:1px solid var(--linha);min-width:0}.rent-kv span{font-size:12.5px;color:var(--apagado)}.rent-kv strong{font-size:14.5px;overflow-wrap:anywhere}.rent-casos{grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));align-items:start}.rent-casos .dir-card{display:flex;flex-direction:column}.rent-casos img,.rent-casos video{display:block}.rent-res .calc-lin strong{white-space:normal;text-align:right}.rent-res .calc-lin span{min-width:0}
 .rent-bt{margin:0}.rent-bt .btn{min-width:160px}#rent_out .calc-res{position:static}
 #rent_out{scroll-margin-top:12px}
 @media(max-width:520px){.rent-proj{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -4509,9 +4510,9 @@ function rentCasosHTML(X){
   const d1=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
   return `<h3>Olhe os resultados de quem já faz ${inf(RENT_TIP.r_casos)}</h3>
    <p class="meta" style="margin:0 0 8px">Fazendas que mediram o resultado no campo, começando pelos casos de ${esc(X.sis.n.toLowerCase())}${uf?" e da região do produtor ("+esc(uf)+")":""}. ${X.met!=="cria"?`A sua conta com o ${esc(X.C.n)} dá ${d1(X.prodH)} @/ha/ano; as fazendas contam a arroba em peso vivo (30 kg), que equivale à arroba de carcaça a 50% de rendimento usada aqui.`:""}</p>
-   <div class="dir-grid">${L.map(c=>`<div class="dir-card" style="min-width:0">${c.video?`<video src="${c.video}" poster="${c.poster}" controls playsinline preload="none" style="width:100%;max-height:320px;border-radius:6px;background:#000"></video>`:c.fotos?`<img src="${c.fotos[0]}" alt="${esc(c.t)}" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px">`:""}
+   <div class="dir-grid rent-casos">${L.map(c=>`<div class="dir-card" style="min-width:0">${c.video?`<video src="${c.video}" poster="${c.poster}" controls playsinline preload="none" style="width:100%;max-height:320px;border-radius:6px;background:#000"></video>`:c.fotos?`<img src="${c.fotos[0]}" alt="${esc(c.t)}" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px">`:""}
      <span class="meta" style="display:block;margin-top:6px">${esc(c.tipo)} · ${esc(c.cult)}${c.loc?" · "+esc(c.loc):""}</span><strong style="display:block;margin:2px 0 6px">${esc(c.t)}</strong>
-     ${c.nums.map(([a,b])=>`<div class="calc-lin"><span>${esc(a)}</span><strong style="text-align:right">${esc(b)}</strong></div>`).join("")}
+     ${c.nums.map(([a,b])=>`<div class="rent-kv"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("")}
      <p class="meta" style="margin:6px 0 0">${esc(c.txt)}</p>${c.fotos&&c.fotos[1]?`<img src="${c.fotos[1]}" alt="" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;margin-top:6px">`:""}</div>`).join("")}</div>
    <p class="meta" style="margin:8px 0 0">Fonte: e-book "Quem planta capim quer colher arroba", de Eloir Daltoé, engenheiro agrônomo (Duagro). Resultados de fazendas específicas, que variam com solo, clima, manejo e sistema. Na pesquisa: no VCU da UFU (Capim Branco), mesmo em solo pobre e sem adubar nos dois anos seguintes, o Marandu fez 19,0 @/ha/ano, o Sabiá 26,4 e o Cayana 27,0.</p>`;
 }
@@ -4642,7 +4643,7 @@ function calcRent(){
     ${neg?"":`<div><button class="btn sec" type="button" data-a="rent-copiar">Copiar argumento</button></div>`}
     ${rentCasosHTML(X)}
     <h3>Por que o ${C.n} ${inf(RENT_TIP.r_porque)}</h3>
-    ${C.dados.map(([a,b])=>`<div class="calc-lin"><span>${esc(a)}</span><strong style="text-align:right">${esc(b)}</strong></div>`).join("")}
+    <div class="dir-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 16px">${C.dados.map(([a,b])=>`<div class="rent-kv"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("")}</div>
     <p class="meta" style="margin:6px 0 0">Fonte: ${esc(C.fdados)}</p>
     ${rentMemoriaHTML(X)}
     <p class="meta" style="margin:12px 0 0">${C.fonte} A lotação do híbrido é calculada pelo ganho dos ensaios e não pode ser editada. O ganho vale para o mesmo nível de manejo, adubação e suplementação nas duas pastagens. Estimativa: o resultado real depende de manejo, adubação, clima, sanidade e formação do pasto.</p>
