@@ -2341,10 +2341,34 @@ function vISImp(){
       <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar edição</button><button class="btn sec" type="button" data-a="imp-nova">Cancelar</button></div></form>`:""}
     <div class="lista" style="margin-top:8px">${L.map(x=>`<div class="linha"><div style="min-width:0"><strong>#${String(x.edicao).padStart(2,"0")} · ${dt(x.data)}${x.titulo?" · "+esc(x.titulo):""}</strong><span class="meta">${esc(x.assunto||"")}${x.enviados?` · ${x.enviados} destinatários`:""}</span>${x.foco?`<span class="meta">${esc(x.foco)}</span>`:""}</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${x.html?`<button class="link" data-a="imp-ver" data-v="${x.id}">${S.impVer===x.id?"fechar":"ler edição"}</button>`:`<span class="meta">sem HTML</span>`}${upl(x)}</div></div>${S.impVer===x.id?`<div>${fr(x)}</div>`:""}`).join("")}</div></section>`;
 }
+const IS_GRUPOS=[
+  ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-imp","Impulso semanal"]]],
+  ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
+  ["2 · Para quem",[["is-icp","ICP e personas"]]],
+  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"]]],
+  ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"]]],
+  ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
+  ["6 · Reter e reativar",[["is-rfv","RFV"]]],
+  ["Gestão",[["is-ger","Análise gerencial"]]]];
+const IS_PROP={
+ "is-fluxo":["Comece aqui","O caminho do lead da campanha do Marketing até a venda, com as regras de quando o Inside Sales atende e quando passa para o canal ou o RC.","alinhar o time e explicar para revendas e RCs como o lead é tratado."],
+ "is-imp":["Comece aqui","O relatório semanal do Marketing para o time: mercado, meta, funil de cada uma, tarefas e a objeção da semana.","combinar as prioridades da semana com o time."],
+ "is-cac":["Atrair","Quanto a mídia digital custa por lead, por negociação e por venda do Inside Sales.","decidir onde colocar verba de mídia e cortar o que não vira venda."],
+ "is-icp":["Para quem","Quem é o produtor que compra pelo Inside Sales e como cada perfil quer ser atendido.","ajustar campanha, mensagem e abordagem ao perfil que mais converte."],
+ "is-neg":["Qualificar e negociar","As negociações em aberto e pausadas, com valor e tempo parado.","cobrar o próximo passo e destravar o que está parado."],
+ "is-obj":["Qualificar e negociar","Por que o produtor não compra: os motivos de perda do funil.","criar conteúdo, argumento e treinamento para a objeção que mais pesa."],
+ "is-time":["Vender","Meta, vendas e funil do time na safra.","acompanhar o resultado do time frente à meta."],
+ "is-vend":["Vender","O resultado de cada vendedora: meta, vendas, funil e conversão.","dar o retorno individual e ver quem precisa de apoio."],
+ "is-painel":["Vender","O painel individual da vendedora: funil, faturamento do mês e dos próximos, pausadas e atrasadas.","a vendedora organizar a semana e a supervisão acompanhar."],
+ "is-reg":["Onde e quando","Vendas e funil do Inside Sales nas 4 regiões do projeto.","escolher a região da próxima campanha e da próxima ação de campo."],
+ "is-hist":["Onde e quando","A evolução das vendas do Inside Sales safra a safra e mês a mês.","ver a sazonalidade e planejar quando acelerar a mídia."],
+ "is-rfv":["Reter e reativar","Os clientes por recência, frequência e valor da compra.","montar a campanha de recompra e de reativação de quem parou de comprar."],
+ "is-ger":["Gestão","Breakeven e custo de cada vendedora frente ao teto do RC de campo.","decidir o tamanho e o custo do time."]};
+const isPropHTML=pag=>{const P=IS_PROP[pag];if(!P||!veTimeIS())return "";return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Esteira do Inside Sales · ${esc(P[0])}</strong><p>${esc(P[1])} Use para: ${esc(P[2])}</p></div>`;};
 function subnavIS(){
-  const abas=veTimeIS()?[["is-fluxo","Como a negociação acontece"],["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-imp","Impulso semanal"]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-imp","Impulso semanal"]]]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Inside Sales">${grupos.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`${g?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>`:""}${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",outros:"Fila de qualificação",time:"Time"};
@@ -8557,7 +8581,7 @@ function rodapeMkt(){
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["cert","Certificado"]],
-  "inside-sales":[["is-fluxo","Como a negociação acontece"],["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
+  "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
@@ -8665,10 +8689,10 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
-    if(S.pag==="is-fluxo"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISFluxo()}</main>`;return;}
-    if(S.pag==="is-reg"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
-    if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
-    app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
+    if(S.pag==="is-fluxo"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFluxo()}</main>`;return;}
+    if(S.pag==="is-reg"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
+    if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
+    app.innerHTML=cabecalho()+subnavIS()+`<main>${isPropHTML(S.pag)}${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
