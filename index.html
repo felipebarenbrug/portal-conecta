@@ -881,6 +881,16 @@ main.largo{max-width:1120px}
 
 .senha-campo{position:relative;display:block}.senha-campo input{width:100%;padding-right:44px}.senha-olho{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;padding:6px;cursor:pointer;color:var(--apagado);display:flex}.senha-olho .risco{display:none}.senha-olho.on .risco{display:inline}.senha-olho.on{color:var(--azul-escuro)}
 
+#prot-marca{position:fixed;inset:0;pointer-events:none;z-index:9998;background-repeat:repeat}
+#prot-ov{position:fixed;inset:0;z-index:10000;background:rgba(20,20,20,.96);display:flex;align-items:center;justify-content:center;padding:20px}
+#prot-ov[hidden]{display:none!important}
+#prot-ov .prot-box{background:#fff;border-radius:14px;max-width:440px;padding:22px;display:grid;gap:10px;border-top:6px solid var(--vermelho)}
+#prot-ov .prot-box strong{font-size:1.15rem;color:var(--vermelho)}
+body.prot-oculto #app{filter:blur(18px)}
+body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
+body.prot-sel main input,body.prot-sel main textarea,body.prot-sel main select,body.prot-sel .permite-copia{-webkit-user-select:text;user-select:text}
+@media print{body.prot-sel #app{display:none!important}body.prot-sel::after{content:"Conteúdo protegido do Portal Conecta Barenbrug. Impressão não permitida.";display:block;padding:40px;font:16px Arial,sans-serif}}
+
 </style>
 </head>
 <body>
@@ -1415,7 +1425,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117233729";
+const APP_VER="20261117234147";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1893,7 +1903,7 @@ function vLeadsOut(){
   if(!adm&&!R.total)return cab+`<section class="bloco"><div class="vazio">A prospecção ainda não foi liberada para você. O Marketing libera por estado e perfil de lead.</div></section>`;
   const sel=(id,ops,v,todos)=>`<select id="${id}" data-lof="${id.slice(3)}"><option value="">${todos}</option>${ops.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
-  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link permite-copia" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
   const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";const N=(S.loNotas||{})[l.id];
     return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
@@ -1957,7 +1967,7 @@ function vLeads(){
   const chips=(campo,ops,sel)=>ops.map(x=>`<button class="chip" data-a="lead-f" data-v="${esc(campo+"|"+x)}" aria-pressed="${sel===x}">${esc(x)}</button>`).join("");
   const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
   const motivo=m=>/antes/i.test(m||"")?"A Barenbrug não conseguiu falar com o produtor":/ap[oó]s 1/i.test(m||"")?"Sem retorno depois do primeiro contato da Barenbrug":(m||"");
-  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link permite-copia" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
   const card=l=>{const visto=(S.leadVistos||{})[l.id];const st=l.status||"Novo";
     const ab=l.situacao==="aberto";
     return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Produtor")}</span><span>${ab?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}<span class="selo">${esc(st)}</span></span></div>
@@ -5874,7 +5884,7 @@ function vLeadsRC(){
   if(!F){carregarFila().then(render);return `<div class="carregando">Carregando a sua fila…</div>`;}
   if(F.erro)return `<div><h1 class="titulo">LeadsBaren · Sua fila</h1></div><section class="bloco"><div class="vazio">${F.falta?"A fila de leads para RCs abre em breve.":"Não foi possível carregar a fila agora. Tente de novo em instantes."}</div></section>`;
   const a=F.atual,p=F.proximo,n=Number(F.na_fila)||0,ufs=(F.ufs||[]).join(", ");
-  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
+  const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link permite-copia" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
   let atual="";
   if(a){
     const ct=(S.leadVistos||{})[a.id];const h=a.prazo?Math.round((new Date(a.prazo).getTime()-Date.now())/36e5):null;
@@ -8708,11 +8718,13 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Conteúdo de terceiros isolado","Impulso (HTML de e-mail) e o widget do Cepea rodam em quadro isolado (sandbox), sem acesso à sessão."],
     [ok,"Texto digitado é escapado antes de exibir","Todo texto vindo de usuário ou do CRM passa por escape antes de virar tela, o que evita injeção de script."],
     [par,"Cabeçalhos HTTP de segurança (HSTS, anti-clickjacking)","A hospedagem atual (GitHub Pages) não permite cabeçalhos próprios. A CSP vai na página; HSTS e bloqueio de enquadramento exigiriam um CDN na frente (ex.: Cloudflare)."],
-    [ok,"Fora dos buscadores","Página marcada para não ser indexada nem arquivada."]]},
+    [ok,"Fora dos buscadores","Página marcada para não ser indexada nem arquivada."],
+    [par,"Proteção contra cópia, print e impressão","Para quem não é administrador: o texto do portal não pode ser selecionado nem copiado (campos de formulário e contatos de lead continuam liberados), a impressão sai em branco, e a tecla Print Screen e os atalhos de captura do Mac e do Windows escondem a tela e mostram um aviso de proibido. Todas as telas levam marca d’água com o nome, o e-mail e a data de quem está vendo, o que identifica a origem de qualquer foto ou captura vazada. Limite: nenhum site consegue impedir o print do celular, o recorte por aplicativo nem a foto da tela com outro aparelho; por isso a marca d’água é a principal proteção."]]},
   {k:"Rastreabilidade",w:10,ref:"OWASP ASVS 4.0 V7 (registros)",it:[
     [ok,"Registro de ações administrativas",`Criação e exclusão de usuário, redefinição de senha, exigência de MFA, importações e premissas financeiras ficam registradas com quem e quando. ${L.audit_30d} registros nos últimos 30 dias.`],
     [ok,"Acesso a contato de lead registrado",`Telefone e e-mail de lead aparecem um a um, por clique, e cada abertura fica registrada. ${L.views_lead_30d} aberturas nos últimos 30 dias.`],
-    [ok,"Histórico de tabela de preços","Cada alteração de preço fica registrada."]]},
+    [ok,"Histórico de tabela de preços","Cada alteração de preço fica registrada."],
+    [ok,"Tentativas de cópia e de print registradas",`Cada tentativa bloqueada de copiar, imprimir ou capturar a tela fica registrada com quem, quando e em que tela. ${L.prot_30d??0} tentativas nos últimos 30 dias.`]]},
   {k:"Privacidade e LGPD",w:10,ref:"Lei 13.709/2018 (LGPD), arts. 6º, 37 e 46",it:[
     [ok,"Dados hospedados no Brasil","Banco na região sa-east-1 (São Paulo)."],
     [ok,"Dado pessoal mínimo e sob demanda","Contato de lead só por clique, para quem tem a área e a UF; o resto das telas mostra dado agregado."],
@@ -8786,6 +8798,27 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
 function pushAbrirPendente(){if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;const v=({mensagens:"mensagens",duvidas:"duvidas",leads:"leads"})[PUSH_ABRIR];PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
+/* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
+const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin());
+let PROT_LOG=0;
+function protRegistra(tipo){if(!S.user||Date.now()-PROT_LOG<5000)return;PROT_LOG=Date.now();try{sb.from("seg_eventos").insert({user_id:S.user.id,tipo,pagina:((S.secao||"inicio")+"/"+(S.pag||"")).slice(0,120)}).then(()=>{},()=>{});}catch(_){}}
+function protAviso(tipo){let o=document.getElementById("prot-ov");if(!o){o=document.createElement("div");o.id="prot-ov";o.setAttribute("role","alertdialog");o.setAttribute("aria-live","assertive");document.body.appendChild(o);}
+  o.innerHTML=`<div class="prot-box"><strong>${tipo==="print"?"Captura de tela não permitida":"Copiar o conteúdo não é permitido"}</strong><p>O conteúdo do Portal Conecta é de uso interno da Barenbrug e dos parceiros, e não pode ser copiado, fotografado ou compartilhado fora do portal. Esta tentativa ficou registrada com o seu nome.</p><button type="button" class="btn" data-a="prot-ok">Entendi</button></div>`;
+  o.hidden=false;document.body.classList.add("prot-oculto");clearTimeout(protAviso.t);protAviso.t=setTimeout(()=>{o.hidden=true;document.body.classList.remove("prot-oculto");},6000);
+  if(tipo==="print"){try{navigator.clipboard&&navigator.clipboard.writeText("Conteúdo protegido do Portal Conecta Barenbrug").catch(()=>{});}catch(_){}}
+  protRegistra(tipo);}
+const protCampo=t=>!!(t&&t.closest&&t.closest("input,textarea,select,[contenteditable=true],.permite-copia"));
+["copy","cut"].forEach(ev=>document.addEventListener(ev,e=>{if(!protAtiva()||protCampo(e.target))return;const sl=window.getSelection&&window.getSelection();const sel=String(sl||"");if(!sel.trim())return;const an=sl&&sl.anchorNode&&(sl.anchorNode.nodeType===1?sl.anchorNode:sl.anchorNode.parentElement);if(an&&protCampo(an))return;e.preventDefault();protAviso(ev==="cut"?"recortar":"copiar");},true));
+document.addEventListener("keyup",e=>{if(!protAtiva())return;if(e.key==="PrintScreen"||e.keyCode===44)protAviso("print");},true);
+document.addEventListener("keydown",e=>{if(!protAtiva())return;const k=(e.key||"").toLowerCase();
+  if(e.key==="PrintScreen"||(e.metaKey&&e.shiftKey&&["3","4","5","s"].includes(k))||(e.shiftKey&&e.metaKey===false&&e.getModifierState&&e.getModifierState("OS")&&k==="s")){protAviso("print");}
+  if((e.ctrlKey||e.metaKey)&&["p"].includes(k)){e.preventDefault();protAviso("print");}},true);
+window.addEventListener("beforeprint",()=>{if(protAtiva())protAviso("print");});
+function protMarca(){let m=document.getElementById("prot-marca");if(!protAtiva()){if(m)m.remove();return;}
+  const txt=`${S.profile.nome||""} · ${S.user.email||""} · ${new Date().toLocaleDateString("pt-BR")}`;if(m&&m.dataset.t===txt)return;
+  if(!m){m=document.createElement("div");m.id="prot-marca";m.setAttribute("aria-hidden","true");document.body.appendChild(m);}
+  m.dataset.t=txt;const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><text x="10" y="120" transform="rotate(-24 210 110)" font-family="Arial,sans-serif" font-size="15" fill="rgba(30,30,30,0.07)">${txt.replace(/[<&>"]/g,"")}</text></svg>`;
+  m.style.backgroundImage=`url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;}
 function npsCard(){if(!npsMostrar())return "";return `<div class="aviso-est" role="note" style="margin:0"><strong>Como está sendo o Portal Conecta para você?</strong><p>Leva 1 minuto. Sua nota e suas sugestões ajudam o Marketing a melhorar o portal.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="nps-abrir">Responder</button></div><p class="meta" style="margin:6px 0 0">Este aviso fica aqui até você responder.</p></div>`;}
 function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua resposta foi registrada. O Marketing lê cada sugestão.</p><div class="acoes"><button class="btn" data-a="inicio">Voltar ao início</button></div></section>`;
   const areas=["Academia de Híbridos","Conecta RC","Conecta Revendas","Tabela de preços","Enxoval de Marketing","LeadsBaren","Inside Sales","Meu CRM","Mercado","Inteligência","Ações de Marketing","Brindes","Mensagens e feed","Outra"];
@@ -8887,10 +8920,10 @@ function vCasos(){
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
-  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
+  f.innerHTML=`<div class="rodape-in permite-copia"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
-function render(){renderApp();pushAbrirPendente();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();pushAbrirPendente();protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
@@ -9197,6 +9230,7 @@ document.addEventListener("click",async ev=>{
   if(a==="cn-n"||a==="cn-at"){const [pp,k,n]=v.split("|");cnLer(pp);const F=(S.cnF||(S.cnF={}))[pp]||(S.cnF[pp]={attrs:{}});if(a==="cn-n")F[k]=+n;else F.attrs[k]=(F.attrs[k]===+n&&+n===0)?undefined:+n;const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(a==="pbv"){if(!ehAdmin())return;const [k,ok]=v.split("|");const {data,error}=await sb.from("is_playbook_valid").upsert({item:k,validado:ok==="1",por:((S.profile&&S.profile.nome)||"Marketing")+" com a supervisão do Inside Sales",em:new Date().toISOString()},{onConflict:"item"}).select().maybeSingle();if(error||!data){aviso("Não foi possível gravar.");return;}(S.pbv||(S.pbv={}))[k]=data;render();return;}
   if(a==="ver-senha"){const i=document.getElementById(v);if(!i)return;const ver=i.type==="password";i.type=ver?"text":"password";b.setAttribute("aria-pressed",String(ver));b.setAttribute("aria-label",ver?"Esconder senha":"Mostrar senha");b.classList.toggle("on",ver);i.focus();return;}
+  if(a==="prot-ok"){const o=document.getElementById("prot-ov");if(o)o.hidden=true;document.body.classList.remove("prot-oculto");return;}
   if(a==="push-on"){await pushAtivar();return;}
   if(a==="push-off"){await pushDesativar();return;}
   if(a==="push-teste"){try{const {data,error}=await sb.functions.invoke("push-enviar",{body:{}});aviso(error?"Não foi possível enviar o teste.":(data&&data.enviados)?"Teste enviado. Deve chegar em alguns segundos.":"Nenhum aparelho ativo recebeu o teste. Desligue e ative de novo.");}catch(_){aviso("Não foi possível enviar o teste.");}return;}
