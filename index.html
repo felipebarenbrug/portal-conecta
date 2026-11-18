@@ -1449,7 +1449,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118083808";
+const APP_VER="20261118091952";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5184,15 +5184,19 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;
   else if(t.id==="cal_marcos"){S.calMarcos=t.checked;render();}else if(t.id==="mz_marcos"){S.mzMarcos=t.checked;render();}});
 
 function subnavRV(){
-  const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
-  if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-cal","Calendário"]);
-  if(ehMaster())abas.push(["rv-validacao","Validação"]);
-  else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"],["rv-cal","Calendário"]);
-  if(ehRevenda()&&temPerfil("Gestor de Revenda")&&!ehAdmin())abas.splice(1,0,["rv-reembolso","Reembolso"]);
-  if(ehAdmin()&&veBarenbrugRV())abas.splice(2,0,["rv-reembolsos","Reembolsos"]);
-  if(cnVeAba("conecta_rv"))abas.push(["rv-nps","Avaliar o programa"]);
+  /* abas em grupos, na ordem da jornada (como em Inside Sales e Inteligência) */
+  const G=[];const add=(g,ab)=>{ab=ab.filter(Boolean);if(ab.length)G.push([g,ab]);};
+  add("Comece aqui",[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]]);
+  if(veBarenbrugRV()){
+    add("Acompanhar",[["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-cal","Calendário"]]);
+    add("Validar e pagar",[ehMaster()&&["rv-validacao","Validação"],ehAdmin()&&["rv-reembolsos","Reembolsos"]]);
+  }else if(ehRevenda()){
+    add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
+  }
+  if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
+  const cur=k=>S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal");
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Conecta Revendas">${G.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${cur(k)?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
 }
 function vRVApresentacao(){
@@ -9534,7 +9538,7 @@ const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
-  "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
+  "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
