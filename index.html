@@ -977,7 +977,6 @@ async function carregarPrecos(){
 }
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
-  {id:"casos",nome:"Casos de sucesso",desc:"Vídeos de produtores reais com os híbridos Barenbrug, por estado e região, com mapa.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"tabela-precos",nome:"Tabela de preços",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
   {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
@@ -1209,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117221141";
+const APP_VER="20261117221537";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1482,7 +1481,7 @@ function cabecalho(){
 }
 function veCalcRent(){const ac=Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];return ehAdmin()||ac.includes("calculadora");}
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"]];
+  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["casos","Casos de sucesso"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -3406,7 +3405,7 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>x.id==="casos"?true:x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
+  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
   const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
@@ -4911,7 +4910,7 @@ function vBase(){
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
   <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast"],S.fTipo,"ftipo")}</div>
   ${vatual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></section>`:""}
-  ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Casos de sucesso</h2><p class="sub" style="margin:0 0 10px">Os ${casos.length} vídeos de produtores contando o resultado dos híbridos Barenbrug agora têm uma seção própria, com mapa e filtro por estado e região.</p><button class="btn" data-a="secao" data-v="casos">Abrir Casos de sucesso</button></section>`:""}
+  ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Casos de sucesso</h2><p class="sub" style="margin:0 0 10px">Os ${casos.length} vídeos de produtores contando o resultado dos híbridos Barenbrug estão na aba Casos de sucesso, aqui na Academia, com mapa e filtro por estado e região.</p><button class="btn" data-a="pag" data-v="casos">Abrir Casos de sucesso</button></section>`:""}
   ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>${vidHTML}</section>`:""}
   ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
@@ -8216,7 +8215,7 @@ function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
 /* ---------- Casos de sucesso: vídeos de produtores por estado e região, com mapa ---------- */
 function casosLista(){return VIDEOS_BASE.filter(x=>x.g==="Caso de sucesso").map(x=>{const m=String(x.t).match(/^(.*?)\s*(?:—\s*(.*?))?\s*\(([A-Z]{2})\)\s*$/);const nome=m?m[1].trim():x.t,cid=m&&m[2]?m[2].trim():"",uf=m?m[3]:"";return {...x,nome,cid,uf,reg:uf?hhReg(uf):"Outros"};});}
 function vCasos(){
-  if(!GEO&&!S.geoBusy){S.geoBusy=true;carregarGeo().catch(()=>null).then(()=>{S.geoBusy=false;if(S.secao==="casos")render();});}
+  if(!GEO&&!S.geoBusy){S.geoBusy=true;carregarGeo().catch(()=>null).then(()=>{S.geoBusy=false;if(S.secao==="academia"&&S.pag==="casos")render();});}
   const L=casosLista();const F=S.casosF||(S.casosF={reg:"Todas",uf:""});
   const regs=["Todas",...Object.keys(HH_REG).filter(r=>L.some(c=>c.reg===r))];
   const V=L.filter(c=>(F.reg==="Todas"||c.reg===F.reg)&&(!F.uf||c.uf===F.uf));
@@ -8241,7 +8240,7 @@ function rodapeMkt(){
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["casos","Casos de sucesso"],["cert","Certificado"]],
   "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
@@ -8337,9 +8336,9 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"?' class="largo"':""}>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
@@ -8369,7 +8368,7 @@ function renderApp(){
     if(S.crmVista==="mapa")pedirMapa();
     return;
   }
-  if(S.secao==="casos"){app.innerHTML=cabecalho()+subnavSimples("Casos de sucesso")+`<main class="largo">${vCasos()}</main>`;return;}
+  if(S.secao==="casos"){S.secao="academia";S.pag="casos";return render();}
   if(S.secao==="mural"){
     app.innerHTML=cabecalho()+subnavSimples("Mural")+`<main>${vMural()}</main>`;
     if(!S.posts){carregarPosts().then(render);}
