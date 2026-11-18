@@ -907,6 +907,12 @@ body.prot-sel main input,body.prot-sel main textarea,body.prot-sel main select,b
 .rb-hist summary{cursor:pointer;font-size:.85rem;margin-top:6px}.rb-hist ul{margin:6px 0 0;padding-left:18px;font-size:.85rem}.rb-hist li{margin-bottom:4px}
 label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px 14px}.form-grid>div,.form-grid>fieldset{min-width:0;display:flex;flex-direction:column;gap:3px}.form-grid input:not([type=checkbox]),.form-grid select,.form-grid textarea{width:100%;box-sizing:border-box}.form-grid fieldset{border:1px solid #d7dbe0;border-radius:8px;padding:8px 12px}
+.cal-filtros{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:4px 0}.cal-sel-c{display:flex;gap:6px;align-items:center;font-size:.88rem}.cal-sel-c select{max-width:260px}
+.cal-mz th button.link{font-weight:600}.cal-mz th.cal-bf{background:rgba(0,0,0,.04)}.cal-mz td,.cal-mz th{padding:4px 6px;font-size:.82rem}.cal-mz tbody th{white-space:nowrap}
+.cal-l.cal-sel{box-shadow:inset 0 0 0 2px var(--azul,#003c71)}.cal-dt{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:6px}.cal-dt label{display:flex;flex-direction:column;font-size:.8rem}
+.mk-ev.cal-prazo{box-shadow:inset 0 0 0 2px #c0392b}
+.cal-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}.cal-leg{display:flex;flex-wrap:wrap;gap:12px}
+.cp-rv{background:#ffdb00;color:#1d1d1b}.cp-rc{background:#2e8b57;color:#fff}.cp-coop{background:#e67e22;color:#fff}.cp-inst{background:#003c71;color:#fff}.cp-is{background:#8e44ad;color:#fff}.cp-exp{background:#16a085;color:#fff}.cp-marco{background:#d7dbe0;color:#1d1d1b}
 </style>
 </head>
 <body>
@@ -3820,18 +3826,10 @@ function cxJanela(d,saz){
   return {st:"fora",ord:2,cult:c0,txt:`fora da janela agora · a próxima abre em ${MESES_PT[s%12]}`};}
 function crmExtraHTML(alvo){
   if(!alvo)return "";const X=(S.crmX||{})[alvo];
-  if(X===undefined){carregarCrmX(alvo);return `<section class="bloco"><div class="carregando">Carregando crédito, grupos, janela de plantio, recompra e perdas…</div></section>`;}
-  if(X===null)return `<section class="bloco"><div class="carregando">Carregando crédito, grupos, janela de plantio, recompra e perdas…</div></section>`;
+  if(X===undefined){carregarCrmX(alvo);return `<section class="bloco"><div class="carregando">Carregando grupos, janela de plantio, recompra e perdas…</div></section>`;}
+  if(X===null)return `<section class="bloco"><div class="carregando">Carregando grupos, janela de plantio, recompra e perdas…</div></section>`;
   if(!X)return "";
   const fmtN=n=>Math.round(Number(n)||0).toLocaleString("pt-BR"),K=v=>"R$ "+fmtN(v);const out=[];
-  // 1. termometro de credito B2B
-  const C=X.credito||[];
-  if(C.length){const nivel=c=>(+c.fin_vencido>0||+c.venc_fat>0)?["vermelho","Atenção"]:/(1[2-9]\d|[9]\d)\s*dias|safra|anual/i.test(c.pag||"")?["amarelo","Prazo longo"]:["verde","Em dia"];
-    const al=C.filter(c=>nivel(c)[0]==="vermelho").length;
-    out.push(`<section class="bloco"><h2 class="sec">Termômetro de crédito dos canais (${C.length})${inf("Clientes B2B do seu painel. Vermelho: faturamento vencido no CRM ou títulos vencidos no financeiro do Conecta. Amarelo: prazo de 90 dias ou mais. A forma e o prazo de pagamento são os mais usados nas vendas da safra.")}</h2>
-      <p class="sub" style="margin:0 0 6px">${al?`<strong style="color:#c0392b">${al} ${al===1?"canal pede":"canais pedem"} atenção antes de uma nova venda.</strong> `:""}Antes de fechar uma venda grande ou estender prazo, confira o crédito com o financeiro. O limite de crédito de cada cliente não está no CRM: entra aqui quando o financeiro enviar a planilha de limites.</p>
-      <div class="tab"><table class="sim-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Prazo usual</th><th class="val">Comprado na safra</th><th class="val">Em aberto</th><th class="val">Faturamento vencido</th><th class="val">Títulos (financeiro)</th></tr></thead><tbody>
-      ${C.slice(0,40).map(c=>{const nv=nivel(c);return `<tr><td><strong>${esc(c.nome||"")}</strong>${c.uf?`<br><span class="meta">${esc(c.uf)}</span>`:""}${crmLnk(c.did)?`<br>${crmLnk(c.did)}`:""}</td><td>${stTag(nv[1],nv[0])}</td><td>${esc(c.pag||"—")}${c.forma?`<br><span class="meta">${esc(c.forma)}</span>`:""}</td><td class="val">${K(c.vend)}</td><td class="val">${K(c.aberto)}</td><td class="val">${+c.venc_fat?`<strong style="color:#c0392b">${K(c.venc_fat)}</strong><br><span class="meta">${c.venc_n} neg.</span>`:"—"}</td><td class="val">${c.canal?(c.fin_vencido!=null?`${+c.fin_vencido?`<strong style="color:#c0392b">vencido ${K(c.fin_vencido)}</strong>`:"nada vencido"}<br><span class="meta">a vencer ${K(c.fin_aberto)} · ${rbData(c.fin_em)}</span>`:"—"):`<span class="meta">fora do Conecta</span>`}</td></tr>`;}).join("")}</tbody></table></div></section>`);}
   // 2. grupo economico
   const G=X.grupos||[];
   if(G.length)out.push(`<section class="bloco"><h2 class="sec">Grupos econômicos: o tamanho real do canal (${G.length})${inf("Soma de todas as empresas e filiais ligadas ao mesmo canal no Conecta, com as compras de todos os vendedores da Barenbrug na safra. Ao lado, a parte que passa pelo seu painel.")}</h2>
@@ -5023,11 +5021,164 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||(f.id!=="
   btn.disabled=false;
 });
 
+/* ===== Calendarios de acoes: canal (micro), Conecta Revendas (gerencial) e mapa da safra do marketing (macro) ===== */
+const CAL_SAFRA_INI="2026-07-01",CAL_SAFRA_FIM="2027-06-30";
+const CAL_PROG=["Conecta Revendas","Conecta RC","Cooperativas e revendas","Institucional","Inside Sales","Exportação"];
+const CAL_PROG_CLS={"Conecta Revendas":"cp-rv","Conecta RC":"cp-rc","Cooperativas e revendas":"cp-coop","Institucional":"cp-inst","Inside Sales":"cp-is","Exportação":"cp-exp","Marco do programa":"cp-marco"};
+const CAL_NAT=["Dia de campo","Feira e evento","Palestra e treinamento","Patrocínio","Ação em loja e revenda","Visita técnica","Campo demonstrativo","Incentivo e premiação","Mídia e conteúdo","Material e brindes","Outros"];
+const CAL_PGD_COR={"Aprovado":"verde","Em Análise":"amarelo","Reprovado":"vermelho"};
+const CAL_MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const CAL_MES_L=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function calNat(t){t=String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+  if(/demonstr|experiment/.test(t))return "Campo demonstrativo";if(/dia de campo/.test(t))return "Dia de campo";if(/patroc/.test(t))return "Patrocínio";
+  if(/feira|evento|show/.test(t))return "Feira e evento";if(/palestra|treinamento|educa/.test(t))return "Palestra e treinamento";
+  if(/loja|revenda|dia de neg/.test(t))return "Ação em loja e revenda";if(/visita/.test(t))return "Visita técnica";
+  if(/incentivo|premia|rebate|viagem|bonifica|campanha/.test(t))return "Incentivo e premiação";if(/midia|conteudo/.test(t))return "Mídia e conteúdo";
+  if(/material|brinde/.test(t))return "Material e brindes";return "Outros";}
+const calIso=(y,m,d)=>`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+const calFimMes=(y,m)=>calIso(y,m,new Date(y,m,0).getDate());
+const calAnoSafra=m=>m>=7?2026:2027;
+/* a data do PGD vem em texto livre ("MARÇO", "AGOSTO/SETEMBRO", "06/03/2027", "25 a 30 de maio 2027", "Até 30/06/2027"); data_ini e data_fim, quando preenchidas, mandam */
+function pgdDatas(a){
+  if(a.data_ini)return {ini:a.data_ini,fim:a.data_fim||a.data_ini,prec:"dia"};
+  const t=String(a.data_acao||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();if(!t)return null;
+  const ds=[...t.matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g)].map(x=>calIso(x[3].length===2?2000+ +x[3]:+x[3],+x[2],+x[1]));
+  if(ds.length){if(/^ate\b/.test(t))return {ini:ds[0],fim:ds[0],prec:"prazo"};return {ini:ds[0],fim:ds[ds.length-1]<ds[0]?ds[0]:ds[ds.length-1],prec:"dia"};}
+  const ms=CAL_MES_L.map(x=>x.normalize("NFD").replace(/[̀-ͯ]/g,""));
+  const mi=[];ms.forEach((n,i)=>{const k=t.indexOf(n);if(k>=0)mi.push([k,i+1]);});mi.sort((x,y)=>x[0]-y[0]);
+  const ano=(t.match(/\b(20\d\d)\b/)||[])[1];
+  const rg=t.match(/(\d{1,2})\s*(?:a|-|e|ate)\s*(\d{1,2})\s*de\s*([a-z]+)/),um=t.match(/\b(\d{1,2})\s*de\s*([a-z]+)/);
+  if(mi.length){const m0=mi[0][1],m1=mi[mi.length-1][1];const y0=ano?+ano:calAnoSafra(m0),y1=ano?+ano:calAnoSafra(m1);
+    if(rg&&mi.length===1)return {ini:calIso(y0,m0,+rg[1]),fim:calIso(y0,m0,+rg[2]),prec:"dia"};
+    if(um&&mi.length===1)return {ini:calIso(y0,m0,+um[1]),fim:calIso(y0,m0,+um[1]),prec:"dia"};
+    return {ini:calIso(y0,m0,1),fim:calFimMes(y1,m1),prec:"mes"};}
+  if(/safra|durante|ano todo/.test(t))return {ini:CAL_SAFRA_INI,fim:CAL_SAFRA_FIM,prec:"safra"};
+  return null;}
+function calDias(e){return Math.round((new Date(e.fim+"T00:00:00")-new Date(e.ini+"T00:00:00"))/864e5)+1;}
+const calPeriodo=e=>e.prec!=="dia"&&e.prec!=="prazo"||calDias(e)>7;
+/* eventos do PGD (um por acao), marcos do programa e acoes do marketing num formato unico */
+function calEvPgd(lista){const nomeC=id=>((S.canais||[]).find(c=>c.id===id)||{}).nome||"";
+  return (lista||[]).map(a=>{const d=pgdDatas(a);const bf=(a.verba||"")==="Bônus de Performance";
+    return {k:"p"+a.id,src:"pgd",id:a.id,canal_id:a.canal_id,canal:nomeC(a.canal_id),tit:(a.tipo||"Ação")+(a.cidade?" · "+a.cidade:""),desc:a.descricao,ini:d&&d.ini,fim:d&&d.fim,prec:d?d.prec:null,txt:a.data_acao,
+      nat:calNat(a.tipo+" "+(a.categoria||"")),prog:"Conecta Revendas",status:a.status||"Em Análise",cor:CAL_PGD_COR[a.status]||"amarelo",verba:bf?"Bônus de Performance":"IGDB",valor:+a.valor_igdb||0,a};});}
+function calMarcos(){const M=[["2026-09-30","Apuração do IGDB · 1º trimestre","Fechamento de julho a setembro. O IGDB do que foi pago no trimestre fica disponível para as ações aprovadas."],
+  ["2026-12-31","Apuração do IGDB · 2º trimestre","Fechamento de outubro a dezembro."],["2027-03-31","Apuração do IGDB · 3º trimestre","Fechamento de janeiro a março."],
+  ["2027-06-30","Fim da safra 26/27 · apuração do 4º trimestre","Último dia para faturar e pagar dentro da safra. Fecha o volume de híbridos que define o Bônus de Performance."]];
+  const L=M.map(([d,t,x])=>({k:"m"+d,src:"marco",ini:d,fim:d,prec:"dia",tit:t,desc:x,nat:"Marco do programa",prog:"Marco do programa",cor:"azul",verba:"IGDB"}));
+  L.push({k:"mbf",src:"marco",ini:"2027-07-01",fim:"2027-08-31",prec:"mes",tit:"Bônus de Performance · apuração e liberação",desc:"Julho e agosto de 2027: apuração da meta de híbridos (100% ou mais libera 100%; de 90% a 99,99% libera 70%) e liberação para as ações de BF aprovadas, dentro do teto de R$ 300 mil com o IGDB.",nat:"Marco do programa",prog:"Marco do programa",cor:"azul",verba:"Bônus de Performance"});
+  return L;}
+function calEvMk(){return (S.mk||[]).filter(a=>!a.agrupador).map(a=>({k:"k"+a.id,src:"mk",id:a.id,tit:a.titulo,desc:a.descricao,ini:a.inicio||null,fim:a.fim||a.inicio||null,prec:a.inicio?"dia":null,
+  nat:calNat(a.tipo),prog:a.programa||"Institucional",status:a.status,cor:(typeof MK_FIN_COR!=="undefined"&&MK_FIN_COR[mkFin(a)])||"cinza",canal:((S.canais||[]).find(c=>c.id===a.canal_id)||{}).nome||"",a}));}
+/* grade do mes: ate 7 dias nos dias; periodos longos e datas so por mes na faixa abaixo */
+function calGrade(m,E,acaoMes,clsDe){const [y,mo]=m.split("-").map(Number),dias=new Date(y,mo,0).getDate(),prim=new Date(y,mo-1,1).getDay(),h=new Date(Date.now()-3*36e5).toISOString().slice(0,10);
+  const ini=`${m}-01`,fim=`${m}-${String(dias).padStart(2,"0")}`;const doMes=E.filter(e=>e.ini&&e.ini<=fim&&e.fim>=ini);const curtos=doMes.filter(e=>!calPeriodo(e)),longos=doMes.filter(calPeriodo);
+  const cel=[];for(let i=0;i<prim;i++)cel.push(`<div class="mk-dia vazio-d"></div>`);
+  for(let d=1;d<=dias;d++){const ds=`${m}-${String(d).padStart(2,"0")}`;const xs=curtos.filter(e=>e.ini<=ds&&ds<=e.fim);
+    cel.push(`<div class="mk-dia${ds===h?" hoje":""}"><span class="mk-dn">${d}</span>${xs.slice(0,4).map(e=>`<button class="mk-ev ${clsDe(e)}${e.prec==="prazo"?" cal-prazo":""}" data-a="cal-ev" data-v="${e.k}" title="${esc(e.tit)}">${esc(e.tit)}</button>`).join("")}${xs.length>4?`<span class="meta">+${xs.length-4}</span>`:""}</div>`);}
+  const mv=k=>{const d=new Date(y,mo-1+k,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
+  const nome=(t=>t.charAt(0).toUpperCase()+t.slice(1))(new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}));
+  return {doMes,html:`<div class="mk-barra"><button class="btn sec" data-a="${acaoMes}" data-v="${mv(-1)}" aria-label="Mês anterior">‹</button><strong style="align-self:center;min-width:150px;text-align:center">${esc(nome)}</strong><button class="btn sec" data-a="${acaoMes}" data-v="${mv(1)}" aria-label="Próximo mês">›</button><button class="link" data-a="${acaoMes}" data-v="${h.slice(0,7)}">hoje</button></div>
+  <div class="mk-cal"><div class="mk-sem">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(x=>`<span>${x}</span>`).join("")}</div><div class="mk-grade">${cel.join("")}</div></div>
+  ${longos.length?`<section class="bloco mk-per"><h2 class="sec">Ao longo do mês · ${longos.length}</h2><p class="meta">Ações com período longo ou só com o mês definido.</p><div class="mk-per-l">${longos.map(e=>`<button class="mk-ev ${clsDe(e)}" data-a="cal-ev" data-v="${e.k}" title="${esc(e.tit)}">${esc(e.tit)}${e.canal?" · "+esc(e.canal):""} · ${esc(calPerTxt(e))}</button>`).join("")}</div></section>`:""}`};}
+const calD=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+function calPerTxt(e){if(!e.ini)return "sem data";if(e.prec==="safra")return "durante a safra";if(e.prec==="prazo")return "até "+calD(e.ini);
+  if(e.prec==="mes"){const a=+e.ini.slice(5,7),b=+e.fim.slice(5,7);return a===b?CAL_MES_L[a-1]:CAL_MES_L[a-1]+" a "+CAL_MES_L[b-1];}
+  return e.ini===e.fim?calD(e.ini):calD(e.ini)+" a "+calD(e.fim);}
+/* matriz da safra: linhas por grupo, colunas de julho a junho */
+function calMatriz(E,grupoDe,grupos,acaoMes){const ms=[...[7,8,9,10,11,12,1,2,3,4,5,6].map(m=>({m,y:calAnoSafra(m)})),{m:7,y:2027,bf:1},{m:8,y:2027,bf:1}];
+  const conta=(g,c)=>E.filter(e=>grupoDe(e)===g&&e.ini&&e.ini<=calFimMes(c.y,c.m)&&e.fim>=calIso(c.y,c.m,1)).length;
+  const G=grupos.filter(g=>E.some(e=>grupoDe(e)===g));if(!G.length)return "";
+  const mx=Math.max(1,...G.flatMap(g=>ms.map(c=>conta(g,c))));const hoje=new Date().getMonth()+1;
+  return `<div class="tab"><table class="sim-t cal-mz"><thead><tr><th></th>${ms.map(c=>`<th class="${c.m===hoje&&!c.bf?"sz-hoje":""}${c.bf?" cal-bf":""}"><button class="link" data-a="${acaoMes}" data-v="${c.y}-${String(c.m).padStart(2,"0")}" title="${c.bf?"Depois da safra: apuração e liberação do Bônus de Performance":""}">${CAL_MES[c.m-1]}${c.bf?"/27":""}</button></th>`).join("")}<th class="val">Total</th></tr></thead><tbody>
+  ${G.map(g=>`<tr><th scope="row">${esc(g)}</th>${ms.map(c=>{const n=conta(g,c);return `<td class="val"${n?` style="background:rgba(0,60,113,${(0.08+0.5*n/mx).toFixed(2)});color:${n/mx>0.6?"#fff":"inherit"}"`:""}>${n||""}</td>`;}).join("")}<td class="val"><strong>${E.filter(e=>grupoDe(e)===g).length}</strong></td></tr>`).join("")}</tbody></table></div>`;}
+function calLinha(e,podeData){const st=e.src==="pgd"?stTag(e.status,e.cor):e.src==="mk"?stTag(e.status||"",e.cor):stTag("Marco","azul");
+  const prazo=e.src==="pgd"&&e.status!=="Aprovado"&&e.ini?(()=>{const d=new Date(e.ini+"T00:00:00");d.setDate(d.getDate()-15);const iso=d.toISOString().slice(0,10);return `<span class="meta" style="color:${iso<new Date().toISOString().slice(0,10)?"#c0392b":"inherit"}">Precisa estar aprovada até ${calD(iso)} (15 dias antes).</span>`;})():"";
+  const ed=podeData&&e.src==="pgd"&&(ehAdmin()||(temPerfil("Gestor de Revenda")&&e.status==="Em Análise"));
+  return `<div class="neg cal-l${S.calSel===e.k?" cal-sel":""}" id="cal-${e.k}"><div class="l1"><span>${e.src==="mk"?`<button class="link" data-a="mk-abrir" data-v="${e.id}" style="text-align:left"><strong>${esc(e.tit)}</strong></button>`:`<strong>${esc(e.tit)}</strong>`}</span>${st}</div>
+    <span class="meta">${esc(calPerTxt(e))}${e.prec==="mes"||e.prec==="safra"?" (data aproximada)":""}${e.canal?" · "+esc(e.canal):""} · ${esc(e.nat)}${e.src!=="marco"?" · "+esc(e.prog):""}${e.src==="pgd"?" · "+esc(e.verba)+(e.valor?" "+fmtK0(e.valor):""):""}</span>
+    ${e.desc?`<span class="meta">${esc(String(e.desc).slice(0,220))}</span>`:""}${prazo}
+    ${ed?(S.calEd===e.k?`<form class="cal-dt" data-id="${e.id}"><label>Início <input type="date" name="i" value="${esc(e.a.data_ini||(e.prec==="dia"?e.ini:"")||"")}"></label><label>Fim <input type="date" name="f" value="${esc(e.a.data_fim||(e.prec==="dia"?e.fim:"")||"")}"></label><button class="btn" type="button" data-a="cal-dt-ok" data-v="${e.id}">Salvar data</button><button class="link" type="button" data-a="cal-dt-x">cancelar</button></form>`:`<button class="link" data-a="cal-dt" data-v="${e.k}">${e.a.data_ini?"Mudar a data":"Definir a data exata"}</button>`):""}</div>`;}
+function calChips(acao,opts,atual){return `<div class="filtros" style="margin:0">${opts.map(([v,t])=>`<button class="chip" data-a="${acao}" data-v="${esc(v)}" aria-pressed="${v===atual}">${esc(t)}</button>`).join("")}</div>`;}
+const calClsSt=e=>"st-"+(e.cor||"cinza");
+/* 1 e 2. Conecta Revendas: calendario do canal (revenda) e geral (Barenbrug) */
+function vRVCal(){
+  if(!S.canais){carregarCanais().then(render);return `<div class="carregando">Carregando as ações…</div>`;}
+  const geral=veBarenbrugRV();const meuC=geral?null:((S.canais||[]).find(c=>c.id===(S.profile&&S.profile.canal_id))||S.canais[0]);
+  if(!geral&&!meuC)return `<section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda.</p></section>`;
+  const fc=geral?(S.calCanal||""):meuC.id,fs=S.calSt||"Todas",fv=S.calVb||"Todas",fn=S.calNat||"Todas";
+  const todas=Object.values(S.acoesCanal||{}).flat().filter(a=>!fc||a.canal_id===fc);
+  let E=calEvPgd(todas);const nat=[...new Set(E.map(e=>e.nat))];
+  E=E.filter(e=>(fs==="Todas"||e.status===fs)&&(fv==="Todas"||e.verba===fv)&&(fn==="Todas"||e.nat===fn));
+  const marcos=S.calMarcos!==false?calMarcos().filter(e=>fv==="Todas"||e.verba===fv):[];
+  const ALL=[...E.filter(e=>e.ini),...marcos];const sem=E.filter(e=>!e.ini);
+  const m=S.calMes||new Date(Date.now()-3*36e5).toISOString().slice(0,7);const G=calGrade(m,ALL,"cal-mes",calClsSt);
+  const lista=[...G.doMes].sort((a,b)=>a.ini.localeCompare(b.ini));const sel=S.calSel&&[...ALL,...sem].find(e=>e.k===S.calSel);
+  const nA=E.filter(e=>e.status==="Aprovado").length,nE=E.filter(e=>e.status==="Em Análise").length,vBF=E.filter(e=>e.verba==="Bônus de Performance").reduce((t,e)=>t+e.valor,0),vIG=E.filter(e=>e.verba==="IGDB").reduce((t,e)=>t+e.valor,0);
+  const canaisCom=geral?[...new Set(Object.values(S.acoesCanal||{}).flat().map(a=>a.canal_id))].map(id=>(S.canais||[]).find(c=>c.id===id)).filter(Boolean).sort((a,b)=>a.nome.localeCompare(b.nome)):[];
+  return `<div><span class="rot">Conecta Revendas${geral?" · visão Barenbrug":" · "+esc(meuC.nome)}</span><h1 class="titulo">${geral?"Calendário do Conecta Revendas":"Calendário das suas ações"}</h1>
+    <p class="sub">${geral?"Todas as ações do PGD dos canais, pagas com IGDB ou com o Bônus de Performance, e os marcos do programa na safra 26/27. Filtre por canal para ver o calendário de cada um.":"As ações do seu Plano de Geração de Demanda pela data, com o que já foi aprovado, o que está em análise e os marcos do programa. Quando a data ainda está só pelo mês, defina o dia exato para ela entrar no calendário."}</p></div>
+  <div class="metrics"><div class="metric"><span>Ações no plano</span><strong>${E.length}</strong><span class="meta">${nA} aprovadas · ${nE} em análise</span></div>
+    <div class="metric"><span>Com IGDB</span><strong>${fmtK0(vIG)}</strong></div><div class="metric"><span>Com Bônus de Performance</span><strong>${fmtK0(vBF)}</strong><span class="meta">liberado em jul–ago/2027</span></div>
+    <div class="metric"><span>Sem data</span><strong>${sem.length}</strong><span class="meta">${E.filter(e=>e.prec==="mes"||e.prec==="safra").length} só com o mês</span></div></div>
+  <section class="bloco"><div class="cal-filtros">
+    ${geral?`<label class="cal-sel-c">Canal <select id="cal_canal"><option value="">Todos os canais (${canaisCom.length})</option>${canaisCom.map(c=>`<option value="${c.id}" ${c.id===fc?"selected":""}>${esc(c.nome)}</option>`).join("")}</select></label>`:""}
+    ${calChips("cal-st",[["Todas","Todas"],["Aprovado","Aprovadas"],["Em Análise","Em análise"],["Reprovado","Reprovadas"]],fs)}
+    ${calChips("cal-vb",[["Todas","IGDB e BF"],["IGDB","IGDB"],["Bônus de Performance","Bônus de Performance"]],fv)}
+    ${nat.length>1?`<label class="cal-sel-c">Natureza <select id="cal_nat"><option>Todas</option>${nat.map(n=>`<option ${n===fn?"selected":""}>${esc(n)}</option>`).join("")}</select></label>`:""}
+    <label class="chk" style="margin:0"><input type="checkbox" id="cal_marcos" ${S.calMarcos!==false?"checked":""}> Marcos do programa</label></div></section>
+  <section class="bloco"><h2 class="sec">A safra mês a mês</h2><p class="meta" style="margin:0 0 6px">Quantas ações acontecem em cada mês, por natureza. Toque no mês para abrir o calendário.</p>${calMatriz(E.filter(e=>e.ini),e=>e.nat,CAL_NAT,"cal-mes")||`<div class="vazio">Nenhuma ação com data.</div>`}</section>
+  ${G.html}
+  ${sel?`<section class="bloco"><h2 class="sec">Ação selecionada</h2>${calLinha(sel,!geral||ehAdmin())}</section>`:""}
+  <section class="bloco"><h2 class="sec">No mês · ${lista.length}</h2>${lista.length?`<div class="lista">${lista.map(e=>calLinha(e,!geral||ehAdmin())).join("")}</div>`:`<div class="vazio">Nada neste mês.</div>`}</section>
+  ${sem.length?`<section class="bloco"><h2 class="sec">Sem data no plano · ${sem.length}</h2><div class="lista">${sem.map(e=>calLinha(e,!geral||ehAdmin())).join("")}</div></section>`:""}`;
+}
+/* 3. mapa da safra do marketing: acoes de marketing + PGD dos canais + marcos */
+function vAcoesMapa(){
+  if(!S.mk)return `<div class="carregando">Carregando…</div>`;
+  if(!S.canais){carregarCanais().then(render);return `<div class="carregando">Carregando as ações dos canais…</div>`;}
+  const ligados=new Set((S.mk||[]).filter(a=>a.pgd_id).map(a=>String(a.pgd_id)));
+  const pgd=calEvPgd(Object.values(S.acoesCanal||{}).flat().filter(a=>!a.mkt_acao_id&&!ligados.has(String(a.id))&&a.status!=="Reprovado"));
+  const base=[...calEvMk(),...pgd,...(S.mzMarcos?calMarcos():[])];
+  const fp=S.mzProg||[],fn=S.mzNat||[];const vis=e=>(!fp.length||fp.includes(e.prog))&&(!fn.length||fn.includes(e.nat));
+  const E=base.filter(vis);const comData=E.filter(e=>e.ini&&e.fim>=CAL_SAFRA_INI&&e.ini<="2027-08-31"),sem=E.filter(e=>!e.ini);
+  const m=S.mzMes||new Date(Date.now()-3*36e5).toISOString().slice(0,7);const clsP=e=>CAL_PROG_CLS[e.prog]||"cp-inst";
+  const G=calGrade(m,comData,"mz-mes",clsP);const lista=[...G.doMes].sort((a,b)=>a.ini.localeCompare(b.ini));const sel=S.calSel&&base.find(e=>e.k===S.calSel);
+  const porProg=CAL_PROG.map(p=>[p,base.filter(e=>e.prog===p).length]).filter(x=>x[1]);const natL=CAL_NAT.filter(n=>base.some(e=>e.nat===n));
+  const tg=(arr,v)=>arr.includes(v);const modo=S.mzModo||"nat";
+  return `<div><h1 class="titulo">Mapa da safra 26/27</h1><p class="sub">Todas as ações de marketing da safra num lugar só: as do quadro de Ações de Marketing (institucionais, com RCs, com cooperativas e revendas) e as do PGD dos canais do Conecta Revendas. Filtre pelo programa e pela natureza para ver o que acontece e quando.</p></div>
+  <div class="metrics">${porProg.map(([p,n])=>`<div class="metric"><span><i class="cal-dot ${CAL_PROG_CLS[p]}"></i>${esc(p)}</span><strong>${n}</strong><span class="meta">${base.filter(e=>e.prog===p&&!e.ini).length} sem data</span></div>`).join("")}</div>
+  <section class="bloco"><div class="cal-filtros"><span class="meta">Programa:</span><div class="filtros" style="margin:0">${CAL_PROG.filter(p=>base.some(e=>e.prog===p)).map(p=>`<button class="chip" data-a="mz-prog" data-v="${esc(p)}" aria-pressed="${tg(fp,p)}"><i class="cal-dot ${CAL_PROG_CLS[p]}"></i>${esc(p)}</button>`).join("")}</div></div>
+    <div class="cal-filtros"><span class="meta">Natureza:</span><div class="filtros" style="margin:0">${natL.map(n=>`<button class="chip" data-a="mz-nat" data-v="${esc(n)}" aria-pressed="${tg(fn,n)}">${esc(n)}</button>`).join("")}</div></div>
+    <div class="cal-filtros">${fp.length||fn.length?`<button class="link" data-a="mz-limpa">limpar filtros</button>`:""}<label class="chk" style="margin:0"><input type="checkbox" id="mz_marcos" ${S.mzMarcos?"checked":""}> Mostrar os marcos do Conecta Revendas</label></div></section>
+  <section class="bloco"><h2 class="sec">A safra mês a mês · ${comData.length} ações com data</h2>${calChips("mz-modo",[["nat","Por natureza"],["prog","Por programa"]],modo)}
+    <div style="margin-top:8px">${modo==="prog"?calMatriz(comData,e=>e.prog,[...CAL_PROG,"Marco do programa"],"mz-mes"):calMatriz(comData,e=>e.nat,[...CAL_NAT,"Marco do programa"],"mz-mes")||`<div class="vazio">Nada com esses filtros.</div>`}</div></section>
+  ${G.html}
+  <p class="meta"><span class="cal-leg">${Object.entries(CAL_PROG_CLS).filter(([p])=>base.some(e=>e.prog===p)).map(([p,c])=>`<span><i class="cal-dot ${c}"></i>${esc(p)}</span>`).join("")}</span></p>
+  ${sel?`<section class="bloco"><h2 class="sec">Ação selecionada</h2>${calLinha(sel,ehAdmin())}</section>`:""}
+  <section class="bloco"><h2 class="sec">No mês · ${lista.length}</h2>${lista.length?`<div class="lista">${lista.map(e=>calLinha(e,ehAdmin())).join("")}</div>`:`<div class="vazio">Nada neste mês.</div>`}</section>
+  ${sem.length?`<section class="bloco"><h2 class="sec">Sem data · ${sem.length}</h2><div class="lista">${sem.map(e=>calLinha(e,ehAdmin())).join("")}</div></section>`:""}`;
+}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='cal-'],[data-a^='mz-']");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
+  if(a==="mz-mes"||a==="cal-mes"){ev.preventDefault();if(a==="mz-mes")S.mzMes=v;else S.calMes=v;S.calSel=null;render();return;}
+  if(a==="cal-ev"){ev.preventDefault();S.calSel=v;render();const e=document.getElementById("cal-"+v);if(e)e.scrollIntoView({block:"center"});return;}
+  if(a==="cal-st"){S.calSt=v;render();return;}if(a==="cal-vb"){S.calVb=v;render();return;}
+  if(a==="mz-prog"||a==="mz-nat"){const k=a==="mz-prog"?"mzProg":"mzNat";const L=S[k]||[];S[k]=L.includes(v)?L.filter(x=>x!==v):[...L,v];render();return;}
+  if(a==="mz-limpa"){S.mzProg=[];S.mzNat=[];render();return;}if(a==="mz-modo"){S.mzModo=v;render();return;}
+  if(a==="cal-dt"){ev.preventDefault();S.calEd=v;render();return;}if(a==="cal-dt-x"){S.calEd=null;render();return;}
+  if(a==="cal-dt-ok"){ev.preventDefault();const f=b.closest("form");const i=f.querySelector("[name=i]").value||null,fi=f.querySelector("[name=f]").value||i;
+    if(fi&&i&&fi<i){aviso("O fim não pode ser antes do início.");return;}
+    const {error}=await sb.from("acoes_pgd").update({data_ini:i,data_fim:i?fi:null}).eq("id",v);if(error){aviso("Não foi possível salvar a data.");return;}
+    Object.values(S.acoesCanal||{}).forEach(L=>L.forEach(x=>{if(x.id===v){x.data_ini=i;x.data_fim=i?fi:null;}}));S.calEd=null;if(i)S.calMes=i.slice(0,7);render();aviso("Data salva.");return;}
+});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;
+  if(t.id==="cal_canal"){S.calCanal=t.value;S.calSel=null;render();}else if(t.id==="cal_nat"){S.calNat=t.value;render();}
+  else if(t.id==="cal_marcos"){S.calMarcos=t.checked;render();}else if(t.id==="mz_marcos"){S.mzMarcos=t.checked;render();}});
+
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
-  if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
+  if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-cal","Calendário"]);
   if(ehMaster())abas.push(["rv-validacao","Validação"]);
-  else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
+  else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"],["rv-cal","Calendário"]);
   if(ehRevenda()&&temPerfil("Gestor de Revenda")&&!ehAdmin())abas.splice(1,0,["rv-reembolso","Reembolso"]);
   if(ehAdmin()&&veBarenbrugRV())abas.splice(2,0,["rv-reembolsos","Reembolsos"]);
   if(cnVeAba("conecta_rv"))abas.push(["rv-nps","Avaliar o programa"]);
@@ -7638,7 +7789,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()||ehAdmin()?[["acoes-mapa","Mapa da safra"]]:[]),["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -7968,6 +8119,7 @@ function mkFormHTML(a){
     <div><label for="mk_tit">Título *</label><input id="mk_tit" required maxlength="160" value="${esc(a.titulo||"")}"></div>
     <div class="dupla"><div><label for="mk_tp">Tipo</label><select id="mk_tp">${MK_TIPOS.map(t=>`<option ${t===(a.tipo||"Evento")?"selected":""}>${t}</option>`).join("")}</select></div>
       <div><label for="mk_st">Status</label><select id="mk_st">${MK_COLS.map(t=>`<option ${t===(a.status||"A fazer")?"selected":""}>${t}</option>`).join("")}</select></div></div>
+    <div><label for="mk_prog">Programa${inf("Para o Mapa da safra: separa as ações institucionais, as do Conecta Revendas, do Conecta RC, das cooperativas e revendas, do Inside Sales e da Exportação.")}</label><select id="mk_prog">${CAL_PROG.map(t=>`<option ${t===(a.programa||"Institucional")?"selected":""}>${t}</option>`).join("")}</select></div>
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim">Data de fim</label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
     <div><label for="mk_loc">Local</label><input id="mk_loc" maxlength="160" value="${esc(a.local||"")}" placeholder="Cidade/UF, fazenda, revenda…"></div>
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
@@ -8304,6 +8456,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-raci"&&ehMkt())return vIntRaci();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
+  if(S.pag==="acoes-mapa")return (ehMkt()||ehAdmin())?vAcoesMapa():vAcoesCal();
   if(S.pag==="acoes-eventos")return vAcoesEventos();
   if(S.pag==="acoes-solic")return vAcoesSolic();
   if(S.pag==="acoes-solic-nova"&&mkPodeSolic())return vAcoesSolicNova();
@@ -8811,7 +8964,7 @@ document.addEventListener("submit",async ev=>{
   const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
-    const d={titulo:val("mk_tit"),tipo:val("mk_tp"),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
+    const d={titulo:val("mk_tit"),tipo:val("mk_tp"),programa:(document.getElementById("mk_prog")?val("mk_prog"):undefined),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
       fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
     if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.fin==="Paga"&&!d.pago_em)d.pago_em=mkHoje();if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
     if(btn)btn.disabled=true;const id=f.dataset.id?+f.dataset.id:null;
@@ -9353,6 +9506,7 @@ function renderApp(){
         return;
       }
     }
+    if(S.pag==="rv-cal"){if(!(veBarenbrugRV()||ehRevenda()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVCal()}</main>`;return;}}
     if(S.pag==="rv-reembolsos"){if(!(ehAdmin()&&veBarenbrugRV()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolsos()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
     if(S.pag==="rv-reembolso"){if(!(ehRevenda()&&temPerfil("Gestor de Revenda")))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolso()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
     if(S.pag==="rv-meucanal"){
