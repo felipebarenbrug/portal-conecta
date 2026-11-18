@@ -977,6 +977,7 @@ async function carregarPrecos(){
 }
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
+  {id:"casos",nome:"Casos de sucesso",desc:"Vídeos de produtores reais com os híbridos Barenbrug, por estado e região, com mapa.",ativo:true,perfis:null},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
   {id:"tabela-precos",nome:"Tabela de preços",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
   {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
@@ -1208,7 +1209,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117220725";
+const APP_VER="20261117221141";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3405,7 +3406,7 @@ function heroHub(){
 }
 function vHub(){
   const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
+  const secs=SECOES.filter(x=>x.id==="casos"?true:x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
   const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
@@ -4910,7 +4911,7 @@ function vBase(){
   <div class="filtros">${chips(["Todos","Sabiá","Cayana","Carcará","Geral"],S.fCult,"fcult")}</div>
   <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast"],S.fTipo,"ftipo")}</div>
   ${vatual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></section>`:""}
-  ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Cases de Sucesso</h2><p class="sub" style="margin:0 0 10px">Produtores reais contando o resultado dos híbridos Barenbrug no campo. Toque para assistir.</p><div class="casos-grid">${casos.map(casoCard).join("")}</div></section>`:""}
+  ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Casos de sucesso</h2><p class="sub" style="margin:0 0 10px">Os ${casos.length} vídeos de produtores contando o resultado dos híbridos Barenbrug agora têm uma seção própria, com mapa e filtro por estado e região.</p><button class="btn" data-a="secao" data-v="casos">Abrir Casos de sucesso</button></section>`:""}
   ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>${vidHTML}</section>`:""}
   ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
@@ -8211,6 +8212,27 @@ function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
    ${R.length?`<div class="int-2" style="margin-top:10px">${tb("Por perfil",por("perfil"))}${tb("Pela área que mais usa",por("area"))}</div>
    ${tb("Por mês",Object.entries(mes).sort().map(([v,L])=>({v:finMesNome(v),...calc(L)})))}
    <h3 class="pgd-h" style="margin-top:12px">Respostas, sugestões e motivos</h3><div class="lista">${R.map(x=>{const [t,c]=tag(x.nota);return `<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area?" · usa mais: "+esc(x.area):""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}</div><span class="seg-st ${c}" style="white-space:nowrap">${x.nota} · ${t}</span></div>`;}).join("")}</div>`:`<div class="vazio">Ainda sem respostas.</div>`}</section>`;}
+
+/* ---------- Casos de sucesso: vídeos de produtores por estado e região, com mapa ---------- */
+function casosLista(){return VIDEOS_BASE.filter(x=>x.g==="Caso de sucesso").map(x=>{const m=String(x.t).match(/^(.*?)\s*(?:—\s*(.*?))?\s*\(([A-Z]{2})\)\s*$/);const nome=m?m[1].trim():x.t,cid=m&&m[2]?m[2].trim():"",uf=m?m[3]:"";return {...x,nome,cid,uf,reg:uf?hhReg(uf):"Outros"};});}
+function vCasos(){
+  if(!GEO&&!S.geoBusy){S.geoBusy=true;carregarGeo().catch(()=>null).then(()=>{S.geoBusy=false;if(S.secao==="casos")render();});}
+  const L=casosLista();const F=S.casosF||(S.casosF={reg:"Todas",uf:""});
+  const regs=["Todas",...Object.keys(HH_REG).filter(r=>L.some(c=>c.reg===r))];
+  const V=L.filter(c=>(F.reg==="Todas"||c.reg===F.reg)&&(!F.uf||c.uf===F.uf));
+  const porUF={};L.forEach(c=>{porUF[c.uf]=(porUF[c.uf]||0)+1;});
+  const atual=S.casoVid?L.find(c=>c.yt===S.casoVid):null;
+  let mapa=`<div class="carregando">Carregando o mapa…</div>`;
+  if(GEO){const pts=V.map(c=>{const k=normGeo(c.cid);const ll=c.cid&&(GEO.mun[c.uf+"|"+k]||GEO.mun2[c.uf+"|"+semPrep(k)]);const e=GEO.cen[c.uf];return ll?{c,x:GEO.px(ll[1]),y:GEO.py(ll[0])}:e?{c,x:e.cx,y:e.cy}:null;}).filter(Boolean);
+    mapa=`<svg viewBox="0 0 ${GEO.W.toFixed(1)} ${GEO.H.toFixed(1)}" style="width:100%;max-width:520px;height:auto;display:block;margin:0 auto" role="img" aria-label="Mapa dos casos de sucesso">${GEO.st.map(e=>{const n=porUF[e.uf]||0;const sel=F.uf===e.uf;const reg=F.reg==="Todas"||hhReg(e.uf)===F.reg;return `<path d="${e.d}" fill="${sel?"#ffdb00":n&&reg?"#cfe9f6":"#eef1f3"}" stroke="#fff" stroke-width=".08" ${n?`data-a="casos-uf" data-v="${e.uf}" style="cursor:pointer"`:""}><title>${e.uf}${n?` · ${n} ${n===1?"caso":"casos"}`:""}</title></path>`;}).join("")}
+      ${pts.map(p=>`<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r=".55" fill="${p.c.yt===S.casoVid?"#E0A800":"#0090D0"}" stroke="#fff" stroke-width=".15" data-a="casos-ver" data-v="${p.c.yt}" style="cursor:pointer"><title>${esc(p.c.nome)}${p.c.cid?" · "+esc(p.c.cid):""} (${p.c.uf})</title></circle>`).join("")}</svg>
+      <p class="meta" style="text-align:center;margin:4px 0 0">Toque num estado para filtrar ou num ponto para assistir.</p>`;}
+  const card=c=>`<button class="card-caso ${c.yt===S.casoVid?"ativa":""}" data-a="casos-ver" data-v="${c.yt}"><img src="https://img.youtube.com/vi/${c.yt}/mqdefault.jpg" alt="" loading="lazy"><span>${esc(c.nome)}<br><small class="meta">${esc(c.cid?c.cid+" · ":"")}${esc(c.uf)}</small></span></button>`;
+  const grupos=Object.keys(HH_REG).map(r=>[r,V.filter(c=>c.reg===r)]).filter(([,x])=>x.length);
+  return `<div><h1 class="titulo">Casos de sucesso</h1><p class="sub">Produtores reais contando o resultado dos híbridos Barenbrug no campo. Escolha a região ou o estado mais perto do seu cliente e use o caso na conversa.</p></div>
+  ${atual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${atual.yt}?rel=0&autoplay=1" title="${esc(atual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><p style="margin:8px 0 0"><strong>${esc(atual.nome)}</strong> <span class="meta">${esc(atual.cid?atual.cid+" · ":"")}${esc(atual.uf)} · ${esc(atual.reg)}</span></p><p class="meta" style="margin:4px 0 0">Para mandar ao cliente: <span style="user-select:all">https://youtu.be/${atual.yt}</span></p></section>`:""}
+  <section class="bloco"><div class="filtros" style="margin:0 0 8px">${regs.map(r=>`<button type="button" class="chip" data-a="casos-reg" data-v="${r}" aria-pressed="${F.reg===r&&!F.uf}">${r}${r!=="Todas"?` · ${L.filter(c=>c.reg===r).length}`:` · ${L.length}`}</button>`).join("")}${F.uf?`<button type="button" class="chip" data-a="casos-uf" data-v="" aria-pressed="true">${F.uf} ✕</button>`:""}</div>
+   <div class="int-2" style="align-items:start"><div style="min-width:0">${mapa}</div><div style="min-width:0">${grupos.map(([r,x])=>`<h3 class="pgd-h">${r} · ${x.length}</h3><div class="casos-grid">${x.map(card).join("")}</div>`).join("")||`<div class="vazio">Nenhum caso neste filtro.</div>`}</div></div></section>`;}
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
@@ -8347,6 +8369,7 @@ function renderApp(){
     if(S.crmVista==="mapa")pedirMapa();
     return;
   }
+  if(S.secao==="casos"){app.innerHTML=cabecalho()+subnavSimples("Casos de sucesso")+`<main class="largo">${vCasos()}</main>`;return;}
   if(S.secao==="mural"){
     app.innerHTML=cabecalho()+subnavSimples("Mural")+`<main>${vMural()}</main>`;
     if(!S.posts){carregarPosts().then(render);}
@@ -8506,6 +8529,9 @@ document.addEventListener("click",async ev=>{
   if(a==="nps-abrir"){S.secao=null;S.pag="nps";S.npsOk=false;S.npsF={};S._erro=null;render();window.scrollTo(0,0);return;}
   if(a==="nps-adiar"){npsLsSet();render();return;}
   if(a==="nps-nota"){const F=S.npsF||(S.npsF={});const m=document.getElementById("nps_m"),g=document.getElementById("nps_s"),ar=document.getElementById("nps_a");if(m)F.motivo=m.value;if(g)F.sugestao=g.value;if(ar)F.area=ar.value;F.nota=+v;const y=window.scrollY;render();window.scrollTo(0,y);return;}
+  if(a==="casos-reg"){S.casosF={reg:v,uf:""};render();return;}
+  if(a==="casos-uf"){const F=S.casosF||(S.casosF={reg:"Todas",uf:""});F.uf=F.uf===v?"":v;if(F.uf)F.reg="Todas";render();return;}
+  if(a==="casos-ver"){S.casoVid=S.casoVid===v?null:v;render();if(S.casoVid)window.scrollTo(0,0);return;}
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
