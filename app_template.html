@@ -3974,7 +3974,7 @@ function heroHub(){
 }
 /* secoes que a pessoa enxerga: base do hub e das opcoes da pesquisa de satisfacao */
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  return SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id)));}
 function vHub(){
   const secs=secoesVisiveis().filter(x=>x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
@@ -4322,7 +4322,8 @@ function vRCMeus(){
   if(!S.mrc){carregarMeusRC();return `<div class="carregando">Carregando os seus RCs…</div>`;}
   const adm=ehAdmin();const eu=(S.profile&&S.profile.crm_dono)||"";
   const coms=[...new Set(S.mrc.ct.map(c=>c.comercial_nome||"Sem responsável"))].sort((a,b)=>a.localeCompare(b));
-  const sel=adm?(S.mrcSel&&coms.includes(S.mrcSel)?S.mrcSel:(coms.includes(eu)?eu:coms[0]||"")):eu;
+  const meus=[eu,...(temPerfil("Inside Sales")?["Inside Sales"]:[])].filter(Boolean); /* a supervisão do Inside Sales acompanha também os RCs atribuídos ao time */
+  const sel=adm?(S.mrcSel&&coms.includes(S.mrcSel)?S.mrcSel:(coms.includes(eu)?eu:coms[0]||"")):(S.mrcSel&&meus.includes(S.mrcSel)?S.mrcSel:meus[0]||"");
   const L=S.mrc.ct.filter(c=>(c.comercial_nome||"Sem responsável")===sel).map(c=>{const nm=mrcNomes(c),ns=new Set(nm.map(repCanon));
     const rk=RC_RANKING.filter(x=>ns.has(x.crm)).reduce((t,x)=>({fat:t.fat+x.fat,aFat:t.aFat+x.aFat,kg:t.kg+x.kg,cKg:t.cKg+x.cKg}),{fat:0,aFat:0,kg:0,cKg:0});
     const ab=S.mrc.neg.filter(x=>x.st==="A"&&nm.includes(x.rep));const vd=S.mrc.neg.filter(x=>x.st==="V"&&nm.includes(x.rep));const pd=S.mrc.ped.filter(x=>nm.includes(x.rep));
@@ -4337,7 +4338,7 @@ function vRCMeus(){
       ${!x.nm.length?`<p class="dica">Este RC ainda não aparece no CRM com o mesmo nome do contrato, então as vendas não foram ligadas.</p>`:""}
       <p class="meta">${c.assinado_em?"Contrato assinado em "+esc(String(c.assinado_em).slice(0,10).split("-").reverse().join("/"))+". ":""}${c.core_venc?"CORE vence em "+esc(String(c.core_venc).slice(0,10).split("-").reverse().join("/"))+".":""}</p></details>`;};
   return `<div><h1 class="titulo">${adm?"RCs por comercial":"Meus RCs"}</h1><p class="sub">RCs com contrato em que ${adm?"cada comercial":"você"} é o responsável: vendas de híbridos da safra 26/27 pela data de faturamento, negociações em aberto e pedidos no CRM. Aparecem mesmo os RCs que ainda não têm acesso ao portal.</p></div>
-  ${adm?`<div class="filtros" style="margin-bottom:10px">${coms.map(n=>`<button class="chip" data-a="mrc-sel" data-v="${esc(n)}" aria-pressed="${sel===n}">${esc(n)}</button>`).join("")}</div>`:""}
+  ${adm||meus.length>1?`<div class="filtros" style="margin-bottom:10px">${(adm?coms:meus).map(n=>`<button class="chip" data-a="mrc-sel" data-v="${esc(n)}" aria-pressed="${sel===n}">${esc(n===eu&&!adm?"Os meus":n==="Inside Sales"?"Time Inside Sales":n)}</button>`).join("")}</div>`:""}
   ${!sel?`<div class="vazio">Seu acesso ainda não está ligado ao seu nome no CRM. Peça ao administrador para fazer o vínculo.</div>`:L.length?`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px"><div class="metric"><span>RCs</span><strong>${L.length}</strong><span class="meta">${tot.n} com venda na safra</span></div><div class="metric"><span>Híbridos na safra</span><strong>${kg(tot.kg)}</strong><span class="meta">${kg(tot.af)} a faturar</span></div><div class="metric"><span>Em negociação</span><strong>${kg(tot.ab)}</strong></div></div>
   <div style="display:grid;gap:8px;grid-template-columns:minmax(0,1fr)">${L.map(card).join("")}</div>`:`<div class="vazio">Nenhum RC com contrato ligado a ${adm?esc(sel):"você"}. O vínculo fica em Painel de gerenciamento → Vínculos.</div>`}`;
 }
@@ -6031,13 +6032,16 @@ function gtVinc(){
   const opRC=[...new Set([...(S.crmDonos||[]).filter(d=>!/^IS:|^Inside Sales$/.test(d)),...CRM_DONOS.filter(d=>d!=="Inside Sales"),...COMERCIAIS_EXTRA,...RCs.map(x=>x.comercial_resp)].filter(Boolean))].filter(n=>!isNomes.has(n)).sort((a,b)=>a.localeCompare(b));
   const optIS=sel=>IS.length?`<optgroup label="Inside Sales">${IS.map(p=>sel(p)).join("")}</optgroup>`:"";
   const resumo={};const add=(n,k,v)=>{if(!n)return;(resumo[n]=resumo[n]||{c:[],r:[]})[k].push(v);};
-  C.forEach(k=>add(nomeCom(k.comercial_id),"c",k.nome));RCs.forEach(x=>add(x.comercial_resp,"r",x.nome));
-  const semC=C.filter(k=>!k.comercial_id).length,semR=RCs.filter(x=>!x.comercial_resp).length;
-  const nIS=Object.keys(resumo).filter(n=>isNomes.has(n));const carteiraIS=nIS.reduce((t,n)=>t+resumo[n].c.length+resumo[n].r.length,0);
+  /* a carteira junta revendas, RCs do portal e RCs com contrato; o nome do CRM (ex.: Mário Perassoli) aponta para a pessoa do cadastro */
+  const pessoaDe=ch=>{if(!ch)return null;const p=S.equipe.find(x=>x.crm_dono===ch)||S.equipe.find(x=>x.nome===ch);return p?p.nome:ch;};
+  const noContrato=new Set();if(S.rcContr==null)carregarContratos();(S.rcContr||[]).forEach(c=>{rcPortalDoContrato(c).forEach(x=>noContrato.add(x.id));add(pessoaDe(c.comercial_nome),"r",c.nome);});
+  C.forEach(k=>add(nomeCom(k.comercial_id),"c",k.nome));RCs.filter(x=>!noContrato.has(x.id)).forEach(x=>add(pessoaDe(x.comercial_resp),"r",x.nome));
+  const semC=C.filter(k=>!k.comercial_id).length,semR=RCs.filter(x=>!x.comercial_resp&&!noContrato.has(x.id)).length+(S.rcContr||[]).filter(c=>!c.comercial_nome).length;
+  isNomes.add("Inside Sales");const nIS=Object.keys(resumo).filter(n=>isNomes.has(n));const carteiraIS=nIS.reduce((t,n)=>t+resumo[n].c.length+resumo[n].r.length,0);
   const tagT=n=>n?` ${stTag(timeDe(n),timeDe(n)==="Inside Sales"?"azul":"cinza")}`:"";
   const linhaCart=n=>`<div class="linha"><div><strong>${esc(n)}</strong><span class="meta">${resumo[n]&&resumo[n].c.length?"Revendas: "+esc(resumo[n].c.join(", ")):"Sem revenda"} · ${resumo[n]&&resumo[n].r.length?"RCs: "+esc(resumo[n].r.join(", ")):"sem RC"}</span></div></div>`;
   return `${adm?"":`<div class="nota-admin">Você vê os vínculos, mas só o administrador master altera.</div>`}
-  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px"><div class="metric"><span>Revendas sem responsável</span><strong>${semC}</strong><span class="meta">de ${C.length} do Conecta</span></div><div class="metric"><span>RCs sem responsável</span><strong>${semR}</strong><span class="meta">de ${RCs.length} RCs no portal</span></div><div class="metric"><span>Com o Comercial</span><strong>${Object.keys(resumo).filter(n=>!isNomes.has(n)).length}</strong><span class="meta">pessoas com carteira</span></div><div class="metric"><span>Com o Inside Sales</span><strong>${carteiraIS}</strong><span class="meta">revendas e RCs em ${nIS.length} ${nIS.length===1?"pessoa":"pessoas"}</span></div></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px"><div class="metric"><span>Revendas sem responsável</span><strong>${semC}</strong><span class="meta">de ${C.length} do Conecta</span></div><div class="metric"><span>RCs sem responsável</span><strong>${semR}</strong><span class="meta">de ${(S.rcContr||[]).length+RCs.filter(x=>!noContrato.has(x.id)).length} RCs (contratos e portal)</span></div><div class="metric"><span>Com o Comercial</span><strong>${Object.keys(resumo).filter(n=>!isNomes.has(n)).length}</strong><span class="meta">pessoas com carteira</span></div><div class="metric"><span>Com o Inside Sales</span><strong>${carteiraIS}</strong><span class="meta">revendas e RCs em ${nIS.length} ${nIS.length===1?"pessoa":"pessoas"}</span></div></div>
   <section class="bloco"><h2 class="sec">Time Inside Sales${inf("Quem está no time de Inside Sales no portal (perfis Inside Sales e Assessor de Vendas Digital). A supervisão é quem acompanha a pessoa no dia a dia. Revendas e RCs podem ter alguém do time como responsável principal nas tabelas abaixo.")}</h2>
     ${IS.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th>Função</th><th>Supervisão</th><th>Carteira</th></tr></thead><tbody>${IS.map(x=>{const sup=pf(x).includes("Inside Sales");const r=resumo[x.nome]||{c:[],r:[]};const opS=[...new Set([...IS.filter(q=>q.id!==x.id).map(q=>q.nome),...com.map(q=>q.nome),x.comercial_resp].filter(Boolean))];
       return `<tr><td><strong>${esc(x.nome)}</strong><br><span class="meta">${esc(x.email||"")}</span></td><td>${x.gerente_is?"Gerência do Inside Sales":sup?"Supervisão do Inside Sales":"Assessora de vendas digital"}</td><td>${adm?`<select data-vincrc="${esc(x.id)}" aria-label="Supervisão de ${esc(x.nome)}"><option value="">—</option>${opS.map(d=>`<option ${x.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select>`:esc(x.comercial_resp||"—")}</td><td>${r.c.length+r.r.length?esc([r.c.length?r.c.length+(r.c.length===1?" revenda":" revendas"):"",r.r.length?r.r.length+(r.r.length===1?" RC":" RCs"):""].filter(Boolean).join(" · ")):`<span class="meta">nenhuma</span>`}</td></tr>`;}).join("")}</tbody></table></div>`:`<div class="vazio">Ninguém com perfil Inside Sales ou Assessor de Vendas Digital no portal.</div>`}</section>

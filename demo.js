@@ -188,12 +188,16 @@
     "RC":{acessos:["academia","conecta-rc","tabela-precos","calculadora","enxoval","mercado"],rc_crm:"Horizonte Representacoes Ltda"},
     "Gestor de Revenda":{acessos:["academia","conecta-revendas","tabela-precos","calculadora","leads","enxoval","mercado"],canal:0},
     "Vendedor de Revenda":{acessos:["academia","calculadora","conecta-revendas","leads","enxoval","mercado"],canal:0},
-    "Inside Sales":{acessos:["academia","inside-sales","meu-crm","tabela-precos","calculadora","enxoval","mercado"],is_vendedora:"Bianca",crm_dono:"IS: Bianca"}
+    "Inside Sales":{acessos:["academia","inside-sales","meu-crm","tabela-precos","calculadora","enxoval","mercado"],is_vendedora:"Bianca",crm_dono:"IS: Bianca"},
+    "Assessor de Vendas Digital":{acessos:["academia","conecta-rc","tabela-precos","calculadora","enxoval","inside-sales","meu-crm","duvidas","mural","mercado"],is_vendedora:"Bianca",crm_dono:"IS: Bianca",rc_crm:"Horizonte Representacoes Ltda"},
+    "Franqueado Nutron":{acessos:["academia","conecta-rc","tabela-precos","calculadora","enxoval","duvidas","mural","mercado"]},
+    "Marketing":{acessos:["academia","conecta-rc","conecta-revendas","tabela-precos","calculadora","enxoval","leads","inside-sales","meu-crm","duvidas","mural","mercado"],crm_dono:"Carlos Menezes"},
+    "Financeiro":{acessos:["academia","conecta-revendas","tabela-precos","calculadora","duvidas","mural","mercado"]}
   };
   window.demoVisoes=Object.keys(VISOES);
   window.demoVer=function(S,v){
     const cfg=VISOES[v]||VISOES.Administrador;const D=window.__DEMO;
-    S.perfil=v;Object.assign(S.profile,{perfil:v,acessos:cfg.acessos.slice(),abas_ocultas:[],exige_curso:false,crm_dono:cfg.crm_dono||null,rc_crm:cfg.rc_crm||null,is_vendedora:cfg.is_vendedora||null,canal_id:cfg.canal!=null?D.canais[cfg.canal].id:null,comercial_resp:v==="RC"?"Carlos Menezes":null});
+    S.perfil=v;Object.assign(S.profile,{perfil:v,acessos:cfg.acessos.slice(),abas_ocultas:[],exige_curso:false,crm_dono:cfg.crm_dono||null,rc_crm:cfg.rc_crm||null,is_vendedora:cfg.is_vendedora||null,canal_id:cfg.canal!=null?D.canais[cfg.canal].id:null,comercial_resp:(v==="RC"||v==="Assessor de Vendas Digital"||v==="Franqueado Nutron")?"Carlos Menezes":null});
     try{schemaDoPerfil(v).forEach(c=>{if(!S.profile[c.k])S.profile[c.k]=/uf|estado/i.test(c.k)?"MT":/cidade|munic/i.test(c.k)?"Sinop":/tel|cel|whats|fone/i.test(c.k)?"(00) 00000-0000":/cpf|cnpj|doc/i.test(c.k)?"00000000000":"Demonstração";});}catch(e){}
     Object.assign(S,{secao:null,pag:"hub",crm:null,mapa:undefined,leadsCache:null,leadUfs:null,leadCanais:null,canais:null,canalRes:null,equipe:null,rcNeg:undefined,meuCanalProg:undefined,mapaF:null,mapaPin:null,crmSel:null,isSel:null,canalSel:null,feedF:"tudo",duvNova:false,postNovo:false,delConf:null,form:null,_erro:null});
     try{RC_DEALS_CACHE=null;}catch(e){}
