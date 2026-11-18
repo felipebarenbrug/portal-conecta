@@ -5203,7 +5203,7 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;
 function subnavRV(){
   /* abas em grupos, na ordem da jornada (como em Inside Sales e Inteligência) */
   const G=[];const add=(g,ab)=>{ab=ab.filter(Boolean);if(ab.length)G.push([g,ab]);};
-  add("Comece aqui",[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]]);
+  add("Comece aqui",[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"]]);
   if(veBarenbrugRV()){
     add("Acompanhar",[["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-cal","Calendário"]]);
     add("Validar e pagar",[ehMaster()&&["rv-validacao","Validação"],ehAdmin()&&["rv-reembolsos","Reembolsos"]]);
@@ -5215,6 +5215,36 @@ function subnavRV(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${G.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${cur(k)?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
+}
+const RV_FAQ=[
+ ["O programa",[
+  ["O que é o Conecta Revendas?","É o programa de incentivo da Barenbrug para as revendas parceiras na safra 26/27. A revenda ganha o IGDB, verba para ações com produtores calculada sobre as compras pagas, e o bônus de performance ao bater a meta de híbridos. Somando os dois, o retorno pode chegar a 7% nas compras de híbridos (Yellow Master a 100% da meta)."],
+  ["Preciso assinar contrato para participar?","Sim. Sem o contrato assinado a revenda não tem nenhum benefício do programa. O contrato é o documento oficial e prevalece sobre qualquer guia ou tela do portal."],
+  ["Como é definida a categoria (tier) da minha revenda?","Pelo volume comprado na safra 25/26. A categoria fica fixa durante toda a safra 26/27. Os pisos são: Blue, 5.000 kg de híbridos; Yellow, 10.000 kg de híbridos ou 20.000 kg de convencionais; Yellow Pro, 15.000 kg de híbridos ou 40.000 kg de convencionais; Yellow Master, 30.000 kg de híbridos ou 80.000 kg de convencionais."],
+  ["Existe um volume mínimo de híbridos?","Sim. Todas as categorias exigem a participação mínima de 5.000 kg de híbridos na safra. Yellow e as categorias acima também exigem exclusividade nos híbridos."],
+  ["Existe um limite para o que a revenda pode receber?","Sim. A soma de IGDB e bônus de performance tem teto de R$ 300.000 por canal na safra."]]],
+ ["IGDB e plano de demanda (PGD)",[
+  ["O que é o IGDB?","IGDB é o Investimento em Geração de Demanda Barenbrug: uma verba gerada pelas compras de cada trimestre para promover os híbridos com os produtores da região. O percentual depende da categoria e é diferente para híbridos e convencionais (veja a tabela na Apresentação). A verba é garantida para uso, mas só em ações do PGD aprovadas pela Barenbrug."],
+  ["O IGDB é calculado sobre o faturado ou sobre o pago?","Sobre o valor efetivamente pago à Barenbrug, não sobre o faturado. Pedido cancelado ou nota não paga não gera IGDB."],
+  ["Quando o IGDB começa a contar?","O acúmulo começa na primeira compra paga. O saldo acumulado é liberado quando a revenda passa de 5.000 kg de híbridos na safra."],
+  ["O que é o PGD?","É o Plano de Geração de Demanda: a lista das ações que a revenda vai fazer com os produtores usando o IGDB. O PGD precisava ser enviado até 31/08/2026 e cada ação precisa da aprovação da Barenbrug para ser reembolsada."],
+  ["Em que posso usar o IGDB?","Dias de campo e eventos técnicos com produtores, workshops e demonstrações a campo dos híbridos, feiras agropecuárias regionais, parcelas demonstrativas em propriedades, mídia rural voltada ao produtor e materiais técnicos de PDV e de genética."],
+  ["Em que não posso usar o IGDB?","Campanhas promocionais internas do time do canal, prêmios ou bonificação por cota para vendedores, comissões ou incentivos para a equipe interna, promoções ou descontos de preço ao produtor e qualquer ação sem a participação do produtor."]]],
+ ["Bônus de performance",[
+  ["Como funciona o bônus?","A meta é de volume de híbridos na safra. Com 100% ou mais da meta, a revenda recebe 100% do bônus da categoria; de 90% a 99,99%, recebe 70%; abaixo de 90%, não há bônus, mas o IGDB continua sendo pago. Passar da meta (por exemplo, 120%) paga o mesmo que 100%."],
+  ["Quando o bônus é pago?","No fechamento da safra, em julho e agosto de 2027, pelo valor fixo da categoria."],
+  ["O bônus exige alguma ação da revenda?","Sim. Na safra, cada categoria precisa realizar ações de valorização dos híbridos: Yellow Master, 3; Yellow Pro, 2; Yellow e Blue, 1. Cada ação deve ser enviada à Barenbrug com pelo menos 15 dias de antecedência."]]],
+ ["Pagamento e reembolso",[
+  ["Quando o IGDB é pago?","Por trimestre: julho a setembro de 2026, pagamento em outubro de 2026; outubro a dezembro, em janeiro de 2027; janeiro a março, em abril de 2027; abril a junho, em julho de 2027. A Barenbrug tem até 30 dias corridos após o fim de cada trimestre para pagar."],
+  ["Como peço o reembolso de uma ação?","O gestor da revenda pede pela aba Reembolso: envia a nota fiscal da ação aprovada, a Barenbrug confere a nota e o saldo, informa o valor aprovado e a data prevista de pagamento, e o depósito cai na conta da revenda. Cada etapa aparece no portal e chega por notificação."],
+  ["Quanto posso pedir de reembolso?","Até o menor entre dois valores: o IGDB já liberado sobre as notas pagas e o valor das ações de PGD aprovadas, descontado o que já foi pedido. O saldo disponível aparece na aba Reembolso."]]],
+ ["Portal e contato",[
+  ["Onde acompanho os números da minha revenda?","Na aba Meu canal: meta, compras, IGDB e as ações do PGD. Os números do programa ficam valendo depois da validação da Barenbrug."],
+  ["Com quem falo sobre regras e valores?","Com o Marketing Barenbrug: Thaís Mendonça (tmendonca@barenbrug.com.br) e Felipe Piccoli (felipe@barenbrug.com.br)."]]]];
+function vRVFaq(){
+  return `<div><h1 class="titulo">Perguntas frequentes</h1><p class="sub">As dúvidas mais comuns sobre o Conecta Revendas na safra 26/27. O contrato assinado prevalece em caso de conflito.</p></div>
+  ${RV_FAQ.map(([g,qs])=>`<section class="bloco"><h2 class="sec">${esc(g)}</h2>${qs.map(([p,r])=>`<details class="faq-item"><summary>${esc(p)}</summary><p style="color:var(--preto)">${esc(r)}</p></details>`).join("")}</section>`).join("")}
+  <div class="precos-nota">Não achou a sua dúvida? Fale com o Marketing Barenbrug: Thaís Mendonça (tmendonca@barenbrug.com.br) ou Felipe Piccoli (felipe@barenbrug.com.br).</div>`;
 }
 function vRVApresentacao(){
   const tiers=RV_TIERS.map(x=>`<tr><td><strong>${x.t}</strong></td><td>${x.piso}</td><td class="val">${x.ih}</td><td class="val">${x.ic}</td><td class="val">${x.bonus}</td></tr>`).join("");
@@ -9572,7 +9602,7 @@ const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
-  "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
+  "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
@@ -9592,7 +9622,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
- "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
+ "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
  "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-insumos-ed":"Escreva um insumo próprio, que aparece junto com os automáticos.","int-insumos":"As maiores oportunidades de todas as abas, com a ação sugerida e o botão para virar ação de marketing.","int-hh":"Híbridos safra a safra desde 22/23, os canais Conecta e os canais que perderam o foco, com o plano de reativação.","int-pot":"Potencial de semente por estado, premissas ajustáveis e penetração das híbridas na safra.","int-marca":"Alcance da marca, como a mídia vira venda e como a Barenbrug aparece nas IAs.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
@@ -9667,7 +9697,7 @@ function renderApp(){
         return;
       }
     }
-    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
+    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-faq":vRVFaq,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
     app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
