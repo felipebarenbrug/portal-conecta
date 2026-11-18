@@ -1449,7 +1449,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118100308";
+const APP_VER="20261118104730";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9245,7 +9245,7 @@ function vPrivacidade(){
   ${sec("8. Seus direitos",`<p>Você pode pedir a qualquer momento: confirmação de que tratamos seus dados, acesso a eles, correção, anonimização, bloqueio ou eliminação do que for desnecessário, portabilidade, informação sobre com quem compartilhamos e revisão do consentimento (art. 18). Parte do seu cadastro você mesmo corrige em Meu perfil.</p><p>Para pedir, fale com o Marketing Barenbrug, que encaminha ao encarregado de dados da empresa: ${mktContatosHTML()}</p>`)}
   ${sec("9. Mudanças neste aviso",`<p>Este aviso pode ser atualizado. A versão e a data ficam no topo da página.</p>`)}
   </div>`;}
-const SEG_VERIF="17/11/2026";
+const SEG_VERIF="18/11/2026";
 const SEG_SENHA_VAZADA=false;
 async function carregarSeg(){if(S.segBusy)return;S.segBusy=true;try{const {data,error}=await sb.rpc("seg_status");S.segSt=error?null:data;}catch(e){S.segSt=null;}try{const {data}=await sb.rpc("seg_eventos_lista",{p_dias:90});S.segEv=data||[];}catch(e){S.segEv=[];}S.segBusy=false;render();}
 function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
@@ -9262,7 +9262,8 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Verificação em duas etapas (MFA) disponível e exigível","O administrador pode exigir MFA por pessoa; quem é exigido não acessa dados sem o segundo fator."],
     [mfa>=0.9?ok:mfa>=0.5?par:pen,"Cobertura de MFA nos usuários ativos",`${L.com_mfa} de ${L.ativos} usuários ativos com MFA (${Math.round(mfa*100)}%). Meta: 100%.`],
     [ok,"Troca de senha obrigatória no primeiro acesso","Senha provisória criada pelo administrador precisa ser trocada antes de qualquer uso."],
-    [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Ainda desligado. Liga no painel do Supabase: Authentication, configurações de senha, Leaked password protection."],
+    [ok,"Senha forte exigida também no servidor","Desde 18/11/2026 o próprio Supabase recusa senha com menos de 8 caracteres ou sem letra minúscula, maiúscula, número e símbolo, mesmo que alguém tente trocar a senha fora da tela do portal. As senhas provisórias geradas no cadastro e na redefinição já seguem essa regra."],
+    [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Testado em 18/11/2026: o Supabase só libera esse bloqueio no plano Pro (US$ 25 por mês). O projeto está no plano gratuito. O Marketing vai validar com o Gustavo a contratação do Pro na recorrência; contratado, basta ligar Leaked password protection em Authentication, Email."],
     [pen,"Proteção contra robôs no login","O Supabase já limita tentativas repetidas de login. Falta o CAPTCHA invisível (Cloudflare Turnstile) na tela de entrada e o Bot Fight Mode do Cloudflare no domínio. Passos: criar a chave do Turnstile no Cloudflare, ligar CAPTCHA protection no Supabase (Authentication) e colocar o widget no login do portal."]]},
   {k:"Segredos e integrações",w:15,ref:"OWASP Top 10 2021 A02 e A05",it:[
     [ok,"Tokens só no cofre do servidor","O token do RD Station CRM e as chaves de serviço ficam em secrets do Supabase. Nunca chegam ao navegador nem ao código."],
@@ -9289,7 +9290,7 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [par,"Aviso de privacidade no portal","Publicado no login, no pedido de acesso e no rodapé (versão 1, 17/11/2026): que dados, para quê, bases legais, compartilhamento, retenção e direitos do titular. Falta a validação do jurídico, que também define o contato do encarregado de dados."]]},
   {k:"Infraestrutura e continuidade",w:5,ref:"Supabase Security Advisor · CIS Controls v8 (11, 16)",it:[
     [ok,"Banco gerenciado e atualizado",`PostgreSQL ${esc(L.pg)} gerenciado pelo Supabase, com criptografia em trânsito e em repouso.`],
-    [par,"Backup e restauração","Depende do plano contratado no Supabase: o plano gratuito não inclui backup restaurável; o Pro inclui backup diário. Confirmar o plano no painel e testar uma restauração."],
+    [pen,"Backup e restauração","Confirmado em 18/11/2026: o projeto está no plano gratuito do Supabase, que não tem backup restaurável. O plano Pro (US$ 25 por mês) inclui backup diário com 7 dias de retenção e libera o bloqueio de senhas vazadas. O Marketing vai validar com o Gustavo a contratação na recorrência; depois de contratar, testar uma restauração numa cópia do banco."],
     [L.sem_search_path===0?ok:par,"Funções com caminho de busca fixo",`${L.sem_search_path} funções sem search_path fixo.`],
     [par,"Extensão pg_net no schema público","Aviso do verificador do Supabase. A extensão não deixa ser movida sem recriar; as funções dela ficam no schema net e não ficam expostas. Risco aceito."]]}];}
 function vSeguranca(){
@@ -9317,7 +9318,7 @@ function vSeguranca(){
    <div class="dir-card"><strong>E se alguém pegar a sessão de um usuário?</strong><p>Vê só o que aquele perfil vê, por tempo limitado (o token expira). Com MFA, senha sozinha não basta. O administrador pode desativar ou excluir o usuário na Gestão de pessoas.</p></div>
    <div class="dir-card"><strong>Como o CRM é acessado?</strong><p>Só por funções no servidor, com o token do RD Station guardado no cofre do Supabase e exigência de login de administrador. O navegador nunca fala direto com o CRM.</p></div>
    <div class="dir-card"><strong>Quem pode ver dado pessoal?</strong><p>Contato de lead só aparece por clique, para quem tem a área e a UF, e cada abertura fica registrada com quem e quando.</p></div>
-   <div class="dir-card"><strong>Tem backup?</strong><p>Depende do plano do Supabase: o Pro faz backup diário; o gratuito não tem backup restaurável. Está nas pendências para confirmar.</p></div></div></section>
+   <div class="dir-card"><strong>Tem backup?</strong><p>Ainda não. O projeto está no plano gratuito do Supabase, sem backup restaurável. A contratação do plano Pro (US$ 25 por mês, com backup diário) está em validação pelo Marketing com o Gustavo.</p></div></div></section>
   <p class="precos-nota">Fontes: indicadores ao vivo do banco do portal (função seg_status, só administrador); verificador de segurança do Supabase; configuração das Edge Functions e varredura do repositório em ${SEG_VERIF}. Referências: OWASP ASVS 4.0.3, OWASP Top 10 2021, NIST SP 800-63B, Supabase Production Checklist, CIS Controls v8, Lei 13.709/2018.</p>`;}
 
 /* ---------- pesquisa NPS do portal ---------- */
