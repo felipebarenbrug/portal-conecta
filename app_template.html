@@ -688,6 +688,162 @@ main.largo{max-width:1120px}
 .dir-passos{counter-reset:p;list-style:none;padding:0;margin:0;display:grid;gap:8px}.dir-passos li{counter-increment:p;display:grid;grid-template-columns:34px 1fr;gap:4px 10px;background:#fff;border:1px solid #e3e8ec;border-radius:12px;padding:12px}.dir-passos li::before{content:counter(p);grid-row:span 2;width:30px;height:30px;border-radius:50%;background:var(--amarelo,#ffdb00);color:#00334d;font-weight:800;display:grid;place-items:center}.dir-passos span{grid-column:2}
 .dir-obj details{background:#fff;border:1px solid #e3e8ec;border-radius:12px;padding:12px 14px;margin-bottom:8px}.dir-obj summary{font-weight:700;cursor:pointer}.dir-obj p{margin:8px 0 0}
 .dir-check{list-style:none;padding:0;margin:0;display:grid;gap:6px}.dir-check li{background:#fff;border:1px solid #e3e8ec;border-radius:10px;padding:10px 12px 10px 36px;position:relative}.dir-check li::before{content:"";position:absolute;left:12px;top:12px;width:14px;height:14px;border:2px solid var(--azul-escuro,#00557f);border-radius:4px}
+/* ===== Apostilas de vendas (PDF virou página) ===== */
+.ap{max-width:1040px;width:100%;min-width:0;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.ap>*,.ap-col>*,.ap-duo>*{min-width:0}
+.ap-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.ap-item{background:#fff;border:1px solid var(--linha);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;cursor:pointer;font:inherit;color:inherit}
+.ap-item[disabled]{cursor:default;opacity:.6}
+.ap-item .ap-item-im{aspect-ratio:16/9;background:var(--amarelo) center/cover no-repeat;max-width:100%}
+.ap-item .ap-item-tx{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.ap-item[aria-current="true"]{box-shadow:0 0 0 3px var(--amarelo)}
+.ap-barra{position:sticky;top:0;z-index:5;background:var(--papel);padding:8px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--linha)}
+.ap-barra .chip{white-space:nowrap}
+.ap-barra .ap-pdf{margin-left:auto}
+.ap-hero{display:grid;grid-template-columns:1.1fr 1fr;border-radius:14px;overflow:hidden;background:var(--amarelo);min-height:320px}
+.ap-hero-im{background:center/cover no-repeat;min-height:220px}
+.ap-hero-tx{padding:26px 26px 22px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.ap-k{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
+.ap-nome{font-size:clamp(2.6rem,7vw,4.2rem);font-weight:300;font-style:italic;line-height:1;color:var(--preto)}
+.ap-nome small{font-size:1rem;font-style:normal;font-weight:600;margin-right:6px}
+.ap-selo{display:inline-flex;flex-direction:column;align-self:flex-start;background:var(--azul);color:#fff;border-radius:12px;padding:10px 14px;margin-top:6px}
+.ap-selo strong{font-size:2rem;line-height:1}
+.ap-selo span{font-size:.8rem}
+.ap-sec{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.ap-sec .ap-tag{align-self:flex-start;background:var(--amarelo);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:3px}
+.ap-sec h2,.ap-intro h2{font-size:clamp(1.3rem,3vw,1.7rem);color:var(--azul);text-wrap:balance}
+.ap-intro{background:#fff;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.ap-intro p,.ap-tx p{max-width:68ch}
+.ap-tx{display:flex;flex-direction:column;gap:8px}
+.ap-tx em{font-style:italic}
+.ap-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.ap-stat{border-top:4px solid var(--azul);background:#fff;border-radius:0 0 10px 10px;padding:12px 14px}
+.ap-stat strong{display:block;font-size:2rem;line-height:1.05;color:var(--azul)}
+.ap-stat strong small{font-size:1rem;margin-left:2px}
+.ap-stat.azul{background:var(--azul);color:#fff;border-top-color:var(--azul)}.ap-stat.azul strong{color:#fff}
+.ap-stat.amarelo{background:var(--amarelo);border-top-color:var(--amarelo)}.ap-stat.amarelo strong{color:var(--preto)}
+.ap-nota{font-size:.8rem;color:var(--apagado)}
+.ap-cap{display:grid;grid-template-columns:1fr 1fr;border-radius:14px;overflow:hidden;background:var(--azul);color:#fff;margin-top:16px;scroll-margin-top:60px}
+.ap-cap.so{grid-template-columns:1fr}
+.ap-cap-tx{padding:24px;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.ap-cap-tx .ap-n{font-size:3.4rem;font-weight:800;line-height:.9}
+.ap-cap-tx h2{font-size:1.6rem;color:#fff}
+.ap-cap-im{background:center/cover no-repeat;min-height:180px}
+.ap-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.ap-duo.l62{grid-template-columns:1.6fr 1fr}
+.ap-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ap-caixa{border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:#eef1f3}
+.ap-caixa.azul{background:var(--azul-claro)}.ap-caixa.amarelo{background:var(--amarelo)}
+.ap-caixa h3{font-size:1rem}
+.ap-cons{background:var(--amarelo);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.ap-cons .ap-k{color:var(--preto)}
+.ap-cons p{max-width:80ch}
+.ap-ficha{background:#fff;border-radius:12px;overflow:hidden}
+.ap-ficha table{width:100%;border-collapse:collapse}
+.ap-ficha td{padding:9px 14px;border-bottom:1px solid var(--linha);vertical-align:top;font-size:.94rem}
+.ap-ficha td:first-child{font-weight:600;width:34%;color:var(--azul-escuro)}
+.ap-ficha tr.alerta td{background:var(--amarelo-claro)}
+.ap-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ap-tags span{border:1px solid var(--azul);color:var(--azul-escuro);border-radius:4px;padding:2px 8px;font-size:.82rem}
+.ap-passos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.ap-passos li{display:grid;grid-template-columns:34px 1fr;gap:10px}
+.ap-passos b{background:var(--azul);color:#fff;border-radius:6px;width:30px;height:30px;display:grid;place-items:center}
+.ap-passos h3{font-size:1rem;margin-bottom:2px}
+.ap-erros{background:var(--amarelo);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.ap-erros div strong::before{content:"✕ ";color:var(--vermelho)}
+.ap-img{margin:0;display:flex;flex-direction:column;gap:4px}
+.ap-img img{width:100%;border-radius:12px;display:block;object-fit:cover;max-height:420px}
+.ap-img.larga img{max-height:360px}
+.ap-img figcaption{font-size:.78rem;color:var(--apagado)}
+.ap-cruz{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.ap-cruz .pais{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.ap-cruz .pais span{background:#eef1f3;padding:8px 12px;border-radius:6px;font-style:italic}
+.ap-cruz .res{background:var(--amarelo);padding:8px 16px;border-radius:6px;font-weight:700}
+.ap-linha{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--azul);display:flex;flex-direction:column;gap:12px}
+.ap-linha li{position:relative}
+.ap-linha li::before{content:"";position:absolute;left:-25px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--azul)}
+.ap-linha li.esc::before{background:var(--preto)}
+.ap-linha .q{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--apagado)}
+.ap-num{border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.ap-num strong{font-size:2rem;line-height:1.05}
+.ap-num.amarelo{background:var(--amarelo)}.ap-num.preto{background:var(--preto);color:#fff}.ap-num.azul{background:var(--azul);color:#fff}
+.ap-cit{border-left:3px solid var(--amarelo);padding:4px 0 4px 12px;font-style:italic}
+.ap-cit span{display:block;font-style:normal;font-size:.85rem;color:var(--apagado);margin-top:4px}
+.ap-bar{display:flex;flex-direction:column;gap:6px;background:#fff;border-radius:12px;padding:14px}
+.ap-bar h3,.ap-ens h3{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--apagado)}
+.ap-bar .g{font-size:.82rem;font-weight:700;margin-top:4px}
+.ap-bar .r{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;font-size:.9rem}
+.ap-bar .t{height:22px;background:#eef1f3;border-radius:4px;overflow:hidden}
+.ap-bar .t i{display:flex;align-items:center;justify-content:flex-end;height:100%;background:#9aa7ae;color:#fff;font-style:normal;font-size:.78rem;padding-right:6px;font-weight:700}
+.ap-bar .r.s .t i{background:var(--azul)}
+.ap-dist .r{grid-template-columns:80px 1fr}
+.ap-dist .t{display:flex;height:26px}
+.ap-dist .t i{justify-content:flex-start;padding-left:6px}
+.ap-dist .t i.seca{background:var(--amarelo);color:var(--preto)}
+.ap-esc{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.ap-esc span{text-align:center;padding:6px 0;background:#eef1f3;border-radius:4px;font-weight:700}
+.ap-esc span.azul{background:var(--azul);color:#fff}.ap-esc span.cinza{background:#9aa7ae;color:#fff}
+.ap-esc-l{display:flex;flex-wrap:wrap;gap:12px;font-size:.85rem}
+.ap-cols{display:flex;align-items:flex-end;gap:24px;height:150px;padding:0 10px;border-bottom:1px solid var(--linha)}
+.ap-cols div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;flex:1}
+.ap-cols i{display:block;width:100%;max-width:90px;background:var(--azul);border-radius:4px 4px 0 0}
+.ap-ens{background:#fff;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ap-ens .leg{display:flex;gap:14px;font-size:.82rem}.ap-ens .leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.ap-ens .r{display:grid;grid-template-columns:minmax(120px,1.2fr) 2.4fr 74px 64px;gap:10px;align-items:center;font-size:.9rem}
+.ap-ens .bs{display:flex;flex-direction:column;gap:3px}
+.ap-ens .bs i{display:block;height:12px;border-radius:3px;font-style:normal}
+.ap-ens .bs i.s{background:var(--azul)}.ap-ens .bs i.m{background:#9aa7ae}
+.ap-ens .dif{font-weight:800;color:var(--azul-escuro);text-align:right}.ap-ens .gan{text-align:right;font-size:.85rem}
+.ap-ens .med{background:var(--amarelo);border-radius:8px;padding:8px 10px;font-weight:700}
+.ap-ens .bs small{font-size:.72rem;color:var(--apagado)}
+.ap-conta{background:var(--azul);color:#fff;border-radius:12px;padding:18px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;text-align:center}
+.ap-conta div{display:flex;flex-direction:column;gap:2px}
+.ap-conta strong{font-size:1.9rem;line-height:1}
+.ap-conta .op{font-size:1.6rem}
+.ap-conta .res{background:#fff;color:var(--azul-escuro);border-radius:10px;padding:10px 14px}
+.ap-tab{background:#fff;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.ap-tab .rolar{overflow-x:auto}
+.ap-tab table{width:100%;border-collapse:collapse;min-width:460px}
+.ap-tab th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--apagado);text-align:left;padding:6px 8px;border-bottom:2px solid var(--linha)}
+.ap-tab td{padding:8px;border-bottom:1px solid var(--linha);font-size:.92rem}
+.ap-tab tr.dest td{background:var(--amarelo);font-weight:700}
+.ap-tab td.cd{color:var(--azul-escuro);font-weight:700}
+.ap-calc{background:var(--azul-claro);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.ap-calc .campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ap-calc label{font-size:.82rem;font-weight:600;display:flex;flex-direction:column;gap:4px}
+.ap-calc input{padding:8px 10px;border:1px solid var(--linha);border-radius:8px;width:100%;min-width:0}
+.ap-calc .out{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ap-calc .out div{background:#fff;border-radius:10px;padding:10px 12px}
+.ap-calc .out strong{display:block;font-size:1.3rem;color:var(--azul-escuro)}
+.ap-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.ap-cards div{background:#fff;border-radius:10px;padding:12px;border-top:3px solid var(--azul)}
+.ap-cards b{color:var(--azul);font-size:.85rem}
+.ap-logo{display:flex;justify-content:center}.ap-logo img{width:140px;height:auto}
+.ap-dlg{display:flex;flex-direction:column;gap:10px}
+.ap-dlg .m{max-width:88%;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.ap-dlg .m.c{background:#eef1f3;align-self:flex-start}
+.ap-dlg .m.v{background:var(--azul);color:#fff;align-self:flex-end}
+.ap-dlg .m span{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.ap-faq{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.ap-faq details{background:#fff;border-radius:10px;padding:10px 14px;border-left:4px solid var(--azul)}
+.ap-faq summary{cursor:pointer;font-weight:700;display:flex;gap:10px;list-style:none}
+.ap-faq summary::-webkit-details-marker{display:none}
+.ap-faq summary b{color:var(--azul);min-width:22px}
+.ap-faq details p{margin-top:6px;padding-left:32px}
+.ap-mat{display:flex;flex-direction:column;gap:8px}
+.ap-mat .cab,.ap-mat .r{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ap-mat .cab span{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--apagado)}
+.ap-mat .r>div{border-radius:8px;padding:10px 12px;font-size:.92rem}
+.ap-mat .r>div:nth-child(1){background:#eef1f3}.ap-mat .r>div:nth-child(2){background:#fff;border:1px solid var(--linha)}.ap-mat .r>div:nth-child(3){background:var(--azul);color:#fff;font-weight:600}
+.ap-mat .r small{display:block;color:var(--apagado);font-size:.82rem}
+.ap-fim{display:grid;grid-template-columns:1fr 1fr;border-radius:14px;overflow:hidden;background:var(--azul);color:#fff;margin-top:12px}
+.ap-fim-im{background:center/cover no-repeat;min-height:240px;position:relative}
+.ap-fim-im img{position:absolute;right:12px;bottom:-10px;width:110px;max-width:40%}
+.ap-fim-tx{padding:24px;display:flex;flex-direction:column;gap:10px}
+.ap-fim-tx h2{font-size:2.2rem;color:#fff}
+.ap-fim-tx .ap-k{color:#fff;opacity:.85}
+@media (max-width:760px){.ap-hero,.ap-cap,.ap-duo,.ap-duo.l62,.ap-fim{grid-template-columns:minmax(0,1fr)}.ap-hero-im{min-height:200px}.ap-cap-im{min-height:140px}.ap-ens .r{grid-template-columns:1fr 60px 56px}.ap-ens .r .nm{grid-column:1/-1}.ap-mat .cab{display:none}.ap-mat .r{grid-template-columns:1fr;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--linha)}.ap-barra{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ap-barra .ap-pdf{margin-left:0;white-space:nowrap}.ap-ficha td{display:block;width:auto!important;border-bottom:0;padding:2px 14px}.ap-ficha td:first-child{padding-top:10px}.ap-ficha td:last-child{padding-bottom:10px;border-bottom:1px solid var(--linha)}.ap-lista{grid-template-columns:1fr;gap:8px}.ap-item{flex-direction:row;align-items:center}.ap-item .ap-item-im{width:84px;flex:0 0 84px;aspect-ratio:4/3}.ap-dlg .m{max-width:100%}}
+
 </style>
 </head>
 <body>
@@ -868,7 +1024,7 @@ const ETAPAS=[
         q("Que sistema tira o melhor de um híbrido?",["Solo corrigido, adubação na dose certa e lotação equilibrada","Área sem correção e sem adubação","Lotação máxima o ano inteiro"]),
         q("Como falar de resultado com o produtor?",["Produção máxima garantida","Observado em ensaios; varia conforme manejo, solo e chuvas","Funciona igual em qualquer fazenda"])]},
  {id:"sabia",n:"Sabiá",d:`Híbrido de ${sci("Brachiaria")}. Resistência e Segurança.`,
-  v:[{t:"Origem e Genética",yt:"llcJ7vpDTWw"},{t:"Atributos da Planta e Estrutura de Pastejo",yt:"yeOjr6ocbWk"},{t:"Produtividade na Seca e Sanidade",yt:"gbe-5Eqbws0"},{t:"Diferimento, Ganho Animal e Plantio",yt:"9lKse6Zmmbc"},{t:"Solo, Florescimento e Retorno (ROI)",yt:"0LKc47gERs4"}],mat:[{n:"Apostila de vendas — Sabiá",tipo:"Apostila",url:"materiais/apostila-vendas-sabia.pdf"},{n:"Base de conhecimento — Sabiá (60 perguntas)",tipo:"Apostila",url:"materiais/sabia-60-perguntas.pdf"},{n:"Podcast — Sabiá acaba com o boi sanfona",tipo:"Podcast",audio:"materiais/podcast-sabia.m4a"}],
+  v:[{t:"Origem e Genética",yt:"llcJ7vpDTWw"},{t:"Atributos da Planta e Estrutura de Pastejo",yt:"yeOjr6ocbWk"},{t:"Produtividade na Seca e Sanidade",yt:"gbe-5Eqbws0"},{t:"Diferimento, Ganho Animal e Plantio",yt:"9lKse6Zmmbc"},{t:"Solo, Florescimento e Retorno (ROI)",yt:"0LKc47gERs4"}],mat:[{n:"Apostila de vendas — Sabiá",tipo:"Apostila",url:"materiais/apostila-vendas-sabia.pdf",apostila:"sabia"},{n:"Base de conhecimento — Sabiá (60 perguntas)",tipo:"Apostila",url:"materiais/sabia-60-perguntas.pdf"},{n:"Podcast — Sabiá acaba com o boi sanfona",tipo:"Podcast",audio:"materiais/podcast-sabia.m4a"}],
   quiz:[
    q("Qual é a origem genética do Sabiá?",[`${sci("B. brizantha")} × ${sci("Megathyrsus maximus")}`,`${sci("B. brizantha")} × ${sci("B. ruziziensis")}, selecionado na 4ª geração`,`${sci("B. decumbens")} × ${sci("B. ruziziensis")}`,`Seleção dentro de ${sci("B. brizantha")}, sem cruzamento`]),
    q("Qual a taxa de semeadura recomendada em condição adversa (via drone, avião ou área de morro)?",["10 kg/ha","12 kg/ha","15 kg/ha","8 kg/ha"]),
@@ -917,7 +1073,7 @@ const ORDEM=ETAPAS_ON.map(e=>e.id);
 
 // Materiais reais (PDF / podcast / tabela) — ficam na base e como complemento dos cursos
 const MATERIAIS=[
- {c:"Sabiá", tipo:"Apostila", n:"Apostila de vendas — Sabiá", url:"materiais/apostila-vendas-sabia.pdf"},
+ {c:"Sabiá", tipo:"Apostila", n:"Apostila de vendas — Sabiá", url:"materiais/apostila-vendas-sabia.pdf", apostila:"sabia"},
  {c:"Sabiá", tipo:"Apostila", n:"Base de conhecimento — Sabiá (60 perguntas)", url:"materiais/sabia-60-perguntas.pdf"},
  {c:"Cayana", tipo:"Apostila", n:"Base de conhecimento — Cayana (60 perguntas)", url:"materiais/base-conhecimento-cayana.pdf"},
  {c:"Carcará", tipo:"Apostila", n:"Base de conhecimento — Carcará (60 perguntas)", url:"materiais/base-conhecimento-carcara.pdf"},
@@ -1481,7 +1637,7 @@ function cabecalho(){
 }
 function veCalcRent(){const ac=Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];return ehAdmin()||ac.includes("calculadora");}
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["casos","Casos de sucesso"]];
+  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Academia de Híbridos</span></div></div>`;
@@ -1814,7 +1970,7 @@ function mdGrafico(D){
   <p class="meta" style="margin:4px 0 0"><span style="display:inline-block;width:10px;height:10px;background:var(--azul);vertical-align:middle"></span> gasto por dia (máximo ${mdR2(max)}) · <span style="display:inline-block;width:14px;border-top:2px solid var(--azul-escuro);vertical-align:middle"></span> leads de formulário por dia (máximo ${isN(maxL)})</p>`;
 }
 function mdAtualizInfo(){const A=(S.md||{}).a||[];const a=A[0];if(!a)return `<p class="meta">Ainda sem atualização registrada.</p>`;
-  return `<div class="nota-admin" style="margin:0 0 12px"><strong>Última atualização: ${fmtDataHora(a.feito_em)}</strong> · dados de ${mdData(a.periodo_ini)} a ${mdData(a.periodo_fim)} · pedida por ${esc(a.pedido_por||"—")}, executada por ${esc(a.executado_por||"—")}.<br><span class="meta">A leitura do Meta Ads é feita sob pedido: peça ao Claude no chat "atualize os dados do Meta Ads" e a data desta linha muda.${a.resumo?" Última: "+esc(a.resumo):""}</span></div>`;}
+  return `<div class="nota-admin" style="margin:0 0 12px"><strong>Dados extraídos do Meta Ads em ${fmtDataHora(a.feito_em)}</strong> · período de ${mdData(a.periodo_ini)} a ${mdData(a.periodo_fim)}, resumidos por campanha e por estado.</div>`;}
 const MD_GRUPOS=[["demanda","Geração de demanda","Campanhas de leads que abastecem o Inside Sales e as revendas",["OUTCOME_LEADS","OUTCOME_SALES"]],["marca","Reconhecimento e alcance","Vídeo e alcance para a marca ser lembrada no campo",["OUTCOME_AWARENESS"]],["conteudo","Engajamento e conteúdo","Engajamento, perfil e posts impulsionados",["OUTCOME_ENGAGEMENT","LINK_CLICKS","OUTCOME_TRAFFIC"]]];
 const mdGrupoDe=obj=>(MD_GRUPOS.find(g=>g[3].includes(obj))||MD_GRUPOS[2])[0];
 function mdGrupos(mes){const L=((S.md||{}).cm||[]).filter(x=>!mes||x.mes===mes);const o={};MD_GRUPOS.forEach(g=>o[g[0]]={k:g[0],t:g[1],d:g[2],g:0,a:0,i:0,l:0});L.forEach(x=>{const a=o[mdGrupoDe(x.objetivo)];a.g+=Number(x.gasto)||0;a.a+=Number(x.alcance)||0;a.i+=Number(x.impressoes)||0;a.l+=Number(x.leads)||0;});return MD_GRUPOS.map(g=>o[g[0]]);}
@@ -2132,13 +2288,13 @@ function vISGD(){
       <div class="metric"><span>Vendas</span><strong>${ven.toLocaleString("pt-BR")}</strong><span class="meta">${fmtKg(Math.round(vkg))} de híbridos · ${fmtK0(vrs)}</span></div>
     </div>
     ${meses.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Mês do lead</th><th class="val">Leads</th><th class="val">Qualificados</th><th class="val">Negociações</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Valor</th></tr></thead><tbody>${meses.map(m=>{const x=M[m]||{};return `<tr><td>${MN(m)}</td><td class="val">${N(x.rec)}</td><td class="val">${N(x.qual)}</td><td class="val">${N(x.sql_lig)}</td><td class="val">${N(x.venda)}</td><td class="val">${fmtKg(Math.round(N(x.vkg)))}</td><td class="val">${fmtK0(x.vrs)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
-    <p class="meta" style="margin:6px 0 0">Mídia digital da conta 1119: ${fmtK0(((D.verbas||[]).find(v=>v.conta==="1119")||{itens:[]}).itens.find(i=>/digital/i.test(i[0]))?.[1]||0)} na safra. Custo por lead e por venda na aba Retorno da mídia.</p></section>
+    <p class="meta" style="margin:6px 0 0">Mídia digital da conta 1119: ${fmtK0(((D.verbas||[]).find(v=>v.conta==="1119")||{itens:[]}).itens.find(i=>/digital/i.test(i[0]))?.[1]||0)} na safra. Custo por lead e por venda na aba Retorno da mídia, no Inside Sales, e o investimento em mídia na aba Campanhas digitais.</p></section>
   <section class="bloco"><h2 class="sec">Plano de campo por região${inf("Ações de geração de demanda submetidas pelos RTVs no plano 26/27 (versão 2, jun/26), pela UF de cada ação, comparadas com os híbridos que o Inside Sales já vendeu na região.")}</h2>
     ${regChips()}
     <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Região</th><th class="val">Ações</th><th class="val">Investimento planejado</th><th style="min-width:120px"></th><th class="val">Inside Sales vendeu (híbridos)</th></tr></thead><tbody>${porReg.map(x=>`<tr style="${F&&F!==x.r?"opacity:.35":""}"><td><strong>${x.r}</strong></td><td class="val">${x.n}</td><td class="val">${fmtK0(x.c)}</td><td><div class="raci-st"><i style="width:${x.c/mxR*100}%;background:#00557f"></i></div></td><td class="val">${fmtKg(Math.round(isKg(x.r)))}</td></tr>`).join("")}${semUF.length?`<tr><td>Sem estado definido</td><td class="val">${semUF.length}</td><td class="val">${fmtK0(semUF.reduce((t,a)=>t+a.custo,0))}</td><td></td><td></td></tr>`:""}</tbody></table></div>
     <div class="int-2" style="margin-top:10px"><div style="min-width:0"><h3 class="pgd-h">Por tipo de ação${F?" · "+esc(F):""}</h3><div class="tab"><table class="sim-t"><tbody>${Object.entries(tipos).sort((a,b)=>b[1].c-a[1].c||b[1].n-a[1].n).map(([k,o])=>`<tr><td>${esc(k)}</td><td class="val">${o.n}</td><td class="val">${fmtK0(o.c)}</td></tr>`).join("")}</tbody></table></div></div>
     <div style="min-width:0"><h3 class="pgd-h">Por RTV${F?" · "+esc(F):""}</h3><div class="tab"><table class="sim-t"><tbody>${Object.entries(rtvs).sort((a,b)=>b[1].c-a[1].c).map(([k,o])=>`<tr><td>${esc(k)}<br><span class="meta">${[...o.ufs].join(", ")||"—"}</span></td><td class="val">${o.n} ações${o.z?`<br><span class="meta">${o.z} sem custo</span>`:""}</td><td class="val">${fmtK0(o.c)}</td></tr>`).join("")}</tbody></table></div></div></div>
-    <p class="meta" style="margin:8px 0 0">Por fonte de verba${F?" ("+esc(F)+")":""}: ${Object.entries(fontes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${fmtK0(v)}`).join(" · ")}. A execução e o resultado de cada ação ficam em Ações de Marketing.</p></section>`;
+    <p class="meta" style="margin:8px 0 0">Por fonte de verba${F?" ("+esc(F)+")":""}: ${Object.entries(fontes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${fmtK0(v)}`).join(" · ")}. A execução e o resultado de cada ação ficam nas abas Quadro e Eventos e resultado.</p></section>`;
 }
 async function impDescomp(t){try{if(!t||!t.startsWith("gz:"))return t;const bin=Uint8Array.from(atob(t.slice(3)),c=>c.charCodeAt(0));const ds=new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));const h=await new Response(ds).text();return h.split("__LOGO__").join(location.origin+"/materiais/logo-barenbrug-email.png");}catch(e){return null;}}
 async function carregarImpulso(){if(S.impBusy)return;S.impBusy=true;try{const {data}=await sb.from("is_impulso").select("id,edicao,data,titulo,assunto,foco,enviados,html").order("edicao",{ascending:false});const L=data||[];for(const x of L)x.html=await impDescomp(x.html);S.impulso=L;}catch(e){S.impulso=[];}S.impBusy=false;render();}
@@ -2159,7 +2315,7 @@ function vISImp(){
     <div class="lista" style="margin-top:8px">${L.map(x=>`<div class="linha"><div style="min-width:0"><strong>#${String(x.edicao).padStart(2,"0")} · ${dt(x.data)}${x.titulo?" · "+esc(x.titulo):""}</strong><span class="meta">${esc(x.assunto||"")}${x.enviados?` · ${x.enviados} destinatários`:""}</span>${x.foco?`<span class="meta">${esc(x.foco)}</span>`:""}</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${x.html?`<button class="link" data-a="imp-ver" data-v="${x.id}">${S.impVer===x.id?"fechar":"ler edição"}</button>`:`<span class="meta">sem HTML</span>`}${upl(x)}</div></div>${S.impVer===x.id?`<div>${fr(x)}</div>`:""}`).join("")}</div></section>`;
 }
 function subnavIS(){
-  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-gd","Geração de demanda"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-imp","Impulso semanal"]];
+  const abas=veTimeIS()?[["is-time","Time"],["is-vend","Por vendedora"],...(ehFin()?[["is-ger","Análise gerencial"]]:[]),["is-hist","Evolução"],["is-reg","Regiões"],["is-imp","Impulso semanal"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]]:[["is-painel","Meu painel"],["is-imp","Impulso semanal"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -2875,6 +3031,7 @@ async function propBaixar(x){
   catch(e){aviso("Não foi possível gerar o PDF. Use Ver a proposta e salve pelo navegador.");}
 }
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
+document.addEventListener("input",ev=>{const t=ev.target;const k=t&&t.dataset&&t.dataset.apc;if(!k)return;(S.apCalc||(S.apCalc={}))[k]=t.value;const o=document.getElementById("ap-calc-out");if(!o)return;const d=document.createElement("div");d.innerHTML=apBloco({t:"calc"});const n=d.querySelector("#ap-calc-out");if(n)o.innerHTML=n.innerHTML;});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;if(t.dataset&&t.dataset.lochk){const [id,k]=t.dataset.lochk.split("|");const ed=S.loEd||(S.loEd={});const base=(S.loAcc||[]).find(x=>x.user_id===id)||{perfis:[],ufs:[],situacoes:[],so_pediu:false,ativo:true};const e=ed[id]||(ed[id]={perfis:[...(base.perfis||[])],ufs:[...(base.ufs||[])],situacoes:[...(base.situacoes||[])],so_pediu:base.so_pediu,ativo:base.ativo!==false});e[k]=t.checked;S.loCfgAberto=true;render();return;}
   if(t.dataset&&t.dataset.lof&&t.tagName==="SELECT"){const F=S.loF||(S.loF={});F[t.dataset.lof]=t.value;loLista(false).then(render);}});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.szp)return;S.szP=S.szP||{ant:2,acao:1,base:"pico"};S.szP[t.dataset.szp]=t.dataset.szp==="base"?t.value:+t.value;const y=window.scrollY;render();window.scrollTo(0,y);});
@@ -3592,6 +3749,7 @@ function matHTML(m){
   const meta=`${m.c?esc(m.c)+" · ":""}${esc(m.tipo)}`;
   if(m.pagina) return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><button class="link" data-a="precos">Ver tabela</button></div>`;
   if(m.audio) return `<div class="linha col"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><audio controls preload="none" src="${m.audio}"></audio></div>`;
+  if(m.apostila) return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="link" data-a="ap-abrir" data-v="${m.apostila}">Ler na página</button><a class="link" href="${m.url}" target="_blank" rel="noopener">PDF ↗</a></div></div>`;
   if(m.url) return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><a class="link" href="${m.url}" target="_blank" rel="noopener">Abrir ↗</a></div>`;
   return `<div class="linha"><div><strong>${m.n}</strong><span class="meta">${meta}</span></div><button class="link" data-a="mat">Abrir</button></div>`;
 }
@@ -4890,6 +5048,73 @@ function vManejo(){
 }
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mj-ir']");if(!b)return;ev.preventDefault();ev.stopPropagation();const el=document.getElementById(b.dataset.v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},true);
 
+/* ===== Apostilas de vendas: o PDF virou página ===== */
+const APOSTILAS=[{id:"sabia",c:"Sabiá",ok:true,img:"materiais/apostilas/sabia/capa.webp"},{id:"cayana",c:"Cayana",ok:false},{id:"carcara",c:"Carcará",ok:false}];
+async function carregarApostila(id){S.apBusy=true;try{const r=await fetch(`materiais/apostilas/${id}.json?v=${APP_VER}`);if(!r.ok)throw 0;S.apDoc=Object.assign(S.apDoc||{},{[id]:await r.json()});}catch(e){S.apDoc=Object.assign(S.apDoc||{},{[id]:null});}S.apBusy=false;if(S.pag==="apostilas")render();}
+const apNum=(n,d)=>(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+function apBloco(b){
+  const P=a=>(a||[]).map(x=>`<p>${x}</p>`).join("");
+  switch(b.t){
+  case "intro":return `<section class="ap-intro"><span class="ap-k">${b.kicker}</span><h2>${b.titulo}</h2><p>${b.texto}</p></section>`;
+  case "stats":return `<div class="ap-col">${b.titulo?`<span class="ap-k">${b.titulo}</span>`:""}<div class="ap-stats">${b.itens.map(x=>`<div class="ap-stat ${x.tom||""}"><strong>${x.v}<small>${x.u||""}</small></strong><span>${x.d}</span></div>`).join("")}</div>${b.fonte?`<p class="ap-nota">${b.fonte}</p>`:""}</div>`;
+  case "cap":return `<section class="ap-cap ${b.img?"":"so"}" id="ap-${b.id}"><div class="ap-cap-tx"><span class="ap-k" style="color:#fff">Capítulo</span><span class="ap-n">${b.n}</span><h2>${b.titulo}</h2><p>${b.sub}</p></div>${b.img?`<div class="ap-cap-im" style="background-image:url('${b.img}')" role="img" aria-label="Foto do capítulo"></div>`:""}</section>`;
+  case "sec":return `<div class="ap-sec"><span class="ap-tag">${b.kicker}</span><h2>${b.titulo}</h2></div>`;
+  case "texto":return `<div class="ap-tx">${P(b.p)}</div>`;
+  case "nota":return `<p class="ap-nota">${b.p}</p>`;
+  case "duo":return `<div class="ap-duo ${b.larg==="62"?"l62":""}"><div class="ap-col">${b.a.map(apBloco).join("")}</div><div class="ap-col">${b.b.map(apBloco).join("")}</div></div>`;
+  case "caixa":return `<div class="ap-caixa ${b.tom||""}">${b.titulo?`<h3>${b.titulo}</h3>`:""}${P(b.p)}${b.tira?`<div><button class="btn sec" data-a="secao" data-v="duvidas">Levar a dúvida ao Tira-Dúvidas</button></div>`:""}</div>`;
+  case "consultor":return `<aside class="ap-cons"><span class="ap-k">Visão do consultor</span><p>${b.p}</p></aside>`;
+  case "cruz":return `<div class="ap-cruz"><div class="pais"><span>${b.p1}</span><strong>×</strong><span>${b.p2}</span></div><span class="meta">↓ ${b.meio} ↓</span><span class="res">${b.res}</span></div>`;
+  case "ficha":return `<div class="ap-col"><div class="ap-ficha"><table><tbody>${b.linhas.map(r=>`<tr class="${r[2]?"alerta":""}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</tbody></table></div>${b.nota?`<p class="ap-nota">${b.nota}</p>`:""}</div>`;
+  case "tags":return `<div class="ap-tags">${b.itens.map(x=>`<span>${x}</span>`).join("")}</div>`;
+  case "passos":return `<ol class="ap-passos">${b.itens.map((x,i)=>`<li><b>${i+1}</b><div><h3>${x.t}</h3><p>${x.d}</p></div></li>`).join("")}</ol>`;
+  case "erros":return `<div class="ap-erros"><span class="ap-k" style="color:var(--preto)">${b.titulo}</span>${b.itens.map(x=>`<div><strong>${x.t}</strong><br><span>${x.d}</span></div>`).join("")}</div>`;
+  case "img":return `<figure class="ap-img ${b.larga?"larga":""}"><img src="${b.src}" alt="${esc(b.leg||"Pasto de cv. Sabiá")}" loading="lazy">${b.leg?`<figcaption>${b.leg}</figcaption>`:""}</figure>`;
+  case "linha":return `<ol class="ap-linha">${b.itens.map(x=>`<li class="${x.esc?"esc":""}"><span class="q">${x.q}</span><strong style="display:block">${x.t}</strong><span>${x.d}</span></li>`).join("")}</ol>`;
+  case "num":return `<div class="ap-num ${b.tom||""}">${b.k?`<span class="ap-k" style="color:inherit">${b.k}</span>`:""}<strong>${b.v}</strong><span>${b.d}</span></div>`;
+  case "citacao":return `<blockquote class="ap-cit" style="margin:0">“${b.t2}”<span>— ${b.a}</span></blockquote>`;
+  case "barras":{const r=(n,v,s)=>`<div class="r ${s?"s":""}"><span>${n}</span><div class="t"><i style="width:${Math.max(8,v/b.max*100).toFixed(1)}%">${apNum(v,b.dec)}</i></div></div>`;
+    const corpo=b.grupos?b.grupos.map(([g,L])=>`<span class="g">${g}</span>${L.map((x,i)=>r(x[0],x[1],i===0)).join("")}`).join(""):b.itens.map((x,i)=>r(x[0],x[1],i===0)).join("");
+    return `<div class="ap-bar"><h3>${b.titulo}</h3>${corpo}${b.rodape?`<p style="margin-top:6px">${/^\+\d/.test(b.rodape)?`<strong style="font-size:1.6rem;color:var(--azul)">${b.rodape.split(" ")[0]}</strong> ${b.rodape.split(" ").slice(1).join(" ")}`:b.rodape}</p>`:""}</div>`;}
+  case "dist":return `<div class="ap-bar ap-dist"><h3>${b.titulo}</h3>${b.itens.map(([n,a,s],i)=>`<div class="r ${i===0?"s":""}"><span>${n}</span><div class="t"><i style="width:${a}%">Águas ${apNum(a,2)}%</i><i class="seca" style="width:${s}%">Seca ${apNum(s,2)}%</i></div></div>`).join("")}<p style="margin-top:6px">${b.texto}</p></div>`;
+  case "escala":{const tom=v=>{const m=b.marcas.find(x=>v>=x.de&&v<=x.ate);return m?m.tom:"";};const L=[];for(let v=b.de;v<=b.ate;v++)L.push(v);
+    return `<div class="ap-col" style="gap:8px"><div class="ap-esc">${L.map(v=>`<span class="${tom(v)}">${v}</span>`).join("")}</div><div class="ap-esc-l">${b.marcas.map(m=>`<span><strong>${m.r}</strong> · ${m.s}</span>`).join("")}</div></div>`;}
+  case "colunas":return `<div class="ap-bar"><div class="ap-cols">${b.itens.map(([n,v])=>`<div><strong>${apNum(v,1)}</strong><i style="height:${(v/b.max*100).toFixed(0)}%"></i></div>`).join("")}</div><div style="display:flex;gap:24px;padding:0 10px">${b.itens.map(([n])=>`<span class="meta" style="flex:1;text-align:center">${n}</span>`).join("")}</div><p class="ap-nota">${b.un}</p></div>`;
+  case "ensaios":return `<div class="ap-ens"><div class="leg"><span><i style="background:var(--azul)"></i>Sabiá</span><span><i style="background:#9aa7ae"></i>Marandu (testemunha)</span><span class="meta">${b.un}</span></div>
+    ${b.itens.map(([n,s,m,d,g])=>`<div class="r"><span class="nm"><strong>${n}</strong></span><div class="bs"><i class="s" style="width:${(s/b.max*100).toFixed(1)}%"></i><i class="m" style="width:${(m/b.max*100).toFixed(1)}%"></i><small>${apNum(s,1)} vs ${apNum(m,1)}</small></div><span class="dif">${d}</span><span class="gan">${g}</span></div>`).join("")}
+    <div class="r med"><span class="nm">${b.media[0]}</span><span>${b.media[1]}</span><span class="dif">${b.media[2]}</span><span class="gan">${b.media[3]}</span></div><p class="ap-nota">${b.fonte}</p></div>`;
+  case "conta":return `<div class="ap-conta"><div><span class="ap-k" style="color:#fff">Arrobas a mais</span><strong>${apNum(b.a,1)} @</strong><span>por ha/ano</span></div><span class="op">×</span><div><span class="ap-k" style="color:#fff">Valor da arroba</span><strong>R$ ${apNum(b.preco)}</strong><span>cotação de exemplo</span></div><span class="op">=</span><div class="res"><span class="ap-k">A mais no caixa</span><strong>R$ ${apNum(b.a*b.preco)}</strong><span>por hectare/ano</span></div></div>`;
+  case "tabela":return `<div class="ap-tab"><h3 style="font-size:1.05rem;color:var(--azul)">${b.titulo}</h3>${b.sub?`<p class="meta">${b.sub}</p>`:""}<div class="rolar"><table><thead><tr>${b.cab.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${b.linhas.map((r,i)=>`<tr class="${i===b.dest?"dest":""}">${r.map((c,j)=>`<td class="${j===b.col_dest?"cd":""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${b.nota?`<p class="ap-nota">${b.nota}</p>`:""}</div>`;
+  case "calc":{const C=S.apCalc||(S.apCalc={ha:"100",arr:"250",dif:"7,0",sem:"150"});const n=x=>Number(String(x).replace(/\./g,"").replace(",","."))||0;
+    const ha=n(C.ha),arr=n(C.arr),dif=n(C.dif),sem=n(C.sem);const fat=ha*dif*arr,custo=ha*sem,pg=arr?sem/arr:0;
+    return `<div class="ap-calc"><span class="ap-k">Faça a conta com os números do cliente</span>
+      <div class="campos"><label>Área a reformar (ha)<input data-apc="ha" inputmode="decimal" value="${esc(C.ha)}"></label><label>Arroba na praça dele (R$/@)<input data-apc="arr" inputmode="decimal" value="${esc(C.arr)}"></label><label>Arrobas a mais por ha/ano<input data-apc="dif" inputmode="decimal" value="${esc(C.dif)}"></label><label>Diferença da semente (R$/ha)<input data-apc="sem" inputmode="decimal" value="${esc(C.sem)}"></label></div>
+      <div class="out" id="ap-calc-out"><div><span class="meta">A mais no caixa por ano</span><strong>${fmtK0(fat)}</strong></div><div><span class="meta">Investido a mais na semente (uma vez)</span><strong>${fmtK0(custo)}</strong></div><div><span class="meta">Arrobas que pagam a semente</span><strong>${apNum(pg,1)} @/ha</strong></div><div><span class="meta">Retorno sobre a diferença</span><strong>${custo?apNum(fat/custo,1)+"×":"—"}</strong></div></div>
+      <p class="ap-nota">Média nacional dos ensaios: +7,0 @/ha/ano. Melhor ensaio (Xinguara/PA): +11,1 @. Faturamento bruto, sem descontar custos de produção.</p></div>`;}
+  case "cards":return `<div class="ap-cards">${b.itens.map(x=>`<div><b>${x.n}</b><h3 style="font-size:1rem;margin:2px 0">${x.t}</h3><p style="font-size:.92rem">${x.d}</p></div>`).join("")}</div>`;
+  case "logo":return `<div class="ap-logo"><img src="${b.src}" alt="${esc(b.alt)}" loading="lazy"></div>`;
+  case "dialogo":return `<div class="ap-col" style="gap:8px"><span class="ap-k">${b.titulo}</span><div class="ap-dlg">${b.itens.map(([q,t])=>`<div class="m ${q}"><span>${q==="c"?"Cliente":"Consultor"}</span>${t}</div>`).join("")}</div></div>`;
+  case "faq":return `<div class="ap-faq">${b.itens.map(([q,r],i)=>`<details><summary><b>${i+1}</b><span>${q}</span></summary><p>${r}</p></details>`).join("")}</div>`;
+  case "matriz":return `<div class="ap-mat"><div class="cab">${b.cab.map(c=>`<span>${c}</span>`).join("")}</div>${b.itens.map(([a,a2,f,v])=>`<div class="r"><div><strong>${a}</strong><small>${a2}</small></div><div>${f}</div><div>${v}</div></div>`).join("")}</div>`;
+  case "fim":return `<section class="ap-fim"><div class="ap-fim-im" style="background-image:url('${b.img}')">${b.saco?`<img src="${b.saco}" alt="Sacaria de semente Barenbrug" loading="lazy">`:""}</div><div class="ap-fim-tx"><span class="ap-k">${b.kicker}</span><h2>${b.titulo}</h2><p>${b.p}</p><p style="font-size:.78rem;opacity:.85">${b.fonte}</p></div></section>`;
+  }
+  return "";
+}
+function vApostilas(){
+  const id=S.apSel||"sabia";const it=APOSTILAS.find(x=>x.id===id)||APOSTILAS[0];
+  const lista=`<div class="ap-lista">${APOSTILAS.map(x=>`<button class="ap-item" ${x.ok?`data-a="ap-sel" data-v="${x.id}"`:"disabled"} aria-current="${x.id===id}"><span class="ap-item-im" ${x.img?`style="background-image:url('${x.img}')"`:""}></span><span class="ap-item-tx"><strong>Apostila de vendas · cv. ${esc(x.c)}</strong><span class="meta">${x.ok?"Safra 26/27 · página e PDF":"Em breve"}</span></span></button>`).join("")}</div>`;
+  const topo=`<div><h1 class="titulo">Apostilas de vendas</h1><p class="sub">A apostila de cada híbrido em página: o dado técnico, o que ele significa para a fazenda e como virar conversa de venda. Se preferir, baixe o PDF para mandar ou imprimir.</p></div>`;
+  if(!it.ok)return `<div class="ap">${topo}${lista}</div>`;
+  const D=(S.apDoc||{})[id];
+  if(D===undefined){if(!S.apBusy)carregarApostila(id);return `<div class="ap">${topo}${lista}<div class="carregando">Carregando a apostila…</div></div>`;}
+  if(!D)return `<div class="ap">${topo}${lista}<div class="vazio">Não foi possível abrir a apostila agora. O PDF continua disponível na Base de conhecimento.</div></div>`;
+  const caps=D.blocos.filter(b=>b.t==="cap");const H=D.hero;
+  return `<div class="ap">${topo}${lista}
+  <div class="ap-barra">${caps.map(c=>`<button class="chip" data-a="ap-ir" data-v="ap-${c.id}">${c.n} · ${esc(c.titulo)}</button>`).join("")}<a class="btn ap-pdf" href="${D.pdf}" download target="_blank" rel="noopener">Baixar PDF (${D.pdf_mb} MB)</a></div>
+  <section class="ap-hero"><div class="ap-hero-im" style="background-image:url('${H.img}')" role="img" aria-label="Pasto de cv. Sabiá com gado"></div><div class="ap-hero-tx"><span class="ap-k">${D.titulo.split("·")[0].trim()} · ${D.safra}</span><span class="ap-k" style="color:var(--preto)">${H.kicker}</span><span class="ap-nome"><small>cv.</small>${H.nome}</span><strong>${H.sub}</strong><span>${H.frase}</span><span class="ap-selo"><strong>${H.selo_v}</strong><span>${H.selo_t}</span><span style="opacity:.8">${H.selo_f}</span></span><span class="ap-nota" style="color:var(--preto)">${D.aviso}</span></div></section>
+  ${D.blocos.map(apBloco).join("")}
+  <div class="acoes" style="justify-content:center"><a class="btn" href="${D.pdf}" download target="_blank" rel="noopener">Baixar a apostila em PDF</a><button class="btn sec" data-a="ap-ir" data-v="ap-topo">Voltar ao topo</button></div></div>`;
+}
 function vBase(){
   const b=S.busca.toLowerCase();
   const txtPlano=s=>String(s).replace(/<[^>]+>/g,"").toLowerCase();
@@ -6786,7 +7011,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -7448,6 +7673,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
   if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
+  if(S.pag==="acoes-gd"&&ehMkt()){if(S.isp==null&&!S.ispBusy&&!S.demo){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(S.pag==="acoes-gd")render();});}return vISGD();}
   if(S.pag==="acoes-raci"&&ehMkt())return vIntRaci();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
@@ -8240,14 +8466,14 @@ function rodapeMkt(){
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["casos","Casos de sucesso"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["cert","Certificado"]],
   "inside-sales":[["is-time","Time"],["is-vend","Por vendedora"],["is-neg","Negociações"],["is-obj","Objeções"],["is-icp","ICP e personas"],["is-rfv","RFV"],["is-cac","Retorno da mídia"],["is-painel","Painel individual"]],
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-meucanal","Meu canal"],["rv-apresentacao","Apresentação"],["rv-curso","Curso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -8261,7 +8487,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   document.addEventListener("keydown",ev=>{if(ev.key==="Escape")fecha();});
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
- trilha:"Cursos por cultivar com provas de certificação.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
+ trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
@@ -8270,7 +8496,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","is-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -8336,9 +8562,9 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"?' class="largo"':""}>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"?' class="largo"':""}>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
@@ -8348,7 +8574,8 @@ function renderApp(){
   }
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
-    if(S.pag==="is-reg"||S.pag==="is-gd"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():S.pag==="is-gd"?vISGD():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
+    if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-reg"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
     if(S.pag==="is-ger"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vISGer()}</main>`;if(!S.fin&&ehFin()){carregarFin().then(render);}return;}
     app.innerHTML=cabecalho()+subnavIS()+`<main>${vInsideSales()}</main>`;
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
@@ -8511,6 +8738,9 @@ document.addEventListener("click",async ev=>{
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
   if(a==="delanexo"){const sel=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===S.acaoSel);if(sel){const an=Array.isArray(sel.anexos)?sel.anexos.slice():[];an.splice(+v,1);await sb.from("acoes_pgd").update({anexos:an}).eq("id",sel.id);S.canais=null;render();}}
   if(a==="reg-f"){S.regF=v||"";render();return;}
+  if(a==="ap-sel"){S.apSel=v;render();return;}
+  if(a==="ap-abrir"){S.secao="academia";S.apSel=v;irPag("apostilas");return;}
+  if(a==="ap-ir"){const el=v==="ap-topo"?document.querySelector(".ap"):document.getElementById(v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="imp-ver"){S.impVer=S.impVer===+v?null:+v;render();return;}
   if(a==="imp-nova"){if(!ehAdmin())return;S.impNova=!S.impNova;render();return;}
   if(a==="isger-ed"){if(!ehAdmin())return;S.isGerEd=!S.isGerEd;render();return;}
