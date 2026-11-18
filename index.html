@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118180359";
+const APP_VER="20261118180411";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9595,7 +9595,7 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Texto digitado é escapado antes de exibir","Todo texto vindo de usuário ou do CRM passa por escape antes de virar tela, o que evita injeção de script."],
     [par,"Cabeçalhos HTTP de segurança (HSTS, anti-clickjacking)","A hospedagem atual (GitHub Pages) não permite cabeçalhos próprios. A CSP vai na página; HSTS e bloqueio de enquadramento exigiriam um CDN na frente (ex.: Cloudflare)."],
     [ok,"Fora dos buscadores","Página marcada para não ser indexada nem arquivada."],
-    [par,"Proteção contra cópia, print e impressão","Para quem não é administrador: o texto do portal não pode ser selecionado nem copiado (campos de formulário e contatos de lead continuam liberados), a impressão sai em branco, e a tecla Print Screen e os atalhos de captura do Mac e do Windows escondem a tela e mostram um aviso de proibido. Todas as telas levam marca d’água com o nome, o e-mail e a data de quem está vendo, o que identifica a origem de qualquer foto ou captura vazada. Limite: nenhum site consegue impedir o print do celular, o recorte por aplicativo nem a foto da tela com outro aparelho; por isso a marca d’água é a principal proteção."]]},
+    [par,"Proteção contra cópia, print e impressão","Para quem não é administrador: o texto do portal não pode ser selecionado nem copiado (campos de formulário e contatos de lead continuam liberados), a impressão sai em branco, a tecla Print Screen e os atalhos de captura do Mac e do Windows escondem a tela e mostram um aviso de proibido, e o conteúdo fica borrado sempre que a janela do portal perde o foco (o que pega as ferramentas de recorte de tela). Todas as telas levam marca d’água com o nome, o e-mail e a data de quem está vendo, o que identifica a origem de qualquer foto ou captura vazada. Limite: nenhum site consegue impedir o print do celular, o recorte por aplicativo nem a foto da tela com outro aparelho; por isso a marca d’água é a principal proteção."]]},
   {k:"Rastreabilidade",w:10,ref:"OWASP ASVS 4.0 V7 (registros)",it:[
     [ok,"Registro de ações administrativas",`Criação e exclusão de usuário, redefinição de senha, exigência de MFA, importações e premissas financeiras ficam registradas com quem e quando. ${L.audit_30d} registros nos últimos 30 dias.`],
     [ok,"Acesso a contato de lead registrado",`Telefone e e-mail de lead aparecem um a um, por clique, e cada abertura fica registrada. ${L.views_lead_30d} aberturas nos últimos 30 dias.`],
