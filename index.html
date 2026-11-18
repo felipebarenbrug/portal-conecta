@@ -1391,7 +1391,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117230523";
+const APP_VER="20261117231145";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2384,7 +2384,7 @@ const IS_GRUPOS=[
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
   ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"]]],
-  ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"]]],
+  ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"],["is-desafio","Desafio 10 t"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
   ["Formação",[["is-formacao","Formação do time"]]],
@@ -2394,6 +2394,7 @@ const IS_PROP={
  "is-playbook":["Comece aqui","As boas práticas de atuação do Inside Sales, do primeiro contato ao funil saudável.","treinar quem entra, alinhar o time e cobrar o padrão de atendimento."],
  "is-formacao":["Formação","Cursos, podcasts e leituras de vendas, CRM, pré-vendas e negociação, mais o que é da Barenbrug.","formar quem entra no time e manter o time afiado."],
  "is-perfil-time":["Gestão","A persona de contratação do Inside Sales: quem atrair, o que essa pessoa busca e o caminho de carreira até o campo.","escrever a vaga, escolher onde divulgar e conduzir a seleção."],
+ "is-desafio":["Vender","A campanha de começo de safra: ranking das assessoras rumo às 10 t de híbridos, quanto falta e se o funil cobre.","acompanhar quem está perto do prêmio e onde acelerar."],
  "is-imp":["Comece aqui","O relatório semanal do Marketing para o time: mercado, meta, funil de cada uma, tarefas e a objeção da semana.","combinar as prioridades da semana com o time."],
  "is-cac":["Atrair","Quanto a mídia digital custa por lead, por negociação e por venda do Inside Sales.","decidir onde colocar verba de mídia e cortar o que não vira venda."],
  "is-icp":["Para quem","Quem é o produtor que compra pelo Inside Sales e como cada perfil quer ser atendido.","ajustar campanha, mensagem e abordagem ao perfil que mais converte."],
@@ -2408,7 +2409,7 @@ const IS_PROP={
  "is-ger":["Gestão","Breakeven e custo de cada vendedora frente ao teto do RC de campo.","decidir o tamanho e o custo do time."]};
 const isPropHTML=pag=>{const P=IS_PROP[pag];if(!P||!veTimeIS())return "";return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Esteira do Inside Sales · ${esc(P[0])}</strong><p>${esc(P[1])} Use para: ${esc(P[2])}</p></div>`;};
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${grupos.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`${g?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>`:""}${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -2778,6 +2779,27 @@ function vISPerfilTime(){
   <section class="bloco"><h2 class="sec">Caminho de carreira</h2><ol class="dir-passos">${C.map(([a,b])=>`<li><strong>${a}</strong><span>${b}</span></li>`).join("")}</ol>
    <p class="meta" style="margin:8px 0 0">Critérios para o passo seguinte: meta de híbridos cumprida, conversão e tempo de atendimento dentro da régua, provas da Academia aprovadas e avaliação do comercial. Prazos de referência, a validar com o comercial e o RH.</p></section>
   <p class="meta">Custo e breakeven de cada assessora ficam na aba Análise gerencial, para quem tem acesso ao Financeiro.</p>`;
+}
+/* ===== Inside Sales: campanha Desafio 10 t · Rumo ao Leão de Judá ===== */
+const DES_META=10000;
+async function carregarDes(){if(S.desBusy)return;S.desBusy=true;try{const {data,error}=await sb.rpc("is_desafio");S.des=error?null:(data||[]);}catch(e){S.des=null;}S.desBusy=false;if(S.pag==="is-desafio")render();}
+function vISDesafio(){
+  if(S.des===undefined){carregarDes();return `<div class="carregando">Carregando o desafio…</div>`;}
+  const L=(S.des||[]);const t=v=>(Math.round(v)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";const adm=ehAdmin();
+  const R=L.map(x=>{const kg=+x.kgh||0,falta=Math.max(0,DES_META-kg),pond=+x.pond||0;return {...x,kg,falta,pond,bateu:kg>=DES_META,cobre:falta?pond/falta:null};}).sort((a,b)=>b.kg-a.kg);
+  const st=x=>x.bateu?(x.pago_ok?["Fim de semana liberado","seg-ok"]:["10 t vendidas · falta confirmar o pagamento","seg-par"]):x.cobre>=1?["O funil cobre o que falta","seg-par"]:["O funil ainda não cobre","seg-pen"];
+  const linha=(x,i)=>{const [s,c]=st(x);const pct=Math.min(100,x.kg/DES_META*100);return `<div class="dir-card" style="display:grid;gap:8px">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><strong style="font-size:17px">${i+1}º · ${esc(x.pessoa)}</strong><span class="seg-st ${c}">${s}</span></div>
+    <div style="height:14px;background:#eef1f3;border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:${pct.toFixed(1)}%;background:${x.bateu?"#1F8A4C":"var(--azul)"}"></i></div>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div class="metric"><span>Vendido em híbridos</span><strong>${t(x.kg)}</strong><span class="meta">${Math.round(pct)}% das 10 t</span></div>
+     ${x.bateu?`<div class="metric"><span>Pedido pago</span><strong>${x.pago_ok?"Confirmado":"A confirmar"}</strong><span class="meta">${esc(x.obs||"")}</span></div>`:`<div class="metric"><span>Falta</span><strong>${t(x.falta)}</strong><span class="meta">para as 10 t</span></div>
+     <div class="metric"><span>Funil ponderado</span><strong>${t(x.pond)}</strong><span class="meta">${t(+x.aberto||0)} em aberto · ${x.cobre==null?"":x.cobre>=1?"cobre o que falta":"cobre "+Math.round(x.cobre*100)+"% do que falta"}</span></div>`}</div>
+    ${!x.bateu&&x.cobre<1?`<p class="meta" style="margin:0">Para fechar a conta, faltam ${t(x.falta-x.pond)} no ponderado: subir a estrela das negociações com chance real e abrir negociações novas de híbrido.</p>`:""}
+    ${adm&&x.bateu?`<label class="check" style="font-size:.88rem"><input type="checkbox" data-desp="${esc(x.pessoa)}" ${x.pago_ok?"checked":""}> Pagamento integral confirmado (libera o fim de semana)</label>`:""}</div>`;};
+  return `<div><h1 class="titulo">Desafio 10 t · Rumo ao Leão de Judá</h1><p class="sub">A campanha de começo de safra do Inside Sales, lançada em 1º de julho de 2026: quem vender 10 toneladas de híbridos ganha um fim de semana no Hotel Leão de Judá, em Ribeirão Preto.</p></div>
+  <section class="bloco dir-hero"><p class="dir-kicker">A regra</p><p class="dir-frase">10 toneladas de Sabiá, Cayana e Carcará, com o pedido pago por inteiro, na safra 26/27.</p><ul style="margin:6px 0 0;padding-left:18px"><li>Contam só Sabiá, Cayana e Carcará (inclusive o Carcará de 3 kg), vendidos desde 1º de julho de 2026 até o fim da safra.</li><li>O pedido precisa estar pago por inteiro: venda ganha no CRM ainda não pague não libera o prêmio.</li><li>Batida a meta e confirmado o pagamento, o fim de semana fica liberado. A data é escolhida pelo Marketing e avisada com antecedência.</li></ul></section>
+  <section class="bloco"><h2 class="sec">Ranking</h2>${S.des===null?`<div class="vazio">Não foi possível carregar o desafio agora.</div>`:R.length?`<div style="display:grid;gap:10px">${R.map(linha).join("")}</div>`:`<div class="vazio">Sem assessoras no desafio.</div>`}
+   <p class="meta" style="margin:8px 0 0">Vendido: negociações ganhas de híbridos na safra, pelo CRM. Funil ponderado: híbridos das negociações em aberto vezes a probabilidade de cada estrela (1 = 5%, 2 = 15%, 3 = 35%, 4 = 70%, 5 = 90%). O pagamento integral é confirmado pelo Marketing com o Financeiro.</p></section>`;
 }
 function vISFluxo(){
   const no=(c,quem,t,corpo)=>`<div class="fx-no ${c}"><span class="fx-quem">${quem}</span><h3>${t}</h3>${corpo}</div>`;
@@ -4964,7 +4986,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time"].includes(pg);
+  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time","is-desafio"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
@@ -8825,7 +8847,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-playbook":"Boas práticas de atuação do time.","is-formacao":"Cursos, podcasts e leituras para a formação do time.","is-perfil-time":"Persona de contratação do Inside Sales.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-playbook":"Boas práticas de atuação do time.","is-formacao":"Cursos, podcasts e leituras para a formação do time.","is-perfil-time":"Persona de contratação do Inside Sales.","is-desafio":"Campanha Desafio 10 t: ranking e quanto falta.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -8906,6 +8928,7 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
     if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
     if(S.pag==="is-playbook"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPlaybook()}</main>`;return;}
@@ -9241,6 +9264,7 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(c.id==="foto_arq"&&c.files&&c.files[0]){await enviarFoto(c.files[0]);return;}
+  if(c.dataset&&c.dataset.desp!==undefined&&ehAdmin()){const pe=c.dataset.desp;const {error}=await sb.from("is_desafio_status").upsert({pessoa:pe,pago_ok:c.checked,atualizado_em:new Date().toISOString(),por:(S.profile&&S.profile.nome)||null},{onConflict:"pessoa"});if(error){aviso("Não foi possível gravar.");c.checked=!c.checked;return;}const x=(S.des||[]).find(y=>y.pessoa===pe);if(x)x.pago_ok=c.checked;render();aviso(c.checked?"Pagamento confirmado: fim de semana liberado.":"Confirmação retirada.");return;}
   if(c.dataset&&c.dataset.rcleads!==undefined&&ehAdmin()){const r=(S.leadRCs||[]).find(x=>x.id===c.dataset.rcleads);if(r)await rcLeadsSalva(r.id,c.checked,r.ufs_leads||[]);return;}
   if(c.dataset&&c.dataset.filaab!==undefined&&ehAdmin()){const {error}=await sb.rpc("adm_fila_abertos",{p_valor:c.checked});if(error){aviso("Não foi possível gravar.");c.checked=!c.checked;return;}S.filaAbertos=c.checked;aviso(c.checked?"Pedidos em aberto entram na fila dos RCs.":"Fila dos RCs só com os sem contato concluído.");return;}
   if(c.dataset&&(c.dataset.leadcanal||c.dataset.leadufs)){
