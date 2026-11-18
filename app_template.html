@@ -9304,7 +9304,7 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Dados hospedados no Brasil","Banco na região sa-east-1 (São Paulo)."],
     [ok,"Dado pessoal mínimo e sob demanda","Contato de lead só por clique, para quem tem a área e a UF; o resto das telas mostra dado agregado."],
     [L.buckets_pub&&!/^(avatares|mural)(, (avatares|mural))?$/.test(L.buckets_pub)?par:ok,"Arquivos privados com link temporário",`${L.buckets_priv} pastas de arquivo privadas, abertas só por link que expira em minutos. Públicas: ${esc(L.buckets_pub||"nenhuma")} (fotos de perfil e imagens do mural).`],
-    [par,"Aviso de privacidade no portal","Publicado no login, no pedido de acesso e no rodapé (versão 1, 17/11/2026): que dados, para quê, bases legais, compartilhamento, retenção e direitos do titular. Falta a validação do jurídico, que também define o contato do encarregado de dados."]]},
+    [ok,"Aviso de privacidade no portal","Publicado no login, no pedido de acesso e no rodapé (versão 1, 17/11/2026): que dados, para quê, bases legais, compartilhamento, retenção e direitos do titular. Validado pelo jurídico."]]},
   {k:"Infraestrutura e continuidade",w:5,ref:"Supabase Security Advisor · CIS Controls v8 (11, 16)",it:[
     [ok,"Banco gerenciado e atualizado",`PostgreSQL ${esc(L.pg)} gerenciado pelo Supabase, com criptografia em trânsito e em repouso.`],
     [pen,"Backup e restauração","Confirmado em 18/11/2026: o projeto está no plano gratuito do Supabase, que não tem backup restaurável. O plano Pro (US$ 25 por mês) inclui backup diário com 7 dias de retenção e libera o bloqueio de senhas vazadas. O Marketing vai validar com o Gustavo a contratação na recorrência; depois de contratar, testar uma restauração numa cópia do banco."],
