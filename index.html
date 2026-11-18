@@ -1449,7 +1449,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118095430";
+const APP_VER="20261118100308";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4272,7 +4272,7 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   S.tpEd=null;S.precosOk=undefined;S.tpLog=undefined;await carregarPrecos();render();aviso(`Tabela salva: ${mud.length} alteraç${mud.length>1?"ões":"ão"} registrada${mud.length>1?"s":""}.`);},true);
 
 function vPrecos(){
-  if(S.precosOk===undefined){carregarPrecos().then(render);return `<div class="carregando">Carregando a tabela de preços…</div>`;}
+  if(S.precosOk===undefined){if(!S.precosBusy)carregarPrecos().then(render);return `<div class="carregando">Carregando a tabela de preços…</div>`;}
   if(!S.precosOk)return `<div><h1 class="titulo">Tabela de preços</h1></div><section class="bloco"><p class="sub" style="margin:0">A tabela de preços não está liberada para o seu acesso. Peça ao administrador do portal.</p></section>`;
   const voltar=S.secao==="tabela-precos"?"":S.secao==="conecta-rc"?`<button class="voltar" data-a="pag" data-v="rc-apresentacao">‹ Conecta RC</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
@@ -6370,7 +6370,7 @@ function rankMini(){
 
 /* ---------- Inteligência: auditoria de preços (cliente oculto) ---------- */
 async function carregarIntAud(){
-  if(S.intAudBusy)return;S.intAudBusy=true;
+  if(S.intAudBusy)return new Promise(()=>{});S.intAudBusy=true;
   try{const [a,b,c]=await Promise.all([sb.from("canal_auditoria").select("*"),sb.from("concorrente_precos").select("*").order("marca"),sb.from("concorrente_cond").select("*")]);
     S.intAud={cond:a.data||[],conc:b.data||[],concCond:c.data||[]};}catch(e){S.intAud={cond:[],conc:[],concCond:[]};}
   S.intAudBusy=false;
@@ -6421,7 +6421,7 @@ function vIntConcorrentes(){
 /* ---------- LeadsBaren: fila do RC ---------- */
 const FILA_MOTIVOS=["Não consegui contato","Número errado ou inexistente","Sem interesse no momento","Já comprou de outro fornecedor","Preço","Fora da minha região","Outro"];
 async function carregarFila(){
-  if(S.filaBusy)return;S.filaBusy=true;
+  if(S.filaBusy)return new Promise(()=>{});S.filaBusy=true;
   try{const {data,error}=await sb.rpc("rc_fila");
     if(error){S.fila={erro:true,falta:RANK_FALTA(error)};}
     else if(data&&typeof data==="object"&&"na_fila" in data)S.fila=data;else S.fila={erro:true,falta:true};
@@ -6469,7 +6469,7 @@ function vLeadsRC(){
   ${atual}${prox}
   ${meus.length?`<section class="bloco"><h2 class="sec">Meus leads finalizados</h2><div class="lista">${meus.map(m=>`<div class="neg"><div class="l1"><span>${esc(m.nome||"Produtor")}</span><span class="selo">${esc(m.evento==="Virou negociação"?"Em negociação":m.evento)}</span></div><span class="meta">${esc(m.cidade||"")}${m.uf?" · "+esc(m.uf):""} · ${fmtDataHora(m.quando)}${m.motivo?" · "+esc(m.motivo):""}</span></div>`).join("")}</div></section>`:""}`;
 }
-async function filaPainelCarregar(){if(S.filaPainelBusy)return;S.filaPainelBusy=true;try{const {data,error}=await sb.rpc("fila_painel");S.filaPainel=!error&&Array.isArray(data)?data:[];}catch(e){S.filaPainel=[];}S.filaPainelBusy=false;}
+async function filaPainelCarregar(){if(S.filaPainelBusy)return new Promise(()=>{});S.filaPainelBusy=true;try{const {data,error}=await sb.rpc("fila_painel");S.filaPainel=!error&&Array.isArray(data)?data:[];}catch(e){S.filaPainel=[];}S.filaPainelBusy=false;}
 function vFilaPainel(){
   if(S.filaPainel===undefined){filaPainelCarregar().then(render);return "";}
   if(!S.filaPainel.length)return "";
@@ -6957,7 +6957,7 @@ function vIntCanais(){
 
 /* ---------- Inteligência: análises de venda ---------- */
 async function carregarIntMapa(){
-  if(S.intBusy)return;S.intBusy=true;
+  if(S.intBusy)return new Promise(()=>{});S.intBusy=true;
   try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("*").eq("st","V").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}t.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);const u=cliCanon(r);if(u){r.org="u:"+u;r.nome=u+" - "+r.nome;}});S.intMapa=t;S.pfC=null;}catch(e){S.intMapa=[];}
   if(!RC_RANKING.length){try{await carregarRanking();}catch(e){}}
   try{if(!S.rcContr){const {data:ct}=await sb.from("rc_contratos").select("*");S.rcContr=ct||[];}}catch(e){S.rcContr=[];}
@@ -7275,7 +7275,9 @@ function vIntRC(C){
   ${lista.map(([a,pf])=>linha(a,pf)).join("")||`<tr><td colspan="9">Nenhuma venda de híbridos.</td></tr>`}</tbody></table></div></section>`;
 }
 /* ---------- Contratos dos RCs (mapeamento 26/27) ---------- */
-async function carregarContratos(){if(S.rcContr||S.rcContrBusy||S.demo)return;S.rcContrBusy=true;try{const {data}=await sb.from("rc_contratos").select("*").order("nome");S.rcContr=data||[];}catch(e){S.rcContr=[];}S.rcContrBusy=false;S.intC=null;render();}
+/* devolve a mesma promessa enquanto carrega: chamadas com .then(render) durante a leitura não podem resolver na hora, senão viram um laço de render que trava a página */
+function carregarContratos(){if(S.rcContr||S.demo)return Promise.resolve();if(S._rcContrP)return S._rcContrP;S.rcContrBusy=true;
+  S._rcContrP=(async()=>{try{const {data}=await sb.from("rc_contratos").select("*").order("nome");S.rcContr=data||[];}catch(e){S.rcContr=[];}S.rcContrBusy=false;S._rcContrP=null;S.intC=null;render();})();return S._rcContrP;}
 const contrKey=t=>finNorm(t).replace(/\b(ltda|eireli|me|epp)\b/g,"").replace(/[^a-z0-9]/g,"");
 function contratoDe(nome,email){const L=S.rcContr||[],k=contrKey(nome),e=String(email||"").toLowerCase().trim();
   return (k&&L.find(c=>[c.nome,...(c.crm_nomes||[])].some(n=>contrKey(n)===k)))||(e&&L.find(c=>(c.emails||[]).some(x=>x.toLowerCase()===e)))||null;}
@@ -7562,7 +7564,7 @@ function subnavFin(){
     <span class="secao-nome">Marketing + Financeiro</span></div></div>`;
 }
 async function carregarFin(){
-  if(S.finBusy)return;S.finBusy=true;
+  if(S.finBusy)return new Promise(()=>{});S.finBusy=true;
   try{const {data,error}=await sb.rpc("financeiro_dados");
     S.fin=(!error&&data&&typeof data==="object"&&Array.isArray(data.mapa))?data:{erro:error?String(error.message||error):"sem dados"};
     if(Array.isArray(S.fin.mapa))S.fin.mapa.forEach(r=>{if(r.rep)r.rep=repCanon(r.rep);});}
