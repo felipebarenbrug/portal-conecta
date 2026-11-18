@@ -10,7 +10,13 @@
 <meta name="bingbot" content="noindex, nofollow, noarchive">
 <title>Portal Conecta Barenbrug</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FFDB00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Conecta">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 <style>
 :root{
@@ -1671,6 +1677,7 @@ function vProgPerfil(){
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
   ${S.demo?"":vProgPerfil()}
+  ${S.demo?"":pushPerfilHTML()}
   <div class="cx" id="prog-dados"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -3875,7 +3882,7 @@ function vHub(){
     if(!x.ativo)return `<button class="area-b" disabled><span>${x.nome}</span><span class="meta">em breve</span></button>`;
     if(bloq&&!secaoLiberada(x.id))return `<button class="area-b" disabled title="Conclua os cursos obrigatórios para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
-  return `${banner}${npsCard()}<div class="home">
+  return `${banner}${pushCard()}${npsCard()}<div class="home">
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
@@ -8745,6 +8752,36 @@ async function carregarNpsUlt(){if(S.npsBusy||S.demo)return;S.npsBusy=true;try{c
 function npsMostrar(){if(!S.user||S.demo||!S.profile)return false;if(S.npsUlt===undefined){carregarNpsUlt();return false;}
   const d=S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):Date.now();if(Date.now()-d<7*864e5)return false;
   if(S.npsUlt&&Date.now()-Date.parse(S.npsUlt)<90*864e5)return false;if(Date.now()-npsLsGet()<7*864e5)return false;return true;}
+/* ===== Notificações no celular e no computador (web push) ===== */
+const VAPID_PUB="BCaWl4SGllVEZdcv9C8LwZtd5tntK0NWceFPz7YZ98QLODe1ritlc7cfdDdOt-DMr_LtqWOigeh9aMxxMwIxRic";
+const pushSup=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const ehIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const ehApp=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;}catch(e){return false;}};
+const b64u=s=>{const p="=".repeat((4-s.length%4)%4);const r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0));};
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}
+async function pushChecar(){let e="sem-suporte";try{
+  if(ehIOS()&&!ehApp())e="ios-instalar";
+  else if(pushSup()){if(Notification.permission==="denied")e="negado";else{const r=await navigator.serviceWorker.getRegistration();const sub=r?await r.pushManager.getSubscription():null;e=sub&&Notification.permission==="granted"?"ativo":"pode";}}
+ }catch(_){e=pushSup()?"pode":"sem-suporte";}const mudou=S.pushEst!==e;S.pushEst=e;if(mudou)render();return e;}
+async function pushAtivar(){try{const perm=await Notification.requestPermission();if(perm!=="granted"){await pushChecar();aviso(perm==="denied"?"As notificações foram bloqueadas neste navegador.":"Permissão não concedida.");return;}
+  const reg=await navigator.serviceWorker.register("sw.js");await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUB)});
+  const j=sub.toJSON();const {error}=await sb.rpc("push_registrar",{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_ua:navigator.userAgent.slice(0,300)});
+  if(error){aviso("Não foi possível ativar agora. Tente de novo.");return;}
+  try{await sb.functions.invoke("push-enviar",{body:{}});}catch(_){}
+  await pushChecar();aviso("Notificações ativadas neste aparelho.");}catch(e){aviso("Não foi possível ativar as notificações neste navegador.");}}
+async function pushDesativar(){try{const r=await navigator.serviceWorker.getRegistration();const sub=r?await r.pushManager.getSubscription():null;if(sub){await sb.from("push_subs").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe();}}catch(_){}await pushChecar();aviso("Notificações desligadas neste aparelho.");}
+function pushPassosIOS(){return `<ol style="margin:6px 0 0;padding-left:20px;display:grid;gap:4px"><li>Toque em <strong>Compartilhar</strong> no navegador (o quadrado com a seta para cima)</li><li>Escolha <strong>"Adicionar à Tela de Início"</strong></li><li>Abra o Portal Conecta pelo ícone e ative as notificações</li></ol>`;}
+function pushCard(){if(S.demo||!S.user)return "";if(S.pushEst===undefined){pushChecar();return "";}const e=S.pushEst;if(e==="ativo"||e==="sem-suporte"||e==="negado")return "";
+  let ad=0;try{ad=+localStorage.getItem("push_adiar")||0;}catch(_){}if(ad&&Date.now()<ad)return "";
+  return `<div class="aviso-est" role="note" style="margin:0 0 12px"><strong>Ative suas notificações</strong>${e==="ios-instalar"?`<p>Para receber os avisos no iPhone, adicione o Portal Conecta à Tela de Início:</p>${pushPassosIOS()}`:`<p>Receba no celular ou no computador quando chegar mensagem, lead novo em Cotações ou resposta no Tira-Dúvidas.</p>`}
+   <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}<button type="button" class="link" data-a="push-adiar">Agora não</button></div></div>`;}
+function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEst;
+  const txt={ativo:"Ativas neste aparelho. Você recebe aviso de mensagem nova, lead novo em Cotações e resposta no Tira-Dúvidas.",pode:"Desligadas neste aparelho.",negado:"Bloqueadas neste navegador. Para liberar, abra as configurações do site no navegador e permita notificações.",["ios-instalar"]:"No iPhone, as notificações só funcionam com o portal adicionado à Tela de Início.",["sem-suporte"]:"Este navegador não aceita notificações. Use o Chrome, o Edge ou, no iPhone, o portal adicionado à Tela de Início."}[e]||"Verificando…";
+  return `<section class="bloco"><h2 class="sec">Notificações</h2><p class="sub" style="margin:0 0 8px">${txt}</p>${e==="ios-instalar"?pushPassosIOS():""}
+   <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
+let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
+function pushAbrirPendente(){if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;const v=({mensagens:"mensagens",duvidas:"duvidas",leads:"leads"})[PUSH_ABRIR];PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
 function npsCard(){if(!npsMostrar())return "";return `<div class="aviso-est" role="note" style="margin:0"><strong>Como está sendo o Portal Conecta para você?</strong><p>Leva 1 minuto. Sua nota e suas sugestões ajudam o Marketing a melhorar o portal.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="nps-abrir">Responder</button><button type="button" class="link" data-a="nps-adiar">agora não</button></div></div>`;}
 function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua resposta foi registrada. O Marketing lê cada sugestão.</p><div class="acoes"><button class="btn" data-a="inicio">Voltar ao início</button></div></section>`;
   const areas=["Academia de Híbridos","Conecta RC","Conecta Revendas","Tabela de preços","Enxoval de Marketing","LeadsBaren","Inside Sales","Meu CRM","Mercado","Inteligência","Ações de Marketing","Brindes","Mensagens e feed","Outra"];
@@ -8849,7 +8886,7 @@ function rodapeMkt(){
   f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
-function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();pushAbrirPendente();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
@@ -9156,6 +9193,10 @@ document.addEventListener("click",async ev=>{
   if(a==="cn-n"||a==="cn-at"){const [pp,k,n]=v.split("|");cnLer(pp);const F=(S.cnF||(S.cnF={}))[pp]||(S.cnF[pp]={attrs:{}});if(a==="cn-n")F[k]=+n;else F.attrs[k]=(F.attrs[k]===+n&&+n===0)?undefined:+n;const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(a==="pbv"){if(!ehAdmin())return;const [k,ok]=v.split("|");const {data,error}=await sb.from("is_playbook_valid").upsert({item:k,validado:ok==="1",por:((S.profile&&S.profile.nome)||"Marketing")+" com a supervisão do Inside Sales",em:new Date().toISOString()},{onConflict:"item"}).select().maybeSingle();if(error||!data){aviso("Não foi possível gravar.");return;}(S.pbv||(S.pbv={}))[k]=data;render();return;}
   if(a==="ver-senha"){const i=document.getElementById(v);if(!i)return;const ver=i.type==="password";i.type=ver?"text":"password";b.setAttribute("aria-pressed",String(ver));b.setAttribute("aria-label",ver?"Esconder senha":"Mostrar senha");b.classList.toggle("on",ver);i.focus();return;}
+  if(a==="push-on"){await pushAtivar();return;}
+  if(a==="push-off"){await pushDesativar();return;}
+  if(a==="push-teste"){try{const {data,error}=await sb.functions.invoke("push-enviar",{body:{}});aviso(error?"Não foi possível enviar o teste.":(data&&data.enviados)?"Teste enviado. Deve chegar em alguns segundos.":"Nenhum aparelho ativo recebeu o teste. Desligue e ative de novo.");}catch(_){aviso("Não foi possível enviar o teste.");}return;}
+  if(a==="push-adiar"){try{localStorage.setItem("push_adiar",String(Date.now()+14*864e5));}catch(_){}render();return;}
   if(a==="cn-adiar"){try{localStorage.setItem("cn_adiar_"+v,String(Date.now()+7*864e5));}catch(e){}render();return;}
   if(a==="nps-ac"||a==="nps-aj"||a==="nps-us"){const F=S.npsF||(S.npsF={});[["nps_m","motivo"],["nps_s","sugestao"],["nps_a","area"],["nps_ac","ac_coment"]].forEach(([i,k])=>{const e=document.getElementById(i);if(e)F[k]=e.value;});
     if(a==="nps-ac")F.ac_nota=v==="x"?(F.ac_nota==="x"?null:"x"):+v;else if(a==="nps-aj")F.ac_ajudou=+v;else F.ac_usou=v;const y=window.scrollY;render();window.scrollTo(0,y);return;}
