@@ -1447,7 +1447,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118061523";
+const APP_VER="20261118064614";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5021,20 +5021,24 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||(f.id!=="
   btn.disabled=false;
 });
 
+/* tipos de acao unicos para Acoes de Marketing e PGD do Conecta Revendas (o calendario e o mapa da safra usam a mesma lista) */
+const ACAO_TIPOS=[["Dia de campo","manhã de campo, tarde de campo"],["Evento","encontro de produtores, aniversário de loja, confraternização"],["Feira","exposição, feira agropecuária"],["Patrocínio","cota de evento, leilão"],["Palestra e treinamento","palestra técnica, workshop, treinamento da equipe do canal"],["Visita técnica","tour técnico, assistente técnico"],["Campo demonstrativo","área demonstrativa, bonificação de semente para teste"],["Ação em loja e revenda","PDV, fachada, dia de negócio"],["Mídia e conteúdo","campanha digital, webinar, live, rádio"],["Material e brindes","material POS/PDV, brindes"],["Incentivo e premiação","incentivo por saco vendido, viagem, prêmio, rebate, campanha de vendas"],["Outro",""]];
+const MK_TIPOS=ACAO_TIPOS.map(x=>x[0]);
+function acaoTipoNorm(t){const x=String(t||"").trim();if(MK_TIPOS.includes(x))return x;const n=x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  if(/demonstr|experiment/.test(n))return "Campo demonstrativo";if(/dia de campo|manha de campo|tarde de campo/.test(n))return "Dia de campo";if(/patroc|leilao/.test(n))return "Patrocínio";
+  if(/feira|expo/.test(n))return "Feira";if(/evento|encontro|confratern/.test(n))return "Evento";if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";
+  if(/visita|tour|\bat\b|assistente/.test(n))return "Visita técnica";if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";
+  if(/incentivo|premia|rebate|viagem|bonifica|campanha de venda/.test(n))return "Incentivo e premiação";if(/digital|webinar|live|midia|conteudo|radio/.test(n))return "Mídia e conteúdo";
+  if(/material|brinde|pos/.test(n))return "Material e brindes";return "Outro";}
 /* ===== Calendarios de acoes: canal (micro), Conecta Revendas (gerencial) e mapa da safra do marketing (macro) ===== */
 const CAL_SAFRA_INI="2026-07-01",CAL_SAFRA_FIM="2027-06-30";
 const CAL_PROG=["Conecta Revendas","Conecta RC","Cooperativas e revendas","Institucional","Inside Sales","Exportação"];
 const CAL_PROG_CLS={"Conecta Revendas":"cp-rv","Conecta RC":"cp-rc","Cooperativas e revendas":"cp-coop","Institucional":"cp-inst","Inside Sales":"cp-is","Exportação":"cp-exp","Marco do programa":"cp-marco"};
-const CAL_NAT=["Dia de campo","Feira e evento","Palestra e treinamento","Patrocínio","Ação em loja e revenda","Visita técnica","Campo demonstrativo","Incentivo e premiação","Mídia e conteúdo","Material e brindes","Outros"];
+const CAL_NAT=ACAO_TIPOS.map(x=>x[0]);
 const CAL_PGD_COR={"Aprovado":"verde","Em Análise":"amarelo","Reprovado":"vermelho"};
 const CAL_MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const CAL_MES_L=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-function calNat(t){t=String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
-  if(/demonstr|experiment/.test(t))return "Campo demonstrativo";if(/dia de campo/.test(t))return "Dia de campo";if(/patroc/.test(t))return "Patrocínio";
-  if(/feira|evento|show/.test(t))return "Feira e evento";if(/palestra|treinamento|educa/.test(t))return "Palestra e treinamento";
-  if(/loja|revenda|dia de neg/.test(t))return "Ação em loja e revenda";if(/visita/.test(t))return "Visita técnica";
-  if(/incentivo|premia|rebate|viagem|bonifica|campanha/.test(t))return "Incentivo e premiação";if(/midia|conteudo/.test(t))return "Mídia e conteúdo";
-  if(/material|brinde/.test(t))return "Material e brindes";return "Outros";}
+function calNat(t){return acaoTipoNorm(t);}
 const calIso=(y,m,d)=>`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 const calFimMes=(y,m)=>calIso(y,m,new Date(y,m,0).getDate());
 const calAnoSafra=m=>m>=7?2026:2027;
@@ -5060,7 +5064,7 @@ const calPeriodo=e=>e.prec!=="dia"&&e.prec!=="prazo"||calDias(e)>7;
 function calEvPgd(lista){const nomeC=id=>((S.canais||[]).find(c=>c.id===id)||{}).nome||"";
   return (lista||[]).map(a=>{const d=pgdDatas(a);const bf=(a.verba||"")==="Bônus de Performance";
     return {k:"p"+a.id,src:"pgd",id:a.id,canal_id:a.canal_id,canal:nomeC(a.canal_id),tit:(a.tipo||"Ação")+(a.cidade?" · "+a.cidade:""),desc:a.descricao,ini:d&&d.ini,fim:d&&d.fim,prec:d?d.prec:null,txt:a.data_acao,
-      nat:calNat(a.tipo+" "+(a.categoria||"")),prog:"Conecta Revendas",status:a.status||"Em Análise",cor:CAL_PGD_COR[a.status]||"amarelo",verba:bf?"Bônus de Performance":"IGDB",valor:+a.valor_igdb||0,a};});}
+      nat:calNat(a.tipo),prog:"Conecta Revendas",status:a.status||"Em Análise",cor:CAL_PGD_COR[a.status]||"amarelo",verba:bf?"Bônus de Performance":"IGDB",valor:+a.valor_igdb||0,a};});}
 function calMarcos(){const M=[["2026-09-30","Apuração do IGDB · 1º trimestre","Fechamento de julho a setembro. O IGDB do que foi pago no trimestre fica disponível para as ações aprovadas."],
   ["2026-12-31","Apuração do IGDB · 2º trimestre","Fechamento de outubro a dezembro."],["2027-03-31","Apuração do IGDB · 3º trimestre","Fechamento de janeiro a março."],
   ["2027-06-30","Fim da safra 26/27 · apuração do 4º trimestre","Último dia para faturar e pagar dentro da safra. Fecha o volume de híbridos que define o Bônus de Performance."]];
@@ -5546,9 +5550,9 @@ function vCanalEditor(c){
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
 function vNovaAcao(modo){
   const bp=modo==="bp";
-  const tipos=bp?["Incentivo por saco vendido","Premiação / Viagem","Premiação em dinheiro ou vale","Campanha de vendas da equipe","Outros"]:["Ação em Loja","AT - Assistente Técnico","Bonificação / Campo Demonstrativo","Campanha Digital","Dia de Campo","Encontro de Produtores","Evento/Feira","Leilão/Patrocínio","Material POS/PDV","Palestra Técnica","Treinamento Canal","Visita Técnica","Webinar/Live","Outros"];
+  const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Evento","Outro"].includes(x[0])):ACAO_TIPOS;
   return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"><h3 class="sec">${bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
-    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(t=>`<option>${t}</option>`).join("")}</select></div>
+    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(([t,h])=>`<option value="${esc(t)}">${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta">Os mesmos tipos das Ações de Marketing, para o calendário juntar tudo.</span></div>
     ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option>${t}</option>`).join("")}</select></div>`}
     <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
     <div><label for="na_valor">${bp?"Custo estimado (R$) *":"Valor de IGDB pedido (R$) *"}</label><input id="na_valor" inputmode="decimal" placeholder="0,00" style="max-width:220px"><span class="meta">${bp?"":"Quanto da verba de IGDB do canal esta ação vai usar."}</span></div>
@@ -6494,15 +6498,15 @@ function insumosCalc(){const L=[];const fT=v=>(Number(v)||0).toLocaleString("pt-
   const px=S.hh&&S.hh.tot&&S.hh.tot["25/26"]&&S.hh.tot["25/26"].kg?S.hh.tot["25/26"].rs/S.hh.tot["25/26"].kg:27;
   // 1. reativação por região
   if(S.hh){try{const H=hhCalc();H.porReg.slice(0,3).forEach(r=>{const gap=r.pk-r.hoje;if(gap<5000)return;const mul=r.pk?r.mul/r.pk:0;
-    L.push({k:"reat-"+r.reg,aba:"int-hh",area:"Histórico de híbridos",tipo:"Treinamento",titulo:`Reativar ${r.n} canais no ${r.reg}`,leitura:`${r.n} canais de ${r.ufs.join(", ")} já compraram ${fT(r.pk/1000)} de híbridos no seu pico e hoje compram ${fT(r.hoje/1000)}.${mul>=.4?` ${Math.round(mul*100)}% desse pico era Mulato II.`:""}`,acao:mul>=.4?"Rodada regional de conversão do Mulato II para Cayana e Sabiá: treinamento da equipe do canal e dia de campo, com lista por RTV.":"Visita dos RTVs com condição de retomada e convite ao Conecta Revendas; acompanhamento por campanha no CRM.",valor:gap/3*px,valTxt:`${fT(gap/3000)} (um terço do que se perdeu) ≈ ${fmtK0(gap/3*px)}`});});}catch(e){}}
+    L.push({k:"reat-"+r.reg,aba:"int-hh",area:"Histórico de híbridos",tipo:"Palestra e treinamento",titulo:`Reativar ${r.n} canais no ${r.reg}`,leitura:`${r.n} canais de ${r.ufs.join(", ")} já compraram ${fT(r.pk/1000)} de híbridos no seu pico e hoje compram ${fT(r.hoje/1000)}.${mul>=.4?` ${Math.round(mul*100)}% desse pico era Mulato II.`:""}`,acao:mul>=.4?"Rodada regional de conversão do Mulato II para Cayana e Sabiá: treinamento da equipe do canal e dia de campo, com lista por RTV.":"Visita dos RTVs com condição de retomada e convite ao Conecta Revendas; acompanhamento por campanha no CRM.",valor:gap/3*px,valTxt:`${fT(gap/3000)} (um terço do que se perdeu) ≈ ${fmtK0(gap/3*px)}`});});}catch(e){}}
   // 2. espaço livre do potencial
   if(S.potD&&S.potD.ufs){try{const D=S.potD,GH=D.hib||null,PJ=(GH&&GH.proj)||[{s:"26/27",hib:3607}];const P={ua:0.71,lot:1,ren:0.08,ilp:true,hs:0,hib:PJ[0].hib};const PC=potCalc(D,P);const V=S.potV||{};
     const rows=PC.rows.map(r=>{const v=V[r.uf]||{};const kv=(Number(v.kg_v)||0)/1000,ka=(Number(v.kg_a)||0)/1000;const H=PC.A?P.hib*r.A/PC.A:0;return {uf:r.uf,H,kv,ka,livre:Math.max(0,H-kv-ka),shr:H?kv/H:0};}).sort((a,b)=>b.livre-a.livre);
     rows.slice(0,2).forEach(r=>{if(r.livre<20)return;L.push({k:"pot-"+r.uf,aba:"int-pot",area:"Potencial de mercado",tipo:"Mídia e conteúdo",titulo:`Ganhar espaço em ${r.uf}`,leitura:`${r.uf} tem um mercado estimado de ${fT(r.H)} de híbridos por ano; a Barenbrug vendeu ${fT(r.kv)} na safra (${Math.round(r.shr*100)}%) e tem ${fT(r.ka)} em negociação.`,acao:`Campanha regional em ${r.uf}: mídia segmentada no Meta Ads, Inside Sales na base de leads do estado e prospecção de revendas para o Conecta.`,valor:r.livre*0.1*1000*px,valTxt:`10% do espaço livre (${fT(r.livre*0.1)}) ≈ ${fmtK0(r.livre*0.1*1000*px)}`});});}catch(e){}}
   // 3. Conecta: perto do bônus e IGDB parado
   if(S.canais&&S.canalRes){(S.canais||[]).forEach(c=>{let m;try{m=metricasCanal(c);}catch(e){return;}if(!m||!m.meta)return;
-    if(m.pAting!=null&&m.pAting>=.6&&m.pAting<.9&&m.pFalta90>0)L.push({k:"bf-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação com revenda",titulo:`${c.nome}: perto do Bônus de Performance`,leitura:`Está em ${Math.round(m.pAting*100)}% da meta de híbridos, contando o que está em negociação. Faltam ${fT(m.pFalta90/1000)} para chegar a 90% e liberar o bônus.`,acao:"Campanha de sell-out com o canal: incentivo à equipe de vendas da revenda e ação de geração de demanda na região, usando o IGDB.",valor:m.pFalta90*(m.pxH||px),valTxt:`${fT(m.pFalta90/1000)} ≈ ${fmtK0(m.pFalta90*(m.pxH||px))}`});
-    const parado=(m.igdb||0)-(m.aprovIG||0)-(m.analiseIG||0);if(parado>=15000)L.push({k:"igdb-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação com revenda",titulo:`${c.nome}: IGDB sem plano`,leitura:`O canal tem ${fmtK0(m.igdb)} de IGDB previsto e só ${fmtK0((m.aprovIG||0)+(m.analiseIG||0))} em ações de PGD.`,acao:"Montar o PGD com o canal: dia de campo, treinamento ou ação em loja, para a verba virar demanda de híbrido no campo.",valor:parado,valTxt:`${fmtK0(parado)} de verba para gerar demanda`});});}
+    if(m.pAting!=null&&m.pAting>=.6&&m.pAting<.9&&m.pFalta90>0)L.push({k:"bf-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação em loja e revenda",titulo:`${c.nome}: perto do Bônus de Performance`,leitura:`Está em ${Math.round(m.pAting*100)}% da meta de híbridos, contando o que está em negociação. Faltam ${fT(m.pFalta90/1000)} para chegar a 90% e liberar o bônus.`,acao:"Campanha de sell-out com o canal: incentivo à equipe de vendas da revenda e ação de geração de demanda na região, usando o IGDB.",valor:m.pFalta90*(m.pxH||px),valTxt:`${fT(m.pFalta90/1000)} ≈ ${fmtK0(m.pFalta90*(m.pxH||px))}`});
+    const parado=(m.igdb||0)-(m.aprovIG||0)-(m.analiseIG||0);if(parado>=15000)L.push({k:"igdb-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação em loja e revenda",titulo:`${c.nome}: IGDB sem plano`,leitura:`O canal tem ${fmtK0(m.igdb)} de IGDB previsto e só ${fmtK0((m.aprovIG||0)+(m.analiseIG||0))} em ações de PGD.`,acao:"Montar o PGD com o canal: dia de campo, treinamento ou ação em loja, para a verba virar demanda de híbrido no campo.",valor:parado,valTxt:`${fmtK0(parado)} de verba para gerar demanda`});});}
   // 4. preço dos concorrentes: maiores quedas entre as duas últimas rodadas
   if(S.potPr&&S.potPr.length){const g={};S.potPr.forEach(x=>{const k=x.marca+"|"+x.produto;(g[k]=g[k]||[]).push(x);});const al=[];
     Object.entries(g).forEach(([k,xs])=>{const rd=[...new Set(xs.map(x=>String(x.data_pesquisa).slice(0,10)))].sort();if(rd.length<2)return;const md=d=>{const a=xs.filter(x=>String(x.data_pesquisa).slice(0,10)===d).map(x=>+x.preco).filter(v=>v>0);return a.length?a.reduce((t,v)=>t+v,0)/a.length:null;};
@@ -7755,7 +7759,7 @@ const MK_STATUS=["Em análise","A fazer","Em andamento","Concluída","Cancelada"
 const MK_COLS=["Em análise","Pausada","A fazer","Em andamento","Concluída","Cancelada"];
 const MK_SIT_F=[["","Todas as situações"],["aprovadas","Aprovadas (verba aprovada ou paga)"],["analise","Em análise (provisionadas)"],["pausadas","Pausadas (provisionadas)"],["prov","Todas as provisionadas"],["pagas","Pagas"]];
 const mkSitOk=(a,k)=>!k||(k==="aprovadas"?(mkFin(a)==="Aprovada"||mkFin(a)==="Paga"):k==="analise"?a.status==="Em análise":k==="pausadas"?a.status==="Pausada":k==="prov"?mkFin(a)==="Provisionada":k==="pagas"?mkFin(a)==="Paga":true);
-const MK_TIPOS=["Evento","Dia de campo","Feira","Patrocínio","Mídia e conteúdo","Material e brindes","Ação com revenda","Treinamento","Outro"];
+
 const MK_MIMES=["image/jpeg","image/png","image/webp","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.ms-powerpoint","application/vnd.openxmlformats-officedocument.presentationml.presentation","text/plain"];
 const BD_LOCAIS=["Estoque UPI Guaíra","Escritório RP"];
 const BD_SAFRA="26/27";
@@ -7789,7 +7793,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()||ehAdmin()?[["acoes-mapa","Mapa da safra"]]:[]),["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()||ehAdmin()?[["acoes-mapa","Mapa da safra"]]:[]),["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -8081,7 +8085,7 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);if(!a||!a.canal_id)return;b.disabled=true;
   const aprov=["A fazer","Em andamento","Concluída"].includes(a.status)&&["Aprovada","Paga","Sem custo"].includes(mkFin(a));const bp=(a.fonte||"").startsWith("Bônus");
   const mes=a.inicio?["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"][+String(a.inicio).slice(5,7)-1]:"";
-  const reg={canal_id:a.canal_id,tipo:a.tipo==="Feira"||a.tipo==="Evento"?"Evento/Feira":a.tipo==="Dia de campo"?"Dia de Campo":"Outros",categoria:"Ação de Reconhecimento da Marca",cidade:a.local||"",descricao:("Ação de Marketing: "+a.titulo).slice(0,300),data_acao:mes,valor_igdb:mkCusto(a),status:aprov?"Aprovado":a.status==="Recusada"?"Reprovado":"Em Análise",verba:bp?"Bônus de Performance":"IGDB",mkt_acao_id:a.id};
+  const reg={canal_id:a.canal_id,tipo:acaoTipoNorm(a.tipo),categoria:"Ação de Reconhecimento da Marca",cidade:a.local||"",descricao:("Ação de Marketing: "+a.titulo).slice(0,300),data_acao:mes,valor_igdb:mkCusto(a),status:aprov?"Aprovado":a.status==="Recusada"?"Reprovado":"Em Análise",verba:bp?"Bônus de Performance":"IGDB",mkt_acao_id:a.id};
   let r;if(a.pgd_id){r=await sb.from("acoes_pgd").update(reg).eq("id",a.pgd_id).select("id").maybeSingle();}else{r=await sb.from("acoes_pgd").insert(reg).select("id").single();}
   if(r.error||!r.data){b.disabled=false;aviso("Não foi possível lançar no PGD do canal.");return;}
   if(!a.pgd_id)await mkSalva(a.id,{pgd_id:r.data.id});S.canais=null;await carregarCanais();render();aviso(a.pgd_id?"PGD do canal atualizado.":"Lançada no PGD do canal.");},true);
@@ -8452,7 +8456,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
   if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
-  if(S.pag==="acoes-gd"&&ehMkt()){if(S.isp==null&&!S.ispBusy&&!S.demo){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(S.pag==="acoes-gd")render();});}return vISGD();}
+  if(S.pag==="acoes-gd")S.pag="acoes-quadro"; /* plano de geracao de demanda retirado a pedido do Felipe (18/11) */
   if(S.pag==="acoes-raci"&&ehMkt())return vIntRaci();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
@@ -9428,7 +9432,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ra
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-gd","Geração de demanda"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -9534,7 +9538,7 @@ function renderApp(){
   }
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
-    if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-quadro";return render();}
     if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
     if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
@@ -9719,7 +9723,7 @@ document.addEventListener("click",async ev=>{
   if(a==="ise-del"){if(!ehAdmin())return;const {error}=await sb.from("int_insumos_manual").delete().eq("id",v);if(error){aviso("Não foi possível excluir.");return;}S.insMan=(S.insMan||[]).filter(x=>String(x.id)!==String(v));S.insDel=null;if(String(S.insEd)===String(v))S.insEd=null;render();aviso("Insumo excluído.");return;}
   if(a==="ise-arq"){if(!ehAdmin())return;const x=(S.insMan||[]).find(y=>String(y.id)===String(v));if(!x)return;const {data,error}=await sb.from("int_insumos_manual").update({ativo:!x.ativo,atualizado_em:new Date().toISOString()}).eq("id",v).select().maybeSingle();if(error||!data){aviso("Não foi possível alterar.");return;}S.insMan=S.insMan.map(y=>y.id===data.id?data:y);render();aviso(data.ativo?"Insumo publicado de novo.":"Insumo arquivado.");return;}
   if(a==="ins-acao"){if(!ehMkt())return;const x=(S.insCache||[]).find(y=>y.k===v);if(!x)return;b.disabled=true;const org="Inteligência · "+x.k;
-    const d={titulo:x.titulo,tipo:MK_TIPOS.includes(x.tipo)?x.tipo:"Outro",status:"Em análise",descricao:`${x.leitura}\n\nAção sugerida: ${x.acao}\n\nQuanto vale: ${x.valTxt}\n\nOrigem: Inteligência › ${x.area} (Insumos para o marketing, ${new Date().toLocaleDateString("pt-BR")}).`,valor_prev:0,valor_real:0,fin:"Provisionada",safra:mkSafra,origem:org};
+    const d={titulo:x.titulo,tipo:acaoTipoNorm(x.tipo),status:"Em análise",descricao:`${x.leitura}\n\nAção sugerida: ${x.acao}\n\nQuanto vale: ${x.valTxt}\n\nOrigem: Inteligência › ${x.area} (Insumos para o marketing, ${new Date().toLocaleDateString("pt-BR")}).`,valor_prev:0,valor_real:0,fin:"Provisionada",safra:mkSafra,origem:org};
     const {data,error}=await sb.from("mkt_acoes").insert(d).select("id,titulo,status,origem").maybeSingle();if(error||!data){b.disabled=false;aviso("Não foi possível criar a ação.");return;}
     S.insFeitos=S.insFeitos||{};S.insFeitos[org]=data;S.mk=null;render();aviso("Ação criada em Ações de Marketing, com status Em análise.");return;}
   if(a==="hh-inat"){if(!ehAdmin())return;S.hhInEd=v||null;const y=window.scrollY;render();window.scrollTo(0,y);const i=document.getElementById("hhi_m");if(i)i.focus();return;}
