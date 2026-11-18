@@ -3796,8 +3796,71 @@ function vMeuCRMPainel(X){
   <section class="bloco"><h2 class="sec">Precisa atualizar no CRM (${fmtN((r.sem_att_n||0))})</h2>
     <p class="sub" style="margin:0 0 6px">Negociações em aberto sem nenhuma atualização há mais de 15 dias, das mais antigas para as mais recentes.</p>
     ${des.length?`<div class="lista">${des.map(x=>neg(x,`${x.dias} dias sem atualização`+(x.venc?" · faturamento vencido":""))).join("")}</div>${(r.sem_att_n||0)>des.length?`<p class="dica" style="margin-top:8px">Mostrando as ${des.length} mais antigas de ${fmtN(r.sem_att_n)}.</p>`:""}`:`<div class="vazio">Tudo em dia.</div>`}
-  </section>`;
+  </section>
+  ${X?"":crmExtraHTML(alvo)}`;
 }
+/* ===== Meu CRM · leituras por persona (credito B2B, grupo economico, janela de plantio B2C, recompra e motivos de perda) ===== */
+const MESES_PT=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+async function carregarCrmX(alvo){S.crmX=S.crmX||{};if(S.crmX[alvo]!==undefined)return;S.crmX[alvo]=null;
+  try{const {data,error}=await sb.rpc("crm_meu_extra",{p_dono:alvo});S.crmX[alvo]=error?false:(data||false);}catch(e){S.crmX[alvo]=false;}render();}
+function cxJanela(d,saz){
+  const uf=String(d.uf||"").toUpperCase();const rows=(saz||[]).filter(r=>r.k&&r.k[0]===uf);if(!rows.length)return null;
+  const ks=Object.keys(d.cults||{});const cs=ks.map(k=>cultivarDe(k));const hib=cs.find(c=>ehHibrida(c));
+  const alvoC=hib||(cs.find(c=>/Ruzizi/.test(c))?"RUZI":cs.length?"MARANDU":"");
+  const nn=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase();
+  const row=rows.find(r=>alvoC&&nn(r.k[1]).includes(nn(alvoC).slice(0,4)))||rows.find(r=>ehHibrida(cultivarDe(r.k[1])))||rows[0];
+  const m=row.m||[];const hoje=new Date();hoje.setHours(0,0,0,0);const cur=hoje.getMonth();const on=i=>!!m[(i+12)%12];
+  const cult=(row.k[1]||"").replace(/\s*\(.*\)/,"");const c0=cult.charAt(0)+cult.slice(1).toLowerCase();
+  const fat=d.fat?new Date(String(d.fat).slice(0,10)+"T00:00:00"):null;
+  if(on(cur)){let e=cur;let n=0;while(on(e+1)&&n<11){e++;n++;}const fimM=e%12,fimA=hoje.getFullYear()+(e>11?1:0);const fim=new Date(fimA,fimM+1,0);
+    const dias=Math.round((fim-hoje)/864e5);const depois=fat&&fat>fim;const ideal=/ideal/i.test(m[cur]);
+    return {st:depois?"tarde":dias<=45?"fecha":"aberta",ord:depois?0:dias<=45?1:3,dias,fim,cult:c0,ideal,
+      txt:depois?`fatura em ${rbData(d.fat)}, depois do fim da janela (${MESES_PT[fimM]})`:`janela ${ideal?"ideal":"possível"} até o fim de ${MESES_PT[fimM]} · ${dias} dias`};}
+  let s=cur,n=0;while(!on(s)&&n<12){s++;n++;}if(n>=12)return {st:"sem",ord:4,cult:c0,txt:"sem janela marcada no calendário"};
+  return {st:"fora",ord:2,cult:c0,txt:`fora da janela agora · a próxima abre em ${MESES_PT[s%12]}`};}
+function crmExtraHTML(alvo){
+  if(!alvo)return "";const X=(S.crmX||{})[alvo];
+  if(X===undefined){carregarCrmX(alvo);return `<section class="bloco"><div class="carregando">Carregando crédito, grupos, janela de plantio, recompra e perdas…</div></section>`;}
+  if(X===null)return `<section class="bloco"><div class="carregando">Carregando crédito, grupos, janela de plantio, recompra e perdas…</div></section>`;
+  if(!X)return "";
+  const fmtN=n=>Math.round(Number(n)||0).toLocaleString("pt-BR"),K=v=>"R$ "+fmtN(v);const out=[];
+  // 1. termometro de credito B2B
+  const C=X.credito||[];
+  if(C.length){const nivel=c=>(+c.fin_vencido>0||+c.venc_fat>0)?["vermelho","Atenção"]:/(1[2-9]\d|[9]\d)\s*dias|safra|anual/i.test(c.pag||"")?["amarelo","Prazo longo"]:["verde","Em dia"];
+    const al=C.filter(c=>nivel(c)[0]==="vermelho").length;
+    out.push(`<section class="bloco"><h2 class="sec">Termômetro de crédito dos canais (${C.length})${inf("Clientes B2B do seu painel. Vermelho: faturamento vencido no CRM ou títulos vencidos no financeiro do Conecta. Amarelo: prazo de 90 dias ou mais. A forma e o prazo de pagamento são os mais usados nas vendas da safra.")}</h2>
+      <p class="sub" style="margin:0 0 6px">${al?`<strong style="color:#c0392b">${al} ${al===1?"canal pede":"canais pedem"} atenção antes de uma nova venda.</strong> `:""}Antes de fechar uma venda grande ou estender prazo, confira o crédito com o financeiro. O limite de crédito de cada cliente não está no CRM: entra aqui quando o financeiro enviar a planilha de limites.</p>
+      <div class="tab"><table class="sim-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Prazo usual</th><th class="val">Comprado na safra</th><th class="val">Em aberto</th><th class="val">Faturamento vencido</th><th class="val">Títulos (financeiro)</th></tr></thead><tbody>
+      ${C.slice(0,40).map(c=>{const nv=nivel(c);return `<tr><td><strong>${esc(c.nome||"")}</strong>${c.uf?`<br><span class="meta">${esc(c.uf)}</span>`:""}${crmLnk(c.did)?`<br>${crmLnk(c.did)}`:""}</td><td>${stTag(nv[1],nv[0])}</td><td>${esc(c.pag||"—")}${c.forma?`<br><span class="meta">${esc(c.forma)}</span>`:""}</td><td class="val">${K(c.vend)}</td><td class="val">${K(c.aberto)}</td><td class="val">${+c.venc_fat?`<strong style="color:#c0392b">${K(c.venc_fat)}</strong><br><span class="meta">${c.venc_n} neg.</span>`:"—"}</td><td class="val">${c.canal?(c.fin_vencido!=null?`${+c.fin_vencido?`<strong style="color:#c0392b">vencido ${K(c.fin_vencido)}</strong>`:"nada vencido"}<br><span class="meta">a vencer ${K(c.fin_aberto)} · ${rbData(c.fin_em)}</span>`:"—"):`<span class="meta">fora do Conecta</span>`}</td></tr>`;}).join("")}</tbody></table></div></section>`);}
+  // 2. grupo economico
+  const G=X.grupos||[];
+  if(G.length)out.push(`<section class="bloco"><h2 class="sec">Grupos econômicos: o tamanho real do canal (${G.length})${inf("Soma de todas as empresas e filiais ligadas ao mesmo canal no Conecta, com as compras de todos os vendedores da Barenbrug na safra. Ao lado, a parte que passa pelo seu painel.")}</h2>
+    <p class="sub" style="margin:0 0 6px">Um canal com várias filiais compra por mais de um CNPJ e às vezes por mais de um vendedor. Olhe o grupo inteiro antes de negociar meta, prazo e exclusividade regional.</p>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Grupo</th><th class="val">Empresas com negócio</th><th class="val">Filiais cadastradas</th><th class="val">Grupo comprado</th><th class="val">Grupo em aberto</th><th class="val">Pelo seu painel</th></tr></thead><tbody>
+    ${G.map(g=>{const tot=(+g.vend_tot||0)+(+g.ab_tot||0),meu=(+g.vend_meu||0)+(+g.ab_meu||0);return `<tr><td><strong>${esc(g.canal)}</strong>${g.tier?`<br><span class="meta">${esc(g.tier)}</span>`:""}</td><td class="val">${g.orgs_n}</td><td class="val">${g.filiais_n||"—"}</td><td class="val">${K(g.vend_tot)}</td><td class="val">${K(g.ab_tot)}</td><td class="val">${K(meu)}<br><span class="meta">${tot?Math.round(100*meu/tot)+"% do grupo":""}</span></td></tr>`;}).join("")}</tbody></table></div></section>`);
+  // 3. janela de plantio B2C
+  const P=(X.plantio||[]).map(d=>({d,j:cxJanela(d,X.saz)})).filter(x=>x.j);
+  if(P.length){P.sort((a,b)=>a.j.ord-b.j.ord||(a.j.dias??999)-(b.j.dias??999)||(+b.d.rs)-(+a.d.rs));const cor={tarde:"vermelho",fecha:"amarelo",aberta:"verde",fora:"cinza",sem:"cinza"},rot={tarde:"Fatura depois da janela",fecha:"Janela fechando",aberta:"Na janela",fora:"Fora da janela",sem:"Sem calendário"};
+    const urg=P.filter(x=>x.j.st==="tarde"||x.j.st==="fecha").length;
+    out.push(`<section class="bloco"><h2 class="sec">Produtor x janela de plantio (${P.length})${inf("Negociações B2C em aberto cruzadas com o calendário de plantio da UF e da cultivar (Inteligência, calendário de plantio). Se o produtor perder a janela, a venda costuma ir para a próxima safra.")}</h2>
+      <p class="sub" style="margin:0 0 6px">${urg?`<strong>${urg} ${urg===1?"negociação está":"negociações estão"} perto de perder a época.</strong> `:""}Priorize quem está com a janela fechando e quem vai faturar depois dela: antecipe o faturamento ou confirme se o plantio fica para o ano que vem.</p>
+      <div class="lista">${P.slice(0,40).map(({d,j})=>`<div class="neg"><div class="l1"><span>${esc(d.nome)}</span><span>${K(d.rs)}</span></div><span class="meta">${stTag(rot[j.st],cor[j.st])} ${esc(j.cult)} em ${esc(d.uf)}${d.cidade?" · "+esc(d.cidade):""} · ${esc(j.txt)}</span>${crmLnk(d.did)}</div>`).join("")}</div>${P.length>40?`<p class="dica">Mostrando 40 de ${P.length}.</p>`:""}</section>`);}
+  // 4. recompra
+  const R=X.recompra||[];
+  if(R.length)out.push(`<section class="bloco"><h2 class="sec">Compraram na safra passada e sumiram (${X.recompra_n||R.length})${inf("Clientes com compra ganha na safra 25/26 no seu nome que não têm nenhuma negociação nesta safra no CRM, com nenhum vendedor.")}</h2>
+    <p class="sub" style="margin:0 0 6px">${K(X.recompra_rs)} comprados na safra 25/26 por clientes que ainda não voltaram. Ligue antes da janela de plantio da região${X.equipe_is?". Lista do time de Inside Sales.":"."}</p>
+    <div class="lista">${R.slice(0,40).map(r=>`<div class="neg"><div class="l1"><span>${esc(r.nome||"")}</span><span>${K(r.rs)}</span></div><span class="meta">${esc([r.cidade,r.uf].filter(Boolean).join("/"))}${r.seg?" · "+esc(r.seg):""}${r.kg_h?" · "+fmtN(r.kg_h)+" kg de híbrido":""}${r.kg_c?" · "+fmtN(r.kg_c)+" kg convencional":""}${r.ult?" · último faturamento "+rbData(r.ult):""}${r.rep?" · "+esc(r.rep):""}</span></div>`).join("")}</div>${R.length>40?`<p class="dica">Mostrando os 40 maiores de ${R.length}.</p>`:""}</section>`);
+  // 5. motivos de perda
+  const M=X.perdas||[];
+  if(M.length){const tn=+X.perdas_n||1,mx=Math.max(...M.map(x=>+x.n));
+    out.push(`<section class="bloco"><h2 class="sec">Por que você perdeu nesta safra (${X.perdas_n})${inf("Negociações marcadas como perdidas no CRM desde julho de 2026, pelo motivo de perda registrado. Atualiza duas vezes por dia.")}</h2>
+      <p class="sub" style="margin:0 0 6px">${K(X.perdas_rs)} em negociações perdidas. O motivo que mais aparece é <strong>${esc(M[0].motivo)}</strong> (${Math.round(100*M[0].n/tn)}%). Use isso para treinar o argumento e para pedir apoio ao marketing na objeção que mais pesa.</p>
+      ${M.map(x=>`<div class="mesbar"><span>${esc(x.motivo)}</span><span class="trilho"><i style="width:${Math.round(100*x.n/mx)}%"></i></span><span class="v"><strong>${x.n}</strong> <span class="meta">· ${Math.round(100*x.n/tn)}% · ${K(x.rs)}</span></span></div>`).join("")}
+      ${X.perdas_em?`<p class="dica" style="margin-top:8px">Lido do CRM em ${esc(fmtDataHora(X.perdas_em))}.</p>`:""}</section>`);}
+  else if(X.perdas_em)out.push(`<section class="bloco"><h2 class="sec">Por que você perdeu nesta safra</h2><div class="vazio">Nenhuma negociação perdida registrada no CRM nesta safra.</div></section>`);
+  return out.join("");
+}
+
 function subnavSimples(nome){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <span class="secao-nome">${esc(nome)}</span></div></div>`;
@@ -8918,7 +8981,8 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Verificação em duas etapas (MFA) disponível e exigível","O administrador pode exigir MFA por pessoa; quem é exigido não acessa dados sem o segundo fator."],
     [mfa>=0.9?ok:mfa>=0.5?par:pen,"Cobertura de MFA nos usuários ativos",`${L.com_mfa} de ${L.ativos} usuários ativos com MFA (${Math.round(mfa*100)}%). Meta: 100%.`],
     [ok,"Troca de senha obrigatória no primeiro acesso","Senha provisória criada pelo administrador precisa ser trocada antes de qualquer uso."],
-    [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Ainda desligado. Liga no painel do Supabase: Authentication, configurações de senha, Leaked password protection."]]},
+    [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Ainda desligado. Liga no painel do Supabase: Authentication, configurações de senha, Leaked password protection."],
+    [pen,"Proteção contra robôs no login","O Supabase já limita tentativas repetidas de login. Falta o CAPTCHA invisível (Cloudflare Turnstile) na tela de entrada e o Bot Fight Mode do Cloudflare no domínio. Passos: criar a chave do Turnstile no Cloudflare, ligar CAPTCHA protection no Supabase (Authentication) e colocar o widget no login do portal."]]},
   {k:"Segredos e integrações",w:15,ref:"OWASP Top 10 2021 A02 e A05",it:[
     [ok,"Tokens só no cofre do servidor","O token do RD Station CRM e as chaves de serviço ficam em secrets do Supabase. Nunca chegam ao navegador nem ao código."],
     [ok,"Funções de servidor exigem login","8 de 8 Edge Functions com verificação de JWT ligada; as que mexem no CRM ou em usuários aceitam só administrador."],
@@ -9630,7 +9694,7 @@ document.addEventListener("click",async ev=>{
   if(a==="mapa-f"){const i=v.indexOf("|");const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F[v.slice(0,i)]=v.slice(i+1);S.mapaPin=null;render();return;}
   if(a==="mapa-uf"){const F=S.mapaF||(S.mapaF={st:"Todas",grp:"Todos",rep:"Todos",dono:"Todos",uf:""});F.uf=F.uf===v?"":v;S.mapaPin=null;render();return;}
   if(a==="mapa-pin"){S.mapaPin=S.mapaPin===v?null:(v||null);render();if(S.mapaPin){const e=document.getElementById("mapa_pin");if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"});}return;}
-  if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.mapa=undefined;S.leadsCache=null;S.crmDonos=null;render();return;}
+  if(a==="crm-atualizar"){if(!ehAdmin())return;b.disabled=true;const prog=t=>{S.crmProg=t;const e=document.getElementById("crm_prog");if(e)e.textContent=t;};const res=await atualizarCRM(prog);S.crmProg="Atualizado: "+res.join(" · ");S.crm=null;S.crmX={};S.mapa=undefined;S.leadsCache=null;S.crmDonos=null;render();return;}
   if(a==="pgd-filtro"){S.pgdFiltro=v;render();return;}
   if(a==="rv-vis"){S.rvVis=v;render();return;}
   if(a==="rv-cen"){S.rvCen=v;render();return;}
