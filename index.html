@@ -1208,7 +1208,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117215818";
+const APP_VER="20261117220032";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3362,7 +3362,7 @@ function vMercado(){
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Painel de gerenciamento">${GT_ABAS.map(([k,t])=>{const cur=S.pag===k||(S.pag==="usuario"&&(S.gtVolta||"gestao-pessoas")===k);const n=k==="gestao-cad"?(S.solic||[]).length:0;return `<button data-a="pag" data-v="${k}" ${cur?'aria-current="page"':""}>${t}${n?` <span class="badge">${n}</span>`:""}</button>`;}).join("")}</nav>
+    <nav class="nav" aria-label="Painel de gerenciamento">${GT_ABAS.filter(x=>x[0]!=="gestao-nps"||ehAdmin()).map(([k,t])=>{const cur=S.pag===k||(S.pag==="usuario"&&(S.gtVolta||"gestao-pessoas")===k);const n=k==="gestao-cad"?(S.solic||[]).length:0;return `<button data-a="pag" data-v="${k}" ${cur?'aria-current="page"':""}>${t}${n?` <span class="badge">${n}</span>`:""}</button>`;}).join("")}</nav>
     <span class="secao-nome">Painel de gerenciamento</span></div></div>`;
 }
 function heroHub(){
@@ -3382,7 +3382,7 @@ function vHub(){
     if(!x.ativo)return `<button class="area-b" disabled><span>${x.nome}</span><span class="meta">em breve</span></button>`;
     if(bloq&&!secaoLiberada(x.id))return `<button class="area-b" disabled title="Conclua os cursos obrigatórios para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
-  return `${banner}<div class="home">
+  return `${banner}${npsCard()}<div class="home">
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
@@ -4937,7 +4937,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","Pesquisa NPS"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC","Assessor de Vendas Digital"],"Representantes comerciais e assessores de vendas digitais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -4947,9 +4947,9 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução"}[S.pag]||"Painel de gerenciamento";
+  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"Pesquisa NPS do portal"}[S.pag]||"Painel de gerenciamento";
   const sub={"gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
-  const corpo=S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
+  const corpo=S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
 function gtHome(R){
@@ -8131,10 +8131,41 @@ function vSeguranca(){
    <div class="dir-card"><strong>Quem pode ver dado pessoal?</strong><p>Contato de lead só aparece por clique, para quem tem a área e a UF, e cada abertura fica registrada com quem e quando.</p></div>
    <div class="dir-card"><strong>Tem backup?</strong><p>Depende do plano do Supabase: o Pro faz backup diário; o gratuito não tem backup restaurável. Está nas pendências para confirmar.</p></div></div></section>
   <p class="precos-nota">Fontes: indicadores ao vivo do banco do portal (função seg_status, só administrador); verificador de segurança do Supabase; configuração das Edge Functions e varredura do repositório em ${SEG_VERIF}. Referências: OWASP ASVS 4.0.3, OWASP Top 10 2021, NIST SP 800-63B, Supabase Production Checklist, CIS Controls v8, Lei 13.709/2018.</p>`;}
+
+/* ---------- pesquisa NPS do portal ---------- */
+function npsLsGet(){try{return +localStorage.getItem("nps_adiar")||0;}catch(e){return 0;}}
+function npsLsSet(){try{localStorage.setItem("nps_adiar",String(Date.now()));}catch(e){}}
+async function carregarNpsUlt(){if(S.npsBusy||S.demo)return;S.npsBusy=true;try{const {data}=await sb.from("nps_respostas").select("criado_em").eq("user_id",S.user.id).order("criado_em",{ascending:false}).limit(1);S.npsUlt=data&&data[0]?data[0].criado_em:null;}catch(e){S.npsUlt=null;}S.npsBusy=false;if(!S.secao&&S.pag==="hub")render();}
+function npsMostrar(){if(!S.user||S.demo||!S.profile)return false;if(S.npsUlt===undefined){carregarNpsUlt();return false;}
+  const d=S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):Date.now();if(Date.now()-d<7*864e5)return false;
+  if(S.npsUlt&&Date.now()-Date.parse(S.npsUlt)<90*864e5)return false;if(Date.now()-npsLsGet()<7*864e5)return false;return true;}
+function npsCard(){if(!npsMostrar())return "";return `<div class="aviso-est" role="note" style="margin:0"><strong>Como está sendo o Portal Conecta para você?</strong><p>Leva 1 minuto. Sua nota e suas sugestões ajudam o Marketing a melhorar o portal.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="nps-abrir">Responder</button><button type="button" class="link" data-a="nps-adiar">agora não</button></div></div>`;}
+function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua resposta foi registrada. O Marketing lê cada sugestão.</p><div class="acoes"><button class="btn" data-a="inicio">Voltar ao início</button></div></section>`;
+  const areas=["Academia de Híbridos","Conecta RC","Conecta Revendas","Tabela de preços","Enxoval de Marketing","LeadsBaren","Inside Sales","Meu CRM","Mercado","Inteligência","Ações de Marketing","Brindes","Mensagens e feed","Outra"];
+  return `<div><button type="button" class="link" data-a="inicio">‹ Início</button><h1 class="titulo">Avalie o Portal Conecta</h1><p class="sub">Pesquisa rápida para o Marketing saber o que está funcionando e o que melhorar. Sua resposta fica registrada com o seu nome, para podermos voltar a falar com você se precisar.</p></div>
+  <form class="form-card" id="f-nps" style="display:grid;gap:14px">
+   <div><label>De 0 a 10, quanto você recomendaria o Portal Conecta a um colega? *</label><div class="nps-esc" role="radiogroup" aria-label="Nota de 0 a 10" style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:6px">${[...Array(11).keys()].map(n=>`<button type="button" class="btn ${F.nota===n?"":"sec"}" role="radio" aria-checked="${F.nota===n}" data-a="nps-nota" data-v="${n}" style="padding:8px 0;min-width:0">${n}</button>`).join("")}</div><div class="meta" style="display:flex;justify-content:space-between;margin-top:2px"><span>Nada provável</span><span>Muito provável</span></div></div>
+   <div><label for="nps_m">O que mais pesou na sua nota?</label><textarea id="nps_m" rows="3" maxlength="1500" placeholder="O que você mais usa, do que gosta, o que atrapalha">${esc(F.motivo||"")}</textarea></div>
+   <div><label for="nps_s">Que melhoria ou novidade você sugere?</label><textarea id="nps_s" rows="4" maxlength="2000" placeholder="Funções, conteúdos, materiais, o que facilitaria o seu dia a dia">${esc(F.sugestao||"")}</textarea></div>
+   <div><label for="nps_a">Qual área do portal você mais usa?</label><select id="nps_a"><option value="">Escolha</option>${areas.map(a=>`<option ${F.area===a?"selected":""}>${a}</option>`).join("")}</select></div>
+   ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+   <div class="acoes"><button class="btn" type="submit">Enviar</button></div></form>`;}
+async function carregarNpsRes(){if(S.npsResBusy)return;S.npsResBusy=true;try{const {data,error}=await sb.rpc("nps_resultados");S.npsRes=error?[]:(data||[]);}catch(e){S.npsRes=[];}S.npsResBusy=false;render();}
+function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</div>`;if(S.npsRes===undefined){carregarNpsRes();return `<div class="carregando">Carregando as respostas…</div>`;}
+  const R=S.npsRes||[];const calc=L=>{const n=L.length,p=L.filter(x=>x.nota>=9).length,d=L.filter(x=>x.nota<=6).length;return {n,p,d,ne:n-p-d,nps:n?Math.round((p-d)/n*100):null,med:n?(L.reduce((t,x)=>t+x.nota,0)/n):null};};
+  const G=calc(R);const por=k=>{const o={};R.forEach(x=>{const v=x[k]||"—";(o[v]=o[v]||[]).push(x);});return Object.entries(o).map(([v,L])=>({v,...calc(L)})).sort((a,b)=>b.n-a.n);};
+  const mes={};R.forEach(x=>{const m=String(x.em).slice(0,7);(mes[m]=mes[m]||[]).push(x);});
+  const tag=n=>n>=9?["Promotor","seg-ok"]:n>=7?["Neutro","seg-par"]:["Detrator","seg-pen"];
+  const tb=(t,L)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Respostas</th><th class="val">NPS</th><th class="val">Nota média</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.v)}</td><td class="val">${x.n}</td><td class="val"><strong>${x.nps}</strong></td><td class="val">${x.med.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td></tr>`).join("")}</tbody></table></div></div>`;
+  return `<section class="bloco"><h2 class="sec">Pesquisa NPS do portal</h2><p class="sub" style="margin:0 0 10px">A pesquisa aparece no início do portal para quem tem acesso há mais de 7 dias e não respondeu nos últimos 90 dias; qualquer pessoa também responde pelo rodapé, em "Avaliar o portal". NPS = % de promotores (9 e 10) menos % de detratores (0 a 6).</p>
+   <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>NPS</span><strong>${G.nps==null?"—":G.nps}</strong><span class="meta">${G.n} respostas</span></div><div class="metric"><span>Promotores</span><strong>${G.p}</strong><span class="meta">${G.n?Math.round(G.p/G.n*100):0}%</span></div><div class="metric"><span>Neutros</span><strong>${G.ne}</strong><span class="meta">${G.n?Math.round(G.ne/G.n*100):0}%</span></div><div class="metric"><span>Detratores</span><strong>${G.d}</strong><span class="meta">${G.n?Math.round(G.d/G.n*100):0}%</span></div></div>
+   ${R.length?`<div class="int-2" style="margin-top:10px">${tb("Por perfil",por("perfil"))}${tb("Pela área que mais usa",por("area"))}</div>
+   ${tb("Por mês",Object.entries(mes).sort().map(([v,L])=>({v:finMesNome(v),...calc(L)})))}
+   <h3 class="pgd-h" style="margin-top:12px">Respostas, sugestões e motivos</h3><div class="lista">${R.map(x=>{const [t,c]=tag(x.nota);return `<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area?" · usa mais: "+esc(x.area):""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}</div><span class="seg-st ${c}" style="white-space:nowrap">${x.nota} · ${t}</span></div>`;}).join("")}</div>`:`<div class="vazio">Ainda sem respostas.</div>`}</section>`;}
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
-  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
+  f.innerHTML=`<div class="rodape-in"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
 function render(){renderApp();document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
@@ -8189,6 +8220,7 @@ function renderApp(){
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"&&S.secao!=="mensagens"){const P=cursosPend();if(!secaoLiberada(S.secao)){const c=P[0]||CURSOS_OBRIG[0];S.secao=c[3];S.pag=c[4];}else if(PAGS_CURSO[S.secao]&&!PAGS_CURSO[S.secao].includes(S.pag))S.pag=PAGS_CURSO[S.secao][0];}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
+  if(S.pag==="nps"){app.innerHTML=cabecalho()+`<main>${vNps()}</main>`;return;}
   if(S.pag==="seguranca"){if(!ehAdmin()){S.pag="hub";}else{app.innerHTML=cabecalho()+`<main>${vSeguranca()}</main>`;return;}}
   if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
   talvezTour(S.secao);
@@ -8422,6 +8454,9 @@ document.addEventListener("click",async ev=>{
     S.insFeitos=S.insFeitos||{};S.insFeitos[org]=data;S.mk=null;render();aviso("Ação criada em Ações de Marketing, com status Em análise.");return;}
   if(a==="hh-inat"){if(!ehAdmin())return;S.hhInEd=v||null;const y=window.scrollY;render();window.scrollTo(0,y);const i=document.getElementById("hhi_m");if(i)i.focus();return;}
   if(a==="hh-reativar"){if(!ehAdmin())return;const {error}=await sb.from("cliente_inativo").delete().eq("nome_erp",v);if(error){aviso("Não foi possível alterar.");return;}delete (S.hhInat||{})[v];S.insOk=false;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Canal voltou para a análise de reativação.");return;}
+  if(a==="nps-abrir"){S.secao=null;S.pag="nps";S.npsOk=false;S.npsF={};S._erro=null;render();window.scrollTo(0,0);return;}
+  if(a==="nps-adiar"){npsLsSet();render();return;}
+  if(a==="nps-nota"){const F=S.npsF||(S.npsF={});const m=document.getElementById("nps_m"),g=document.getElementById("nps_s"),ar=document.getElementById("nps_a");if(m)F.motivo=m.value;if(g)F.sugestao=g.value;if(ar)F.area=ar.value;F.nota=+v;const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
@@ -8657,6 +8692,10 @@ document.addEventListener("submit",async ev=>{
     if(error){aviso("Erro ao salvar a ação.");render();return;}
     S.canais=null;render();aviso("Ação atualizada.");return;
   }
+  if(f.id==="f-nps"){const F=S.npsF||{};F.motivo=f.querySelector("#nps_m").value.trim();F.sugestao=f.querySelector("#nps_s").value.trim();F.area=f.querySelector("#nps_a").value;if(F.nota==null){S._erro="Escolha uma nota de 0 a 10.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
+    const {error}=await sb.from("nps_respostas").insert({user_id:S.user.id,nota:F.nota,motivo:F.motivo||null,sugestao:F.sugestao||null,area:F.area||null,perfil:S.perfil||null});
+    if(error){S._erro="Não foi possível enviar. Tente de novo.";render();return;}S._erro=null;S.npsOk=true;S.npsUlt=new Date().toISOString();S.npsRes=undefined;render();window.scrollTo(0,0);return;}
   if(f.id==="f-hh-inat"){if(!ehAdmin())return;const n=f.dataset.v,m=f.querySelector("#hhi_m").value.trim();if(!m){aviso("Informe o motivo.");return;}const {data,error}=await sb.from("cliente_inativo").upsert({nome_erp:n,motivo:m,inativado_em:new Date().toISOString()},{onConflict:"nome_erp"}).select().maybeSingle();if(error||!data){aviso("Não foi possível inativar.");return;}S.hhInat=S.hhInat||{};S.hhInat[n]=data;S.hhInEd=null;S.insOk=false;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Canal inativado: sai da lista de reativação.");return;}
   if(f.id==="f-canal"){
     const elCom=f.querySelector("#c_com");const comId=elCom&&!elCom.disabled?(elCom.value||null):undefined;const comNome=comId?((S.rvComerciais||[]).find(x=>x.id===comId)||{}).nome:null;
