@@ -913,6 +913,8 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .mk-ev.cal-prazo{box-shadow:inset 0 0 0 2px #c0392b}
 .cal-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}.cal-leg{display:flex;flex-wrap:wrap;gap:12px}
 .cp-rv{background:#ffdb00;color:#1d1d1b}.cp-rc{background:#2e8b57;color:#fff}.cp-coop{background:#e67e22;color:#fff}.cp-inst{background:#003c71;color:#fff}.cp-is{background:#8e44ad;color:#fff}.cp-exp{background:#16a085;color:#fff}.cp-marco{background:#d7dbe0;color:#1d1d1b}
+.pir-q{border:1px solid var(--linha,#d7dbe0);border-radius:10px;padding:10px 12px;margin:0}.pir-q legend{font-weight:600;padding:0 4px}.pir-ops{display:grid;gap:6px;margin-top:6px}
+.pir-op{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--linha,#d7dbe0);cursor:pointer;font-weight:400}.pir-op.sel{border-color:var(--azul,#003c71);box-shadow:inset 0 0 0 1px var(--azul,#003c71)}.pir-det{margin-top:8px}
 </style>
 </head>
 <body>
@@ -1447,7 +1449,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118082851";
+const APP_VER="20261118083808";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5957,7 +5959,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","Pesquisa NPS"],["gestao-app","App e comunicados"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-pir","Perfil dos RCs"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","Pesquisa NPS"],["gestao-app","App e comunicados"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC","Assessor de Vendas Digital"],"Representantes comerciais e assessores de vendas digitais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -5967,9 +5969,9 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"Pesquisa NPS do portal","gestao-app":"Portal instalado, notificações e comunicados"}[S.pag]||"Painel de gerenciamento";
-  const sub={"gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
-  const corpo=S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
+  const tit={"gestao-pir":"Perfil dos RCs","gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"Pesquisa NPS do portal","gestao-app":"Portal instalado, notificações e comunicados"}[S.pag]||"Painel de gerenciamento";
+  const sub={"gestao-pir":"Cada RC responde, no primeiro acesso, 10 perguntas de escolher baseadas no scorecard de Perfil Ideal de Representante. A formação vem do cadastro e o comportamental é avaliado aqui pela Barenbrug.","gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
+  const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
 function gtHome(R){
@@ -6075,6 +6077,78 @@ async function comRCGravar(tipo,id,chave){
     S.mrc=null;return true;}
   const {data,error}=await sb.from("profiles").update({comercial_resp:chave}).eq("id",id).select("id,comercial_resp").maybeSingle();
   if(error||!data||(data.comercial_resp||null)!==chave)return false;const x=(S.equipe||[]).find(q=>q.id===id);if(x)x.comercial_resp=chave;return true;}
+/* ===== Perfil do representante (PIR): o RC responde no primeiro acesso; a Barenbrug avalia o comportamental ===== */
+/* cada opcao: [texto, nota 1-5, alerta]. Pesos e blocos seguem o scorecard PIR da consultoria (100 pontos). */
+const PIR_Q=[
+  {k:"dedicacao",b:"Estrutural",p:10,c:"Estar à frente do negócio",l:"No dia a dia, quem conduz as vendas da sua representação?",o:[["Eu mesmo, em tempo integral",5],["Eu, junto com sócio ou equipe",4],["Divido com outra atividade principal",2],["Outra pessoa conduz; eu acompanho de longe",1]]},
+  {k:"equipe",b:"Estrutural",p:0,c:"Estrutura",l:"Quantas pessoas vendem com você?",o:[["Só eu",3],["1 ou 2 vendedores",4],["3 ou mais vendedores",5]]},
+  {k:"rampup",b:"Estrutural",p:0,c:"Capacidade para começar",l:"Nos primeiros meses, você consegue bancar visitas, amostras e dias de campo?",o:[["Sim, já tenho estrutura e caixa para isso",5],["Sim, com o apoio do programa da Barenbrug",3],["Hoje não teria como",1,"Sem fôlego financeiro para o início"]]},
+  {k:"experiencia",b:"Comercial",p:10,c:"Histórico de vendas técnicas",l:"Há quanto tempo você vende produtos técnicos para o campo (sementes, insumos, nutrição, genética)?",o:[["Mais de 10 anos",5],["De 5 a 10 anos",4],["De 2 a 5 anos",3],["Menos de 2 anos",2],["Nunca vendi produto técnico",1,"Sem experiência em venda técnica"]]},
+  {k:"decisor",b:"Comercial",p:10,c:"Acesso ao decisor",l:"Com quem você negocia na maioria das vendas?",o:[["Direto com o dono ou o gerente da fazenda",5],["Com o técnico ou o comprador da fazenda",3],["Principalmente pela revenda",2]]},
+  {k:"carteira",b:"Comercial",p:20,c:"Carteira ativa",l:"Quantos clientes compraram de você nos últimos 12 meses?",o:[["Mais de 100",5],["De 50 a 100",4],["De 20 a 49",3],["De 5 a 19",2],["Menos de 5",1]]},
+  {k:"portfolio",b:"Comercial",p:0,c:"Portfólio",l:"Que tipo de produto você mais vende hoje?",o:[["Alta tecnologia: híbridos, genética, nutrição, insumos premium",5],["Mistura de commodity e tecnologia",3],["Principalmente commodity",1,"Portfólio de baixa tecnologia"]]},
+  {k:"registro",b:"Governança e disciplina",p:5,c:"Reporte formal",l:"Como você registra hoje as visitas e negociações?",o:[["Em um CRM",5],["Em planilha",3],["No caderno ou no WhatsApp",2],["Não registro",1,"Não registra a operação"]]},
+  {k:"politica",b:"Governança e disciplina",p:5,c:"Alinhamento com a política comercial",l:"Você topa registrar as negociações no CRM da Barenbrug e seguir a política comercial (preço, região e prazos)?",o:[["Sim",5],["Sim, com ajuda no começo",4],["Tenho ressalvas",1,"Ressalva à governança e ao reporte"]]},
+  {k:"gestao",b:"Técnico",p:5,c:"Conhecimento em gestão",l:"Como você acompanha os resultados do seu negócio?",o:[["Com metas e números todo mês",5],["Acompanho o faturamento",3],["Não acompanho de forma organizada",1]]}];
+/* avaliado pela Barenbrug (não pelo RC): o comportamental e a validação */
+const PIR_AV=[{k:"resultado",p:15,c:"Foco em resultado, proatividade e assertividade"},{k:"imagem",p:10,c:"Imagem pessoal e profissional no mercado"},{k:"relacao",p:5,c:"Relacionamento interpessoal"}];
+const PIR_AGR=/agronomia|zootecnia|veterin|agron[oô]mica/i;
+const pirFormNota=f=>!f?null:PIR_AGR.test(f)?5:/t[eé]cnico/i.test(f)?3:1;
+function pirScore(resp,av,formacao){let pts=0,max=0;const cat={},alertas=[];
+  const soma=(b,p,n)=>{if(!p||n==null)return;pts+=p*n;max+=p*5;const c=cat[b]||(cat[b]={s:0,m:0});c.s+=p*n;c.m+=p*5;};
+  PIR_Q.forEach(q=>{const i=resp&&resp[q.k];if(i==null)return;const o=q.o[i];if(!o)return;soma(q.b,q.p,o[1]);if(o[2])alertas.push(o[2]);});
+  soma("Técnico",5,pirFormNota(formacao));
+  PIR_AV.forEach(a=>soma("Comportamental",a.p,av&&av[a.k]!=null?+av[a.k]:null));
+  const pct=max?Math.round(100*pts/max):null;
+  const faixa=pct==null?null:pct>=80?["Perfil ideal","verde"]:pct>=65?["Bom, com plano de desenvolvimento","azul"]:pct>=50?["Acompanhar de perto","amarelo"]:["Risco","vermelho"];
+  return {pct,faixa,alertas,cat,comp:PIR_AV.every(a=>av&&av[a.k]!=null)};}
+const pirDevo=()=>!S.demo&&temPerfil("RC")&&!ehAdmin();
+async function carregarPirMeu(){if(S.pirMeu!==undefined)return;S.pirMeu=null;try{const {data,error}=await sb.from("rc_perfil").select("user_id,enviado_em").eq("user_id",S.user.id).maybeSingle();S.pirMeu=error?{erro:1}:(data||false);}catch(e){S.pirMeu={erro:1};}render();}
+function vPirForm(){const F=S.pirF||(S.pirF={});const falta=PIR_Q.filter(q=>F[q.k]==null).length;
+  return `<div class="acesso"><div class="acesso-card" style="max-width:760px"><div><h1>Perfil do representante</h1><p style="margin-top:10px">${PIR_Q.length} perguntas rápidas, todas de escolher. Leva uns 2 minutos e ajuda a Barenbrug a apoiar melhor a sua região.</p></div>
+    <form class="acesso-form rolavel" id="f-pir"><div style="display:grid;gap:14px">
+    ${PIR_Q.map((q,n)=>`<fieldset class="pir-q"><legend><span class="meta">${n+1}. ${esc(q.b)}</span><br>${esc(q.l)}</legend><div class="pir-ops">${q.o.map((o,i)=>`<label class="pir-op${F[q.k]===i?" sel":""}"><input type="radio" name="pir_${q.k}" value="${i}" ${F[q.k]===i?"checked":""} data-pir="${q.k}"> ${esc(o[0])}</label>`).join("")}</div></fieldset>`).join("")}
+    ${S._erroPir?`<div class="erro" role="alert">${esc(S._erroPir)}</div>`:""}
+    <button class="btn" type="submit">${falta?`Faltam ${falta} ${falta===1?"resposta":"respostas"}`:"Enviar e entrar no portal"}</button>
+    <p class="meta" style="margin:0">Suas respostas ficam visíveis só para a Barenbrug.</p></div></form></div></div>`;}
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.pir)return;(S.pirF||(S.pirF={}))[t.dataset.pir]=+t.value;const y=document.querySelector(".rolavel")?.scrollTop;const w=window.scrollY;render();const r=document.querySelector(".rolavel");if(r&&y!=null)r.scrollTop=y;window.scrollTo(0,w);});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-pir")return;ev.preventDefault();ev.stopImmediatePropagation();const F=S.pirF||{};
+  const falta=PIR_Q.filter(q=>F[q.k]==null);if(falta.length){S._erroPir="Responda todas as perguntas para continuar.";render();return;}
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  const {error}=await sb.from("rc_perfil").upsert({user_id:S.user.id,respostas:F},{onConflict:"user_id"});btn.disabled=false;
+  if(error){S._erroPir="Não foi possível enviar. Tente de novo.";render();return;}S._erroPir=null;S.pirMeu={user_id:S.user.id};render();aviso("Obrigado! Perfil enviado.");});
+/* painel da Barenbrug: Gestão → Perfil dos RCs */
+async function carregarPir(){if(S.pirBusy)return;S.pirBusy=true;try{const {data}=await sb.from("rc_perfil").select("*");S.pirL=data||[];}catch(e){S.pirL=[];}S.pirBusy=false;render();}
+function gtPir(){
+  if(S.pirL===undefined){S.pirL=null;carregarPir();}if(!S.pirL||!S.equipe)return `<div class="carregando">Carregando…</div>`;
+  const rcs=S.equipe.filter(x=>{const pf=x.perfis&&x.perfis.length?x.perfis:[x.perfil];return pf.includes("RC")&&x.ativo!==false;});
+  const por={};S.pirL.forEach(r=>por[r.user_id]=r);
+  const L=rcs.map(x=>{const r=por[x.id];return {x,r,s:r?pirScore(r.respostas,r.avaliacao,x.formacao):null};}).sort((a,b)=>(b.s?b.s.pct:-1)-(a.s?a.s.pct:-1));
+  const resp=L.filter(z=>z.r),pend=L.filter(z=>!z.r);const ab=S.pirAb;
+  const media=b=>{const v=resp.map(z=>z.s.cat[b]).filter(Boolean);return v.length?(v.reduce((t,c)=>t+5*c.s/c.m,0)/v.length).toFixed(1):"—";};
+  return `<p class="meta" style="margin:-6px 0 12px">O score de 0 a 100 usa os pesos do scorecard: 80 ou mais é perfil ideal; de 65 a 79, bom com plano; de 50 a 64, acompanhar de perto; abaixo de 50, risco.</p>
+  <div class="metrics"><div class="metric"><span>Responderam</span><strong>${resp.length} de ${rcs.length}</strong><span class="meta">RCs com acesso ao portal</span></div>
+    <div class="metric"><span>Com alerta</span><strong>${resp.filter(z=>z.s.alertas.length).length}</strong><span class="meta">critérios eliminatórios do scorecard</span></div>
+    <div class="metric"><span>Avaliados pela Barenbrug</span><strong>${resp.filter(z=>z.s.comp).length}</strong><span class="meta">bloco comportamental</span></div>
+    <div class="metric"><span>Média por bloco (1 a 5)</span><strong style="font-size:15px">Comercial ${media("Comercial")} · Estrutural ${media("Estrutural")}</strong><span class="meta">Governança ${media("Governança e disciplina")} · Técnico ${media("Técnico")}</span></div></div>
+  <section class="bloco"><h2 class="sec">RCs que responderam (${resp.length})</h2>${resp.length?`<div class="lista">${resp.map(({x,r,s})=>`<div class="neg"><div class="l1"><span><button class="link" data-a="pir-ab" data-v="${x.id}"><strong>${esc(x.nome)}</strong></button></span><span>${s.pct!=null?`<strong>${s.pct}</strong> `:""}${s.faixa?stTag(s.faixa[0],s.faixa[1]):""}</span></div>
+    <span class="meta">${esc(x.comercial_resp?"Responsável: "+x.comercial_resp:"Sem responsável")} · respondeu em ${esc(fmtDataHora(r.enviado_em))}${s.comp?" · comportamental avaliado":" · falta avaliar o comportamental"}</span>
+    ${s.alertas.length?`<span class="meta" style="color:#c0392b">Atenção: ${esc(s.alertas.join(" · "))}</span>`:""}
+    ${ab===x.id?pirDetalhe(x,r):""}</div>`).join("")}</div>`:`<div class="vazio">Nenhum RC respondeu ainda. O formulário aparece no próximo acesso de cada RC.</div>`}</section>
+  ${pend.length?`<section class="bloco"><h2 class="sec">Ainda não responderam (${pend.length})</h2><p class="meta" style="margin:0 0 6px">O formulário aparece no próximo acesso. Os RCs com contrato e sem acesso ao portal entram aqui quando receberem o acesso.</p><div class="lista">${pend.map(({x})=>`<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.comercial_resp||"sem responsável")}</span></div></div>`).join("")}</div></section>`:""}`;}
+function pirDetalhe(x,r){const R=r.respostas||{},A=r.avaliacao||{};
+  return `<div class="pir-det"><div class="tab"><table class="sim-t"><thead><tr><th>Critério</th><th>Resposta</th><th class="val">Nota</th></tr></thead><tbody>
+    ${PIR_Q.map(q=>{const o=q.o[R[q.k]];return `<tr><td>${esc(q.c)}<br><span class="meta">${esc(q.b)}${q.p?" · peso "+q.p:" · contexto"}</span></td><td>${o?esc(o[0]):"—"}${o&&o[2]?`<br><span class="meta" style="color:#c0392b">${esc(o[2])}</span>`:""}</td><td class="val">${o?o[1]:"—"}</td></tr>`;}).join("")}
+    <tr><td>Formação em ciências agrárias<br><span class="meta">Técnico · peso 5 · do cadastro</span></td><td>${esc(x.formacao||"—")}</td><td class="val">${pirFormNota(x.formacao)??"—"}</td></tr></tbody></table></div>
+    ${ehAdmin()?`<form class="form-grid pir-av" data-id="${x.id}" style="margin-top:8px">${PIR_AV.map(a=>`<div><label>${esc(a.c)} <span class="meta">peso ${a.p}</span></label><select name="${a.k}"><option value="">—</option>${[[1,"1 · inexistente"],[2,"2 · muito abaixo"],[3,"3 · parcial"],[4,"4 · adequado"],[5,"5 · excelente"]].map(([v,t])=>`<option value="${v}" ${+A[a.k]===v?"selected":""}>${t}</option>`).join("")}</select></div>`).join("")}
+      <div style="grid-column:1/-1"><label>Observações da Barenbrug</label><textarea name="obs" rows="2">${esc(A.obs||"")}</textarea></div>
+      <div class="rb-acoes"><button class="btn" type="button" data-a="pir-av" data-v="${x.id}">Salvar avaliação</button>${r.avaliado_em?`<span class="meta">Avaliado em ${esc(fmtDataHora(r.avaliado_em))}</span>`:""}</div></form>`:""}</div>`;}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='pir-']");if(!b)return;ev.preventDefault();const a=b.dataset.a,v=b.dataset.v;
+  if(a==="pir-ab"){S.pirAb=S.pirAb===v?null:v;render();return;}
+  if(a==="pir-av"&&ehAdmin()){const f=b.closest("form");const av={};PIR_AV.forEach(x=>{const s=f.querySelector(`[name=${x.k}]`).value;if(s)av[x.k]=+s;});const o=f.querySelector("[name=obs]").value.trim();if(o)av.obs=o;
+    b.disabled=true;const {data,error}=await sb.from("rc_perfil").update({avaliacao:av}).eq("user_id",v).select().maybeSingle();b.disabled=false;
+    if(error||!data){aviso("Não foi possível salvar a avaliação.");return;}const i=(S.pirL||[]).findIndex(r=>r.user_id===v);if(i>=0)S.pirL[i]=data;render();aviso("Avaliação salva.");}});
+
 function gtCad(){
   return `  ${vSolic()}
   ${S.senhaReset&&S.senhaReset.viaSolic?(S.senhaReset.alerta?`<div class="aviso-bloq">${esc(S.senhaReset.alerta)}</div>`:"")+caixaCred(S.senhaReset):""}
@@ -9505,6 +9579,7 @@ function renderApp(){
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
   if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
+  if(pirDevo()){if(S.pirMeu===undefined){carregarPirMeu();app.innerHTML=`<div class="carregando">Carregando…</div>`;return;}if(S.pirMeu===false){app.innerHTML=vPirForm();return;}}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"&&S.secao!=="mensagens"){const P=cursosPend();if(!secaoLiberada(S.secao)){const c=P[0]||CURSOS_OBRIG[0];S.secao=c[3];S.pag=c[4];}else if(PAGS_CURSO[S.secao]&&!PAGS_CURSO[S.secao].includes(S.pag))S.pag=PAGS_CURSO[S.secao][0];}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(S.pag==="nps"){app.innerHTML=cabecalho()+`<main>${vNps()}</main>`;return;}
