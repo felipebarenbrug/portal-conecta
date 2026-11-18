@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118105535";
+const APP_VER="20261118110010";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9281,7 +9281,7 @@ function segCats(L){const pct=(a,b)=>b?a/b:0;const mfa=pct(L.com_mfa,L.ativos);
     [ok,"Troca de senha obrigatória no primeiro acesso","Senha provisória criada pelo administrador precisa ser trocada antes de qualquer uso."],
     [ok,"Senha forte exigida também no servidor","Desde 18/11/2026 o próprio Supabase recusa senha com menos de 8 caracteres ou sem letra minúscula, maiúscula, número e símbolo, mesmo que alguém tente trocar a senha fora da tela do portal. As senhas provisórias geradas no cadastro e na redefinição já seguem essa regra."],
     [SEG_SENHA_VAZADA?ok:pen,"Bloqueio de senhas vazadas",SEG_SENHA_VAZADA?"Senhas que aparecem em vazamentos conhecidos (HaveIBeenPwned) são recusadas.":"Testado em 18/11/2026: o Supabase só libera esse bloqueio no plano Pro (US$ 25 por mês). O projeto está no plano gratuito. O Marketing vai validar com o Gustavo a contratação do Pro na recorrência; contratado, basta ligar Leaked password protection em Authentication, Email."],
-    [pen,"Proteção contra robôs no login","O Supabase já limita tentativas repetidas de login. Falta o CAPTCHA invisível (Cloudflare Turnstile) na tela de entrada e o Bot Fight Mode do Cloudflare no domínio. Passos: criar a chave do Turnstile no Cloudflare, ligar CAPTCHA protection no Supabase (Authentication) e colocar o widget no login do portal."]]},
+    [ok,"Proteção contra robôs no login","Desde 18/11/2026 o login passa pela verificação Cloudflare Turnstile, invisível para quem é gente e com uma caixa de confirmação só quando o acesso parece suspeito. O Supabase recusa qualquer tentativa de login sem a verificação, mesmo chamando a API direto, e ainda limita tentativas repetidas."]]},
   {k:"Segredos e integrações",w:15,ref:"OWASP Top 10 2021 A02 e A05",it:[
     [ok,"Tokens só no cofre do servidor","O token do RD Station CRM e as chaves de serviço ficam em secrets do Supabase. Nunca chegam ao navegador nem ao código."],
     [ok,"Funções de servidor exigem login","8 de 8 Edge Functions com verificação de JWT ligada; as que mexem no CRM ou em usuários aceitam só administrador."],
