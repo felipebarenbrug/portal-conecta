@@ -4322,7 +4322,7 @@ async function carregarCanais(){
 const veBarenbrugRV=()=>ehAdmin()||temPerfil("Comercial Barenbrug");
 // acesso extra: o admin pode liberar a seção para qualquer pessoa em "Acesso às seções"
 const temAcessoExtra=id=>!S.demo&&Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.includes(id);
-const veInt=()=>veBarenbrugRV()||temAcessoExtra("inteligencia");
+const veInt=()=>ehAdmin()&&!S.demo; /* por enquanto, só administradores (pedido do Felipe, 17/11/2026) */
 const ehRevenda=()=>temPerfil("Gestor de Revenda")||temPerfil("Vendedor de Revenda");
 const RV_REGRA={"Blue":{ih:.02,ic:.0075,b:.02},"Yellow":{ih:.025,ic:.01,b:.025},"Yellow Pro":{ih:.03,ic:.0125,b:.03},"Yellow Master":{ih:.035,ic:.015,b:.035}};
 const RV_TETO=300000,RV_PISO_KG=5000;
@@ -5342,7 +5342,29 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_ABAS=[["int-raci","Mapa do Marketing"],["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-marca","Marca, mídia e IAs"],["int-perfil","Perfil dos canais"],["int-saz","Calendário de plantio"],["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"],["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-mapa","Mapas B2B e B2C"],["int-modelos","Modelos de representação"]];
+const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos da semana"]]],
+  ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
+  ["Quando atuar",[["int-saz","Calendário de plantio"]]],
+  ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
+  ["Como comunicar",[["int-marca","Marca, mídia e IAs"]]],
+  ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
+const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
+/* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
+const INT_PROP={"int-pot":["Onde está o mercado de híbridos que a Barenbrug ainda não ocupa?","Escolher os estados para campanha regional, mídia segmentada e prospecção de revendas."],
+  "int-hh":["Quem já comprou híbrido e parou, e como os canais do Conecta evoluem?","Montar a lista de reativação por RTV e a rodada regional de conversão do Mulato II."],
+  "int-mapa":["Onde estão os clientes e as revendas que compram hoje?","Definir rotas de dia de campo, eventos e visitas, e os raios de mídia."],
+  "int-perfil":["Quem são os canais e o que eles compram?","Segmentar a comunicação por tipo de canal e escolher candidatos ao Conecta."],
+  "int-saz":["Quando o produtor decide e planta em cada região?","Marcar a janela das campanhas, do Impulso e dos eventos por região."],
+  "int-canais":["Por quanto o canal vende os híbridos ao produtor?","Ajustar argumento de valor e checar margem do canal antes de campanhas de sell-out."],
+  "int-concorrentes":["Quanto o concorrente cobra e para onde o preço está indo?","Reagir a quedas de preço com argumento de custo por hectare e condição comercial."],
+  "int-hibridos":["O que os concorrentes oferecem em híbridos?","Escolher os pontos de diferenciação de Sabiá, Cayana e Carcará nos materiais."],
+  "int-vendas":["Quanto custa colocar o produto em cada região?","Priorizar regiões onde preço com frete é competitivo para campanhas."],
+  "int-marca":["Como a marca aparece nas redes, na mídia e nas IAs?","Ajustar pauta de conteúdo, verba de mídia e o que publicar para aparecer nas respostas das IAs."],
+  "int-rc":["Quem vende, onde e quanto?","Direcionar leads, treinamento e apoio de marketing a cada RC e ao Inside Sales."],
+  "int-seg":["Quanto vem do produtor direto e quanto vem do canal?","Equilibrar a verba entre geração de demanda no produtor e apoio ao canal."],
+  "int-modelos":["Como estão desenhados os contratos de representação?","Apoiar a revisão dos modelos e os materiais de integração dos representantes."]};
+function intPropHTML(pag){const P=INT_PROP[pag];if(!P)return "";let L=[];try{if(S.insOk)L=insumosCalc().filter(x=>x.aba===pag);}catch(e){}S.insCache=S.insCache||[];L.forEach(x=>{if(!S.insCache.some(y=>y.k===x.k))S.insCache.push(x);});
+  return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Para que serve esta aba</strong><p>${esc(P[0])} Use para: ${esc(P[1])}</p>${L.length?`<div style="display:grid;gap:8px;margin-top:6px">${L.map(x=>`<div><strong>${esc(x.titulo)}</strong> <span class="meta">· ${esc(x.valTxt)}</span><br><span class="meta">${esc(x.acao)}</span><div class="mk-link" style="margin-top:4px">${x.feito?`<span class="seg-st seg-ok">Virou ação: ${esc(x.feito.status||"")}</span> <button type="button" class="link" data-a="ins-ver" data-v="${x.feito.id}">abrir</button>`:`<button type="button" class="btn sec" data-a="ins-acao" data-v="${esc(x.k)}">Transformar em ação</button>`}</div></div>`).join("")}</div>`:`<p class="meta" style="margin:6px 0 0">${S.insOk?"Nenhum insumo automático desta aba acima dos limites agora.":`<button type="button" class="link" data-a="pag" data-v="int-insumos">Ver os insumos da semana</button>`}</p>`}</div>`;}
 /* ---------- Potencial de mercado (modelo do Mapa Comercial) ---------- */
 /* Participação em valor: volume do estudo × preço médio por kg do cliente oculto */
 const VS_MAP={"Mavuno":{m:"Wolf",p:/^mavuno/i},"Dunamis":{m:"Milagro",p:/^dunamis/i},"Camello":{m:"Papalotla",p:/^camello/i},"Cayman":{m:"Papalotla",p:/^cayman/i},"Sabiá":{m:"Barenbrug",p:/^sabi/i},"Cayana":{m:"Barenbrug",p:/^cayana/i},"Carcará":{m:"Barenbrug",p:/^carcar/i},"Supremo":{m:"Safrasul",p:/^supremo/i}};
@@ -5446,6 +5468,39 @@ function vIntHH(){
     <div class="dir-card"><strong>4. Como executar</strong><p>Lista por RTV com os canais da sua área; uma rodada regional por área prioritária (treinamento + dia de campo); Impulso e e-mail para os canais; acompanhamento no CRM com uma campanha própria, para medir quantos voltaram e quantos quilos.</p></div>
     <div class="dir-card"><strong>5. Como medir</strong><p>Canais reativados (com pedido ganho na safra), quilos de híbridos desses canais contra o pico e contra 25/26, e quantos entraram no Conecta. Esta página atualiza sozinha o 26/27 pelo CRM.</p></div></div>
    <p class="precos-nota">Fontes: ERP Barenbrug, relatório de pedidos por safra (22/23 a 25/26), planilha de histórico de híbridos; RD Station CRM para 26/27 (atualizado ${esc(S.hh27&&S.hh27.em?fmtDataHora(S.hh27.em):"—")}). Clientes do ERP e organizações do CRM foram ligados pelo nome; nos canais do Conecta, pela razão social cadastrada e pelas organizações do canal. Uso interno.</p></section>`;}
+
+function insumosCalc(){const L=[];const fT=v=>(Number(v)||0).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t";
+  const px=S.hh&&S.hh.tot&&S.hh.tot["25/26"]&&S.hh.tot["25/26"].kg?S.hh.tot["25/26"].rs/S.hh.tot["25/26"].kg:27;
+  // 1. reativação por região
+  if(S.hh){try{const H=hhCalc();H.porReg.slice(0,3).forEach(r=>{const gap=r.pk-r.hoje;if(gap<5000)return;const mul=r.pk?r.mul/r.pk:0;
+    L.push({k:"reat-"+r.reg,aba:"int-hh",area:"Histórico de híbridos",tipo:"Treinamento",titulo:`Reativar ${r.n} canais no ${r.reg}`,leitura:`${r.n} canais de ${r.ufs.join(", ")} já compraram ${fT(r.pk/1000)} de híbridos no seu pico e hoje compram ${fT(r.hoje/1000)}.${mul>=.4?` ${Math.round(mul*100)}% desse pico era Mulato II.`:""}`,acao:mul>=.4?"Rodada regional de conversão do Mulato II para Cayana e Sabiá: treinamento da equipe do canal e dia de campo, com lista por RTV.":"Visita dos RTVs com condição de retomada e convite ao Conecta Revendas; acompanhamento por campanha no CRM.",valor:gap/3*px,valTxt:`${fT(gap/3000)} (um terço do que se perdeu) ≈ ${fmtK0(gap/3*px)}`});});}catch(e){}}
+  // 2. espaço livre do potencial
+  if(S.potD&&S.potD.ufs){try{const D=S.potD,GH=D.hib||null,PJ=(GH&&GH.proj)||[{s:"26/27",hib:3607}];const P={ua:0.71,lot:1,ren:0.08,ilp:true,hs:0,hib:PJ[0].hib};const PC=potCalc(D,P);const V=S.potV||{};
+    const rows=PC.rows.map(r=>{const v=V[r.uf]||{};const kv=(Number(v.kg_v)||0)/1000,ka=(Number(v.kg_a)||0)/1000;const H=PC.A?P.hib*r.A/PC.A:0;return {uf:r.uf,H,kv,ka,livre:Math.max(0,H-kv-ka),shr:H?kv/H:0};}).sort((a,b)=>b.livre-a.livre);
+    rows.slice(0,2).forEach(r=>{if(r.livre<20)return;L.push({k:"pot-"+r.uf,aba:"int-pot",area:"Potencial de mercado",tipo:"Mídia e conteúdo",titulo:`Ganhar espaço em ${r.uf}`,leitura:`${r.uf} tem um mercado estimado de ${fT(r.H)} de híbridos por ano; a Barenbrug vendeu ${fT(r.kv)} na safra (${Math.round(r.shr*100)}%) e tem ${fT(r.ka)} em negociação.`,acao:`Campanha regional em ${r.uf}: mídia segmentada no Meta Ads, Inside Sales na base de leads do estado e prospecção de revendas para o Conecta.`,valor:r.livre*0.1*1000*px,valTxt:`10% do espaço livre (${fT(r.livre*0.1)}) ≈ ${fmtK0(r.livre*0.1*1000*px)}`});});}catch(e){}}
+  // 3. Conecta: perto do bônus e IGDB parado
+  if(S.canais&&S.canalRes){(S.canais||[]).forEach(c=>{let m;try{m=metricasCanal(c);}catch(e){return;}if(!m||!m.meta)return;
+    if(m.pAting!=null&&m.pAting>=.6&&m.pAting<.9&&m.pFalta90>0)L.push({k:"bf-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação com revenda",titulo:`${c.nome}: perto do Bônus de Performance`,leitura:`Está em ${Math.round(m.pAting*100)}% da meta de híbridos, contando o que está em negociação. Faltam ${fT(m.pFalta90/1000)} para chegar a 90% e liberar o bônus.`,acao:"Campanha de sell-out com o canal: incentivo à equipe de vendas da revenda e ação de geração de demanda na região, usando o IGDB.",valor:m.pFalta90*(m.pxH||px),valTxt:`${fT(m.pFalta90/1000)} ≈ ${fmtK0(m.pFalta90*(m.pxH||px))}`});
+    const parado=(m.igdb||0)-(m.aprovIG||0)-(m.analiseIG||0);if(parado>=15000)L.push({k:"igdb-"+c.id,aba:"int-hh",area:"Conecta Revendas",tipo:"Ação com revenda",titulo:`${c.nome}: IGDB sem plano`,leitura:`O canal tem ${fmtK0(m.igdb)} de IGDB previsto e só ${fmtK0((m.aprovIG||0)+(m.analiseIG||0))} em ações de PGD.`,acao:"Montar o PGD com o canal: dia de campo, treinamento ou ação em loja, para a verba virar demanda de híbrido no campo.",valor:parado,valTxt:`${fmtK0(parado)} de verba para gerar demanda`});});}
+  // 4. preço dos concorrentes: maiores quedas entre as duas últimas rodadas
+  if(S.potPr&&S.potPr.length){const g={};S.potPr.forEach(x=>{const k=x.marca+"|"+x.produto;(g[k]=g[k]||[]).push(x);});const al=[];
+    Object.entries(g).forEach(([k,xs])=>{const rd=[...new Set(xs.map(x=>String(x.data_pesquisa).slice(0,10)))].sort();if(rd.length<2)return;const md=d=>{const a=xs.filter(x=>String(x.data_pesquisa).slice(0,10)===d).map(x=>+x.preco).filter(v=>v>0);return a.length?a.reduce((t,v)=>t+v,0)/a.length:null;};
+      const a=md(rd[rd.length-2]),b=md(rd[rd.length-1]);if(a&&b&&b/a-1<=-.08)al.push({m:xs[0].marca,p:xs[0].produto,a,b,v:b/a-1,d:rd[rd.length-1]});});
+    al.sort((x,y)=>x.v-y.v).slice(0,2).forEach(x=>L.push({k:"preco-"+x.m+"-"+x.p,aba:"int-concorrentes",area:"Preços dos concorrentes",tipo:"Mídia e conteúdo",titulo:`${x.m} baixou o preço do ${x.p}`,leitura:`No cliente oculto, o kg passou de R$ ${(+x.a).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})} para R$ ${(+x.b).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})} (${Math.round(x.v*100)}%) na rodada de ${x.d.split("-").reverse().join("/")}.`,acao:"Reforçar com o time e os canais o argumento de custo por hectare e produtividade dos híbridos Barenbrug, e checar se os canais precisam de condição comercial.",valor:null,valTxt:"alerta de preço"}));}
+  const feitos=S.insFeitos||{};L.forEach(x=>{x.feito=feitos["Inteligência · "+x.k];});
+  return L.sort((a,b)=>(b.valor==null?-1:b.valor)-(a.valor==null?-1:a.valor));}
+async function carregarInsumos(){if(S.insBusy)return;S.insBusy=true;try{const tasks=[];if(S.hh===undefined)tasks.push(carregarHH());if(S.potD===undefined)tasks.push(carregarPot());if(!S.canais)tasks.push(carregarCanais());await Promise.all(tasks);
+  const {data}=await sb.from("mkt_acoes").select("id,titulo,status,origem").not("origem","is",null);S.insFeitos={};(data||[]).forEach(a=>{S.insFeitos[a.origem]=a;});}catch(e){S.insFeitos=S.insFeitos||{};}S.insOk=true;S.insBusy=false;render();}
+function vIntInsumos(){
+  if(!S.insOk){carregarInsumos();return `<div class="carregando">Juntando os insumos de todas as abas…</div>`;}
+  const L=insumosCalc();const top=L.filter(x=>x.valor!=null).slice(0,5),resto=L.filter(x=>!top.includes(x));
+  const card=(x,i)=>`<div class="dir-card" style="display:grid;gap:6px">${i!=null?`<span class="meta"><strong>${i+1}.</strong> ${esc(x.area)}</span>`:`<span class="meta">${esc(x.area)}</span>`}<strong style="font-size:16px">${esc(x.titulo)}</strong><p style="margin:0">${esc(x.leitura)}</p><p style="margin:0"><strong>Ação sugerida:</strong> ${esc(x.acao)}</p><p class="meta" style="margin:0">Quanto vale: ${esc(x.valTxt)}</p>
+    <div class="mk-link" style="margin-top:4px">${x.feito?`<span class="seg-st seg-ok">Virou ação: ${esc(x.feito.status||"")}</span> <button type="button" class="link" data-a="ins-ver" data-v="${x.feito.id}">abrir a ação</button>`:`<button type="button" class="btn" data-a="ins-acao" data-v="${esc(x.k)}">Transformar em ação</button>`} <button type="button" class="link" data-a="pag" data-v="${x.aba}">ver os dados</button></div></div>`;
+  S.insCache=L;
+  return `<div><h1 class="titulo">Insumos da semana</h1><p class="sub">As maiores oportunidades que os dados da Inteligência apontam agora, ordenadas pelo valor estimado. Cada uma traz a leitura, a ação sugerida e o botão para virar um cartão em Ações de Marketing, onde o resultado é acompanhado. Recalcula sozinho a cada visita. Só administradores.</p></div>
+  ${top.length?`<section class="bloco"><h2 class="sec">As 5 maiores oportunidades</h2><div class="dir-grid">${top.map(card).join("")}</div></section>`:`<div class="vazio">Nenhuma oportunidade acima dos limites agora.</div>`}
+  ${resto.length?`<section class="bloco"><h2 class="sec">Outras leituras e alertas · ${resto.length}</h2><div class="dir-grid">${resto.map(x=>card(x)).join("")}</div></section>`:""}
+  <p class="precos-nota">Como os insumos são escolhidos: reativação, quando uma região tem 5 t ou mais abaixo do pico dos canais (meta de um terço); potencial, os dois estados com mais espaço livre no mercado de híbridos (meta de 10% do espaço); Conecta, canais entre 60% e 90% da meta, perto do bônus, e canais com R$ 15 mil ou mais de IGDB sem ação de PGD; preço, quedas de 8% ou mais no preço médio de um concorrente entre as duas últimas rodadas do cliente oculto. Valores em R$ pelo preço médio do kg de híbrido da Barenbrug em 25/26 ou do próprio canal. São estimativas para priorizar, não metas oficiais.</p>`;}
 function vIntPot(){
   if(S.potD===undefined){carregarPot();return `<div class="carregando">Carregando o potencial de mercado…</div>`;}
   const D=S.potD;if(!D)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
@@ -5597,7 +5652,7 @@ function vIntRaci(){
 }
 function subnavInt(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inteligência">${semOcultas(INT_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Inteligência">${INT_GRUPOS.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Inteligência</span></div></div>`;
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
@@ -6553,7 +6608,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]]:[])];
+  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Ações de Marketing</span></div></div>`;
@@ -7215,6 +7270,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
   if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
+  if(S.pag==="acoes-raci"&&ehMkt())return vIntRaci();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
   if(S.pag==="acoes-eventos")return vAcoesEventos();
@@ -7961,7 +8017,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ra
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -7980,7 +8036,7 @@ const ABA_DESC={
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
- "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-hh":"Híbridos safra a safra desde 22/23, os canais Conecta e os canais que perderam o foco, com o plano de reativação.","int-pot":"Potencial de semente por estado, premissas ajustáveis e penetração das híbridas na safra.","int-marca":"Alcance da marca, como a mídia vira venda e como a Barenbrug aparece nas IAs.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
+ "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-insumos":"As maiores oportunidades de todas as abas, com a ação sugerida e o botão para virar ação de marketing.","int-hh":"Híbridos safra a safra desde 22/23, os canais Conecta e os canais que perderam o foco, com o plano de reativação.","int-pot":"Potencial de semente por estado, premissas ajustáveis e penetração das híbridas na safra.","int-marca":"Alcance da marca, como a mídia vira venda e como a Barenbrug aparece nas IAs.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
@@ -8088,12 +8144,14 @@ function renderApp(){
   }
   if(S.secao==="inteligencia"){
     if(veInt()){
+      if(S.pag==="int-raci"){S.secao="acoes-mkt";S.pag="acoes-raci";render();return;}
+      if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
-      app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${corpo}</main>`;
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${corpo}</main>`;if(!S.insOk&&S.pag!=="int-insumos")carregarInsumos();
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
-      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh")carregarCanais().then(render);
+      else if(!an&&!S.canais&&S.pag!=="int-concorrentes"&&S.pag!=="int-raci"&&S.pag!=="int-marca"&&S.pag!=="int-pot"&&S.pag!=="int-hh"&&S.pag!=="int-insumos")carregarCanais().then(render);
       return;}
     S.secao=null;S.pag="hub";
   }
@@ -8131,7 +8189,7 @@ async function concluir(id,nota){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="visto")return;
-  if(a==="secao"&&v==="inteligencia"){if(!veInt())return;S.secao=v;S.pag="int-canais";S.novoPreco=false;render();window.scrollTo(0,0);return;}
+  if(a==="secao"&&v==="inteligencia"){if(!veInt())return;S.secao=v;S.pag="int-insumos";S.novoPreco=false;render();window.scrollTo(0,0);return;}
   if(a==="int-cult"){S.intCult=v;render();return;}
   if(a==="int-rod"){S.intRod=v==="todas"?"todas":+v;render();return;}
   if(a==="int-perfil"){S.intPerfil=v;render();return;}
@@ -8229,6 +8287,11 @@ document.addEventListener("click",async ev=>{
     const [sc,pg]=v.split("|");if(sc==="academia"){S.secao="academia";S.pag="trilha";}else{S.secao=sc;S.pag=pg;}S.res=null;render();window.scrollTo(0,0);return;}
   if(a==="perfil"){S.pag="perfil";S._erro=null;S.formAlvo="form";S.form={...S.profile};preloadCidades(S.perfil);render();window.scrollTo(0,0);}
   if(a==="curso-ir"){const c=CURSOS_OBRIG.find(x=>x[0]===v);if(c){S.secao=c[3];S.pag=c[4];render();window.scrollTo(0,0);}return;}
+  if(a==="ins-acao"){if(!ehMkt())return;const x=(S.insCache||[]).find(y=>y.k===v);if(!x)return;b.disabled=true;const org="Inteligência · "+x.k;
+    const d={titulo:x.titulo,tipo:MK_TIPOS.includes(x.tipo)?x.tipo:"Outro",status:"Em análise",descricao:`${x.leitura}\n\nAção sugerida: ${x.acao}\n\nQuanto vale: ${x.valTxt}\n\nOrigem: Inteligência › ${x.area} (Insumos da semana, ${new Date().toLocaleDateString("pt-BR")}).`,valor_prev:0,valor_real:0,fin:"Provisionada",safra:mkSafra,origem:org};
+    const {data,error}=await sb.from("mkt_acoes").insert(d).select("id,titulo,status,origem").maybeSingle();if(error||!data){b.disabled=false;aviso("Não foi possível criar a ação.");return;}
+    S.insFeitos=S.insFeitos||{};S.insFeitos[org]=data;S.mk=null;render();aviso("Ação criada em Ações de Marketing, com status Em análise.");return;}
+  if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
   if(a==="pag")irPag(v);
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
