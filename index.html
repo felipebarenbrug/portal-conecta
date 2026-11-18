@@ -887,7 +887,7 @@ main.largo{max-width:1120px}
 #prot-ov[hidden]{display:none!important}
 #prot-ov .prot-box{background:#fff;border-radius:14px;max-width:440px;padding:22px;display:grid;gap:10px;border-top:6px solid var(--vermelho)}
 #prot-ov .prot-box strong{font-size:1.15rem;color:var(--vermelho)}
-body.prot-oculto #app{filter:blur(18px)}
+body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
 body.prot-sel main input,body.prot-sel main textarea,body.prot-sel main select,body.prot-sel .permite-copia{-webkit-user-select:text;user-select:text}
 @media print{body.prot-sel #app{display:none!important}body.prot-sel::after{content:"Conteúdo protegido do Portal Conecta Barenbrug. Impressão não permitida.";display:block;padding:40px;font:16px Arial,sans-serif}}
@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118163609";
+const APP_VER="20261118180359";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9718,10 +9718,15 @@ document.addEventListener("keydown",e=>{if(!protAtiva())return;const k=(e.key||"
   if(e.key==="PrintScreen"||(e.metaKey&&e.shiftKey&&["3","4","5","s"].includes(k))||(e.shiftKey&&e.metaKey===false&&e.getModifierState&&e.getModifierState("OS")&&k==="s")){protAviso("print");}
   if((e.ctrlKey||e.metaKey)&&["p"].includes(k)){e.preventDefault();protAviso("print");}},true);
 window.addEventListener("beforeprint",()=>{if(protAtiva())protAviso("print");});
+/* recortes de tela (Win+Shift+S, Ferramenta de Captura, Cmd+Shift+4/5) tiram o foco do portal: o conteúdo fica borrado enquanto a janela não está em foco */
+window.addEventListener("blur",()=>{if(!protAtiva())return;setTimeout(()=>{const ae=document.activeElement;if(ae&&ae.tagName==="IFRAME")return;if(!document.hasFocus())document.body.classList.add("prot-fora");},0);});
+window.addEventListener("focus",()=>document.body.classList.remove("prot-fora"));
+document.addEventListener("visibilitychange",()=>{if(!protAtiva())return;if(document.hidden)document.body.classList.add("prot-fora");else if(document.hasFocus())document.body.classList.remove("prot-fora");});
+document.addEventListener("pointerdown",()=>document.body.classList.remove("prot-fora"),true);
 function protMarca(){let m=document.getElementById("prot-marca");if(!protAtiva()){if(m)m.remove();return;}
   const txt=`${S.profile.nome||""} · ${S.user.email||""} · ${new Date().toLocaleDateString("pt-BR")}`;if(m&&m.dataset.t===txt)return;
   if(!m){m=document.createElement("div");m.id="prot-marca";m.setAttribute("aria-hidden","true");document.body.appendChild(m);}
-  m.dataset.t=txt;const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><text x="10" y="120" transform="rotate(-24 210 110)" font-family="Arial,sans-serif" font-size="15" fill="rgba(30,30,30,0.07)">${txt.replace(/[<&>"]/g,"")}</text></svg>`;
+  m.dataset.t=txt;const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="380" height="200"><text x="10" y="110" transform="rotate(-24 190 100)" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="rgba(30,30,30,0.12)">${txt.replace(/[<&>"]/g,"")}</text></svg>`;
   m.style.backgroundImage=`url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;}
 function npsCard(){if(!npsMostrar())return "";return `<div class="aviso-est" role="note" style="margin:0"><strong>Como está sendo o Portal Conecta para você?</strong><p>Leva 1 minuto. Sua nota e suas sugestões ajudam o Marketing a melhorar o portal.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="nps-abrir">Responder</button></div><p class="meta" style="margin:6px 0 0">Este aviso fica aqui até você responder.</p></div>`;}
 function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua resposta foi registrada. O Marketing lê cada sugestão.</p><div class="acoes"><button class="btn" data-a="inicio">Voltar ao início</button></div></section>`;
