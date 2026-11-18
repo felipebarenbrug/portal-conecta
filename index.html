@@ -1391,7 +1391,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117225714";
+const APP_VER="20261117225922";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4075,6 +4075,7 @@ function subnavRC(){
   if(veMeusRC())abas.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))abas.push(["rc-cobertura","Cobertura dos RCs"]);
+  if(cnVeAba("conecta_rc"))abas.push(["rc-nps","Avaliar o programa"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta RC</span></div></div>`;
@@ -4625,6 +4626,7 @@ function subnavRV(){
   if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
   if(ehMaster())abas.push(["rv-validacao","Validação"]);
   else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
+  if(cnVeAba("conecta_rv"))abas.push(["rv-nps","Avaliar o programa"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Conecta Revendas</span></div></div>`;
@@ -8642,6 +8644,43 @@ function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="b
    <div><label for="nps_a">Qual área do portal você mais usa?</label><select id="nps_a"><option value="">Escolha</option>${areas.map(a=>`<option ${F.area===a?"selected":""}>${a}</option>`).join("")}</select></div>
    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
    <div class="acoes"><button class="btn" type="submit">Enviar</button></div></form>`;}
+/* ===== NPS dos programas Conecta Revendas e Conecta RC ===== */
+const CN_CFG={
+ conecta_rv:{nome:"Conecta Revendas",aba:"rv-nps",secao:"conecta-revendas",par:"outra revenda",
+  attrs:["Regras do programa claras","Metas e tiers justos","IGDB e verba para ações (PGD)","Bônus de Performance","Apoio do comercial Barenbrug","Materiais, Enxoval e treinamento","Leads e cotações que recebo","Entrega e logística"]},
+ conecta_rc:{nome:"Conecta RC",aba:"rc-nps",secao:"conecta-rc",par:"outro representante",
+  attrs:["Regras e comissão claras","Pagamento da comissão em dia","Apoio do comercial Barenbrug","Análise de crédito e aprovação de pedidos","Ferramentas: proposta, calculadora e envio de negociação","Treinamento e curso de integração","Leads que recebo","Entrega e logística"]}};
+const cnPublico=p=>p==="conecta_rv"?ehRevenda():temPerfil("RC");
+const cnVeAba=p=>!S.demo&&(cnPublico(p)||ehAdmin());
+async function carregarCnUlt(){if(S.cnBusy||S.demo||!S.user)return;S.cnBusy=true;try{const {data}=await sb.from("conecta_nps").select("programa,criado_em").eq("user_id",S.user.id).order("criado_em",{ascending:false});S.cnUlt={};(data||[]).forEach(x=>{if(!S.cnUlt[x.programa])S.cnUlt[x.programa]=x.criado_em;});}catch(e){S.cnUlt={};}S.cnBusy=false;render();}
+function cnAviso(p){if(!cnPublico(p)||S.demo)return "";if(S.cnUlt===undefined){carregarCnUlt();return "";}const u=S.cnUlt[p];if(u&&Date.now()-Date.parse(u)<90*864e5)return "";
+  let ad=0;try{ad=+localStorage.getItem("cn_adiar_"+p)||0;}catch(e){}if(ad&&Date.now()<ad)return "";if(S.pag===CN_CFG[p].aba)return "";
+  return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Como está sendo o ${CN_CFG[p].nome} para você?</strong><p>Leva 2 minutos. Sua avaliação do programa ajuda a Barenbrug a melhorar regras, apoio e ferramentas.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="pag" data-v="${CN_CFG[p].aba}">Avaliar o programa</button><button type="button" class="link" data-a="cn-adiar" data-v="${p}">Agora não</button></div></div>`;}
+function vCnNps(p){const C=CN_CFG[p];const F=(S.cnF||(S.cnF={}))[p]||(S.cnF[p]={attrs:{}});
+  if(F.ok)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua avaliação do ${C.nome} foi registrada. O Marketing e o time comercial leem cada resposta.</p></section>`;
+  const esc10=(campo,rot)=>`<div role="radiogroup" aria-label="${rot}" style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:6px">${[...Array(11).keys()].map(n=>`<button type="button" class="btn ${F[campo]===n?"":"sec"}" role="radio" aria-checked="${F[campo]===n}" data-a="cn-n" data-v="${p}|${campo}|${n}" style="padding:8px 0;min-width:0">${n}</button>`).join("")}</div><div class="meta" style="display:flex;justify-content:space-between;margin-top:2px"><span>Nada provável</span><span>Muito provável</span></div>`;
+  const OP=[[1,"Ruim"],[2,"Fraco"],[3,"Regular"],[4,"Bom"],[5,"Ótimo"]];
+  return `<div><h1 class="titulo">Avalie o ${C.nome}</h1><p class="sub">Sua resposta fica registrada com o seu nome, para o Marketing e o comercial poderem voltar a falar com você se precisar.${ehAdmin()&&!cnPublico(p)?" Você está vendo como administrador: o envio fica disponível só para o público do programa.":""}</p></div>
+  <form class="form-card" id="f-cn" data-v="${p}" style="display:grid;gap:14px">
+   <div><label>De 0 a 10, quanto você recomendaria o programa ${C.nome} a ${C.par}? *</label>${esc10("nota_prog","Nota do programa")}</div>
+   <div><label>Como você avalia cada parte do programa?</label><div style="display:grid;gap:8px;margin-top:6px">${C.attrs.map((a,i)=>`<div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,2fr);gap:8px;align-items:center"><span style="font-size:.92rem">${esc(a)}</span><div role="radiogroup" aria-label="${esc(a)}" style="display:flex;flex-wrap:wrap;gap:4px">${OP.map(([n,t])=>`<button type="button" class="btn ${F.attrs[i]===n?"":"sec"}" role="radio" aria-checked="${F.attrs[i]===n}" data-a="cn-at" data-v="${p}|${i}|${n}" style="padding:4px 8px;font-size:.82rem">${t}</button>`).join("")}<button type="button" class="link" data-a="cn-at" data-v="${p}|${i}|0" style="font-size:.8rem">${F.attrs[i]===0?"Marcado: não uso":"Não uso"}</button></div></div>`).join("")}</div></div>
+   <div><label>De 0 a 10, quanto a área do ${C.nome} aqui no portal ajuda no seu dia a dia?</label>${esc10("nota_area","Nota da área no portal")}</div>
+   <div><label for="cn_m">O que mais pesou na sua nota do programa?</label><textarea id="cn_m" rows="3" maxlength="1500">${esc(F.motivo||"")}</textarea></div>
+   <div><label for="cn_s">O que a Barenbrug poderia mudar ou acrescentar no programa?</label><textarea id="cn_s" rows="4" maxlength="2000" placeholder="Regras, apoio, materiais, ferramentas, prazos">${esc(F.sugestao||"")}</textarea></div>
+   ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+   <div class="acoes"><button class="btn" type="submit" ${cnPublico(p)?"":"disabled"}>Enviar avaliação</button></div></form>`;}
+function cnLer(p){const F=((S.cnF||{})[p])||{};const m=document.getElementById("cn_m"),s=document.getElementById("cn_s");if(m)F.motivo=m.value;if(s)F.sugestao=s.value;}
+async function carregarCnRes(){if(S.cnResBusy)return;S.cnResBusy=true;try{const {data,error}=await sb.rpc("conecta_nps_resultados");S.cnRes=error?[]:(data||[]);}catch(e){S.cnRes=[];}S.cnResBusy=false;render();}
+function cnResHTML(){if(S.cnRes===undefined){carregarCnRes();return `<div class="carregando">Carregando as avaliações dos programas…</div>`;}
+  const calc=L=>{const n=L.length,p=L.filter(x=>x>=9).length,d=L.filter(x=>x<=6).length;return {n,nps:n?Math.round((p-d)/n*100):null,med:n?L.reduce((t,x)=>t+x,0)/n:null};};
+  const f1=v=>v==null?"—":v.toLocaleString("pt-BR",{maximumFractionDigits:1});
+  return Object.entries(CN_CFG).map(([k,C])=>{const R=(S.cnRes||[]).filter(x=>x.programa===k);const P=calc(R.map(x=>x.nota)),A=calc(R.filter(x=>x.area!=null).map(x=>x.area));
+    const at=C.attrs.map((a,i)=>{const v=R.map(x=>Number((x.attrs||{})[i])).filter(x=>x>=1);return {a,n:v.length,m:v.length?v.reduce((t,x)=>t+x,0)/v.length:null};});
+    return `<h3 class="pgd-h" style="margin-top:16px">${C.nome}: avaliação do programa</h3>${!R.length?`<p class="meta">Ainda sem respostas. A avaliação aparece dentro do ${C.nome} para ${k==="conecta_rv"?"gestores e vendedores de revenda":"os RCs"}, uma vez a cada 90 dias.</p>`:`
+     <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>NPS do programa</span><strong>${P.nps}</strong><span class="meta">${P.n} respostas · média ${f1(P.med)}</span></div><div class="metric"><span>NPS da área no portal</span><strong>${A.nps==null?"—":A.nps}</strong><span class="meta">${A.n} notas · média ${f1(A.med)}</span></div></div>
+     <div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Parte do programa</th><th class="val">Respostas</th><th class="val">Média (1 a 5)</th></tr></thead><tbody>${at.slice().sort((a,b)=>(a.m??9)-(b.m??9)).map(x=>`<tr><td>${esc(x.a)}</td><td class="val">${x.n}</td><td class="val"><strong>${f1(x.m)}</strong></td></tr>`).join("")}</tbody></table></div>
+     <p class="meta" style="margin:4px 0 8px">Ordenado da pior para a melhor média: o topo da tabela é onde agir primeiro.</p>
+     <div class="lista">${R.map(x=>`<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area!=null?" · área no portal: "+x.area:""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}</div><span class="seg-st ${x.nota>=9?"seg-ok":x.nota>=7?"seg-par":"seg-pen"}" style="white-space:nowrap">${x.nota}</span></div>`).join("")}</div>`}`;}).join("");}
 async function carregarNpsRes(){if(S.npsResBusy)return;S.npsResBusy=true;try{const {data,error}=await sb.rpc("nps_resultados");S.npsRes=error?[]:(data||[]);}catch(e){S.npsRes=[];}S.npsResBusy=false;render();}
 function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</div>`;if(S.npsRes===undefined){carregarNpsRes();return `<div class="carregando">Carregando as respostas…</div>`;}
   const R=S.npsRes||[];const calc=L=>{const n=L.length,p=L.filter(x=>x.nota>=9).length,d=L.filter(x=>x.nota<=6).length;return {n,p,d,ne:n-p-d,nps:n?Math.round((p-d)/n*100):null,med:n?(L.reduce((t,x)=>t+x.nota,0)/n):null};};
@@ -8664,7 +8703,7 @@ function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
      <p class="meta" style="margin:6px 0 0">Se quem concluiu os módulos dá nota mais alta e usa mais o conteúdo com o cliente, o treinamento está fazendo efeito. Os comentários sobre o que falta na Academia aparecem nas respostas abaixo.</p>`;})()}
    ${R.length?`<div class="int-2" style="margin-top:10px">${tb("Por perfil",por("perfil"))}${tb("Pela área que mais usa",por("area"))}</div>
    ${tb("Por mês",Object.entries(mes).sort().map(([v,L])=>({v:finMesNome(v),...calc(L)})))}
-   <h3 class="pgd-h" style="margin-top:12px">Respostas, sugestões e motivos</h3><div class="lista">${R.map(x=>{const [t,c]=tag(x.nota);return `<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area?" · usa mais: "+esc(x.area):""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}${x.ac_nota!=null?`<p style="margin:4px 0 0"><span class="meta">Academia:</span> nota ${x.ac_nota}${x.ac_ajudou?` · ajudou: ${["","não","pouco","em parte","sim","muito"][x.ac_ajudou]}`:""}${x.ac_usou?` · usou com cliente: ${x.ac_usou==="sim"?"sim":"ainda não"}`:""}${x.ac_coment?`<br><span class="meta">O que falta:</span> ${esc(x.ac_coment)}`:""}</p>`:""}</div><span class="seg-st ${c}" style="white-space:nowrap">${x.nota} · ${t}</span></div>`;}).join("")}</div>`:`<div class="vazio">Ainda sem respostas.</div>`}</section>`;}
+   <h3 class="pgd-h" style="margin-top:12px">Respostas, sugestões e motivos</h3><div class="lista">${R.map(x=>{const [t,c]=tag(x.nota);return `<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area?" · usa mais: "+esc(x.area):""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}${x.ac_nota!=null?`<p style="margin:4px 0 0"><span class="meta">Academia:</span> nota ${x.ac_nota}${x.ac_ajudou?` · ajudou: ${["","não","pouco","em parte","sim","muito"][x.ac_ajudou]}`:""}${x.ac_usou?` · usou com cliente: ${x.ac_usou==="sim"?"sim":"ainda não"}`:""}${x.ac_coment?`<br><span class="meta">O que falta:</span> ${esc(x.ac_coment)}`:""}</p>`:""}</div><span class="seg-st ${c}" style="white-space:nowrap">${x.nota} · ${t}</span></div>`;}).join("")}</div>`:`<div class="vazio">Ainda sem respostas.</div>`}${cnResHTML()}</section>`;}
 
 /* ---------- Casos de sucesso: vídeos de produtores por estado e região, com mapa ---------- */
 function casosLista(){return VIDEOS_BASE.filter(x=>x.g==="Caso de sucesso").map(x=>{const m=String(x.t).match(/^(.*?)\s*(?:—\s*(.*?))?\s*\(([A-Z]{2})\)\s*$/);const nome=m?m[1].trim():x.t,cid=m&&m[2]?m[2].trim():"",uf=m?m[3]:"";return {...x,nome,cid,uf,reg:uf?hhReg(uf):"Outros"};});}
@@ -8758,17 +8797,19 @@ function renderApp(){
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
-    app.innerHTML=cabecalho()+subnavRC()+`<main>${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
   }
   if(S.secao==="conecta-revendas"){
     if(S.pag==="rv-validacao"&&!ehMaster())S.pag="rv-painel";
+    if(S.pag==="rv-nps"){if(!cnVeAba("conecta_rv"))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vCnNps("conecta_rv")}</main>`;return;}}
     if(S.pag==="rv-canais"||S.pag==="rv-canal"||S.pag==="rv-painel"||S.pag==="rv-validacao"){
       if(!veBarenbrugRV()){S.pag=ehRevenda()?"rv-meucanal":"rv-apresentacao";}
       else{
@@ -8780,14 +8821,14 @@ function renderApp(){
     if(S.pag==="rv-meucanal"){
       if(!ehRevenda()){S.pag="rv-apresentacao";}
       else{
-        app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVMeuCanal()}</main>`;
+        app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${vRVMeuCanal()}</main>`;
         if(temPerfil("Gestor de Revenda")){if(!S.canais){carregarCanais().then(render);}}
         else if(S.meuCanalProg===undefined){carregarMeuCanalVendedor().then(render);}
         return;
       }
     }
     const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
-    app.innerHTML=cabecalho()+subnavRV()+`<main>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar}[S.pag]||vTrilha;
@@ -8991,6 +9032,8 @@ document.addEventListener("click",async ev=>{
   if(a==="hh-reativar"){if(!ehAdmin())return;const {error}=await sb.from("cliente_inativo").delete().eq("nome_erp",v);if(error){aviso("Não foi possível alterar.");return;}delete (S.hhInat||{})[v];S.insOk=false;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Canal voltou para a análise de reativação.");return;}
   if(a==="nps-abrir"){S.secao=null;S.pag="nps";S.npsOk=false;S.npsF={};S._erro=null;render();window.scrollTo(0,0);return;}
   if(a==="nps-adiar"){npsLsSet();render();return;}
+  if(a==="cn-n"||a==="cn-at"){const [pp,k,n]=v.split("|");cnLer(pp);const F=(S.cnF||(S.cnF={}))[pp]||(S.cnF[pp]={attrs:{}});if(a==="cn-n")F[k]=+n;else F.attrs[k]=(F.attrs[k]===+n&&+n===0)?undefined:+n;const y=window.scrollY;render();window.scrollTo(0,y);return;}
+  if(a==="cn-adiar"){try{localStorage.setItem("cn_adiar_"+v,String(Date.now()+7*864e5));}catch(e){}render();return;}
   if(a==="nps-ac"||a==="nps-aj"||a==="nps-us"){const F=S.npsF||(S.npsF={});[["nps_m","motivo"],["nps_s","sugestao"],["nps_a","area"],["nps_ac","ac_coment"]].forEach(([i,k])=>{const e=document.getElementById(i);if(e)F[k]=e.value;});
     if(a==="nps-ac")F.ac_nota=v==="x"?(F.ac_nota==="x"?null:"x"):+v;else if(a==="nps-aj")F.ac_ajudou=+v;else F.ac_usou=v;const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(a==="nps-nota"){const F=S.npsF||(S.npsF={});const m=document.getElementById("nps_m"),g=document.getElementById("nps_s"),ar=document.getElementById("nps_a");if(m)F.motivo=m.value;if(g)F.sugestao=g.value;if(ar)F.area=ar.value;const ac=document.getElementById("nps_ac");if(ac)F.ac_coment=ac.value;F.nota=+v;const y=window.scrollY;render();window.scrollTo(0,y);return;}
@@ -9232,6 +9275,10 @@ document.addEventListener("submit",async ev=>{
     if(error){aviso("Erro ao salvar a ação.");render();return;}
     S.canais=null;render();aviso("Ação atualizada.");return;
   }
+  if(f.id==="f-cn"){const pp=f.dataset.v;if(!cnPublico(pp))return;cnLer(pp);const F=S.cnF[pp];if(F.nota_prog==null){S._erro="Escolha a nota do programa, de 0 a 10.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";const at={};Object.entries(F.attrs||{}).forEach(([k,x])=>{if(x!=null)at[k]=x;});
+    const {error}=await sb.from("conecta_nps").insert({user_id:S.user.id,programa:pp,nota_prog:F.nota_prog,nota_area:F.nota_area??null,attrs:at,motivo:(F.motivo||"").trim()||null,sugestao:(F.sugestao||"").trim()||null,perfil:S.perfil||null});
+    if(error){S._erro="Não foi possível enviar. Tente de novo.";render();return;}S._erro=null;F.ok=true;(S.cnUlt||(S.cnUlt={}))[pp]=new Date().toISOString();S.cnRes=undefined;render();window.scrollTo(0,0);return;}
   if(f.id==="f-nps"){const F=S.npsF||{};F.motivo=f.querySelector("#nps_m").value.trim();F.sugestao=f.querySelector("#nps_s").value.trim();F.area=f.querySelector("#nps_a").value;const acE=f.querySelector("#nps_ac");if(acE)F.ac_coment=acE.value.trim();if(F.nota==null){S._erro="Escolha uma nota de 0 a 10.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
     const {error}=await sb.from("nps_respostas").insert({user_id:S.user.id,nota:F.nota,motivo:F.motivo||null,sugestao:F.sugestao||null,area:F.area||null,perfil:S.perfil||null,ac_nota:typeof F.ac_nota==="number"?F.ac_nota:null,ac_ajudou:F.ac_nota==="x"?null:(F.ac_ajudou||null),ac_usou:F.ac_nota==="x"?null:(F.ac_usou||null),ac_coment:F.ac_nota==="x"?null:(F.ac_coment||null)});
