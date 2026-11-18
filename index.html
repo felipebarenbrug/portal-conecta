@@ -1447,7 +1447,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118081913";
+const APP_VER="20261118082851";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9257,7 +9257,8 @@ const plataforma=()=>ehIOS()?"iphone":/Android/i.test(navigator.userAgent)?"andr
 let PWA_PROMPT=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();PWA_PROMPT=e;if(S.user)render();});
 window.addEventListener("appinstalled",()=>{PWA_PROMPT=null;appUsoSync(true);render();});
 async function appConfCarrega(){if(S.appConf!==undefined||!S.user||S.demo)return;S.appConf=null;try{const [r,c]=await Promise.all([sb.from("app_uso").select("confirmou_em").eq("user_id",S.user.id).maybeSingle(),sb.from("push_subs").select("id",{count:"exact",head:true}).eq("user_id",S.user.id)]);S.appConf=(r.data&&r.data.confirmou_em)||false;S.temSub=(c.count||0)>0;}catch(_){S.appConf=false;S.temSub=false;}render();}
-const notifFeito=()=>S.pushEst==="ativo"||!!S.temSub;
+/* vale por aparelho: notificação ativa em outro aparelho não esconde o aviso neste iPhone ou computador */
+const notifFeito=()=>S.pushEst==="ativo"||(!!S.temSub&&S.pushEst!=="ios-instalar"&&S.pushEst!=="pode");
 function appModal(){if(S.demo||!S.user||!S.profile||S.profile.precisa_trocar_senha||S.appConf===undefined||S.pushEst===undefined||notifFeito())return;let vis=!!window._appModalVisto;try{vis=vis||sessionStorage.getItem("app_modal")==="1";}catch(_){}if(vis||document.getElementById("app-modal"))return;
   window._appModalVisto=true;try{sessionStorage.setItem("app_modal","1");}catch(_){}const m=document.createElement("div");m.id="app-modal";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
   m.innerHTML=`<div class="prot-box" style="border-top-color:var(--amarelo);max-width:480px"><strong style="color:var(--preto)">Ative as notificações do Portal Conecta</strong><p>É assim que você fica sabendo de mensagem nova, lead novo, resposta no Tira-Dúvidas e novidades do portal. Este lembrete aparece a cada vez que você entra, até as notificações estarem ativas.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-a="app-modal-ir">${S.pushEst==="pode"?"Ativar agora":"Ver como fazer"}</button><button type="button" class="link" data-a="app-modal-fecha">Lembrar depois</button></div></div>`;document.body.appendChild(m);}
