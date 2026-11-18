@@ -1450,7 +1450,12 @@ async function recarregarPermissoes(){
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});
 setInterval(()=>{if(!document.hidden)recarregarPermissoes();},180000);
 setInterval(async()=>{if(document.hidden||!S.user||S.feedBusy||S.posts==null)return;if(document.querySelector("form textarea:focus,form input:focus"))return;try{await carregarFeed();if(!S.secao&&S.pag==="hub"&&!S.duvNova&&!S.postNovo&&!S.duvAberta)render();else{const q=document.querySelector(".sino");if(q){const n=novidades().total;const bq=q.querySelector("b");if(n&&!bq)q.insertAdjacentHTML("beforeend","<b>"+(n>99?"99+":n)+"</b>");else if(n&&bq)bq.textContent=n>99?"99+":n;}}}catch(e){}},240000);
-async function checarVersao(){try{const r=await fetch("version.txt",{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(v&&v!==APP_VER&&sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
+async function checarVersao(ao){try{const r=await fetch("version.txt?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=(await r.text()).trim();if(!v||v===APP_VER)return;
+  const editando=!!document.querySelector("form input:focus,form textarea:focus,form select:focus")||!!document.querySelector("#f-quiz");
+  if(ao&&editando){if(!document.getElementById("ver-nova")){const d=document.createElement("button");d.id="ver-nova";d.type="button";d.className="btn";d.textContent="Nova versão do portal: toque para atualizar";d.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9995;box-shadow:0 4px 16px rgba(0,0,0,.25)";d.onclick=()=>location.replace(location.pathname+"?v="+encodeURIComponent(v));document.body.appendChild(d);}return;}
+  if(sessionStorage.getItem("pc_ver")!==v){sessionStorage.setItem("pc_ver",v);location.replace(location.pathname+"?v="+encodeURIComponent(v));}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checarVersao(true);});
+setInterval(()=>{if(document.visibilityState==="visible")checarVersao(true);},5*60*1000);
 document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="ng_novo"){const x=document.getElementById("ng_extra");if(x)x.hidden=!ev.target.checked;}if(ev.target&&ev.target.id==="mkt_pasta"&&ev.target.files&&ev.target.files.length){if(!ehAdmin())return;ev.target.disabled=true;importarPastaMkt(ev.target.files);}});
 async function boot(){
   checarVersao();
