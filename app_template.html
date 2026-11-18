@@ -871,6 +871,8 @@ main.largo{max-width:1120px}
 @media (max-width:860px){.fx{grid-template-columns:minmax(0,1fr)}.fx-lado{position:static}}
 @media (max-width:520px){.fx-ramos{grid-template-columns:minmax(0,1fr)}}
 
+.senha-reg{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:4px;font-size:.85rem;color:var(--apagado)}.senha-reg li::before{content:"○ ";color:var(--bloqueado)}.senha-reg li.ok{color:#1F7A44}.senha-reg li.ok::before{content:"✓ ";color:#1F7A44}
+
 </style>
 </head>
 <body>
@@ -1604,9 +1606,12 @@ function vTrocaSenha(erro){
       <div><label for="s2">Repita a nova senha</label><input id="s2" type="password" required minlength="8" autocomplete="new-password"></div>
       ${erro?`<div class="erro" role="alert">${esc(erro)}</div>`:""}
       <button class="btn" type="submit">Salvar e continuar</button>
-      <p class="dica">Pelo menos 8 caracteres.</p>
+      <ul class="senha-reg" id="senha-reg" aria-live="polite">${SENHA_REGRAS.map(([k,t])=>`<li data-r="${k}">${t}</li>`).join("")}</ul>
     </form></div>`;
 }
+const SENHA_REGRAS=[["tam","Pelo menos 8 caracteres"],["caixa","No mínimo 1 letra maiúscula e 1 letra minúscula"],["num","Pelo menos 1 número"],["esp","Pelo menos 1 caractere especial (ex: !@#$%)"],["igual","As senhas digitadas são iguais"]];
+function senhaChecar(s1,s2){return {tam:s1.length>=8,caixa:/[A-ZÀ-Þ]/.test(s1)&&/[a-zß-ÿ]/.test(s1),num:/\d/.test(s1),esp:/[^A-Za-zÀ-ÿ0-9\s]/.test(s1),igual:s1.length>0&&s1===s2};}
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||(t.id!=="s1"&&t.id!=="s2"))return;const f=t.closest("#f-senha");if(!f)return;const R=senhaChecar(f.querySelector("#s1").value,f.querySelector("#s2").value);f.querySelectorAll("#senha-reg li").forEach(li=>{li.classList.toggle("ok",!!R[li.dataset.r]);});});
 function campoHTML(c){
   const F=formAtual();const v=F[c.k]||"";
   const lbl=`<label for="f_${c.k}">${c.l}${c.req?" *":""}</label>`;
@@ -9517,8 +9522,7 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-senha"){
     const s1=f.querySelector("#s1").value,s2=f.querySelector("#s2").value;
-    if(s1!==s2){S._erro="As senhas não são iguais.";render();return;}
-    if(s1.length<8){S._erro="Use pelo menos 8 caracteres.";render();return;}
+    {const R=senhaChecar(s1,s2);const falta=SENHA_REGRAS.filter(([k])=>!R[k]).map(([,t])=>t.toLowerCase());if(falta.length){S._erro="A senha ainda não atende: "+falta.join("; ")+".";render();return;}}
     const btn=f.querySelector("button");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.auth.updateUser({password:s1});
     if(error){S._erro="Não foi possível salvar a senha. Tente de novo.";render();return;}
