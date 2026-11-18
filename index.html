@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118121900";
+const APP_VER="20261118121912";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2819,7 +2819,7 @@ function vISPlaybook(){
   ${sec("regioes","12","Regiões que não atendemos: canais Yellow Master","Nas regiões destes canais o Inside Sales não abre negociação. Quando o canal recebe leads pelo Portal Conecta, o lead vai direto para ele, na aba Cotações.",(()=>{const cfg=Object.fromEntries((YM||[]).map(x=>[x.nome,x]));
     const L=[["Supera Agro","Não atendemos."],["Agrosanta","Não atendemos, a não ser com a anuência do canal."],["Imperagro","Não atendemos."],["Duagro","Não atendemos."]];
     return `<div class="tab"><table class="sim-t"><thead><tr><th>Canal Yellow Master</th><th>Regra</th><th>Recebe leads pelo portal</th></tr></thead><tbody>${L.map(([n,r])=>{const c=cfg[n];return `<tr><td><strong>${esc(n)}</strong></td><td>${esc(r)}</td><td>${c&&(c.ufs||[]).length?"Sim, "+esc(c.ufs.join(", ")):"Não"}</td></tr>`;}).join("")}</tbody></table></div>`;})())}
-    <p class="meta" style="margin:-6px 0 12px">Na dúvida se o produtor está na região de um destes canais, confirme com o Felipe antes de abrir a negociação. Exceção: se o lead voltar dizendo que não foi atendido pelo canal, o Inside Sales avança, desde que isso esteja registrado no CRM.</p>
+    <p class="meta" style="margin:-6px 0 12px">Na dúvida se o produtor está na região de um destes canais, confirme com a supervisão do Inside Sales antes de abrir a negociação. Exceção: se o lead voltar dizendo que não foi atendido pelo canal, o Inside Sales avança, desde que isso esteja registrado no CRM.</p>
   ${sec("dicas","13","Mais dicas do playbook","",`<div class="dir-grid">${card("Antes de ligar",["Leia o que o lead preencheu: cultivar, área, cidade e perfil","Veja se ele já tem negociação ou histórico no CRM","Tenha a calculadora e o caso de sucesso da região abertos"])}
     ${card("Mulato II e outras cultivares",["Quem pede Mulato II converte metade da média: apresente o híbrido Barenbrug que resolve a mesma dor","Cynodon e Cayana estão entre os que mais convertem"])}
     ${card("Escreva para ser lido no campo",["Mensagens curtas, uma ideia por mensagem, nunca textão","Áudio curto ajuda quem está no trator","Sempre termine com uma pergunta ou um próximo passo"])}
