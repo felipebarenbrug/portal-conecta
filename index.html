@@ -62,6 +62,14 @@ img{max-width:100%}
 .nav button{flex:0 0 auto;background:none;border:0;padding:9px 10px;font-weight:700;font-size:14px;cursor:pointer;color:var(--preto);border-radius:6px 6px 0 0;white-space:nowrap}
 .nav button[aria-current=page]{background:var(--papel)}
 @media (max-width:640px){.nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}}
+.nav.ng button.ng-g{font-size:14px}.nav.ng button.ng-g[aria-expanded=true]{background:var(--papel)}.nav.ng button.ng-atual{box-shadow:inset 0 -3px 0 var(--azul-escuro)}.nav.ng button.ng-atual[aria-expanded=true]{box-shadow:none}
+.ng-n{display:inline-block;min-width:18px;padding:0 5px;margin-left:2px;border-radius:9px;background:rgba(0,0,0,.1);font-size:11px;line-height:18px;text-align:center;font-weight:700}
+.ng-sub-w{background:var(--papel);border-bottom:1px solid rgba(0,0,0,.08)}
+.ng-sub{max-width:880px;margin:0 auto;padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap}
+.ng-sub button{flex:0 0 auto;background:none;border:1px solid rgba(0,0,0,.12);padding:6px 12px;border-radius:999px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--preto);white-space:nowrap}
+.ng-sub button:hover{border-color:rgba(0,0,0,.35)}
+.ng-sub button[aria-current=page]{background:var(--amarelo);border-color:var(--amarelo);font-weight:700}
+@media (max-width:640px){.ng-sub{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ng-sub::-webkit-scrollbar{display:none}}
 .secao-nome{margin-left:auto;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--azul-escuro)}
 
 main{max-width:880px;margin:0 auto;padding:26px 16px 56px;display:grid;gap:24px}
@@ -1451,7 +1459,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118204336";
+const APP_VER="20261118204732";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2500,11 +2508,22 @@ const IS_PROP={
  "is-rfv":["Reter e reativar","Os clientes por recência, frequência e valor da compra.","montar a campanha de recompra e de reativação de quem parou de comprar."],
  "is-ger":["Gestão","Breakeven e custo de cada vendedora frente ao teto do RC de campo.","decidir o tamanho e o custo do time."]};
 const isPropHTML=pag=>{const P=IS_PROP[pag];if(!P||!veTimeIS())return "";return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Esteira do Inside Sales · ${esc(P[0])}</strong><p>${esc(P[1])} Use para: ${esc(P[2])}</p></div>`;};
+/* menu em dois niveis: na barra amarela, os grupos (na ordem da jornada); logo abaixo, as abas do grupo aberto.
+   Abre no grupo da pagina atual; clicar em outro grupo so troca as abas mostradas. Grupo de uma aba so vai direto. */
+function navGrupos(G,nome,cur){
+  const gs=G.map(([g,ab])=>[g,semOcultas((ab||[]).filter(Boolean))]).filter(x=>x[1].length);
+  const tab=([k,t])=>`<button data-a="pag" data-v="${k}" ${cur(k)?'aria-current="page"':""}>${t}</button>`;
+  const topo=`<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>`,fim=`<span class="secao-nome">${esc(nome)}</span></div>`;
+  if(gs.length<2||gs.every(x=>!x[0]))return `${topo}<nav class="nav" aria-label="${esc(nome)}">${gs.flatMap(x=>x[1]).map(tab).join("")}</nav>${fim}</div>`;
+  const atual=gs.findIndex(x=>x[1].some(([k])=>cur(k)));const ab=(S.ngAb||{})[nome];const gi=ab!=null&&ab<gs.length&&gs[ab][1].length>1?ab:(atual>=0?atual:0);
+  const g1=gs.map(([g,l],i)=>l.length===1?`<button class="ng-g${i===atual?" ng-atual":""}" data-a="pag" data-v="${l[0][0]}" ${cur(l[0][0])?'aria-current="page"':""}>${esc(l[0][1])}</button>`
+    :`<button class="ng-g${i===atual?" ng-atual":""}" data-a="ng" data-v="${esc(nome)}|${i}" aria-expanded="${i===gi}">${esc(g)} <span class="ng-n">${l.length}</span></button>`).join("");
+  const sub=gs[gi][1].length>1?`<div class="ng-sub-w"><div class="ng-sub" role="group" aria-label="${esc(gs[gi][0])}">${gs[gi][1].map(tab).join("")}</div></div>`:"";
+  return `${topo}<nav class="nav ng" aria-label="${esc(nome)}">${g1}</nav>${fim}${sub}</div>`;
+}
 function subnavIS(){
   const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inside Sales">${grupos.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`${g?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>`:""}${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
-    <span class="secao-nome">Inside Sales</span></div></div>`;
+  return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",outros:"Fila de qualificação",time:"Time"};
 const IS_ETAPAS=["Forecast","Prospecção","Qualificação","Influenciadores & Proposta de Valor","Influenciadores & Proposta","Negociação e Fechamento","Cadastro de novo cliente","Análise de Crédito","Pedido Finalizado","Solicitação de alteração","Pedidos Finalizados Alterados"];
@@ -5477,9 +5496,7 @@ function subnavRV(){
   }
   if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
   const cur=k=>S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal");
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta Revendas">${G.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${cur(k)?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
-    <span class="secao-nome">Conecta Revendas</span></div></div>`;
+  return navGrupos(G,"Conecta Revendas",cur);
 }
 const RV_FAQ=[
  ["O programa",[
@@ -7235,9 +7252,7 @@ function vIntRaci(){
   ${(D.aberto||[]).length?`<section class="bloco"><h2 class="sec">Em aberto: o que ainda precisamos fechar</h2><div class="lista">${D.aberto.map((t,i)=>`<div class="linha"><div><strong>${i+1}. ${esc(t.split(":")[0])}</strong><span class="meta">${esc(t.split(":").slice(1).join(":").trim())}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function subnavInt(){
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Inteligência">${INT_GRUPOS.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
-    <span class="secao-nome">Inteligência</span></div></div>`;
+  return navGrupos(INT_GRUPOS,"Inteligência",k=>S.pag===k);
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
@@ -10212,7 +10227,8 @@ document.addEventListener("click",async ev=>{
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
-  if(a==="pag")irPag(v);
+  if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
+  if(a==="pag"){S.ngAb={};irPag(v);}
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
   if(a==="mat")aviso("No lançamento, este botão abre o material.");
