@@ -2387,10 +2387,12 @@ const IS_GRUPOS=[
   ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
+  ["Formação",[["is-formacao","Formação do time"]]],
   ["Gestão",[["is-ger","Análise gerencial"]]]];
 const IS_PROP={
  "is-fluxo":["Comece aqui","O caminho do lead da campanha do Marketing até a venda, com as regras de quando o Inside Sales atende e quando passa para o canal ou o RC.","alinhar o time e explicar para revendas e RCs como o lead é tratado."],
  "is-playbook":["Comece aqui","As boas práticas de atuação do Inside Sales, do primeiro contato ao funil saudável.","treinar quem entra, alinhar o time e cobrar o padrão de atendimento."],
+ "is-formacao":["Formação","Cursos, podcasts e leituras de vendas, CRM, pré-vendas e negociação, mais o que é da Barenbrug.","formar quem entra no time e manter o time afiado."],
  "is-imp":["Comece aqui","O relatório semanal do Marketing para o time: mercado, meta, funil de cada uma, tarefas e a objeção da semana.","combinar as prioridades da semana com o time."],
  "is-cac":["Atrair","Quanto a mídia digital custa por lead, por negociação e por venda do Inside Sales.","decidir onde colocar verba de mídia e cortar o que não vira venda."],
  "is-icp":["Para quem","Quem é o produtor que compra pelo Inside Sales e como cada perfil quer ser atendido.","ajustar campanha, mensagem e abordagem ao perfil que mais converte."],
@@ -2405,7 +2407,7 @@ const IS_PROP={
  "is-ger":["Gestão","Breakeven e custo de cada vendedora frente ao teto do RC de campo.","decidir o tamanho e o custo do time."]};
 const isPropHTML=pag=>{const P=IS_PROP[pag];if(!P||!veTimeIS())return "";return `<div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Esteira do Inside Sales · ${esc(P[0])}</strong><p>${esc(P[1])} Use para: ${esc(P[2])}</p></div>`;};
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-imp","Impulso semanal"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Inside Sales">${grupos.map(([g,ab])=>{const v=semOcultas(ab);return v.length?`${g?`<span class="meta" style="align-self:center;padding:0 2px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${g}</span>`:""}${v.map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}`:"";}).join("")}</nav>
     <span class="secao-nome">Inside Sales</span></div></div>`;
@@ -2716,6 +2718,35 @@ function vISPlaybook(){
     ${card("Toda semana",["Revise pausadas e datas vencidas","Leia o Impulso semanal e a objeção da semana","Atualize estrelas e datas antes da reunião do time"])}
     ${card("Dúvida técnica",["Não improvise dado técnico","Leve a dúvida ao Tira-Dúvidas e volte ao produtor no prazo combinado"])}</div>`)}
   <p class="meta">Fonte do estudo de velocidade: <a class="link" href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener">The Short Life of Online Sales Leads, Harvard Business Review, 2011</a>.</p>`;
+}
+/* ===== Inside Sales: formação do time (cursos, podcasts e leituras) ===== */
+const IS_FORM=[
+ ["Comece pelo que é nosso",[
+  {t:"Cursos da Academia de Híbridos",tipo:"Curso interno",d:"Os cursos e provas de Sabiá, Cayana e Carcará. Base técnica para qualquer conversa.",int:["secao","academia"]},
+  {t:"Playbook do Inside Sales",tipo:"Guia interno",d:"Velocidade, CRM primeiro, cadência, qualificação, funil e as três datas.",int:["pag","is-playbook"]},
+  {t:"Como a negociação acontece",tipo:"Guia interno",d:"O caminho do lead e as regras de quando atender e quando passar para o canal ou o RC.",int:["pag","is-fluxo"]},
+  {t:"Objeções do funil",tipo:"Dados internos",d:"Por que o produtor não compra, com os motivos de perda reais da safra.",int:["pag","is-obj"]}]],
+ ["Cursos gratuitos",[
+  {t:"Universidade RD Station",tipo:"Curso online",d:"Trilha para profissionais de vendas, com parte gratuita (\"comece grátis\"). Bom para CRM, cadência e vendas consultivas. A assinatura completa é paga.",u:"https://university.rdstation.com/"},
+  {t:"FGV: Negociação e Formação do Contrato",tipo:"Curso online FGV",d:"Um dos cursos online mais feitos da FGV. Fundamentos de negociação e de como fechar o acordo.",u:"https://educacao-executiva.fgv.br/cursos/online/curta-media-duracao-online/negociacao-e-formacao-do-contrato"},
+  {t:"FGV: Aspectos conceituais do processo de negociação",tipo:"Curso online FGV",d:"Conceitos de negociação: interesses, alternativas e concessões. Confira na página se está na lista de gratuitos.",u:"https://educacao-executiva.fgv.br/./cursos/online/curta-media-duracao-online/aspectos-conceituais-associados-ao-processo-de-negociacao"},
+  {t:"SENAR EAD: pastagem e gestão rural",tipo:"Curso online gratuito",d:"Recuperação de pastagens degradadas, manejo de pastagens e planejamento da empresa rural. Ajuda a falar a língua do pecuarista.",u:"https://ead.senar.org.br/"}]],
+ ["Podcasts",[
+  {t:"Casts for Closers (Meetime)",tipo:"Podcast",d:"Vendas B2B e Sales Engagement: prospecção, ligação, diagnóstico, indecisão do cliente e rotina de pré-vendas. Mais de 200 episódios.",u:"https://open.spotify.com/show/2gSDMUj7dhWwWhxKZxktWE"},
+  {t:"Lista de podcasts de vendas da RD Station",tipo:"Lista",d:"Seleção de podcasts de marketing, vendas e negócios para escolher outros programas.",u:"https://www.rdstation.com/blog/marketing/melhores-podcasts/"}]],
+ ["Leituras e técnicas",[
+  {t:"Receita Previsível (Aaron Ross e Marylou Tyler)",tipo:"Livro",d:"A base do modelo de pré-vendas: separar quem qualifica de quem fecha, cadência de contato e funil previsível. É o desenho do nosso MQL para SQL.",u:"https://www.agendor.com.br/blog/receita-previsivel/"},
+  {t:"SPIN Selling (Neil Rackham)",tipo:"Livro e técnica",d:"Perguntas de Situação, Problema, Implicação e Necessidade. No agro: área e capim de hoje, o que a seca faz com a lotação, quanto isso custa em arroba e o que mudaria com um pasto melhor."},
+  {t:"Como Chegar ao Sim (Fisher e Ury)",tipo:"Livro e técnica",d:"Negociar pelos interesses, não pelas posições. Útil quando o produtor trava no preço: o interesse dele é arroba, prazo e segurança, não o desconto."},
+  {t:"Harvard Program on Negotiation: Negotiation Skills",tipo:"Relatório gratuito (inglês)",d:"Estratégias e técnicas de negociação do programa de Harvard, em relatório gratuito.",u:"https://www.pon.harvard.edu/freemium/negotiation-skills-negotiation-strategies-and-negotiation-techniques-to-help-you-become-a-better-negotiator/"},
+  {t:"The Short Life of Online Sales Leads (HBR)",tipo:"Artigo",d:"O estudo que mostra por que responder ao lead em até 1 hora multiplica a chance de qualificar.",u:"https://hbr.org/2011/03/the-short-life-of-online-sales-leads"}]]];
+function vISFormacao(){
+  const it=x=>`<div class="dir-card" style="display:grid;gap:6px;align-content:start"><span class="meta">${esc(x.tipo)}</span><strong style="font-size:16px">${esc(x.t)}</strong><p style="margin:0">${esc(x.d)}</p>${x.u?`<a class="link" href="${esc(x.u)}" target="_blank" rel="noopener">Abrir ↗</a>`:x.int?`<button type="button" class="link" style="justify-self:start" data-a="${x.int[0]}" data-v="${x.int[1]}">Abrir no portal</button>`:""}</div>`;
+  const T=[["Semana 1","Academia de Híbridos (cursos e provas), Como a negociação acontece e o Playbook"],["Semana 2","Universidade RD Station (CRM e vendas) e Receita Previsível"],["Semana 3","Curso de negociação da FGV e SPIN Selling aplicado à fazenda"],["Semana 4","SENAR: pastagem e gestão rural, e um episódio do Casts for Closers por semana daqui em diante"]];
+  return `<div><h1 class="titulo">Formação do time</h1><p class="sub">Cursos, podcasts e leituras para o time de Inside Sales se municiar de técnica: vendas, CRM, pré-vendas, negociação e o mundo do pecuarista. Começa pelo que é da Barenbrug e segue para o melhor conteúdo gratuito do mercado.</p></div>
+  <section class="bloco"><h2 class="sec">Trilha sugerida para quem entra no time</h2><ol class="dir-passos">${T.map(([a,b])=>`<li><strong>${a}</strong><span>${esc(b)}</span></li>`).join("")}</ol><p class="meta" style="margin:8px 0 0">Pode virar parte do onboarding, com os cursos da Academia como obrigatórios para o time. Os conteúdos externos ficam como formação recomendada.</p></section>
+  ${IS_FORM.map(([g,L])=>`<section class="bloco"><h2 class="sec">${esc(g)}</h2><div class="dir-grid">${L.map(it).join("")}</div></section>`).join("")}
+  <p class="meta">Links externos abrem fora do portal. Conteúdos gratuitos podem mudar de condição: confira na página antes de indicar.</p>`;
 }
 function vISFluxo(){
   const no=(c,quem,t,corpo)=>`<div class="fx-no ${c}"><span class="fx-quem">${quem}</span><h3>${t}</h3>${corpo}</div>`;
@@ -4902,7 +4933,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook"].includes(pg);
+  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
@@ -8763,7 +8794,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-playbook":"Boas práticas de atuação do time.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-playbook":"Boas práticas de atuação do time.","is-formacao":"Cursos, podcasts e leituras para a formação do time.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -8844,6 +8875,7 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
     if(S.pag==="is-playbook"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPlaybook()}</main>`;return;}
     if(S.pag==="is-fluxo"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFluxo()}</main>`;return;}
     if(S.pag==="is-reg"||S.pag==="is-imp"||S.pag==="is-hist"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${S.pag==="is-hist"?vISHist():S.pag==="is-reg"?vISReg():vISImp()}</main>`;if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;render();});}return;}
