@@ -1364,7 +1364,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261117222755";
+const APP_VER="20261117223017";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5675,7 +5675,8 @@ function hhCalc(){const D=S.hh,Z=S.hh27||{};const SF=D.safras.slice(0,4),S27="26
   const con=C.filter(c=>c.conecta).sort((a,b)=>(b.kg[S27]+b.a27)-(a.kg[S27]+a.a27));
   const conT={};ALL.forEach(s=>{conT[s]=con.reduce((t,c)=>t+(c.kg[s]||0),0);});
   const INA=S.hhInat||{};const inat=C.filter(c=>INA[c.n]).map(c=>({...c,motivo:INA[c.n].motivo,em:INA[c.n].inativado_em}));
-  const reat=C.filter(c=>!INA[c.n]&&c.pk>=3000&&c.hoje<.35*c.pk).sort((a,b)=>b.pk-a.pk);
+  const RJ=/RECUPERA[CÇ][AÃ]O JUDICIAL|\bEM RJ\b|FAL[EÊ]NCIA|MASSA FALIDA/i;
+  const reat=C.filter(c=>!INA[c.n]&&!RJ.test(c.n)&&c.pk>=3000&&c.hoje<.35*c.pk).sort((a,b)=>b.pk-a.pk);
   const porUF={};reat.forEach(c=>{const u=c.uf||"—";const x=porUF[u]||(porUF[u]={uf:u,reg:hhReg(u),n:0,pk:0,hoje:0,mul:0,resp:{},cid:new Set()});x.n++;x.pk+=c.pk;x.hoje+=c.hoje;x.mul+=c.pk*c.mul;if(c.resp)x.resp[c.resp]=(x.resp[c.resp]||0)+1;if(c.cid)x.cid.add(String(c.cid).split(" / ")[0]);});
   const porReg={};Object.values(porUF).forEach(u=>{const r=porReg[u.reg]||(porReg[u.reg]={reg:u.reg,n:0,pk:0,hoje:0,mul:0,ufs:[]});r.n+=u.n;r.pk+=u.pk;r.hoje+=u.hoje;r.mul+=u.mul;r.ufs.push(u.uf);});
   return {D,SF,S27,ALL,tot,cv,CVS,seg,C,con,conT,reat,inat,porUF:Object.values(porUF).sort((a,b)=>b.pk-a.pk),porReg:Object.values(porReg).sort((a,b)=>b.pk-a.pk)};}
@@ -5721,7 +5722,7 @@ function vIntHH(){
   <section class="bloco"><h2 class="sec">Canais do Conecta, ano a ano</h2><p class="sub" style="margin:0 0 8px">Quilos de híbridos comprados por cada revenda do Conecta, pela razão social no ERP (22/23 a 25/26) e pelas organizações do canal no CRM (26/27). Tendência compara 26/27, com o que está em negociação, à safra 25/26.</p>
    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th>${SF.map(s=>`<th class="val">${s}</th>`).join("")}<th class="val">26/27*</th><th>Tendência</th></tr></thead><tbody>${conTab}
    <tr style="font-weight:700"><td>Total Conecta</td>${SF.map(s=>`<td class="val">${fT(H.conT[s])}</td>`).join("")}<td class="val">${fT(H.conT[S27])}</td><td></td></tr></tbody></table></div></section>
-  <section class="bloco"><h2 class="sec">Canais que perderam o foco · chance de reativação</h2><p class="sub" style="margin:0 0 8px">Canais B2B que já compraram 3 t ou mais de híbridos em uma safra e hoje (o maior entre 25/26 e 26/27, com negociações) estão abaixo de 35% desse pico. ${H.reat.length>40?"Mostrando os 40 maiores.":""}</p>
+  <section class="bloco"><h2 class="sec">Canais que perderam o foco · chance de reativação</h2><p class="sub" style="margin:0 0 8px">Canais B2B que já compraram 3 t ou mais de híbridos em uma safra e hoje (o maior entre 25/26 e 26/27, com negociações) estão abaixo de 35% desse pico. ${H.reat.length>40?"Mostrando os 40 maiores.":""}</p><div class="aviso-est" role="note" style="margin:0 0 10px"><strong>Antes de reativar, consulte o crédito</strong><p>Canais em recuperação judicial ou falência ficam fora desta lista: os que têm isso no nome saem sozinhos, e os identificados em notícias (Forte Agro, Rural Brasil e Agrocat do grupo AgroGalaxy, Prime Agro e Aliança Agrícola) estão em Inativados, com a fonte. A lista foi cruzada com notícias em 17/11/2026 e não substitui a consulta de CNPJ e Serasa pelo Financeiro antes de qualquer proposta.</p></div>
    <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th><th>Cidade</th><th class="val">Pico</th><th class="val">25/26</th><th class="val">26/27*</th><th class="val">Mulato II no histórico</th><th>RTV do histórico</th><th>Sugestão</th></tr></thead><tbody>${reTab||`<tr><td colspan="8" class="meta">Nenhum canal nesse critério.</td></tr>`}</tbody></table></div>
    ${inTab?`<details class="lote" style="margin-top:8px"><summary>Inativados · fora da reativação · ${H.inat.length}</summary><p class="meta" style="margin:6px 0">Canais que a Barenbrug decidiu não reativar, por inadimplência, relacionamento ou outro motivo. Não entram na lista, no mapa de áreas nem nos insumos.</p><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Canal</th><th>Cidade</th><th class="val">Pico</th><th>Motivo</th><th></th></tr></thead><tbody>${inTab}</tbody></table></div></details>`:""}</section>
   <section class="bloco"><h2 class="sec">Mapa de áreas para a ação</h2>
