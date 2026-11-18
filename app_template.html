@@ -10195,6 +10195,7 @@ document.addEventListener("submit",async ev=>{
     const email=f.querySelector("#email").value.trim();const senha=f.querySelector("#senha").value;
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Entrando…";
     const captchaToken=await tsToken();
+    if(!captchaToken&&TS.wid!==null){S._erro="Confirme a verificação de segurança (a caixa \"Confirme que é humano\" acima do botão) e clique em Entrar de novo.";render();return;}
     const {error}=await sb.auth.signInWithPassword({email,password:senha,options:captchaToken?{captchaToken}:undefined});
     if(error){S._erro=/invalid login/i.test(error.message)?"E-mail ou senha incorretos.":/captcha/i.test(error.message)?"A verificação de segurança não foi concluída. Confira a conexão, recarregue a página e tente de novo.":"Não foi possível entrar. Tente de novo.";render();return;}
     const {data:{session}}=await sb.auth.getSession();iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();
