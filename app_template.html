@@ -1138,7 +1138,7 @@ const ETAPAS=[
  {id:"qualcapim",n:"Qual capim encaixa melhor na sua fazenda?",d:"Posicionamento comercial: diagnosticar o cliente, responder objeções e indicar Sabiá, Cayana ou Carcará para cada sistema.",
   v:[{t:"Qual capim encaixa melhor na sua fazenda?",yt:"GZlCjclo2mE"}],mat:[],quiz:[]},
  {id:"vender",n:"Como vender",d:"Objeções, preço e argumentação.",
-  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Tabela de preços — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Política de Crédito e Cobrança",tipo:"PDF",url:"materiais/politica-credito-cobranca.pdf"}],
+  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Tabela de preços — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Crédito do pedido (guia do RC)",tipo:"Guia",pagina:"rc-credito"}],
   quiz:[q("O que avaliar antes de indicar um cultivar?",["Só o preço do saco","Solo, sistema e janela de plantio do produtor","A cor da embalagem"]),
         q("Peso do saco de Sabiá, Cayana e Carcará?",["3 kg","10 kg","25 kg"]),
         q("A comunicação pode citar cultivares concorrentes?",["Não","Sim, sempre","Sim, nos impressos"])]},
@@ -1167,7 +1167,6 @@ const MATERIAIS=[
  {c:"Cayana", tipo:"Podcast", n:"Podcast — Cayana e o ganho de peso", audio:"materiais/podcast-cayana.m4a"},
  {c:"Carcará", tipo:"Podcast", n:"Podcast — A engenharia genética do Carcará", audio:"materiais/podcast-carcara.m4a"},
  {c:"Geral", tipo:"Apostila", n:"E-book — Quem planta capim quer colher arroba", url:"materiais/ebook-colher-arroba.pdf"},
- {c:"Geral", tipo:"Apostila", n:"Política de Crédito e Cobrança (análise de crédito do RC)", url:"materiais/politica-credito-cobranca.pdf"}
 ];
 // Vídeos da base — g: grupo (Conteúdo técnico, Caso de sucesso, Bate-papo)
 const VIDEOS_BASE=[
@@ -4298,6 +4297,7 @@ function vPrecos(){
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
   const linhas=PRECOS.map(p=>`<tr><td class="cult">${p.cult}</td><td>${p.cod}</td><td>${esc(p.cat)}</td><td>${p.trat}</td><td>${p.emb}</td>${p.v.map((x,i)=>`<td class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${x}</td>`).join("")}</tr>`).join("");
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
+  const polc=polHTML("pol_comercial");
   return `${voltar}
   <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
   ${S.tpEd&&tpPodeEditar()?`<section class="bloco"><h2 class="sec">Editar a tabela</h2>${tpEditor()}</section>`:`
@@ -4311,17 +4311,26 @@ function vPrecos(){
   <div class="precos-nota"><strong>Condições gerais</strong>
     <div class="cond"><ul style="margin:0;padding:0;list-style:disc"><li>Preços <strong>CIF</strong> para cargas fechadas acima de 15 t (exceto Roraima). Volumes menores: <strong>FOB</strong> Guaíra–SP + frete da tabela acima.</li>
     <li>Entrega em fazenda somente com carga fechada e estradas em boas condições (anexar roteiro e km).</li>
-    <li>Descontos por canal de vendas seguem a política vigente — consulte o responsável comercial da região.</li>
+    <li>Descontos por canal de vendas seguem a política comercial vigente, resumida logo abaixo.</li>
     <li>Inadimplência: multa de 2,0% + juros de mora de 2,0% ao mês, pro rata die.</li>
     <li>Esta tabela cancela as versões anteriores e pode ser revogada a qualquer momento, sem aviso prévio.</li></ul></div></div>
+  ${polc}
   `;
 }
 /* ---------- Conecta RC ---------- */
 const vePainelRC=()=>ehAdmin()||temPerfil("RC")||temPerfil("Assessor de Vendas Digital")||temPerfil("Comercial Barenbrug");
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
+/* ===== Crédito do pedido: resumo da Política de Crédito para o RC (a política completa fica com o Financeiro) ===== */
+function carregarPol(id){S.pol=S.pol||{};if(S.pol[id]!==undefined)return;S.pol[id]=null;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id",id).maybeSingle();S.pol[id]=data&&data.dados&&data.dados.html?data.dados.html:"";}catch(e){S.pol[id]="";}render();})();}
+function polHTML(id){carregarPol(id);const h=S.pol[id];return h===null?`<div class="carregando">Carregando…</div>`:h;}
+function vRCCredito(){
+  const h=polHTML("pol_credito");
+  return `<div><span class="rot">Conecta RC</span><h1 class="titulo">Crédito do pedido</h1><p class="sub">O essencial da Política de Crédito da Barenbrug para o seu pedido ser aprovado rápido. Nenhum pedido é faturado sem a aprovação do crédito pelo Financeiro.</p></div>
+  ${h===""?`<div class="vazio">O resumo de crédito não está disponível para o seu acesso.</div>`:h}`;
+}
 function subnavRC(){
-  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
+  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
   if(veMeusRC())abas.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))abas.push(["rc-cobertura","Cobertura dos RCs"]);
@@ -9827,7 +9836,7 @@ function render(){renderApp();tsMontar();pushAbrirPendente();setTimeout(appModal
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -9847,7 +9856,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
- "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
+ "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
@@ -9890,7 +9899,7 @@ function renderApp(){
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
