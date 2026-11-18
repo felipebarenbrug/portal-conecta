@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118180411";
+const APP_VER="20261118204038";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4308,7 +4308,7 @@ function vPrecos(){
     const ru=Math.max(...D.map(x=>x.rodada));
     return `<section class="bloco"><h2 class="sec">Preço praticado pelos canais (cliente oculto)${inf("Preço por kg que os canais do Conecta cobram do produtor, levantado no cliente oculto. Comparado com a tabela ao produtor do mês atual. Visível só para a equipe Barenbrug.")}</h2>
       <div class="tab"><table class="sim-t"><thead><tr><th>Cultivar</th><th class="val">Tabela (${esc(PRECOS_MESES[PRECOS_MES_ATUAL]||"")})</th><th class="val">Média dos canais · ${ru}ª rodada</th><th class="val">Faixa</th><th class="val">Canais</th><th class="val">Média vs tabela</th></tr></thead><tbody>${lin}</tbody></table></div>
-      <p class="meta" style="margin:6px 0 0">Uso interno: não aparece para RCs e revendas. A margem de cada canal está na ficha do canal, em Conecta Revendas.</p></section>`;})();
+      <p class="meta" style="margin:6px 0 0">Uso interno: não aparece para RCs e revendas. A margem de cada canal está em Inteligência, Preços dos canais.</p></section>`;})();
   return `${voltar}
   <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
   ${S.tpEd&&tpPodeEditar()?`<section class="bloco"><h2 class="sec">Editar a tabela</h2>${tpEditor()}</section>`:`
@@ -5937,18 +5937,6 @@ function canalMargem(c){
     return {cult:k,so:so.p,rod:so.r,data:so.d,si:si?si.p:null,base,mg:si&&si.p?so.p/si.p-1:null};});
   return {carregando:false,L};
 }
-function vCanalPrecos(c){
-  const lst=(S.canalPrecos&&S.canalPrecos[c.id])||[];
-  const M=canalMargem(c),r2=x=>x==null?"—":"R$ "+x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),pc=x=>x==null?"—":(x>=0?"+":"")+(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
-  const marg=M.carregando?`<div class="carregando">Calculando a margem do canal…</div>`:M.L.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Cultivar</th><th class="val">Venda ao produtor${inf("Preço que o canal pratica com o produtor, levantado no cliente oculto (rodada mais recente).")}</th><th class="val">Compra da Barenbrug${inf("Preço médio por kg que o canal pagou à Barenbrug nos pedidos ganhos (sell-in). Sem compra do cultivar na safra atual, usa a safra passada; sem compra do cultivar, usa a média dos híbridos.")}</th><th class="val">Margem do canal${inf("Quanto o preço ao produtor fica acima do preço de compra: venda ÷ compra − 1.")}</th></tr></thead><tbody>${M.L.map(x=>`<tr><td><strong>${esc(x.cult)}</strong></td><td class="val">${r2(x.so)}<span class="meta" style="display:block">${x.rod?x.rod+"ª rodada":esc(x.data||"")}</span></td><td class="val">${r2(x.si)}<span class="meta" style="display:block">${esc(x.base||"sem compra registrada")}</span></td><td class="val"><strong>${pc(x.mg)}</strong></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Sem preço do cliente oculto para este canal.</div>`;
-  const rows=lst.length?`<details style="margin-top:8px"><summary>Todas as pesquisas (${lst.length})</summary><div class="tab"><table><thead><tr><th>Cultivar</th><th class="val">Preço praticado</th><th>Data da pesquisa</th><th>Fonte</th><th></th></tr></thead><tbody>${lst.map(x=>`<tr><td>${esc(x.cultivar||"—")}</td><td class="val">${x.preco?fmtR(x.preco):"—"}</td><td>${esc(x.data_pesquisa||"—")}</td><td>${esc(x.fonte||"Cliente oculto")}</td><td><button class="link" data-a="preco-del" data-v="${x.id}">excluir</button></td></tr>`).join("")}</tbody></table></div></details>`:"";
-  const form=S.novoPreco?`<form class="form-card" id="f-preco"><h3 class="sec">Preço praticado (cliente oculto)</h3>
-    <div class="dupla"><div><label>Cultivar</label><input id="pr_cult"></div><div><label>Preço (R$)</label><input id="pr_preco" type="number" step="0.01"></div></div>
-    <div class="dupla"><div><label>Data da pesquisa</label><input id="pr_data" type="date"></div><div><label>Fonte</label><input id="pr_fonte" value="Cliente oculto"></div></div>
-    <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="preco-novo" data-v="0">Cancelar</button></div></form>`:"";
-  return `<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">Preço ao produtor e margem do canal</h2><button class="btn sec" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>
-    <p class="sub" style="margin:0 0 6px">Venda ao produtor pelo cliente oculto contra o preço que o canal pagou à Barenbrug (sell-in).</p>${form}${marg}${rows}</section>`;
-}
 function vCanalCRM(c,m){
   return `  <div class="metrics">
     <div class="metric"><span>Meta de híbridos</span><strong>${fmtKg(m.meta)}</strong></div>
@@ -6042,7 +6030,6 @@ function vRVCanal(){
   ${vCanalContatos(c)}
   ${vCanalFiliais(c)}
   ${vCanalEstoque(c)}
-  ${vCanalPrecos(c)}
 `;
 }
 /* ===== Concorrentes em híbridos (conteúdo no banco, uso interno) ===== */
@@ -7244,6 +7231,14 @@ function subnavInt(){
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
+function vIntMargem(){
+  if(!ehAdmin())return "";
+  const cs=(S.canais||[]).filter(c=>((S.canalPrecos||{})[c.id]||[]).some(x=>x.preco));if(!cs.length)return "";
+  const r2=x=>x==null?"—":"R$ "+x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),pc=x=>x==null?"—":(x>=0?"+":"")+(x*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+  let carr=false;const L=[];cs.sort((a,b)=>String(a.nome).localeCompare(String(b.nome))).forEach(c=>{const M=canalMargem(c);if(M.carregando){carr=true;return;}M.L.forEach(x=>L.push({...x,canal:c.nome}));});
+  const corpo=L.length?`<div class="tab"><table class="sim-t"><thead><tr><th>Canal</th><th>Cultivar</th><th class="val">Venda ao produtor${inf("Preço que o canal pratica com o produtor, levantado no cliente oculto (rodada mais recente).")}</th><th class="val">Compra da Barenbrug${inf("Preço médio por kg que o canal pagou à Barenbrug nos pedidos ganhos (sell-in), sem bonificações e sem misturas. Sem compra do cultivar na safra atual, usa a safra passada; sem compra do cultivar, usa a média dos híbridos.")}</th><th class="val">Margem do canal${inf("Quanto o preço ao produtor fica acima do preço de compra: venda ÷ compra − 1.")}</th></tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.canal)}</strong></td><td>${esc(x.cult)}</td><td class="val">${r2(x.so)}<span class="meta" style="display:block">${x.rod?x.rod+"ª rodada":esc(intData(x.data))}</span></td><td class="val">${r2(x.si)}<span class="meta" style="display:block">${esc(x.base||"sem compra registrada")}</span></td><td class="val"><strong>${pc(x.mg)}</strong></td></tr>`).join("")}</tbody></table></div>`:"";
+  return `<section class="bloco"><h2 class="sec">Margem dos canais</h2><p class="sub" style="margin:0 0 6px">Venda ao produtor pelo cliente oculto contra o preço que cada canal pagou à Barenbrug (sell-in). Análise do Marketing, visível só para administradores: não aparece para as revendas, para o Comercial nem na ficha do canal.</p>${corpo}${carr?`<div class="carregando">Calculando a margem dos canais…</div>`:""}${!carr&&!L.length?`<div class="vazio">Sem dados suficientes para calcular a margem.</div>`:""}</section>`;
+}
 function vIntCanais(){
   if(!S.canais)return `<div class="carregando">Carregando as pesquisas…</div>`;
   const nome={};S.canais.forEach(c=>{nome[c.id]=c.nome;});
@@ -7264,6 +7259,7 @@ function vIntCanais(){
   return `<div><h1 class="titulo">Preços praticados pelos canais</h1><p class="sub">Pesquisas de cliente oculto nas revendas do Conecta Revendas. Uso interno da Barenbrug: as revendas não veem esta área.</p></div>
   <div class="acoes" style="margin:0"><button class="btn" data-a="preco-novo" data-v="1">+ Pesquisa</button></div>
   ${form}
+  ${vIntMargem()}
   ${rodsT.length?`<div class="filtros" role="group" aria-label="Rodada da auditoria">${[...rodsT,"todas"].map(r=>`<button class="chip" data-a="int-rod" data-v="${r}" aria-pressed="${r===rd}">${r==="todas"?"Todas as pesquisas":esc(ROD_NOME[r]||r+"ª rodada")}</button>`).join("")}</div>`:""}
   ${resumo.length?`<section class="bloco"><h2 class="sec">Resumo por cultivar${rd!=="todas"?" · "+esc(ROD_NOME[rd]||""):""}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th class="val">Pesquisas</th><th class="val">Média</th><th class="val">Menor preço</th><th class="val">Maior preço</th><th>Pesquisa mais recente</th></tr></thead><tbody>${resumo.map(r=>`<tr><td><strong>${esc(r.cu)}</strong></td><td class="val">${r.n}<br><small class="muted">${r.nr} revenda${r.nr>1?"s":""}</small></td><td class="val">${fmtR(r.med)}</td><td class="val">${fmtR(r.min)}<br><small class="muted">${esc(r.qmin)}</small></td><td class="val">${fmtR(r.max)}<br><small class="muted">${esc(r.qmax)}</small></td><td>${esc(intData(r.ult.data_pesquisa))}</td></tr>`).join("")}</tbody></table></div><p class="muted" style="font-size:.85em;margin-top:6px">Abaixo de cada preço, a revenda que praticou o menor e o maior valor.</p></section>`:""}
   <section class="bloco"><h2 class="sec">Todas as pesquisas (${lst.length})</h2>
