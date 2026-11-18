@@ -1447,7 +1447,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118064614";
+const APP_VER="20261118072833";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3972,9 +3972,11 @@ function heroHub(){
     <p>Este é o seu ponto de partida na Barenbrug: treinamento dos híbridos, materiais de apoio à venda e os programas comerciais, reunidos em um só lugar. Escolha uma área abaixo para começar.</p>
     <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div></section>`;
 }
+/* secoes que a pessoa enxerga: base do hub e das opcoes da pesquisa de satisfacao */
+function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
+  return SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id)));}
 function vHub(){
-  const acessos=Array.isArray(S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  const secs=SECOES.filter(x=>x.id==="financeiro"?ehFin():x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id))&&x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
+  const secs=secoesVisiveis().filter(x=>x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
   const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
@@ -9281,18 +9283,19 @@ function protMarca(){let m=document.getElementById("prot-marca");if(!protAtiva()
   m.style.backgroundImage=`url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;}
 function npsCard(){if(!npsMostrar())return "";return `<div class="aviso-est" role="note" style="margin:0"><strong>Como está sendo o Portal Conecta para você?</strong><p>Leva 1 minuto. Sua nota e suas sugestões ajudam o Marketing a melhorar o portal.</p><div class="mk-link" style="margin-top:6px"><button type="button" class="btn" data-a="nps-abrir">Responder</button></div><p class="meta" style="margin:6px 0 0">Este aviso fica aqui até você responder.</p></div>`;}
 function vNps(){const F=S.npsF||(S.npsF={});if(S.npsOk)return `<section class="bloco"><h1 class="titulo">Obrigado!</h1><p class="sub">Sua resposta foi registrada. O Marketing lê cada sugestão.</p><div class="acoes"><button class="btn" data-a="inicio">Voltar ao início</button></div></section>`;
-  const areas=["Academia de Híbridos","Conecta RC","Conecta Revendas","Tabela de preços","Enxoval de Marketing","LeadsBaren","Inside Sales","Meu CRM","Mercado","Inteligência","Ações de Marketing","Brindes","Mensagens e feed","Outra"];
+  /* so as areas liberadas para a pessoa: quem nao ve uma area nao deve nem saber que ela existe */
+  const areas=[...secoesVisiveis().filter(x=>x.ativo&&x.id!=="mural").map(x=>x.nome),"Mensagens e feed","Outra"];
   return `<div><button type="button" class="link" data-a="inicio">‹ Início</button><h1 class="titulo">Avalie o Portal Conecta</h1><p class="sub">Pesquisa rápida para o Marketing saber o que está funcionando e o que melhorar. Sua resposta fica registrada com o seu nome, para podermos voltar a falar com você se precisar.</p></div>
   <form class="form-card" id="f-nps" style="display:grid;gap:14px">
    <div><label>De 0 a 10, quanto você recomendaria o Portal Conecta a um colega? *</label><div class="nps-esc" role="radiogroup" aria-label="Nota de 0 a 10" style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:6px">${[...Array(11).keys()].map(n=>`<button type="button" class="btn ${F.nota===n?"":"sec"}" role="radio" aria-checked="${F.nota===n}" data-a="nps-nota" data-v="${n}" style="padding:8px 0;min-width:0">${n}</button>`).join("")}</div><div class="meta" style="display:flex;justify-content:space-between;margin-top:2px"><span>Nada provável</span><span>Muito provável</span></div></div>
    <div><label for="nps_m">O que mais pesou na sua nota?</label><textarea id="nps_m" rows="3" maxlength="1500" placeholder="O que você mais usa, do que gosta, o que atrapalha">${esc(F.motivo||"")}</textarea></div>
    <div><label for="nps_s">Que melhoria ou novidade você sugere?</label><textarea id="nps_s" rows="4" maxlength="2000" placeholder="Funções, conteúdos, materiais, o que facilitaria o seu dia a dia">${esc(F.sugestao||"")}</textarea></div>
-   <fieldset style="border:1px solid var(--linha);border-radius:10px;padding:12px;display:grid;gap:12px;margin:0"><legend style="font-weight:700;padding:0 6px">Academia de Híbridos</legend>
+   ${secoesVisiveis().some(x=>x.id==="academia")?`   <fieldset style="border:1px solid var(--linha);border-radius:10px;padding:12px;display:grid;gap:12px;margin:0"><legend style="font-weight:700;padding:0 6px">Academia de Híbridos</legend>
     <div><label>De 0 a 10, quanto você recomendaria a Academia de Híbridos (cursos, apostilas e materiais) a um colega?</label><div role="radiogroup" aria-label="Nota da Academia de 0 a 10" style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:6px">${[...Array(11).keys()].map(n=>`<button type="button" class="btn ${F.ac_nota===n?"":"sec"}" role="radio" aria-checked="${F.ac_nota===n}" data-a="nps-ac" data-v="${n}" style="padding:8px 0;min-width:0">${n}</button>`).join("")}</div><div class="meta" style="display:flex;justify-content:space-between;margin-top:2px"><span>Nada provável</span><span>Muito provável</span></div><button type="button" class="link" style="margin-top:4px" data-a="nps-ac" data-v="x" aria-pressed="${F.ac_nota==="x"}">${F.ac_nota==="x"?"Marcado: ainda não usei a Academia":"Ainda não usei a Academia"}</button></div>
     ${F.ac_nota==="x"?"":`<div><label>Os cursos e conteúdos da Academia te ajudaram a explicar e vender melhor os híbridos?</label><div role="radiogroup" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${[[1,"Não ajudaram"],[2,"Pouco"],[3,"Em parte"],[4,"Ajudaram"],[5,"Ajudaram muito"]].map(([n,t])=>`<button type="button" class="btn ${F.ac_ajudou===n?"":"sec"}" role="radio" aria-checked="${F.ac_ajudou===n}" data-a="nps-aj" data-v="${n}" style="padding:6px 10px">${t}</button>`).join("")}</div></div>
     <div><label>Você já usou algum conteúdo da Academia numa conversa com cliente (apostila, vídeo, caso de sucesso, resposta pronta)?</label><div role="radiogroup" style="display:flex;gap:6px;margin-top:6px">${[["sim","Sim"],["nao","Ainda não"]].map(([k,t])=>`<button type="button" class="btn ${F.ac_usou===k?"":"sec"}" role="radio" aria-checked="${F.ac_usou===k}" data-a="nps-us" data-v="${k}" style="padding:6px 12px">${t}</button>`).join("")}</div></div>
     <div><label for="nps_ac">O que falta na Academia para ela te ajudar mais?</label><textarea id="nps_ac" rows="3" maxlength="1500" placeholder="Um curso, um tema, um formato, um material para mandar ao cliente">${esc(F.ac_coment||"")}</textarea></div>`}
-   </fieldset>
+   </fieldset>`:""}
    <div><label for="nps_a">Qual área do portal você mais usa?</label><select id="nps_a"><option value="">Escolha</option>${areas.map(a=>`<option ${F.area===a?"selected":""}>${a}</option>`).join("")}</select></div>
    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
    <div class="acoes"><button class="btn" type="submit">Enviar</button></div></form>`;}
