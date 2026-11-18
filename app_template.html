@@ -4457,26 +4457,58 @@ const RENT_CULT={
 const RENT_SAFRAS=4;
 /* casos reais do e-book "Quem planta capim quer colher arroba" (Eloir Daltoé, Duagro) */
 const RENT_CASOS=[
- {sis:["cria","ciclo"],t:"Fazenda Santa Tereza",loc:"Butiá (RS)",cult:"Sabiá",tipo:"Cria e ciclo completo",fotos:["img/casos/santa-tereza-1.jpg","img/casos/santa-tereza-2.jpg"],
+ {uf:"RS",sis:["cria","ciclo"],t:"Fazenda Santa Tereza",loc:"Butiá (RS)",cult:"Sabiá",tipo:"Cria e ciclo completo",fotos:["img/casos/santa-tereza-1.jpg","img/casos/santa-tereza-2.jpg"],
   nums:[["Taxa de prenhez","62% → 87%"],["Peso à desmama","157 → 211 kg"],["Área com híbridos","550 de 2.100 ha de pecuária"]],
   txt:"Começou pelo solo em 2018 e trouxe os híbridos depois. São 54 kg a mais por bezerro desmamado e 25 pontos a mais de prenhez: na cria, pasto de qualidade o ano todo aparece direto nos índices reprodutivos."},
- {sis:["semi","ciclo"],t:"Fazenda Santa Tereza · novilho precoce",loc:"Butiá (RS)",cult:"Cayana",tipo:"Terminação a pasto",fotos:["img/casos/santa-tereza-3.jpg","img/casos/santa-tereza-4.jpg"],arroba:34.26,dias:172,
+ {uf:"RS",sis:["semi","ciclo"],t:"Fazenda Santa Tereza · novilho precoce",loc:"Butiá (RS)",cult:"Cayana",tipo:"Terminação a pasto",fotos:["img/casos/santa-tereza-3.jpg","img/casos/santa-tereza-4.jpg"],arroba:34.26,dias:172,
   nums:[["Animais","416 em 83 ha, 4 piquetes"],["Lotação","5 animais/ha"],["Entrada e saída","280 → 485 kg em 172 dias"],["GMD","1,19 kg/dia"],["Suplementação","leve: 0,2% do peso vivo, 16% PB"],["Produção","1.028 kg de peso vivo/ha (34,3 @/ha)"]],
   txt:"Lotação alta com ganho individual alto ao mesmo tempo: é a soma dos dois que passa de uma tonelada de peso vivo por hectare."},
  {sis:["semi","recria","ciclo"],t:"Fazenda Cristal",loc:"",cult:"Cayana",tipo:"Terminação e recria em 1 ha",video:"img/casos/cristal.mp4",poster:"img/casos/cristal.jpg",arroba:86.7,dias:260,
   nums:[["Terminação (90 dias)","14 animais/ha, GMD 1,46 kg, 1.853 kg/ha"],["Recria (170 dias)","8 animais/ha, GMD 0,55 kg, 748 kg/ha"],["Valor produzido","R$ 36.235/ha em 260 dias"],["Suplementação","R$ 10.556/ha"],["Implantação e adubação","R$ 4.500/ha (só no 1º ciclo)"],["Saldo","R$ 21.179/ha"]],
   txt:"O caso que fecha a conta: tirando suplemento e implantação, sobram R$ 21.179 por hectare. E a implantação não se repete no ano seguinte."},
- {sis:["recria"],t:"Fazenda Ventura · medição em 9 ha",loc:"Figueirão (MS)",cult:"híbrido Barenbrug",tipo:"Recria intensiva a pasto",fotos:["img/casos/ventura.jpg"],arroba:35.93,dias:210,
+ {uf:"MS",sis:["recria"],t:"Fazenda Ventura · medição em 9 ha",loc:"Figueirão (MS)",cult:"híbrido Barenbrug",tipo:"Recria intensiva a pasto",fotos:["img/casos/ventura.jpg"],arroba:35.93,dias:210,
   nums:[["Animais","76 novilhas em 9 ha, 4 piquetes"],["GMD","0,608 kg/dia por 210 dias"],["Produção","1.078 kg/ha (35,9 @/ha) em 210 dias"],["Suplementação","0,3% do peso vivo"],["Implantação","R$ 2.870/ha"]],
   txt:"Solo arenoso, recria de novilhas e mais de uma tonelada de carne por hectare em sete meses."},
- {sis:["recria"],t:"Fazenda Ventura · módulo de 400 ha",loc:"Figueirão (MS)",cult:"híbrido Barenbrug",tipo:"Recria a pasto, escala comercial",arroba:26.6,dias:240,
+ {uf:"MS",sis:["recria"],t:"Fazenda Ventura · módulo de 400 ha",loc:"Figueirão (MS)",cult:"híbrido Barenbrug",tipo:"Recria a pasto, escala comercial",arroba:26.6,dias:240,
   nums:[["Lotação","4 a 5 recrias/ha (cerca de 1.800 kg PV/ha)"],["Ganho por animal","150 a 200 kg de out/nov a abr/mai"],["Suplementação","somente mineral"],["Adubação anual","200 kg/ha de 16-16-16 + 150 kg/ha de ureia"],["Produção","cerca de 800 kg/ha/ano (26,6 @/ha)"]],
   txt:"Na escala da fazenda inteira, só com sal mineral: produção alta com custo baixo."}];
+function rentMemoriaHTML(X){
+  const I=X.inp,C=X.C,b=C.base,h=C.n,m=C.m;
+  const nf=(x,d)=>x.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});const r0=x=>"R$ "+nf(Math.round(x),0),r2=x=>"R$ "+nf(x,2);
+  const passo=(t,linhas)=>`<li><strong>${t}</strong>${linhas.map(l=>`<div class="meta" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;margin-top:3px;overflow-wrap:anywhere">${l}</div>`).join("")}</li>`;
+  const P=[];
+  P.push(passo("1. Lotação com o pasto novo",[`Multiplicador do ensaio VCU do ${h} sobre o ${b}: ${nf(m,3)} (${nf((m-1)*100,1)}% a mais)`,`${h}: ${nf(X.lot,2)} × ${nf(m,3)} = ${nf(X.lotH,2)} ${X.met==="cria"?"vacas":"UA"}/ha`]));
+  if(X.met==="abate"){const a=I.dias/365;P.push(passo("2. Produção por hectare por ano (peso de abate)",[`Anos do ciclo = ${nf(I.dias,0)} dias ÷ 365 = ${nf(a,2)}`,`${b}: ${nf(X.lot,2)} UA × ${nf(I.peso,1)} @ ÷ ${nf(a,2)} = ${nf(X.prodC,2)} @/ha/ano`,`${h}: ${nf(X.lotH,2)} UA × ${nf(I.peso,1)} @ ÷ ${nf(a,2)} = ${nf(X.prodH,2)} @/ha/ano`]));}
+  else if(X.met==="gmd"){const k=I.gmd/1000*X.dOc*I.rend/100/15;P.push(passo("2. Produção por hectare no ano (ganho de peso no período)",[`Arrobas por animal no período = ${nf(I.gmd,0)} g ÷ 1.000 × ${nf(X.dOc,0)} dias × ${nf(I.rend,1)}% ÷ 15 kg = ${nf(k,3)} @`,`${b}: ${nf(X.lot,2)} × ${nf(k,3)} = ${nf(X.prodC,2)} @/ha/ano`,`${h}: ${nf(X.lotH,2)} × ${nf(k,3)} = ${nf(X.prodH,2)} @/ha/ano`,`Só o período informado entra na conta; o resto do ano não. 1 @ = 15 kg de carcaça.`]));}
+  else P.push(passo("2. Bezerros desmamados por hectare por ano",[`${b}: ${nf(X.lot,2)} vacas × ${nf(I.desm,1)}% = ${nf(X.prodC,3)} bezerros/ha`,`${h}: ${nf(X.lotH,2)} vacas × ${nf(I.desm,1)}% = ${nf(X.prodH,3)} bezerros/ha`]));
+  const un=X.met==="cria"?"bezerro":"@";
+  P.push(passo("3. Receita bruta por hectare por ano",[`${b}: ${nf(X.prodC,2)} × ${r2(I.preco)} por ${un} = ${r0(X.recC)}`,`${h}: ${nf(X.prodH,2)} × ${r2(I.preco)} por ${un} = ${r0(X.recH)}`]));
+  if(X.csup)P.push(passo("4. Suplementação por hectare por ano",[`${b}: ${nf(X.lot,2)} × ${r2(X.csup)} × ${nf(X.dOc,0)} dias = ${r0(X.supC)}`,`${h}: ${nf(X.lotH,2)} × ${r2(X.csup)} × ${nf(X.dOc,0)} dias = ${r0(X.supH)}`,`O pasto novo tem mais animais, então gasta mais suplemento.`]));
+  else P.push(passo("4. Suplementação",[`Não informada: entra igual nos dois pastos e não muda a diferença.`]));
+  P.push(passo(`5. Semente diluída em ${RENT_SAFRAS} safras`,[`${b}: ${nf(I.tc,1)} kg/ha × ${r2(I.pc)} ÷ ${RENT_SAFRAS} = ${r0(X.semC)}/ha/ano`,`${h}: ${nf(I.th,1)} kg/ha × ${r2(I.ph)} ÷ ${RENT_SAFRAS} = ${r0(X.semH)}/ha/ano`]));
+  const LC=[];if(I.va&&I.jur){LC.push(`${b}: ${nf(X.lot,2)} × ${r0(I.va)} × ${nf(I.jur,1)}% × ${nf(X.dOc,0)} ÷ 365 dias = ${r0(X.capC)}`,`${h}: ${nf(X.lotH,2)} × ${r0(I.va)} × ${nf(I.jur,1)}% × ${nf(X.dOc,0)} ÷ 365 dias = ${r0(X.capH)}`);}else LC.push("Valor do animal ou custo do dinheiro não informado: não entra.");
+  LC.push(I.adub?`Adubação de manutenção a mais no pasto novo: ${r0(I.adub)}/ha/ano`:"Adubação a mais não informada: considera a mesma adubação nos dois pastos.");
+  P.push(passo("5b. Custo do capital nos animais e adubação a mais",LC));
+  const fC=X.fC,fH=X.fH;
+  P.push(passo("6. O que fica por hectare por ano",[`${b}: receita ${r0(X.recC)} − suplemento ${r0(X.supC)} − capital ${r0(X.capC)} − semente ${r0(X.semC)} = ${r0(fC)}`,`${h}: receita ${r0(X.recH)} − suplemento ${r0(X.supH)} − capital ${r0(X.capH)} − adubação a mais ${r0(X.adH)} − semente ${r0(X.semH)} = ${r0(fH)}`,`A mais por hectare: ${r0(fH)} − ${r0(fC)} = ${r0(X.extraHa)}`]));
+  const L7=[X.area?`Na área: ${r0(X.extraHa)} × ${nf(X.area,0)} ha = ${r0(X.extraArea)} por ano`:"Área não informada: resultado por hectare",
+    `Por ${X.met==="cria"?"vaca":"cabeça"}: ${r0(X.extraHa)} ÷ ${nf(X.lotH,2)} × ${nf(X.cab,0)} ÷ 365 dias = ${r0(X.porCab)}`];
+  if(X.qtd)L7.push(`No rebanho: ${r0(X.porCab)} × ${nf(X.qtd,0)} = ${r0(X.rebanho)}`);
+  L7.push(`Acumulado: ${r0(X.area?X.extraArea:X.extraHa)} × safras (1 a ${RENT_SAFRAS})`);
+  P.push(passo("7. Na área, por animal e no rebanho",L7));
+  const L8=[`Diferença de semente na formação: ${nf(I.th,1)} × ${r2(I.ph)} − ${nf(I.tc,1)} × ${r2(I.pc)} = ${r0(X.invExtra)}/ha`];
+  if(X.retorno)L8.push(`Retorno: (receita − suplemento a mais) ${r0(X.ganhoRec)} × ${RENT_SAFRAS} safras ÷ ${r0(X.invExtra)} = ${r2(X.retorno)} para cada R$ 1`);
+  if(X.payback)L8.push(`Tempo para se pagar: ${r0(X.invExtra)} ÷ (${r0(X.ganhoRec)} ÷ 12 meses) = ${nf(X.payback,1)} meses`);
+  P.push(passo("8. A formação do pasto",L8));
+  const E=rentEquilibrio(X.ck,X.vv);if(E){const z=rentConta(X.ck,X.vv,1);P.push(passo("9. Ponto de equilíbrio e cenário conservador",[`A conta é linear na lotação. Sem ganho de lotação, o pasto novo ficaria ${r0(-(z?z.extraHa:0))} por hectare abaixo (só o custo a mais)`,`Ganho mínimo para empatar: ${nf(E.pct,1)}% a mais de lotação, contra ${nf(E.pctEnsaio,1)}% do ensaio`,`Com metade do ganho do ensaio (${nf(E.pctEnsaio/2,1)}%): ${r0(E.meio)}/ha/ano`]));}
+  return `<details class="faq-item" style="margin-top:14px"><summary>Memória de cálculo: todas as contas com os números informados</summary><ol style="display:grid;gap:10px;padding-left:18px;margin:8px 0 0;list-style:none">${P.join("")}</ol>
+   <p class="meta" style="margin:8px 0 0">Não entram na conta: mão de obra, sanidade, impostos e, se não informados, o custo do capital nos animais e a adubação a mais. A comparação vale para quem já vai formar ou reformar o pasto e mantém o mesmo nível de manejo nos dois.</p></details>`;
+}
 function rentCasosHTML(X){
-  const L=RENT_CASOS.filter(c=>c.sis.includes(X.sis.k)).concat(RENT_CASOS.filter(c=>!c.sis.includes(X.sis.k)));
+  const uf=X.uf,rg=rentRegiao(uf),sc=c=>(c.sis.includes(X.sis.k)?4:0)+(uf&&c.uf===uf?2:rg&&rentRegiao(c.uf)===rg?1:0);const L=RENT_CASOS.map((c,i)=>[c,i]).sort((a,b)=>sc(b[0])-sc(a[0])||a[1]-b[1]).map(x=>x[0]);
   const d1=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
   return `<h3>Olhe os resultados de quem já faz</h3>
-   <p class="meta" style="margin:0 0 8px">Fazendas que mediram o resultado no campo, ${X.sis.k==="cria"?"começando pelos casos de cria":"começando pelos casos de "+esc(X.sis.n.toLowerCase())}. ${X.met!=="cria"?`A sua conta com o ${esc(X.C.n)} dá ${d1(X.prodH)} @/ha/ano; as fazendas contam a arroba em peso vivo (30 kg), que equivale à arroba de carcaça a 50% de rendimento usada aqui.`:""}</p>
+   <p class="meta" style="margin:0 0 8px">Fazendas que mediram o resultado no campo, começando pelos casos de ${esc(X.sis.n.toLowerCase())}${uf?" e da região do produtor ("+esc(uf)+")":""}. ${X.met!=="cria"?`A sua conta com o ${esc(X.C.n)} dá ${d1(X.prodH)} @/ha/ano; as fazendas contam a arroba em peso vivo (30 kg), que equivale à arroba de carcaça a 50% de rendimento usada aqui.`:""}</p>
    <div class="dir-grid">${L.map(c=>`<div class="dir-card" style="min-width:0">${c.video?`<video src="${c.video}" poster="${c.poster}" controls playsinline preload="none" style="width:100%;max-height:320px;border-radius:6px;background:#000"></video>`:c.fotos?`<img src="${c.fotos[0]}" alt="${esc(c.t)}" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px">`:""}
      <span class="meta" style="display:block;margin-top:6px">${esc(c.tipo)} · ${esc(c.cult)}${c.loc?" · "+esc(c.loc):""}</span><strong style="display:block;margin:2px 0 6px">${esc(c.t)}</strong>
      ${c.nums.map(([a,b])=>`<div class="calc-lin"><span>${esc(a)}</span><strong style="text-align:right">${esc(b)}</strong></div>`).join("")}
@@ -4488,9 +4520,33 @@ const RENT_SIS={
   ciclo:{n:"Ciclo completo",met:"abate",d:{dias:"730",peso:"18"},dica:"Do bezerro ao boi gordo. Conta pelas arrobas que saem no abate."},
   cria:{n:"Cria",met:"cria",d:{desm:"66"},dica:"Venda de bezerros. Conta pelos bezerros desmamados por hectare."},
   recria:{n:"Recria",met:"gmd",d:{dias:"365",gmd:"600",rend:"50"},dica:"Da desmama ao boi magro. Conta pelo ganho de peso no período."},
-  semi:{n:"Semiconfinamento",met:"gmd",d:{dias:"120",gmd:"900",rend:"52"},dica:"Terminação a pasto com ração no cocho (cerca de 1% do peso vivo). Conta pelo ganho de peso."}
+  semi:{n:"Semiconfinamento",met:"gmd",d:{dias:"120",gmd:"900",rend:"52"},dica:"Terminação a pasto com ração no cocho (cerca de 1% do peso vivo), numa janela de 90 a 150 dias. Só a janela entra na conta."}
 };
-const RENT_RACA={nelore:{n:"Nelore",peso:"16,5"},cruzado:{n:"Cruzado (Nelore × raça europeia)",peso:"19"},outra:{n:"Outra raça ou composto",peso:"18"}};
+const RENT_RACA={nelore:{n:"Nelore",peso:"16,5"},cruzado:{n:"Cruzado (Nelore × raça europeia)",peso:"19"},europeia:{n:"Europeia (Angus, Hereford, Braford)",peso:"19"},outra:{n:"Outra raça ou composto",peso:"18"}};
+const RENT_COND={
+  chuva:["Regime de chuvas",[["","Não informado"],["regular","Regular"],["irregular","Irregular"],["seca","Seca longa (3 meses ou mais)"]]],
+  fert:["Fertilidade do solo",[["","Não informada"],["alta","Alta (solo corrigido)"],["media","Média"],["baixa","Baixa"]]],
+  dren:["Drenagem",[["","Não informada"],["boa","Boa"],["regular","Regular"],["ruim","Ruim"],["encharcada","Encharcada ou sujeita a alagar"]]],
+  text:["Textura do solo",[["","Não informada"],["arenoso","Arenoso"],["medio","Médio"],["argiloso","Argiloso"]]]};
+const RENT_UFS="AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO".split(" ");
+const RENT_REG={Sul:"PR RS SC",Sudeste:"ES MG RJ SP","Centro-Oeste":"DF GO MS MT",Norte:"AC AM AP PA RO RR TO",Nordeste:"AL BA CE MA PB PE PI RN SE"};
+const rentRegiao=uf=>Object.keys(RENT_REG).find(r=>RENT_REG[r].split(" ").includes(uf))||"";
+/* recomendacao pelas condicoes da area: regras da Barenbrug (calculadora avancada e fichas tecnicas). Nao muda os numeros */
+function rentRecom(c,v){
+  const A=[],ch=v.chuva,fe=v.fert,dr=v.dren,tx=v.text;let ind=null,porque="";
+  if(!ch&&!fe&&!dr&&!tx)return null;
+  if(dr==="encharcada")return {ind:null,porque:"",alertas:["Em solo encharcado ou que alaga, nenhum dos três híbridos é indicado. A área precisa de uma forrageira adaptada a alagamento."]};
+  if(ch==="seca"||ch==="irregular"){ind="sabia";porque="Chuva irregular ou seca longa: o Sabiá é o indicado da Barenbrug para a seca (+47% de produção na seca sobre o Marandu)."}
+  else if(fe==="baixa"){ind="sabia";porque="Fertilidade baixa: o Sabiá é o único dos três de média exigência em fertilidade."}
+  else if(dr==="ruim"){ind="carcara";porque="Drenagem ruim: o Carcará tem tolerância média à má drenagem; Sabiá e Cayana têm baixa tolerância."}
+  else if(fe==="alta"){ind=v.sis==="cria"?"sabia":"cayana";porque=v.sis==="cria"?"Solo corrigido na cria: o Sabiá entrega forragem de qualidade o ano todo, como na Fazenda Santa Tereza.":"Solo corrigido: o Cayana tem alta resposta à adubação e o maior ganho em Brachiaria (+42,2%). O Carcará é a opção em Panicum."}
+  if((c==="cayana"||c==="carcara")&&(fe==="baixa"||fe==="media"))A.push(`O ${RENT_CULT[c].n} é de alta exigência em fertilidade${c==="cayana"?" (saturação por bases acima de 60%, fósforo acima de 7 ppm e potássio de 3% a 5% da CTC)":""}. ${fe==="baixa"?"Sem corrigir o solo antes, ele não entrega o ganho do ensaio.":"Ele performa bem, mas entrega o máximo em solo corrigido."}`);
+  if(c!=="carcara"&&dr==="ruim")A.push("Sabiá e Cayana têm baixa tolerância à má drenagem. Evite as partes mais baixas da área ou considere o Carcará.");
+  if(c!=="sabia"&&(ch==="seca"||ch==="irregular"))A.push("Na seca, a diferença do Sabiá aparece mais. No VCU da UFU, Cayana e Sabiá produziram cerca do dobro de forragem do Marandu na seca. Os três suportam até 6 meses sem chuva e precisam de no mínimo 800 mm por ano.");
+  if(tx==="arenoso")A.push("Em solo arenoso, correção e adubação pesam mais no resultado. A Fazenda Ventura (MS) mostra recria a pasto com híbrido em solo arenoso.");
+  A.push("A recomendação de correção e adubação é do agrônomo da fazenda.");
+  return {ind,porque,alertas:A};
+}
 const RENT_SUP={mineral:{n:"Sal mineral",gmd:"500"},proteinado:{n:"Proteinado",gmd:"600"},pe:{n:"Proteico-energético",gmd:"700"},racao:{n:"Ração (semiconfinamento)",gmd:"900"}};
 const RENT_FONTES=[
   ["Ganho dos híbridos (multiplicador)","Ensaios oficiais de Valor de Cultivo e Uso (VCU), exigidos pelo MAPA para o registro: Sabiá +36% e Cayana +42,2% sobre o Marandu (Cayana: UFU, Fazenda Capim Branco, 2015 a 2017); Carcará +19% sobre o Mombaça.",""],
@@ -4500,30 +4556,39 @@ const RENT_FONTES=[
   ["Suplementação nas águas","Recria de cruzados a pasto (Embrapa Gado de Corte, Favero e colaboradores): 704 g/dia com proteico e 736 g/dia com proteico-energético, sem diferença estatística entre os dois.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1077427/1/Desempenhodebovinoscruzadosrecriadosempastagemtropical.pdf"],
   ["Suplementação na seca e semiconfinamento","Proteinado (mistura múltipla): 200 a 400 g/dia; ração a cerca de 1% do peso vivo (semiconfinamento): 700 a 1.000 g/dia (Medeiros e Gomes, Embrapa, Suplementação de bovinos de corte na ILPF). Só sal mineral na seca: cerca de 113 g/dia (Lopes e colaboradores, citado em Embrapa).","https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/938944/1/Suplementacaodebovinosdecortenaintegracao.pdf"],
   ["Raça e peso de abate","Para o acabamento mínimo de gordura, Nelore e Guzerá × Nelore foram abatidos com cerca de 460 kg e cruzados com raças europeias com cerca de 550 kg (Perotto e colaboradores, 2003, em Alencar, Cruzamento em gado de corte, Embrapa). Os estudos citados não mostram diferença consistente de rendimento de carcaça entre Nelore e cruzados. Convertido a 53% de rendimento: 16,5 @ e 19 @.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/47823/1/id16989.pdf"],
+  ["Exigências e limites dos cultivares","Fichas técnicas Barenbrug: Sabiá de média exigência em fertilidade; Cayana e Carcará de alta exigência (Cayana: saturação por bases acima de 60%, fósforo acima de 7 ppm e potássio de 3% a 5% da CTC); Carcará com tolerância média à má drenagem. Os três: no mínimo 800 mm de chuva por ano, até 1.800 m de altitude e até 6 meses sem chuva. Na seca, no VCU da UFU: Cayana 8.615 e Sabiá 7.761 kg de MS/ha, contra 4.189 do Marandu.",""],
+  ["Casos reais","E-book Quem planta capim quer colher arroba, de Eloir Daltoé, engenheiro agrônomo (Duagro, revenda Barenbrug no RS): Fazenda Santa Tereza (RS), Fazenda Cristal e Fazenda Ventura (MS).",""],
   ["Rendimento de carcaça","50% é o padrão conservador; 52% a 54% para animal de bom acabamento. Uma arroba é 15 kg de carcaça.",""],
   ["Semente diluída em 4 safras","Premissa conservadora da Barenbrug: pastagens convencionais começam a perder capacidade de suporte entre o 3º e o 4º ano (Embrapa Gado de Corte). Com manejo correto, o pasto dura mais de 10 anos.",""]];
-function rentEstado(){if(!S.rent)S.rent={c:"cayana",v:{sis:"ciclo",raca:"nelore",sup:"mineral",area:"100",lot:"1,5",dias:"730",peso:"16,5",gmd:"500",rend:"50",desm:"66",pbz:"",pa:"320",ph:"45",pc:"15",th:"10",tc:"10",csup:"",qtd:""},res:null};return S.rent;}
+function rentEstado(){if(!S.rent)S.rent={c:"cayana",v:{sis:"ciclo",raca:"nelore",sup:"mineral",area:"100",lot:"1,5",dias:"730",peso:"16,5",gmd:"500",rend:"50",desm:"66",pbz:"",pa:"320",ph:"45",pc:"15",th:"10",tc:"10",csup:"",qtd:"",va:"",jur:"",adub:"",uf:"",chuva:"",fert:"",dren:"",text:""},res:null};return S.rent;}
 function rentCepea(){if(S.rentCepea!==undefined)return S.rentCepea;S.rentCepea=null;(async()=>{try{const {data}=await sb.from("mercado_cepea").select("data,produto,valor");const num=s=>{const x=parseFloat(String(s||"").replace(/[^\d,]/g,"").replace(",","."));return isFinite(x)?x:0;};
   const L=data||[],b=L.find(x=>/boi/i.test(x.produto)),z=L.find(x=>/bezerro.*ms/i.test(x.produto))||L.find(x=>/bezerro/i.test(x.produto));
   S.rentCepea={arroba:b?num(b.valor):0,bezerro:z?num(z.valor):0,data:(b||z||{}).data||"",praca:z?z.produto:""};
   const R=rentEstado();if(S.rentCepea.bezerro&&!R.v.pbz){R.v.pbz=String(Math.round(S.rentCepea.bezerro));}
   if(S.pag==="calc")render();}catch(e){S.rentCepea={arroba:0,bezerro:0,data:""};}})();return null;}
-function rentConta(c,v){
+function rentConta(c,v,mOver){
   const n=k=>{const x=parseFloat(String(v[k]==null?"":v[k]).replace(/\./g,"").replace(",","."));return isFinite(x)&&x>0?x:0;};
-  const C=RENT_CULT[c],sk=RENT_SIS[v.sis]?v.sis:"ciclo",sis=Object.assign({k:sk},RENT_SIS[sk]),met=sis.met;
-  const meta=n("meta"),area=n("area"),lot=n("lot"),dias=n("dias"),pa=n("pa"),ph=n("ph"),pc=n("pc"),th=n("th"),tc=n("tc"),csup=n("csup"),qtd=n("qtd");
-  const lotH=lot*C.m;let un="@",prodC=0,prodH=0,preco=0,cab=0;
+  const C=RENT_CULT[c],sk=RENT_SIS[v.sis]?v.sis:"ciclo",sis=Object.assign({k:sk},RENT_SIS[sk]),met=sis.met,m=mOver||C.m;
+  const meta=n("meta"),area=n("area"),lot=n("lot"),dias=n("dias"),pa=n("pa"),ph=n("ph"),pc=n("pc"),th=n("th"),tc=n("tc"),csup=n("csup"),qtd=n("qtd"),va=n("va"),jur=n("jur"),adub=n("adub");
+  const lotH=lot*m;let un="@",prodC=0,prodH=0,preco=0,cab=0,dOc=365;
   if(met==="abate"){const peso=n("peso");if(!lot||!dias||!peso||!pa)return null;const anos=dias/365;prodC=lot*peso/anos;prodH=lotH*peso/anos;preco=pa;cab=dias;}
-  else if(met==="gmd"){const g=n("gmd"),r=n("rend");if(!lot||!g||!r||!pa)return null;const k=g/1000*365*r/100/15;prodC=lot*k;prodH=lotH*k;preco=pa;cab=dias||365;}
+  else if(met==="gmd"){const g=n("gmd"),r=n("rend");if(!lot||!g||!r||!pa||!dias)return null;dOc=Math.min(dias,365);const k=g/1000*dOc*r/100/15;prodC=lot*k;prodH=lotH*k;preco=pa;cab=dOc;}
   else{const d=n("desm"),pb=n("pbz");if(!lot||!d||!pb)return null;un="bezerros";prodC=lot*d/100;prodH=lotH*d/100;preco=pb;cab=365;}
   const recC=prodC*preco,recH=prodH*preco;
-  const supC=lot*csup*365,supH=lotH*csup*365;
-  const semC=tc*pc/RENT_SAFRAS,semH=th*ph/RENT_SAFRAS,extraHa=(recH-semH-supH)-(recC-semC-supC);
-  const invExtra=th*ph-tc*pc,ganhoRec=(recH-supH)-(recC-supC);
+  const supC=lot*csup*dOc,supH=lotH*csup*dOc;
+  const capC=lot*va*jur/100*dOc/365,capH=lotH*va*jur/100*dOc/365;
+  const adC=0,adH=adub;
+  const semC=tc*pc/RENT_SAFRAS,semH=th*ph/RENT_SAFRAS;
+  const fC=recC-supC-capC-adC-semC,fH=recH-supH-capH-adH-semH,extraHa=fH-fC;
+  const invExtra=th*ph-tc*pc,ganhoRec=(recH-supH-capH-adH)-(recC-supC-capC-adC);
   const porCab=lotH?extraHa/lotH*(cab/365):0;
-  return {meta,C,sis,met,un,area,lot,lotH,prodC,prodH,recC,recH,semC,semH,supC,supH,csup,extraHa,extraArea:extraHa*area,invExtra,ganhoRec,porCab,qtd,rebanho:qtd*porCab,cab,
+  return {ck:c,vv:v,uf:v.uf||"",inp:{peso:n("peso"),dias,gmd:n("gmd"),rend:n("rend"),desm:n("desm"),pbz:n("pbz"),pa,ph,pc,th,tc,preco,va,jur,adub},m,dOc,meta,C,sis,met,un,area,lot,lotH,prodC,prodH,recC,recH,semC,semH,supC,supH,capC,capH,adC,adH,fC,fH,csup,extraHa,extraArea:extraHa*area,invExtra,ganhoRec,porCab,qtd,rebanho:qtd*porCab,cab,
+    capExtra:(lotH-lot)*va*(area||1),
     retorno:invExtra>0?ganhoRec*RENT_SAFRAS/invExtra:0,payback:invExtra>0&&ganhoRec>0?invExtra/(ganhoRec/12):0,pa};
 }
+/* ganho minimo de lotacao para o hibrido empatar (a conta e linear no multiplicador) */
+function rentEquilibrio(c,v){const X=rentConta(c,v),Y=rentConta(c,v,1);if(!X||!Y)return null;const d=X.extraHa-Y.extraHa;if(d<=0)return null;const mEq=1+(-Y.extraHa)/d*(X.m-1);
+  const meio=rentConta(c,v,1+(X.m-1)/2);return {pct:Math.max(0,(mEq-1)*100),pctEnsaio:(X.m-1)*100,meio:meio?meio.extraHa:0};}
 function calcRent(){
   const out=document.getElementById("rent_out");if(!out)return;
   const R=rentEstado(),snap=R.res;
@@ -4543,8 +4608,13 @@ function calcRent(){
     ${velho?`<div class="nota-admin" style="margin-bottom:10px">Os dados mudaram depois do último cálculo. Clique em <strong>Calcular</strong> para atualizar o resultado.</div>`:""}
     <span class="calc-badge" style="background:var(--azul-escuro);color:#fff">${C.n} sobre ${C.base} · ${esc(X.sis.n)}</span>
     <div class="calc-total"><span>A mais no bolso do produtor por ano${X.area?` em ${X.area.toLocaleString("pt-BR")} ha`:" por hectare"}</span><strong>${f0(X.area?X.extraArea:X.extraHa)}</strong></div>
-    <p class="meta" style="margin:8px 0 0">${f0(X.extraHa)} a mais por hectare por ano, já descontada a diferença de custo da semente${X.csup?" e da suplementação dos animais a mais":""}.</p>
+    <p class="meta" style="margin:8px 0 0">${f0(X.extraHa)} a mais por hectare por ano, já descontados a diferença de semente${X.csup?", o suplemento dos animais a mais":""}${X.capH?", o custo do capital nos animais a mais":""}${X.adH?" e a adubação a mais":""}.</p>
     ${neg?`<p class="meta" style="margin:8px 0 0"><strong>Com esses números o híbrido não se paga.</strong> Revise preço, lotação e preço da semente antes de usar o argumento.</p>`:""}
+    ${(()=>{const E=rentEquilibrio(snap.c,snap.v);if(!E)return "";return `<div class="dir-grid" style="margin-top:10px">
+      <div class="dir-card" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span class="meta">Ponto de equilíbrio</span><strong style="display:block;font-size:20px">${E.pct<0.1?"menos de 0,1":d1(E.pct)}% a mais de lotação</strong><span class="meta">É o mínimo que o ${C.n} precisa entregar para empatar com o ${C.base}. O ensaio mostra ${d1(E.pctEnsaio)}%.</span></div>
+      <div class="dir-card"><span class="meta">Cenário conservador</span><strong style="display:block;font-size:20px">${f0(E.meio)}/ha/ano</strong><span class="meta">Se o pasto novo entregar só metade do ganho do ensaio (${d1(E.pctEnsaio/2)}% a mais de lotação).</span></div></div>`;})()}
+    ${X.inp.va?`<p class="meta" style="margin:8px 0 0">Para ocupar o pasto novo, entram ${d1((X.lotH-X.lot)*(X.area||1))} ${cria?"vacas":"animais"} a mais${X.area?" na área":" por hectare"}: <strong>${f0(X.capExtra)} de capital em animais</strong>. ${X.inp.jur?`O custo desse dinheiro (${d1(X.inp.jur)}% ao ano) já está descontado.`:"Informe o custo do dinheiro (% ao ano) para descontar."} Na recria e na terminação, o valor do animal volta na venda; o custo real é o do capital parado.</p>`:""}
+    ${(()=>{const RC=rentRecom(snap.c,snap.v);if(!RC)return "";return `<h3>As condições da área</h3>${RC.ind?`<div class="nota-admin">${RC.ind===snap.c?`Para essa área, o ${esc(C.n)} é o indicado.`:`Para essa área, o indicado é o <strong>${esc(RENT_CULT[RC.ind].n)}</strong>. <button class="link" type="button" data-a="rent-cult" data-v="${RC.ind}">Calcular com o ${esc(RENT_CULT[RC.ind].n)}</button>`} ${esc(RC.porque)}</div>`:""}${RC.alertas.map(a=>`<p class="meta" style="margin:6px 0 0">${esc(a)}</p>`).join("")}`;})()}
     <div class="dir-grid" style="margin-top:10px">
       <div class="dir-card"><span class="meta">Lucro a mais por ${quem}</span><strong style="display:block;font-size:20px">${f0(X.porCab)}</strong><span class="meta">${cria?"por vaca no ano":X.met==="abate"?"no ciclo de "+Math.round(X.cab).toLocaleString("pt-BR")+" dias":"no período de "+Math.round(X.cab).toLocaleString("pt-BR")+" dias"}</span></div>
       <div class="dir-card"><span class="meta">Lucro a mais no rebanho</span><strong style="display:block;font-size:20px">${X.qtd?f0(X.rebanho):"—"}</strong><span class="meta">${X.qtd?X.qtd.toLocaleString("pt-BR")+" "+(cria?"vacas":"cabeças"):"Informe o tamanho do rebanho"}</span></div></div>
@@ -4555,6 +4625,8 @@ function calcRent(){
       ${lin(cria?"Lotação (vacas/ha)":"Lotação (UA/ha)",d2(X.lot),d2(X.lotH))}
       ${lin("Receita bruta",f0(X.recC),f0(X.recH))}
       ${X.csup?lin("Suplementação ("+esc(sup.toLowerCase())+")",f0(X.supC),f0(X.supH)):""}
+      ${X.capC||X.capH?lin("Custo do capital nos animais",f0(X.capC),f0(X.capH)):""}
+      ${X.adH?lin("Adubação de manutenção a mais",f0(0),f0(X.adH)):""}
       ${lin("Semente, diluída em "+RENT_SAFRAS+" safras",f0(X.semC),f0(X.semH))}
       ${lin("O que fica por hectare",f0(X.recC-X.semC-X.supC),f0(X.recH-X.semH-X.supH))}
     </tbody></table></div>
@@ -4572,6 +4644,7 @@ function calcRent(){
     <h3>Por que o ${C.n}</h3>
     ${C.dados.map(([a,b])=>`<div class="calc-lin"><span>${esc(a)}</span><strong style="text-align:right">${esc(b)}</strong></div>`).join("")}
     <p class="meta" style="margin:6px 0 0">Fonte: ${esc(C.fdados)}</p>
+    ${rentMemoriaHTML(X)}
     <p class="meta" style="margin:12px 0 0">${C.fonte} A lotação do híbrido é calculada pelo ganho dos ensaios e não pode ser editada. O ganho vale para o mesmo nível de manejo, adubação e suplementação nas duas pastagens. Estimativa: o resultado real depende de manejo, adubação, clima, sanidade e formação do pasto.</p>
   </div>`;
 }
@@ -4583,8 +4656,8 @@ function vRent(){
   const usarA=cp&&cp.arroba?`<button class="link" type="button" data-a="rent-cepea" data-v="pa">Usar o indicador de hoje: R$ ${cp.arroba.toLocaleString("pt-BR",{minimumFractionDigits:2})}${dt}</button>`:"";
   const usarB=cp&&cp.bezerro?`<button class="link" type="button" data-a="rent-cepea" data-v="pbz">Usar o indicador de hoje: R$ ${Math.round(cp.bezerro).toLocaleString("pt-BR")} por cabeça${cp.praca?" ("+esc(cp.praca)+")":""}</button>`:"";
   let prod="";
-  if(sis.met==="abate")prod=campo("dias","Ciclo de produção (dias)","Do bezerro ao abate. Ciclo completo: cerca de 730 dias")+campo("peso","Peso de abate (@ por cabeça)","Nelore cerca de 16,5 @; cruzado cerca de 19 @ (Embrapa)")+campo("pa","Preço de venda da arroba (R$)",usarA);
-  else if(sis.met==="gmd")prod=campo("gmd","Ganho médio diário no "+C.base+" (g/dia)","Valor de partida pela suplementação escolhida. Use o histórico da fazenda")+campo("dias","Dias do período","Recria: cerca de 365 dias. Semiconfinamento: 90 a 150 dias")+campo("rend","Rendimento de carcaça (%)","50% é o padrão conservador; 52% a 54% com bom acabamento")+campo("pa","Preço de venda da arroba (R$)",usarA);
+  if(sis.met==="abate")prod=campo("dias","Ciclo de produção (dias)","Do bezerro ao abate. Ciclo completo: cerca de 730 dias")+campo("peso","Peso de abate (@ por cabeça)","Nelore cerca de 16,5 @; cruzado ou europeu cerca de 19 @ (Embrapa)")+campo("pa","Preço de venda da arroba (R$)",usarA);
+  else if(sis.met==="gmd")prod=campo("gmd","Ganho médio diário no "+C.base+" (g/dia)","Valor de partida pela suplementação escolhida. Use o histórico da fazenda")+campo("dias","Dias do período","Só esse período entra na conta. Recria: cerca de 365 dias. Semiconfinamento: 90 a 150 dias")+campo("rend","Rendimento de carcaça (%)","50% é o padrão conservador; 52% a 54% com bom acabamento")+campo("pa","Preço de venda da arroba (R$)",usarA);
   else prod=campo("desm","Taxa de desmama (%)","Média das fazendas de cria: 62% a 76% (Campo Futuro 2026)")+campo("pbz","Preço do bezerro desmamado (R$ por cabeça)",usarB);
   setTimeout(calcRent,0);
   return `<div><h1 class="titulo">Calculadora de rentabilidade</h1><p class="sub">Comece pela pergunta do produtor: quanto eu quero produzir e ganhar por hectare? Coloque os números do sistema dele, compare o pasto de hoje com o pasto novo e mostre o que fica a mais no bolso, por hectare, por animal e no rebanho. No fim, os resultados de quem já faz.</p></div>
@@ -4595,8 +4668,15 @@ function vRent(){
       <label style="margin-top:6px">Raça do rebanho</label>${chips("raca",RENT_RACA,v.raca)}
       <label style="margin-top:6px">Suplementação</label>${chips("sup",RENT_SUP,v.sup)}
       ${sis.met!=="cria"?campo("meta","Meta de produção do produtor (@/ha/ano, opcional)","Quanto ele quer produzir por hectare por ano"):""}${campo("area","Área a formar ou reformar (ha)")}${campo("lot",sis.met==="cria"?"Lotação atual com "+C.base+" (vacas/ha)":"Lotação atual com "+C.base+" (UA/ha)","Média Brasil: 1,0 a 1,5 UA/ha")}${prod}
-      ${campo("csup","Custo da suplementação (R$ por "+(sis.met==="cria"?"vaca":"cabeça")+" por dia, opcional)","Entra nos dois pastos: o híbrido tem mais animais, então gasta mais suplemento")}
       ${campo("qtd","Tamanho do rebanho ("+(sis.met==="cria"?"vacas":"cabeças")+", opcional)","Para o lucro a mais no rebanho inteiro")}</div>
+    <div class="calc-grupo"><h4>As condições da área (opcional)</h4><span class="meta">Não mudam os números: indicam o cultivar certo para a área, mostram os alertas e trazem primeiro os casos da região.</span>
+      <div class="rent-c"><label for="rt_uf">Estado</label><select id="rt_uf" data-rent="uf"><option value="">Não informado</option>${RENT_UFS.map(u=>`<option ${v.uf===u?"selected":""}>${u}</option>`).join("")}</select></div>
+      ${Object.keys(RENT_COND).map(k=>`<div class="rent-c"><label for="rt_${k}">${RENT_COND[k][0]}</label><select id="rt_${k}" data-rent="${k}">${RENT_COND[k][1].map(([o,t])=>`<option value="${o}" ${v[k]===o?"selected":""}>${esc(t)}</option>`).join("")}</select></div>`).join("")}</div>
+    <div class="calc-grupo"><h4>Os custos que o produtor vai perguntar (opcional)</h4><span class="meta">Deixe em branco o que não souber. O que for preenchido entra na conta dos dois pastos.</span>
+      ${campo("csup","Custo da suplementação (R$ por "+(sis.met==="cria"?"vaca":"cabeça")+" por dia)","O pasto novo tem mais animais, então gasta mais suplemento")}
+      ${campo("va","Valor do "+(sis.met==="cria"?"animal (vaca)":"animal de reposição")+" (R$ por cabeça)",sis.met!=="cria"&&cp&&cp.bezerro?`<button class="link" type="button" data-a="rent-cepea" data-v="va">Usar o bezerro Cepea de hoje: R$ ${Math.round(cp.bezerro).toLocaleString("pt-BR")}</button>`:"Para lotar mais, ele precisa de mais animais")}
+      ${campo("jur","Custo do dinheiro (% ao ano)","Juros do crédito rural ou o rendimento que o dinheiro teria parado")}
+      ${campo("adub","Adubação de manutenção a mais no pasto novo (R$/ha/ano)","Se o pasto novo for receber mais adubo que o atual")}</div>
     <div class="calc-kg"><label>O pasto</label><span class="meta">Hoje: ${C.base}. Pasto novo: ${C.n} (${C.fam})</span>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${Object.keys(RENT_CULT).map(k=>`<button class="chip" type="button" data-a="rent-cult" data-v="${k}" aria-pressed="${k===R.c}">${RENT_CULT[k].n}</button>`).join("")}</div></div>
     <div class="calc-grupo"><h4>A formação do pasto</h4><span class="meta">Paga uma vez e diluída em ${RENT_SAFRAS} safras. Preço estimado ao produtor, varia por região e condição comercial</span>
@@ -4612,7 +4692,7 @@ function vRent(){
     <li>Feche com o lucro a mais na área, por animal e no rebanho, e o acumulado em ${RENT_SAFRAS} safras.</li></ol></div>
   <div class="calc-grupo" style="margin-top:16px"><h4>De onde vêm os números</h4><span class="meta">Fontes oficiais e de pesquisa para dar segurança ao produtor. Os valores de partida podem ser trocados pelos da fazenda.</span>
     ${RENT_FONTES.map(([t,d,u])=>`<details class="faq-item"><summary>${esc(t)}</summary><p style="color:var(--preto)">${esc(d)}${u?` <a class="link" href="${esc(u)}" target="_blank" rel="noopener">Ver a fonte ↗</a>`:""}</p></details>`).join("")}
-    <p class="meta" style="margin:8px 0 0">Mesma lógica da calculadora pública da campanha "A lógica do custo da arroba". Fórmulas: ciclo completo, @/ha/ano = lotação × peso de abate ÷ anos do ciclo; recria e semiconfinamento, @/ha/ano = lotação × GMD × 365 × rendimento ÷ 15; cria, bezerros/ha/ano = lotação × taxa de desmama. O híbrido usa a lotação × o multiplicador do ensaio.</p></div>`;
+    <p class="meta" style="margin:8px 0 0">Mesma lógica da calculadora pública da campanha "A lógica do custo da arroba". Fórmulas: ciclo completo, @/ha/ano = lotação × peso de abate ÷ anos do ciclo; recria e semiconfinamento, @/ha = lotação × GMD × dias do período × rendimento ÷ 15; cria, bezerros/ha/ano = lotação × taxa de desmama. O híbrido usa a lotação × o multiplicador do ensaio.</p></div>`;
 }
 function vRCCalc(){
   const v=S.calcV||{};
@@ -10136,7 +10216,7 @@ document.addEventListener("click",async ev=>{
     else if(g==="raca"&&RENT_RACA[k]){R.v.raca=k;if(R.v.sis==="ciclo")R.v.peso=RENT_RACA[k].peso;}
     else if(g==="sup"&&RENT_SUP[k]){R.v.sup=k;if((RENT_SIS[R.v.sis]||{}).met==="gmd")R.v.gmd=RENT_SUP[k].gmd;}
     R.res=null;render();return;}
-  if(a==="rent-cepea"){const R=rentEstado(),cp=S.rentCepea||{};if(v==="pa"&&cp.arroba)R.v.pa=String(cp.arroba).replace(".",",");if(v==="pbz"&&cp.bezerro)R.v.pbz=String(Math.round(cp.bezerro));render();return;}
+  if(a==="rent-cepea"){const R=rentEstado(),cp=S.rentCepea||{};if(v==="pa"&&cp.arroba)R.v.pa=String(cp.arroba).replace(".",",");if(v==="pbz"&&cp.bezerro)R.v.pbz=String(Math.round(cp.bezerro));if(v==="va"&&cp.bezerro)R.v.va=String(Math.round(cp.bezerro));render();return;}
   if(a==="rent-copiar"){const t=(document.getElementById("rent_arg")||{}).innerText||"";if(navigator.clipboard&&t)navigator.clipboard.writeText(t).then(()=>aviso("Argumento copiado."),()=>aviso("Selecione o texto e copie."));return;}
   if(a==="duv-nova"){S.duvNova=v==="1";render();return;}
   if(a==="duv-filtro"){S.duvFiltro=v;render();return;}
