@@ -897,6 +897,16 @@ body.prot-sel main input,body.prot-sel main textarea,body.prot-sel main select,b
 #app-modal .prot-box{background:#fff;border-radius:14px;max-width:480px;padding:22px;display:grid;gap:10px;border-top:6px solid var(--amarelo)}
 
 .crm-lnk{display:inline-block;margin-top:4px;font-size:.82rem;font-weight:600;color:var(--azul,#003c71);text-decoration:none;border-bottom:1px solid currentColor;align-self:flex-start}.crm-lnk:hover{opacity:.8}
+.rb-fluxo{list-style:none;padding:0;margin:0 0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;counter-reset:rb}
+.rb-fluxo li{background:var(--papel);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;counter-increment:rb;min-width:0}
+.rb-fluxo li strong::before{content:counter(rb) ". ";color:var(--azul,#003c71)}.rb-fluxo li span{font-size:.82rem;opacity:.8}
+.rb-passos{list-style:none;display:flex;gap:4px;padding:0;margin:8px 0 4px;flex-wrap:wrap}.rb-passos li{flex:1 1 70px;font-size:.75rem;text-align:center;padding:4px 2px;border-top:4px solid #d7dbe0;opacity:.6}
+.rb-passos li.feito{border-color:#2e8b57;opacity:1}.rb-passos li.atual{font-weight:700}
+.rb-aviso{border-radius:6px;padding:8px 10px;margin:6px 0;font-size:.88rem}.rb-aviso.ok{background:rgba(46,139,87,.12)}.rb-aviso.erro{background:rgba(192,57,43,.1)}
+.rb-acoes{display:flex;gap:10px;flex-wrap:wrap;align-items:center;grid-column:1/-1}.rb-form{margin-top:8px}.rb-banco{margin-top:4px}
+.rb-hist summary{cursor:pointer;font-size:.85rem;margin-top:6px}.rb-hist ul{margin:6px 0 0;padding-left:18px;font-size:.85rem}.rb-hist li{margin-bottom:4px}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px 14px}.form-grid>div,.form-grid>fieldset{min-width:0;display:flex;flex-direction:column;gap:3px}.form-grid input:not([type=checkbox]),.form-grid select,.form-grid textarea{width:100%;box-sizing:border-box}.form-grid fieldset{border:1px solid #d7dbe0;border-radius:8px;padding:8px 12px}
 </style>
 </head>
 <body>
@@ -1431,7 +1441,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118001022";
+const APP_VER="20261118001608";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4779,11 +4789,184 @@ function vRVValidacao(){
   ${up}${regras}`;
 }
 
+/* ===== Conecta Revendas · Reembolso do saldo (NF da revenda, aprovacao e pagamento pela Barenbrug) ===== */
+const RB_ST={"Enviado":["Enviado","azul"],"Em análise":["Em análise","amarelo"],"Correção":["Correção pedida","vermelho"],"Aprovado":["Aprovado","verde"],"Recusado":["Não aprovado","vermelho"],"Pago":["Pago","verde"],"Cancelado":["Cancelado","cinza"]};
+const RB_MIMES=["application/pdf","image/jpeg","image/png","image/webp","text/xml","application/xml"];
+const rbRs=v=>"R$ "+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const rbData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
+const rbNum=v=>{const t=String(v||"").replace(/\s|R\$/g,"");return Number(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;};
+async function carregarReemb(){if(S.rbBusy)return;S.rbBusy=true;
+  try{const {data}=await sb.from("rv_reembolsos").select("*").order("criado_em",{ascending:false});S.rb=data||[];}catch(e){S.rb=[];}
+  try{const {data}=await sb.from("rv_dados_bancarios").select("*");S.rbBanco={};(data||[]).forEach(b=>{S.rbBanco[b.canal_id]=b;});}catch(e){S.rbBanco={};}
+  S.rbBusy=false;render();}
+/* saldo: IGDB ja liberado (sobre o que a revenda pagou, numeros validados), limitado as acoes de PGD aprovadas e ao teto; menos o que ja foi aprovado ou esta em analise */
+function rbSaldo(c){const m=metricasCanal(c);const L=(S.rb||[]).filter(r=>r.canal_id===c.id);
+  const disp=m.pub?Math.min(RV_TETO,m.pub.igdbPago||0):0,acoes=m.aprovIG||0,lim=Math.min(disp,acoes);
+  const usado=L.filter(r=>r.status==="Aprovado"||r.status==="Pago").reduce((t,r)=>t+(+r.valor_aprovado||0),0);
+  const pago=L.filter(r=>r.status==="Pago").reduce((t,r)=>t+(+r.valor_aprovado||0),0);
+  const reserv=L.filter(r=>["Enviado","Em análise","Correção"].includes(r.status)).reduce((t,r)=>t+(+r.valor_solicitado||0),0);
+  return {m,validado:!!m.pub,disp,acoes,lim,usado,pago,reserv,saldo:Math.max(0,lim-usado-reserv)};}
+function rbPassos(r){const ord=["Enviado","Em análise","Aprovado","Pago"];const i=r.status==="Correção"?1:r.status==="Recusado"||r.status==="Cancelado"?-1:ord.indexOf(r.status);
+  if(i<0)return "";
+  return `<ol class="rb-passos">${["Enviado","Em análise","Aprovado","Pago"].map((t,k)=>`<li class="${k<=i?"feito":""}${k===i?" atual":""}">${t}</li>`).join("")}</ol>`;}
+function rbHist(r){const H=Array.isArray(r.historico)?r.historico:[];if(!H.length)return "";
+  return `<details class="rb-hist"><summary>Histórico (${H.length})</summary><ul>${H.map(h=>`<li><strong>${esc((RB_ST[h.status]||[h.status])[0])}</strong> · ${esc(fmtDataHora(h.em))}${h.por?" · "+esc(h.por):""}${h.texto?`<br><span class="meta">${esc(h.texto)}</span>`:""}${h.status==="Aprovado"&&h.valor?`<br><span class="meta">${rbRs(h.valor)} · pagamento previsto ${rbData(h.prev)}</span>`:""}</li>`).join("")}</ul></details>`;}
+function rbArq(path,rot){return path?`<button class="link" data-a="rb-arq" data-v="${esc(path)}">${esc(rot)}</button>`:"";}
+function rbBancoHTML(b){if(!b)return `<span class="meta" style="color:#c0392b">Dados bancários não cadastrados.</span>`;
+  return `<span class="meta">${esc(b.favorecido)} · ${esc(b.documento)} · ${esc(b.banco)} · ag. ${esc(b.agencia)} · ${esc(b.tipo_conta||"")} ${esc(b.conta)}${b.pix_chave?` · Pix (${esc(b.pix_tipo||"chave")}) ${esc(b.pix_chave)}`:""}</span>${b.contato_nome||b.contato_email||b.contato_fone?`<span class="meta">Financeiro: ${esc([b.contato_nome,b.contato_email,b.contato_fone].filter(Boolean).join(" · "))}</span>`:""}`;}
+function rbFormBanco(c,b){b=b||{};const v=k=>esc(b[k]||"");
+  return `<form id="f-rb-banco" class="form-grid rb-form" data-canal="${c.id}">
+    <div><label for="rb_fav">Favorecido (razão social)</label><input id="rb_fav" required value="${v("favorecido")||esc(c.nome||"")}"></div>
+    <div><label for="rb_doc">CNPJ do favorecido</label><input id="rb_doc" required inputmode="numeric" value="${v("documento")}"></div>
+    <div><label for="rb_bco">Banco (nome e número)</label><input id="rb_bco" required placeholder="Ex.: 001 · Banco do Brasil" value="${v("banco")}"></div>
+    <div><label for="rb_ag">Agência</label><input id="rb_ag" required inputmode="numeric" value="${v("agencia")}"></div>
+    <div><label for="rb_cc">Conta com dígito</label><input id="rb_cc" required value="${v("conta")}"></div>
+    <div><label for="rb_tp">Tipo de conta</label><select id="rb_tp">${["Corrente","Poupança"].map(t=>`<option ${b.tipo_conta===t?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div><label for="rb_pxt">Tipo da chave Pix (opcional)</label><select id="rb_pxt"><option value="">—</option>${["CNPJ","E-mail","Telefone","Aleatória"].map(t=>`<option ${b.pix_tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div><label for="rb_px">Chave Pix (opcional)</label><input id="rb_px" value="${v("pix_chave")}"></div>
+    <div><label for="rb_cn">Contato do financeiro</label><input id="rb_cn" value="${v("contato_nome")}"></div>
+    <div><label for="rb_ce">E-mail do financeiro</label><input id="rb_ce" type="email" value="${v("contato_email")}"></div>
+    <div><label for="rb_cf">Telefone do financeiro</label><input id="rb_cf" inputmode="tel" value="${v("contato_fone")}"></div>
+    <div class="rb-acoes"><button class="btn" type="submit">Salvar dados bancários</button>${S.rbBancoEd?`<button class="btn sec" type="button" data-a="rb-banco-fecha">Cancelar</button>`:""}</div>
+    <p class="dica" style="grid-column:1/-1;margin:0">A conta precisa estar no CNPJ da revenda que emite a nota. Os dados ficam visíveis só para a gestão da revenda e para o financeiro da Barenbrug.</p></form>`;}
+function rbFormPedido(c,sd,r){r=r||{};const ac=((S.acoesCanal||{})[c.id]||[]).filter(a=>(a.status||"")==="Aprovado"&&(a.verba||"IGDB")!=="Bônus de Performance");
+  const sel=new Set(r.acoes||[]);const max=sd.saldo+(r.id&&["Enviado","Correção"].includes(r.status)?(+r.valor_solicitado||0):0);
+  return `<form id="f-rb-pedido" class="form-grid rb-form" data-canal="${c.id}" data-id="${r.id||""}">
+    <div><label for="rb_val">Valor a resgatar (R$)</label><input id="rb_val" required inputmode="decimal" value="${r.valor_solicitado?String(r.valor_solicitado).replace(".",","):""}" placeholder="até ${rbRs(max)}"><span class="meta">Saldo disponível para pedir: ${rbRs(max)}</span></div>
+    <div><label for="rb_nf">Número da nota fiscal</label><input id="rb_nf" required value="${esc(r.nf_numero||"")}"></div>
+    <div><label for="rb_em">Data de emissão</label><input id="rb_em" type="date" required value="${esc(r.nf_emissao||"")}"></div>
+    <div><label for="rb_nv">Valor total da nota (R$)</label><input id="rb_nv" required inputmode="decimal" value="${r.nf_valor?String(r.nf_valor).replace(".",","):""}"></div>
+    <div style="grid-column:1/-1"><label for="rb_arq">Arquivo da nota (PDF ou XML; até 10 MB)</label><input id="rb_arq" type="file" accept=".pdf,.xml,image/*" ${r.nf_path?"":"required"}>${r.nf_path?`<span class="meta">Já enviada: ${rbArq(r.nf_path,"ver nota")}. Escolha outro arquivo só se for trocar.</span>`:""}</div>
+    ${ac.length?`<fieldset style="grid-column:1/-1"><legend>Ações de geração de demanda que esta nota reembolsa</legend>${ac.map(a=>`<label class="chk"><input type="checkbox" name="rb_ac" value="${a.id}" ${sel.has(a.id)?"checked":""}> ${esc(a.tipo||a.categoria||"Ação")}${a.data_acao?" · "+rbData(a.data_acao):""} · ${rbRs(a.valor_igdb)}${a.descricao?`<span class="meta"> · ${esc(String(a.descricao).slice(0,80))}</span>`:""}</label>`).join("")}</fieldset>`:""}
+    <div style="grid-column:1/-1"><label for="rb_ds">Observação para a Barenbrug (opcional)</label><textarea id="rb_ds" rows="2">${esc(r.descricao||"")}</textarea></div>
+    <div class="rb-acoes"><button class="btn" type="submit">${r.id?"Reenviar pedido":"Enviar pedido de reembolso"}</button><button class="btn sec" type="button" data-a="rb-novo-fecha">Cancelar</button></div>
+    <p class="dica" style="grid-column:1/-1;margin:0">A nota deve ser emitida contra a Barenbrug do Brasil, com a descrição do serviço de geração de demanda (ex.: reembolso de ação de marketing do Programa Conecta). Confirme os dados de faturamento com o seu RC antes de emitir.</p></form>`;}
+function rbCartaoRevenda(r){const st=RB_ST[r.status]||[r.status,"cinza"];const ed=["Enviado","Correção"].includes(r.status);
+  return `<div class="neg rb-card"><div class="l1"><span>NF ${esc(r.nf_numero)} · ${rbRs(r.valor_solicitado)}</span>${stTag(st[0],st[1])}</div>
+    <span class="meta">Enviado em ${esc(fmtDataHora(r.criado_em))} · nota de ${rbRs(r.nf_valor)} emitida em ${rbData(r.nf_emissao)} · ${rbArq(r.nf_path,"ver nota")}</span>
+    ${rbPassos(r)}
+    ${r.status==="Aprovado"?`<div class="rb-aviso ok"><strong>${rbRs(r.valor_aprovado)} aprovados</strong>${+r.valor_aprovado<+r.valor_solicitado?` de ${rbRs(r.valor_solicitado)} pedidos`:""} · pagamento previsto para <strong>${rbData(r.prev_pagamento)}</strong>${r.resposta?`<br>${esc(r.resposta)}`:""}</div>`:""}
+    ${r.status==="Pago"?`<div class="rb-aviso ok"><strong>${rbRs(r.valor_aprovado)} pagos em ${rbData(r.pago_em)}</strong>${r.comprovante_path?` · ${rbArq(r.comprovante_path,"ver comprovante")}`:""}</div>`:""}
+    ${r.status==="Correção"?`<div class="rb-aviso erro"><strong>A Barenbrug pediu um ajuste:</strong> ${esc(r.resposta||"")}</div>`:""}
+    ${r.status==="Recusado"?`<div class="rb-aviso erro"><strong>Pedido não aprovado:</strong> ${esc(r.resposta||"")}</div>`:""}
+    ${rbHist(r)}
+    ${ed?`<div class="rb-acoes"><button class="link" data-a="rb-editar" data-v="${r.id}">${r.status==="Correção"?"Corrigir e reenviar":"Editar"}</button><button class="link" data-a="rb-cancelar" data-v="${r.id}">Cancelar pedido</button></div>`:""}</div>`;}
+function vRVReembolso(){
+  if(!S.canais)return `<div class="carregando">Carregando o seu canal…</div>`;
+  if(S.rb===undefined){carregarReemb();return `<div class="carregando">Carregando os pedidos de reembolso…</div>`;}
+  const c=(S.canais||[]).find(x=>x.id===(S.profile&&S.profile.canal_id))||S.canais[0];
+  if(!c)return `<section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
+  const sd=rbSaldo(c),b=(S.rbBanco||{})[c.id],L=(S.rb||[]).filter(r=>r.canal_id===c.id);const ed=S.rbEdit&&L.find(r=>r.id===S.rbEdit);
+  return `<div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">Reembolso do saldo Conecta</h1><p class="sub">Peça aqui o reembolso das ações de geração de demanda aprovadas. Envie a nota fiscal, a Barenbrug analisa, informa quanto foi aprovado e a data prevista de pagamento, e você acompanha cada etapa por aqui e por notificação.</p></div>
+  <ol class="rb-fluxo"><li><strong>Ação aprovada</strong><span>PGD aprovado e realizado</span></li><li><strong>Nota fiscal</strong><span>Você emite e envia aqui</span></li><li><strong>Análise</strong><span>A Barenbrug confere a nota e o saldo</span></li><li><strong>Aprovação</strong><span>Valor liberado e data de pagamento</span></li><li><strong>Pagamento</strong><span>Depósito na conta da revenda</span></li></ol>
+  ${sd.validado?`<div class="metrics">
+    <div class="metric"><span>IGDB liberado${inf("IGDB sobre o que a revenda já pagou à Barenbrug, nos números validados pela Barenbrug. Limitado ao teto do programa.")}</span><strong>${rbRs(sd.disp)}</strong><span class="meta">sobre as notas já pagas</span></div>
+    <div class="metric"><span>Ações de PGD aprovadas</span><strong>${rbRs(sd.acoes)}</strong><span class="meta">o reembolso vai até o menor dos dois</span></div>
+    <div class="metric"><span>Já aprovado</span><strong>${rbRs(sd.usado)}</strong><span class="meta">pago ${rbRs(sd.pago)}${sd.reserv?` · em análise ${rbRs(sd.reserv)}`:""}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Saldo para pedir agora</span><strong>${rbRs(sd.saldo)}</strong><span class="meta">o Bônus de Performance entra no fechamento da safra</span></div></div>`
+  :`<section class="bloco"><p class="sub" style="margin:0">O saldo para reembolso aparece depois que a Barenbrug valida os números de compras e pagamentos da sua revenda. Você já pode cadastrar os dados bancários.</p></section>`}
+  <section class="bloco"><h2 class="sec">Dados bancários para o pagamento</h2>${b&&!S.rbBancoEd?`<div class="neg">${rbBancoHTML(b)}<span class="meta">Atualizado em ${esc(fmtDataHora(b.atualizado_em))}</span><div class="rb-acoes"><button class="link" data-a="rb-banco-ed">Alterar dados bancários</button></div></div>`:rbFormBanco(c,b)}</section>
+  <section class="bloco"><h2 class="sec">${ed?`Corrigir o pedido da NF ${esc(ed.nf_numero)}`:"Novo pedido de reembolso"}</h2>
+    ${!b?`<p class="sub" style="margin:0">Cadastre os dados bancários acima para enviar um pedido.</p>`:ed||S.rbNovo?rbFormPedido(c,sd,ed):sd.saldo>0?`<button class="btn" data-a="rb-novo">Pedir reembolso de até ${rbRs(sd.saldo)}</button>`:`<p class="sub" style="margin:0">${sd.validado?"Não há saldo para pedir agora. O saldo cresce quando a revenda paga as notas de compra e quando novas ações de PGD são aprovadas.":"Aguardando a validação dos números da revenda."}</p>`}</section>
+  <section class="bloco"><h2 class="sec">Seus pedidos (${L.length})</h2>${L.length?`<div class="lista">${L.map(rbCartaoRevenda).join("")}</div>`:`<div class="vazio">Nenhum pedido enviado ainda.</div>`}</section>`;
+}
+/* fila da Barenbrug */
+function rbCartaoAdmin(r){const c=(S.canais||[]).find(x=>x.id===r.canal_id)||{nome:"Canal",id:r.canal_id};const st=RB_ST[r.status]||[r.status,"cinza"];const sd=S.canais?rbSaldo(c):null;
+  const b=r.banco||(S.rbBanco||{})[r.canal_id];const aberto=["Enviado","Em análise","Correção"].includes(r.status);
+  const acs=((S.acoesCanal||{})[r.canal_id]||[]).filter(a=>(r.acoes||[]).includes(a.id));
+  const sug=sd?Math.min(+r.valor_solicitado||0,sd.saldo+(aberto?(+r.valor_solicitado||0):0)):+r.valor_solicitado||0;
+  return `<div class="neg rb-card"><div class="l1"><span><strong>${esc(c.nome)}</strong> · NF ${esc(r.nf_numero)}</span>${stTag(st[0],st[1])}</div>
+    <span class="meta">Pedido ${rbRs(r.valor_solicitado)} · nota de ${rbRs(r.nf_valor)} emitida em ${rbData(r.nf_emissao)} · enviado em ${esc(fmtDataHora(r.criado_em))} · ${rbArq(r.nf_path,"abrir nota")}</span>
+    ${sd?`<span class="meta">Saldo do canal: IGDB liberado ${rbRs(sd.disp)} · ações aprovadas ${rbRs(sd.acoes)} · já aprovado ${rbRs(sd.usado)} · ${sd.validado?"":"<strong style=\"color:#c0392b\">números ainda não validados</strong> · "}${+r.valor_solicitado>sd.saldo+(aberto?(+r.valor_solicitado||0):0)?`<strong style="color:#c0392b">pedido acima do saldo</strong>`:"dentro do saldo"}</span>`:""}
+    ${acs.length?`<span class="meta">Ações: ${acs.map(a=>esc(a.tipo||a.categoria||"Ação")+" "+rbRs(a.valor_igdb)).join(" · ")}</span>`:""}
+    ${r.descricao?`<span class="meta">Observação da revenda: ${esc(r.descricao)}</span>`:""}
+    <div class="rb-banco">${rbBancoHTML(b)}</div>
+    ${rbPassos(r)}
+    ${r.status==="Aprovado"?`<div class="rb-aviso ok">${rbRs(r.valor_aprovado)} aprovados · pagamento previsto ${rbData(r.prev_pagamento)}</div>`:""}
+    ${r.status==="Pago"?`<div class="rb-aviso ok">${rbRs(r.valor_aprovado)} pagos em ${rbData(r.pago_em)} ${rbArq(r.comprovante_path,"comprovante")}</div>`:""}
+    ${rbHist(r)}
+    ${aberto?`<form class="form-grid rb-form f-rb-dec" data-id="${r.id}">
+      <div><label>Valor aprovado agora (R$)</label><input name="va" inputmode="decimal" value="${String(Math.round(sug*100)/100).replace(".",",")}"></div>
+      <div><label>Previsão de pagamento</label><input name="pp" type="date" value="${esc(r.prev_pagamento||"")}"></div>
+      <div style="grid-column:1/-1"><label>Mensagem para a revenda</label><textarea name="msg" rows="2" placeholder="Obrigatória para pedir correção ou não aprovar">${esc(r.resposta||"")}</textarea></div>
+      <div class="rb-acoes">${r.status==="Enviado"?`<button class="btn sec" type="button" data-a="rb-dec" data-st="Em análise" data-v="${r.id}">Marcar em análise</button>`:""}<button class="btn" type="button" data-a="rb-dec" data-st="Aprovado" data-v="${r.id}">Aprovar</button><button class="btn sec" type="button" data-a="rb-dec" data-st="Correção" data-v="${r.id}">Pedir correção</button><button class="btn sec" type="button" data-a="rb-dec" data-st="Recusado" data-v="${r.id}">Não aprovar</button></div></form>`:""}
+    ${r.status==="Aprovado"?`<form class="form-grid rb-form f-rb-pag" data-id="${r.id}">
+      <div><label>Pago em</label><input name="pe" type="date" value="${new Date(Date.now()-3*36e5).toISOString().slice(0,10)}"></div>
+      <div><label>Comprovante (opcional)</label><input name="cp" type="file" accept=".pdf,image/*"></div>
+      <div><label>Nova previsão</label><input name="pp" type="date" value="${esc(r.prev_pagamento||"")}"></div>
+      <div class="rb-acoes"><button class="btn" type="button" data-a="rb-pago" data-v="${r.id}">Marcar como pago</button><button class="btn sec" type="button" data-a="rb-prev" data-v="${r.id}">Atualizar previsão</button></div></form>`:""}</div>`;}
+function vRVReembolsos(){
+  if(!S.canais)return `<div class="carregando">Carregando os canais…</div>`;
+  if(S.rb===undefined){carregarReemb();return `<div class="carregando">Carregando os pedidos de reembolso…</div>`;}
+  const F=S.rbF||"abertos";const L=S.rb||[];const fil={abertos:r=>["Enviado","Em análise","Correção"].includes(r.status),aprovados:r=>r.status==="Aprovado",pagos:r=>r.status==="Pago",encerrados:r=>r.status==="Recusado"||r.status==="Cancelado",todos:()=>true};
+  const rows=L.filter(fil[F]||fil.abertos);const soma=f=>L.filter(f).reduce((t,r)=>t+(+(r.valor_aprovado??r.valor_solicitado)||0),0);
+  const prox=L.filter(r=>r.status==="Aprovado").sort((a,b)=>String(a.prev_pagamento).localeCompare(String(b.prev_pagamento)));
+  return `<div><h1 class="titulo">Reembolsos do Conecta Revendas</h1><p class="sub">Pedidos das revendas para resgatar o saldo Conecta. Confira a nota e o saldo, aprove o valor que pode ser pago agora com a data prevista, e marque o pagamento quando sair. Cada decisão gera uma notificação para a gestão da revenda.</p></div>
+  <div class="metrics">
+    <div class="metric"><span>Aguardando decisão</span><strong>${L.filter(fil.abertos).length}</strong><span class="meta">${rbRs(L.filter(fil.abertos).reduce((t,r)=>t+(+r.valor_solicitado||0),0))} pedidos</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Aprovado a pagar</span><strong>${rbRs(soma(fil.aprovados))}</strong><span class="meta">${prox.length?"próximo em "+rbData(prox[0].prev_pagamento):"nada programado"}</span></div>
+    <div class="metric"><span>Pago na safra</span><strong>${rbRs(soma(fil.pagos))}</strong><span class="meta">${L.filter(fil.pagos).length} pedidos</span></div></div>
+  <div class="filtros">${[["abertos","Aguardando"],["aprovados","Aprovados a pagar"],["pagos","Pagos"],["encerrados","Não aprovados e cancelados"],["todos","Todos"]].map(([k,t])=>`<button class="chip" data-a="rb-f" data-v="${k}" aria-pressed="${F===k}">${t} (${L.filter(fil[k]).length})</button>`).join("")}</div>
+  ${rows.length?`<div class="lista">${rows.map(rbCartaoAdmin).join("")}</div>`:`<div class="vazio">Nenhum pedido neste filtro.</div>`}`;
+}
+async function rbUpload(canal,id,file){
+  const xml=/\.xml$/i.test(file.name),ct=file.type||(xml?"application/xml":"");
+  if(file.size>10*1048576)throw new Error("O arquivo passa de 10 MB.");
+  if(!RB_MIMES.includes(ct))throw new Error("Tipo de arquivo não aceito. Use PDF, XML ou imagem.");
+  const limpo=file.name.normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"-").slice(-80)||"arquivo";
+  const path=`${canal}/${id}/${Date.now().toString(36)}-${limpo}`;
+  const up=await sb.storage.from("reembolso").upload(path,file,{contentType:ct,upsert:false});if(up.error)throw up.error;return path;}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='rb-']");if(!b)return;ev.preventDefault();ev.stopPropagation();const a=b.dataset.a,v=b.dataset.v;
+  if(a==="rb-f"){S.rbF=v;render();return;}
+  if(a==="rb-novo"){S.rbNovo=true;S.rbEdit=null;render();return;}
+  if(a==="rb-novo-fecha"){S.rbNovo=false;S.rbEdit=null;render();return;}
+  if(a==="rb-editar"){S.rbEdit=v;S.rbNovo=false;render();window.scrollTo(0,0);return;}
+  if(a==="rb-banco-ed"){S.rbBancoEd=true;render();return;}
+  if(a==="rb-banco-fecha"){S.rbBancoEd=false;render();return;}
+  if(a==="rb-arq"){try{const {data,error}=await sb.storage.from("reembolso").createSignedUrl(v,600);if(error||!data)throw error;window.open(data.signedUrl,"_blank","noopener");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
+  if(a==="rb-cancelar"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Toque de novo para confirmar o cancelamento";return;}
+    const {error}=await sb.from("rv_reembolsos").update({status:"Cancelado"}).eq("id",v);if(error){aviso("Não foi possível cancelar.");return;}S.rb=undefined;render();aviso("Pedido cancelado.");return;}
+  if(!ehAdmin())return;
+  const r=(S.rb||[]).find(x=>x.id===v);if(!r)return;
+  if(a==="rb-dec"){const st=b.dataset.st;const f=b.closest("form");const va=rbNum(f.querySelector("[name=va]").value),pp=f.querySelector("[name=pp]").value,msg=f.querySelector("[name=msg]").value.trim();
+    const up={status:st,resposta:msg||null};
+    if(st==="Aprovado"){if(!(va>0)){aviso("Informe o valor aprovado.");return;}if(va>+r.valor_solicitado){aviso("O valor aprovado não pode passar do pedido.");return;}if(!pp){aviso("Informe a previsão de pagamento.");return;}up.valor_aprovado=va;up.prev_pagamento=pp;}
+    if((st==="Correção"||st==="Recusado")&&!msg){aviso("Escreva a mensagem para a revenda.");return;}
+    b.disabled=true;const {error}=await sb.from("rv_reembolsos").update(up).eq("id",v);b.disabled=false;if(error){aviso("Não foi possível gravar: "+(error.message||""));return;}
+    S.rb=undefined;render();aviso(st==="Aprovado"?"Aprovado. A revenda recebe a notificação com o valor e a data.":"Gravado. A revenda foi avisada.");return;}
+  if(a==="rb-prev"){const pp=b.closest("form").querySelector("[name=pp]").value;if(!pp){aviso("Informe a nova data.");return;}const {error}=await sb.from("rv_reembolsos").update({prev_pagamento:pp,resposta:"Previsão de pagamento atualizada para "+rbData(pp)+"."}).eq("id",v);if(error){aviso("Não foi possível gravar.");return;}S.rb=undefined;render();aviso("Previsão atualizada. A revenda foi avisada.");return;}
+  if(a==="rb-pago"){const f=b.closest("form");const pe=f.querySelector("[name=pe]").value;const fl=f.querySelector("[name=cp]").files[0];b.disabled=true;
+    try{let cp=null;if(fl)cp=await rbUpload(r.canal_id,r.id,fl);const up={status:"Pago",pago_em:pe||null,resposta:"Pagamento realizado."};if(cp)up.comprovante_path=cp;const {error}=await sb.from("rv_reembolsos").update(up).eq("id",v);if(error)throw error;S.rb=undefined;render();aviso("Marcado como pago. A revenda foi avisada.");}
+    catch(e){aviso("Não foi possível gravar: "+(e.message||""));}b.disabled=false;return;}
+});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||(f.id!=="f-rb-banco"&&f.id!=="f-rb-pedido"))return;ev.preventDefault();ev.stopImmediatePropagation();const g=s=>f.querySelector(s).value.trim();const canal=f.dataset.canal;
+  if(f.id==="f-rb-banco"){const row={canal_id:canal,favorecido:g("#rb_fav"),documento:g("#rb_doc"),banco:g("#rb_bco"),agencia:g("#rb_ag"),conta:g("#rb_cc"),tipo_conta:g("#rb_tp"),pix_tipo:g("#rb_pxt")||null,pix_chave:g("#rb_px")||null,contato_nome:g("#rb_cn")||null,contato_email:g("#rb_ce")||null,contato_fone:g("#rb_cf")||null,atualizado_em:new Date().toISOString()};
+    if(row.documento.replace(/\D/g,"").length!==14){aviso("Informe o CNPJ do favorecido com 14 números.");return;}
+    const {data,error}=await sb.from("rv_dados_bancarios").upsert(row).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar os dados bancários.");return;}(S.rbBanco||(S.rbBanco={}))[canal]=data;S.rbBancoEd=false;render();aviso("Dados bancários salvos.");return;}
+  const id=f.dataset.id;const val=rbNum(g("#rb_val")),nv=rbNum(g("#rb_nv"));const fl=f.querySelector("#rb_arq").files[0];
+  const c=(S.canais||[]).find(x=>x.id===canal);const sd=c?rbSaldo(c):{saldo:0};const atual=id?(S.rb||[]).find(x=>x.id===id):null;const max=sd.saldo+(atual?(+atual.valor_solicitado||0):0);
+  if(!(val>0)){aviso("Informe o valor a resgatar.");return;}if(val>max+0.005){aviso("O valor passa do saldo disponível ("+rbRs(max)+").");return;}if(val>nv+0.005){aviso("O valor a resgatar não pode passar do valor da nota.");return;}
+  if(!id&&!fl){aviso("Anexe o arquivo da nota fiscal.");return;}
+  const row={valor_solicitado:val,nf_numero:g("#rb_nf"),nf_emissao:g("#rb_em"),nf_valor:nv,descricao:g("#rb_ds")||null,acoes:[...f.querySelectorAll("input[name=rb_ac]:checked")].map(x=>x.value)};
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  try{
+    if(!id){const {data,error}=await sb.from("rv_reembolsos").insert({...row,canal_id:canal}).select().maybeSingle();if(error||!data)throw error||new Error("");
+      try{const p=await rbUpload(canal,data.id,fl);const u=await sb.from("rv_reembolsos").update({nf_path:p}).eq("id",data.id);if(u.error)throw u.error;}
+      catch(e){await sb.from("rv_reembolsos").update({status:"Cancelado",descricao:"Envio interrompido: a nota não subiu."}).eq("id",data.id);throw e;}
+      aviso("Pedido enviado. A Barenbrug foi avisada e você recebe uma notificação a cada etapa.");}
+    else{if(fl)row.nf_path=await rbUpload(canal,id,fl);row.status="Enviado";const {error}=await sb.from("rv_reembolsos").update(row).eq("id",id);if(error)throw error;aviso(atual&&atual.status==="Correção"?"Pedido corrigido e reenviado.":"Pedido atualizado.");}
+    S.rbNovo=false;S.rbEdit=null;S.rb=undefined;render();
+  }catch(e){aviso("Não foi possível enviar: "+((e&&e.message)||"tente de novo"));}
+  btn.disabled=false;
+});
+
 function subnavRV(){
   const abas=[["rv-apresentacao","Apresentação"],["rv-curso","Curso"]];
   if(veBarenbrugRV())abas.unshift(["rv-painel","Painel do programa"],["rv-canais","Canais"]);
   if(ehMaster())abas.push(["rv-validacao","Validação"]);
   else if(ehRevenda())abas.unshift(["rv-meucanal","Meu canal"]);
+  if(ehRevenda()&&temPerfil("Gestor de Revenda")&&!ehAdmin())abas.splice(1,0,["rv-reembolso","Reembolso"]);
+  if(ehAdmin()&&veBarenbrugRV())abas.splice(2,0,["rv-reembolsos","Reembolsos"]);
   if(cnVeAba("conecta_rv"))abas.push(["rv-nps","Avaliar o programa"]);
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Conecta Revendas">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -9106,6 +9289,8 @@ function renderApp(){
         return;
       }
     }
+    if(S.pag==="rv-reembolsos"){if(!(ehAdmin()&&veBarenbrugRV()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolsos()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
+    if(S.pag==="rv-reembolso"){if(!(ehRevenda()&&temPerfil("Gestor de Revenda")))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolso()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
     if(S.pag==="rv-meucanal"){
       if(!ehRevenda()){S.pag="rv-apresentacao";}
       else{
