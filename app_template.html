@@ -346,7 +346,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .rent-proj strong{font-size:14px}
 .rent-arg{margin:4px 0 10px;padding:12px;border-radius:8px;background:var(--papel);font-size:15px;line-height:1.5}
 .rent-ol{margin:0;padding-left:20px;display:grid;gap:6px}
-.rent-wrap{display:grid;gap:14px}.rent-form{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}.rent-form>*{min-width:0}.rent-form>.calc-kg{grid-column:1/-1}
+.rent-wrap{display:grid;gap:14px}.rent-form{grid-template-columns:1fr;align-items:start}.rent-form>*{min-width:0}.rent-form .calc-grupo,.rent-form .calc-kg{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:14px;align-items:end}.rent-form .calc-grupo>:not(.rent-c),.rent-form .calc-kg>*{grid-column:1/-1}.rent-c{display:grid;gap:4px;min-width:0}
 .rent-bt{margin:0}.rent-bt .btn{min-width:160px}#rent_out .calc-res{position:static}
 #rent_out{scroll-margin-top:12px}
 @media(max-width:520px){.rent-proj{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -4577,7 +4577,7 @@ function calcRent(){
 }
 function vRent(){
   const R=rentEstado(),C=RENT_CULT[R.c],v=R.v,sis=RENT_SIS[v.sis]||RENT_SIS.ciclo,cp=rentCepea();
-  const campo=(k,lbl,dica)=>`<div><label for="rt_${k}">${lbl}</label>${dica?`<span class="meta">${dica}</span>`:""}<input id="rt_${k}" type="text" inputmode="decimal" data-rent="${k}" value="${esc(v[k]||"")}" autocomplete="off"></div>`;
+  const campo=(k,lbl,dica)=>`<div class="rent-c"><label for="rt_${k}">${lbl}</label>${dica?`<span class="meta">${dica}</span>`:""}<input id="rt_${k}" type="text" inputmode="decimal" data-rent="${k}" value="${esc(v[k]||"")}" autocomplete="off"></div>`;
   const chips=(grp,obj,cur)=>`<div style="display:flex;flex-wrap:wrap;gap:8px">${Object.keys(obj).map(k=>`<button class="chip" type="button" data-a="rent-opt" data-v="${grp}:${k}" aria-pressed="${k===cur}">${esc(obj[k].n)}</button>`).join("")}</div>`;
   const dt=cp&&cp.data?` (Cepea, ${esc(cp.data)})`:"";
   const usarA=cp&&cp.arroba?`<button class="link" type="button" data-a="rent-cepea" data-v="pa">Usar o indicador de hoje: R$ ${cp.arroba.toLocaleString("pt-BR",{minimumFractionDigits:2})}${dt}</button>`:"";
