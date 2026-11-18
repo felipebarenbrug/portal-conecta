@@ -2388,11 +2388,12 @@ const IS_GRUPOS=[
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
   ["Formação",[["is-formacao","Formação do time"]]],
-  ["Gestão",[["is-ger","Análise gerencial"]]]];
+  ["Gestão",[["is-perfil-time","Quem queremos no time"],["is-ger","Análise gerencial"]]]];
 const IS_PROP={
  "is-fluxo":["Comece aqui","O caminho do lead da campanha do Marketing até a venda, com as regras de quando o Inside Sales atende e quando passa para o canal ou o RC.","alinhar o time e explicar para revendas e RCs como o lead é tratado."],
  "is-playbook":["Comece aqui","As boas práticas de atuação do Inside Sales, do primeiro contato ao funil saudável.","treinar quem entra, alinhar o time e cobrar o padrão de atendimento."],
  "is-formacao":["Formação","Cursos, podcasts e leituras de vendas, CRM, pré-vendas e negociação, mais o que é da Barenbrug.","formar quem entra no time e manter o time afiado."],
+ "is-perfil-time":["Gestão","A persona de contratação do Inside Sales: quem atrair, o que essa pessoa busca e o caminho de carreira até o campo.","escrever a vaga, escolher onde divulgar e conduzir a seleção."],
  "is-imp":["Comece aqui","O relatório semanal do Marketing para o time: mercado, meta, funil de cada uma, tarefas e a objeção da semana.","combinar as prioridades da semana com o time."],
  "is-cac":["Atrair","Quanto a mídia digital custa por lead, por negociação e por venda do Inside Sales.","decidir onde colocar verba de mídia e cortar o que não vira venda."],
  "is-icp":["Para quem","Quem é o produtor que compra pelo Inside Sales e como cada perfil quer ser atendido.","ajustar campanha, mensagem e abordagem ao perfil que mais converte."],
@@ -2747,6 +2748,32 @@ function vISFormacao(){
   <section class="bloco"><h2 class="sec">Trilha sugerida para quem entra no time</h2><ol class="dir-passos">${T.map(([a,b])=>`<li><strong>${a}</strong><span>${esc(b)}</span></li>`).join("")}</ol><p class="meta" style="margin:8px 0 0">Pode virar parte do onboarding, com os cursos da Academia como obrigatórios para o time. Os conteúdos externos ficam como formação recomendada.</p></section>
   ${IS_FORM.map(([g,L])=>`<section class="bloco"><h2 class="sec">${esc(g)}</h2><div class="dir-grid">${L.map(it).join("")}</div></section>`).join("")}
   <p class="meta">Links externos abrem fora do portal. Conteúdos gratuitos podem mudar de condição: confira na página antes de indicar.</p>`;
+}
+/* ===== Inside Sales: perfil de contratação (persona de quem queremos atrair para o time) ===== */
+function vISPerfilTime(){
+  const blk=(t,a)=>`<div class="dir-card" style="display:grid;gap:6px;align-content:start"><strong style="font-size:16px">${t}</strong><ul style="margin:0;padding-left:18px">${a.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+  const C=[["Entrada · 0 a 3 meses","Rampagem: Academia de Híbridos com provas, Playbook, Formação do time e acompanhamento de perto da supervisão. Meta reduzida."],
+   ["Assessor(a) de vendas · 3 a 18 meses","Meta cheia de híbridos, carteira de MQL e primeiros clientes recorrentes. Avaliação mensal de conversão, tempo de atendimento e disciplina de CRM."],
+   ["Assessor(a) sênior · 18 a 30 meses","Ajuda a treinar quem entra, assume canais ou RCs sob a guarda do Inside Sales e as negociações grandes com o suporte técnico."],
+   ["Porta para o campo · a partir de 24 meses","Candidato(a) a RTV ou AT do comercial Barenbrug, quando abrir vaga: já conhece portfólio, cliente, CRM e política comercial."]];
+  return `<div><h1 class="titulo">Quem queremos atrair para o time</h1><p class="sub">A persona de contratação do Inside Sales: o perfil que mais combina com o trabalho, o que essa pessoa busca, o que a Barenbrug oferece e o caminho de carreira. Serve para escrever a vaga, escolher onde divulgar e conduzir a seleção.</p></div>
+  <section class="bloco dir-hero"><p class="dir-kicker">A persona</p><p class="dir-frase">Agrônomo(a) recém-formado(a), digital, que quer entrar numa grande empresa pelo comercial.</p><p>Jovem que acabou de sair da faculdade de agronomia (ou de zootecnia ou veterinária), à vontade com sistemas e ferramentas digitais, que quer uma porta de entrada numa multinacional, aprender a vender e crescer no comercial. O Inside Sales é a formação; o campo, como RTV ou AT, pode ser o próximo passo.</p></section>
+  <section class="bloco"><div class="dir-grid">
+   ${blk("Quem é",["Recém-formado(a) ou no último ano de Agronomia, Zootecnia ou Medicina Veterinária","Entre os 21 e os 27 anos, em geral no primeiro emprego ou vindo de estágio","Nativo(a) digital: WhatsApp, planilha, CRM e videochamada sem medo","Fez estágio, empresa júnior ou grupo de estudos ligado a pastagem, pecuária ou extensão rural"])}
+   ${blk("O que busca",["A marca de uma multinacional no currículo (Barenbrug, referência mundial em forrageiras desde 1904)","Aprender a vender com método e com meta","Uma trilha clara de crescimento, com chance de ir para o campo","Remuneração variável que premia quem vende"])}
+   ${blk("O que a Barenbrug oferece",["Formação técnica completa nos híbridos (Academia, provas e suporte técnico)","Método de vendas: Playbook, CRM, cadência e Impulso semanal","Contato com revendas, RCs e o comercial de campo","Remuneração com parte fixa e comissão por cultivar","Caminho para RTV ou AT do comercial Barenbrug"])}
+   ${blk("Competências que procuramos",["Comunicação clara ao telefone e por escrito, em linguagem do produtor","Disciplina: registra tudo no CRM e cumpre a cadência","Curiosidade técnica: quer entender a fazenda antes de oferecer produto","Resiliência com o não e com a meta","Organização para tocar muitas negociações ao mesmo tempo"])}
+   ${blk("Sinais de alerta na seleção",["Quer só pesquisa ou só campo, sem interesse em vender","Não gosta de telefone ou de falar com quem não conhece","Desorganizado(a) com prazo e registro","Vê o Inside Sales só como espera para outra vaga, sem compromisso com a meta"])}
+   ${blk("Onde encontrar",["Faculdades de agronomia, zootecnia e veterinária, principalmente as fortes em pecuária e forragicultura","Empresas juniores, grupos de estudo de pastagem e ligas acadêmicas","Indicação de professores e do comercial de campo","LinkedIn e páginas de vagas das universidades","Dias de campo, feiras e eventos em que a Barenbrug já está"])}
+  </div></section>
+  <section class="bloco"><h2 class="sec">Como atrair</h2><div class="dir-grid">
+   ${blk("A mensagem da vaga",["“Programa de formação comercial em uma multinacional do agro”","Fale da formação, da marca e do caminho para o campo antes do salário","Mostre o dia a dia real: atender produtor de todo o Brasil pelo telefone e pelo digital"])}
+   ${blk("Seleção em 4 etapas",["1. Triagem do currículo e uma pergunta escrita: “como você explicaria a um pecuarista por que reformar o pasto?”","2. Prova curta de conceitos de pastagem, com base na Academia","3. Simulação de ligação com um produtor (role play), avaliada com o Playbook","4. Conversa com a supervisão do Inside Sales e com o Marketing"])}
+   ${blk("Para reter",["Feedback mensal com números (conversão, tempo de atendimento, vendas)","Reconhecimento: ranking, campanha de incentivo e casos de sucesso com o nome de quem vendeu","Combinar desde o início a trilha e os critérios para ir ao campo"])}
+  </div></section>
+  <section class="bloco"><h2 class="sec">Caminho de carreira</h2><ol class="dir-passos">${C.map(([a,b])=>`<li><strong>${a}</strong><span>${b}</span></li>`).join("")}</ol>
+   <p class="meta" style="margin:8px 0 0">Critérios para o passo seguinte: meta de híbridos cumprida, conversão e tempo de atendimento dentro da régua, provas da Academia aprovadas e avaliação do comercial. Prazos de referência, a validar com o comercial e o RH.</p></section>
+  <p class="meta">Custo e breakeven de cada assessora ficam na aba Análise gerencial, para quem tem acesso ao Financeiro.</p>`;
 }
 function vISFluxo(){
   const no=(c,quem,t,corpo)=>`<div class="fx-no ${c}"><span class="fx-quem">${quem}</span><h3>${t}</h3>${corpo}</div>`;
@@ -4933,7 +4960,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao"].includes(pg);
+  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
@@ -8794,7 +8821,7 @@ const ABA_DESC={
  "fin-resumo":"Resumo financeiro de marketing.","fin-mensal":"Gastos e receitas mês a mês.","fin-comissoes":"Comissões de RCs e Inside Sales.","fin-conecta":"Provisão do Conecta Revendas.","fin-premissas":"Premissas usadas nos cálculos.",
  "acoes-quadro":"Quadro das ações de marketing por etapa.","acoes-solic":"Pedidos de ação feitos pelo comercial.","acoes-cal":"Calendário de eventos e ações.","acoes-eventos":"Por que participamos de cada evento e o que ele gerou de venda no CRM.","acoes-gestao":"Gestão das ações: responsáveis, custos e checklist.","acoes-matriz":"Matriz de priorização das ações.","acoes-painel":"Verba, saldo e cenários da safra.","acoes-digital":"Gasto e resultados das campanhas no Meta Ads.",
  "brindes-catalogo":"Catálogo de brindes disponíveis.","brindes-reqs":"Pedidos de brindes.","brindes-emp":"Empréstimo de materiais (banners, tendas).","brindes-painel":"Estoque, gastos e verba de brindes.",
- "is-playbook":"Boas práticas de atuação do time.","is-formacao":"Cursos, podcasts e leituras para a formação do time.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
+ "is-playbook":"Boas práticas de atuação do time.","is-formacao":"Cursos, podcasts e leituras para a formação do time.","is-perfil-time":"Persona de contratação do Inside Sales.","is-fluxo":"O caminho do lead da campanha até a venda e as regras de atendimento.","is-time":"Meta, vendas e funil do time de Inside Sales.","is-vend":"Resultado de cada vendedora.","is-reg":"Vendas e funil do Inside Sales nas 4 regiões do projeto.","is-hist":"Evolução das vendas do Inside Sales safra a safra.","acoes-gd":"Plano de geração de demanda: verba, máquina digital e plano de campo por região.","is-imp":"Todas as edições do Impulso Inside Sales enviadas ao time.","is-ger":"Breakeven e custo de cada vendedora frente ao teto do RC de campo.","is-neg":"Negociações em aberto e pausadas.","is-obj":"Por que o produtor não compra.","is-icp":"ICP e personas do produtor B2C.","is-rfv":"Clientes por recência, frequência e valor.","is-cac":"Retorno da mídia: custo por lead e por venda.","is-painel":"Painel individual da vendedora."};
 const secDesc=id=>{const x=(typeof SECOES!=="undefined"?SECOES:[]).find(z=>z.id===id);return x?x.desc:"";};
 const abasOcultas=()=>(!ehAdmin()&&S.profile&&Array.isArray(S.profile.abas_ocultas))?S.profile.abas_ocultas:[];
 const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
@@ -8875,6 +8902,7 @@ function renderApp(){
   if(S.secao==="inside-sales"){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-gd";return render();}
+    if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
     if(S.pag==="is-playbook"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPlaybook()}</main>`;return;}
     if(S.pag==="is-fluxo"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFluxo()}</main>`;return;}
