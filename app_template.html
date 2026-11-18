@@ -6940,7 +6940,7 @@ function vIntRaci(){
   // hierarquia
   const filhos=id=>D.pessoas.filter(x=>x.chefe===id);
   const box=x=>{const cls=x.id==="gustavo"?"top":(x.id==="mayane"||x.id==="laura"||x.id==="is")?"isx":"mk";
-    return `<button class="org-box ${cls} ${x.ausente?"aus":""} ${F.p===x.id?"sel":""}" data-a="raci-f" data-v="p:${x.id==="mayane"?"":esc(x.id)}"><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.papel)}${x.desde?" · "+esc(x.desde):""}</span>${x.ausente?`<span class="meta" style="color:var(--vermelho,#c0392b)">${esc(x.ausente)}</span>`:""}${x.cobre?`<span class="meta"><strong>Cobre a supervisão do Inside Sales</strong></span>`:""}</button>`;};
+    return `<button class="org-box ${cls} ${x.ausente?"aus":""} ${F.p===x.id?"sel":""}" data-a="raci-f" data-v="p:${F.p===x.id?"":esc(x.id)}"><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.papel)}${x.desde?" · "+esc(x.desde):""}</span>${x.ausente?`<span class="meta" style="color:var(--vermelho,#c0392b)">${esc(x.ausente)}</span>`:""}${x.cobre?`<span class="meta"><strong>Cobre a supervisão do Inside Sales</strong></span>`:""}</button>`;};
   const arv=x=>{const f=filhos(x.id);return `<li>${box(x)}${f.length?`<ul>${f.map(arv).join("")}</ul>`:""}</li>`;};
   const raiz=D.pessoas.filter(x=>!x.chefe);
   // cards por pessoa

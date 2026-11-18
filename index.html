@@ -1450,7 +1450,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118111536";
+const APP_VER="20261118121108";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6940,7 +6940,7 @@ function vIntRaci(){
   // hierarquia
   const filhos=id=>D.pessoas.filter(x=>x.chefe===id);
   const box=x=>{const cls=x.id==="gustavo"?"top":(x.id==="mayane"||x.id==="laura"||x.id==="is")?"isx":"mk";
-    return `<button class="org-box ${cls} ${x.ausente?"aus":""} ${F.p===x.id?"sel":""}" data-a="raci-f" data-v="p:${x.id==="mayane"?"":esc(x.id)}"><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.papel)}${x.desde?" · "+esc(x.desde):""}</span>${x.ausente?`<span class="meta" style="color:var(--vermelho,#c0392b)">${esc(x.ausente)}</span>`:""}${x.cobre?`<span class="meta"><strong>Cobre a supervisão do Inside Sales</strong></span>`:""}</button>`;};
+    return `<button class="org-box ${cls} ${x.ausente?"aus":""} ${F.p===x.id?"sel":""}" data-a="raci-f" data-v="p:${F.p===x.id?"":esc(x.id)}"><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.papel)}${x.desde?" · "+esc(x.desde):""}</span>${x.ausente?`<span class="meta" style="color:var(--vermelho,#c0392b)">${esc(x.ausente)}</span>`:""}${x.cobre?`<span class="meta"><strong>Cobre a supervisão do Inside Sales</strong></span>`:""}</button>`;};
   const arv=x=>{const f=filhos(x.id);return `<li>${box(x)}${f.length?`<ul>${f.map(arv).join("")}</ul>`:""}</li>`;};
   const raiz=D.pessoas.filter(x=>!x.chefe);
   // cards por pessoa
