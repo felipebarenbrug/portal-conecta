@@ -4581,14 +4581,16 @@ function vRCEtapa(){
 /* ---------- Conecta Revendas ---------- */
 /* ===== Conecta Revendas · Validação (só administradores): IGDB e BF pelo BI de pedidos + Financeiro Analítico ===== */
 const RVV_HIB=["Sabiá","Cayana","Carcará"];
-async function carregarRVV(){if(S.rvvBusy)return;S.rvvBusy=true;try{const {data}=await sb.from("rv_validacao").select("*");S.rvv={};(data||[]).forEach(r=>{S.rvv[r.canal_id]=r;});}catch(e){S.rvv={};}S.rvvBusy=false;render();}
+async function carregarRVV(){if(S.rvvBusy)return;S.rvvBusy=true;try{const {data}=await sb.from("rv_validacao").select("*");S.rvv={};(data||[]).forEach(r=>{S.rvv[r.canal_id]=rvvScFix(r);});}catch(e){S.rvv={};}S.rvvBusy=false;render();}
 function rvvNum(v){if(v==null||v==="")return 0;if(typeof v==="number")return v;const t=String(v).replace(/\s/g,"");return Number(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;}
 function rvvNF(v){if(v==null||v==="")return null;const n=parseInt(String(v).replace(/\D/g,""),10);return isNaN(n)?null:String(n);}
 function rvvData(v){if(!v)return null;if(v instanceof Date)return isNaN(v)?null:v;if(typeof v==="number")return new Date(Math.round((v-25569)*864e5)+12*36e5);const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],+m[2]-1,+m[1]);const d=new Date(v);return isNaN(d)?null:d;}
 const rvvISO=d=>d?new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10):null;
+/* dados gravados antes da regra do teto: limita cada cenario ao ler */
+function rvvScFix(r){const sc=r&&r.dados&&r.dados.sc;if(!sc)return r;["pago","faturado","total"].forEach(k=>{const z=sc[k];if(!z||z.igdb_bruto!=null)return;const K=rvCap(z.igdb,z.bf);Object.assign(z,{igdb_bruto:z.igdb,bf_bruto:z.bf,igdb:K.ig,igdb_h:(z.igdb_h||0)*K.f,igdb_c:(z.igdb_c||0)*K.f,bf:K.bf,total:K.ig+K.bf,teto:K.exc>0,excesso:K.exc});});return r;}
 function rvvCen(v,meta,g){
   const fator=a=>a>=1?1:a>=.9?.7:0;const sc={};
-  [["pago",v.pag_rs_h,v.pag_rs_c,v.pag_kg_h],["faturado",v.fat_rs_h,v.fat_rs_c,v.fat_kg_h],["total",v.tot_rs_h,v.tot_rs_c,v.tot_kg_h]].forEach(([k,rh,rc,kh])=>{const at=meta?kh/meta:0,ig=rh*g.ih+rc*g.ic,bf=rh*g.b*fator(at);sc[k]={igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:at,fator:fator(at),bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO};});
+  [["pago",v.pag_rs_h,v.pag_rs_c,v.pag_kg_h],["faturado",v.fat_rs_h,v.fat_rs_c,v.fat_kg_h],["total",v.tot_rs_h,v.tot_rs_c,v.tot_kg_h]].forEach(([k,rh,rc,kh])=>{const at=meta?kh/meta:0,ig=rh*g.ih+rc*g.ic,bf=rh*g.b*fator(at);const K=rvCap(ig,bf);sc[k]={igdb:K.ig,igdb_h:rh*g.ih*K.f,igdb_c:rc*g.ic*K.f,igdb_bruto:ig,ating:at,fator:fator(at),bf:K.bf,bf_bruto:bf,bf_cheio:rh*g.b,total:K.ig+K.bf,teto:K.exc>0,excesso:K.exc};});
   sc.bf_fat_meta_total=v.fat_rs_h*g.b*fator(meta?v.tot_kg_h/meta:0);
   return sc;
 }
@@ -4597,7 +4599,7 @@ function rvvCenMeta(v,meta,g,pxFb){
   const px=v.tot_kg_h>0?v.tot_rs_h/v.tot_kg_h:v.fat_kg_h>0?v.fat_rs_h/v.fat_kg_h:(pxFb||0);
   const kh=Math.max(v.tot_kg_h,meta||0),rh=v.tot_kg_h>=(meta||0)?v.tot_rs_h:v.tot_rs_h+((meta||0)-v.tot_kg_h)*px,rc=v.tot_rs_c;
   const ig=rh*g.ih+rc*g.ic,bf=meta?rh*g.b:0;
-  return {rh,rc,kh,px,falta:Math.max(0,(meta||0)-v.tot_kg_h),z:{igdb:ig,igdb_h:rh*g.ih,igdb_c:rc*g.ic,ating:meta?kh/meta:0,fator:meta?1:0,bf,bf_cheio:rh*g.b,total:Math.min(RV_TETO,ig+bf),teto:ig+bf>RV_TETO}};
+  return {rh,rc,kh,px,falta:Math.max(0,(meta||0)-v.tot_kg_h),z:(()=>{const K=rvCap(ig,bf);return {igdb:K.ig,igdb_h:rh*g.ih*K.f,igdb_c:rc*g.ic*K.f,igdb_bruto:ig,ating:meta?kh/meta:0,fator:meta?1:0,bf:K.bf,bf_bruto:bf,bf_cheio:rh*g.b,total:K.ig+K.bf,teto:K.exc>0,excesso:K.exc};})()};
 }
 function rvvCalcular(ped,finRows,hoje,canais){
   const fin={};
@@ -4687,8 +4689,9 @@ function rvvBlocos(d,g,rev,pxFb){
     `<div class="rvv-cen">${cen.map(([t,e,z,rh,rc,cl])=>`<div class="rvv-c ${cl}"><span class="rvv-ct">${t}</span><span class="meta">Meta atingida neste cenário: ${pc(z.ating)}</span>
       <div class="rvv-l"><span>Híbridos</span><span>${rs(rh)} × ${pt(g.b)}</span><strong>${rs(rh*g.b)}</strong></div>
       <div class="rvv-l"><span>Fator da meta</span><span>${z.fator===1?"meta batida":z.fator?"entre 90% e 99,99%":"abaixo de 90%"}</span><strong>${z.fator===1?"100%":z.fator?"70%":"0%"}</strong></div>
+      ${z.teto?`<div class="rvv-l" style="color:#c0392b"><span>Corte pelo teto</span><span>passa ${rs(z.excesso)} de ${rs(RV_TETO)}</span><strong>− ${rs(Math.max(0,(z.bf_bruto||0)-z.bf))}</strong></div>`:""}
       <div class="rvv-l rvv-tot"><span>Bônus</span><span></span><strong>${rs(z.bf)}</strong></div>
-      <div class="rvv-l"><span>IGDB + bônus</span><span>${z.teto?"limitado ao teto":""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
+      <div class="rvv-l"><span>IGDB + bônus</span><span>${z.teto?`teto de ${rs(RV_TETO)} atingido`:""}</span><strong>${rs(z.total)}</strong></div></div>`).join("")}</div>
      ${s.bf_fat_meta_total&&s.faturado.fator<1?`<p class="meta" style="margin:6px 0 0">Se a meta for batida com os encarteirados, o bônus sobre o já faturado seria ${rs(s.bf_fat_meta_total)}.</p>`:""}`);
   return {q1,q3,q4,q5};
 }
@@ -4840,7 +4843,7 @@ async function carregarCanais(){
   if(temPerfil("Gestor de Revenda")&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
-    try{const {data:pb}=await sb.from("rv_publicado").select("*");S.rvPub={};(pb||[]).forEach(x=>{S.rvPub[x.canal_id]=x;});}catch(e){S.rvPub={};}
+    try{const {data:pb}=await sb.from("rv_publicado").select("*");S.rvPub={};(pb||[]).forEach(x=>{S.rvPub[x.canal_id]=rvvScFix(x);});}catch(e){S.rvPub={};}
     try{const {data:ru}=await sb.from("canal_reunioes").select("*").order("data",{ascending:false});S.canalReun=grp(ru);}catch(e){S.canalReun={};}
     const [co,fi,es,pr]=await Promise.all([
       sb.from("canal_contatos").select("*"),
@@ -4857,6 +4860,8 @@ const veInt=()=>ehAdmin()&&!S.demo; /* por enquanto, só administradores (pedido
 const ehRevenda=()=>temPerfil("Gestor de Revenda")||temPerfil("Vendedor de Revenda");
 const RV_REGRA={"Blue":{ih:.02,ic:.0075,b:.02},"Yellow":{ih:.025,ic:.01,b:.025},"Yellow Pro":{ih:.03,ic:.0125,b:.03},"Yellow Master":{ih:.035,ic:.015,b:.035}};
 const RV_TETO=300000,RV_PISO_KG=5000;
+/* Teto do programa: IGDB + BF nunca passa de RV_TETO por canal na safra. O IGDB entra primeiro; o bonus completa ate o teto. */
+function rvCap(ig,bf){ig=+ig||0;bf=+bf||0;const i=Math.min(ig,RV_TETO),b=Math.min(bf,Math.max(0,RV_TETO-i));return {ig:i,bf:b,f:ig>0?i/ig:1,exc:Math.max(0,ig+bf-RV_TETO)};}
 const fmtK0=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
 const pctTxt=x=>(x*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
 function vCanalNaMeta(m){
@@ -4915,14 +4920,22 @@ function metricasCanal(c,o){o=o||{};
   const rsHMeta=Math.max(N("rs_hib"),meta*pxH);const mIgdb=rsHMeta*g.ih+N("rs_conv")*g.ic,mBonus=rsHMeta*g.b,mTotal=Math.min(RV_TETO,mIgdb+mBonus);
   /* IGDB so e devido com PGD submetido e aprovado: o compromisso e o aprovado, limitado ao IGDB do canal. BF so com 90%+ da meta. */
   const aprovIGr=som("Aprovado",false);
-  const igdbAprov=Math.min(igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
+  const igdbAprov=Math.min(RV_TETO,igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(RV_TETO,mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
   const pv=pub&&pub.dados&&pub.dados.v;const pubInfo=pv?{em:pub.validado_em,por:pub.validado_nome,sit:pub.situacao_em,pagRs:(pv.pag_rs_h||0)+(pv.pag_rs_c||0),fatRs:(pv.fat_rs_h||0)+(pv.fat_rs_c||0),ordKgH:pv.ord_kg_h||0,igdbPago:(pv.pag_rs_h||0)*g.ih+(pv.pag_rs_c||0)*g.ic,aberto:(pub.dados.fin||{}).aberto||0,vencido:(pub.dados.fin||{}).vencido||0}:null;
-  return {mulOn,mul:MU,pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+  const K0=rvCap(igdb,bonus),KM=rvCap(mIgdb,mBonus);
+  const RET={mulOn,mul:MU,pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     abKgH:N("aberto_kg_hib"),abKgC:N("aberto_kg_conv"),abRsH:N("aberto_rs_hib"),abRsC:N("aberto_rs_conv"),abertas:Array.isArray(r.abertas)?r.abertas:[],
-    ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;const apIG=ac.filter(a=>(a.status||"Em Análise")==="Aprovado"&&!ehBPa(a)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);const pIgdbAprov=Math.min(pIgdb,apIG);
+    ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;const apIG=ac.filter(a=>(a.status||"Em Análise")==="Aprovado"&&!ehBPa(a)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);const pIgdbAprov=Math.min(RV_TETO,pIgdb,apIG);
       return {pKgH:kH,pAting:pAt,pFator:pF,pIgdb,pIgdbH:rH*g.ih,pIgdbC:rC*g.ic,pIgdbAprov,pBonus,pBonusCheio:rH*g.b,pAPagar:Math.min(RV_TETO,pIgdbAprov+pBonus),pTotal:Math.min(RV_TETO,pIgdb+pBonus),pTeto:pIgdb+pBonus>RV_TETO,pFalta90:meta?Math.max(0,meta*.9-kH):0};})(),
     aprov,analise,nAprov:cnt("Aprovado"),nAnalise:cnt("Em Análise"),nReprov:cnt("Reprovado"),n:ac.length,aprovIG:som("Aprovado",false),aprovBP:som("Aprovado",true),analiseIG:som("Em Análise",false),saldo:igdb-som("Aprovado",false),faltaKg,soma:aprov+analise};
+  /* nada acima do teto chega a tela: IGDB e bonus exibidos ja limitados; o bruto fica so para a validacao */
+  const KP=rvCap(RET.pIgdb,RET.pBonus);
+  Object.assign(RET,{igdbBruto:igdb,bonusBruto:bonus,exc:K0.exc,igdb:K0.ig,igdbH:igdbH*K0.f,igdbC:igdbC*K0.f,bonus:K0.bf,
+    mIgdbBruto:mIgdb,mBonusBruto:mBonus,mExc:KM.exc,mIgdb:KM.ig,mBonus:KM.bf,
+    pIgdbBruto:RET.pIgdb,pBonusBruto:RET.pBonus,pExc:KP.exc,pIgdb:KP.ig,pIgdbH:RET.pIgdbH*KP.f,pIgdbC:RET.pIgdbC*KP.f,pBonus:KP.bf,
+    saldo:K0.ig-RET.aprovIG});
+  return RET;
 }
 function vPlanoXIgdb(m){
   const plano=(m.aprovIG||0)+(m.analiseIG||0);if(!plano)return "";
