@@ -1549,7 +1549,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119124552";
+const APP_VER="20261119124845";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4969,7 +4969,14 @@ function vFaq(){
   ${corpo||`<div class="vazio">Nenhuma pergunta encontrada. Tente outra palavra ou pergunte no início do portal.</div>`}
   <p class="dica">Não achou o que precisava? Faça a sua pergunta no início do portal: a Barenbrug responde e valida.</p>`;
 }
+function vTrilhaES(){
+  const L=ETAPAS_ON.map((e,i)=>[e,i]).filter(([e])=>e.id!=="prova"&&e.v&&e.v.length);
+  return `${heroAcademia()}
+  <div><h2 class="sec">Cursos</h2><p class="sub">Los videos están en portugués. Active los subtítulos en español en el reproductor de YouTube (ícono CC y, en la rueda de configuración, Subtítulos → Traducir automáticamente → Español). Todos los módulos están abiertos para consulta.</p></div>
+  <ol class="trilha">${L.map(([e,i],k)=>`<li class="atual"><span class="marco" aria-hidden="true">${k+1}</span><button class="etapa-b" data-a="abrir" data-v="${i}"><h3>${e.n}</h3><p>${e.d}</p><span class="est">${e.v.length} ${e.v.length>1?"videos":"video"}</span></button></li>`).join("")}</ol>`;
+}
 function vTrilha(){
+  if(LANG()==="es")return vTrilhaES();
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
   return `${heroAcademia()}
   <div><h2 class="sec">Cursos</h2><p class="sub">Os módulos liberam um de cada vez: termine os vídeos do módulo, faça a prova e, aprovado (70%, ou o mínimo indicado na prova), o próximo módulo é liberado. Cada prova aprovada vale pontos no ranking: 10 por acerto, mais 20 de bônus se passar na primeira tentativa.</p></div>
@@ -5057,17 +5064,18 @@ function vEtapa(){
   const i=S.etapa,e=ETAPAS_ON[i],vistos=S.vistos[e.id]||[],s=estadoEt(i);
   if(e.id==="prova")return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">Prova final</h1><p class="sub">${e.d}</p></div>${vQuiz(PROVA,"prova")}`;
   const todos=e.v.every((_,k)=>vistos.includes(k)),v=e.v[S.video];
-  const emProva=S.pv&&S.pv.id===e.id&&!S.res;
+  const es=LANG()==="es";
+  const emProva=!es&&S.pv&&S.pv.id===e.id&&!S.res;
   const secProva=`<section class="bloco" id="sec-prova"><h2 class="sec">Prova</h2>${s==="feita"&&!S.res&&!emProva?`<div class="vazio">Você concluiu esta etapa${S.notas[e.id]!=null?" com "+S.notas[e.id]+" acertos":""}.</div>`:todos?vQuiz(e.quiz,e.id):`<div class="vazio">Marque todos os vídeos como assistidos para liberar a prova. Aprovação com ${Math.ceil((MIN_PCT[e.id]||.7)*e.quiz.length)} de ${e.quiz.length} acertos.</div>`}</section>`;
   if(emProva)return `<div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1></div>${secProva}`;
-  const chamada=todos&&s!=="feita"?`<div class="pv-aviso" role="status"><div><strong>Você assistiu a todos os vídeos deste módulo.</strong><span>Agora falta a prova para concluir o módulo e liberar o próximo.</span></div><button class="btn" type="button" data-a="ir-prova">Ir para a prova</button></div>`:"";
+  const chamada=!es&&todos&&s!=="feita"?`<div class="pv-aviso" role="status"><div><strong>Você assistiu a todos os vídeos deste módulo.</strong><span>Agora falta a prova para concluir o módulo e liberar o próximo.</span></div><button class="btn" type="button" data-a="ir-prova">Ir para a prova</button></div>`:"";
   return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button>
   <div><span class="rot">Módulo ${i+1} de ${ORDEM.length}</span><h1 class="titulo">${e.n}</h1><p class="sub">${e.d}</p></div>
   ${chamada}
-  ${v.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${v.yt}?rel=0" title="${esc(v.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m?v.m+" min · ":""}O vídeo entra aqui no site final</p></div>`}
+  ${v.yt?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${v.yt}?rel=0${LANG()==="es"?"&cc_load_policy=1&cc_lang_pref=es&hl=es":""}" title="${esc(v.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:`<div class="player"><span class="play" aria-hidden="true"></span><h3>${v.t}</h3><p>${v.m?v.m+" min · ":""}O vídeo entra aqui no site final</p></div>`}
   <section class="bloco"><h2 class="sec">Vídeos</h2><div class="lista">${e.v.map((x,k)=>`<div class="linha ${k===S.video?"ativa":""}"><div><button class="link" data-a="video" data-v="${k}">${k+1}. ${x.t}</button>${x.m?`<span class="meta"> · ${x.m} min</span>`:""}</div><label class="check"><input type="checkbox" data-a="visto" data-v="${k}" ${vistos.includes(k)?"checked":""}>Assisti</label></div>`).join("")}</div>${!todos&&s!=="feita"?`<p class="dica" style="margin:8px 0 0">A prova do módulo fica logo abaixo e é liberada quando você marcar todos os vídeos como assistidos.</p>`:""}</section>
   ${chamada?chamada.replace('class="pv-aviso"','class="pv-aviso pv-aviso-2"'):""}
-  ${secProva}
+  ${es?"":secProva}
   ${e.mat.length?`<section class="bloco"><h2 class="sec">Materiais de apoio</h2><div class="lista">${e.mat.map(matHTML).join("")}</div></section>`:""}`;
 }
 function matHTML(m){
