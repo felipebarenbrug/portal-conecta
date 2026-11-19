@@ -8151,7 +8151,7 @@ const MET_AN=[
  {aba:"int-digital",n:"Campanhas digitais",f:"Meta Ads (gasto, resultado, região) e orçamento da verba digital em Ações de Marketing.",m:"Gasto e resultado por campanha e região, projetados contra a verba da safra.",rec:"mensal",como:"Dados do Meta Ads atualizados pelo portal; análise mensal.",resp:"Marketing"},
  {aba:"int-rc",n:"RCs e Inside Sales",f:"Funil de vendas do RD Station CRM (campo Representante) e contratos de representação.",m:"Pedidos fechados com faturamento na safra, por representante e região.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"is",resp:"Marketing"},
  {aba:"int-seg",n:"B2C e B2B",f:"Pedidos ganhos do RD Station CRM.",m:"Volume e valor separados entre venda ao produtor e venda ao canal.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
- {aba:"int-modelos",n:"Modelos de representação",f:"Contratos de representação assinados da safra.",m:"Comparação dos modelos de contrato: comissão, verba, obrigações.",rec:"anual",como:"Revisão na renovação dos contratos (até 30 de agosto).",resp:"Marketing"},
+ {aba:"int-modelos",n:"Modelos de representação",f:"Contratos de representação assinados da safra.",m:"Comparação dos modelos de contrato: comissão, verba, obrigações.",rec:"anual",como:"Revisão na renovação dos contratos (até 30 de agosto).",resp:"Marketing"}];
 function carregarMetStatus(){if(S.metBusy)return;S.metBusy=true;(async()=>{try{const {data}=await sb.rpc("intel_status");S.metSt=data||{};}catch(e){S.metSt={};}S.metBusy=false;render();})();}
 function vIntMetodo(){
   if(S.metSt===undefined){S.metSt=null;carregarMetStatus();}
