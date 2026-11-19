@@ -1012,6 +1012,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .pir-q{border:1px solid var(--linha,#d7dbe0);border-radius:10px;padding:10px 12px;margin:0}.pir-q legend{font-weight:600;padding:0 4px}.pir-ops{display:grid;gap:6px;margin-top:6px}
 .pir-op{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--linha,#d7dbe0);cursor:pointer;font-weight:400}.pir-op input{width:auto;min-width:0;flex:0 0 auto;margin:3px 0 0}.pir-op.sel{border-color:var(--azul,#003c71);box-shadow:inset 0 0 0 1px var(--azul,#003c71)}.pir-det{margin-top:8px}
 .ts-box{display:flex;justify-content:center}.ts-box:empty{display:none}
+.guia-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.guia-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}.guia-l li{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:4px 12px;padding:6px 0;border-top:1px solid #eef1f3}.guia-l li:first-child{border-top:0}.guia-l li>span{color:#555}.guia-l .link{text-align:left;padding:0}.guia-rot{margin:0;padding-left:20px;display:grid;gap:4px}.guia-destaque{box-shadow:inset 4px 0 0 #ffdb00}@media (max-width:600px){.guia-l li{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1329,6 +1330,7 @@ const SECOES=[
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
+  {id:"guia",nome:"Guia do portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência"],["financeiro","Marketing + Financeiro"]];
@@ -1552,7 +1554,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119164322";
+const APP_VER="20261119165904";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3323,6 +3325,7 @@ const isPropHTML=pag=>{const P=IS_PROP[pag];if(!P||!veTimeIS())return "";return 
    Abre no grupo da pagina atual; clicar em outro grupo so troca as abas mostradas. Grupo de uma aba so vai direto. */
 function navGrupos(G,nome,cur){
   const gs=G.map(([g,ab])=>[g,semOcultas((ab||[]).filter(Boolean))]).filter(x=>x[1].length);
+  if(S._cap){S._cap.push(...gs);return "";}
   const tab=([k,t])=>`<button data-a="pag" data-v="${k}" ${cur(k)?'aria-current="page"':""}>${t}</button>`;
   const topo=`<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>`,fim=`<span class="secao-nome">${esc(nome)}</span></div>`;
   if(gs.length<2||gs.every(x=>!x[0]))return `${topo}<nav class="nav" aria-label="${esc(nome)}">${gs.flatMap(x=>x[1]).map(tab).join("")}</nav>${fim}</div>`;
@@ -4911,7 +4914,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -11381,6 +11384,77 @@ function vCasos(){
   ${atual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${atual.yt}?rel=0&autoplay=1" title="${esc(atual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><p style="margin:8px 0 0"><strong>${esc(atual.nome)}</strong> <span class="meta">${esc(atual.cid?atual.cid+" · ":"")}${esc(atual.uf)} · ${esc(atual.reg)}</span></p><p class="meta" style="margin:4px 0 0">Para mandar ao cliente: <span style="user-select:all">https://youtu.be/${atual.yt}</span></p></section>`:""}
   <section class="bloco"><div class="filtros" style="margin:0 0 8px">${regs.map(r=>`<button type="button" class="chip" data-a="casos-reg" data-v="${r}" aria-pressed="${F.reg===r&&!F.uf}">${r}${r!=="Todas"?` · ${L.filter(c=>c.reg===r).length}`:` · ${L.length}`}</button>`).join("")}${F.uf?`<button type="button" class="chip" data-a="casos-uf" data-v="" aria-pressed="true">${F.uf} ✕</button>`:""}</div>
    <div class="int-2" style="align-items:start"><div style="min-width:0">${mapa}</div><div style="min-width:0">${grupos.map(([r,x])=>`<h3 class="pgd-h">${r} · ${x.length}</h3><div class="casos-grid">${x.map(card).join("")}</div>`).join("")||`<div class="vazio">Nenhum caso neste filtro.</div>`}</div></div></section>`;}
+/* ---------- Guia do portal: o que cada área faz, com visão por perfil ---------- */
+const GUIA_PERFIL={
+ "RC":{t:"RC de campo",serve:"O portal é o seu apoio de campo: treinar os híbridos, montar a proposta, enviar a negociação e acompanhar o seu resultado no Conecta RC.",
+  rotina:["Antes da visita: veja a Tabela de preços e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
+  comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"],["conecta-rc","rc-pedido","Enviar negociação"]],
+  secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
+ "Franqueado Nutron":{t:"Franqueado Nutron",serve:"O portal reúne o treinamento dos híbridos, a tabela de preços e os materiais com a marca para você vender Barenbrug na sua franquia.",
+  rotina:["Antes da visita: Tabela de preços e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing, com artes e folders prontos."],
+  comece:[["academia","trilha","Cursos da Academia"],["conecta-rc","rc-apresentacao","Como funciona o Conecta RC"]],
+  secs:["academia","conecta-rc","tabela-precos","enxoval","mural","duvidas","mercado"]},
+ "Assessor de Vendas Digital":{t:"RC digital",serve:"O portal é o seu apoio para vender à distância: treinamento, proposta, envio da negociação e acompanhamento no Conecta RC.",
+  rotina:["Ao começar o dia: LeadsBaren e as negociações em andamento.","Na conversa: Objeções do produtor, Comunicação e encantamento e Casos de sucesso.","Ao fechar: envie a negociação e confira o que o pedido precisa para o crédito."],
+  comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"]],
+  secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
+ "Inside Sales":{t:"Inside Sales",serve:"O portal organiza o seu dia: o que fazer hoje e em que ordem, as negociações que pedem ação, o treinamento e as ferramentas para cada conversa.",
+  rotina:["Ao começar o dia: abra o seu painel do Inside Sales e veja os alertas, as negociações paradas e o que fatura nos próximos dias.","Em cada atendimento: Playbook IS, Objeções do produtor, Tabela de preços e Calculadora de rentabilidade.","Ao fim do dia: confira se toda negociação tem tarefa e próximo passo.","Toda semana: o funil de MQL a venda e a sua posição frente à meta do time."],
+  comece:[["inside-sales","is-playbook","Playbook IS"],["inside-sales","is-painel","Meu painel"],["academia","trilha","Cursos da Academia"]],
+  secs:["inside-sales","academia","tabela-precos","enxoval","leads","time-mkt","mural","duvidas","mercado"]},
+ "Comercial Barenbrug":{t:"Comercial Barenbrug",serve:"O portal dá ao Comercial a visão da carteira e dos canais: seu painel de vendas, os RCs e as revendas, a inteligência de mercado e as ações de marketing.",
+  rotina:["Toda semana: Meu CRM, com o que fatura, o forecast e o que precisa atualizar.","Com os canais: Conecta Revendas, com a meta, as compras, o IGDB e o PGD de cada canal.","Com os RCs: Meus RCs, ranking e cobertura no Conecta RC.","Para decidir: Inteligência de mercado e Ações de Marketing."],
+  comece:[["meu-crm","","Meu CRM"],["conecta-revendas","rv-apresentacao","Conecta Revendas"],["inteligencia","","Inteligência"]],
+  secs:["meu-crm","conecta-revendas","conecta-rc","inteligencia","acoes-mkt","vitrines","brindes","time-mkt","academia","tabela-precos","enxoval","mural","duvidas","mercado"]},
+ "Gestor de Revenda":{t:"Gestor de revenda",serve:"O portal mostra como o seu canal está no Conecta Revendas e dá à sua equipe o treinamento e os materiais para vender mais híbrido.",
+  rotina:["Todo mês: Meu canal, com a meta, as compras, o IGDB e o PGD.","Para planejar ações: Calendário e as regras do Conecta Revendas, com 15 dias de antecedência.","Para a equipe: Cursos da Academia e o Enxoval de Marketing para divulgar.","Depois de uma ação: Reembolso, com a prestação de contas."],
+  comece:[["conecta-revendas","rv-meucanal","Meu canal"],["conecta-revendas","rv-curso","Curso do Conecta Revendas"],["academia","trilha","Cursos da Academia"]],
+  secs:["conecta-revendas","academia","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
+ "Vendedor de Revenda":{t:"Vendedor de revenda",serve:"O portal é o seu treinamento e o seu kit de venda: os cursos dos híbridos, a tabela de preços, a calculadora e os materiais para mostrar ao produtor.",
+  rotina:["No balcão ou na visita: Tabela de preços e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing.","Ficou com dúvida: pergunte no Tira-Dúvidas."],
+  comece:[["academia","trilha","Cursos da Academia"],["conecta-revendas","rv-curso","Curso do Conecta Revendas"]],
+  secs:["academia","conecta-revendas","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
+ "Marketing":{t:"Marketing",serve:"O portal é onde o Marketing opera: ações e verba, brindes, áreas demonstrativas, materiais, comunicados e o playbook do time.",
+  rotina:["Todo dia: Solicitações e Quadro das Ações de Marketing e as requisições de brindes.","Toda semana: Mural, com os comunicados, e o Enxoval atualizado.","Por safra: Projetos de marketing e o Mapa de Marketing, Comunicação e Vendas Digitais."],
+  comece:[["acoes-mkt","","Ações de Marketing"],["time-mkt","","Time de Marketing"],["brindes","","Brindes de Marketing"]],
+  secs:["acoes-mkt","brindes","vitrines","time-mkt","enxoval","conecta-revendas","academia","mural","duvidas","mercado"]},
+ "Financeiro":{t:"Financeiro",serve:"O portal dá ao Financeiro a estimativa de comissões do Conecta RC e do Inside Sales e a provisão do Conecta Revendas mês a mês.",
+  rotina:["Todo mês: Resumo, Mensal e Comissões em Marketing + Financeiro.","No fechamento do programa: a provisão do Conecta Revendas frente aos pools."],
+  comece:[["financeiro","","Marketing + Financeiro"]],
+  secs:["financeiro","tabela-precos","mural"]},
+ "Administrador":{t:"Administrador",serve:"O portal inteiro passa por você: acessos e cadastros, conteúdos, indicadores, inteligência e a operação do Marketing.",
+  rotina:["Todo dia: Painel de gerenciamento, com as solicitações de acesso e quem precisa de atenção.","Toda semana: Inside Sales, Inteligência e Ações de Marketing.","Sempre que mudar uma regra: Mural e Tira-Dúvidas para avisar e responder."],
+  comece:[["gestao","","Painel de gerenciamento"],["inteligencia","","Inteligência"]],
+  secs:null}
+};
+const GUIA_SUBNAV={academia:()=>subnavAcademia(),enxoval:()=>subnavEnxoval(),leads:()=>subnavLeads(),"inside-sales":()=>subnavIS(),mercado:()=>subnavMercado(),"conecta-rc":()=>subnavRC(),"conecta-revendas":()=>subnavRV(),"time-mkt":()=>subnavTM(),inteligencia:()=>subnavInt(),financeiro:()=>subnavFin(),"acoes-mkt":()=>subnavAcoes(),vitrines:()=>subnavVit(),brindes:()=>subnavBrindes()};
+function guiaAbas(id){const fn=GUIA_SUBNAV[id];if(!fn)return [];
+  const sv={secao:S.secao,pag:S.pag};S._cap=[];let r=[];try{fn();r=S._cap.flatMap(([g,ab])=>ab.map(([k,t])=>({k,t,g})));}catch(e){r=[];}S._cap=null;S.secao=sv.secao;S.pag=sv.pag;return r;}
+function guiaPerfilAtual(){const ordem=["Administrador","Comercial Barenbrug","Marketing","Inside Sales","Assessor de Vendas Digital","RC","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda","Financeiro"];
+  if(S.guiaVer&&ehAdmin())return S.guiaVer;if(GUIA_PERFIL[S.perfil])return S.perfil;return ordem.find(p=>temPerfil(p))||"";}
+function vGuia(){
+  const pf=guiaPerfilAtual(),P=GUIA_PERFIL[pf]||{t:S.perfil||"Você",serve:"Um só lugar para treinar os híbridos, achar materiais de apoio à venda e acompanhar os programas comerciais da Barenbrug.",rotina:[],comece:[["academia","trilha","Cursos da Academia"]]};
+  const prev=ehAdmin()&&S.guiaVer&&S.guiaVer!=="Administrador";
+  const vis=secoesVisiveis().filter(x=>x.id!=="guia"&&x.ativo);
+  const secs=prev?SECOES.filter(x=>x.ativo&&x.id!=="guia"&&(P.secs||[]).includes(x.id)).sort((a,b)=>P.secs.indexOf(a.id)-P.secs.indexOf(b.id)):vis;
+  const ir=(s,p,t)=>prev?`<span class="chip" style="cursor:default">${esc(t)}</span>`:`<button type="button" class="chip" data-a="guia-ir" data-v="${esc(s)}" data-p="${esc(p)}">${esc(t)}</button>`;
+  const sel=ehAdmin()?`<section class="bloco"><h2 class="sec" style="margin:0 0 6px">Ver o guia como</h2><p class="meta" style="margin:0 0 8px">Cada pessoa vê o guia do próprio perfil, só com as áreas a que tem acesso. Use para conferir o que cada público lê.</p><div class="filtros">${Object.keys(GUIA_PERFIL).map(k=>`<button type="button" class="chip" data-a="guia-ver" data-v="${esc(k)}" aria-pressed="${(S.guiaVer||"Administrador")===k}">${esc(GUIA_PERFIL[k].t)}</button>`).join("")}</div>${prev?`<p class="meta" style="margin:8px 0 0">Prévia: áreas típicas deste perfil. As abas de cada área dependem dos acessos de cada pessoa, por isso só aparecem no guia dela.</p>`:""}</section>`:"";
+  const cards=secs.map(x=>{const ab=prev?[]:guiaAbas(x.id);const grupos=[];ab.forEach(a=>{let g=grupos.find(y=>y[0]===a.g);if(!g)grupos.push(g=[a.g,[]]);g[1].push(a);});
+    return `<section class="bloco guia-sec"><div class="guia-cab"><h2 class="sec" style="margin:0">${esc(x.nome)}</h2>${prev?"":`<button type="button" class="btn sec" data-a="secao" data-v="${esc(x.id)}">Abrir</button>`}</div><p style="margin:6px 0 ${ab.length?"10px":"0"}">${esc(x.desc)}</p>
+    ${grupos.map(([g,L])=>`${g?`<h3 class="pgd-h" style="margin:8px 0 4px">${esc(g)}</h3>`:""}<ul class="guia-l">${L.map(a=>`<li><button type="button" class="link" data-a="guia-ir" data-v="${esc(x.id)}" data-p="${esc(a.k)}"><strong>${esc(a.t)}</strong></button>${ABA_DESC[a.k]?`<span>${esc(ABA_DESC[a.k])}</span>`:""}</li>`).join("")}</ul>`).join("")}</section>`;}).join("");
+  return `<div><span class="rot">Guia do portal</span><h1 class="titulo">Como usar o Portal Conecta</h1><p class="sub">O que cada área faz e para que serve, na visão de ${esc(P.t)}. ${prev?"":"Você vê aqui só o que está liberado para você."}</p></div>
+  ${sel}
+  <section class="bloco guia-destaque"><h2 class="sec" style="margin:0 0 6px">Para que o portal serve para você</h2><p style="margin:0">${esc(P.serve)}</p>
+   ${P.rotina.length?`<h3 class="pgd-h" style="margin:12px 0 4px">Uma rotina que funciona</h3><ol class="guia-rot">${P.rotina.map(r=>`<li>${esc(r)}</li>`).join("")}</ol>`:""}
+   ${P.comece.length?`<h3 class="pgd-h" style="margin:12px 0 6px">Comece por</h3><div class="filtros">${P.comece.filter(([s])=>prev||s==="gestao"?(prev||gerePessoas()):vis.some(x=>x.id===s)).map(([s,p,t])=>ir(s,p,t)).join("")}</div>`:""}</section>
+  ${cards}
+  <section class="bloco"><h2 class="sec" style="margin:0 0 6px">Em qualquer tela</h2><ul class="guia-l">
+   <li><strong>Início</strong><span>Comunicados da Barenbrug, perguntas e respostas e o seu progresso nos cursos.</span></li>
+   <li><strong>Sino no topo</strong><span>Quantas novidades chegaram desde a sua última visita.</span></li>
+   <li><strong>Meu perfil</strong><span>Seus dados, sua foto e a troca de senha.</span></li>
+   <li><strong>O sinal "i"</strong><span>Toque para ver o que um número ou um bloco quer dizer.</span></li>
+   <li><strong>Tira-Dúvidas</strong><span>Pergunte sobre híbridos, manejo e programas. O time técnico-comercial responde.</span></li></ul></section>`;}
+
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
@@ -11517,6 +11591,7 @@ function renderApp(){
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
+  if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
   if(S.secao==="duvidas"){
     app.innerHTML=cabecalho()+subnavSimples("Tira-Dúvidas")+`<main>${vDuvidas()}</main>`;
@@ -11657,7 +11732,9 @@ document.addEventListener("click",async ev=>{
   if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
-  if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área: "+cursosPend().map(c=>c[1]).join(", ")+".");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+  if(a==="guia-ver"){S.guiaVer=v;render();return;}
+if(a==="guia-ir"){if(v!=="gestao"&&!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área.");return;}const pg=b.dataset.p;if(pg){S.secao=v;S.pag=pg;render();window.scrollTo(0,0);return;}const t=document.createElement("button");t.dataset.a="secao";t.dataset.v=v;t.hidden=true;document.body.appendChild(t);t.click();t.remove();return;}
+if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área: "+cursosPend().map(c=>c[1]).join(", ")+".");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="quiz-extra"){S.quizExtra=v;S.res=null;S.pv=null;render();return;}
   if(a==="prova-ini"){pvIniciar(v);return;}
