@@ -1295,7 +1295,7 @@ const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia 
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
- {id:"posts",n:"Posts para Redes Sociais",d:"Artes prontas para publicar, organizadas por tema.",sub:["Institucional","Híbridos","Campanhas de Vendas","Sabiá","Cayana","Carcará","Yellow Jacket"],link:""},
+ {id:"posts",n:"Posts para Redes Sociais",d:"As artes prontas para publicar ficam no Google Drive, organizadas por tema e sempre atualizadas pelo Marketing. Abra a pasta do tema e baixe a peça que precisar.",sub:["Institucional","Híbridos","Campanhas de Vendas","Sabiá","Cayana","Carcará","Yellow Jacket"],link:""},
  {id:"banners",n:"Banners",d:"Banners para eventos, feiras e ponto de venda.",link:""},
  {id:"folders",n:"Folders",d:"Folders e materiais impressos dos híbridos.",link:""},
  {id:"apresentacoes",n:"Apresentações",d:"Apresentações prontas para reuniões com revendas, RCs e produtores.",link:""},
@@ -2543,7 +2543,7 @@ function vEnxoval(){
   const abrir=m=>{if((m.url||"").startsWith("storage:"))return `<button class="link" data-a="mkt-abrir" data-v="${esc(m.url.slice(8))}">Abrir</button>`;const lbl=m.tipo==="drive"?"Abrir no Google Drive ↗":m.tipo==="video"?"Assistir ↗":"Abrir ↗";return m.url?`<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener">${lbl}</a>`:"";};
   const item=m=>`<div class="linha"><div><strong>${esc(m.titulo||"Material")}</strong>${m.descricao?`<span class="meta">${esc(m.descricao)}</span>`:""}</div><div style="display:flex;gap:10px;align-items:center">${abrir(m)}${admin?`<button class="link" data-a="mkt-del" data-v="${m.id}">excluir</button>`:""}</div></div>`;
   const bloco=s=>{
-    const temas=s.sub||[null];
+    const temas=s.sub?(s.sub.filter(t=>porSec(s.id,t).length).length?s.sub.filter(t=>porSec(s.id,t).length):s.sub):[null];
     const inner=temas.map(t=>{
       const list=porSec(s.id,t);
       const head=t?`<div class="sub-vid">${esc(t)}</div>`:"";
@@ -4304,6 +4304,7 @@ async function importarPastaMkt(files){
     const chave=x.rel.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._\/-]+/g,"_");
     prog(`Enviando ${feitos+erros+pulados+1} de ${ok.length}: ${x.rel}`);
     if(ja.has("storage:"+chave)){pulados++;continue;}
+    if(classificaMkt(x.rel).secao==="posts"){pulados++;continue;} /* posts de redes sociais ficam só no Google Drive */
     const up=await sb.storage.from("enxoval").upload(chave,x.f,{upsert:true,contentType:x.f.type||undefined});
     if(up.error){erros++;continue;}
     const c=classificaMkt(x.rel);
