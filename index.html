@@ -1085,6 +1085,11 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 }
 .bloco.guia-destaque,.bloco.pj-minhas,.bloco.emdev,.bloco.guia-breve{padding-left:20px}
 @media (max-width:760px){body.em-secao .app-topo{display:none}}
+@media (max-width:760px){
+ table.mt-card td,table.mt-card th{border-left:0!important;border-right:0!important;box-shadow:none!important}
+ .metric .meta{text-transform:none!important;letter-spacing:0!important;font-size:12.5px;line-height:1.35}
+ .metrics{gap:10px}
+}
 </style>
 </head>
 <body>
@@ -1626,7 +1631,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119183816";
+const APP_VER="20261119183851";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
