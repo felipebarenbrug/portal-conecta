@@ -895,6 +895,8 @@ main.largo{max-width:1120px}
 #prot-ov[hidden]{display:none!important}
 #prot-ov .prot-box{background:#fff;border-radius:14px;max-width:440px;padding:22px;display:grid;gap:10px;border-top:6px solid var(--vermelho)}
 #prot-ov .prot-box strong{font-size:1.15rem;color:var(--vermelho)}
+.dre{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dre-l{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:6px 10px;border-radius:6px;background:var(--azul-claro)}.dre-l>span:first-child{font-weight:600}.dre-sub{background:none;border-top:1px solid rgba(0,0,0,.12)}.dre-sub>span:first-child{font-weight:800}.dre-cv{box-shadow:inset 4px 0 0 var(--azul-escuro)}.dre-oc{box-shadow:inset 4px 0 0 var(--amarelo)}
+.dre-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.dre-cv.dre-tag{background:var(--azul-escuro);color:#fff;box-shadow:none}.dre-oc.dre-tag{background:var(--amarelo);color:var(--preto);box-shadow:none}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1459,7 +1461,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118204732";
+const APP_VER="20261118211212";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8138,6 +8140,7 @@ function vFinConecta(C){
     return `<tr><td>${esc(c.nome)}${m.pub?`<br>${stTag("validado "+String(m.pub.sit||"").slice(0,10).split("-").reverse().join("/"),"verde")}`:`<br><span class="meta">pelo CRM</span>`}${m.teto?`<br><span class="meta" style="color:var(--vermelho)">limitado pelo teto</span>`:""}${!m.piso?`<br><span class="meta">abaixo do piso de 5 t</span>`:""}</td><td><span class="selo">${esc(c.tier||"—")}</span></td><td class="val">${m.ating==null?"—":pctTxt(m.ating)}</td><td class="val">${fmtK0(m.rsH+m.rsC)}</td><td class="val">${fmtK0(m.igdb)}</td><td class="val">${fmtK0(m.igdbFat)}</td><td class="val">${m.pub?`<strong style="color:#2E8B57">${fmtK0(m.pub.igdbPago)}</strong><br><span class="meta">pago ${fmtK0(m.pub.pagRs)}</span>`:"—"}</td><td class="val">${fmtK0(m.igdbAprov)}${m.aprovIG>m.igdb?`<br><span class="meta">PGD ${fmtK0(m.aprovIG)}</span>`:""}</td><td class="val">${fmtK0(m.bonus)}</td><td class="val"><strong>${fmtK0(m.aPagar)}</strong></td><td class="val">${fmtK0(m.total)}</td><td class="val">${fmtK0(m.mTotal)}</td><td class="val">${apr.length?comp+" de "+apr.length:"—"}</td></tr>`;}).join("");
   return `<div><h1 class="titulo">Conecta Revendas · visão financeira</h1><p class="sub">Quanto cada revenda tem a receber, frente ao pool de ${pctTxt(Number(P.pool_rv)||0)} de todas as vendas, com exportação (${fmtK0(C.pools.rv)}). O IGDB só é devido com o PGD submetido e aprovado; o BF, só com 90% ou mais da meta.</p></div>
   ${finAvisoTopo(C)}
+  <div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Onde entra no resultado</strong><p>O Conecta Revendas (IGDB e Bônus de Performance) sai do custo da venda: fica embutido no custo do produto e reduz a margem bruta. Não sai do budget de Marketing, cujas outras contas (eventos, publicidade, brindes) ficam em other costs. A explicação completa está em Investimento do Marketing.</p></div>
   <div class="metrics">
     <div class="metric"><span>IGDB previsto na safra (pedidos encarteirados)</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">já faturado: ${fmtK0(C.rv.igdbFat)} · não é obrigação sem PGD aprovado</span></div>
     <div class="metric"><span>IGDB aprovado (a reembolsar)</span><strong>${fmtK0(C.rv.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(C.rv.aprovIG)}, limitado ao IGDB do canal · campanhas de BF: ${fmtK0(C.rv.aprovBP)}</span></div>
@@ -8154,6 +8157,29 @@ function vFinConecta(C){
 }
 
 async function carregarMInv(){if(S.minvBusy)return;S.minvBusy=true;try{const {data,error}=await sb.rpc("mkt_investimento");S.minv=error?{erro:1}:(data||{});}catch(e){S.minv={erro:1};}S.minvBusy=false;render();}
+/* onde cada verba entra no resultado: Conecta Revendas no custo da venda (margem bruta); demais contas do Marketing em other costs (despesa operacional) */
+function finDreHTML(T,G){
+  const it=G.flatMap(x=>x.it);const cv=it.filter(i=>i.dre==="cv").reduce((t,i)=>t+(Number(i.v)||0),0),oc=it.filter(i=>i.dre==="oc").reduce((t,i)=>t+(Number(i.v)||0),0);
+  const L=(t,c,k)=>`<li class="dre-l${k?" "+k:""}"><span>${t}</span>${c?`<span class="meta">${c}</span>`:""}</li>`;
+  return `<section class="bloco"><h2 class="sec">Onde cada investimento entra no resultado</h2>
+   <p class="sub" style="margin:0 0 10px">As verbas desta página saem de dois lugares diferentes do resultado da Barenbrug. As duas reduzem o EBITDA, mas em linhas diferentes da DRE, e por isso dizem coisas diferentes sobre o negócio.</p>
+   <div class="metrics">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul-escuro)"><span>Custo da venda (margem bruta)</span><strong>${fmtK0(cv)}</strong><span class="meta">Conecta Revendas: IGDB e Bônus de Performance</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Budget de Marketing (other costs)</span><strong>${fmtK0(oc)}</strong><span class="meta">eventos, publicidade e brindes</span></div></div>
+   <div class="dir-grid" style="margin-top:12px">
+    <div class="dir-card"><strong>Conecta Revendas · custo da venda</strong><ul class="cond" style="margin:6px 0 0"><li>O IGDB e o Bônus de Performance só existem porque a revenda comprou: são uma condição comercial da venda, calculada em % sobre o sell-in.</li><li>Por isso ficam embutidos no custo do produto vendido e reduzem a <strong>margem bruta</strong> (gross margin), antes das despesas.</li><li>Sobem e descem com o volume: mais venda pelos canais, mais Conecta.</li><li>Na prática, funcionam como parte do preço líquido que a Barenbrug recebe da revenda.</li></ul></div>
+    <div class="dir-card"><strong>Demais contas do Marketing · other costs</strong><ul class="cond" style="margin:6px 0 0"><li>Eventos (1108), publicidade (1119) e brindes (1221) saem do budget de Marketing, na linha de other costs.</li><li>São despesa operacional: entram <strong>depois</strong> da margem bruta e não mudam o custo do produto.</li><li>São um orçamento aprovado para a safra: não dependem de uma venda específica.</li><li>É este valor que se compara com o budget de Marketing e com o % de Marketing sobre as vendas.</li></ul></div></div>
+   <h3 style="margin:16px 0 6px">O caminho na DRE</h3>
+   <ol class="dre">${L("Receita bruta","vendas faturadas")}${L("(−) Deduções","impostos sobre a venda, devoluções e descontos")}${L("= Receita líquida","","dre-sub")}${L("(−) Custo do produto vendido","aqui entra o Conecta Revendas (IGDB e Bônus de Performance)","dre-cv")}${L("= Margem bruta (gross margin)","","dre-sub")}${L("(−) Despesas operacionais","aqui entram os other costs do Marketing: eventos, publicidade, brindes","dre-oc")}${L("= EBITDA","resultado da operação, antes de depreciação, juros e impostos sobre o lucro","dre-sub")}${L("(−) Depreciação, amortização, juros e IR","")}${L("= Lucro líquido","","dre-sub")}</ol>
+   <h3 style="margin:16px 0 6px">A diferença em números (exemplo)</h3>
+   <p class="meta" style="margin:0 0 6px">Venda de R$ 1.000.000, custo do produto de R$ 600.000, R$ 50.000 de Conecta e R$ 50.000 de outras contas do Marketing.</p>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Conecta no custo da venda (como é)</th><th class="val">Se o Conecta fosse despesa de Marketing</th></tr></thead><tbody>
+    <tr><td>Receita líquida</td><td class="val">R$ 1.000.000</td><td class="val">R$ 1.000.000</td></tr>
+    <tr><td>(−) Custo do produto + Conecta</td><td class="val">R$ 650.000</td><td class="val">R$ 600.000</td></tr>
+    <tr><td><strong>Margem bruta</strong></td><td class="val"><strong>R$ 350.000 (35%)</strong></td><td class="val"><strong>R$ 400.000 (40%)</strong></td></tr>
+    <tr><td>(−) Despesas de Marketing</td><td class="val">R$ 50.000</td><td class="val">R$ 100.000</td></tr>
+    <tr><td><strong>EBITDA</strong></td><td class="val"><strong>R$ 300.000 (30%)</strong></td><td class="val"><strong>R$ 300.000 (30%)</strong></td></tr></tbody></table></div>
+   <p class="precos-nota">O EBITDA é o mesmo nos dois casos: o dinheiro que sai é o mesmo. O que muda é a leitura. Com o Conecta no custo da venda, a margem bruta mostra o quanto a venda pelos canais rende de verdade, já descontado o incentivo, e o budget de Marketing mostra só o que o Marketing decide investir. Somar os dois como "gasto de Marketing" inflaria o % de Marketing sobre as vendas e esconderia o custo real de vender pelos canais. A conta contábil exata (custo do produto ou dedução da receita) é definida pela Controladoria; para a margem bruta e o EBITDA, o efeito é o mesmo.</p></section>`;}
 function vFinInvest(C){
   if(S.minv===undefined){carregarMInv();return `<div class="carregando">Carregando o investimento do Marketing…</div>`;}
   const I=S.minv||{};if(I.erro)return `<div class="vazio">Não foi possível ler o orçamento do Marketing agora.</div>`;
@@ -8164,13 +8190,13 @@ function vFinInvest(C){
   const vendas=C.tot,plano=C.plano?C.plano.vendasRs:0;
   const G=[
    {g:"Geração de demanda",d:"Verba para gerar demanda no campo: o IGDB dos canais do Conecta Revendas e a verba de eventos.",it:[
-     {n:"IGDB dos canais (Conecta Revendas)",v:C.rv.igdb,r:C.rv.aprovIG,rl:"em ações de PGD aprovadas",f:"Previsto pela regra do programa sobre os pedidos dos canais na safra (% do tier sobre híbridos e convencionais)."},
-     {n:"Verba de eventos (conta 1108)",v:o(ev),r:evReal,rl:"custo dos eventos registrados",f:"Orçado da conta 1108 Eventos e viagens de evento na safra."}]},
+     {n:"IGDB dos canais (Conecta Revendas)",v:C.rv.igdb,r:C.rv.aprovIG,rl:"em ações de PGD aprovadas",f:"Previsto pela regra do programa sobre os pedidos dos canais na safra (% do tier sobre híbridos e convencionais).",dre:"cv"},
+     {n:"Verba de eventos (conta 1108)",v:o(ev),r:evReal,rl:"custo dos eventos registrados",f:"Orçado da conta 1108 Eventos e viagens de evento na safra.",dre:"oc"}]},
    {g:"Rebate",d:"Premiação dos vendedores das revendas: o Bônus de Performance do Conecta Revendas.",it:[
-     {n:"Bônus de Performance (Conecta Revendas)",v:C.rv.bonus,r:0,rl:"pago só no fim da safra",f:`Previsto hoje, só para os canais com 90% ou mais da meta. Se todos baterem a meta: ${fmtK0(C.rv.mBonus)}.`}]},
+     {n:"Bônus de Performance (Conecta Revendas)",v:C.rv.bonus,r:0,rl:"pago só no fim da safra",f:`Previsto hoje, só para os canais com 90% ou mais da meta. Se todos baterem a meta: ${fmtK0(C.rv.mBonus)}.`,dre:"cv"}]},
    {g:"Outras ações",d:"Publicidade e brindes.",it:[
-     {n:"Publicidade (conta 1119)",v:o(pub),r:meta,rl:`mídia Meta Ads${metaAte?" até "+String(metaAte).split("-").reverse().join("/"):""}`,f:`Orçado da conta 1119 Publicidade e propaganda${midiaOrc?`, dos quais ${fmtK0(+midiaOrc)} em mídia digital (Meta Ads)`:""}.`},
-     {n:"Brindes (conta 1221)",v:brOrc,r:brReal,rl:"brindes baixados no painel",f:"Orçado da conta 1221 Brindes na safra."}]}];
+     {n:"Publicidade (conta 1119)",v:o(pub),r:meta,rl:`mídia Meta Ads${metaAte?" até "+String(metaAte).split("-").reverse().join("/"):""}`,f:`Orçado da conta 1119 Publicidade e propaganda${midiaOrc?`, dos quais ${fmtK0(+midiaOrc)} em mídia digital (Meta Ads)`:""}.`,dre:"oc"},
+     {n:"Brindes (conta 1221)",v:brOrc,r:brReal,rl:"brindes baixados no painel",f:"Orçado da conta 1221 Brindes na safra.",dre:"oc"}]}];
   G.forEach(x=>{x.v=x.it.reduce((t,i)=>t+(Number(i.v)||0),0);x.r=x.it.reduce((t,i)=>t+(Number(i.r)||0),0);});
   const T=G.reduce((t,x)=>t+x.v,0),TR=G.reduce((t,x)=>t+x.r,0);
   const pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"—";
@@ -8181,9 +8207,10 @@ function vFinInvest(C){
   <div class="metrics">
    ${G.map(x=>`<div class="metric"><span>${x.g}</span><strong>${fmtK0(x.v)}</strong><span class="meta">${pc(x.v,vendas)} das vendas no CRM${plano?` · ${pc(x.v,plano)} do plano`:""}</span></div>`).join("")}
    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total disponibilizado</span><strong>${fmtK0(T)}</strong><span class="meta">${pc(T,vendas)} das vendas no CRM${plano?` · ${pc(T,plano)} do plano`:""}</span></div></div>
+  ${finDreHTML(T,G)}
   <section class="bloco"><h2 class="sec">Por tipo de investimento</h2>
    <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th>${cols}</tr></thead><tbody>
-   ${G.map(x=>`<tr><td colspan="${plano?5:4}" style="background:var(--azul-claro)"><strong>${x.g}</strong> <span class="meta">${x.d}</span></td></tr>${x.it.map(i=>row(i.n,i.v,i.r,i.rl,i.f)).join("")}${x.it.length>1?row("Subtotal "+x.g.toLowerCase(),x.v,x.r,"","",true):""}`).join("")}
+   ${G.map(x=>`<tr><td colspan="${plano?5:4}" style="background:var(--azul-claro)"><strong>${x.g}</strong> <span class="meta">${x.d}</span></td></tr>${x.it.map(i=>row(i.n,i.v,i.r,i.rl,(i.f||"")+(i.dre?`<br><span class="dre-tag dre-${i.dre}">${i.dre==="cv"?"Custo da venda · entra na margem bruta":"Budget de Marketing · other costs"}</span>`:""))).join("")}${x.it.length>1?row("Subtotal "+x.g.toLowerCase(),x.v,x.r,"","",true):""}`).join("")}
    ${row("Total",T,TR,"","",true)}</tbody></table></div>
    <p class="precos-nota">Como ler: IGDB e Bônus de Performance são previstos pelas regras do Conecta Revendas sobre os pedidos já no CRM e crescem com as vendas; eventos, publicidade e brindes são o orçado da safra inteira. Por isso a porcentagem sobre as vendas no CRM cai ao longo da safra, à medida que as vendas entram, e a porcentagem sobre o plano de vendas é a referência para a safra completa. O IGDB só vira pagamento com PGD aprovado e notas pagas; o bônus, só no fechamento da safra. Fontes: pedidos ganhos do RD Station CRM; orçamento das contas em Ações de Marketing; mídia do Meta Ads; eventos registrados em Ações; Painel de brindes.</p></section>`;}
 function vFinPremissas(C){
