@@ -1548,7 +1548,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119114146";
+const APP_VER="20261119120424";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6759,6 +6759,7 @@ function vRVMeuCanal(){
 }
 const avisoValoresRV=()=>"";
 const AVISO_CRM_TXT=`<strong>Dados estimados, puxados do CRM</strong><p>As quantidades e os valores desta tela vêm do CRM da Barenbrug e servem como estimativa. Não são dados confirmados pelo Financeiro nem pela Logística, e podem mudar por frete, impostos, descontos, devoluções e outros parâmetros. Para dados oficiais, consulte seu responsável comercial. Eles também serão informados dentro da política da Barenbrug.</p>`;
+const AVISO_CRM_INT=`<strong>Dados do CRM, para alinhamento</strong><p>As quantidades e os valores desta tela vêm do CRM da Barenbrug e servem para alinhar o funil e as negociações. Os dados oficiais são os que entram no ERP. O valor real de cada negociação está no Power BI da Barenbrug, que não está conectado a esta plataforma.</p>`;
 function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
@@ -6771,7 +6772,7 @@ function avisoCRMPag(){
 }
 function injetarAvisoCRM(){
   try{if(!S.user||!avisoCRMPag())return;const m=document.querySelector("#app main");if(!m||m.querySelector(".aviso-crm"))return;
-    const d=document.createElement("div");d.className="aviso-est aviso-crm";d.setAttribute("role","note");d.innerHTML=AVISO_CRM_TXT;
+    const d=document.createElement("div");d.className="aviso-est aviso-crm";d.setAttribute("role","note");d.innerHTML=["inside-sales","financeiro","inteligencia"].includes(S.secao)?AVISO_CRM_INT:AVISO_CRM_TXT;
     const h=m.querySelector(":scope > div:first-child");if(h&&h.querySelector("h1"))h.after(d);else m.prepend(d);}catch(e){}
 }
 const stBadge=st=>{const c=st==="Aprovado"?"ok":st==="Reprovado"?"no":"an";return `<span class="stbadge ${c}">${esc(st||"Em Análise")}</span>`;};
