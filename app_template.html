@@ -8583,7 +8583,7 @@ function pjLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Bo
 function vPJDet(p){const d=p.dados||{};const ed=pjEdita();const F=(d.fases||[]).slice().sort((a,b)=>String(a.ini).localeCompare(String(b.ini)));const M=pjMarcos(d.marcos);
   const feitas=F.filter(f=>f.status==="Feito").length;
   return `<button class="link" data-a="pj-lista">‹ Todos os projetos</button>
-  <section class="pj-topo"><span class="rot">Projeto de marketing · ${esc(p.status||"")}</span><h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
+  <section class="pj-topo"><span class="rot">Projeto de marketing · ${esc(p.status||"")}${p.restrito?" · restrito a administradores e Marketing":""}</span><h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
     <div class="pj-chaves">${M.slice(0,6).map(m=>`<span>${esc(m.n)} <b>${pjF(m.d)}</b></span>`).join("")}</div>
     <p class="meta">${d.dono?"Responsável: "+esc(d.dono)+" · ":""}${feitas} de ${F.length} fases concluídas · atualizado em ${p.atualizado_em?new Date(p.atualizado_em).toLocaleDateString("pt-BR"):"—"}${p.atualizado_por?" por "+esc(p.atualizado_por):""}</p>
     ${ed?`<div class="acoes"><button class="btn sec" data-a="pj-edit" data-v="${p.id}">Editar projeto</button></div>`:""}</section>
@@ -8611,14 +8611,14 @@ function pjForm(p){const d=p.dados||{};const v=x=>esc(x==null?"":String(x));
   return `<button class="link" data-a="pj-cancel">‹ Voltar sem salvar</button><form id="f-pj" class="form-card"><h2 class="sec">${p.id?"Editar projeto":"Novo projeto de marketing"}</h2>
     <div class="pj-fg"><div class="pj-l2"><label for="pj_titulo">Nome do projeto *</label><input id="pj_titulo" required value="${v(p.titulo)}"></div><div><label for="pj_status">Situação</label><select id="pj_status">${PJ_ST.map(x=>`<option ${x===(p.status||"Planejamento")?"selected":""}>${x}</option>`).join("")}</select></div>
     <div class="pj-l3"><label for="pj_resumo">Resumo em uma ou duas frases</label><textarea id="pj_resumo" rows="2">${v(d.resumo)}</textarea></div>
-    <div><label for="pj_dono">Responsável</label><input id="pj_dono" value="${v(d.dono)}"></div><div><label for="pj_ordem">Ordem na lista</label><input id="pj_ordem" type="number" value="${v(p.ordem||0)}"></div>
+    <div><label for="pj_dono">Responsável</label><input id="pj_dono" value="${v(d.dono)}"></div><div><label for="pj_ordem">Ordem na lista</label><input id="pj_ordem" type="number" value="${v(p.ordem||0)}"></div><div><label class="chk"><input type="checkbox" id="pj_restrito" ${p.restrito?"checked":""}> Restrito a administradores e Marketing</label></div>
     <div class="pj-l3"><label for="pj_marcos">Marcos (um por linha, no formato 2026-11-24 | Kickoff)</label><textarea id="pj_marcos" rows="4">${v(d.marcos)}</textarea></div></div>
     <h3 style="margin:18px 0 8px">Fases</h3>${(d.fases||[]).map(fase).join("")}<button class="btn sec" type="button" data-a="pj-fadd">+ Incluir fase</button>
     <h3 style="margin:18px 0 8px">Leitura, ideias e decisões</h3>${(d.blocos||[]).map(bloco).join("")}<button class="btn sec" type="button" data-a="pj-badd">+ Incluir quadro</button>
     <div class="acoes" style="margin-top:18px"><button class="btn" type="submit">Salvar projeto</button><button class="link" type="button" data-a="pj-cancel">Cancelar</button>${p.id&&ehAdmin()?`<button class="link perigo" type="button" data-a="pj-del" data-v="${p.id}">Excluir projeto</button>`:""}</div></form>`;}
 function pjColeta(){const p=S.pjEd;if(!p)return;const g=id=>{const e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value):undefined;};
   if(!document.getElementById("pj_titulo"))return;
-  p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");d.marcos=g("pj_marcos");
+  p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;p.restrito=!!g("pj_restrito");const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");d.marcos=g("pj_marcos");
   d.fases=(d.fases||[]).map((f,i)=>{const o={};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);o[k]=x===undefined?f[k]:x;});return o;});
   d.blocos=(d.blocos||[]).map((b,i)=>({titulo:g(`pjb_titulo_${i}`)??b.titulo,destaque:g(`pjb_destaque_${i}`)??b.destaque,texto:g(`pjb_texto_${i}`)??b.texto}));}
 function vTMProj(){
@@ -8629,7 +8629,7 @@ function vTMProj(){
   return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Projetos de marketing</h1><p class="sub">Os projetos do Marketing no mesmo método: fases com datas, quem participa, o que precisa estar pronto, uma linha do tempo e os marcos. ${pjEdita()?"Você pode incluir e editar projetos.":"Ficou alguma dúvida sobre um projeto? Fale com o Marketing."}</p></div>
   ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
   ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));
-    return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
+    return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}${x.restrito?" · restrito":""}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
 
 /* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
 const TM_FUNC=[
@@ -10952,7 +10952,7 @@ document.addEventListener("submit",async ev=>{
     if(o.pesos_media.length!==4||o.pesos_vetor.length!==3||Object.values(o).some(v=>Array.isArray(v)?v.some(isNaN):isNaN(v))){aviso("Confira os parâmetros: 4 pesos da média, 3 do vetor e números válidos.");return;}
     const {error}=await sb.from("mkt_mapa").upsert({id:"rv_meta_param",dados:o});if(error){aviso("Não foi possível salvar.");return;}S.rvm={...RVM_PAD,...o};aviso("Parâmetros salvos");render();return;}
   if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim());
-    const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
+    const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,restrito:!!p.restrito,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
     const r=p.id?await sb.from("mkt_projetos").update(o).eq("id",p.id).select("id").single():await sb.from("mkt_projetos").insert(o).select("id").single();if(r.error){aviso("Não foi possível salvar o projeto.");return;}
     aviso("Projeto salvo");S.pjEd=null;S.pjSel=r.data.id;S.pj=undefined;render();return;}
   if(f.id==="f-gc"){const o={};GC_CAMPOS.forEach(([k])=>{const el=document.getElementById("gc_"+k);o[k]=el?el.value.trim()||null:null;});if(!o.nome){aviso("Informe o nome da conta.");return;}if(o.uf)o.uf=o.uf.toUpperCase();o.atualizado_em=new Date().toISOString();
