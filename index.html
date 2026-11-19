@@ -1278,7 +1278,7 @@ const SECOES=[
   {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens e vídeo institucional — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
-  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram no CRM (inbound) e a base de prospecção do RD Marketing (outbound).",ativo:true,perfis:null},
+  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram à Barenbrug (inbound) e a base de prospecção do Marketing (outbound).",ativo:true,perfis:null},
   {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null},
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
@@ -1307,7 +1307,7 @@ const RC_CURSO=[
  {n:"O Programa e o Modelo de Parceria",d:"O que é o Conecta RC e a representação comercial autônoma (PJ, Lei 4.886/1965): autonomia, inscrição no CORE, responsabilidades de cada parte, vigência por prazo indeterminado e o papel do Responsável Comercial.",yt:"yZBbZ1xkwwE"},
  {n:"Como Atuar, Regras de Campo e Portfólio",d:"Portfólio autorizado (híbridos, Cynodon, tropicais convencionais, Barmix e temperadas), exclusividade estrita em híbridos, atuação nacional sem exclusividade de praça, aprovação prévia fora do estado sede e cobrança amigável (vedado o del credere).",yt:"DvwjcUYObnQ"},
  {n:"Como Funciona a Remuneração e Comissões",d:"Taxas fixas das convencionais x alíquotas progressivas em tiers (Blue, Yellow, Yellow Pro, Yellow Master), volume unificado produtor + canal, adiantamento mensal pelo piso e excedente flat sobre 100% da safra no fechamento.",yt:"eyR8xSdxwlI"},
- {n:"Rotina Operacional, do Pedido ao Pagamento",d:"Do CRM e análise cadastral à liquidação; calendário financeiro (demonstrativo até o 5º dia útil, NF até o dia 10, pagamento até o dia 15), estornos, prazos de fechamento, aviso prévio e indenização de 1/12, e o checklist da primeira semana.",yt:"9mCU_uNWkD0"}
+ {n:"Rotina Operacional, do Pedido ao Pagamento",d:"Do registro no portal e análise cadastral à liquidação; calendário financeiro (demonstrativo até o 5º dia útil, NF até o dia 10, pagamento até o dia 15), estornos, prazos de fechamento, aviso prévio e indenização de 1/12, e o checklist da primeira semana.",yt:"9mCU_uNWkD0"}
 ];
 const RC_TIERS=[
  {t:"Blue",vol:"0 a 3.000 kg",prod:"10,0%",canal:"8,0%"},
@@ -1512,7 +1512,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119100706";
+const APP_VER="20261119104858";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5227,13 +5227,56 @@ function vRCCredito(){
   return `<div><span class="rot">Conecta RC</span><h1 class="titulo">Crédito do pedido</h1><p class="sub">O essencial da Política de Crédito da Barenbrug para o seu pedido ser aprovado rápido. Nenhum pedido é faturado sem a aprovação do crédito pelo Financeiro.</p></div>
   ${h===""?`<div class="vazio">O resumo de crédito não está disponível para o seu acesso.</div>`:h}`;
 }
+/* ===== Conecta RC · Perguntas frequentes (em primeira pessoa, do RC) ===== */
+const RCFAQ=[
+ ["Parceria e contrato",[
+  ["Qual é a minha relação com a Barenbrug?","É uma parceria entre empresas: a sua pessoa jurídica e a Barenbrug do Brasil, regida pela Lei 4.886/1965 (Lei do Representante Comercial) e pelo Código Civil. Não há vínculo de emprego, subordinação, jornada ou controle de ponto. Você define seus roteiros, horários e estratégia de prospecção e arca com os custos da sua atividade."],
+  ["Preciso ter registro no CORE para atuar?","Sim. A inscrição regular e ativa no Conselho Regional dos Representantes Comerciais (CORE) do estado da sua empresa é obrigatória pela Lei 4.886/1965 e pela Cláusula Primeira do contrato, e precisa continuar em dia durante toda a representação."],
+  ["O meu contrato vence? Preciso renovar a cada safra?","Não. O contrato é por prazo indeterminado (Cláusula Segunda). A cada safra a Barenbrug publica novos anexos com a tabela comercial, as faixas de meta e as alíquotas de comissão, sem precisar encerrar o contrato principal."],
+  ["Como o programa é formalizado?","Pelo Contrato de Representação Comercial 26/27, apresentado pelo seu Responsável Comercial, com a mecânica, as alíquotas e as regras de exclusividade."]]],
+ ["Território e clientes",[
+  ["Tenho exclusividade de território ou de clientes?","Não. A representação vale para o território nacional sem exclusividade de praça (Cláusula Terceira), e os clientes são da Barenbrug (Cláusula Sétima). Não existe reserva de cliente por tempo: a comissão é de quem prospectou, negociou e formalizou aquele pedido."],
+  ["Posso vender para um produtor fora do meu estado?","Sua atuação principal é no estado da sua empresa. Para vender direto a um produtor de outro estado, peça e obtenha a aprovação do seu Responsável Comercial antes de confirmar a proposta. Isso evita sobreposição com revendas, distribuidores e outros representantes que já atuam na região."],
+  ["A Barenbrug pode vender direto ou por canais na minha região?","Sim. Sem exclusividade de território, a Barenbrug pode fazer vendas diretas (contas corporativas, campanhas) ou nomear revendas e distribuidores. Se você participou de uma venda que acabou faturada direto ou por um canal, a sua remuneração só fica garantida se a negociação tiver sido informada e formalizada antes com a Barenbrug."],
+  ["Se outro RC vender para um cliente que eu estava visitando, quem recebe?","Recebe quem formalizou e concluiu a venda. Se você entender que a venda veio de um trabalho que você já conduzia, cabe a você provar: abra uma contestação em até 30 dias depois do demonstrativo mensal, com as evidências da negociação, para avaliação do Responsável Comercial."]]],
+ ["Negociações e o meu Responsável Comercial",[
+  ["Qual é o papel do meu Responsável Comercial?","É a pessoa da Barenbrug que conduziu a sua contratação e é o seu parceiro no campo. Fale com ele para tirar dúvidas sobre contrato, preços e regras; formalizar negociações e registrar clientes; pedir aprovação para vender fora do seu estado; solicitar condições especiais; e acompanhar faturamento, entrega e suporte pós-venda."],
+  ["Como registro uma negociação para garantir que ela é minha?","Informe toda negociação e o cliente assim que começarem, pelo Portal Conecta, em Enviar negociação. O seu Responsável Comercial registra no sistema da Barenbrug depois das reuniões periódicas com você. Esse registro é a prova oficial de que a negociação é sua e protege a sua comissão."],
+  ["Posso dar desconto ou prazo diferente por conta própria?","Não. Qualquer condição fora da tabela comercial oficial (desconto extra, prazo maior, bonificação) só vale com autorização prévia, por escrito, de quem tem alçada na Barenbrug. Acordo verbal ou informal não vale."]]],
+ ["Conduta, produtos e pagamentos dos clientes",[
+  ["O que a exclusividade de produtos cobre?","Só as forrageiras híbridas. Você representa com exclusividade os híbridos da Barenbrug (Sabiá, Cayana, Carcará e Cynodon) e não pode vender, intermediar ou representar forrageiras híbridas de outras marcas enquanto o contrato valer. Sementes convencionais de outras marcas são permitidas, desde que sem concorrência desleal ou desvio de foco."],
+  ["Posso receber dinheiro, cheque ou Pix direto do cliente?","Não, de jeito nenhum. Você não pode receber valores, dar quitação nem intermediar pagamentos em espécie, cheque ou Pix pessoal. O cliente paga só nas contas oficiais da Barenbrug ou pelos boletos que ela emite. Reter ou cobrar valores direto é justa causa para encerrar o contrato na hora."],
+  ["Se o cliente atrasar ou não pagar, eu respondo por isso?","Não. A Lei 4.886/1965 (artigo 43) e o contrato proíbem a cláusula del credere: você nunca paga pela inadimplência do comprador nem tem desconto por isso. Mas a comissão só é paga sobre o que o cliente efetivamente pagou, e você ajuda a equipe de crédito da Barenbrug no contato com o cliente para regularizar."],
+  ["Posso garantir germinação ou produtividade ao cliente?","Não. Não faça promessas ou garantias agronômicas sem respaldo técnico oficial. Pureza, germinação e valor cultural estão nos certificados e laudos do laboratório da Barenbrug que acompanham cada lote."]]],
+ ["Remuneração e pagamentos",[
+  ["Como é a minha comissão nos híbridos?","Os híbridos Barenbrug e o Cynodon seguem alíquotas progressivas por faixa de volume na safra:",{tab:[["Faixa","Volume na safra","Venda ao produtor","Venda a canal ou revenda"],["Blue (piso)","até 3.000 kg","10,0%","8,0%"],["Yellow","3.001 a 6.000 kg","11,5%","9,0%"],["Yellow Pro","6.001 a 9.000 kg","13,0%","10,0%"],["Yellow Master","acima de 9.000 kg","15,0%","11,0%"]]}],
+  ["E nas sementes convencionais?","Taxa fixa, paga na liquidação, fora das faixas: incrustadas e grafitadas 8% ao produtor e 6% ao canal; nuas 6% e 4%; temperadas 6% e 5%."],
+  ["Quando eu recebo?","Todo mês você recebe o piso Blue (10% ao produtor e 8% ao canal) sobre o que os clientes pagaram no mês anterior. No fechamento da safra, se você subiu de faixa, recebe o excedente."],
+  ["Quando recebo o valor extra se eu subir de categoria?","No fechamento da safra. Em 30 de junho a Barenbrug apura o seu volume total em quilos. Se você chegou ao Yellow, Yellow Pro ou Yellow Master, a nova alíquota vale para 100% do que foi faturado e pago na safra inteira, e a diferença para o que você já recebeu pelo piso é paga de uma vez, como Excedente da Safra, no ciclo de pagamento seguinte ao fechamento."],
+  ["A alíquota da nova faixa vale só para o que passou do limite ou para tudo?","Para tudo. A alíquota final vale para todo o volume da safra, não só para os quilos acima do limite da faixa."],
+  ["O que conta para eu subir de faixa?","Conta a soma em quilos de todos os híbridos Barenbrug (Sabiá, Cayana, Carcará) e do Cynodon, vendidos a produtores e a canais, faturados e pagos entre 1º de julho e 30 de junho. Não contam sementes convencionais tropicais nem temperadas."],
+  ["Qual é o calendário de demonstrativo, nota e pagamento?","Até o 5º dia útil do mês a Barenbrug envia o demonstrativo das comissões sobre o que foi pago no mês anterior. Até o dia 10 você emite e envia a nota fiscal de serviço (com o CNAE de representação) ao financeiro. Até o dia 15 a Barenbrug deposita na conta da sua empresa. Nota enviada depois do dia 10 fica para o mês seguinte (Cláusula Décima, §4º)."],
+  ["E se o pedido for cancelado ou o cliente devolver a semente?","A comissão depende do faturamento líquido. Cancelado ou devolvido, não há base de cálculo. Se a comissão já tiver sido paga, o valor é estornado no demonstrativo do mês seguinte (Cláusula Décima Primeira)."]]],
+ ["Encerramento do contrato",[
+  ["Tenho direito à indenização de 1/12?","Sim, mas não é um valor anual. A indenização de 1/12 (um doze avos) de tudo o que você recebeu de comissões durante todo o contrato só é devida se a Barenbrug encerrar o contrato sem justa causa (Lei 4.886/1965, artigo 27, alínea j). Enquanto o contrato estiver ativo, não há pagamento de 1/12."],
+  ["Como funciona se o contrato for encerrado sem justa causa?","Qualquer uma das partes pode encerrar a qualquer momento, com aviso por escrito de pelo menos 30 dias. Sem o aviso, a parte que encerra paga 1/3 das comissões do último trimestre. Se for a Barenbrug a encerrar sem justa causa, você recebe também a indenização de 1/12."],
+  ["O que é justa causa para encerrar na hora?","Pela Cláusula Vigésima Segunda e pelo artigo 35 da Lei 4.886/1965: vender híbridos forrageiros concorrentes; reter, desviar ou cobrar valores direto dos clientes; violar confidencialidade, segredos comerciais ou regras anticorrupção; condenação criminal definitiva por crime infamante ou desleixo habitual. Nesses casos o contrato acaba na hora e sem indenização."]]]];
+function vRCFaq(){const q=(S.rcFaqQ||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");const nm=t=>t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const tab=T=>`<div class="tab" style="margin-top:8px"><table class="sim-t"><thead><tr>${T[0].map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${T.slice(1).map(r=>`<tr>${r.map((x,i)=>`<td${i>1?' class="val"':""}>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const G=RCFAQ.map(([g,L])=>[g,L.filter(([p,a])=>!q||nm(p+" "+a).includes(q))]).filter(([,L])=>L.length);
+  return `<div><h1 class="titulo">Perguntas frequentes</h1><p class="sub">As dúvidas mais comuns dos RCs sobre o contrato, o território, as negociações e a comissão na safra 26/27. Não achou a sua? Fale com o seu Responsável Comercial ou mande no Tira-Dúvidas.</p></div>
+  <div class="cs-in" style="max-width:520px;margin:0 0 14px"><input type="search" id="rcfaq_q" placeholder="Buscar: comissão, território, 1/12, excedente…" value="${esc(S.rcFaqQ||"")}" aria-label="Buscar nas perguntas"></div>
+  ${G.length?G.map(([g,L])=>`<section class="bloco"><h2 class="sec">${esc(g)}</h2>${L.map(([p,a,x])=>`<details class="faq-item"${q?" open":""}><summary>${esc(p)}</summary><p>${esc(a)}</p>${x&&x.tab?tab(x.tab):""}</details>`).join("")}</section>`).join(""):`<div class="vazio">Nenhuma pergunta com esse termo.</div>`}
+  <p class="meta">Resumo para consulta. Vale o que está no Contrato de Representação Comercial e nos anexos da safra 26/27.</p>`;}
+let _rcfT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="rcfaq_q")return;S.rcFaqQ=t.value;clearTimeout(_rcfT);_rcfT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("rcfaq_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
+
 function subnavRC(){
   const g=[];const ger=[];
   if(veGuiaRC())ger.push(["rc-guia","Jornada do novo RC"]);
   if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
-  const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-credito","Crédito do pedido"]]],
+  const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-credito","Crédito do pedido"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
@@ -10964,7 +11007,7 @@ function render(){renderApp();tsMontar();pushAbrirPendente();setTimeout(appModal
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-faq","Perguntas frequentes"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -10985,7 +11028,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
- "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
+ "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
@@ -11028,7 +11071,7 @@ function renderApp(){
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
