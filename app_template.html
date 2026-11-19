@@ -962,6 +962,7 @@ main.largo{max-width:1120px}
 .cs-bars{display:flex;gap:14px;align-items:flex-end;height:170px;max-width:520px}.cs-b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}.cs-b i{display:block;width:100%;border-radius:6px 6px 0 0}.cs-v{font-weight:800;font-size:14px}
 .tf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}.tf-card{margin:0}.tf-cab{display:flex;gap:12px;align-items:center;margin-bottom:10px}.tf-av{width:44px;height:44px;border-radius:50%;background:var(--amarelo);color:#1E1E1E;font-weight:900;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.tf-h{margin:14px 0 6px;font-size:15px}.tf-ul{margin:0;padding-left:18px;display:grid;gap:4px}.tf-chips{display:flex;flex-wrap:wrap;gap:6px}
 .rvm-et{display:grid;gap:10px}.rvm-e{display:flex;gap:12px;border:1px solid var(--linha);border-radius:10px;padding:12px 14px}.rvm-e p{margin:6px 0 0;font-size:14px}.rvm-e .selo{display:inline-block;margin-top:8px}.rvm-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--azul);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center}.rvm-st{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rvm-st span{background:var(--papel);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700}.rvm-st i{color:var(--apagado);font-style:normal}.rvm-ol{margin:0;padding-left:20px;display:grid;gap:8px}
+.tf-asv{margin-top:14px}.tf-tab td{vertical-align:top;font-size:14px;line-height:1.45}.tf-tab td:first-child{white-space:nowrap}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
 .gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
 .gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
@@ -3262,8 +3263,34 @@ function vISCsat(){
   <section class="bloco"><h2 class="sec">Por assessora</h2><p style="margin:0">A integração com o RD Station Conversas ainda não separa a nota por assessora: o filtro por atendente volta sempre a média do time, e nem todas as assessoras têm uma fila própria. Para ter a nota individual, exporte no RD o relatório de avaliações por atendente e envie ao Marketing para importar aqui.</p></section>
   <p class="meta">Fonte: ${esc(D.fonte||"RD Station Conversas")} · atualizado em ${D.atualizado?new Date(D.atualizado+"T12:00").toLocaleDateString("pt-BR"):"—"}.</p>`;}
 
+/* Assessoras de vendas digitais (Inside Sales): termos do contrato de vendedor autônomo ligados à rotina. Sem valores de comissão ou ajuda de custo. Só quem gerencia o time vê. */
+const TM_ASV={
+ quem:"Laura Alteia Costa, Thaís Franco, Maria Giulia D’Agosta e Maria Eduarda Serutti (em rampagem). Laura também supervisiona o time a partir de 20/11/2026.",
+ vinculo:"Prestadoras de serviço autônomas (pessoa jurídica), com contrato de vendedor autônomo por prazo indeterminado, sem vínculo trabalhista. Trabalham de forma remota e respondem à supervisão do Inside Sales e ao Felipe Piccoli.",
+ papel:"Vender os produtos Barenbrug ao produtor e às revendas pelos canais digitais, do primeiro atendimento ao pós-venda, com assistência técnica a pecuaristas (formação e reforma de pastagens) e a agricultores (cobertura e integração lavoura-pecuária).",
+ linhas:[
+  ["O que vendem","Os produtos da marca Barenbrug listados no contrato, seguindo a tabela de preços e as condições de prazo vigentes.","Foco nos híbridos Sabiá, Cayana e Carcará, que contam na meta de 60 t da safra 26/27. Preço e prazo sempre pela Tabela de Preços do portal."],
+  ["Onde atuam","Região definida no contrato, sem exclusividade. A Barenbrug pode indicar outras regiões, sempre com confirmação antes.","Os leads chegam pela esteira Pré-Vendas Barenbrug no CRM, e quem estiver online puxa primeiro. Nas regiões dos canais Yellow Master, só atendem com anuência do canal."],
+  ["Atendimento e pós-venda","Venda, intermediação e agenciamento de pedidos, mais assistência técnica e pós-venda. A comissão sobre vendas feitas diretamente pela Barenbrug na área depende desse pós-venda.","Primeiro atendimento pelo WhatsApp no RD Conversas, qualificação (MQL para SQL), proposta, acompanhamento do plantio e da formação. Toda negociação com tarefa e próximo passo no CRM."],
+  ["Cliente novo","Fazer o levantamento cadastral do cliente novo e enviar a ficha com o primeiro pedido. A assessora responde pela veracidade das informações.","Ficha cadastral completa antes do pedido. O Financeiro pode recusar o pedido em até 5 dias úteis, e cliente com crédito suspenso não compra até regularizar."],
+  ["Pedido","Lançar o pedido no CRM ou no ERP com o próprio usuário, que é pessoal e intransferível, e só nas condições comerciais vigentes. Pedido lançado por outra pessoa não gera comissão, e pedido faturado não muda.","Conferir cultivar, quantidade, preço, prazo e frete antes de lançar. Erro de pedido que gere devolução é notificado e, se repetir, pode encerrar o contrato."],
+  ["Metas e informação de mercado","Cumprir as metas de vendas, manter contato com os clientes da área e informar à Barenbrug o comportamento do mercado e a previsão de vendas.","Meta do time e de cada uma no painel do Inside Sales. Motivos de perda, objeções e preço da concorrência registrados no CRM, que alimentam a pesquisa de preço e o playbook."],
+  ["Comunicação com o cliente","Manter cópia de toda correspondência com clientes e seguir as circulares de comunicação da Barenbrug.","Conversas pelo WhatsApp corporativo no RD Conversas e pelo e-mail corporativo, nunca por canais pessoais. A satisfação do atendimento é medida pela nota que o robô pede ao fim da conversa."],
+  ["Ferramentas","A Barenbrug fornece CRM, ERP, chatbot, Intexfy, Microsoft 365 e uma conta de e-mail corporativa, além de folhetos, manuais, listas de preço e catálogos.","RD Station CRM, RD Conversas, Intexfy para prospecção e o Portal Conecta, com Academia, Playbook IS e Tabela de Preços."],
+  ["Marca, sigilo e dados","Não autorizar o uso da marca Barenbrug em fachadas ou lojas sem autorização por escrito. Manter sigilo sobre sistemas e informações. Os dados de clientes são da Barenbrug e seguem a LGPD. Valem o termo de confidencialidade e a política antissuborno e anticorrupção (NP.16.001).","Nada de exportar ou copiar listas de clientes do CRM. Pedido de material com a marca passa pelo Marketing."],
+  ["Exclusividade","Pode vender outros produtos, mas é proibido vender produtos concorrentes ou similares aos da Barenbrug, e é preciso informar as outras marcas com que trabalha.","Qualquer outra representação é comunicada ao Felipe antes."],
+  ["Local de trabalho","Trabalho remoto. Pode usar o escritório de Ribeirão Preto avisando com 1 dia útil de antecedência. Presencial só de forma excepcional e combinada.","Reunião semanal do Inside Sales com a Laura e o Felipe. Eventos e ações comerciais podem pedir presença e roupa com a marca, sempre combinados antes."],
+  ["Remuneração","Comissão sobre as vendas faturadas e efetivamente recebidas, mais uma ajuda de custo mensal, nos termos do Anexo III. As despesas para prestar o serviço são da assessora.","A Barenbrug informa o valor da comissão até o 5º dia do mês seguinte ao recebimento, e a nota fiscal é enviada até o dia 10. Devolução estorna a comissão. O Felipe valida as comissões antes do pagamento."],
+  ["Prazo e encerramento","Contrato por prazo indeterminado, que qualquer parte pode encerrar com aviso de 30 dias. Descumprimento de cláusula permite rescisão imediata.","Mudanças em comissão ou ajuda de custo são feitas só no Anexo III, assinado pelas duas partes."]]
+};
+function vISFuncoes(){const A=TM_ASV;
+  return `<div><h1 class="titulo">Funções das assessoras</h1><p class="sub">O que o contrato de vendedor autônomo estabelece e como isso aparece no dia a dia do Inside Sales. Visível só para quem gerencia o time.</p></div><section class="bloco tf-asv"><div class="tf-cab"><span class="tf-av" aria-hidden="true">IS</span><div><h2 class="sec" style="margin:0">Assessoras de vendas digitais · Inside Sales</h2><span class="meta">Vendedoras autônomas · respondem à supervisão do Inside Sales e ao Felipe Piccoli</span></div></div>
+  <p>${esc(A.papel)}</p><p class="meta" style="margin:0 0 4px"><strong>Quem são:</strong> ${esc(A.quem)}</p><p class="meta" style="margin:0 0 10px"><strong>Vínculo:</strong> ${esc(A.vinculo)}</p>
+  <div class="tab-wrap"><table class="tab tf-tab"><thead><tr><th>Tema</th><th>O que o contrato estabelece</th><th>Como isso aparece no dia a dia</th></tr></thead><tbody>${A.linhas.map(([t,c,d])=>`<tr><td><strong>${esc(t)}</strong></td><td>${esc(c)}</td><td>${esc(d)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="meta" style="margin:10px 0 0">Resumo do contrato modelo de vendedor autônomo da safra 26/27. Percentuais de comissão e valor da ajuda de custo ficam só no contrato. Em caso de dúvida, vale o texto assinado.</p></section>`;}
+
 const IS_GRUPOS=[
-  ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-imp","Impulso semanal"]]],
+  ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"],["is-imp","Impulso semanal"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
   ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
@@ -3762,6 +3789,7 @@ function vISFluxo(){
   <p class="dica">Do primeiro ao último e-mail são cerca de 3 dias. Se o lead disser que recebeu os e-mails, use o assunto deles na conversa: o depoimento de um produtor da região dele ou a nota do suporte técnico.</p></section>`;
 }
 function vInsideSales(){
+  if(S.pag==="is-func"&&veTimeIS())return vISFuncoes();
   if(S.pag==="is-csat"&&veTimeIS())return vISCsat();
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
   if(S.pag==="is-icp"&&veTimeIS())return vISIcp();
@@ -6885,7 +6913,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-csat","is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time","is-desafio"].includes(pg);
+  if(sc==="inside-sales")return !["is-func","is-csat","is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time","is-desafio"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
