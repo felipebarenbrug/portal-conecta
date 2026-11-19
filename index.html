@@ -1071,6 +1071,20 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
  .cal-filtros .chk input{width:auto}
 }
 .mt-dica{display:none}@media (max-width:760px){.mt-dica{display:block;margin:4px 0 6px;font-size:12.5px;color:#5A6B74}}
+@media (max-width:760px){
+ table.mt-card td:empty,table.mt-card td.c:not(:has(*)){display:none}
+ table.raci-t.mt-card td.c{justify-content:flex-start;gap:10px}
+ table.raci-t.mt-card td.c::before{flex:0 0 110px}
+ table.raci-t.mt-card tr>:first-child .nm{display:block;font-size:16px}
+ table.raci-t.mt-card tr>:first-child .ds{display:block;font-weight:400;font-size:14px;color:#5A6B74;margin-top:4px;line-height:1.45}
+ table.raci-t.mt-card tr.dim{opacity:.45}
+ table.raci-t.mt-card tr.ar{background:none;border:0;box-shadow:none;padding:14px 2px 4px;margin:0}
+ table.raci-t.mt-card tr.ar td{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#00658f}
+ .guia-l li{grid-template-columns:1fr!important;gap:2px!important}
+ .guia-cab{align-items:flex-start}
+}
+.bloco.guia-destaque,.bloco.pj-minhas,.bloco.emdev,.bloco.guia-breve{padding-left:20px}
+@media (max-width:760px){body.em-secao .app-topo{display:none}}
 </style>
 </head>
 <body>
@@ -1612,7 +1626,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119183329";
+const APP_VER="20261119183816";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8783,7 +8797,7 @@ function vIntRaci(){
   <section class="bloco"><h2 class="sec">Carga por pessoa${inf("Quantas atividades cada pessoa faz (R), aprova (A), apoia (C) ou acompanha (I). Toque para filtrar o mapa.")}</h2><div class="raci-p">${cards}</div></section>
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Mapa de atividades e RACI</h2><span class="meta">${F.p?`Destacando ${esc(F.p==="is"?"Inside Sales":(P[F.p]||{}).nome||"")}: ${nVis} de ${L.length} atividades · <button class="link" data-a="raci-f" data-v="p:">ver todos</button>`:`${L.length} atividades`}</span></div>
     <div class="rv-chips" style="margin:8px 0 10px;display:flex;flex-wrap:wrap;gap:6px">${chips}</div>
-    <div class="tab" style="overflow-x:auto"><table class="raci-t"><thead><tr><th>Atividade</th>${D.cols.map(id=>`<th>${esc(nomeC(id))}</th>`).join("")}<th>Outros</th></tr></thead><tbody>${linhas}</tbody></table></div></section>
+    <div class="tab" style="overflow-x:auto"><table class="raci-t mt-force"><thead><tr><th>Atividade</th>${D.cols.map(id=>`<th>${esc(nomeC(id))}</th>`).join("")}<th>Outros</th></tr></thead><tbody>${linhas}</tbody></table></div></section>
   ${(D.aberto||[]).length?`<section class="bloco"><h2 class="sec">Em aberto: o que ainda precisamos fechar</h2><div class="lista">${D.aberto.map((t,i)=>`<div class="linha"><div><strong>${i+1}. ${esc(t.split(":")[0])}</strong><span class="meta">${esc(t.split(":").slice(1).join(":").trim())}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function subnavInt(){
@@ -11564,7 +11578,7 @@ function mobTabelas(root){(root||document).querySelectorAll("#app table:not([dat
   const hr=thead&&thead.rows.length?thead.rows[thead.rows.length-1]:null;
   const comp=thead&&[...thead.querySelectorAll("th,td")].some(c=>c.colSpan>1||c.rowSpan>1);
   const H=hr?[...hr.cells].map(c=>c.textContent.trim()):[];
-  if(!H.length||temInput||comp||H.length>7){t.classList.add("mt-sticky");const w=t.closest(".tab,.tab-wrap")||t.parentElement;if(w&&!(w.previousElementSibling&&w.previousElementSibling.classList.contains("mt-dica"))){const d=document.createElement("p");d.className="mt-dica";d.textContent="Arraste a tabela para o lado para ver todas as colunas.";w.before(d);}return;}
+  if(!H.length||temInput||comp||(H.length>7&&!t.classList.contains("mt-force"))){t.classList.add("mt-sticky");const w=t.closest(".tab,.tab-wrap")||t.parentElement;if(w&&!(w.previousElementSibling&&w.previousElementSibling.classList.contains("mt-dica"))){const d=document.createElement("p");d.className="mt-dica";d.textContent="Arraste a tabela para o lado para ver todas as colunas.";w.before(d);}return;}
   t.classList.add("mt-card");
   [...t.tBodies].concat(t.tFoot?[t.tFoot]:[]).forEach(b=>[...b.rows].forEach(r=>{const cs=[...r.cells];if(cs.length===1||cs.some(c=>c.colSpan>1)){r.classList.add("mt-linha");return;}cs.forEach((c,i)=>{if(H[i])c.setAttribute("data-label",H[i]);});}));
   const w=t.closest(".tab,.tab-wrap");if(w)w.classList.add("mt-w");});}
@@ -11589,7 +11603,7 @@ function rodapeMkt(){
   f.innerHTML=`<div class="rodape-in permite-copia"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
-function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById("app"));else document.documentElement.lang="pt-BR";tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();mobTabelas();barraApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById("app"));else document.documentElement.lang="pt-BR";tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();mobTabelas();barraApp();document.body.classList.toggle("em-secao",!!S.secao||S.pag==="perfil");paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
