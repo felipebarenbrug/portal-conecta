@@ -913,6 +913,7 @@ main.largo{max-width:1120px}
 .cs-in{display:flex;align-items:center;gap:8px}.cs-in input{flex:1;min-width:0}.cs-in>span{color:var(--apagado);font-size:13px;white-space:nowrap}
 .cs-lista{display:grid;gap:6px}.cs-out{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .cs-big{background:var(--azul-claro);border-radius:10px;padding:12px 14px;display:grid;gap:2px}.cs-big strong{font-size:26px;color:var(--azul-escuro)}.cs-vazio{background:var(--papel);font-size:13px}
+.cs-mod{margin-top:10px;border:2px solid var(--azul);border-radius:10px;padding:12px 14px;display:grid;gap:3px}.cs-mod strong{font-size:20px;color:var(--azul-escuro)}.cs-prem{margin-top:8px}.cs-valid{margin-top:8px;font-style:italic}
 .cs-conf{margin-top:12px;font-size:14px;line-height:1.5}.cs-av{margin-top:10px}
 @media (max-width:860px){.cs-grid{grid-template-columns:1fr}.cs-res-w{position:static}.cs-out{grid-template-columns:1fr}}
 .ps-met{margin-top:12px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px 14px}.ps-met>summary{cursor:pointer}
@@ -1487,7 +1488,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119091918";
+const APP_VER="20261119093042";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2049,92 +2050,114 @@ function psFontesHTML(){return `<section class="bloco" id="ps-fontes"><h2 class=
   <p class="meta">Material de apoio comercial. Não substitui a recomendação do engenheiro agrônomo ou zootecnista da fazenda.</p></section>`;}
 
 /* ===== Academia · Capacidade de suporte da pastagem (lotação rotacionada), a partir da planilha de campo ===== */
-/* alturas de manejo no rotacionado [entrada min, entrada max, saida min, saida max]; Barenbrug: bases de conhecimento oficiais; demais: planilha de referência */
+/* alturas de manejo no rotacionado [entrada min, entrada max, saida min, saida max]; of:1 = bases de conhecimento oficiais Barenbrug; demais: planilha de referência, a confirmar */
 const CS_FORR=[
- {k:"sabia",n:"Sabiá (Brachiaria híbrida)",h:[30,30,15,20],bb:1},
- {k:"cayana",n:"Cayana (Brachiaria híbrida)",h:[32,32,16,20],bb:1},
- {k:"carcara",n:"Carcará (Panicum híbrido)",h:[70,80,35,40],bb:1},
- {k:"mulato",n:"Mulato II (Brachiaria híbrida)",h:[35,35,20,20],bb:1},
- {k:"llanero",n:"Llanero (Brachiaria humidicola)",h:[25,25,13,13],bb:1},
+ {k:"sabia",n:"Sabiá (Brachiaria híbrida)",h:[30,30,15,20],of:1},
+ {k:"cayana",n:"Cayana (Brachiaria híbrida)",h:[32,32,16,20],of:1},
+ {k:"carcara",n:"Carcará (Panicum híbrido)",h:[70,80,35,40],of:1},
+ {k:"mulato",n:"Mulato II (Brachiaria híbrida)",h:[35,35,20,20]},
+ {k:"llanero",n:"Llanero (Brachiaria humidicola)",h:[25,25,13,13]},
  {k:"marandu",n:"Marandu (Brachiaria brizantha)",h:[35,35,20,20]},
  {k:"decumbens",n:"Basilisk (Brachiaria decumbens)",h:[30,30,15,15]},
  {k:"humidicola",n:"Humidicola comum",h:[25,25,13,13]},
  {k:"ruzi",n:"Ruziziensis",h:[25,25,15,15]},
  {k:"mombaca",n:"Mombaça (Panicum maximum)",h:[90,90,45,45]}];
-const CS_CAT=["Recria, macho","Recria, fêmea","Terminação, macho, sem suplementação","Terminação, fêmea, sem suplementação","Terminação, macho, suplemento de baixo consumo","Terminação, fêmea, suplemento de baixo consumo","Terminação intensiva a pasto, macho","Terminação intensiva a pasto, fêmea","Vacas de cria","Outra"];
-const CS_OFERTA=0.066; /* oferta diária de 6,6 kg de MS por 100 kg de peso vivo (premissa da planilha) */
-const CS_PAD={area:"10",dias:"7",forr:"cayana",alt:"35",quadro:"1",corte:"acima",pts:["0,75","0,75","0,75","0,75"],msModo:"micro",tara:"50",total:"150",pesagens:["100","90","80","72","70","70"],msDir:"",cat:"0",pv:"300",lote:""};
+/* consumo de matéria seca de pasto, em % do peso vivo por dia (referência, em validação pelo time técnico) */
+const CS_CAT=[["Recria, macho",2.5],["Recria, fêmea",2.4],["Terminação, macho, sem suplementação",2.3],["Terminação, fêmea, sem suplementação",2.3],["Terminação, macho, suplemento de baixo consumo",2.2],["Terminação, fêmea, suplemento de baixo consumo",2.2],["Terminação intensiva a pasto, macho",1.6],["Terminação intensiva a pasto, fêmea",1.6],["Vacas de cria",2.2],["Outra",2.3]];
+const CS_OFERTA=0.066; /* premissa da planilha original: oferta diária de 6,6 kg de MS por 100 kg de peso vivo */
+const CS_MINPTS=5;
+const CS_PAD={area:"10",dias:"7",piq:"5",forr:"cayana",alt:"35",quadro:"1",corte:"acima",pts:["0,75","0,75","0,75","0,75","0,75"],msModo:"micro",tara:"50",total:"150",pesagens:["100","90","80","72","70","70"],msDir:"",cat:"0",pv:"300",lote:"",prem:"planilha",efic:"60"};
 const csN=v=>{const x=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",","."));return isFinite(x)?x:null;};
 const csF=(v,d)=>v==null||!isFinite(v)?"—":v.toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
 function csEstado(){if(!S.cs){let x=null;try{x=JSON.parse(localStorage.getItem("pc_capsup")||"null");}catch(e){}S.cs=Object.assign(JSON.parse(JSON.stringify(CS_PAD)),x||{});}return S.cs;}
 function csSalvar(){try{localStorage.setItem("pc_capsup",JSON.stringify(S.cs));}catch(e){}}
 function csCalc(V){const R={};const fo=CS_FORR.find(f=>f.k===V.forr)||CS_FORR[1];R.fo=fo;
   R.area=csN(V.area);R.dias=csN(V.dias);R.alt=csN(V.alt);R.quadro=csN(V.quadro);R.pv=csN(V.pv);R.lote=csN(V.lote);
+  R.piq=Math.max(1,Math.round(csN(V.piq)||1));
+  const cat=CS_CAT[+V.cat]||CS_CAT[0];R.cat=cat[0];R.cons=cat[1];R.efic=csN(V.efic)||60;
+  R.oferta=V.prem==="categoria"?(R.cons/100)/(R.efic/100):CS_OFERTA;
   const pts=(V.pts||[]).map(csN).filter(x=>x!=null&&x>0);R.nPts=pts.length;R.media=pts.length?pts.reduce((a,b)=>a+b,0)/pts.length:null;
   R.fat=V.corte==="rente"?0.5:1;
   R.mv=R.media!=null&&R.quadro>0?R.fat*R.media/R.quadro*10000:null;
   if(V.msModo==="direto"){R.ms=csN(V.msDir);R.estavel=true;}
   else{const t=csN(V.tara),tot=csN(V.total);const P=(V.pesagens||[]).map(csN).filter(x=>x!=null&&x>0);R.final=P.length?P[P.length-1]:null;
-    R.estavel=P.length>=2&&P[P.length-1]===P[P.length-2];R.ms=t!=null&&tot>t&&R.final!=null&&R.final>=t?(R.final-t)/(tot-t)*100:null;R.umida=tot!=null&&t!=null?tot-t:null;}
+    R.estavel=P.length>=2&&P[P.length-1]===P[P.length-2];R.ms=t!=null&&tot>t&&R.final!=null&&R.final>=t?(R.final-t)/(tot-t)*100:null;}
   R.mss=R.mv!=null&&R.ms!=null?R.mv*R.ms/100:null;
-  R.taxa=R.mss!=null&&R.pv>0&&R.dias>0?R.mss/(R.pv*CS_OFERTA*R.dias):null;
+  R.taxa=R.mss!=null&&R.pv>0&&R.dias>0?R.mss/(R.pv*R.oferta*R.dias):null; /* densidade no piquete durante a ocupação */
   R.ua=R.taxa!=null?R.taxa*R.pv/450:null;
   R.total=R.taxa!=null&&R.area>0?R.taxa*R.area:null;
-  R.diasLote=R.mss!=null&&R.area>0&&R.lote>0&&R.pv>0?(R.mss*R.area)/(R.lote*R.pv*CS_OFERTA):null;
+  R.areaMod=R.area>0?R.area*R.piq:null;R.descanso=R.dias>0?(R.piq-1)*R.dias:null;R.ciclo=R.dias>0?R.piq*R.dias:null;
+  R.taxaMod=R.taxa!=null?R.taxa/R.piq:null;R.uaMod=R.ua!=null?R.ua/R.piq:null;
+  R.diasLote=R.mss!=null&&R.area>0&&R.lote>0&&R.pv>0?(R.mss*R.area)/(R.lote*R.pv*R.oferta):null;
   const [e1,e2,s1,s2]=fo.h;R.alvo=[e1,e2,s1,s2];
   R.conf=R.alt==null?null:R.alt<e1*0.9?"baixo":R.alt>e2*1.1?"alto":"ok";
   return R;}
-function csResHTML(){const V=csEstado(),R=csCalc(V);const fo=R.fo;const hE=R.alvo[0]===R.alvo[1]?R.alvo[0]+" cm":R.alvo[0]+" a "+R.alvo[1]+" cm",hS=R.alvo[2]===R.alvo[3]?R.alvo[2]+" cm":R.alvo[2]+" a "+R.alvo[3]+" cm";
+const csFx=(a,b)=>a===b?a+" cm":a+" a "+b+" cm";
+function csResHTML(){const V=csEstado(),R=csCalc(V);const fo=R.fo;const hE=csFx(R.alvo[0],R.alvo[1]),hS=csFx(R.alvo[2],R.alvo[3]);
   const conf=R.conf==="ok"?`<span class="met-st met-ok">Dentro da meta</span> A altura de ${csF(R.alt)} cm está no ponto de entrada.`:R.conf==="alto"?`<span class="met-st met-at">Acima da meta</span> O pasto passou do ponto de entrada: a qualidade cai e sobra mais resíduo. Entre com os animais logo ou ajuste a carga e o intervalo.`:R.conf==="baixo"?`<span class="met-st met-at">Abaixo da meta</span> O pasto ainda não chegou ao ponto de entrada. Espere a rebrota para não pastejar antes da hora.`:"";
-  const k=(t,v,u,d)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const k=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
   const avisos=[];if(R.dias>10)avisos.push("Período de ocupação acima de 10 dias: os animais passam a comer a rebrota do próprio piquete. O recomendado é até 10 dias.");
   if(V.msModo!=="direto"&&R.final!=null&&!R.estavel)avisos.push("As duas últimas pesagens do micro-ondas ainda não são iguais: continue secando até o peso estabilizar.");
-  if(R.nPts<4)avisos.push("Use pelo menos 4 pontos de corte que representem a altura média do pasto.");
-  if(V.corte==="rente")avisos.push("Corte rente ao solo: a planilha considera só 50% da massa colhida como disponível para o animal.");
-  return `<div class="metrics">${k("Massa de forragem verde",csF(R.mv),"kg de MV/ha")}${k("Matéria seca",csF(R.ms,1)+(R.ms!=null?"%":""),"")}${k("Massa de forragem seca",csF(R.mss),"kg de MS/ha")}${k("Taxa de lotação",csF(R.taxa,2),"animais/ha · "+csF(R.ua,2)+" UA/ha")}</div>
-   <div class="cs-out"><div class="cs-big"><span class="meta">Capacidade da área em ${csF(R.dias)} dias</span><strong>${csF(R.total)} animais</strong><span class="meta">de ${csF(R.pv)} kg em ${csF(R.area,1)} ha</span></div>
-    ${R.lote>0?`<div class="cs-big"><span class="meta">Com o lote de ${csF(R.lote)} animais</span><strong>${csF(R.diasLote,1)} dias</strong><span class="meta">de pastejo na área</span></div>`:`<div class="cs-big cs-vazio"><span class="meta">Já tem um lote definido?</span><span>Informe o número de animais para ver quantos dias a área suporta.</span></div>`}</div>
-   <div class="cs-conf"><strong>Manejo de ${esc(fo.n)}:</strong> entrada a ${hE}, saída a ${hS}. ${conf}</div>
+  if(R.nPts<CS_MINPTS)avisos.push(`A massa de forragem varia muito dentro do piquete. Use de ${CS_MINPTS} a 10 pontos de corte, escolhidos na altura média do pasto.`);
+  if(V.corte==="rente")avisos.push("Corte rente ao solo: a conta usa 50% da massa colhida, mas a parte de baixo do capim é mais densa (colmo e material morto) e a forragem disponível costuma ser menor que isso. Prefira cortar na altura de saída.");
+  if(R.piq===1)avisos.push("Com um piquete só, o resultado vale para esta ocupação, não é a capacidade de suporte da fazenda. Informe quantos piquetes o módulo tem.");
+  const premTxt=V.prem==="categoria"?`Consumo de ${csF(R.cons,1)}% do peso vivo (${esc(R.cat)}) com ${csF(R.efic)}% de aproveitamento: oferta de ${csF(R.oferta*100,1)} kg de MS por 100 kg de peso vivo por dia.`:`Planilha original: oferta de 6,6 kg de MS por 100 kg de peso vivo por dia. Nesta premissa a categoria não muda a conta.`;
+  return `<div class="metrics">${k("Massa de forragem verde",csF(R.mv),"kg de MV/ha")}${k("Matéria seca",csF(R.ms,1)+(R.ms!=null?"%":""),"")}${k("Massa de forragem seca",csF(R.mss),"kg de MS/ha")}${k("Lotação no piquete durante a ocupação",csF(R.taxa,2),"animais/ha · "+csF(R.ua,2)+" UA/ha")}</div>
+   <div class="cs-out"><div class="cs-big"><span class="meta">Lote que o piquete comporta em ${csF(R.dias)} dias</span><strong>${csF(R.total)} animais</strong><span class="meta">de ${csF(R.pv)} kg em ${csF(R.area,1)} ha</span></div>
+    ${R.lote>0?`<div class="cs-big"><span class="meta">Com o lote de ${csF(R.lote)} animais</span><strong>${csF(R.diasLote,1)} dias</strong><span class="meta">de pastejo no piquete</span></div>`:`<div class="cs-big cs-vazio"><span class="meta">Já tem um lote definido?</span><span>Informe o número de animais para ver quantos dias o piquete aguenta.</span></div>`}</div>
+   <div class="cs-mod"><span class="meta">Capacidade de suporte do módulo</span><strong>${csF(R.taxaMod,2)} animais/ha · ${csF(R.uaMod,2)} UA/ha</strong><span class="meta">${R.piq} ${R.piq===1?"piquete":"piquetes"} de ${csF(R.area,1)} ha (${csF(R.areaMod,1)} ha) · ${csF(R.dias)} dias de ocupação e ${csF(R.descanso)} de descanso, ciclo de ${csF(R.ciclo)} dias. É este número que se compara com a lotação da fazenda.</span></div>
+   <div class="cs-conf"><strong>Manejo de ${esc(fo.n)}:</strong> entrada a ${hE}, saída a ${hS}${fo.of?"":" (referência da planilha original, a confirmar pelo time técnico)"}. ${conf}</div>
+   <p class="meta cs-prem">Premissa de oferta: ${premTxt}</p>
    ${avisos.length?`<ul class="cond cs-av">${avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>`:""}
    <div class="acoes"><button class="btn sec" data-a="cs-copiar">Copiar resumo</button><button class="link" data-a="cs-limpar">Voltar ao exemplo</button></div>`;}
 function csResumoTxt(){const V=csEstado(),R=csCalc(V);return `Capacidade de suporte · ${R.fo.n}
-Área: ${csF(R.area,1)} ha · ocupação: ${csF(R.dias)} dias · altura: ${csF(R.alt)} cm (meta de entrada: ${R.alvo[0]===R.alvo[1]?R.alvo[0]:R.alvo[0]+" a "+R.alvo[1]} cm)
+Piquete de ${csF(R.area,1)} ha · ocupação de ${csF(R.dias)} dias · altura de ${csF(R.alt)} cm (meta de entrada: ${csFx(R.alvo[0],R.alvo[1])})
 Massa verde: ${csF(R.mv)} kg/ha · MS: ${csF(R.ms,1)}% · massa seca: ${csF(R.mss)} kg de MS/ha
-Lotação: ${csF(R.taxa,2)} animais/ha (${csF(R.ua,2)} UA/ha) · capacidade: ${csF(R.total)} animais de ${csF(R.pv)} kg (${CS_CAT[+V.cat]||""})${R.lote>0?`
-Lote de ${csF(R.lote)} animais: ${csF(R.diasLote,1)} dias de pastejo`:""}
+Lotação no piquete durante a ocupação: ${csF(R.taxa,2)} animais/ha (${csF(R.ua,2)} UA/ha) · lote comportado: ${csF(R.total)} animais de ${csF(R.pv)} kg${R.lote>0?`
+Lote de ${csF(R.lote)} animais: ${csF(R.diasLote,1)} dias no piquete`:""}
+Capacidade de suporte do módulo (${R.piq} piquetes, ${csF(R.areaMod,1)} ha, ciclo de ${csF(R.ciclo)} dias): ${csF(R.taxaMod,2)} animais/ha (${csF(R.uaMod,2)} UA/ha)
+Premissa: ${V.prem==="categoria"?`consumo de ${csF(R.cons,1)}% do PV (${R.cat}), ${csF(R.efic)}% de aproveitamento`:"oferta de 6,6 kg de MS por 100 kg de PV por dia"}
 Portal Conecta Barenbrug`;}
 function vCapSup(){const V=csEstado();const inp=(k,l,u,ex)=>`<div><label for="cs_${k}">${l}</label><div class="cs-in"><input id="cs_${k}" inputmode="decimal" value="${esc(V[k]||"")}" data-cs="${k}">${u?`<span>${u}</span>`:""}</div>${ex?`<span class="meta">${ex}</span>`:""}</div>`;
   const pts=(V.pts||[]).map((p,i)=>`<div class="cs-in"><span class="meta" style="min-width:56px">Ponto ${i+1}</span><input inputmode="decimal" value="${esc(p)}" data-cs-pt="${i}" aria-label="Massa verde do ponto ${i+1}"><span>kg</span></div>`).join("");
   const pes=(V.pesagens||[]).map((p,i)=>`<div class="cs-in"><span class="meta" style="min-width:110px">${i===0?"Após 3 min":i===1?"Após +2 min":i===2?"Após +1 min":"Após +30 s"}</span><input inputmode="decimal" value="${esc(p)}" data-cs-pes="${i}" aria-label="Pesagem ${i+1}"><span>g</span></div>`).join("");
-  return `<div><h1 class="titulo">Capacidade de suporte da pastagem</h1><p class="sub">Quantos animais o piquete aguenta no período de ocupação, ou quantos dias ele aguenta o lote que o produtor já tem. Para lotação rotacionada, a partir da massa de forragem medida no campo.</p></div>
+  const cat=CS_CAT[+V.cat]||CS_CAT[0];
+  return `<div><h1 class="titulo">Capacidade de suporte da pastagem</h1><p class="sub">Quantos animais o piquete comporta no período de ocupação, quantos dias ele aguenta o lote que o produtor já tem e qual a capacidade de suporte do módulo inteiro. Para lotação rotacionada, a partir da massa de forragem medida no campo.</p></div>
   <section class="bloco cs-passos"><h2 class="sec">Como medir no campo</h2><ol class="rb-fluxo">
    <li><strong>Altura</strong><span>Na entrada dos animais, faça cerca de 50 leituras de altura para cada 5 ha e use a média.</span></li>
-   <li><strong>Massa verde</strong><span>Corte a forragem dentro de um quadro de cerca de 1 m², em pelo menos 4 pontos que representem a altura média, e pese cada um.</span></li>
-   <li><strong>Forma de corte</strong><span>Acima do resíduo (na altura de saída) conta 100% da massa; rente ao solo, só 50%.</span></li>
+   <li><strong>Massa verde</strong><span>Corte a forragem dentro de um quadro de cerca de 1 m², em 5 a 10 pontos que representem a altura média, e pese cada um.</span></li>
+   <li><strong>Forma de corte</strong><span>Corte na altura de saída (acima do resíduo): é o que o animal vai comer. Rente ao solo só em último caso.</span></li>
    <li><strong>Matéria seca</strong><span>Seque cerca de 100 g da forragem picada no micro-ondas e pese até o peso parar de cair.</span></li>
-   <li><strong>Animais</strong><span>Informe o peso vivo médio e, se já tiver um lote, o número de animais.</span></li></ol></section>
+   <li><strong>Animais e módulo</strong><span>Informe a categoria, o peso vivo médio e quantos piquetes o módulo tem.</span></li></ol></section>
   <div class="cs-grid"><div class="cs-form">
-   <section class="bloco"><h2 class="sec">1. A área e o manejo</h2><div class="dupla">${inp("area","Tamanho da área","ha")}${inp("dias","Período de ocupação","dias","Recomendado: até 10 dias")}</div>
+   <section class="bloco"><h2 class="sec">1. O piquete e o módulo</h2><div class="dupla">${inp("area","Tamanho do piquete avaliado","ha")}${inp("dias","Período de ocupação","dias","Recomendado: até 10 dias")}</div>
+    ${inp("piq","Piquetes no módulo","piquetes","Considera piquetes do mesmo tamanho. O descanso é a ocupação dos outros piquetes.")}
     <div><label for="cs_forr">Forrageira</label><select id="cs_forr" data-cs="forr">${CS_FORR.map(f=>`<option value="${f.k}" ${V.forr===f.k?"selected":""}>${esc(f.n)}</option>`).join("")}</select><span class="meta">Sistema: lotação rotacionada.</span></div></section>
    <section class="bloco"><h2 class="sec">2. Altura e massa de forragem</h2><div class="dupla">${inp("alt","Altura média do pasto","cm")}${inp("quadro","Tamanho do quadro","m²")}</div>
-    <div><label for="cs_corte">Como a forragem foi cortada</label><select id="cs_corte" data-cs="corte"><option value="acima" ${V.corte==="acima"?"selected":""}>Acima do resíduo (na altura de saída)</option><option value="rente" ${V.corte==="rente"?"selected":""}>Rente ao solo</option></select></div>
+    <div><label for="cs_corte">Como a forragem foi cortada</label><select id="cs_corte" data-cs="corte"><option value="acima" ${V.corte==="acima"?"selected":""}>Na altura de saída, acima do resíduo (recomendado)</option><option value="rente" ${V.corte==="rente"?"selected":""}>Rente ao solo</option></select></div>
     <label style="margin-top:8px">Massa verde de cada ponto</label><div class="cs-lista">${pts}</div><div class="acoes" style="margin:4px 0 0"><button class="link" data-a="cs-pt" data-v="1">+ ponto</button>${(V.pts||[]).length>1?`<button class="link" data-a="cs-pt" data-v="-1">− ponto</button>`:""}</div></section>
    <section class="bloco"><h2 class="sec">3. Matéria seca (% MS)</h2><div class="filtros" role="group" aria-label="Como informar a MS"><button class="chip" data-a="cs-ms" data-v="micro" aria-pressed="${V.msModo!=="direto"}">Medir no micro-ondas</button><button class="chip" data-a="cs-ms" data-v="direto" aria-pressed="${V.msModo==="direto"}">Já sei a % de MS</button></div>
     ${V.msModo==="direto"?inp("msDir","Matéria seca","%"):`<div class="dupla">${inp("tara","Peso do recipiente (tara)","g")}${inp("total","Recipiente + forragem fresca","g","Use cerca de 100 g de forragem")}</div>
     <label style="margin-top:8px">Pesagens depois de cada secagem (recipiente + forragem)</label><div class="cs-lista">${pes}</div><div class="acoes" style="margin:4px 0 0"><button class="link" data-a="cs-pes" data-v="1">+ pesagem</button>${(V.pesagens||[]).length>1?`<button class="link" data-a="cs-pes" data-v="-1">− pesagem</button>`:""}</div>
     <details class="ps-met"><summary>Passo a passo do micro-ondas</summary><ol class="rent-ol"><li>Pese o recipiente vazio (tara) e coloque cerca de 100 g da forragem picada.</li><li>Ponha um copo com dois terços de água no fundo do micro-ondas, para a forragem não queimar.</li><li>Aqueça 3 minutos na potência máxima, deixe esfriar 1 minuto e pese.</li><li>Misture e repita com 2 minutos, depois 1 minuto, depois 30 segundos, sempre esfriando e pesando.</li><li>Pare quando o peso não cair mais (três pesagens iguais). O último peso é o peso final.</li></ol><p class="meta">Método do micro-ondas da Embrapa Gado de Leite. O tempo varia com a potência do forno e a umidade da forragem.</p></details>`}</section>
-   <section class="bloco"><h2 class="sec">4. Os animais</h2><div><label for="cs_cat">Categoria</label><select id="cs_cat" data-cs="cat">${CS_CAT.map((c,i)=>`<option value="${i}" ${+V.cat===i?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
-    <div class="dupla">${inp("pv","Peso vivo médio","kg")}${inp("lote","Número de animais do lote (opcional)","animais","Preencha para saber quantos dias a área aguenta")}</div></section></div>
+   <section class="bloco"><h2 class="sec">4. Os animais e a premissa de oferta</h2><div><label for="cs_cat">Categoria</label><select id="cs_cat" data-cs="cat">${CS_CAT.map((c,i)=>`<option value="${i}" ${+V.cat===i?"selected":""}>${esc(c[0])}</option>`).join("")}</select><span class="meta">Consumo de referência: ${csF(cat[1],1)}% do peso vivo em MS de pasto por dia.</span></div>
+    <div class="dupla">${inp("pv","Peso vivo médio","kg")}${inp("lote","Número de animais do lote (opcional)","animais","Preencha para saber quantos dias o piquete aguenta")}</div>
+    <label style="margin-top:8px">Premissa de oferta de forragem</label><div class="filtros" role="group" aria-label="Premissa de oferta"><button class="chip" data-a="cs-prem" data-v="planilha" aria-pressed="${V.prem!=="categoria"}">Conservadora (planilha original)</button><button class="chip" data-a="cs-prem" data-v="categoria" aria-pressed="${V.prem==="categoria"}">Pelo consumo da categoria</button></div>
+    ${V.prem==="categoria"?`<label style="margin-top:6px">Aproveitamento da forragem acima do resíduo</label><div class="filtros" role="group" aria-label="Aproveitamento">${["50","60","70"].map(x=>`<button class="chip" data-a="cs-efic" data-v="${x}" aria-pressed="${String(V.efic)===x}">${x}%</button>`).join("")}</div><span class="meta">Parte da forragem medida que o animal efetivamente come; o resto é pisoteado, sujo ou rejeitado.</span>`:`<span class="meta">Oferta fixa de 6,6 kg de MS por 100 kg de peso vivo por dia, igual para todas as categorias.</span>`}
+    <p class="meta cs-valid">Premissas de consumo e oferta em validação pelo time técnico da Barenbrug.</p></section></div>
   <div class="cs-res-w"><section class="bloco cs-res"><h2 class="sec">Resultado</h2><div id="cs-res">${csResHTML()}</div></section></div></div>
   <section class="bloco"><details class="ps-met" open><summary><strong>Memória de cálculo e premissas</strong></summary><ul class="cond">
-   <li><strong>Massa verde (kg/ha)</strong> = média dos pontos (kg) ÷ área do quadro (m²) × 10.000. Com corte rente ao solo, multiplica por 0,5.</li>
-   <li><strong>Matéria seca (%)</strong> = (peso final − tara) ÷ (peso inicial − tara) × 100.</li>
-   <li><strong>Massa seca (kg de MS/ha)</strong> = massa verde × % MS.</li>
-   <li><strong>Taxa de lotação (animais/ha)</strong> = massa seca ÷ (peso vivo × 0,066 × dias de ocupação). O 0,066 é a premissa da planilha: oferta diária de 6,6 kg de MS para cada 100 kg de peso vivo, o que cobre o consumo do animal e a forragem que fica no resíduo ou se perde no pastejo.</li>
+   <li><strong>Massa verde (kg/ha)</strong> = média dos pontos (kg) ÷ área do quadro (m²) × 10.000. Com corte rente ao solo, multiplica por 0,5 (aproximação da planilha original; tende a superestimar a forragem disponível).</li>
+   <li><strong>Matéria seca (%)</strong> = (peso final − tara) ÷ (peso fresco − tara) × 100.</li>
+   <li><strong>Massa seca (kg de MS/ha)</strong> = massa verde × % MS. Com o corte na altura de saída, é a forragem disponível para o pastejo: o resíduo fica para a rebrota.</li>
+   <li><strong>Oferta diária (kg de MS por kg de peso vivo)</strong>: na premissa conservadora, 0,066, da planilha original (cerca de três vezes o consumo do animal, ou seja, considera que só perto de 38% da forragem medida é comida). Na premissa pelo consumo, consumo da categoria (% do peso vivo) ÷ aproveitamento.</li>
+   <li><strong>Lotação no piquete durante a ocupação (animais/ha)</strong> = massa seca ÷ (peso vivo × oferta × dias de ocupação). É a densidade de animais enquanto eles estão naquele piquete, não a lotação da fazenda.</li>
    <li><strong>UA/ha</strong> = animais/ha × peso vivo ÷ 450.</li>
-   <li><strong>Capacidade da área</strong> = animais/ha × área. <strong>Dias com o lote</strong> = (massa seca × área) ÷ (animais × peso vivo × 0,066).</li>
-   <li><strong>Alturas de manejo:</strong> Sabiá, Cayana e Carcará pelas bases de conhecimento oficiais da Barenbrug; as demais forrageiras pela planilha de referência. A meta aceita 10% de folga em torno da altura de entrada.</li></ul>
-   <p class="meta">Ferramenta adaptada da planilha de cálculo da capacidade de suporte em lotação intermitente. A capacidade vale para o momento da medição: repita a amostragem a cada ciclo de pastejo.</p></details></section>`;}
+   <li><strong>Lote comportado</strong> = lotação no piquete × área do piquete. <strong>Dias com o lote</strong> = (massa seca × área) ÷ (animais × peso vivo × oferta).</li>
+   <li><strong>Capacidade de suporte do módulo</strong> = lotação no piquete ÷ número de piquetes. O lote passa pelos piquetes em sequência: cada um fica ocupado nos dias de ocupação e descansa enquanto os outros são pastejados (descanso = ocupação × (piquetes − 1)).</li>
+   <li><strong>Alturas de manejo:</strong> Sabiá, Cayana e Carcará pelas bases de conhecimento oficiais da Barenbrug; as demais forrageiras pela planilha original, a confirmar pelo time técnico. A meta aceita 10% de folga em torno da altura de entrada.</li>
+   <li><strong>Consumo por categoria:</strong> valores de referência de consumo de MS de pasto (de 2,2% a 2,5% do peso vivo; 1,6% na terminação intensiva a pasto, em que o concentrado responde pelo restante), em validação pelo time técnico.</li></ul>
+   <p class="meta">Ferramenta adaptada da planilha de cálculo da capacidade de suporte em lotação intermitente. A conta usa a forragem medida hoje: a capacidade muda com a estação e com a rebrota, então repita a amostragem a cada ciclo de pastejo.</p></details></section>`;}
 
 function subnavAcademia(){
   const G=[["Aprender",[["trilha","Cursos"],["manejo","Guia de manejo"],["base","Base de conhecimento"],["faq","Perguntas e respostas"]]],
@@ -10905,6 +10928,8 @@ document.addEventListener("click",async ev=>{
   if(a==="cand-cancela"){S.candEd=undefined;S.candF=null;render();return;}
   if(a==="cand-et"){S.candEt=v;render();return;}
   if(a==="cs-pt"||a==="cs-pes"){const V=csEstado(),k=a==="cs-pt"?"pts":"pesagens";const L=V[k]=V[k]||[];if(v==="1")L.push(L.length?L[L.length-1]:"");else if(L.length>1)L.pop();csSalvar();render();return;}
+  if(a==="cs-prem"){csEstado().prem=v;csSalvar();render();return;}
+  if(a==="cs-efic"){csEstado().efic=v;csSalvar();render();return;}
   if(a==="cs-ms"){csEstado().msModo=v;csSalvar();render();return;}
   if(a==="cs-limpar"){S.cs=JSON.parse(JSON.stringify(CS_PAD));csSalvar();render();return;}
   if(a==="cs-copiar"){const t=csResumoTxt();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso("Resumo copiado")).catch(()=>aviso("Não foi possível copiar"));return;}
