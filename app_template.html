@@ -908,6 +908,13 @@ main.largo{max-width:1120px}
 .jr-donos{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 4px}.jr-pap{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap}.jr-ramo ul{margin:4px 0 0;padding-left:18px;font-size:14px}
 .jr-score{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:2;background:var(--azul-claro);border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.jr-nota{flex-direction:row;flex-wrap:wrap}
 .ps-sim{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:10px}.ps-res{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--azul-claro);display:grid;gap:4px}.ps-res strong{font-size:20px}.ps-res p{margin:0}
+.cs-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}.cs-form{display:grid;gap:12px;min-width:0}.cs-form .bloco{margin:0}
+.cs-res-w{position:sticky;top:12px;min-width:0}.cs-res .metric{background:var(--papel)}
+.cs-in{display:flex;align-items:center;gap:8px}.cs-in input{flex:1;min-width:0}.cs-in>span{color:var(--apagado);font-size:13px;white-space:nowrap}
+.cs-lista{display:grid;gap:6px}.cs-out{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.cs-big{background:var(--azul-claro);border-radius:10px;padding:12px 14px;display:grid;gap:2px}.cs-big strong{font-size:26px;color:var(--azul-escuro)}.cs-vazio{background:var(--papel);font-size:13px}
+.cs-conf{margin-top:12px;font-size:14px;line-height:1.5}.cs-av{margin-top:10px}
+@media (max-width:860px){.cs-grid{grid-template-columns:1fr}.cs-res-w{position:static}.cs-out{grid-template-columns:1fr}}
 .ps-met{margin-top:12px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px 14px}.ps-met>summary{cursor:pointer}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
@@ -2041,9 +2048,98 @@ function vObjecoes(){
 function psFontesHTML(){return `<section class="bloco" id="ps-fontes"><h2 class="sec">Fontes</h2><ol class="ps-fontes">${Object.entries(PS_FONTES).map(([k,[t,u]])=>`<li id="psf-${k}">${esc(t)}${u?` <a class="link" href="${esc(u)}" target="_blank" rel="noopener">abrir ↗</a>`:""}</li>`).join("")}</ol>
   <p class="meta">Material de apoio comercial. Não substitui a recomendação do engenheiro agrônomo ou zootecnista da fazenda.</p></section>`;}
 
+/* ===== Academia · Capacidade de suporte da pastagem (lotação rotacionada), a partir da planilha de campo ===== */
+/* alturas de manejo no rotacionado [entrada min, entrada max, saida min, saida max]; Barenbrug: bases de conhecimento oficiais; demais: planilha de referência */
+const CS_FORR=[
+ {k:"sabia",n:"Sabiá (Brachiaria híbrida)",h:[30,30,15,20],bb:1},
+ {k:"cayana",n:"Cayana (Brachiaria híbrida)",h:[32,32,16,20],bb:1},
+ {k:"carcara",n:"Carcará (Panicum híbrido)",h:[70,80,35,40],bb:1},
+ {k:"mulato",n:"Mulato II (Brachiaria híbrida)",h:[35,35,20,20],bb:1},
+ {k:"llanero",n:"Llanero (Brachiaria humidicola)",h:[25,25,13,13],bb:1},
+ {k:"marandu",n:"Marandu (Brachiaria brizantha)",h:[35,35,20,20]},
+ {k:"decumbens",n:"Basilisk (Brachiaria decumbens)",h:[30,30,15,15]},
+ {k:"humidicola",n:"Humidicola comum",h:[25,25,13,13]},
+ {k:"ruzi",n:"Ruziziensis",h:[25,25,15,15]},
+ {k:"mombaca",n:"Mombaça (Panicum maximum)",h:[90,90,45,45]}];
+const CS_CAT=["Recria, macho","Recria, fêmea","Terminação, macho, sem suplementação","Terminação, fêmea, sem suplementação","Terminação, macho, suplemento de baixo consumo","Terminação, fêmea, suplemento de baixo consumo","Terminação intensiva a pasto, macho","Terminação intensiva a pasto, fêmea","Vacas de cria","Outra"];
+const CS_OFERTA=0.066; /* oferta diária de 6,6 kg de MS por 100 kg de peso vivo (premissa da planilha) */
+const CS_PAD={area:"10",dias:"7",forr:"cayana",alt:"35",quadro:"1",corte:"acima",pts:["0,75","0,75","0,75","0,75"],msModo:"micro",tara:"50",total:"150",pesagens:["100","90","80","72","70","70"],msDir:"",cat:"0",pv:"300",lote:""};
+const csN=v=>{const x=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",","."));return isFinite(x)?x:null;};
+const csF=(v,d)=>v==null||!isFinite(v)?"—":v.toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+function csEstado(){if(!S.cs){let x=null;try{x=JSON.parse(localStorage.getItem("pc_capsup")||"null");}catch(e){}S.cs=Object.assign(JSON.parse(JSON.stringify(CS_PAD)),x||{});}return S.cs;}
+function csSalvar(){try{localStorage.setItem("pc_capsup",JSON.stringify(S.cs));}catch(e){}}
+function csCalc(V){const R={};const fo=CS_FORR.find(f=>f.k===V.forr)||CS_FORR[1];R.fo=fo;
+  R.area=csN(V.area);R.dias=csN(V.dias);R.alt=csN(V.alt);R.quadro=csN(V.quadro);R.pv=csN(V.pv);R.lote=csN(V.lote);
+  const pts=(V.pts||[]).map(csN).filter(x=>x!=null&&x>0);R.nPts=pts.length;R.media=pts.length?pts.reduce((a,b)=>a+b,0)/pts.length:null;
+  R.fat=V.corte==="rente"?0.5:1;
+  R.mv=R.media!=null&&R.quadro>0?R.fat*R.media/R.quadro*10000:null;
+  if(V.msModo==="direto"){R.ms=csN(V.msDir);R.estavel=true;}
+  else{const t=csN(V.tara),tot=csN(V.total);const P=(V.pesagens||[]).map(csN).filter(x=>x!=null&&x>0);R.final=P.length?P[P.length-1]:null;
+    R.estavel=P.length>=2&&P[P.length-1]===P[P.length-2];R.ms=t!=null&&tot>t&&R.final!=null&&R.final>=t?(R.final-t)/(tot-t)*100:null;R.umida=tot!=null&&t!=null?tot-t:null;}
+  R.mss=R.mv!=null&&R.ms!=null?R.mv*R.ms/100:null;
+  R.taxa=R.mss!=null&&R.pv>0&&R.dias>0?R.mss/(R.pv*CS_OFERTA*R.dias):null;
+  R.ua=R.taxa!=null?R.taxa*R.pv/450:null;
+  R.total=R.taxa!=null&&R.area>0?R.taxa*R.area:null;
+  R.diasLote=R.mss!=null&&R.area>0&&R.lote>0&&R.pv>0?(R.mss*R.area)/(R.lote*R.pv*CS_OFERTA):null;
+  const [e1,e2,s1,s2]=fo.h;R.alvo=[e1,e2,s1,s2];
+  R.conf=R.alt==null?null:R.alt<e1*0.9?"baixo":R.alt>e2*1.1?"alto":"ok";
+  return R;}
+function csResHTML(){const V=csEstado(),R=csCalc(V);const fo=R.fo;const hE=R.alvo[0]===R.alvo[1]?R.alvo[0]+" cm":R.alvo[0]+" a "+R.alvo[1]+" cm",hS=R.alvo[2]===R.alvo[3]?R.alvo[2]+" cm":R.alvo[2]+" a "+R.alvo[3]+" cm";
+  const conf=R.conf==="ok"?`<span class="met-st met-ok">Dentro da meta</span> A altura de ${csF(R.alt)} cm está no ponto de entrada.`:R.conf==="alto"?`<span class="met-st met-at">Acima da meta</span> O pasto passou do ponto de entrada: a qualidade cai e sobra mais resíduo. Entre com os animais logo ou ajuste a carga e o intervalo.`:R.conf==="baixo"?`<span class="met-st met-at">Abaixo da meta</span> O pasto ainda não chegou ao ponto de entrada. Espere a rebrota para não pastejar antes da hora.`:"";
+  const k=(t,v,u,d)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const avisos=[];if(R.dias>10)avisos.push("Período de ocupação acima de 10 dias: os animais passam a comer a rebrota do próprio piquete. O recomendado é até 10 dias.");
+  if(V.msModo!=="direto"&&R.final!=null&&!R.estavel)avisos.push("As duas últimas pesagens do micro-ondas ainda não são iguais: continue secando até o peso estabilizar.");
+  if(R.nPts<4)avisos.push("Use pelo menos 4 pontos de corte que representem a altura média do pasto.");
+  if(V.corte==="rente")avisos.push("Corte rente ao solo: a planilha considera só 50% da massa colhida como disponível para o animal.");
+  return `<div class="metrics">${k("Massa de forragem verde",csF(R.mv),"kg de MV/ha")}${k("Matéria seca",csF(R.ms,1)+(R.ms!=null?"%":""),"")}${k("Massa de forragem seca",csF(R.mss),"kg de MS/ha")}${k("Taxa de lotação",csF(R.taxa,2),"animais/ha · "+csF(R.ua,2)+" UA/ha")}</div>
+   <div class="cs-out"><div class="cs-big"><span class="meta">Capacidade da área em ${csF(R.dias)} dias</span><strong>${csF(R.total)} animais</strong><span class="meta">de ${csF(R.pv)} kg em ${csF(R.area,1)} ha</span></div>
+    ${R.lote>0?`<div class="cs-big"><span class="meta">Com o lote de ${csF(R.lote)} animais</span><strong>${csF(R.diasLote,1)} dias</strong><span class="meta">de pastejo na área</span></div>`:`<div class="cs-big cs-vazio"><span class="meta">Já tem um lote definido?</span><span>Informe o número de animais para ver quantos dias a área suporta.</span></div>`}</div>
+   <div class="cs-conf"><strong>Manejo de ${esc(fo.n)}:</strong> entrada a ${hE}, saída a ${hS}. ${conf}</div>
+   ${avisos.length?`<ul class="cond cs-av">${avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>`:""}
+   <div class="acoes"><button class="btn sec" data-a="cs-copiar">Copiar resumo</button><button class="link" data-a="cs-limpar">Voltar ao exemplo</button></div>`;}
+function csResumoTxt(){const V=csEstado(),R=csCalc(V);return `Capacidade de suporte · ${R.fo.n}
+Área: ${csF(R.area,1)} ha · ocupação: ${csF(R.dias)} dias · altura: ${csF(R.alt)} cm (meta de entrada: ${R.alvo[0]===R.alvo[1]?R.alvo[0]:R.alvo[0]+" a "+R.alvo[1]} cm)
+Massa verde: ${csF(R.mv)} kg/ha · MS: ${csF(R.ms,1)}% · massa seca: ${csF(R.mss)} kg de MS/ha
+Lotação: ${csF(R.taxa,2)} animais/ha (${csF(R.ua,2)} UA/ha) · capacidade: ${csF(R.total)} animais de ${csF(R.pv)} kg (${CS_CAT[+V.cat]||""})${R.lote>0?`
+Lote de ${csF(R.lote)} animais: ${csF(R.diasLote,1)} dias de pastejo`:""}
+Portal Conecta Barenbrug`;}
+function vCapSup(){const V=csEstado();const inp=(k,l,u,ex)=>`<div><label for="cs_${k}">${l}</label><div class="cs-in"><input id="cs_${k}" inputmode="decimal" value="${esc(V[k]||"")}" data-cs="${k}">${u?`<span>${u}</span>`:""}</div>${ex?`<span class="meta">${ex}</span>`:""}</div>`;
+  const pts=(V.pts||[]).map((p,i)=>`<div class="cs-in"><span class="meta" style="min-width:56px">Ponto ${i+1}</span><input inputmode="decimal" value="${esc(p)}" data-cs-pt="${i}" aria-label="Massa verde do ponto ${i+1}"><span>kg</span></div>`).join("");
+  const pes=(V.pesagens||[]).map((p,i)=>`<div class="cs-in"><span class="meta" style="min-width:110px">${i===0?"Após 3 min":i===1?"Após +2 min":i===2?"Após +1 min":"Após +30 s"}</span><input inputmode="decimal" value="${esc(p)}" data-cs-pes="${i}" aria-label="Pesagem ${i+1}"><span>g</span></div>`).join("");
+  return `<div><h1 class="titulo">Capacidade de suporte da pastagem</h1><p class="sub">Quantos animais o piquete aguenta no período de ocupação, ou quantos dias ele aguenta o lote que o produtor já tem. Para lotação rotacionada, a partir da massa de forragem medida no campo.</p></div>
+  <section class="bloco cs-passos"><h2 class="sec">Como medir no campo</h2><ol class="rb-fluxo">
+   <li><strong>Altura</strong><span>Na entrada dos animais, faça cerca de 50 leituras de altura para cada 5 ha e use a média.</span></li>
+   <li><strong>Massa verde</strong><span>Corte a forragem dentro de um quadro de cerca de 1 m², em pelo menos 4 pontos que representem a altura média, e pese cada um.</span></li>
+   <li><strong>Forma de corte</strong><span>Acima do resíduo (na altura de saída) conta 100% da massa; rente ao solo, só 50%.</span></li>
+   <li><strong>Matéria seca</strong><span>Seque cerca de 100 g da forragem picada no micro-ondas e pese até o peso parar de cair.</span></li>
+   <li><strong>Animais</strong><span>Informe o peso vivo médio e, se já tiver um lote, o número de animais.</span></li></ol></section>
+  <div class="cs-grid"><div class="cs-form">
+   <section class="bloco"><h2 class="sec">1. A área e o manejo</h2><div class="dupla">${inp("area","Tamanho da área","ha")}${inp("dias","Período de ocupação","dias","Recomendado: até 10 dias")}</div>
+    <div><label for="cs_forr">Forrageira</label><select id="cs_forr" data-cs="forr">${CS_FORR.map(f=>`<option value="${f.k}" ${V.forr===f.k?"selected":""}>${esc(f.n)}</option>`).join("")}</select><span class="meta">Sistema: lotação rotacionada.</span></div></section>
+   <section class="bloco"><h2 class="sec">2. Altura e massa de forragem</h2><div class="dupla">${inp("alt","Altura média do pasto","cm")}${inp("quadro","Tamanho do quadro","m²")}</div>
+    <div><label for="cs_corte">Como a forragem foi cortada</label><select id="cs_corte" data-cs="corte"><option value="acima" ${V.corte==="acima"?"selected":""}>Acima do resíduo (na altura de saída)</option><option value="rente" ${V.corte==="rente"?"selected":""}>Rente ao solo</option></select></div>
+    <label style="margin-top:8px">Massa verde de cada ponto</label><div class="cs-lista">${pts}</div><div class="acoes" style="margin:4px 0 0"><button class="link" data-a="cs-pt" data-v="1">+ ponto</button>${(V.pts||[]).length>1?`<button class="link" data-a="cs-pt" data-v="-1">− ponto</button>`:""}</div></section>
+   <section class="bloco"><h2 class="sec">3. Matéria seca (% MS)</h2><div class="filtros" role="group" aria-label="Como informar a MS"><button class="chip" data-a="cs-ms" data-v="micro" aria-pressed="${V.msModo!=="direto"}">Medir no micro-ondas</button><button class="chip" data-a="cs-ms" data-v="direto" aria-pressed="${V.msModo==="direto"}">Já sei a % de MS</button></div>
+    ${V.msModo==="direto"?inp("msDir","Matéria seca","%"):`<div class="dupla">${inp("tara","Peso do recipiente (tara)","g")}${inp("total","Recipiente + forragem fresca","g","Use cerca de 100 g de forragem")}</div>
+    <label style="margin-top:8px">Pesagens depois de cada secagem (recipiente + forragem)</label><div class="cs-lista">${pes}</div><div class="acoes" style="margin:4px 0 0"><button class="link" data-a="cs-pes" data-v="1">+ pesagem</button>${(V.pesagens||[]).length>1?`<button class="link" data-a="cs-pes" data-v="-1">− pesagem</button>`:""}</div>
+    <details class="ps-met"><summary>Passo a passo do micro-ondas</summary><ol class="rent-ol"><li>Pese o recipiente vazio (tara) e coloque cerca de 100 g da forragem picada.</li><li>Ponha um copo com dois terços de água no fundo do micro-ondas, para a forragem não queimar.</li><li>Aqueça 3 minutos na potência máxima, deixe esfriar 1 minuto e pese.</li><li>Misture e repita com 2 minutos, depois 1 minuto, depois 30 segundos, sempre esfriando e pesando.</li><li>Pare quando o peso não cair mais (três pesagens iguais). O último peso é o peso final.</li></ol><p class="meta">Método do micro-ondas da Embrapa Gado de Leite. O tempo varia com a potência do forno e a umidade da forragem.</p></details>`}</section>
+   <section class="bloco"><h2 class="sec">4. Os animais</h2><div><label for="cs_cat">Categoria</label><select id="cs_cat" data-cs="cat">${CS_CAT.map((c,i)=>`<option value="${i}" ${+V.cat===i?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="dupla">${inp("pv","Peso vivo médio","kg")}${inp("lote","Número de animais do lote (opcional)","animais","Preencha para saber quantos dias a área aguenta")}</div></section></div>
+  <div class="cs-res-w"><section class="bloco cs-res"><h2 class="sec">Resultado</h2><div id="cs-res">${csResHTML()}</div></section></div></div>
+  <section class="bloco"><details class="ps-met" open><summary><strong>Memória de cálculo e premissas</strong></summary><ul class="cond">
+   <li><strong>Massa verde (kg/ha)</strong> = média dos pontos (kg) ÷ área do quadro (m²) × 10.000. Com corte rente ao solo, multiplica por 0,5.</li>
+   <li><strong>Matéria seca (%)</strong> = (peso final − tara) ÷ (peso inicial − tara) × 100.</li>
+   <li><strong>Massa seca (kg de MS/ha)</strong> = massa verde × % MS.</li>
+   <li><strong>Taxa de lotação (animais/ha)</strong> = massa seca ÷ (peso vivo × 0,066 × dias de ocupação). O 0,066 é a premissa da planilha: oferta diária de 6,6 kg de MS para cada 100 kg de peso vivo, o que cobre o consumo do animal e a forragem que fica no resíduo ou se perde no pastejo.</li>
+   <li><strong>UA/ha</strong> = animais/ha × peso vivo ÷ 450.</li>
+   <li><strong>Capacidade da área</strong> = animais/ha × área. <strong>Dias com o lote</strong> = (massa seca × área) ÷ (animais × peso vivo × 0,066).</li>
+   <li><strong>Alturas de manejo:</strong> Sabiá, Cayana e Carcará pelas bases de conhecimento oficiais da Barenbrug; as demais forrageiras pela planilha de referência. A meta aceita 10% de folga em torno da altura de entrada.</li></ul>
+   <p class="meta">Ferramenta adaptada da planilha de cálculo da capacidade de suporte em lotação intermitente. A capacidade vale para o momento da medição: repita a amostragem a cada ciclo de pastejo.</p></details></section>`;}
+
 function subnavAcademia(){
   const G=[["Aprender",[["trilha","Cursos"],["manejo","Guia de manejo"],["base","Base de conhecimento"],["faq","Perguntas e respostas"]]],
-    ["Vender",[["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],veCalcRent()&&["calc","Calculadora de rentabilidade"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]]],
+    ["Vender",[["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]]],
+    ["Ferramentas de campo",[["suporte","Capacidade de suporte"],veCalcRent()&&["calc","Calculadora de rentabilidade"]]],
     ["Seu progresso",S.rankOff?[]:[["ranking","Ranking"]]]];
   return navGrupos(G,"Academia de Híbridos",k=>S.pag===k||(k==="trilha"&&S.pag==="etapa"));
 }
@@ -3730,6 +3826,10 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   if(r.error||!r.data){aviso("Não foi possível salvar: "+((r.error&&r.error.message)||""));return;}
   S.cand=(S.cand||[]).filter(x=>x.id!==r.data.id);S.cand.unshift(r.data);S.candEd=undefined;S.candF=null;render();aviso("Avaliação salva.");});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.psq)return;(S.psQ||(S.psQ={}))[t.dataset.psq]=+t.value;const w=window.scrollY;render();window.scrollTo(0,w);});
+function csInput(ev){const t=ev.target;if(!t||!t.closest)return;const V=S.cs;if(!V)return;let ok=false;
+  if(t.dataset.cs){V[t.dataset.cs]=t.value;ok=true;}else if(t.dataset.csPt!=null){V.pts[+t.dataset.csPt]=t.value;ok=true;}else if(t.dataset.csPes!=null){V.pesagens[+t.dataset.csPes]=t.value;ok=true;}
+  if(!ok)return;csSalvar();const r=document.getElementById("cs-res");if(r)r.innerHTML=csResHTML();}
+document.addEventListener("input",csInput);document.addEventListener("change",csInput);
 let _tmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="tm_q")return;S.pbQ=t.value;clearTimeout(_tmT);_tmT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("tm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
@@ -10459,7 +10559,7 @@ function rodapeMkt(){
 }
 function render(){renderApp();tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
@@ -10562,9 +10662,9 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar,posicionar:vPosicionar,objecoes:vObjecoes}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar,posicionar:vPosicionar,objecoes:vObjecoes,suporte:vCapSup}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"||S.pag==="posicionar"||S.pag==="objecoes"?' class="largo"':""}><div class="aviso-est ac-rev" role="note"><strong>Em revisão técnica</strong><p>Os conteúdos da Academia de Híbridos estão em fase final de revisão técnica pelo time técnico da Barenbrug.</p></div>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"||S.pag==="posicionar"||S.pag==="objecoes"||S.pag==="suporte"?' class="largo"':""}><div class="aviso-est ac-rev" role="note"><strong>Em revisão técnica</strong><p>Os conteúdos da Academia de Híbridos estão em fase final de revisão técnica pelo time técnico da Barenbrug.</p></div>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
@@ -10804,6 +10904,10 @@ document.addEventListener("click",async ev=>{
   if(a==="cand-ed"){S.candEd=+v;S.candF=null;render();window.scrollTo(0,0);return;}
   if(a==="cand-cancela"){S.candEd=undefined;S.candF=null;render();return;}
   if(a==="cand-et"){S.candEt=v;render();return;}
+  if(a==="cs-pt"||a==="cs-pes"){const V=csEstado(),k=a==="cs-pt"?"pts":"pesagens";const L=V[k]=V[k]||[];if(v==="1")L.push(L.length?L[L.length-1]:"");else if(L.length>1)L.pop();csSalvar();render();return;}
+  if(a==="cs-ms"){csEstado().msModo=v;csSalvar();render();return;}
+  if(a==="cs-limpar"){S.cs=JSON.parse(JSON.stringify(CS_PAD));csSalvar();render();return;}
+  if(a==="cs-copiar"){const t=csResumoTxt();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso("Resumo copiado")).catch(()=>aviso("Não foi possível copiar"));return;}
   if(a==="ps-sis"){S.psSis=v;render();return;}
   if(a==="psq-limpa"){S.psQ={};render();return;}
   if(a==="ps-per"){S.psPer=v;render();return;}
