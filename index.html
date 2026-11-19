@@ -1552,7 +1552,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119142804";
+const APP_VER="20261119143148";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8012,8 +8012,34 @@ function vIntContas(){
   <section class="bloco"><details class="ps-met"><summary><strong>Como esta lista foi montada</strong></summary><ul class="cond"><li>Pesquisa em reportagens e relatórios públicos de 2021 a 2026 (AgFeed, Bloomberg Línea, Forbes, Canal Rural, PwC, The AgriBiz, Repórter Brasil e o ranking de confinadores da DBO). Cada conta traz a fonte e a data do dado.</li><li>Prioridade A: rebanho ou área de pasto grande e sistema que depende de pasto de alta qualidade (ILP, TIP, ciclo completo). B: escala grande com menos sinal de reforma ou dados antigos. C: acesso indireto, risco de crédito ou de compliance.</li><li>Contatos ficam só no nível da empresa e do cargo. Telefones e e-mails pessoais entram só depois de um contato real, registrados por quem atendeu.</li><li>Rebanhos e áreas mudam rápido nesses grupos: confirme na primeira conversa e atualize aqui.</li></ul></details></section>`;}
 let _gcT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="gc_q")return;(S.gcF||(S.gcF={p:"Todas",st:"Todas"})).q=t.value;clearTimeout(_gcT);_gcT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("gc_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
 
+/* ===== Inteligência · B2C de híbridos por responsável comercial (ERP) ===== */
+async function carregarB2C(){if(S.b2cBusy)return;S.b2cBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","b2c_resp").maybeSingle();S.b2c=(data&&data.dados)||null;}catch(e){S.b2c=null;}S.b2cBusy=false;render();}
+function vIntB2C(){
+  if(S.b2c===undefined){carregarB2C();return `<div class="carregando">Carregando…</div>`;}
+  const D=S.b2c;if(!D)return `<div class="vazio">Sem dados.</div>`;
+  const SF=Object.keys(D.safras);const sf=S.b2cSf&&D.safras[S.b2cSf]?S.b2cSf:"25/26";const X=D.safras[sf];
+  const nf=v=>Math.round(v).toLocaleString("pt-BR"),pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
+  const nome=n=>n==="INSIDE SALES"?"Inside Sales":n.split(" ").map(w=>w.length>2?w[0]+w.slice(1).toLowerCase():w.toLowerCase()).join(" ");
+  const is=X.resp.find(r=>r[0]==="INSIDE SALES")||["INSIDE SALES",0,0,0];const max=Math.max(...X.resp.map(r=>r[1]));
+  const hist=SF.filter(s=>s!=="26/27*").map(s=>{const d=D.safras[s],i=d.resp.find(r=>r[0]==="INSIDE SALES")||[0,0,0,0];return [s,i[1]/d.kg,d.kg];});
+  return `<div><h1 class="titulo">B2C de híbridos por responsável comercial</h1><p class="sub">Quanto da venda direta ao produtor de Sabiá, Cayana e Carcará fica com cada responsável comercial no ERP, e qual o peso do Inside Sales.</p></div>
+  <div class="filtros" role="group" aria-label="Safra">${SF.map(s=>`<button class="chip" data-a="b2c-sf" data-v="${esc(s)}" aria-pressed="${s===sf}">${esc(s.replace("*"," parcial"))}</button>`).join("")}</div>
+  ${sf==="26/27*"?`<div class="aviso-est" style="margin-top:10px"><strong>Safra em andamento</strong>A extração do ERP vai só até ${new Date(X.ate+"T12:00").toLocaleDateString("pt-BR")}. Para a safra 26/27 completa, vale o painel do Inside Sales, que lê o CRM.</div>`:""}
+  <div class="dir-grid" style="margin-top:12px">
+    <div class="dir-card"><span class="meta">Inside Sales · volume B2C</span><strong style="display:block;font-size:28px;color:var(--azul)">${pc(is[1],X.kg)}</strong><span class="meta">${nf(is[1])} de ${nf(X.kg)} kg</span></div>
+    <div class="dir-card"><span class="meta">Inside Sales · faturamento B2C</span><strong style="display:block;font-size:28px;color:var(--azul)">${pc(is[2],X.rs)}</strong><span class="meta">R$ ${nf(is[2])} de R$ ${nf(X.rs)}</span></div>
+    <div class="dir-card"><span class="meta">Inside Sales · clientes B2C</span><strong style="display:block;font-size:28px;color:var(--azul)">${pc(is[3],X.cli)}</strong><span class="meta">${nf(is[3])} de ${nf(X.cli)} clientes</span></div>
+    ${X.tot_hib?`<div class="dir-card"><span class="meta">B2C no total de híbridos</span><strong style="display:block;font-size:28px">${pc(X.kg,X.tot_hib)}</strong><span class="meta">${nf(X.kg)} de ${nf(X.tot_hib)} kg (B2B + B2C)</span></div>`:""}</div>
+  <section class="bloco"><h2 class="sec">Por responsável · safra ${esc(sf.replace("*"," parcial"))}</h2><div class="tab-wrap"><table class="tab"><thead><tr><th>Responsável</th><th style="text-align:right">kg</th><th style="text-align:right">% kg</th><th style="text-align:right">R$</th><th style="text-align:right">% R$</th><th style="text-align:right">Clientes</th><th style="min-width:140px"></th></tr></thead><tbody>
+    ${X.resp.map(r=>`<tr${r[0]==="INSIDE SALES"?' style="font-weight:800"':""}><td>${esc(nome(r[0]))}</td><td style="text-align:right">${nf(r[1])}</td><td style="text-align:right">${pc(r[1],X.kg)}</td><td style="text-align:right">${nf(r[2])}</td><td style="text-align:right">${pc(r[2],X.rs)}</td><td style="text-align:right">${nf(r[3])}</td><td><span style="display:block;height:10px;border-radius:5px;background:${r[0]==="INSIDE SALES"?"var(--azul)":"#AEB8C0"};width:${max?Math.max(2,r[1]/max*100):0}%"></span></td></tr>`).join("")}
+    <tr><td><strong>Total B2C</strong></td><td style="text-align:right"><strong>${nf(X.kg)}</strong></td><td style="text-align:right">100%</td><td style="text-align:right"><strong>${nf(X.rs)}</strong></td><td style="text-align:right">100%</td><td style="text-align:right">${nf(X.cli)}</td><td></td></tr></tbody></table></div>
+    <p class="meta">Clientes por responsável podem se repetir: o mesmo cliente pode comprar com mais de um responsável na safra. O total de clientes não repete.</p></section>
+  <section class="bloco"><h2 class="sec">Inside Sales por cultivar · ${esc(sf.replace("*"," parcial"))}</h2><div class="dir-grid">${["Sabiá","Cayana","Carcará"].map(c=>`<div class="dir-card"><span class="meta">${c}</span><strong style="display:block;font-size:22px">${pc(X.cv_is[c]||0,X.cv[c]||0)}</strong><span class="meta">${nf(X.cv_is[c]||0)} de ${nf(X.cv[c]||0)} kg B2C</span></div>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Evolução do Inside Sales no B2C de híbridos</h2><div class="cs-bars" style="max-width:420px">${hist.map(([s,p,kg])=>`<div class="cs-b"><span class="cs-v">${(p*100).toLocaleString("pt-BR",{maximumFractionDigits:0})}%</span><i style="height:${Math.max(3,p*100*2.2)}%;background:var(--azul)"></i><span class="meta">${s}</span></div>`).join("")}</div><p class="meta">Participação em kg na venda direta ao produtor de cada safra completa.</p></section>
+  <section class="bloco"><details class="ps-met"><summary><strong>Como os números foram calculados</strong></summary><ul class="cond"><li>Fonte: ${esc(D.fonte)}.</li><li>B2C é a venda direta ao produtor (categoria Venda Direta no ERP). Revendas, cooperativas, exportação e key account ficam fora.</li><li>Só Sabiá, Cayana e Carcará. Mulato II e linhas experimentais ficam fora.</li><li>Volume e faturamento líquidos: vendas menos devoluções. Bonificações não contam.</li><li>Responsável é o campo Responsável de vendas do ERP, ou seja, quem fechou a venda, e não quem gerou o lead. Equipes já inativas aparecem somadas.</li><li>A safra vai de julho a junho, pela data de emissão da nota.</li></ul></details></section>`;}
+
 const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"],["int-metodo","Metodologia e fontes"]]],
-  ["Para quem",[["int-icp","ICPs e personas"],["int-contas","Grandes contas da pecuária"],["int-nps","NPS dos clientes diretos"]]],
+  ["Para quem",[["int-icp","ICPs e personas"],["int-contas","Grandes contas da pecuária"],["int-b2c","B2C por responsável"],["int-nps","NPS dos clientes diretos"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
@@ -8023,6 +8049,7 @@ const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
   "int-digital":["Como a mídia paga está rendendo e se o gasto cabe na verba digital da safra?","Ajustar verba, regiões e criativos das campanhas no Meta Ads e prestar contas do investimento digital."],
+  "int-b2c":["Quem vende o híbrido direto ao produtor, e qual o peso do Inside Sales nessa venda?","Dividir carteira e esforço entre Inside Sales e time de campo, e decidir onde o Inside Sales pode crescer em Cayana e Carcará."],
   "int-contas":["Quem são os grandes grupos pecuários e de ILP que a Barenbrug precisa acessar, e como chegar a eles?","Priorizar as contas, dividir quem aborda cada uma e acompanhar a situação de cada conversa."],
   "int-nps":["O que o cliente que compra direto da Barenbrug acha da empresa, e o que faz ele recomendar ou não?","Priorizar pós-venda e suporte técnico, recuperar detratores, criar um programa de indicação e medir a evolução na próxima pesquisa."],
   "int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
@@ -8601,13 +8628,14 @@ function vTMProj(){
 /* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
 const TM_FUNC=[
  {nome:"Mayane Costa",cargo:"Analista de Vendas Internas e Marketing",resp:"Felipe Piccoli",
-  cob:"De 20/11/2026 a julho de 2027, as atribuições de Vendas Internas ficam com Laura Alteia Costa, sob supervisão do Felipe.",
-  resumo:"Elo estratégico entre o Inside Sales, os canais do Programa Conecta e o Marketing. Responde pelo desempenho das vendas digitais, acompanha as assessoras de vendas digitais, conduz a pesquisa de satisfação (NPS) e apoia ações de marketing que reforçam a marca junto a clientes e parceiros.",
-  blocos:[["Vendas internas",["Assegurar a meta de faturamento definida pela liderança da área.","Desenvolver, otimizar e ajustar as integrações de RD Conversas, RD Station Marketing, RD Station CRM e ERP Mega, além de novos softwares que forem implantados.","Dar suporte técnico, comercial e operacional às assessoras.","Estruturar e ministrar treinamentos de CRM, RD Conversas, processo de vendas digitais e produtos Barenbrug.","Manter as assessoras ativas e capacitadas, seguindo o planejamento da área.","Conduzir contratação, onboarding e capacitação das assessoras, quando necessário.","Monitorar desempenho e engajamento individual e do time."]],
-   ["Canais Yellow Master (Programa Conecta)",["Gerir o repasse de leads aos canais Yellow Master, conforme as regras do Conecta.","Conduzir reuniões mensais com os responsáveis operacionais dos canais.","Elaborar relatórios mensais de desempenho e conversão dos leads."]],
-   ["Pesquisa de satisfação (NPS)",["Executar a pesquisa NPS da Barenbrug do Brasil.","Entrevistar produtores e consolidar os dados.","Entregar relatórios mensais com análises e recomendações para a liderança."]],
-   ["Comunicação e marketing operacional",["Produzir o quadro No Campo com Inovação, conforme o planejamento.","Integrar Marketing, Canais e Inside Sales para dar visibilidade à marca e gerar demanda.","Organizar eventos internos e externos de pequeno, médio e grande porte.","Apoiar ações de marketing e comunicação."]]],
-  comp:["Vendas digitais e suporte comercial","CRM, funil de vendas e atendimento remoto","Office, CRM e automação de marketing","Relacionamento e comunicação","Orientação para resultados e visão integrada entre comercial e marketing"]},
+  cob:"De 20/11/2026 a julho de 2027, a supervisão do Inside Sales e o suporte aos RCs ficam com Laura Alteia Costa, sob supervisão do Felipe.",
+  resumo:"Supervisiona a operação diária do Inside Sales e dá o suporte operacional dos pedidos às assessoras de vendas digitais e aos RCs de campo que passaram a ser responsabilidade do Inside Sales na safra 26/27. Funciona como um comercial dentro do Marketing.",
+  nota:"A função foi ajustada ao longo do tempo. Campanhas, prospecção ativa e as demais ações de marketing previstas na contratação ficaram com o Marketing; hoje ela responde pelo que está no RACI do time.",
+  blocos:[["Supervisão diária do Inside Sales",["Contato diário com assessoras e RCs: fluxo de pedidos, volume de negociações e demandas do dia.","Reunião diária operacional e de pipeline com todo o time.","Checagem diária da qualidade do atendimento no funil, com correção na hora, durante a negociação.","Apoio às dúvidas das assessoras e interface dos pedidos e negociações."]],
+   ["Suporte aos RCs de campo",["Suporte operacional diário aos pedidos dos RCs que passaram ao Inside Sales na safra 26/27, como Leite e Tobias (Berrante) e Crop Agrícola.","Logística e operação dos pedidos desses canais; o contato com a gerência comercial do canal é do Felipe, junto com o RC."]],
+   ["Pedidos, comissões e ferramentas",["Do pedido à entrega: logística, pagamento, liberação de crédito e pós-venda de todos os pedidos. O Felipe entra nos casos críticos.","Prepara os casos de condição, desconto e exceção para a aprovação do Felipe.","Primeira validação do relatório de comissões, antes da validação final do Felipe.","Dona do RD Station Conversas: filas, carteiras e relatórios de tempo de resposta."]],
+   ["Time e capacitação",["Treinamento contínuo de assessoras e RCs em produto, atendimento, CRM e processo de venda.","Acompanhamento do trabalho do time e onboarding de novas pessoas.","Participa do acompanhamento semanal, do funil de MQL a SQL e do fechamento mensal, que são conduzidos pelo Felipe."]]],
+  comp:["Operação de vendas digitais","Pedidos, logística e pós-venda","CRM e RD Conversas","Treinamento e acompanhamento do time","Interface com Financeiro e logística"]},
  {nome:"Thaís Mendonça",cargo:"Analista de Marketing Tático",resp:"Felipe Piccoli",desde:"16/11/2026",
   resumo:"Planeja, executa e acompanha o trade marketing com os canais parceiros, com foco na operação do Programa Conecta Revendas, na consistência de marca, no uso eficiente das verbas e no resultado de sell-in, sell-out e aceleração dos híbridos. Atua junto a Comercial, Inside Sales e Marketing e operacionaliza o calendário de treinamentos e comunicações com os canais.",
   blocos:[["Programa Conecta Revendas",["Operar o programa: cadastros, contratos, fluxos de aprovação, comprovações e pagamentos de IGDB.","Conduzir com canais e RTVs a elaboração e a aprovação dos Planos de Geração de Demanda.","Garantir que todo canal ativo tenha contrato assinado e PGD aprovado no prazo de cada safra.","Assegurar o uso correto da verba de IGDB e antecipar o risco de perda de verba pelos canais.","Cumprir os calendários de comprovação e pagamento trimestral do IGDB e do bônus de performance."]],
@@ -8619,7 +8647,7 @@ const TM_FUNC=[
 function vTMFuncoes(){
   return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Time e funções</h1><p class="sub">Quem faz o quê no Marketing: as funções de quem responde ao Felipe Piccoli, supervisor de Marketing. Use para saber a quem levar cada assunto.</p></div>
   <div class="tf-grid">${TM_FUNC.map(p=>`<section class="bloco tf-card"><div class="tf-cab"><span class="tf-av" aria-hidden="true">${esc(p.nome.split(" ").map(x=>x[0]).slice(0,2).join(""))}</span><div><h2 class="sec" style="margin:0">${esc(p.nome)}</h2><span class="meta">${esc(p.cargo)} · responde a ${esc(p.resp)}${p.desde?" · desde "+esc(p.desde):""}</span></div></div>
-    <p>${esc(p.resumo)}</p>${p.cob?`<div class="aviso-est"><strong>Cobertura</strong>${esc(p.cob)}</div>`:""}
+    <p>${esc(p.resumo)}</p>${p.nota?`<p class="meta" style="margin:0 0 8px">${esc(p.nota)}</p>`:""}${p.cob?`<div class="aviso-est"><strong>Cobertura</strong>${esc(p.cob)}</div>`:""}
     ${p.blocos.map(([t,L])=>`<h3 class="tf-h">${esc(t)}</h3><ul class="tf-ul">${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`).join("")}
     <h3 class="tf-h">Competências</h3><div class="tf-chips">${p.comp.map(c=>`<span class="chip">${esc(c)}</span>`).join("")}</div></section>`).join("")}</div>`;}
 
@@ -11496,6 +11524,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       if(S.pag==="int-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+      if(S.pag==="int-b2c"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntB2C()}</main>`;return;}
       if(S.pag==="int-contas"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntContas()}</main>`;return;}
       if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
@@ -11708,6 +11737,7 @@ document.addEventListener("click",async ev=>{
   if(a==="pj-bdel"){pjColeta();S.pjEd.dados.blocos.splice(+v,1);render();return;}
   if(a==="pj-del"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}const {error}=await sb.from("mkt_projetos").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}S.pjEd=null;S.pjSel=null;S.pj=undefined;render();return;}
   if(a==="lang-prev"){S.langPrev=!S.langPrev;if(S.langPrev&&!["academia","enxoval"].includes(S.secao)){S.secao="academia";S.pag="trilha";}render();window.scrollTo(0,0);return;}
+  if(a==="b2c-sf"){S.b2cSf=v;render();return;}
   if(a==="gc-sel"){S.gcSel=S.gcSel===+v?null:+v;render();const e=document.getElementById("gc-"+v);if(e&&S.gcSel)e.scrollIntoView({behavior:"smooth",block:"nearest"});return;}
   if(a==="gc-f"){const [k,x]=v.split("|");S.gcF[k]=x;render();return;}
   if(a==="gc-novo"){S.gcEd={prioridade:"B",status:"A abordar"};render();return;}
