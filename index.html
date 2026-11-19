@@ -902,6 +902,11 @@ main.largo{max-width:1120px}
 .ps-f{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.ps-fl{border:0;cursor:pointer;display:inline-block;min-width:20px;padding:0 6px;border-radius:9px;background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;font-weight:700;line-height:18px;text-align:center;text-decoration:none}.ps-nao{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,.07);box-shadow:inset 3px 0 0 #c0392b;font-size:14px}.ps-frase{margin:10px 0 0;font-style:italic;color:var(--azul-escuro)}.ps-fontes li{margin:4px 0}.ps-on{background:var(--amarelo);border-radius:4px}
 .ac-rev{margin:0 0 14px}
 .met-st{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.met-ok{background:#e3f4ea;color:#1e6b3e}.met-at{background:#fdecea;color:#a33426}.met-sem{background:var(--azul-claro);color:var(--azul-escuro)}
+.jr-mapa{display:grid;gap:14px}.jr-centro{justify-self:center;text-align:center;background:var(--amarelo);border-radius:14px;padding:12px 22px;display:flex;flex-direction:column}.jr-centro span{font-size:13px}
+.jr-ramos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:10px;position:relative}.jr-ramo{border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:12px;background:var(--branco,#fff);position:relative}
+.jr-no{display:flex;gap:8px;align-items:center}.jr-num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--azul-escuro);color:#fff;font-weight:800;font-size:13px;flex:0 0 auto}
+.jr-donos{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 4px}.jr-pap{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap}.jr-ramo ul{margin:4px 0 0;padding-left:18px;font-size:14px}
+.jr-score{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:2;background:var(--azul-claro);border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.jr-nota{flex-direction:row;flex-wrap:wrap}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1473,7 +1478,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119071119";
+const APP_VER="20261119075100";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3656,6 +3661,20 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.icpov||!ehAdmin())return;const n=t.dataset.icpov,v=t.value;const {data,error}=await sb.from("cliente_icp").upsert({nome_erp:n,icp:v,atualizado_em:new Date().toISOString()},{onConflict:"nome_erp"}).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o perfil.");return;}S.icpOv=S.icpOv||{};S.icpOv[n]=data;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Perfil do canal atualizado.");});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.vitf)return;(S.vitF||(S.vitF={}))[t.dataset.vitf]=t.value;render();});
 let _cobT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="cob_cq")return;S.cobCq=t.value;clearTimeout(_cobT);_cobT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("cob_cq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
+  if(t.dataset.cand){const F=S.candF||(S.candF={respostas:{},avaliacao:{},formacao:""});const k=t.dataset.cand;
+    if(k==="f")F.formacao=t.value;else if(k.startsWith("r:"))F.respostas[k.slice(2)]=+t.value;else if(k.startsWith("a:"))F.avaliacao[k.slice(2)]=+t.value;
+    const keep={};["cd_n","cd_o","cd_c","cd_u","cd_t","cd_obs"].forEach(id=>{const e=document.getElementById(id);if(e)keep[id]=e.value;});const w=window.scrollY;render();
+    Object.entries(keep).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v;});window.scrollTo(0,w);return;}
+  if(t.dataset.candEt){const id=+t.dataset.candEt;const {error}=await sb.from("rc_candidatos").update({etapa:t.value}).eq("id",id);if(error){aviso("Não foi possível mudar a etapa.");return;}const x=(S.cand||[]).find(q=>q.id===id);if(x)x.etapa=t.value;render();aviso("Etapa atualizada.");}});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-cand")return;ev.preventDefault();ev.stopImmediatePropagation();
+  const g=id=>((f.querySelector("#"+id)||{}).value||"").trim();const F=S.candF||{respostas:{},avaliacao:{},formacao:""};
+  const row={nome:g("cd_n"),origem:g("cd_o")||null,cidade:g("cd_c")||null,uf:(g("cd_u")||"").toUpperCase()||null,contato:g("cd_t")||null,obs:g("cd_obs")||null,respostas:F.respostas,avaliacao:F.avaliacao,formacao:F.formacao||null};
+  if(row.nome.length<2){aviso("Informe o nome do candidato.");return;}if(row.uf&&row.uf.length!==2){aviso("UF com 2 letras.");return;}
+  const b=f.querySelector("button[type=submit]");b.disabled=true;const id=+f.dataset.id||0;
+  const r=id?await sb.from("rc_candidatos").update(row).eq("id",id).select().maybeSingle():await sb.from("rc_candidatos").insert(row).select().maybeSingle();b.disabled=false;
+  if(r.error||!r.data){aviso("Não foi possível salvar: "+((r.error&&r.error.message)||""));return;}
+  S.cand=(S.cand||[]).filter(x=>x.id!==r.data.id);S.cand.unshift(r.data);S.candEd=undefined;S.candF=null;render();aviso("Avaliação salva.");});
 let _tmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="tm_q")return;S.pbQ=t.value;clearTimeout(_tmT);_tmT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("tm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
@@ -4591,13 +4610,92 @@ const vePainelRC=()=>ehAdmin()||temPerfil("RC")||temPerfil("Assessor de Vendas D
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 /* ===== Crédito do pedido: resumo da Política de Crédito para o RC (a política completa fica com o Financeiro) ===== */
+/* ===== Conecta RC · Jornada do novo RC: atração, entrevista com scorecard, contrato, onboarding no portal, liberação e acompanhamento ===== */
 const veGuiaRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
+const JR_PAP={mkt:["Marketing","#FFDB00","#1E1E1E"],com:["Responsável comercial","#00A8E2","#fff"],cs:["Customer Service","#34B233","#fff"],rc:["RC","#1E1E1E","#fff"]};
+const JR_ET=[
+ {n:"Atração",d:["mkt","com"],b:["Marketing: campanhas nas redes sociais, anúncios e página de interesse","Comercial: prospecção ativa de representantes na região","Mirar no perfil ideal (veja Perfil ideal e scorecard)"],raci:{mkt:"R · A",com:"R",cs:"",rc:""}},
+ {n:"Entrevista e scorecard",d:["com"],b:["O responsável comercial faz a primeira entrevista","Preenche o scorecard do perfil ideal no portal","Decide se segue: 80+ perfil ideal; 65 a 79 com plano; abaixo, só com justificativa"],raci:{mkt:"C",com:"R · A",cs:"",rc:"C"}},
+ {n:"Contrato",d:["cs","com"],b:["Empresa aberta (ME ou EPP) e registro no CORE","Ficha cadastral e documentos para o comercial, com a Sabrina em cópia","A Sabrina confere e envia o contrato pela Clicksign"],raci:{mkt:"I",com:"R",cs:"R · A",rc:"R"}},
+ {n:"Onboarding no Portal Conecta",d:["mkt","rc"],b:["Marketing libera o acesso e apresenta os recursos do portal","No primeiro acesso, o RC responde o perfil do representante","Cursos obrigatórios: Academia de Híbridos (Sabiá, Cayana, Carcará) e Conecta RC"],raci:{mkt:"R · A",com:"I",cs:"I",rc:"R"}},
+ {n:"Liberação para vender",d:["mkt","com"],b:["Marketing devolve o RC ao responsável comercial com os pontos de aderência","Cursos aprovados e notas, perfil enviado, uso do portal","O comercial confirma: pronto para vender"],raci:{mkt:"R",com:"A",cs:"",rc:"I"}},
+ {n:"Acompanhamento",d:["com","mkt"],b:["Comercial: acompanhamento direto, rotina de campo e metas","Marketing: portal e CRM, com prospecções, vendas e engajamento","RC: registra as negociações no CRM e usa o portal"],raci:{mkt:"R",com:"R · A",cs:"",rc:"R"}}];
+const JR_ETAPA={entrevista:"Entrevistado",contrato:"Contrato em andamento",onboarding:"Onboarding no portal",pronto:"Pronto para vender",ativo:"Ativo",nao_seguiu:"Não seguiu"};
+const JR_ORIG={campanha:"Campanha do Marketing",prospeccao:"Prospecção ativa do comercial",indicacao:"Indicação",outro:"Outro"};
+const JR_HIB=["sabia","cayana","carcara"];
+const JR_FORM=["Agronomia, zootecnia ou veterinária","Técnico agrícola ou agropecuário","Outra formação"];
+const jrPap=k=>{const p=JR_PAP[k];return `<span class="jr-pap" style="background:${p[1]};color:${p[2]}">${esc(p[0])}</span>`;};
+function carregarCand(){if(S.candBusy)return;S.candBusy=true;(async()=>{try{const {data}=await sb.from("rc_candidatos").select("*").order("atualizado_em",{ascending:false});S.cand=data||[];}catch(e){S.cand=[];}S.candBusy=false;render();})();}
+function carregarPront(){if(S.prBusy)return;S.prBusy=true;(async()=>{try{const {data}=await sb.rpc("rc_prontidao");S.pront=Array.isArray(data)?data:[];}catch(e){S.pront=[];}S.prBusy=false;render();})();}
+function jrScoreForm(F){const fm=F.formacao;return pirScore(F.respostas||{},F.avaliacao||{},fm===JR_FORM[0]?"agronomia":fm===JR_FORM[1]?"técnico":fm?"outra":"");}
+function jrFaixa(s){if(!s||s.pct==null)return `<span class="meta">sem nota</span>`;const c={verde:"#1e6b3e",azul:"#00548a",amarelo:"#8a6d00",vermelho:"#a33426"}[s.faixa[1]];return `<strong style="color:${c}">${s.pct}</strong> <span class="meta">${esc(s.faixa[0])}</span>`;}
+function jrMapa(){
+  return `<div class="jr-mapa" role="img" aria-label="Mapa da jornada do novo RC em seis etapas">
+    <div class="jr-centro"><strong>Novo RC no Conecta</strong><span>do primeiro contato à venda</span></div>
+    <div class="jr-ramos">${JR_ET.map((e,i)=>`<div class="jr-ramo"><div class="jr-no"><span class="jr-num">${i+1}</span><strong>${esc(e.n)}</strong></div><div class="jr-donos">${e.d.map(jrPap).join("")}</div><ul>${e.b.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</div></div>`;}
+function jrRaci(){const L={"R":"faz","A":"aprova e responde pelo resultado","C":"é consultado","I":"é informado"};
+  return `<div class="tab"><table class="sim-t"><thead><tr><th>Etapa</th>${Object.keys(JR_PAP).map(k=>`<th>${jrPap(k)}</th>`).join("")}</tr></thead><tbody>${JR_ET.map(e=>`<tr><td><strong>${esc(e.n)}</strong></td>${Object.keys(JR_PAP).map(k=>`<td style="text-align:center"><strong>${esc(e.raci[k]||"—")}</strong></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+  <p class="meta" style="margin:6px 0 0">${Object.entries(L).map(([k,t])=>`<strong>${k}</strong> ${t}`).join(" · ")}. Contrato de representação renovado todo ano, até 30 de agosto.</p>`;}
+function jrScorecard(){
+  const lin=[...PIR_Q.filter(q=>q.p).map(q=>[q.b,q.c,q.p,q.l,q.o.filter(o=>o[2]).map(o=>o[2])]),["Técnico","Formação",5,"Agronomia, zootecnia ou veterinária pontuam mais; técnico agrícola, em seguida.",[]],...PIR_AV.map(a=>["Comportamental",a.c,a.p,"Avaliado pelo responsável comercial na entrevista, de 1 a 5.",[]])];
+  const alertas=[...new Set(PIR_Q.flatMap(q=>q.o.filter(o=>o[2]).map(o=>o[2])))];
+  return `<div class="dir-grid">
+    <div class="dir-card"><strong>Perfil ideal em uma frase</strong><p>Profissional à frente do próprio negócio, com experiência em venda técnica para o campo, acesso direto ao dono da fazenda, carteira ativa grande, disciplina para registrar tudo no CRM e seguir a política comercial, e imagem forte na região.</p></div>
+    <div class="dir-card"><strong>Faixas do scorecard (100 pontos)</strong><ul class="cond" style="margin:6px 0 0"><li><strong>80 ou mais:</strong> perfil ideal</li><li><strong>65 a 79:</strong> bom, com plano de desenvolvimento</li><li><strong>50 a 64:</strong> acompanhar de perto</li><li><strong>Abaixo de 50:</strong> risco</li></ul></div>
+    <div class="dir-card"><strong>Sinais de alerta</strong><ul class="cond" style="margin:6px 0 0">${alertas.map(a=>`<li>${esc(a)}</li>`).join("")}</ul></div></div>
+    <details style="margin-top:8px"><summary>Critérios e pesos do scorecard</summary><div class="tab"><table class="sim-t"><thead><tr><th>Bloco</th><th>Critério</th><th class="val">Peso</th><th>O que olhar</th></tr></thead><tbody>${lin.map(r=>`<tr><td>${esc(r[0])}</td><td><strong>${esc(r[1])}</strong></td><td class="val">${r[2]}</td><td style="white-space:normal;min-width:240px">${esc(r[3])}</td></tr>`).join("")}</tbody></table></div>
+    <p class="meta">Scorecard do Perfil Ideal de Representante (PIR), da consultoria. As perguntas de estrutura, equipe, fôlego para começar e portfólio não pesam na nota, mas podem gerar alerta.</p></details>`;}
+function jrFormCand(c){c=c||{};const F=S.candF||(S.candF={respostas:{...(c.respostas||{})},avaliacao:{...(c.avaliacao||{})},formacao:c.formacao||""});const s=jrScoreForm(F);
+  const v=k=>esc(c[k]||"");
+  return `<form class="form-card" id="f-cand" data-id="${c.id||""}"><h3 class="sec">${c.id?"Editar avaliação":"Avaliar candidato"}</h3>
+    <div class="dupla"><div><label for="cd_n">Nome *</label><input id="cd_n" required maxlength="120" value="${v("nome")}"></div><div><label for="cd_o">Como chegou</label><select id="cd_o">${Object.entries(JR_ORIG).map(([k,t])=>`<option value="${k}" ${c.origem===k?"selected":""}>${t}</option>`).join("")}</select></div></div>
+    <div class="dupla"><div><label for="cd_c">Cidade</label><input id="cd_c" maxlength="80" value="${v("cidade")}"></div><div><label for="cd_u">UF</label><input id="cd_u" maxlength="2" value="${v("uf")}" style="text-transform:uppercase"></div></div>
+    <div><label for="cd_t">Contato (telefone ou e-mail)</label><input id="cd_t" maxlength="120" value="${v("contato")}"></div>
+    <div class="jr-score"><span>Nota até agora</span>${jrFaixa(s)}${(()=>{const n=PIR_Q.filter(q=>F.respostas[q.k]==null).length+(F.formacao?0:1)+PIR_AV.filter(a=>F.avaliacao[a.k]==null).length;return n?`<span class="meta">parcial: faltam ${n} ${n===1?"resposta":"respostas"}</span>`:"";})()}${s.alertas.length?`<span class="ps-nao" style="margin:6px 0 0;display:block"><strong>Alerta:</strong> ${esc(s.alertas.join("; "))}</span>`:""}</div>
+    ${PIR_Q.map((q,n)=>`<fieldset class="pir-q"><legend><span class="meta">${esc(q.b)}${q.p?" · peso "+q.p:""}</span><br>${esc(q.l)}</legend><div class="pir-ops">${q.o.map((o,i)=>`<label class="pir-op${F.respostas[q.k]===i?" sel":""}"><input type="radio" name="cd_${q.k}" value="${i}" ${F.respostas[q.k]===i?"checked":""} data-cand="r:${q.k}"> ${esc(o[0])}</label>`).join("")}</div></fieldset>`).join("")}
+    <fieldset class="pir-q"><legend><span class="meta">Técnico · peso 5</span><br>Formação</legend><div class="pir-ops">${JR_FORM.map(f=>`<label class="pir-op${F.formacao===f?" sel":""}"><input type="radio" name="cd_form" value="${esc(f)}" ${F.formacao===f?"checked":""} data-cand="f"> ${esc(f)}</label>`).join("")}</div></fieldset>
+    ${PIR_AV.map(a=>`<fieldset class="pir-q"><legend><span class="meta">Comportamental · peso ${a.p} · sua avaliação na entrevista</span><br>${esc(a.c)}</legend><div class="pir-ops jr-nota">${[1,2,3,4,5].map(n=>`<label class="pir-op${+F.avaliacao[a.k]===n?" sel":""}"><input type="radio" name="cd_${a.k}" value="${n}" ${+F.avaliacao[a.k]===n?"checked":""} data-cand="a:${a.k}"> ${n}</label>`).join("")}</div></fieldset>`).join("")}
+    <div><label for="cd_obs">Observações da entrevista</label><textarea id="cd_obs" rows="3" maxlength="2000">${v("obs")}</textarea></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar avaliação</button><button class="btn sec" type="button" data-a="cand-cancela">Cancelar</button></div></form>`;}
+function jrCandidatos(){
+  if(S.cand===undefined){S.cand=null;carregarCand();}
+  if(S.candEd!==undefined)return jrFormCand(S.candEd&&(S.cand||[]).find(x=>x.id===S.candEd));
+  if(!S.cand)return `<div class="carregando">Carregando candidatos…</div>`;
+  const F=S.candEt||"ativos";const fil={ativos:x=>!["ativo","nao_seguiu"].includes(x.etapa),todos:()=>true,...Object.fromEntries(Object.keys(JR_ETAPA).map(k=>[k,x=>x.etapa===k]))};
+  const L=S.cand.filter(fil[F]||fil.ativos);
+  return `<div class="acoes" style="margin:0 0 8px"><button class="btn" data-a="cand-novo">+ Avaliar candidato</button></div>
+    ${S.cand.length?`<div class="filtros" role="group" aria-label="Etapa">${[["ativos","Em andamento"],...Object.entries(JR_ETAPA),["todos","Todos"]].map(([k,t])=>`<button class="chip" data-a="cand-et" data-v="${k}" aria-pressed="${k===F}">${esc(t)} (${S.cand.filter(fil[k]).length})</button>`).join("")}</div>
+    <div class="tab" style="margin-top:8px"><table class="sim-t"><thead><tr><th>Candidato</th><th>Origem</th><th>Scorecard</th><th>Etapa</th>${ehAdmin()?"<th>Comercial</th>":""}<th></th></tr></thead><tbody>${L.map(x=>{const s=jrScoreForm(x);return `<tr><td><strong>${esc(x.nome)}</strong><span class="meta" style="display:block">${esc([x.cidade,x.uf].filter(Boolean).join("/"))}${x.contato?" · "+esc(x.contato):""}</span></td><td>${esc(JR_ORIG[x.origem]||"—")}</td><td>${jrFaixa(s)}${s.alertas.length?`<span class="meta" style="display:block;color:#a33426">${s.alertas.length} alerta${s.alertas.length>1?"s":""}</span>`:""}</td>
+      <td><select data-cand-et="${x.id}" aria-label="Etapa de ${esc(x.nome)}">${Object.entries(JR_ETAPA).map(([k,t])=>`<option value="${k}" ${x.etapa===k?"selected":""}>${t}</option>`).join("")}</select></td>${ehAdmin()?`<td>${esc(x.comercial||"—")}</td>`:""}<td><button class="link" data-a="cand-ed" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div>`
+    :`<div class="vazio">Nenhum candidato avaliado ainda. Depois da primeira entrevista, clique em "Avaliar candidato" e preencha o scorecard.</div>`}`;}
+function jrProntidao(){
+  if(S.pront===undefined){S.pront=null;carregarPront();}
+  if(!S.pront)return `<div class="carregando">Carregando os RCs…</div>`;
+  if(!S.pront.length)return `<div class="vazio">Nenhum RC com acesso ao portal ligado a ${ehAdmin()?"um responsável comercial":"você"} ainda. O vínculo fica em Painel de gerenciamento → Vínculos.</div>`;
+  const ok=b=>b?`<span class="met-st met-ok">Feito</span>`:`<span class="met-st met-at">Pendente</span>`;
+  const linhas=S.pront.map(r=>{const fe={};(r.feitos||[]).forEach(f=>fe[f.e]=f);
+    const cursos=(r.obrig||[]).map(o=>o==="hibridos"?{n:"Academia de Híbridos",ok:JR_HIB.every(k=>fe[k]),nota:JR_HIB.map(k=>fe[k]&&fe[k].nota!=null?fe[k].nota:null)}:{n:(CURSOS_OBRIG.find(c=>c[0]===o)||[,o])[1],ok:!!fe[o],nota:[fe[o]&&fe[o].nota!=null?fe[o].nota:null]});
+    const s=r.pir?pirScore(r.pir.respostas,r.pir.avaliacao,r.formacao):null;const pronto=r.acessou&&!!r.pir&&cursos.every(c=>c.ok);
+    const nt=a=>a.filter(x=>x!=null).length?" · acertos: "+a.filter(x=>x!=null).join(", "):"";
+    return `<tr><td><strong>${esc(r.nome)}</strong><span class="meta" style="display:block">${esc([r.cidade,r.uf].filter(Boolean).join("/"))}${ehAdmin()&&r.comercial?" · "+esc(r.comercial):""}</span></td><td>${ok(r.acessou)}</td><td>${ok(!!r.pir)}${s&&s.pct!=null?`<span class="meta" style="display:block">${s.pct} pontos${s.comp?"":" (falta o comportamental)"}</span>`:""}</td>
+      <td style="white-space:normal;min-width:180px">${cursos.length?cursos.map(c=>`<div>${ok(c.ok)} ${esc(c.n)}<span class="meta">${nt(c.nota)}</span></div>`).join(""):`<span class="meta">sem curso obrigatório</span>`}</td><td>${usoH(r.min30||0)}</td><td>${pronto?`<span class="met-st met-ok">Pronto para vender</span>`:`<span class="met-st met-sem">Em onboarding</span>`}</td></tr>`;}).join("");
+  return `<div class="tab"><table class="sim-t"><thead><tr><th>RC</th><th>Primeiro acesso</th><th>Perfil do representante</th><th>Cursos obrigatórios</th><th>Uso do portal (30 dias)</th><th>Situação</th></tr></thead><tbody>${linhas}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">Pronto para vender = primeiro acesso feito, perfil do representante enviado e todos os cursos obrigatórios aprovados. A nota comportamental do perfil é dada pelo responsável comercial em Painel de gerenciamento → Perfil dos RCs.</p>`;}
 function vRCGuia(){
   if(!veGuiaRC())return vRCApresentacao();
-  const h=polHTML("guia_rc");
-  return `<div><span class="rot">Conecta RC · uso interno</span><h1 class="titulo">Guia do novo RC</h1><p class="sub">O que fazer e como fazer para trazer um novo Representante Comercial: da empresa aberta ao contrato assinado, e como funcionam a comissão e o pagamento depois. Por enquanto, só administradores e o Comercial Barenbrug veem esta página.</p></div>
-  ${h===""?`<div class="vazio">O guia não está disponível para o seu acesso.</div>`:h}`;
+  const T=S.jrAba||"mapa";const h=T==="contrato"?polHTML("guia_rc"):"";
+  const abas=[["mapa","Mapa da jornada"],["perfil","Perfil ideal e scorecard"],["cand","Candidatos"],["pront","Onboarding e liberação"],["contrato","Cadastro e contrato"]];
+  const corpo=T==="perfil"?`<section class="bloco"><h2 class="sec">Perfil ideal e scorecard</h2><p class="sub" style="margin:0 0 8px">O que procurar na atração e o que o responsável comercial avalia na primeira entrevista.</p>${jrScorecard()}</section>`
+    :T==="cand"?`<section class="bloco"><h2 class="sec">Candidatos</h2><p class="sub" style="margin:0 0 8px">O scorecard preenchido na entrevista fica registrado aqui, com a etapa de cada candidato até virar RC ativo. ${ehAdmin()?"Você vê os candidatos de todos os comerciais.":"Você vê os candidatos que avaliou."}</p>${jrCandidatos()}</section>`
+    :T==="pront"?`<section class="bloco"><h2 class="sec">Onboarding e liberação</h2><p class="sub" style="margin:0 0 8px">O onboarding é do Marketing, pelo Portal Conecta. Quando o RC completa tudo, ele volta ao responsável comercial com estes pontos de aderência, pronto para vender.</p>${jrProntidao()}</section>
+      <section class="bloco"><h2 class="sec">Depois da liberação: acompanhamento</h2><div class="dir-grid"><div class="dir-card"><strong>Responsável comercial</strong><p>Acompanhamento direto: rotina de campo, metas e apoio nas negociações. Vendas e negociações do CRM de cada RC estão em Meus RCs.</p><button class="btn sec" data-a="pag" data-v="rc-meus">Abrir Meus RCs</button></div><div class="dir-card"><strong>Marketing</strong><p>Pelo portal e pelo CRM: prospecções e vendas, ranking, tempo de uso e cursos. Leads e campanhas apoiam a região do RC.</p></div></div></section>`
+    :T==="contrato"?`<section class="bloco"><h2 class="sec">Cadastro e contrato</h2><p class="sub" style="margin:0 0 8px">O passo a passo da empresa, do CORE, da ficha cadastral e dos documentos, até a assinatura com o Customer Service.</p></section>${h===""?`<div class="vazio">O guia de cadastro não está disponível para o seu acesso.</div>`:h}`
+    :`<section class="bloco"><h2 class="sec">Mapa da jornada</h2>${jrMapa()}</section><section class="bloco"><h2 class="sec">Quem faz o quê</h2>${jrRaci()}</section>`;
+  return `<div><span class="rot">Conecta RC · uso interno</span><h1 class="titulo">Jornada do novo RC</h1><p class="sub">O processo completo para trazer um Representante Comercial: atração, entrevista com scorecard, contrato, onboarding no portal, liberação para vender e acompanhamento. Visível só para administradores e o Comercial Barenbrug.</p></div>
+  <div class="filtros" role="group" aria-label="Partes da jornada">${abas.map(([k,t])=>`<button class="chip" data-a="jr-aba" data-v="${k}" aria-pressed="${k===T}">${t}</button>`).join("")}</div>
+  ${corpo}`;
 }
+
 function carregarPol(id){S.pol=S.pol||{};if(S.pol[id]!==undefined)return;S.pol[id]=null;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id",id).maybeSingle();S.pol[id]=data&&data.dados&&data.dados.html?data.dados.html:"";}catch(e){S.pol[id]="";}render();})();}
 function polHTML(id){carregarPol(id);const h=S.pol[id];return h===null?`<div class="carregando">Carregando…</div>`:h;}
 function vRCCredito(){
@@ -4606,15 +4704,16 @@ function vRCCredito(){
   ${h===""?`<div class="vazio">O resumo de crédito não está disponível para o seu acesso.</div>`:h}`;
 }
 function subnavRC(){
-  const abas=[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]];
-  if(veMeusRC())abas.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
-  if(veGuiaRC())abas.push(["rc-guia","Guia do novo RC"]);
-  if(vePainelRC()){abas.push(["rc-ranking","Ranking de vendas"]);abas.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
-  if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))abas.push(["rc-cobertura","Cobertura dos RCs"]);
-  if(cnVeAba("conecta_rc"))abas.push(["rc-nps","Avaliar o programa"]);
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Conecta RC">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Conecta RC</span></div></div>`;
+  const g=[];const ger=[];
+  if(veGuiaRC())ger.push(["rc-guia","Jornada do novo RC"]);
+  if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
+  if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
+  if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
+  const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-credito","Crédito do pedido"]]],
+    ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
+    [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
+    ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
+  return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
 }
 /* ===== Meus RCs: carteira de RCs do responsável comercial (pelo contrato), com ou sem acesso ao portal ===== */
 const veMeusRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
@@ -7455,7 +7554,13 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.
   if(k==="potua")P.ua=+t.value;else if(k==="potlot")P.lot=+t.value;else if(k==="potren")P.ren=+t.value/100;else if(k==="potilp")P.ilp=t.checked;else if(k==="pothib")P.hs=+t.value;render();});
 async function carregarMarca(){if(S.marcaBusy)return;S.marcaBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","marca").maybeSingle();S.marca=data?data.dados:null;}catch(e){S.marca=null;}S.marcaBusy=false;render();}
 /* ===== Inteligência · Metodologia e fontes: como cada análise é feita, com que fontes e de quanto em quanto tempo ===== */
-const MET_REC={continuo:["Contínua",2],mensal:["Mensal",40],trimestral:["Trimestral",100],anual:["Anual",400]};
+const MET_REC={continuo:["Contínua",2],mensal:["Mensal",40],trimestral:["Trimestral",100],anual:["Anual",400],oculto:["Março, agosto, outubro e dezembro",0]};
+const MET_OC=[3,8,10,12];
+/* rodada de cliente oculto esperada: o mais recente entre marco, agosto, outubro e dezembro ate o mes atual */
+function metOculto(d){const h=new Date();const m=h.getMonth()+1,y=h.getFullYear();const ant=MET_OC.filter(x=>x<=m);const em=ant.length?[y,ant[ant.length-1]]:[y-1,12];
+  const ini=em[0]+"-"+String(em[1]).padStart(2,"0")+"-01";const nomes={3:"março",8:"agosto",10:"outubro",12:"dezembro"};
+  if(d&&String(d).slice(0,10)>=ini)return `<span class="met-st met-ok">Em dia</span>`;
+  return em[0]===y&&em[1]===m?`<span class="met-st met-sem">Rodada de ${nomes[em[1]]} em andamento</span>`:`<span class="met-st met-at">Falta a rodada de ${nomes[em[1]]}</span>`;}
 const MET_AN=[
  {aba:"int-insumos",n:"Insumos para o marketing",f:"Todas as análises desta área, mais os registros de campo, reuniões e conversas com revendas (Escrever insumo).",m:"Cada análise gera achados com valor e ação sugerida; o insumo de campo entra com data e autor e vira ação.",rec:"continuo",como:"Automático a partir das análises; registros de campo pelo Marketing.",k:"insumos",resp:"Marketing"},
  {aba:"int-icp",n:"ICPs e personas",f:"Canais: histórico de compras do ERP e do RD Station CRM e potencial de mercado. Produtores e representantes: pesquisas públicas de comportamento do produtor (ABMRA, pesquisas de conectividade rural) e NPS Barenbrug.",m:"Canais classificados pelo histórico e pelo potencial da região; personas B2C e de representantes descritas a partir de pesquisa pública, sem dado pessoal.",rec:"anual",como:"Revisão no início da safra (julho).",k:"icp",resp:"Marketing"},
@@ -7464,8 +7569,8 @@ const MET_AN=[
  {aba:"int-mapa",n:"Mapas B2B e B2C",f:"RD Station CRM (organizações e pedidos ganhos) e malha de municípios do IBGE.",m:"Clientes e revendas georreferenciados pelo município cadastrado no CRM.",rec:"continuo",como:"Automático, todo dia de manhã.",k:"orgs",resp:"Marketing"},
  {aba:"int-perfil",n:"Perfil dos canais",f:"RD Station CRM e cadastro dos canais do Conecta.",m:"Canais segmentados pelo que compram (mix, volume, cultivares) e pelo tipo de operação.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
  {aba:"int-saz",n:"Calendário de plantio",f:"Embrapa (Gado de Corte CT/12, Pecuária Sudeste, Agropecuária Oeste, Milho e Sorgo) · IEB/USP · climatologia do INMET · ZARC do MAPA como referência local.",m:"Janela de plantio por região: chuva acima de 100 mm/mês, transição de 60 a 100 mm e seca abaixo de 60 mm, cruzada com as recomendações técnicas de cada sistema.",rec:"anual",como:"Revisão antes da safra (junho).",k:"saz",resp:"Marketing"},
- {aba:"int-canais",n:"Preços dos canais",f:"Pesquisa de cliente oculto do Marketing, por canal e cultivar.",m:"Preço por kg ao produtor na rodada mais recente, comparado com a tabela ao produtor do mês.",rec:"trimestral",como:"Rodada de cliente oculto no dia 15 de janeiro, abril, julho e outubro.",k:"canal",rod:"canal_rod",resp:"Marketing"},
- {aba:"int-concorrentes",n:"Preços dos concorrentes",f:"Pesquisa de cliente oculto do Marketing, por marca e produto.",m:"Preço por kg por produto e por rodada; tendência entre rodadas; entra no cálculo da participação em valor do Potencial de mercado.",rec:"trimestral",como:"Mesma rodada do cliente oculto dos canais.",k:"conc",rod:"conc_rod",resp:"Marketing"},
+ {aba:"int-canais",n:"Preços dos canais",f:"Pesquisa de cliente oculto do Marketing, por canal e cultivar.",m:"Preço por kg ao produtor na rodada mais recente, comparado com a tabela ao produtor do mês.",rec:"oculto",como:"Rodadas definidas pelo Marketing por estratégia, dentro de cada um desses meses, sem dia fixo.",k:"canal",rod:"canal_rod",resp:"Marketing"},
+ {aba:"int-concorrentes",n:"Preços dos concorrentes",f:"Pesquisa de cliente oculto do Marketing, por marca e produto.",m:"Preço por kg por produto e por rodada; tendência entre rodadas; entra no cálculo da participação em valor do Potencial de mercado.",rec:"oculto",como:"Na mesma rodada do cliente oculto dos canais.",k:"conc",rod:"conc_rod",resp:"Marketing"},
  {aba:"int-hibridos",n:"Concorrentes em híbridos",f:"Sites e materiais oficiais dos concorrentes · RNC e SIGEF/MAPA · Embrapa · CIAT · imprensa especializada · cliente oculto.",m:"Ficha por material: origem, registro, posicionamento, argumentos e preço; comparação com Sabiá, Cayana e Carcará.",rec:"trimestral",como:"Revisão a cada trimestre e sempre que houver lançamento ou novo registro no RNC.",k:"hib_conc",resp:"Marketing"},
  {aba:"int-vendas",n:"Preço e frete",f:"Pedidos ganhos da safra no RD Station CRM e tabela de preços e frete Barenbrug.",m:"Preço médio por kg dos híbridos e frete médio por kg, por região.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
  {aba:"int-diretriz",n:"Como comunicar",f:"Manual da marca Barenbrug · pesquisa NPS Barenbrug · ensaios oficiais e casos de clientes.",m:"Tom, palavras, provas e regras por público; toda afirmação de produto precisa de dado com fonte.",rec:"anual",como:"Revisão anual, no início da safra.",resp:"Marketing"},
@@ -7480,7 +7585,7 @@ function vIntMetodo(){
   if(S.metSt===undefined){S.metSt=null;carregarMetStatus();}
   const St=S.metSt||{};const hoje=Date.now();
   const linha=x=>{const d=x.k?St[x.k]:null;const r=MET_REC[x.rec];let st="";
-    if(x.k){if(!d)st=`<span class="met-st met-sem">Sem registro</span>`;else{const dias=Math.floor((hoje-new Date(String(d).length<=10?d+"T12:00:00":d))/864e5);st=dias<=r[1]?`<span class="met-st met-ok">Em dia</span>`:`<span class="met-st met-at">Atualizar</span>`;}}
+    if(x.rec==="oculto")st=metOculto(d);else if(x.k){if(!d)st=`<span class="met-st met-sem">Sem registro</span>`;else{const dias=Math.floor((hoje-new Date(String(d).length<=10?d+"T12:00:00":d))/864e5);st=dias<=r[1]?`<span class="met-st met-ok">Em dia</span>`:`<span class="met-st met-at">Atualizar</span>`;}}
     const dt=d?(String(d).length>10?fmtDataHora(d):intData(d)):"—";const rod=x.rod&&St[x.rod]?` · ${St[x.rod]}ª rodada`:"";
     return `<tr><td><button class="link" data-a="pag" data-v="${x.aba}"><strong>${esc(x.n)}</strong></button></td><td style="white-space:normal;min-width:240px">${esc(x.f)}</td><td style="white-space:normal;min-width:220px">${esc(x.m)}</td><td><strong>${r[0]}</strong><span class="meta" style="display:block;white-space:normal;min-width:150px">${esc(x.como)}</span></td><td>${S.metSt?esc(dt)+rod:"…"}${st?"<br>"+st:""}</td></tr>`;};
   return `<div><span class="rot">Inteligência</span><h1 class="titulo">Metodologia e fontes</h1><p class="sub">Como cada análise da Inteligência é feita, com que fontes, de quanto em quanto tempo é atualizada e quando foi a última atualização.</p></div>
@@ -7507,7 +7612,8 @@ function vIntMetodo(){
   <section class="bloco"><h2 class="sec">Calendário de estudos</h2><div class="dir-grid">
     <div class="dir-card"><strong>Todo dia (automático)</strong><ul class="cond" style="margin:6px 0 0"><li>RD Station CRM: 9h, 15h e 19h</li><li>Organizações e mapas: de manhã</li><li>Notícias do mercado: ao longo do dia</li><li>Cepea (arroba e bezerro): uma vez por dia</li></ul></div>
     <div class="dir-card"><strong>Todo mês</strong><ul class="cond" style="margin:6px 0 0"><li>Marca, mídia e redes</li><li>Campanhas digitais</li><li>Inteligência × execução</li><li>Revisão dos insumos abertos</li></ul></div>
-    <div class="dir-card"><strong>A cada trimestre</strong><ul class="cond" style="margin:6px 0 0"><li>Cliente oculto de canais e concorrentes: dia 15 de janeiro, abril, julho e outubro</li><li>Concorrentes em híbridos (RNC e SIGEF)</li><li>Presença da marca nas IAs</li></ul></div>
+    <div class="dir-card"><strong>Cliente oculto</strong><ul class="cond" style="margin:6px 0 0"><li>Canais e concorrentes em março, agosto, outubro e dezembro</li><li>Meses definidos pelo Marketing por estratégia; a rodada acontece dentro do mês, sem dia fixo</li></ul></div>
+    <div class="dir-card"><strong>A cada trimestre</strong><ul class="cond" style="margin:6px 0 0"><li>Concorrentes em híbridos (RNC e SIGEF)</li><li>Presença da marca nas IAs</li></ul></div>
     <div class="dir-card"><strong>Uma vez por safra</strong><ul class="cond" style="margin:6px 0 0"><li>Junho: calendário de plantio</li><li>Julho: fechamento do histórico no ERP, ICPs e personas, Como comunicar</li><li>Agosto: modelos de representação (renovação dos contratos)</li><li>Segundo semestre: potencial de mercado (nova PPM e MapBiomas)</li></ul></div></div>
     <p class="meta" style="margin:8px 0 0">Responsável pela Inteligência de Mercado: Marketing Barenbrug (Felipe Piccoli). O estudo de oferta de semente no SIGEF é de Gustavo Aguiar.</p></section>`;
 }
@@ -10623,6 +10729,11 @@ document.addEventListener("click",async ev=>{
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
+  if(a==="jr-aba"){S.jrAba=v;render();return;}
+  if(a==="cand-novo"){S.candEd=null;S.candF=null;render();return;}
+  if(a==="cand-ed"){S.candEd=+v;S.candF=null;render();window.scrollTo(0,0);return;}
+  if(a==="cand-cancela"){S.candEd=undefined;S.candF=null;render();return;}
+  if(a==="cand-et"){S.candEt=v;render();return;}
   if(a==="ps-sis"){S.psSis=v;render();return;}
   if(a==="ps-per"){S.psPer=v;render();return;}
   if(a==="ps-fonte"){const e=document.getElementById("psf-"+v);if(e){e.scrollIntoView({behavior:"smooth",block:"center"});e.classList.add("ps-on");setTimeout(()=>e.classList.remove("ps-on"),1800);}return;}
