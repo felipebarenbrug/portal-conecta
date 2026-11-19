@@ -959,6 +959,7 @@ main.largo{max-width:1120px}
 @media (max-width:760px){.pj-fase{grid-template-columns:1fr}.pj-fg{grid-template-columns:1fr}.pj-l2{grid-column:auto}}
 .rg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:rg}.rg-p{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;background:var(--branco);display:grid;gap:4px;align-content:start;position:relative}
 .rg-p.gat{background:var(--amarelo);border-color:var(--amarelo);color:#1E1E1E}.rg-p.mail{border-top:3px solid var(--azul)}.rg-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado)}.rg-p.gat .rg-t{color:#1E1E1E}.rg-p p{margin:0;font-size:14px}
+.cs-bars{display:flex;gap:14px;align-items:flex-end;height:170px;max-width:520px}.cs-b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}.cs-b i{display:block;width:100%;border-radius:6px 6px 0 0}.cs-v{font-weight:800;font-size:14px}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
 .gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
 .gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
@@ -3231,11 +3232,32 @@ function vISImp(){
       <div class="acoes" style="margin:0"><button class="btn" type="submit">Salvar edição</button><button class="btn sec" type="button" data-a="imp-nova">Cancelar</button></div></form>`:""}
     <div class="lista" style="margin-top:8px">${L.map(x=>`<div class="linha"><div style="min-width:0"><strong>#${String(x.edicao).padStart(2,"0")} · ${dt(x.data)}${x.titulo?" · "+esc(x.titulo):""}</strong><span class="meta">${esc(x.assunto||"")}${x.enviados?` · ${x.enviados} destinatários`:""}</span>${x.foco?`<span class="meta">${esc(x.foco)}</span>`:""}</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${x.html?`<button class="link" data-a="imp-ver" data-v="${x.id}">${S.impVer===x.id?"fechar":"ler edição"}</button>`:`<span class="meta">sem HTML</span>`}${upl(x)}</div></div>${S.impVer===x.id?`<div>${fr(x)}</div>`:""}`).join("")}</div></section>`;
 }
+/* ===== Inside Sales · Satisfação do atendimento (nota do robô do RD Station Conversas) ===== */
+async function carregarCsat(){if(S.csatBusy)return;S.csatBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","is_csat").maybeSingle();S.csat=(data&&data.dados)||null;}catch(e){S.csat=null;}S.csatBusy=false;render();}
+function vISCsat(){
+  if(S.csat===undefined){carregarCsat();return `<div class="carregando">Carregando as notas…</div>`;}
+  const D=S.csat||{};const M=D.meses||[];const MN=m=>{const [y,mm]=m.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+mm-1]+"/"+y.slice(2);};
+  const cor=v=>v>=9?"var(--azul)":v>=7?"#D96D00":"#c0392b";
+  const barras=M.length?`<div class="cs-bars">${M.map(([m,v])=>`<div class="cs-b"><span class="cs-v">${String(v).replace(".",",")}</span><i style="height:${Math.max(4,v*10)}%;background:${cor(v)}"></i><span class="meta">${MN(m)}</span></div>`).join("")}</div>`:"";
+  return `<div><h1 class="titulo">Satisfação do atendimento</h1><p class="sub">A nota que o próprio produtor dá ao atendimento das assessoras pelo WhatsApp, de 0 a 10.</p></div>
+  <section class="bloco"><h2 class="sec">Como a nota é coletada</h2><ol class="rent-ol" style="display:grid;gap:6px;max-width:70ch">
+    <li>A assessora encerra a conversa no RD Station Conversas, ou a conversa fecha sozinha depois de um tempo sem resposta.</li>
+    <li>Um robô do RD abre uma mensagem automática pedindo ao lead uma nota de 0 a 10 para o atendimento que recebeu. A assessora não envia nem vê essa mensagem antes.</li>
+    <li>O lead responde ali mesmo, e a nota entra no relatório do RD Station Conversas.</li></ol>
+    <p class="dica">É uma nota média de 0 a 10, não o índice NPS de -100 a +100. Para calcular NPS seria preciso a quantidade de notas 9 e 10 e de 0 a 6, que o RD não entrega pela integração.</p></section>
+  <section class="bloco"><h2 class="sec">Nota média do time</h2><div class="dir-grid">${(D.safras||[]).map(([t,v])=>`<div class="dir-card"><span class="meta">${esc(t)}</span><strong style="display:block;font-size:30px;color:${cor(v)}">${String(v).replace(".",",")}</strong></div>`).join("")}</div>
+    ${barras?`<h3 style="margin:16px 0 6px">Mês a mês, safra 26/27</h3>${barras}`:""}
+    <p class="dica">Outubro e novembro caíram bastante frente a julho a setembro. Antes de tirar conclusão, vale abrir no RD as avaliações desses meses: a média não mostra quantas notas entraram, e poucas notas baixas puxam a média para baixo.</p></section>
+  ${(D.filas||[]).length?`<section class="bloco"><h2 class="sec">Por fila de atendimento · safra 26/27</h2><div class="dir-grid">${D.filas.map(([t,v])=>`<div class="dir-card"><span class="meta">${esc(t)}</span><strong style="display:block;font-size:24px;color:${cor(v)}">${String(v).replace(".",",")}</strong></div>`).join("")}</div>
+    <p class="dica">A nota fica na fila em que a conversa terminou. Conversas encerradas ainda no primeiro atendimento têm nota bem menor que as que passaram pela qualificação.</p></section>`:""}
+  <section class="bloco"><h2 class="sec">Por assessora</h2><p style="margin:0">A integração com o RD Station Conversas ainda não separa a nota por assessora: o filtro por atendente volta sempre a média do time, e nem todas as assessoras têm uma fila própria. Para ter a nota individual, exporte no RD o relatório de avaliações por atendente e envie ao Marketing para importar aqui.</p></section>
+  <p class="meta">Fonte: ${esc(D.fonte||"RD Station Conversas")} · atualizado em ${D.atualizado?new Date(D.atualizado+"T12:00").toLocaleDateString("pt-BR"):"—"}.</p>`;}
+
 const IS_GRUPOS=[
   ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-imp","Impulso semanal"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
-  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"]]],
+  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
   ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"],["is-desafio","Desafio 10 t"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
@@ -3251,6 +3273,7 @@ const IS_PROP={
  "is-cac":["Atrair","Quanto a mídia digital custa por lead, por negociação e por venda do Inside Sales.","decidir onde colocar verba de mídia e cortar o que não vira venda."],
  "is-icp":["Para quem","Quem é o produtor que compra pelo Inside Sales e como cada perfil quer ser atendido.","ajustar campanha, mensagem e abordagem ao perfil que mais converte."],
  "is-neg":["Qualificar e negociar","As negociações em aberto e pausadas, com valor e tempo parado.","cobrar o próximo passo e destravar o que está parado."],
+ "is-csat":["Qualificar e negociar","A nota de 0 a 10 que o produtor dá ao atendimento das assessoras, pedida por um robô do RD Station Conversas no fim da conversa.","acompanhar a experiência do lead no WhatsApp e achar onde o atendimento perde qualidade."],
  "is-obj":["Qualificar e negociar","Por que o produtor não compra: os motivos de perda do funil.","criar conteúdo, argumento e treinamento para a objeção que mais pesa."],
  "is-time":["Vender","Meta, vendas e funil do time na safra.","acompanhar o resultado do time frente à meta."],
  "is-vend":["Vender","O resultado de cada vendedora: meta, vendas, funil e conversão.","dar o retorno individual e ver quem precisa de apoio."],
@@ -3728,6 +3751,7 @@ function vISFluxo(){
   <p class="dica">Do primeiro ao último e-mail são cerca de 3 dias. Se o lead disser que recebeu os e-mails, use o assunto deles na conversa: o depoimento de um produtor da região dele ou a nota do suporte técnico.</p></section>`;
 }
 function vInsideSales(){
+  if(S.pag==="is-csat"&&veTimeIS())return vISCsat();
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
   if(S.pag==="is-icp"&&veTimeIS())return vISIcp();
   if(S.pag==="is-rfv"&&veTimeIS())return vISRfv();
@@ -6765,7 +6789,7 @@ function avisoCRMPag(){
   const sc=S.secao,pg=S.pag||"";
   if(sc==="conecta-rc")return pg==="rc-ranking"||pg==="rc-mapa"||pg==="rc-cobertura";
   if(sc==="conecta-revendas"){if((pg==="rv-canal"||pg==="rv-meucanal")&&(S.rvPub||{})[S.canalSel])return false;return /^rv-(painel|canais|canal|meucanal)$/.test(pg);}
-  if(sc==="inside-sales")return !["is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time","is-desafio"].includes(pg);
+  if(sc==="inside-sales")return !["is-csat","is-gd","is-imp","is-ger","is-hist","is-fluxo","is-playbook","is-formacao","is-perfil-time","is-desafio"].includes(pg);
   if(sc==="meu-crm")return true;
   if(sc==="financeiro")return pg!=="fin-premissas";
   if(sc==="inteligencia")return /^int-(vendas|rc|seg)$/.test(pg);
