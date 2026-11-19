@@ -932,6 +932,33 @@ main.largo{max-width:1120px}
 .nps-dist{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px;align-items:end;max-width:560px}.nps-b{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}.nps-b>div{width:100%;border-radius:5px 5px 0 0}
 .nps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:14px}.nps-peq td{color:var(--apagado)}.nps-ach li span{line-height:1.5}
 @media (max-width:500px){.nps-grid{grid-template-columns:1fr}}
+.pj-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}.pj-card{display:grid;gap:6px;text-align:left;cursor:pointer;font:inherit;color:inherit;margin:0;border:1px solid var(--linha)}.pj-card strong{font-size:18px}.pj-card .selo{justify-self:start}
+.pj-prog{display:block;height:6px;border-radius:3px;background:var(--papel);overflow:hidden}.pj-prog i{display:block;height:100%;background:var(--azul)}
+.pj-topo{background:var(--amarelo);color:#1E1E1E;border-radius:10px;padding:22px 24px;margin:10px 0 16px;display:grid;gap:8px}.pj-topo .titulo{color:#1E1E1E;margin:0}.pj-topo p{max-width:70ch;margin:0}.pj-topo .meta{color:#3a3a3a}
+.pj-chaves{display:flex;flex-wrap:wrap;gap:8px}.pj-chaves span{background:#1E1E1E;color:#fff;border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}.pj-chaves b{color:#FFDB00}
+.pj-gw{overflow-x:auto;margin-top:10px;border:1px solid var(--linha);border-radius:10px;padding:12px 12px 8px;background:var(--branco)}
+.pj-g{display:grid;min-width:880px;row-gap:6px;grid-auto-rows:minmax(28px,auto);position:relative}
+.pj-mes{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-left:2px solid var(--preto);padding-left:6px}
+.pj-sem{font-size:11px;color:var(--apagado);border-left:1px solid var(--linha);padding-left:4px}
+.pj-lab{grid-column:1;font-weight:800;font-size:13px;align-self:center}.pj-tri{background:var(--papel);border-radius:6px}
+.pj-bar{border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;z-index:1}.pj-bar span{overflow:hidden;text-overflow:ellipsis}.pj-bar.feito{opacity:.55}
+.pj-lin{border-left:1px dashed var(--apagado);opacity:.5;justify-self:start;width:0;z-index:2;pointer-events:none}
+.pj-hoje{border-left:2px solid var(--azul);justify-self:start;width:0;z-index:2;pointer-events:none}
+.pj-mk{position:relative;justify-self:start;font-size:11px;line-height:1.25;z-index:3}.pj-mk i{display:block;width:10px;height:10px;background:var(--azul);transform:translateX(-5px) rotate(45deg)}
+.pj-mk span{display:block;margin-top:6px;transform:translateX(-5px);white-space:nowrap;color:var(--apagado)}.pj-mk.baixo span{margin-top:32px}.pj-mk b{color:var(--preto)}
+.pj-fases{display:grid;border-top:1px solid var(--linha)}.pj-fase{display:grid;grid-template-columns:140px minmax(0,1fr) minmax(0,.9fr);gap:8px 24px;padding:18px 0;border-bottom:1px solid var(--linha)}
+.pj-data{font-weight:900;font-size:19px;line-height:1.15}.pj-data small{display:block;font-weight:400;font-size:13px;color:var(--apagado);margin-top:4px}.pj-fase.st-ok .pj-data{color:var(--azul)}
+.pj-quem{font-size:12px;font-weight:800;color:var(--azul-escuro);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}.pj-fase h3{margin:0 0 6px}.pj-fase ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.pj-tag{display:inline-block;font-size:11px;font-weight:800;border-radius:4px;padding:1px 7px;vertical-align:2px;background:var(--papel);color:var(--apagado)}.pj-tag.ok{background:#1E1E1E;color:#FFDB00}.pj-tag.and{background:#FFDB00;color:#1E1E1E}.pj-tag.mud{background:var(--azul);color:#fff}
+.pj-saida{background:var(--papel);border-radius:8px;padding:12px 14px;font-size:14px;align-self:start}.pj-saida b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado);margin-bottom:4px}
+.pj-op{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.pj-box{border:1px solid var(--linha);border-radius:10px;padding:16px 18px;min-width:0}.pj-box h3{margin:0 0 8px}.pj-box ul{margin:0;padding-left:18px;display:grid;gap:5px}.pj-box p{margin:0}
+.pj-box.dest{background:var(--azul);color:#fff;border:0}.pj-box.dest h3{color:#FFDB00}
+.pj-fs{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;margin:0 0 10px}.pj-fs legend{font-weight:800;padding:0 6px}
+.pj-fg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.pj-l2{grid-column:span 2}.pj-l3{grid-column:1/-1}.pj-fg textarea,.pj-fg input,.pj-fg select{width:100%}
+@media (max-width:860px){.rg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:520px){.rg{grid-template-columns:1fr}}
+@media (max-width:760px){.pj-fase{grid-template-columns:1fr}.pj-fg{grid-template-columns:1fr}.pj-l2{grid-column:auto}}
+.rg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:rg}.rg-p{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;background:var(--branco);display:grid;gap:4px;align-content:start;position:relative}
+.rg-p.gat{background:var(--amarelo);border-color:var(--amarelo);color:#1E1E1E}.rg-p.mail{border-top:3px solid var(--azul)}.rg-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado)}.rg-p.gat .rg-t{color:#1E1E1E}.rg-p p{margin:0;font-size:14px}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
 .gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
 .gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
@@ -1521,7 +1548,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119111932";
+const APP_VER="20261119114146";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3443,10 +3470,10 @@ function vISVend(cfg){
     const clic=nome!=="Time"?`<button class="link" data-a="is-abrir" data-v="${esc(nome)}">${esc(rot||nome)}</button>`:`<strong>${esc(rot||nome)}</strong>`;
     return `<tr${nome==="Time"?' class="is-tot"':""}><td>${clic}${extra?`<br><span class="meta">${extra}</span>`:""}</td><td class="val">${isN(re.n)}</td><td class="val"><strong>${isT(re.kgh)}</strong></td><td class="val">${+re.kgc?isT(re.kgc):"—"}</td><td class="val">${isR(re.rs)}</td><td class="val">${re.n?isR(re.rs/re.n):"—"}</td><td class="val">${isPct(re.kgh,meta)}</td><td class="val">${isN(ab.n)} · ${isT(ab.kgh)}${+ab.kgc?`<br><span class="meta">+ ${isT(ab.kgc)} conv.</span>`:""}</td><td class="val">${isT(ab.pond)}</td><td class="val">${isN(mq.rec)}</td><td class="val">${isTaxa(+mq.qual||0,+mq.rec||0)}</td><td class="val">${isTaxa(g,g+p)}<br><span class="meta">${isN(g)}×${isN(p)}</span></td><td class="val">${isTaxa(+mq.venda||0,+mq.rec||0)}</td><td class="val">${at?isH(at.med):"—"}</td><td class="val">${at?Math.round(100*at.mais3d)+"%":"—"}</td><td class="val">${nome==="Time"||["supervisao","fora_cobranca"].includes(r.papel)||nome==="Carteira com RC"?"—":isN(((A.alerta||{}).sem_tarefa||{}).n)}</td></tr>`;};
   const vend=P.filter(p=>p.papel==="vendedora"||p.papel==="rampagem");
-  const outros=[...P.filter(p=>p.papel==="supervisao").map(p=>[p.p,p.p+" · supervisão/carteira",""]),["CROP Agrícola","CROP Agrícola","conduzida pelo Felipe · nos números, fora da cobrança"],["Carteira com RC","Carteira com RC","negociações da supervisão com RC no campo Representante"],...P.filter(p=>p.papel==="fora_cobranca").map(p=>[p.p,p.p,"nos números, fora da cobrança"]),["Pré-Vendas","Pré-Vendas","fila de qualificação, só MQL"]];
+  const outros=[...P.filter(p=>p.papel==="supervisao").map(p=>[p.p,p.p+" · supervisão/carteira",""]),["Carteira com RC","Carteira com RC","negociações da supervisão com RC no campo Representante"],...P.filter(p=>p.papel==="fora_cobranca").map(p=>[p.p,p.p,"nos números, fora da cobrança"])];
   return `<section class="bloco"><h2 class="sec">Por vendedora ${isMat(ms)}</h2><div class="tab"><table class="is-tab"><thead><tr><th>Pessoa</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Convencionais</th><th class="val">Valor</th><th class="val">Ticket médio</th><th class="val">% da meta</th><th class="val">Em andamento</th><th class="val">Ponderado</th><th class="val">MQL recebidos</th><th class="val">MQL → SQL</th><th class="val">SQL → Venda</th><th class="val">Lead → venda</th><th class="val">Atribuição (mediana)</th><th class="val">Acima de 3 dias</th><th class="val">Sem próximo passo</th></tr></thead><tbody>
     ${vend.map(p=>linha(p.p,p.p,p.papel==="rampagem"&&p.ton_desde?"rampagem · tonelada a partir de "+isNomeMes(p.ton_desde.slice(0,7)):"")).join("")}
-    <tr><td colspan="16" class="meta" style="padding-top:12px">Supervisão, carteira e fila (fora da cobrança)</td></tr>
+    <tr><td colspan="16" class="meta" style="padding-top:12px">Supervisão e carteira (fora da cobrança)</td></tr>
     ${outros.map(([n,r,e])=>linha(n,r,e)).join("")}
     ${linha("Time","Time")}</tbody></table></div>
     <p class="dica">Vendas, híbridos, convencionais, valor e % da meta: safra inteira (contribuição de cada pessoa para as ${isT(meta)} do time). MQL, SQL → Venda, lead → venda e atribuição: período escolhido acima. SQL → Venda mostra ganhas × perdidas. Taxa em cinza: menos de 10 casos, não serve para ranquear. Toque no nome para abrir o painel da pessoa.</p></section>`;
@@ -3660,9 +3687,9 @@ function vISFluxo(){
   <div class="fx"><div class="fx-trilho">
     ${no("mkt","Marketing · 1","Geração de demanda","<p>Campanhas direcionadas nas plataformas de anúncios, por região e perfil de produtor.</p>")}
     ${seta("clique no anúncio")}
-    ${no("mkt","Marketing · 2","Página de captura","<p>O lead conhece o híbrido e deixa os dados no formulário.</p>")}
+    ${no("mkt","Marketing · 2","Página de captura","<p>O lead conhece o híbrido e deixa os dados no formulário: perfil, atividade, cultivar de interesse, área e quantidade.</p><p><a class=\"link\" href=\"https://materiais.barenbrug.com.br/atendimentocomercial\" target=\"_blank\" rel=\"noopener\">Abrir a página de captura ↗</a></p>")}
     ${seta("envia o cadastro")}
-    ${no("mkt","Marketing · 3","Página de obrigado",`<p>O lead escolhe como quer seguir:</p><div class="fx-ramos"><div class="fx-par"><strong>Falar com a Barenbrug</strong><br>Abre uma conversa no WhatsApp e é atendido direto pelo Inside Sales.</div><div class="fx-par"><strong>Achar um canal ou RC perto</strong><br>Digita o CEP e vê a revenda ou o RC mais próximo, com os dados de contato.</div></div><p style="margin-top:6px"><strong>Nos dois casos</strong>, o lead entra no CRM.</p>`)}
+    ${no("mkt","Marketing · 3","Página de obrigado",`<p>O lead escolhe como quer seguir:</p><div class="fx-ramos"><div class="fx-par"><strong>Falar com a Barenbrug</strong><br>Abre uma conversa no WhatsApp e é atendido direto pelo Inside Sales.</div><div class="fx-par"><strong>Achar um canal ou RC perto</strong><br>Digita o CEP e vê a revenda ou o RC mais próximo, com os dados de contato.</div></div><p style="margin-top:6px"><strong>Nos dois casos</strong>, o lead entra no CRM.</p><p><a class="link" href="https://materiais.barenbrug.com.br/atendimento-comercial-direto-ou-canal" target="_blank" rel="noopener">Abrir a página de obrigado ↗</a> · <a class="link" href="https://materiais.barenbrug.com.br/encontre-um-canal-barenbrug" target="_blank" rel="noopener">Abrir a busca de canal ↗</a></p>`)}
     ${seta("todo lead entra no CRM")}
     <div class="fx-ramos" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
       ${no("is","Inside Sales · 4","Funil de MQL no CRM","<p>O lead chega como MQL na fila das assessoras de vendas.</p>")}
@@ -3686,8 +3713,18 @@ function vISFluxo(){
   <aside class="fx-lado">
     <div class="fx-regra"><b>Regra 1 · atendimento perto</b><p>Se durante a negociação o lead pedir para ser atendido por alguém perto, a assessora tem o compromisso de passar o contato do RC ou da revenda mais próxima.</p></div>
     <div class="fx-regra"><b>Regra 2 · lead não atendido</b><p>Se o lead foi passado para a revenda ou o RC e volta dizendo que não foi atendido, mesmo em região de canal Yellow Master, o Inside Sales avança na negociação.</p><p><strong>Condição:</strong> ter registrado no CRM que o lead não foi atendido.</p></div>
-    <div class="fx-regra" style="background:#fff;border-color:var(--linha)"><b>Em breve</b><p>As páginas de captura e de obrigado e os e-mails de nutrição vão entrar aqui, em cada etapa do fluxo.</p></div>
-  </aside></div>`;
+    <div class="fx-regra" style="background:#fff;border-color:var(--linha)"><b>As páginas do fluxo</b><p><a class="link" href="https://materiais.barenbrug.com.br/atendimentocomercial" target="_blank" rel="noopener">Página de captura ↗</a><br><a class="link" href="https://materiais.barenbrug.com.br/atendimento-comercial-direto-ou-canal" target="_blank" rel="noopener">Página de obrigado ↗</a><br><a class="link" href="https://materiais.barenbrug.com.br/encontre-um-canal-barenbrug" target="_blank" rel="noopener">Encontre um canal ↗</a></p><p class="meta">Na busca de canal, o produtor digita o CEP e vê os distribuidores e cooperativas com híbridos mais perto. Se não houver, a página leva ao WhatsApp do time de vendas.</p></div>
+  </aside></div>
+  <section class="bloco" style="margin-top:18px"><h2 class="sec">A automação de boas-vindas no RD Station</h2><p class="sub" style="margin:0 0 12px">Todo lead que converte na página de captura entra neste fluxo, em paralelo ao atendimento da assessora. Saber o que ele já recebeu ajuda a puxar a conversa.</p>
+  <div class="rg">
+    <div class="rg-p gat"><span class="rg-t">Gatilho</span><strong>Conversão na página de captura</strong><p>Evento <code>atendimentocomercial</code>.</p></div>
+    <div class="rg-p"><span class="rg-t">Na hora</span><strong>Vira oportunidade e negociação</strong><p>Marca como oportunidade e cria a negociação no funil de MQL, na etapa Novas oportunidades, com o nome do lead e a cultivar de maior interesse.</p></div>
+    <div class="rg-p mail"><span class="rg-t">Na hora · e-mail 1</span><strong>Recebemos seu contato</strong><p>Avisa que uma assessora vai ligar ou chamar no WhatsApp e mostra o horário de atendimento. Dá dois atalhos: WhatsApp direto ou o mapa de canais.</p></div>
+    <div class="rg-p mail"><span class="rg-t">4 horas depois · e-mail 2</span><strong>Capim que vira arroba: 22 fazendas, 22 resultados</strong><p>Boas-vindas com a série No Campo com Inovação: quatro produtores com Sabiá, Cayana e Carcará, cada um com o vídeo do depoimento.</p></div>
+    <div class="rg-p mail"><span class="rg-t">1 dia depois · e-mail 3</span><strong>Onde comprar sementes Barenbrug perto de você</strong><p>Explica a busca de canal e destaca os canais com híbridos. Quem não acha canal vai para o WhatsApp do time de vendas.</p></div>
+    <div class="rg-p mail"><span class="rg-t">2 dias depois · e-mail 4</span><strong>Quem planta, confia</strong><p>O resultado da pesquisa de satisfação com os clientes diretos da safra 25/26: qualidade, suporte técnico e recomendação.</p></div>
+  </div>
+  <p class="dica">Do primeiro ao último e-mail são cerca de 3 dias. Se o lead disser que recebeu os e-mails, use o assunto deles na conversa: o depoimento de um produtor da região dele ou a nota do suporte técnico.</p></section>`;
 }
 function vInsideSales(){
   if(S.pag==="is-obj"&&veTimeIS())return vISObjecoes();
@@ -3704,7 +3741,7 @@ function vInsideSales(){
   if(manager&&S.pag==="is-time")return `<div><h1 class="titulo">Inside Sales · Time</h1></div>${isCabecalho(cfg,T)}${atualiza}${isPerSel(cfg)}${vISBloco("Time",T,cfg,true)}${rodape}`;
   if(manager&&S.pag==="is-vend")return `<div><h1 class="titulo">Inside Sales · Por vendedora</h1></div>${isCabecalho(cfg,T)}${isPerSel(cfg)}${vISVend(cfg)}${rodape}`;
   if(manager&&S.pag==="is-neg"){const L=(cfg.pessoas||[]).filter(p=>p.papel==="vendedora"||p.papel==="rampagem").flatMap(p=>((S.isp[p.p]||{}).dados||{}).lista||[]);
-    return `<div><h1 class="titulo">Inside Sales · Negociações</h1><p class="sub">Negociações em andamento das vendedoras, com os alertas que pedem ação. Supervisão, carteira com RC e a CROP Agrícola, conduzida pelo Felipe, ficam fora desta lista.</p></div>${isCabecalho(cfg,T)}<section class="bloco">${isListaHTML(L,true)}</section>${rodape}`;}
+    return `<div><h1 class="titulo">Inside Sales · Negociações</h1><p class="sub">Negociações em andamento das vendedoras, com os alertas que pedem ação. Supervisão e carteira com RC ficam fora desta lista.</p></div>${isCabecalho(cfg,T)}<section class="bloco">${isListaHTML(L,true)}</section>${rodape}`;}
   // painel individual
   const nomes=linhasP.filter(n=>n!=="Pré-Vendas");const alvo=manager?(S.isSel&&S.isp[S.isSel]?S.isSel:(nomes[0]||"")):(S.profile&&S.profile.is_vendedora);
   const row=S.isp[alvo];
@@ -8298,7 +8335,7 @@ async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {da
 const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
 /* ===== Time de Marketing: o playbook do time (mapa RACI, processos passo a passo, como pedir ao Marketing) ===== */
 const veTimeMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing")||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"));
-function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
+function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
 function carregarPlaybook(){if(S.pbBusy)return;S.pbBusy=true;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","playbook_mkt").maybeSingle();S.pb=(data&&data.dados&&Array.isArray(data.dados.processos))?data.dados:{processos:[]};}catch(e){S.pb={processos:[]};}S.pbBusy=false;render();})();}
 const TM_AREAS=["Estratégia e budget","Ações de marketing","Eventos","Comunicação e conteúdo","Mídia e campanhas digitais","Inside Sales","Conecta Revendas","Conecta RC","Brindes e materiais","Inteligência de mercado","Portal Conecta","Outro"];
 function tmLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
@@ -8334,6 +8371,83 @@ function vTMProc(){
     ${L.length?`<div class="tm-filtros"><input id="tm_q" type="search" placeholder="Buscar processo" value="${esc(S.pbQ||"")}" aria-label="Buscar processo"><div class="filtros" role="group" aria-label="Área">${["",...ar].map(a=>`<button class="chip" data-a="tm-area" data-v="${esc(a)}" aria-pressed="${a===F}">${a?esc(a):"Todas as áreas"} (${a?L.filter(x=>x.area===a).length:L.length})</button>`).join("")}</div></div>${grupos||`<div class="vazio">Nenhum processo com esse filtro.</div>`}`
     :`<div class="vazio">Nenhum processo cadastrado ainda.${adm?" Comece pelos que mais geram dúvida: como pedir uma ação, como aprovar verba, como planejar um evento.":""}</div>`}`;
 }
+/* ===== Time de Marketing · Projetos de marketing (plano com fases, linha do tempo e marcos) ===== */
+const PJ_ST=["Planejamento","Em andamento","Concluído","Pausado"];
+const PJ_FST=["A fazer","Em andamento","Feito"];
+const PJ_FAIXA_COR=["#00A8E2","#005F86","#FFDB00","#1E1E1E","#7FD3F0","#AEB8C0","#C9D2D9","#3C8FB0"];
+const pjEdita=()=>ehAdmin()||temPerfil("Marketing");
+async function carregarPJ(){if(S.pjBusy)return;S.pjBusy=true;try{const {data}=await sb.from("mkt_projetos").select("*").order("ordem").order("id");S.pj=data||[];}catch(e){S.pj=[];}S.pjBusy=false;render();}
+const pjD=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||"");return m?new Date(+m[1],+m[2]-1,+m[3]):null;};
+const PJ_SEM=["dom","seg","ter","qua","qui","sex","sáb"],PJ_MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const pjF=s=>{const d=pjD(s);return d?`${PJ_SEM[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`:"";};
+const pjCurta=s=>{const d=pjD(s);return d?`${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`:"";};
+function pjMarcos(t){return String(t||"").split("\n").map(l=>{const k=l.indexOf("|");const d=(k>=0?l.slice(0,k):"").trim(),n=(k>=0?l.slice(k+1):l).trim();return pjD(d)&&n?{d,n}:null;}).filter(Boolean).sort((a,b)=>a.d.localeCompare(b.d));}
+function pjDataFase(f){if(f.ini&&f.fim&&f.ini!==f.fim)return [`${pjCurta(f.ini)} a ${pjCurta(f.fim)}`,`${pjF(f.ini).slice(0,3)} a ${pjF(f.fim).slice(0,3)}`];return [pjF(f.ini||f.fim),""];}
+function pjGantt(p){const F=(p.dados.fases||[]).filter(f=>pjD(f.ini)&&pjD(f.fim));if(!F.length)return "";const M=pjMarcos(p.dados.marcos);
+  const dia=864e5;let a=Math.min(...F.map(f=>+pjD(f.ini)),...M.map(m=>+pjD(m.d))),b=Math.max(...F.map(f=>+pjD(f.fim)),...M.map(m=>+pjD(m.d)));
+  const A=new Date(a);A.setDate(A.getDate()-((A.getDay()+6)%7));const N=Math.round((b-A)/dia)+3;const c=s=>Math.round((pjD(s)-A)/dia)+2;
+  const faixas=[...new Set(F.map(f=>f.faixa||"Geral"))];let h="";
+  let cur=new Date(A);while(cur-A<N*dia){const fimM=new Date(cur.getFullYear(),cur.getMonth()+1,1);const ini=Math.round((cur-A)/dia)+2,fim=Math.min(Math.round((fimM-A)/dia)+2,N+2);h+=`<div class="pj-mes" style="grid-row:1;grid-column:${ini}/${fim}">${PJ_MES[cur.getMonth()]} ${cur.getFullYear()}</div>`;cur=fimM;}
+  for(let i=0;i<N;i+=7){const d=new Date(+A+i*dia);h+=`<div class="pj-sem" style="grid-row:2;grid-column:${i+2}/span 7">${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}</div>`;}
+  faixas.forEach((fx,i)=>{const r=i+3;h+=`<div class="pj-lab" style="grid-row:${r}">${esc(fx)}</div><div class="pj-tri" style="grid-row:${r};grid-column:2/${N+2}"></div>`;
+    F.filter(f=>(f.faixa||"Geral")===fx).forEach(f=>{const cor=PJ_FAIXA_COR[i%PJ_FAIXA_COR.length];const esc2=["#FFDB00","#7FD3F0","#AEB8C0","#C9D2D9"].includes(cor);
+      h+=`<div class="pj-bar${f.status==="Feito"?" feito":""}" style="grid-row:${r};grid-column:${c(f.ini)}/${c(f.fim)+1};background:${cor};color:${esc2?"#1E1E1E":"#fff"}" title="${esc(f.nome)}: ${esc(pjF(f.ini))} a ${esc(pjF(f.fim))}"><span>${f.status==="Feito"?"✓ ":""}${esc(f.barra||f.nome)}</span></div>`;});});
+  const ult=faixas.length+3;
+  M.forEach((m,i)=>{h+=`<div class="pj-lin" style="grid-row:3/${ult};grid-column:${c(m.d)}"></div><div class="pj-mk${i%2?" baixo":""}" style="grid-row:${ult};grid-column:${c(m.d)}" title="${esc(m.n)} · ${esc(pjF(m.d))}"><i></i><span>${esc(m.n)}<br><b>${pjCurta(m.d)}</b></span></div>`;});
+  const hoje=new Date();hoje.setHours(0,0,0,0);if(hoje>=A&&hoje<=new Date(+A+N*dia))h+=`<div class="pj-hoje" style="grid-row:2/${ult};grid-column:${Math.round((hoje-A)/dia)+2}" title="Hoje"></div>`;
+  return `<div class="pj-gw"><div class="pj-g" style="grid-template-columns:96px repeat(${N},minmax(9px,1fr))">${h}</div></div>`;}
+function pjLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
+function vPJDet(p){const d=p.dados||{};const ed=pjEdita();const F=(d.fases||[]).slice().sort((a,b)=>String(a.ini).localeCompare(String(b.ini)));const M=pjMarcos(d.marcos);
+  const feitas=F.filter(f=>f.status==="Feito").length;
+  return `<button class="link" data-a="pj-lista">‹ Todos os projetos</button>
+  <section class="pj-topo"><span class="rot">Projeto de marketing · ${esc(p.status||"")}</span><h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
+    <div class="pj-chaves">${M.slice(0,6).map(m=>`<span>${esc(m.n)} <b>${pjF(m.d)}</b></span>`).join("")}</div>
+    <p class="meta">${d.dono?"Responsável: "+esc(d.dono)+" · ":""}${feitas} de ${F.length} fases concluídas · atualizado em ${p.atualizado_em?new Date(p.atualizado_em).toLocaleDateString("pt-BR"):"—"}${p.atualizado_por?" por "+esc(p.atualizado_por):""}</p>
+    ${ed?`<div class="acoes"><button class="btn sec" data-a="pj-edit" data-v="${p.id}">Editar projeto</button></div>`:""}</section>
+  ${F.length?`<section class="bloco"><h2 class="sec">Linha do tempo</h2><p class="meta">Cada faixa é um público ou uma frente. As linhas tracejadas marcam os marcos e a linha azul é hoje. No celular, arraste para o lado.</p>${pjGantt(p)}</section>`:""}
+  ${F.length?`<section class="bloco"><h2 class="sec">As fases, uma a uma</h2><div class="pj-fases">${F.map(f=>{const [dt,sub]=pjDataFase(f);return `<div class="pj-fase st-${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":"fz"}">
+      <div class="pj-data">${esc(f.status==="Feito"?"Feito":dt)}<small>${esc(f.status==="Feito"?dt:sub)}</small></div>
+      <div style="min-width:0">${f.quem?`<div class="pj-quem">${esc(f.quem)}</div>`:""}<h3>${esc(f.nome)} <span class="pj-tag ${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":""}">${esc(f.status||"A fazer")}</span>${f.tag?` <span class="pj-tag mud">${esc(f.tag)}</span>`:""}</h3>${pjLinhas(f.itens).length?`<ul>${pjLinhas(f.itens).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>
+      ${f.saida?`<div class="pj-saida"><b>${esc(f.saida_rot||"Pronto quando")}</b>${esc(f.saida)}</div>`:"<div></div>"}</div>`;}).join("")}</div></section>`:""}
+  ${(d.blocos||[]).length?`<section class="bloco"><h2 class="sec">Leitura, ideias e decisões</h2><div class="pj-op">${d.blocos.map(b=>`<div class="pj-box${b.destaque?" dest":""}"><h3>${esc(b.titulo||"")}</h3>${pjLinhas(b.texto).length>1?`<ul>${pjLinhas(b.texto).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p>${esc(b.texto||"")}</p>`}</div>`).join("")}</div></section>`:""}`;}
+function pjForm(p){const d=p.dados||{};const v=x=>esc(x==null?"":String(x));
+  const fase=(f,i)=>`<fieldset class="pj-fs" data-i="${i}"><legend>Fase ${i+1}</legend><div class="pj-fg">
+    <div class="pj-l2"><label for="pjf_nome_${i}">Nome da fase *</label><input id="pjf_nome_${i}" value="${v(f.nome)}"></div>
+    <div><label for="pjf_status_${i}">Situação</label><select id="pjf_status_${i}">${PJ_FST.map(x=>`<option ${x===(f.status||"A fazer")?"selected":""}>${x}</option>`).join("")}</select></div>
+    <div><label for="pjf_ini_${i}">Início</label><input type="date" id="pjf_ini_${i}" value="${v(f.ini)}"></div><div><label for="pjf_fim_${i}">Fim</label><input type="date" id="pjf_fim_${i}" value="${v(f.fim)}"></div>
+    <div><label for="pjf_faixa_${i}">Faixa na linha do tempo</label><input id="pjf_faixa_${i}" value="${v(f.faixa)}" placeholder="Ex.: Revendas"></div>
+    <div><label for="pjf_barra_${i}">Texto curto da barra</label><input id="pjf_barra_${i}" value="${v(f.barra)}" maxlength="40"></div>
+    <div class="pj-l2"><label for="pjf_quem_${i}">Quem participa ou faz</label><input id="pjf_quem_${i}" value="${v(f.quem)}"></div>
+    <div><label for="pjf_tag_${i}">Marcação (opcional)</label><input id="pjf_tag_${i}" value="${v(f.tag)}" placeholder="Ex.: ajuste, novo"></div>
+    <div class="pj-l3"><label for="pjf_itens_${i}">O que acontece (um item por linha)</label><textarea id="pjf_itens_${i}" rows="4">${v(f.itens)}</textarea></div>
+    <div><label for="pjf_saida_rot_${i}">Título do quadro lateral</label><input id="pjf_saida_rot_${i}" value="${v(f.saida_rot)}" placeholder="Pronto quando"></div>
+    <div class="pj-l2"><label for="pjf_saida_${i}">Texto do quadro lateral</label><textarea id="pjf_saida_${i}" rows="2">${v(f.saida)}</textarea></div></div>
+    <div class="acoes"><button class="link" type="button" data-a="pj-fsub" data-v="${i}">Subir</button><button class="link perigo" type="button" data-a="pj-fdel" data-v="${i}">Remover fase</button></div></fieldset>`;
+  const bloco=(b,i)=>`<fieldset class="pj-fs" data-b="${i}"><legend>Quadro ${i+1}</legend><div class="pj-fg"><div class="pj-l2"><label for="pjb_titulo_${i}">Título</label><input id="pjb_titulo_${i}" value="${v(b.titulo)}"></div><div><label class="chk"><input type="checkbox" id="pjb_destaque_${i}" ${b.destaque?"checked":""}> Em destaque</label></div>
+    <div class="pj-l3"><label for="pjb_texto_${i}">Texto (cada linha vira um item)</label><textarea id="pjb_texto_${i}" rows="4">${v(b.texto)}</textarea></div></div><div class="acoes"><button class="link perigo" type="button" data-a="pj-bdel" data-v="${i}">Remover quadro</button></div></fieldset>`;
+  return `<button class="link" data-a="pj-cancel">‹ Voltar sem salvar</button><form id="f-pj" class="form-card"><h2 class="sec">${p.id?"Editar projeto":"Novo projeto de marketing"}</h2>
+    <div class="pj-fg"><div class="pj-l2"><label for="pj_titulo">Nome do projeto *</label><input id="pj_titulo" required value="${v(p.titulo)}"></div><div><label for="pj_status">Situação</label><select id="pj_status">${PJ_ST.map(x=>`<option ${x===(p.status||"Planejamento")?"selected":""}>${x}</option>`).join("")}</select></div>
+    <div class="pj-l3"><label for="pj_resumo">Resumo em uma ou duas frases</label><textarea id="pj_resumo" rows="2">${v(d.resumo)}</textarea></div>
+    <div><label for="pj_dono">Responsável</label><input id="pj_dono" value="${v(d.dono)}"></div><div><label for="pj_ordem">Ordem na lista</label><input id="pj_ordem" type="number" value="${v(p.ordem||0)}"></div>
+    <div class="pj-l3"><label for="pj_marcos">Marcos (um por linha, no formato 2026-11-24 | Kickoff)</label><textarea id="pj_marcos" rows="4">${v(d.marcos)}</textarea></div></div>
+    <h3 style="margin:18px 0 8px">Fases</h3>${(d.fases||[]).map(fase).join("")}<button class="btn sec" type="button" data-a="pj-fadd">+ Incluir fase</button>
+    <h3 style="margin:18px 0 8px">Leitura, ideias e decisões</h3>${(d.blocos||[]).map(bloco).join("")}<button class="btn sec" type="button" data-a="pj-badd">+ Incluir quadro</button>
+    <div class="acoes" style="margin-top:18px"><button class="btn" type="submit">Salvar projeto</button><button class="link" type="button" data-a="pj-cancel">Cancelar</button>${p.id&&ehAdmin()?`<button class="link perigo" type="button" data-a="pj-del" data-v="${p.id}">Excluir projeto</button>`:""}</div></form>`;}
+function pjColeta(){const p=S.pjEd;if(!p)return;const g=id=>{const e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value):undefined;};
+  if(!document.getElementById("pj_titulo"))return;
+  p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");d.marcos=g("pj_marcos");
+  d.fases=(d.fases||[]).map((f,i)=>{const o={};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);o[k]=x===undefined?f[k]:x;});return o;});
+  d.blocos=(d.blocos||[]).map((b,i)=>({titulo:g(`pjb_titulo_${i}`)??b.titulo,destaque:g(`pjb_destaque_${i}`)??b.destaque,texto:g(`pjb_texto_${i}`)??b.texto}));}
+function vTMProj(){
+  if(S.pj===undefined){carregarPJ();return `<div class="carregando">Carregando os projetos…</div>`;}
+  if(S.pjEd)return pjForm(S.pjEd);
+  const p=(S.pj||[]).find(x=>x.id===S.pjSel);if(p)return vPJDet(p);
+  const L=S.pj||[];
+  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Projetos de marketing</h1><p class="sub">Os projetos do Marketing no mesmo método: fases com datas, quem participa, o que precisa estar pronto, uma linha do tempo e os marcos. ${pjEdita()?"Você pode incluir e editar projetos.":"Ficou alguma dúvida sobre um projeto? Fale com o Marketing."}</p></div>
+  ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
+  ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));
+    return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
+
 function vTMPedir(){
   return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Como pedir ao Marketing</h1><p class="sub">O caminho certo para cada tipo de pedido, para que nada se perca e tudo tenha resposta.</p></div>
   <section class="bloco"><div class="dir-grid">
@@ -10620,6 +10734,10 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim());
+    const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
+    const r=p.id?await sb.from("mkt_projetos").update(o).eq("id",p.id).select("id").single():await sb.from("mkt_projetos").insert(o).select("id").single();if(r.error){aviso("Não foi possível salvar o projeto.");return;}
+    aviso("Projeto salvo");S.pjEd=null;S.pjSel=r.data.id;S.pj=undefined;render();return;}
   if(f.id==="f-gc"){const o={};GC_CAMPOS.forEach(([k])=>{const el=document.getElementById("gc_"+k);o[k]=el?el.value.trim()||null:null;});if(!o.nome){aviso("Informe o nome da conta.");return;}if(o.uf)o.uf=o.uf.toUpperCase();o.atualizado_em=new Date().toISOString();
     const r=S.gcEd&&S.gcEd.id?await sb.from("grandes_contas").update(o).eq("id",S.gcEd.id):await sb.from("grandes_contas").insert(o);if(r.error){aviso("Não foi possível salvar.");return;}aviso("Conta salva");S.gcEd=null;S.gc=undefined;render();return;}
   if(f.id==="f-is-margem"){if(!ehAdmin())return;const v=mkNum(val("ism_v"));if(!(v>0&&v<100)){aviso("Informe a margem em %, entre 0 e 100.");return;}const {error}=await sb.from("is_config").upsert({chave:"margem_bruta",valor:v/100});if(error){aviso("Não foi possível salvar.");return;}S.isMargem=v/100;aviso("Margem salva");render();return;}
@@ -11056,7 +11174,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["gu
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
   "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
-  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-pedir","Como pedir ao Marketing"]],
+  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -11219,7 +11337,7 @@ function renderApp(){
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="time-mkt"){
-    if(veTimeMkt()){if(!/^tm-/.test(S.pag))S.pag="tm-mapa";app.innerHTML=cabecalho()+subnavTM()+`<main class="largo">${S.pag==="tm-proc"?vTMProc():S.pag==="tm-pedir"?vTMPedir():vIntRaci()}</main>`;return;}
+    if(veTimeMkt()){if(!/^tm-/.test(S.pag))S.pag="tm-mapa";app.innerHTML=cabecalho()+subnavTM()+`<main class="largo">${S.pag==="tm-proc"?vTMProc():S.pag==="tm-proj"?vTMProj():S.pag==="tm-pedir"?vTMPedir():vIntRaci()}</main>`;return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="vitrines"){
@@ -11398,6 +11516,17 @@ document.addEventListener("click",async ev=>{
   if(a==="cs-pt"||a==="cs-pes"){const V=csEstado(),k=a==="cs-pt"?"pts":"pesagens";const L=V[k]=V[k]||[];if(v==="1")L.push(L.length?L[L.length-1]:"");else if(L.length>1)L.pop();csSalvar();render();return;}
   if(a==="gt-abre"){S.gtSel=v||null;render();window.scrollTo(0,0);return;}
   if(a==="gt-ir"){const el=document.getElementById(v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
+  if(a==="pj-abrir"){S.pjSel=+v;render();window.scrollTo(0,0);return;}
+  if(a==="pj-lista"){S.pjSel=null;render();return;}
+  if(a==="pj-novo"){S.pjEd={titulo:"",status:"Planejamento",ordem:0,dados:{fases:[{status:"A fazer"}],blocos:[]}};render();window.scrollTo(0,0);return;}
+  if(a==="pj-edit"){const x=(S.pj||[]).find(y=>y.id===+v);S.pjEd=JSON.parse(JSON.stringify(x));render();window.scrollTo(0,0);return;}
+  if(a==="pj-cancel"){S.pjEd=null;render();return;}
+  if(a==="pj-fadd"){pjColeta();const F=S.pjEd.dados.fases=S.pjEd.dados.fases||[];const ult=F[F.length-1]||{};F.push({status:"A fazer",faixa:ult.faixa||""});render();return;}
+  if(a==="pj-fdel"){pjColeta();S.pjEd.dados.fases.splice(+v,1);render();return;}
+  if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]]=[F[i],F[i-1]];render();return;}
+  if(a==="pj-badd"){pjColeta();(S.pjEd.dados.blocos=S.pjEd.dados.blocos||[]).push({titulo:"",texto:""});render();return;}
+  if(a==="pj-bdel"){pjColeta();S.pjEd.dados.blocos.splice(+v,1);render();return;}
+  if(a==="pj-del"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}const {error}=await sb.from("mkt_projetos").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}S.pjEd=null;S.pjSel=null;S.pj=undefined;render();return;}
   if(a==="gc-sel"){S.gcSel=S.gcSel===+v?null:+v;render();const e=document.getElementById("gc-"+v);if(e&&S.gcSel)e.scrollIntoView({behavior:"smooth",block:"nearest"});return;}
   if(a==="gc-f"){const [k,x]=v.split("|");S.gcF[k]=x;render();return;}
   if(a==="gc-novo"){S.gcEd={prioridade:"B",status:"A abordar"};render();return;}
