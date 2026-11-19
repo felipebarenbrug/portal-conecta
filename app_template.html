@@ -1013,6 +1013,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .pir-op{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--linha,#d7dbe0);cursor:pointer;font-weight:400}.pir-op input{width:auto;min-width:0;flex:0 0 auto;margin:3px 0 0}.pir-op.sel{border-color:var(--azul,#003c71);box-shadow:inset 0 0 0 1px var(--azul,#003c71)}.pir-det{margin-top:8px}
 .ts-box{display:flex;justify-content:center}.ts-box:empty{display:none}
 .guia-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.guia-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}.guia-l li{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:4px 12px;padding:6px 0;border-top:1px solid #eef1f3}.guia-l li:first-child{border-top:0}.guia-l li>span{color:#555}.guia-l .link{text-align:left;padding:0}.guia-rot{margin:0;padding-left:20px;display:grid;gap:4px}.guia-destaque{box-shadow:inset 4px 0 0 #ffdb00}@media (max-width:600px){.guia-l li{grid-template-columns:1fr}}
+.pj-trab{grid-column:1/-1;display:grid;gap:8px;margin-top:4px}.pj-rl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pj-rc{display:inline-flex;align-items:center;gap:4px;background:#EEF6FA;color:#0B5E7E;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}.pj-rc.eu{background:#FFDB00;color:#1E1E1E}.pj-rx{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:inherit;padding:0 2px}.pj-ta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pj-ta select{width:auto}.pj-com{background:#F6F8FA;border-radius:12px;padding:12px 14px;display:grid;gap:10px}.pj-ci{border-bottom:1px solid var(--linha);padding-bottom:8px}.pj-ch{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.pj-ci p{margin:4px 0 0;white-space:pre-wrap}.pj-cf{display:grid;gap:6px}.pj-cfa{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pj-cfa .btn{margin-left:auto}.pj-radd{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.pj-radd select,.pj-radd input{flex:1 1 220px;width:auto}.lab{display:block;font-weight:700;margin-bottom:4px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.pj-minhas{box-shadow:inset 4px 0 0 #FFDB00}
 </style>
 </head>
 <body>
@@ -8591,8 +8592,19 @@ function pjGantt(p){const F=(p.dados.fases||[]).filter(f=>pjD(f.ini)&&pjD(f.fim)
   M.forEach((m,i)=>{h+=`<div class="pj-lin" style="grid-row:3/${ult};grid-column:${c(m.d)}"></div><div class="pj-mk${i%2?" baixo":""}" style="grid-row:${ult};grid-column:${c(m.d)}" title="${esc(m.n)} · ${esc(pjF(m.d))}"><i></i><span>${esc(m.n)}<br><b>${pjCurta(m.d)}</b></span></div>`;});
   const hoje=new Date();hoje.setHours(0,0,0,0);if(hoje>=A&&hoje<=new Date(+A+N*dia))h+=`<div class="pj-hoje" style="grid-row:2/${ult};grid-column:${Math.round((hoje-A)/dia)+2}" title="Hoje"></div>`;
   return `<div class="pj-gw"><div class="pj-g" style="grid-template-columns:96px repeat(${N},minmax(9px,1fr))">${h}</div></div>`;}
+const pjFid=()=>Math.random().toString(36).slice(2,12);
+const pjSouResp=f=>!!(S.user&&(f.resp||[]).some(r=>r.id===S.user.id));
+const pjPodeStatus=f=>pjEdita()||pjSouResp(f);
+function pjRespChips(f,ed,i){const R=f.resp||[];if(!R.length)return ed?`<span class="meta">Ninguém marcado ainda.</span>`:"";
+  return R.map((r,k)=>`<span class="pj-rc${r.id&&S.user&&r.id===S.user.id?" eu":""}" title="${r.id?"":"Ainda sem acesso ao portal"}">${esc(r.nome||"—")}${r.id?"":" ·  sem acesso"}${ed?`<button type="button" class="pj-rx" data-a="pj-rdel" data-v="${i}:${k}" aria-label="Tirar ${esc(r.nome||"")}">×</button>`:""}</span>`).join("");}
+async function carregarPJPessoas(){if(S.pjPes!==undefined)return;S.pjPes=null;try{const {data}=await sb.rpc("pj_pessoas");S.pjPes=data||[];}catch(e){S.pjPes=[];}render();}
+async function carregarPJCom(pid){try{const {data}=await sb.from("mkt_proj_coment").select("*").eq("projeto_id",pid).order("criado_em");(S.pjCom=S.pjCom||{})[pid]=data||[];}catch(e){(S.pjCom=S.pjCom||{})[pid]=[];}render();}
+function pjComPainel(p,f){const L=((S.pjCom||{})[p.id]||[]).filter(c=>c.fid===f.fid);
+  return `<div class="pj-com">${L.length?L.map(c=>`<div class="pj-ci"><div class="pj-ch"><strong>${esc(c.nome||"—")}</strong><span class="meta">${new Date(c.criado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span>${S.user&&(c.user_id===S.user.id||ehAdmin())?`<button type="button" class="link perigo" data-a="pj-cdel" data-v="${c.id}">apagar</button>`:""}</div>${c.texto?`<p>${esc(c.texto)}</p>`:""}${c.arq_path?`<button type="button" class="link" data-a="pj-baixar" data-v="${esc(c.arq_path)}">Arquivo: ${esc(c.arq_nome||"abrir")}</button>`:""}</div>`).join(""):`<p class="meta" style="margin:0">Nenhum comentário ainda. Escreva o que validou, o que precisa mudar ou anexe um arquivo.</p>`}
+   <form class="pj-cf" id="f-pjc" data-fid="${esc(f.fid)}" data-pid="${p.id}"><label class="sr" for="pjc_t">Comentário</label><textarea id="pjc_t" rows="2" maxlength="4000" placeholder="Seu comentário sobre esta fase"></textarea><div class="pj-cfa"><label class="link" style="cursor:pointer">Anexar arquivo<input type="file" id="pjc_f" hidden></label><span class="meta" id="pjc_fn"></span><button class="btn" type="submit">Enviar</button></div></form></div>`;}
+function pjMinhas(){if(!S.user)return [];const out=[];(S.pj||[]).forEach(p=>((p.dados||{}).fases||[]).forEach(f=>{if(pjSouResp(f))out.push([p,f]);}));return out;}
 function pjLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
-function vPJDet(p){const d=p.dados||{};const ed=pjEdita();const F=(d.fases||[]).slice().sort((a,b)=>String(a.ini).localeCompare(String(b.ini)));const M=pjMarcos(d.marcos);
+function vPJDet(p){const d=p.dados||{};if(!(S.pjCom||{})[p.id]){(S.pjCom=S.pjCom||{})[p.id]=[];carregarPJCom(p.id);}const ed=pjEdita();const F=(d.fases||[]).slice().sort((a,b)=>String(a.ini).localeCompare(String(b.ini)));const M=pjMarcos(d.marcos);
   const feitas=F.filter(f=>f.status==="Feito").length;
   return `<button class="link" data-a="pj-lista">‹ Todos os projetos</button>
   <section class="pj-topo"><span class="rot">Projeto de marketing · ${esc(p.status||"")}${p.restrito?" · restrito a administradores e Marketing":""}</span><h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
@@ -8603,9 +8615,11 @@ function vPJDet(p){const d=p.dados||{};const ed=pjEdita();const F=(d.fases||[]).
   ${F.length?`<section class="bloco"><h2 class="sec">As fases, uma a uma</h2><div class="pj-fases">${F.map(f=>{const [dt,sub]=pjDataFase(f);return `<div class="pj-fase st-${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":"fz"}">
       <div class="pj-data">${esc(f.status==="Feito"?"Feito":dt)}<small>${esc(f.status==="Feito"?dt:sub)}</small></div>
       <div style="min-width:0">${f.quem?`<div class="pj-quem">${esc(f.quem)}</div>`:""}<h3>${esc(f.nome)} <span class="pj-tag ${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":""}">${esc(f.status||"A fazer")}</span>${f.tag?` <span class="pj-tag mud">${esc(f.tag)}</span>`:""}</h3>${pjLinhas(f.itens).length?`<ul>${pjLinhas(f.itens).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>
-      ${f.saida?`<div class="pj-saida"><b>${esc(f.saida_rot||"Pronto quando")}</b>${esc(f.saida)}</div>`:"<div></div>"}</div>`;}).join("")}</div></section>`:""}
+      ${f.saida?`<div class="pj-saida"><b>${esc(f.saida_rot||"Pronto quando")}</b>${esc(f.saida)}</div>`:"<div></div>"}
+      ${f.fid?(()=>{const nC=((S.pjCom||{})[p.id]||[]).filter(c=>c.fid===f.fid).length;const ab=S.pjAberta===f.fid;return `<div class="pj-trab"><div class="pj-rl">${(f.resp||[]).length?`<span class="meta">Responsáveis:</span> ${pjRespChips(f,false)}`:`<span class="meta">Sem responsável marcado.</span>`}</div>
+      <div class="pj-ta">${pjPodeStatus(f)?`<label class="sr" for="pjst_${esc(f.fid)}">Situação</label><select id="pjst_${esc(f.fid)}" data-pjst="${esc(f.fid)}" data-pid="${p.id}">${PJ_FST.map(x=>`<option ${x===(f.status||"A fazer")?"selected":""}>${x}</option>`).join("")}</select>`:""}<button type="button" class="btn sec" data-a="pj-com" data-v="${esc(f.fid)}" aria-expanded="${ab}">${ab?"Fechar":"Comentários e arquivos"}${nC?` (${nC})`:""}</button></div>${ab?pjComPainel(p,f):""}</div>`;})():""}</div>`;}).join("")}</div></section>`:""}
   ${(d.blocos||[]).length?`<section class="bloco"><h2 class="sec">Leitura, ideias e decisões</h2><div class="pj-op">${d.blocos.map(b=>`<div class="pj-box${b.destaque?" dest":""}"><h3>${esc(b.titulo||"")}</h3>${pjLinhas(b.texto).length>1?`<ul>${pjLinhas(b.texto).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p>${esc(b.texto||"")}</p>`}</div>`).join("")}</div></section>`:""}`;}
-function pjForm(p){const d=p.dados||{};const v=x=>esc(x==null?"":String(x));
+function pjForm(p){const d=p.dados||{};carregarPJPessoas();const v=x=>esc(x==null?"":String(x));
   const fase=(f,i)=>`<fieldset class="pj-fs" data-i="${i}"><legend>Fase ${i+1}</legend><div class="pj-fg">
     <div class="pj-l2"><label for="pjf_nome_${i}">Nome da fase *</label><input id="pjf_nome_${i}" value="${v(f.nome)}"></div>
     <div><label for="pjf_status_${i}">Situação</label><select id="pjf_status_${i}">${PJ_FST.map(x=>`<option ${x===(f.status||"A fazer")?"selected":""}>${x}</option>`).join("")}</select></div>
@@ -8613,6 +8627,8 @@ function pjForm(p){const d=p.dados||{};const v=x=>esc(x==null?"":String(x));
     <div><label for="pjf_faixa_${i}">Faixa na linha do tempo</label><input id="pjf_faixa_${i}" value="${v(f.faixa)}" placeholder="Ex.: Revendas"></div>
     <div><label for="pjf_barra_${i}">Texto curto da barra</label><input id="pjf_barra_${i}" value="${v(f.barra)}" maxlength="40"></div>
     <div class="pj-l2"><label for="pjf_quem_${i}">Quem participa ou faz</label><input id="pjf_quem_${i}" value="${v(f.quem)}"></div>
+    <div class="pj-l3"><span class="lab">Responsáveis por esta fase</span><div class="pj-rl">${pjRespChips(f,true,i)}</div>
+      <div class="pj-radd"><label class="sr" for="pjf_rsel_${i}">Pessoa do portal</label><select id="pjf_rsel_${i}"><option value="">${S.pjPes===null?"Carregando pessoas…":"Escolher pessoa do portal"}</option>${(S.pjPes||[]).filter(x=>!(f.resp||[]).some(r=>r.id===x.id)).map(x=>`<option value="${esc(x.id)}">${esc(x.nome)} · ${esc(x.perfil||"")}</option>`).join("")}</select><label class="sr" for="pjf_rnome_${i}">Ou nome de quem ainda não tem acesso</label><input id="pjf_rnome_${i}" placeholder="ou nome de quem ainda não tem acesso"><button class="btn sec" type="button" data-a="pj-radd" data-v="${i}">Incluir</button></div></div>
     <div><label for="pjf_tag_${i}">Marcação (opcional)</label><input id="pjf_tag_${i}" value="${v(f.tag)}" placeholder="Ex.: ajuste, novo"></div>
     <div class="pj-l3"><label for="pjf_itens_${i}">O que acontece (um item por linha)</label><textarea id="pjf_itens_${i}" rows="4">${v(f.itens)}</textarea></div>
     <div><label for="pjf_saida_rot_${i}">Título do quadro lateral</label><input id="pjf_saida_rot_${i}" value="${v(f.saida_rot)}" placeholder="Pronto quando"></div>
@@ -8631,7 +8647,7 @@ function pjForm(p){const d=p.dados||{};const v=x=>esc(x==null?"":String(x));
 function pjColeta(){const p=S.pjEd;if(!p)return;const g=id=>{const e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value):undefined;};
   if(!document.getElementById("pj_titulo"))return;
   p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;p.restrito=!!g("pj_restrito");const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");d.marcos=g("pj_marcos");
-  d.fases=(d.fases||[]).map((f,i)=>{const o={};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);o[k]=x===undefined?f[k]:x;});return o;});
+  d.fases=(d.fases||[]).map((f,i)=>{const o={};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);o[k]=x===undefined?f[k]:x;});o.fid=f.fid||pjFid();o.resp=f.resp||[];return o;});
   d.blocos=(d.blocos||[]).map((b,i)=>({titulo:g(`pjb_titulo_${i}`)??b.titulo,destaque:g(`pjb_destaque_${i}`)??b.destaque,texto:g(`pjb_texto_${i}`)??b.texto}));}
 function vTMProj(){
   if(S.pj===undefined){carregarPJ();return `<div class="carregando">Carregando os projetos…</div>`;}
@@ -8640,6 +8656,7 @@ function vTMProj(){
   const L=S.pj||[];
   return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Projetos de marketing</h1><p class="sub">Os projetos do Marketing no mesmo método: fases com datas, quem participa, o que precisa estar pronto, uma linha do tempo e os marcos. ${pjEdita()?"Você pode incluir e editar projetos.":"Ficou alguma dúvida sobre um projeto? Fale com o Marketing."}</p></div>
   ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
+  ${(()=>{const M=pjMinhas();return M.length?`<section class="bloco pj-minhas"><h2 class="sec" style="margin:0 0 8px">Marcadas para você (${M.length})</h2><ul class="guia-l">${M.map(([p,f])=>`<li><button type="button" class="link" data-a="pj-ir" data-v="${p.id}" data-f="${esc(f.fid||"")}"><strong>${esc(f.nome)}</strong></button><span>${esc(p.titulo)} · ${esc(f.status||"A fazer")}${f.fim?" · até "+esc(pjF(f.fim)):""}</span></li>`).join("")}</ul></section>`:"";})()}
   ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));
     return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}${x.restrito?" · restrito":""}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
 
@@ -10898,6 +10915,8 @@ document.addEventListener("change",async ev=>{
   if(t.id==="bd_loc"){S.bdLoc=t.value;render();return;}
   if(t.id==="bd_vis"){S.bdVis=t.value;render();return;}
   if(t.dataset&&t.dataset.bdq){const it=(S.bd||[]).find(x=>String(x.id)===t.dataset.bdq);if(!it)return;let q=parseInt(String(t.value).replace(/\D/g,""),10)||0;q=Math.max(0,Math.min(bdDisp(it),q));const C=bdCarr();if(q)C[t.dataset.bdq]=q;else delete C[t.dataset.bdq];render();return;}
+  if(t.id==="pjc_f"){const e=document.getElementById("pjc_fn");if(e)e.textContent=t.files&&t.files[0]?t.files[0].name:"";return;}
+  if(t.dataset&&t.dataset.pjst){const pid=+t.dataset.pid;t.disabled=true;const {data,error}=await sb.rpc("pj_fase_status",{p_proj:pid,p_fid:t.dataset.pjst,p_status:t.value});if(error||!data){aviso("Não foi possível mudar a situação.");t.disabled=false;return;}S.pj=(S.pj||[]).map(x=>x.id===pid?{...x,dados:data,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||x.atualizado_por}:x);aviso("Situação atualizada.");render();return;}
   if(t.dataset&&t.dataset.mkup){const id=+t.dataset.mkup,files=[...(t.files||[])];if(!files.length)return;t.disabled=true;let ok=0;
     for(const f of files){if(f.size>15*1048576){aviso(`"${f.name}" passa de 15 MB.`);continue;}if(!MK_MIMES.includes(f.type)){aviso(`Tipo de arquivo não aceito: ${f.name}`);continue;}
       const path=`acoes/${id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}-${mkLimpo(f.name)}`;aviso(`Enviando ${f.name}…`);
@@ -10963,7 +10982,12 @@ document.addEventListener("submit",async ev=>{
     const o={pesos_media:lst(g("pesos_media")),pesos_vetor:lst(g("pesos_vetor")),vetor_teto:num(g("vetor_teto")),vetor_piso:num(g("vetor_piso")),vetor_padrao:num(g("vetor_padrao")),fator_piso:num(g("fator_piso")),fator_teto:num(g("fator_teto")),arred:num(g("arred")),piso_abs:num(g("piso_abs"))};
     if(o.pesos_media.length!==4||o.pesos_vetor.length!==3||Object.values(o).some(v=>Array.isArray(v)?v.some(isNaN):isNaN(v))){aviso("Confira os parâmetros: 4 pesos da média, 3 do vetor e números válidos.");return;}
     const {error}=await sb.from("mkt_mapa").upsert({id:"rv_meta_param",dados:o});if(error){aviso("Não foi possível salvar.");return;}S.rvm={...RVM_PAD,...o};aviso("Parâmetros salvos");render();return;}
-  if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim());
+  if(f.id==="f-pjc"){const pid=+f.dataset.pid,fid=f.dataset.fid;const tx=(document.getElementById("pjc_t").value||"").trim();const fi=document.getElementById("pjc_f");const arq=fi&&fi.files&&fi.files[0];
+    if(!tx&&!arq){aviso("Escreva um comentário ou anexe um arquivo.");return;}if(btn)btn.disabled=true;const o={projeto_id:pid,fid,texto:tx||null};
+    if(arq){if(arq.size>15*1048576||!MK_MIMES.includes(arq.type)){if(btn)btn.disabled=false;aviso("Use PDF, imagem, Word, Excel, PowerPoint ou texto de até 15 MB.");return;}
+      const path=`projetos/${pid}/${fid}/${Date.now().toString(36)}-${mkLimpo(arq.name)}`;const up=await sb.storage.from("mkt").upload(path,arq,{contentType:arq.type,upsert:false});if(up.error){if(btn)btn.disabled=false;aviso("Não foi possível enviar o arquivo.");return;}Object.assign(o,{arq_path:path,arq_nome:arq.name.slice(0,160),arq_tipo:arq.type,arq_tam:arq.size});}
+    const {error}=await sb.from("mkt_proj_coment").insert(o);if(error){if(btn)btn.disabled=false;if(o.arq_path){try{await sb.storage.from("mkt").remove([o.arq_path]);}catch(e){}}aviso("Não foi possível comentar.");return;}aviso("Comentário enviado.");carregarPJCom(pid);return;}
+  if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim()).map(x=>({...x,fid:x.fid||pjFid(),resp:x.resp||[]}));
     const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,restrito:!!p.restrito,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
     const r=p.id?await sb.from("mkt_projetos").update(o).eq("id",p.id).select("id").single():await sb.from("mkt_projetos").insert(o).select("id").single();if(r.error){aviso("Não foi possível salvar o projeto.");return;}
     aviso("Projeto salvo");S.pjEd=null;S.pjSel=r.data.id;S.pj=undefined;render();return;}
@@ -11822,7 +11846,14 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="cs-pt"||a==="cs-pes"){const V=csEstado(),k=a==="cs-pt"?"pts":"pesagens";const L=V[k]=V[k]||[];if(v==="1")L.push(L.length?L[L.length-1]:"");else if(L.length>1)L.pop();csSalvar();render();return;}
   if(a==="gt-abre"){S.gtSel=v||null;render();window.scrollTo(0,0);return;}
   if(a==="gt-ir"){const el=document.getElementById(v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
-  if(a==="pj-abrir"){S.pjSel=+v;render();window.scrollTo(0,0);return;}
+  if(a==="pj-abrir"){S.pjSel=+v;S.pjAberta=null;render();window.scrollTo(0,0);return;}
+if(a==="pj-ir"){S.pjSel=+v;S.pjAberta=b.dataset.f||null;render();setTimeout(()=>{const e=document.querySelector(`[data-a="pj-com"][data-v="${b.dataset.f}"]`);if(e)e.scrollIntoView({block:"center"});},50);return;}
+if(a==="pj-com"){S.pjAberta=S.pjAberta===v?null:v;render();return;}
+if(a==="pj-radd"){pjColeta();const i=+v,F=S.pjEd.dados.fases[i];const sel=document.getElementById("pjf_rsel_"+i),nm=document.getElementById("pjf_rnome_"+i);const id=sel&&sel.value,n=(nm&&nm.value||"").trim();
+  F.resp=F.resp||[];if(id){const x=(S.pjPes||[]).find(y=>y.id===id);if(x&&!F.resp.some(r=>r.id===id))F.resp.push({id,nome:x.nome});}else if(n){F.resp.push({nome:n.slice(0,80)});}else{aviso("Escolha uma pessoa ou digite um nome.");return;}render();return;}
+if(a==="pj-rdel"){pjColeta();const [i,k]=v.split(":").map(Number);S.pjEd.dados.fases[i].resp.splice(k,1);render();return;}
+if(a==="pj-cdel"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="confirmar";return;}const c=Object.values(S.pjCom||{}).flat().find(x=>x.id===+v);const {error}=await sb.from("mkt_proj_coment").delete().eq("id",+v);if(error){aviso("Não foi possível apagar.");return;}if(c&&c.arq_path){try{await sb.storage.from("mkt").remove([c.arq_path]);}catch(e){}}carregarPJCom(S.pjSel);return;}
+if(a==="pj-baixar"){try{const {data}=await sb.storage.from("mkt").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
   if(a==="pj-lista"){S.pjSel=null;render();return;}
   if(a==="pj-novo"){S.pjEd={titulo:"",status:"Planejamento",ordem:0,dados:{fases:[{status:"A fazer"}],blocos:[]}};render();window.scrollTo(0,0);return;}
   if(a==="pj-edit"){const x=(S.pj||[]).find(y=>y.id===+v);S.pjEd=JSON.parse(JSON.stringify(x));render();window.scrollTo(0,0);return;}
