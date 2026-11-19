@@ -900,6 +900,7 @@ main.largo{max-width:1120px}
 .on-n{display:inline-block;min-width:22px;padding:0 7px;border-radius:11px;background:#2E8B57;color:#fff;font-size:13px;line-height:22px;text-align:center;vertical-align:middle}.on-l{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}.on-l li{display:flex;gap:8px;align-items:flex-start}.on-l li>span:last-child{display:flex;flex-direction:column;min-width:0}.on-dot{width:9px;height:9px;border-radius:50%;background:#2E8B57;margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 3px rgba(46,139,87,.18)}
 .tm-proc{border:1px solid rgba(0,0,0,.12);border-radius:10px;background:var(--branco,#fff)}.tm-proc>summary{cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.tm-corpo{padding:0 14px 14px}.tm-filtros{display:grid;gap:8px;margin-bottom:6px}.tm-filtros input{max-width:420px}
 .ps-f{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.ps-fl{border:0;cursor:pointer;display:inline-block;min-width:20px;padding:0 6px;border-radius:9px;background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;font-weight:700;line-height:18px;text-align:center;text-decoration:none}.ps-nao{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,.07);box-shadow:inset 3px 0 0 #c0392b;font-size:14px}.ps-frase{margin:10px 0 0;font-style:italic;color:var(--azul-escuro)}.ps-fontes li{margin:4px 0}.ps-on{background:var(--amarelo);border-radius:4px}
+.ac-rev{margin:0 0 14px}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1471,7 +1472,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118215858";
+const APP_VER="20261118220007";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -10328,7 +10329,7 @@ function renderApp(){
   if(S.secao==="academia"){
     const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar,posicionar:vPosicionar,objecoes:vObjecoes}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"||S.pag==="posicionar"||S.pag==="objecoes"?' class="largo"':""}>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"||S.pag==="posicionar"||S.pag==="objecoes"?' class="largo"':""}><div class="aviso-est ac-rev" role="note"><strong>Em revisão técnica</strong><p>Os conteúdos da Academia de Híbridos estão em fase final de revisão técnica pelo time técnico da Barenbrug.</p></div>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
