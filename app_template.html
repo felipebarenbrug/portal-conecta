@@ -960,6 +960,7 @@ main.largo{max-width:1120px}
 .rg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:rg}.rg-p{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;background:var(--branco);display:grid;gap:4px;align-content:start;position:relative}
 .rg-p.gat{background:var(--amarelo);border-color:var(--amarelo);color:#1E1E1E}.rg-p.mail{border-top:3px solid var(--azul)}.rg-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado)}.rg-p.gat .rg-t{color:#1E1E1E}.rg-p p{margin:0;font-size:14px}
 .cs-bars{display:flex;gap:14px;align-items:flex-end;height:170px;max-width:520px}.cs-b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}.cs-b i{display:block;width:100%;border-radius:6px 6px 0 0}.cs-v{font-weight:800;font-size:14px}
+.tf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}.tf-card{margin:0}.tf-cab{display:flex;gap:12px;align-items:center;margin-bottom:10px}.tf-av{width:44px;height:44px;border-radius:50%;background:var(--amarelo);color:#1E1E1E;font-weight:900;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.tf-h{margin:14px 0 6px;font-size:15px}.tf-ul{margin:0;padding-left:18px;display:grid;gap:4px}.tf-chips{display:flex;flex-wrap:wrap;gap:6px}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
 .gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
 .gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
@@ -8398,7 +8399,7 @@ async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {da
 const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
 /* ===== Time de Marketing: o playbook do time (mapa RACI, processos passo a passo, como pedir ao Marketing) ===== */
 const veTimeMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing")||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"));
-function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
+function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
 function carregarPlaybook(){if(S.pbBusy)return;S.pbBusy=true;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","playbook_mkt").maybeSingle();S.pb=(data&&data.dados&&Array.isArray(data.dados.processos))?data.dados:{processos:[]};}catch(e){S.pb={processos:[]};}S.pbBusy=false;render();})();}
 const TM_AREAS=["Estratégia e budget","Ações de marketing","Eventos","Comunicação e conteúdo","Mídia e campanhas digitais","Inside Sales","Conecta Revendas","Conecta RC","Brindes e materiais","Inteligência de mercado","Portal Conecta","Outro"];
 function tmLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
@@ -8510,6 +8511,31 @@ function vTMProj(){
   ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
   ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));
     return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
+
+/* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
+const TM_FUNC=[
+ {nome:"Mayane Costa",cargo:"Analista de Vendas Internas e Marketing",resp:"Felipe Piccoli",
+  cob:"De 20/11/2026 a julho de 2027, as atribuições de Vendas Internas ficam com Laura Alteia Costa, sob supervisão do Felipe.",
+  resumo:"Elo estratégico entre o Inside Sales, os canais do Programa Conecta e o Marketing. Responde pelo desempenho das vendas digitais, acompanha as assessoras de vendas digitais, conduz a pesquisa de satisfação (NPS) e apoia ações de marketing que reforçam a marca junto a clientes e parceiros.",
+  blocos:[["Vendas internas",["Assegurar a meta de faturamento definida pela liderança da área.","Desenvolver, otimizar e ajustar as integrações de RD Conversas, RD Station Marketing, RD Station CRM e ERP Mega, além de novos softwares que forem implantados.","Dar suporte técnico, comercial e operacional às assessoras.","Estruturar e ministrar treinamentos de CRM, RD Conversas, processo de vendas digitais e produtos Barenbrug.","Manter as assessoras ativas e capacitadas, seguindo o planejamento da área.","Conduzir contratação, onboarding e capacitação das assessoras, quando necessário.","Monitorar desempenho e engajamento individual e do time."]],
+   ["Canais Yellow Master (Programa Conecta)",["Gerir o repasse de leads aos canais Yellow Master, conforme as regras do Conecta.","Conduzir reuniões mensais com os responsáveis operacionais dos canais.","Elaborar relatórios mensais de desempenho e conversão dos leads."]],
+   ["Pesquisa de satisfação (NPS)",["Executar a pesquisa NPS da Barenbrug do Brasil.","Entrevistar produtores e consolidar os dados.","Entregar relatórios mensais com análises e recomendações para a liderança."]],
+   ["Comunicação e marketing operacional",["Produzir o quadro No Campo com Inovação, conforme o planejamento.","Integrar Marketing, Canais e Inside Sales para dar visibilidade à marca e gerar demanda.","Organizar eventos internos e externos de pequeno, médio e grande porte.","Apoiar ações de marketing e comunicação."]]],
+  comp:["Vendas digitais e suporte comercial","CRM, funil de vendas e atendimento remoto","Office, CRM e automação de marketing","Relacionamento e comunicação","Orientação para resultados e visão integrada entre comercial e marketing"]},
+ {nome:"Thaís Mendonça",cargo:"Analista de Marketing Tático",resp:"Felipe Piccoli",desde:"16/11/2026",
+  resumo:"Planeja, executa e acompanha o trade marketing com os canais parceiros, com foco na operação do Programa Conecta Revendas, na consistência de marca, no uso eficiente das verbas e no resultado de sell-in, sell-out e aceleração dos híbridos. Atua junto a Comercial, Inside Sales e Marketing e operacionaliza o calendário de treinamentos e comunicações com os canais.",
+  blocos:[["Programa Conecta Revendas",["Operar o programa: cadastros, contratos, fluxos de aprovação, comprovações e pagamentos de IGDB.","Conduzir com canais e RTVs a elaboração e a aprovação dos Planos de Geração de Demanda.","Garantir que todo canal ativo tenha contrato assinado e PGD aprovado no prazo de cada safra.","Assegurar o uso correto da verba de IGDB e antecipar o risco de perda de verba pelos canais.","Cumprir os calendários de comprovação e pagamento trimestral do IGDB e do bônus de performance."]],
+   ["Treinamentos e comunicação com canais",["Manter atualizado e executar o calendário oficial de treinamentos e comunicações com os canais, alinhado aos RTVs.","Comunicar-se com vendedores de revendas e RCs pelas ferramentas de CRM e relacionamento.","Participar de reuniões periódicas com RTVs, Gerentes Regionais e canais."]],
+   ["Eventos, fornecedores e materiais",["Planejar e organizar eventos institucionais, feiras, dias de campo e workshops, do pré ao pós-evento, no prazo, no orçamento e no padrão de marca.","Contratar e acompanhar fornecedores: orçamentos, contratos, notas fiscais e pagamentos, com documentação completa.","Gerir estoque e despacho de brindes, kits e materiais de PDV para RTVs e RCs, sem rupturas e com rastreio dos envios."]],
+   ["Orçamento, dados e processos",["Apoiar o controle do orçamento de marketing tático, com requisições no ERP.","Manter relatórios e dashboards do Conecta, dos eventos e das ações, ligando os resultados a sell-in, sell-out e volume de híbridos.","Documentar e padronizar os processos do marketing tático e propor melhorias com base nos dados.","Dar apoio técnico-comercial em eventos e treinamentos pontuais e viajar para ações regionais."]]],
+  comp:["Trade marketing e operação de programa de canais","Eventos e gestão de fornecedores","Controle de verba e compliance","Relatórios e indicadores","Organização e padronização de processos"]}
+];
+function vTMFuncoes(){
+  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Time e funções</h1><p class="sub">Quem faz o quê no Marketing: as funções de quem responde ao Felipe Piccoli, supervisor de Marketing. Use para saber a quem levar cada assunto.</p></div>
+  <div class="tf-grid">${TM_FUNC.map(p=>`<section class="bloco tf-card"><div class="tf-cab"><span class="tf-av" aria-hidden="true">${esc(p.nome.split(" ").map(x=>x[0]).slice(0,2).join(""))}</span><div><h2 class="sec" style="margin:0">${esc(p.nome)}</h2><span class="meta">${esc(p.cargo)} · responde a ${esc(p.resp)}${p.desde?" · desde "+esc(p.desde):""}</span></div></div>
+    <p>${esc(p.resumo)}</p>${p.cob?`<div class="aviso-est"><strong>Cobertura</strong>${esc(p.cob)}</div>`:""}
+    ${p.blocos.map(([t,L])=>`<h3 class="tf-h">${esc(t)}</h3><ul class="tf-ul">${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`).join("")}
+    <h3 class="tf-h">Competências</h3><div class="tf-chips">${p.comp.map(c=>`<span class="chip">${esc(c)}</span>`).join("")}</div></section>`).join("")}</div>`;}
 
 function vTMPedir(){
   return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Como pedir ao Marketing</h1><p class="sub">O caminho certo para cada tipo de pedido, para que nada se perca e tudo tenha resposta.</p></div>
@@ -11237,7 +11263,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["gu
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
   "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
-  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
+  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -11400,7 +11426,7 @@ function renderApp(){
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="time-mkt"){
-    if(veTimeMkt()){if(!/^tm-/.test(S.pag))S.pag="tm-mapa";app.innerHTML=cabecalho()+subnavTM()+`<main class="largo">${S.pag==="tm-proc"?vTMProc():S.pag==="tm-proj"?vTMProj():S.pag==="tm-pedir"?vTMPedir():vIntRaci()}</main>`;return;}
+    if(veTimeMkt()){if(!/^tm-/.test(S.pag))S.pag="tm-mapa";app.innerHTML=cabecalho()+subnavTM()+`<main class="largo">${S.pag==="tm-proc"?vTMProc():S.pag==="tm-func"?vTMFuncoes():S.pag==="tm-proj"?vTMProj():S.pag==="tm-pedir"?vTMPedir():vIntRaci()}</main>`;return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="vitrines"){
