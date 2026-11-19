@@ -928,6 +928,7 @@ main.largo{max-width:1120px}
 .gt-num{clear:both;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 14px}.gt-num>div{background:var(--amarelo-claro);border-radius:10px;padding:12px;display:grid;gap:4px}.gt-num strong{font-size:24px;color:var(--azul-escuro)}.gt-num span{font-size:13px;color:var(--apagado)}
 .gt-tab{clear:both}.gt-rodape{margin-top:6px}
 @media (max-width:860px){.gt-corpo{grid-template-columns:1fr}.gt-sum{position:static;max-height:none}.gt-fig,.gt-fig.gt-esq{float:none;width:100%;margin:6px 0 12px}.gt-hero h1{font-size:24px}}
+.msg-aut{font-size:12px;color:var(--azul-escuro)}#msgadm_q{width:100%}
 .cs-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}.cs-form{display:grid;gap:12px;min-width:0}.cs-form .bloco{margin:0}
 .cs-res-w{position:sticky;top:12px;min-width:0}.cs-res .metric{background:var(--papel)}
 .cs-in{display:flex;align-items:center;gap:8px}.cs-in input{flex:1;min-width:0}.cs-in>span{color:var(--apagado);font-size:13px;white-space:nowrap}
@@ -3748,7 +3749,19 @@ setInterval(async()=>{if(document.hidden||!S.user||S.demo)return;await carregarM
       if(data&&data.length){const f=document.querySelector(".msg-fio");data.forEach(m=>{if(!S.msgFio.some(x=>x.id===m.id)){S.msgFio.push(m);if(f)f.insertAdjacentHTML("beforeend",msgBolha(m));}});if(f)f.scrollTop=f.scrollHeight;try{await sb.rpc("marcar_lidas",{p_conv:S.msgAberta});}catch(e){}}}}},25000);
 function msgListaHTML(){const L=S.msgConv||[];if(!L.length)return `<div class="vazio">Nenhuma conversa ainda. Comece uma em Nova conversa.</div>`;
   return L.map(c=>`<button class="msg-item ${S.msgAberta===c.id?"ativo":""}" data-a="msg-abrir" data-v="${c.id}">${avatar(c.outro,c.nome,40)}<span class="msg-item-t"><strong>${esc(c.nome)}</strong><span class="meta">${esc(c.detalhe||"")}</span><span class="msg-prev">${c.ult_autor===S.user.id?"Você: ":""}${esc(c.ult_txt||"")}</span></span><span class="msg-item-d"><span class="meta">${c.ult_em?msgHora(c.ult_em):""}</span>${+c.nao_lidas?`<b class="msg-n">${c.nao_lidas}</b>`:""}</span></button>`).join("");}
+function vMsgAdm(){
+  if(S.admConv===undefined){if(!S.admBusy){S.admBusy=true;sb.rpc("admin_conversas").then(({data,error})=>{S.admBusy=false;S.admConv=error?[]:(data||[]);render();});}return `<div class="carregando">Carregando…</div>`;}
+  const q=(S.admQ||"").toLowerCase();const L=S.admConv.filter(c=>!q||((c.a_nome||"")+" "+(c.b_nome||"")+" "+(c.ult_txt||"")).toLowerCase().includes(q));
+  const conv=S.admConv.find(c=>c.id===S.admAberta);
+  const nome=id=>conv?(id===conv.a?conv.a_nome:id===conv.b?conv.b_nome:"?"):"?";
+  const lista=L.length?L.map(c=>`<button class="msg-item ${S.admAberta===c.id?"ativo":""}" data-a="msgadm-abrir" data-v="${c.id}"><span class="msg-item-t"><strong>${esc(c.a_nome||"?")} e ${esc(c.b_nome||"?")}</strong><span class="meta">${esc(c.a_perfil||"")} · ${esc(c.b_perfil||"")} · ${c.n} ${+c.n===1?"mensagem":"mensagens"}</span><span class="msg-prev">${esc(c.ult_txt||"")}</span></span><span class="msg-item-d"><span class="meta">${c.ult_em?msgHora(c.ult_em):""}</span></span></button>`).join(""):`<div class="vazio">Nenhuma conversa.</div>`;
+  const fio=conv?`<div class="msg-topo"><button class="link msg-so-mob" data-a="msgadm-voltar">‹ Conversas</button><span><strong>${esc(conv.a_nome||"?")} e ${esc(conv.b_nome||"?")}</strong><span class="meta">Somente leitura. Abrir esta conversa fica registrado.</span></span></div>
+    <div class="msg-fio">${S.admFio==null?`<div class="carregando">Carregando…</div>`:S.admFio.length?S.admFio.map(m=>{const ea=m.autor===conv.a;return `<div class="msg-b ${ea?"ele":"eu"}"><p><strong class="msg-aut">${esc(nome(m.autor))}</strong><br>${esc(m.texto).replace(/\n/g,"<br>")}</p><span>${msgHora(m.criado_em)}${m.lida_em?" · lida":""}</span></div>`;}).join(""):`<div class="vazio">Conversa sem mensagens.</div>`}</div>`
+    :`<div class="vazio msg-vazio">Escolha uma conversa para ler.</div>`;
+  return `<div class="msg-wrap ${conv?"aberto":""}"><aside class="msg-lado"><div class="msg-topo"><input type="search" id="msgadm_q" placeholder="Buscar por nome ou texto" value="${esc(S.admQ||"")}" aria-label="Buscar conversas"></div><div class="msg-lista">${lista}</div></aside><section class="msg-painel">${fio}</section></div>`;}
 function vMensagens(){
+  const abaAdm=ehMaster()&&!S.demo?`<div class="filtros" role="group" aria-label="Visão"><button class="chip" data-a="msgadm-modo" data-v="" aria-pressed="${!S.msgAdm}">Minhas conversas</button><button class="chip" data-a="msgadm-modo" data-v="1" aria-pressed="${!!S.msgAdm}">Todas as conversas (administração)</button></div>`:"";
+  if(S.msgAdm&&ehMaster()&&!S.demo)return `<div><h1 class="titulo">Mensagens</h1><p class="sub">Visão de administração: todas as conversas do portal, só para leitura. Cada conversa aberta fica registrada no histórico de auditoria.</p></div>${abaAdm}${vMsgAdm()}`;
   if(S.msgConv===undefined||S.msgCont===undefined){if(!S.msgBusy){S.msgBusy=true;carregarMsgs().then(()=>{S.msgBusy=false;render();});}return `<div class="carregando">Carregando…</div>`;}
   const cont=S.msgCont||[];const conv=(S.msgConv||[]).find(c=>c.id===S.msgAberta);
   const grupos=MSG_G;
@@ -3758,11 +3771,14 @@ function vMensagens(){
     ${conv.pode===false?`<div class="vazio">Esta conversa está encerrada.</div>`:`<form id="f-msg" class="msg-form"><label for="msg_txt" class="sr-only">Mensagem</label><textarea id="msg_txt" rows="2" maxlength="4000" placeholder="Escreva sua mensagem. Enter envia, Shift+Enter quebra a linha."></textarea><button class="btn" type="submit">Enviar</button></form>`}`
     :`<div class="vazio msg-vazio">Escolha uma conversa ao lado ou comece uma nova.</div>`;
   const ladoAberto=S.msgNova||!!conv;
-  return `<div><h1 class="titulo">Mensagens</h1><p class="sub">Converse com o Marketing, o embaixador técnico e o seu responsável comercial. As mensagens ficam só entre vocês dois.</p></div>
+  return `<div><h1 class="titulo">Mensagens</h1><p class="sub">Converse com o Marketing, o embaixador técnico e o seu responsável comercial. A conversa é entre vocês dois; a administração do portal pode consultá-la para suporte, segurança e conformidade, e cada consulta fica registrada.</p></div>${abaAdm}
   <div class="msg-wrap ${ladoAberto?"aberto":""}"><aside class="msg-lado"><div class="msg-topo"><strong>Conversas</strong>${cont.length?`<button class="btn sec" data-a="msg-nova">Nova conversa</button>`:""}</div><div class="msg-lista">${msgListaHTML()}</div></aside>
   <section class="msg-painel">${S.msgNova?nova:fio}</section></div>`;
 }
 document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='msg-']");if(!b)return;ev.preventDefault();ev.stopPropagation();const a=b.dataset.a,v=b.dataset.v;
+  if(a==="msgadm-modo"){S.msgAdm=!!v;S.admConv=undefined;S.admAberta=null;S.admFio=null;render();return;}
+  if(a==="msgadm-voltar"){S.admAberta=null;render();return;}
+  if(a==="msgadm-abrir"){S.admAberta=+v;S.admFio=null;render();const {data,error}=await sb.rpc("admin_mensagens",{cid:+v});S.admFio=error?[]:(data||[]);if(error)aviso("Não foi possível abrir a conversa.");render();const f=document.querySelector(".msg-fio");if(f)f.scrollTop=f.scrollHeight;return;}
   if(a==="msg-nova"){S.msgNova=true;S.msgAberta=null;render();return;}
   if(a==="msg-voltar"){S.msgNova=false;S.msgAberta=null;render();return;}
   if(a==="msg-abrir"){msgAbrirConv(+v);return;}
@@ -4123,6 +4139,7 @@ function csInput(ev){const t=ev.target;if(!t||!t.closest)return;const V=S.cs;if(
   if(t.dataset.cs){V[t.dataset.cs]=t.value;ok=true;}else if(t.dataset.csPt!=null){V.pts[+t.dataset.csPt]=t.value;ok=true;}else if(t.dataset.csPes!=null){V.pesagens[+t.dataset.csPes]=t.value;ok=true;}
   if(!ok)return;csSalvar();const r=document.getElementById("cs-res");if(r)r.innerHTML=csResHTML();}
 document.addEventListener("input",csInput);document.addEventListener("change",csInput);
+let _admT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="msgadm_q")return;S.admQ=t.value;clearTimeout(_admT);_admT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("msgadm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
 let _tmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="tm_q")return;S.pbQ=t.value;clearTimeout(_tmT);_tmT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("tm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
@@ -10523,14 +10540,14 @@ const moderaDuv=()=>ehAdmin()||ehEmb();
 const mktContatosHTML=()=>MKT_CONTATOS.map(c=>`<span class="mkt-c"><strong>${esc(c.nome)}</strong>${c.email?` · <a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}</span>`).join("");
 
 
-const PRIV_VER="Versão 1 · 17/11/2026";
+const PRIV_VER="Versão 2 · 19/11/2026";
 function vPrivacidade(){
   const sec=(t,h)=>`<section class="bloco"><h2 class="sec">${t}</h2>${h}</section>`;
   return `<div><p><button type="button" class="link" data-a="priv-voltar">‹ Voltar</button></p><h1 class="titulo">Aviso de privacidade</h1><p class="sub">Como o Portal Conecta Barenbrug trata os dados pessoais de quem usa o portal e dos contatos comerciais que passam por ele, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018). ${PRIV_VER}.</p></div>
   <div class="priv-txt">
   ${sec("1. Quem trata os dados",`<p>A Barenbrug do Brasil é a controladora dos dados tratados no Portal Conecta. O portal é mantido pelo Marketing Barenbrug e serve a revendas, representantes comerciais (RCs), time comercial e parceiros convidados.</p>`)}
   ${sec("2. Que dados usamos",`<p><strong>Seu cadastro:</strong> nome, e-mail, WhatsApp, data de nascimento, cidade e UF, função, empresa ou revenda, CNPJ e razão social quando você representa uma empresa, região de atuação, formação, marcas com que trabalha e foto de perfil, que é opcional.</p>
-   <p><strong>Seu uso do portal:</strong> data do último acesso, tempo de uso por área do portal (contado só com o portal aberto na tela e em uso), progresso e respostas nos cursos e provas, mensagens, dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
+   <p><strong>Seu uso do portal:</strong> data do último acesso, tempo de uso por área do portal (contado só com o portal aberto na tela e em uso), progresso e respostas nos cursos e provas, mensagens (que a administração do portal pode consultar para suporte, segurança e conformidade, com registro de cada consulta), dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
    <p><strong>Contatos comerciais:</strong> dados de produtores e clientes que pediram atendimento à Barenbrug (nome, telefone, e-mail, cidade e o histórico da negociação), vindos do CRM da Barenbrug, para que a pessoa certa faça o atendimento.</p>`)}
   ${sec("3. Para que usamos",`<ul><li>Liberar, controlar e proteger o seu acesso.</li><li>Oferecer treinamento, provas e certificados.</li><li>Operar os programas de relacionamento Conecta RC e Conecta Revendas, com metas, ranking e materiais, e planejar ações de relacionamento, como datas comemorativas.</li><li>Direcionar contatos de clientes interessados ao atendimento comercial da sua região.</li><li>Apoiar a venda, com tabela de preços, propostas e informações de mercado.</li><li>Cumprir obrigações legais e registrar ações para segurança e auditoria.</li></ul>`)}
   ${sec("4. Bases legais",`<p>Tratamos os dados para executar a relação comercial com você ou com a empresa que você representa (art. 7º, V), pelo legítimo interesse da Barenbrug em treinar e apoiar a sua rede comercial e em atender quem pediu contato (art. 7º, IX), para cumprir obrigações legais (art. 7º, II) e, para a foto de perfil e outros dados opcionais, com o seu consentimento (art. 7º, I), que você pode retirar quando quiser.</p>`)}
