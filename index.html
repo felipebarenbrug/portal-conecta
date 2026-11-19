@@ -1552,7 +1552,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119150637";
+const APP_VER="20261119151755";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8518,7 +8518,7 @@ async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {da
 const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
 /* ===== Time de Marketing: o playbook do time (mapa RACI, processos passo a passo, como pedir ao Marketing) ===== */
 const veTimeMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing")||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"));
-function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
+function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa de Marketing, Comunicação e Vendas Digitais"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
 function carregarPlaybook(){if(S.pbBusy)return;S.pbBusy=true;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","playbook_mkt").maybeSingle();S.pb=(data&&data.dados&&Array.isArray(data.dados.processos))?data.dados:{processos:[]};}catch(e){S.pb={processos:[]};}S.pbBusy=false;render();})();}
 const TM_AREAS=["Estratégia e budget","Ações de marketing","Eventos","Comunicação e conteúdo","Mídia e campanhas digitais","Inside Sales","Conecta Revendas","Conecta RC","Brindes e materiais","Inteligência de mercado","Portal Conecta","Outro"];
 function tmLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
@@ -8664,10 +8664,10 @@ function vTMPedir(){
     <div class="dir-card"><strong>Brindes e materiais</strong><p>Faça a requisição em Brindes de Marketing, escolhendo o item do catálogo. A baixa no estoque acontece na aprovação.</p><button class="btn sec" data-a="tm-ir" data-v="brindes|brindes-catalogo">Abrir Brindes</button></div>
     <div class="dir-card"><strong>Artes, marca e materiais prontos</strong><p>Antes de pedir uma arte, veja o Enxoval de Marketing: logos, artes para redes, folders e banco de imagens já aprovados.</p><button class="btn sec" data-a="tm-ir" data-v="enxoval|">Abrir Enxoval</button></div>
     <div class="dir-card"><strong>Dúvida sobre produto, manejo ou programa</strong><p>Pergunte no Tira-Dúvidas: o time técnico-comercial responde e a resposta fica para todos.</p><button class="btn sec" data-a="tm-ir" data-v="duvidas|">Abrir Tira-Dúvidas</button></div></div></section>
-  <section class="bloco"><h2 class="sec">Quem decide</h2><p class="sub" style="margin:0">As ações de marketing são aprovadas pelo Felipe Piccoli, caso a caso. O dia a dia com canais, comercial e RCs é com a Thaís Mendonça. O detalhe de quem faz o quê em cada atividade está no Mapa do Marketing.</p></section>`;}
+  <section class="bloco"><h2 class="sec">Quem decide</h2><p class="sub" style="margin:0">As ações de marketing são aprovadas pelo Felipe Piccoli, caso a caso. O dia a dia com canais, comercial e RCs é com a Thaís Mendonça. O detalhe de quem faz o quê em cada atividade está no Mapa de Marketing, Comunicação e Vendas Digitais.</p></section>`;}
 function vIntRaci(){
-  if(S.raci===undefined){carregarRaci();return `<div class="carregando">Carregando o mapa do Marketing…</div>`;}
-  const D=S.raci;if(!D)return `<div><h1 class="titulo">Mapa do Marketing</h1></div><div class="vazio">O mapa não está disponível para o seu perfil.</div>`;
+  if(S.raci===undefined){carregarRaci();return `<div class="carregando">Carregando o mapa de Marketing, Comunicação e Vendas Digitais…</div>`;}
+  const D=S.raci;if(!D)return `<div><h1 class="titulo">Mapa de Marketing, Comunicação e Vendas Digitais</h1></div><div class="vazio">O mapa não está disponível para o seu perfil.</div>`;
   const F=S.raciF||(S.raciF={area:"",p:""});const P=Object.fromEntries(D.pessoas.map(x=>[x.id,x]));
   const nomeC=id=>id==="is"?"Inside Sales":(P[id]?P[id].nome.split(" ")[0]:id);
   const badge=(l)=>l.split("").map(x=>`<span class="rb rb-${x}" title="${esc(RACI_TXT[x])}">${x}</span>`).join(" ");
@@ -8690,7 +8690,7 @@ function vIntRaci(){
     return `<tr class="ar"><td colspan="${D.cols.length+2}">${esc(ar)} · ${A.length}</td></tr>`+A.map(a=>`<tr class="${pOk(a)?"":"dim"}"><td><span class="nm">${esc(a.nome)}</span>${a.conf?` ${stTag("a confirmar","amarelo")}`:""}<span class="ds">${esc(a.oque)}${a.freq?` · <strong>${esc(a.freq)}</strong>`:""}</span></td>${D.cols.map(id=>`<td class="c">${a.r[id]?badge(a.r[id]):""}</td>`).join("")}<td style="font-size:12px;min-width:120px">${(a.outros||[]).map(([l,n])=>`${badge(l)} ${esc(n)}`).join("<br>")}</td></tr>`).join("");}).join("");
   const chips=[["","Todas"],...D.areas.map(a=>[a,a])].map(([k,t])=>`<button class="chip" data-a="raci-f" data-v="area:${esc(k)}" aria-pressed="${F.area===k}">${esc(t)}</button>`).join("");
   const nA=D.ativ.length,nConf=D.ativ.filter(a=>a.conf).length;
-  return `<div><h1 class="titulo">Mapa do Marketing</h1><p class="sub">Tudo o que o Marketing da Barenbrug faz, quem faz, quem aprova e quem apoia: ${nA} atividades em ${D.areas.length} frentes. Versão de ${esc(D.versao||"")}${nConf?`, com ${nConf} ${nConf===1?"ponto":"pontos"} a confirmar`:""}.</p></div>
+  return `<div><h1 class="titulo">Mapa de Marketing, Comunicação e Vendas Digitais</h1><p class="sub">Tudo o que o Marketing da Barenbrug faz, quem faz, quem aprova e quem apoia: ${nA} atividades em ${D.areas.length} frentes. Versão de ${esc(D.versao||"")}${nConf?`, com ${nConf} ${nConf===1?"ponto":"pontos"} a confirmar`:""}.</p></div>
   <section class="bloco"><h2 class="sec">Quem é quem${inf("O Marketing responde ao Gerente Comercial. Felipe e Thais tocam juntos o marketing institucional, a comunicação e a inteligência. O Inside Sales é um comercial dentro do marketing. Toque numa pessoa para ver só as atividades dela no mapa.")}</h2>
     <div class="org"><ul>${raiz.map(arv).join("")}</ul></div></section>
   <section class="bloco"><h2 class="sec">Como ler o RACI</h2><div class="raci-leg">${["R","A","C","I"].map(k=>`<span>${badge(k)} ${esc(RACI_TXT[k])}</span>`).join("")}</div>
@@ -11391,7 +11391,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["gu
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
   "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
-  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
+  "time-mkt":[["tm-mapa","Mapa de Marketing, Comunicação e Vendas Digitais"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
