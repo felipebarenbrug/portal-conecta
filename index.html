@@ -907,6 +907,7 @@ main.largo{max-width:1120px}
 .jr-no{display:flex;gap:8px;align-items:center}.jr-num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--azul-escuro);color:#fff;font-weight:800;font-size:13px;flex:0 0 auto}
 .jr-donos{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 4px}.jr-pap{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap}.jr-ramo ul{margin:4px 0 0;padding-left:18px;font-size:14px}
 .jr-score{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:2;background:var(--azul-claro);border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.jr-nota{flex-direction:row;flex-wrap:wrap}
+.ps-sim{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:10px}.ps-res{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--azul-claro);display:grid;gap:4px}.ps-res strong{font-size:20px}.ps-res p{margin:0}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -936,7 +937,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .cal-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}.cal-leg{display:flex;flex-wrap:wrap;gap:12px}
 .cp-rv{background:#ffdb00;color:#1d1d1b}.cp-rc{background:#2e8b57;color:#fff}.cp-coop{background:#e67e22;color:#fff}.cp-inst{background:#003c71;color:#fff}.cp-is{background:#8e44ad;color:#fff}.cp-exp{background:#16a085;color:#fff}.cp-marco{background:#d7dbe0;color:#1d1d1b}
 .pir-q{border:1px solid var(--linha,#d7dbe0);border-radius:10px;padding:10px 12px;margin:0}.pir-q legend{font-weight:600;padding:0 4px}.pir-ops{display:grid;gap:6px;margin-top:6px}
-.pir-op{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--linha,#d7dbe0);cursor:pointer;font-weight:400}.pir-op.sel{border-color:var(--azul,#003c71);box-shadow:inset 0 0 0 1px var(--azul,#003c71)}.pir-det{margin-top:8px}
+.pir-op{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--linha,#d7dbe0);cursor:pointer;font-weight:400}.pir-op input{width:auto;min-width:0;flex:0 0 auto;margin:3px 0 0}.pir-op.sel{border-color:var(--azul,#003c71);box-shadow:inset 0 0 0 1px var(--azul,#003c71)}.pir-det{margin-top:8px}
 .ts-box{display:flex;justify-content:center}.ts-box:empty{display:none}
 </style>
 </head>
@@ -1478,7 +1479,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119075100";
+const APP_VER="20261119080706";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1864,6 +1865,43 @@ const PS_CAL=[
  ["Seca (jun a set)","Use os pastos vedados de Sabiá e Cayana com proteinado ou TIP. Tire os animais pesados para o confinamento e libere pasto para a recria. Carcará com lotação baixa e rebrota lenta na seca, ou produzindo no pivô onde o inverno é quente."],
  ["Volta das chuvas (set a out)","Sabiá rebrota rápido porque chega à seca com mais folha viva. Retome a adubação e a rotação dos módulos."]];
 
+/* Sabiá ou Cayana: o que desempata (perfil do produtor e da área) */
+const PS_FAT=[
+ ["Tecnificação do produtor","Faz pouca análise de solo, corrige quando sobra dinheiro, assistência técnica eventual.","Análise de solo todo ano, segue a recomendação, tem agrônomo ou consultor."],
+ ["Correção do solo","V% entre 50% e 60% e fósforo a partir de 5 mg/dm³ (o mínimo do Sabiá).","V% acima de 60% e fósforo a partir de 7 mg/dm³, ou terra de lavoura."],
+ ["Adubação de manutenção","Não garante adubação todo ano.","Vai repor nitrogênio, fósforo e potássio todo ano (manutenção a partir de 50 a 80 kg de N/ha)."],
+ ["Clima","Seca longa, chuva irregular, veranico na implantação, região de transição.","Chuva regular e bem distribuída, seca de até 5 a 6 meses."],
+ ["Área e escala","Área grande e extensiva, em que corrigir tudo pesa no caixa.","Área menor ou módulo para intensificar, onde o investimento por hectare se paga."],
+ ["Manejo do pastejo","Pastejo contínuo sem controle de altura, lotação variável.","Controla altura e lotação (contínuo a 30 a 35 cm ou rotacionado)."],
+ ["Solo e relevo","Declive, solo arenoso ou mais fraco (raiz profunda do Sabiá segura).","Área plana ou suave, solo de textura média a argilosa, bem corrigido."],
+ ["Objetivo","Segurança: pasto na seca, diferimento, vaca de cria.","Máximo de arroba por hectare: recria intensiva, boi safrinha, silagem."]];
+const PS_Q=[
+ {k:"tec",l:"Ele faz análise de solo e segue a recomendação?",o:[["Sim, todo ano",2],["Às vezes",0],["Não faz",-2]]},
+ {k:"vp",l:"Como está a correção do solo da área?",o:[["V% acima de 60% e fósforo acima de 7",2],["V% de 50% a 60%",-1],["Abaixo disso ou não sabe",-2]]},
+ {k:"adu",l:"Vai adubar a manutenção todo ano?",o:[["Sim",2],["Em parte",0],["Não",-2]]},
+ {k:"cli",l:"Como é a chuva na região?",o:[["Regular, seca de até 5 meses",1],["Seca longa ou veranicos frequentes",-2]]},
+ {k:"area",l:"Qual é a área a formar?",o:[["Módulo para intensificar",1],["Área grande e extensiva",-1]]},
+ {k:"man",l:"Como ele maneja o pasto?",o:[["Controla altura e lotação",1],["Contínuo, sem controle",-1]]},
+ {k:"rel",l:"Como é o solo e o relevo?",o:[["Plano, textura média a argilosa",1],["Declive ou arenoso",-1]]},
+ {k:"dren",l:"A área encharca nas chuvas?",o:[["Não",0],["Sim, em parte ou toda",null]]}];
+function psDecide(){const R=S.psQ||{};const n=PS_Q.filter(q=>R[q.k]!=null).length;
+  if(R.dren===1)return {t:"Nenhum dos dois nas partes que encharcam",c:"#a33426",p:["Sabiá e Cayana não toleram encharcamento. Indique braquiária humidicola para a parte baixa e um dos dois só na parte alta, bem drenada."]};
+  if(n<PS_Q.length)return null;
+  const sc=PS_Q.reduce((t,q)=>t+(q.o[R[q.k]][1]||0),0);
+  const fr=[];if(R.vp!==0)fr.push("solo abaixo da exigência do Cayana");if(R.adu===2)fr.push("sem adubação de manutenção");if(R.cli===1)fr.push("seca longa ou chuva irregular");if(R.tec===2)fr.push("pouca tecnificação");
+  const trava=R.vp===2||R.adu===2;
+  if(sc>=5&&!trava)return {t:"Cayana",c:"#00548a",p:["Produtor tecnificado, solo corrigido e manutenção garantida: é onde o Cayana entrega o teto de arroba (cerca de 8 @/ha/ano a mais que o Marandu nos ensaios).",R.man===0&&R.adu===0&&R.tec===0?"Com esse nível de manejo e adubação, vale também apresentar o Carcará para um módulo rotacionado nas águas.":"",R.area===1?"Na área grande, considere Cayana nas melhores manchas e Sabiá no restante.":""].filter(Boolean)};
+  if(sc<=-2||trava)return {t:"Sabiá",c:"#1e6b3e",p:["O perfil pede segurança: "+(fr.length?fr.join(", "):"menor investimento por hectare")+". O Sabiá tem média exigência e mais produção na seca.",R.vp!==0?"Para o Cayana virar opção: calagem para V% acima de 60% e fósforo acima de 7 mg/dm³, com adubação de manutenção todo ano.":""].filter(Boolean)};
+  return {t:"Sabiá na base, Cayana nas melhores áreas",c:"#8a6d00",p:["O perfil está no meio do caminho. Divida: Cayana nas áreas mais férteis, planas e corrigidas, onde o produtor vai adubar; Sabiá no restante, para segurança na seca.","Revise com ele a análise de solo talhão por talhão antes de fechar a quantidade de cada um."]};}
+function psDesempateHTML(){const R=S.psQ||{};const D=psDecide();
+  return `<section class="bloco"><h2 class="sec">Sabiá ou Cayana? O que desempata</h2>
+   <p class="sub" style="margin:0 0 8px">Os dois são braquiárias híbridas. O que decide entre eles não é o sistema, e sim o produtor e a área: quanto ele é tecnificado, se corrige e aduba, o clima, a escala e o manejo.</p>
+   <div class="tab"><table class="sim-t"><thead><tr><th>O que olhar</th><th>Puxa para o Sabiá</th><th>Puxa para o Cayana</th></tr></thead><tbody>${PS_FAT.map(r=>`<tr><td><strong>${esc(r[0])}</strong></td><td style="white-space:normal;min-width:200px">${esc(r[1])}</td><td style="white-space:normal;min-width:200px">${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>
+   <h3 style="margin:14px 0 6px">Simule com o seu cliente</h3>
+   <div class="ps-sim">${PS_Q.map(q=>`<fieldset class="pir-q"><legend>${esc(q.l)}</legend><div class="pir-ops">${q.o.map((o,i)=>`<label class="pir-op${R[q.k]===i?" sel":""}"><input type="radio" name="psq_${q.k}" value="${i}" ${R[q.k]===i?"checked":""} data-psq="${q.k}"> ${esc(o[0])}</label>`).join("")}</div></fieldset>`).join("")}</div>
+   ${D?`<div class="ps-res" style="box-shadow:inset 4px 0 0 ${D.c}"><span class="meta">Indicação para este perfil</span><strong style="color:${D.c}">${esc(D.t)}</strong>${D.p.map(t=>`<p>${esc(t)}</p>`).join("")}<button class="link" data-a="psq-limpa">Começar de novo</button></div>`:`<p class="meta" style="margin:8px 0 0">Responda as ${PS_Q.length} perguntas para ver a indicação.</p>`}
+   <p class="meta" style="margin:8px 0 0">Ferramenta de apoio à conversa, baseada nas exigências das bases de conhecimento oficiais. A recomendação final de correção e adubação é do agrônomo da fazenda.</p></section>`;}
+
 function vPosicionar(){
   const F=S.psSis||"";const L=F?PS_SIS.filter(x=>x.id===F):PS_SIS;
   const pSab=psPrecoHa("Sabiá",10),pCay=psPrecoHa("Cayana",10),pCar=psPrecoHa("Carcará",10);
@@ -1886,6 +1924,7 @@ function vPosicionar(){
     <li><strong>Onde a água para?</strong> Partes que encharcam ficam fora dos híbridos de braquiária.</li>
     <li><strong>Como ele maneja o pasto?</strong> Rotacionado com disciplina comporta Carcará; contínuo ou manejo frouxo, Sabiá ou Cayana.</li>
     <li><strong>O que ele quer da área?</strong> Arroba, leite, volumoso ou só palhada. Isso muda a indicação.</li></ol></section>
+  ${psDesempateHTML()}
   <section class="bloco"><h2 class="sec">Por sistema de produção</h2>
     <div class="filtros" role="group" aria-label="Sistema">${[["","Todos"],...PS_SIS.map(x=>[x.id,x.n])].map(([k,t])=>`<button class="chip" data-a="ps-sis" data-v="${k}" aria-pressed="${k===F}">${esc(t)}</button>`).join("")}</div>
     <div class="lista" style="margin-top:8px">${L.map(card).join("")}</div></section>
@@ -3675,6 +3714,7 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
   const r=id?await sb.from("rc_candidatos").update(row).eq("id",id).select().maybeSingle():await sb.from("rc_candidatos").insert(row).select().maybeSingle();b.disabled=false;
   if(r.error||!r.data){aviso("Não foi possível salvar: "+((r.error&&r.error.message)||""));return;}
   S.cand=(S.cand||[]).filter(x=>x.id!==r.data.id);S.cand.unshift(r.data);S.candEd=undefined;S.candF=null;render();aviso("Avaliação salva.");});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.psq)return;(S.psQ||(S.psQ={}))[t.dataset.psq]=+t.value;const w=window.scrollY;render();window.scrollTo(0,w);});
 let _tmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="tm_q")return;S.pbQ=t.value;clearTimeout(_tmT);_tmT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("tm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
@@ -10735,6 +10775,7 @@ document.addEventListener("click",async ev=>{
   if(a==="cand-cancela"){S.candEd=undefined;S.candF=null;render();return;}
   if(a==="cand-et"){S.candEt=v;render();return;}
   if(a==="ps-sis"){S.psSis=v;render();return;}
+  if(a==="psq-limpa"){S.psQ={};render();return;}
   if(a==="ps-per"){S.psPer=v;render();return;}
   if(a==="ps-fonte"){const e=document.getElementById("psf-"+v);if(e){e.scrollIntoView({behavior:"smooth",block:"center"});e.classList.add("ps-on");setTimeout(()=>e.classList.remove("ps-on"),1800);}return;}
   if(a==="tm-novo"){S.pbEd=null;render();return;}
