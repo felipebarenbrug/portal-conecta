@@ -901,6 +901,7 @@ main.largo{max-width:1120px}
 .tm-proc{border:1px solid rgba(0,0,0,.12);border-radius:10px;background:var(--branco,#fff)}.tm-proc>summary{cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.tm-corpo{padding:0 14px 14px}.tm-filtros{display:grid;gap:8px;margin-bottom:6px}.tm-filtros input{max-width:420px}
 .ps-f{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.ps-fl{border:0;cursor:pointer;display:inline-block;min-width:20px;padding:0 6px;border-radius:9px;background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;font-weight:700;line-height:18px;text-align:center;text-decoration:none}.ps-nao{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,.07);box-shadow:inset 3px 0 0 #c0392b;font-size:14px}.ps-frase{margin:10px 0 0;font-style:italic;color:var(--azul-escuro)}.ps-fontes li{margin:4px 0}.ps-on{background:var(--amarelo);border-radius:4px}
 .ac-rev{margin:0 0 14px}
+.met-st{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.met-ok{background:#e3f4ea;color:#1e6b3e}.met-at{background:#fdecea;color:#a33426}.met-sem{background:var(--azul-claro);color:var(--azul-escuro)}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -7069,7 +7070,7 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
-const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"]]],
+const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"],["int-metodo","Metodologia e fontes"]]],
   ["Para quem",[["int-icp","ICPs e personas"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
@@ -7453,6 +7454,64 @@ function vIntPot(){
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.potp)return;const P=S.potP||(S.potP={ua:0.71,lot:1,ren:0.08,ilp:true});const k=t.dataset.potp;
   if(k==="potua")P.ua=+t.value;else if(k==="potlot")P.lot=+t.value;else if(k==="potren")P.ren=+t.value/100;else if(k==="potilp")P.ilp=t.checked;else if(k==="pothib")P.hs=+t.value;render();});
 async function carregarMarca(){if(S.marcaBusy)return;S.marcaBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","marca").maybeSingle();S.marca=data?data.dados:null;}catch(e){S.marca=null;}S.marcaBusy=false;render();}
+/* ===== Inteligência · Metodologia e fontes: como cada análise é feita, com que fontes e de quanto em quanto tempo ===== */
+const MET_REC={continuo:["Contínua",2],mensal:["Mensal",40],trimestral:["Trimestral",100],anual:["Anual",400]};
+const MET_AN=[
+ {aba:"int-insumos",n:"Insumos para o marketing",f:"Todas as análises desta área, mais os registros de campo, reuniões e conversas com revendas (Escrever insumo).",m:"Cada análise gera achados com valor e ação sugerida; o insumo de campo entra com data e autor e vira ação.",rec:"continuo",como:"Automático a partir das análises; registros de campo pelo Marketing.",k:"insumos",resp:"Marketing"},
+ {aba:"int-icp",n:"ICPs e personas",f:"Canais: histórico de compras do ERP e do RD Station CRM e potencial de mercado. Produtores e representantes: pesquisas públicas de comportamento do produtor (ABMRA, pesquisas de conectividade rural) e NPS Barenbrug.",m:"Canais classificados pelo histórico e pelo potencial da região; personas B2C e de representantes descritas a partir de pesquisa pública, sem dado pessoal.",rec:"anual",como:"Revisão no início da safra (julho).",k:"icp",resp:"Marketing"},
+ {aba:"int-pot",n:"Potencial de mercado",f:"MapBiomas Coleção 11 (pastagem 2024, por UF) · IBGE PPM 2024, tabela 3939 (rebanho) · IBGE Censo Agropecuário, tabela 6882 · Atlas das Pastagens Lapig-UFG (vigor 2024) · Embrapa Gado de Corte, CT-38 · MAPA/SIGEF, dados abertos (oferta de semente) · Modelo interno v4.0 · vendas da safra no RD Station CRM.",m:"Área de pastagem por UF × taxa de renovação anual (8%) × 10 kg/ha de semente, ajustado por vigor da pastagem e áreas de ILP; comparado com a oferta nacional de semente híbrida no SIGEF e com o realizado da Barenbrug.",rec:"anual",como:"Revisão no segundo semestre, quando saem a nova PPM do IBGE e a nova coleção do MapBiomas; vendas Barenbrug ao vivo pelo CRM.",k:"pot",resp:"Marketing, com o estudo SIGEF de Gustavo Aguiar"},
+ {aba:"int-hh",n:"Histórico de híbridos",f:"ERP Barenbrug, relatório de pedidos por safra (22/23 a 25/26) · planilha de histórico de híbridos · RD Station CRM para a safra atual.",m:"Clientes do ERP ligados às organizações do CRM pelo nome e pela razão social; quem comprou híbrido e parou entra na lista de reativação.",rec:"continuo",como:"Safra atual pelo CRM, 3 vezes ao dia; histórico do ERP fechado uma vez por ano, no fim da safra.",k:"crm",resp:"Marketing"},
+ {aba:"int-mapa",n:"Mapas B2B e B2C",f:"RD Station CRM (organizações e pedidos ganhos) e malha de municípios do IBGE.",m:"Clientes e revendas georreferenciados pelo município cadastrado no CRM.",rec:"continuo",como:"Automático, todo dia de manhã.",k:"orgs",resp:"Marketing"},
+ {aba:"int-perfil",n:"Perfil dos canais",f:"RD Station CRM e cadastro dos canais do Conecta.",m:"Canais segmentados pelo que compram (mix, volume, cultivares) e pelo tipo de operação.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
+ {aba:"int-saz",n:"Calendário de plantio",f:"Embrapa (Gado de Corte CT/12, Pecuária Sudeste, Agropecuária Oeste, Milho e Sorgo) · IEB/USP · climatologia do INMET · ZARC do MAPA como referência local.",m:"Janela de plantio por região: chuva acima de 100 mm/mês, transição de 60 a 100 mm e seca abaixo de 60 mm, cruzada com as recomendações técnicas de cada sistema.",rec:"anual",como:"Revisão antes da safra (junho).",k:"saz",resp:"Marketing"},
+ {aba:"int-canais",n:"Preços dos canais",f:"Pesquisa de cliente oculto do Marketing, por canal e cultivar.",m:"Preço por kg ao produtor na rodada mais recente, comparado com a tabela ao produtor do mês.",rec:"trimestral",como:"Rodada de cliente oculto no dia 15 de janeiro, abril, julho e outubro.",k:"canal",rod:"canal_rod",resp:"Marketing"},
+ {aba:"int-concorrentes",n:"Preços dos concorrentes",f:"Pesquisa de cliente oculto do Marketing, por marca e produto.",m:"Preço por kg por produto e por rodada; tendência entre rodadas; entra no cálculo da participação em valor do Potencial de mercado.",rec:"trimestral",como:"Mesma rodada do cliente oculto dos canais.",k:"conc",rod:"conc_rod",resp:"Marketing"},
+ {aba:"int-hibridos",n:"Concorrentes em híbridos",f:"Sites e materiais oficiais dos concorrentes · RNC e SIGEF/MAPA · Embrapa · CIAT · imprensa especializada · cliente oculto.",m:"Ficha por material: origem, registro, posicionamento, argumentos e preço; comparação com Sabiá, Cayana e Carcará.",rec:"trimestral",como:"Revisão a cada trimestre e sempre que houver lançamento ou novo registro no RNC.",k:"hib_conc",resp:"Marketing"},
+ {aba:"int-vendas",n:"Preço e frete",f:"Pedidos ganhos da safra no RD Station CRM e tabela de preços e frete Barenbrug.",m:"Preço médio por kg dos híbridos e frete médio por kg, por região.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
+ {aba:"int-diretriz",n:"Como comunicar",f:"Manual da marca Barenbrug · pesquisa NPS Barenbrug · ensaios oficiais e casos de clientes.",m:"Tom, palavras, provas e regras por público; toda afirmação de produto precisa de dado com fonte.",rec:"anual",como:"Revisão anual, no início da safra.",resp:"Marketing"},
+ {aba:"int-marca",n:"Marca, mídia e IAs",f:"Meta Ads · Instagram Insights · RD Station CRM · respostas das IAs a perguntas de produtor · comparativo de redes sociais.",m:"Alcance, engajamento e seguidores contra perfis de referência; presença da marca nas respostas das IAs.",rec:"mensal",como:"Foto mensal das redes; leitura das IAs a cada trimestre.",k:"social",resp:"Marketing"},
+ {aba:"int-digital",n:"Campanhas digitais",f:"Meta Ads (gasto, resultado, região) e orçamento da verba digital em Ações de Marketing.",m:"Gasto e resultado por campanha e região, projetados contra a verba da safra.",rec:"mensal",como:"Dados do Meta Ads atualizados pelo portal; análise mensal.",resp:"Marketing"},
+ {aba:"int-rc",n:"RCs e Inside Sales",f:"Funil de vendas do RD Station CRM (campo Representante) e contratos de representação.",m:"Pedidos fechados com faturamento na safra, por representante e região.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"is",resp:"Marketing"},
+ {aba:"int-seg",n:"B2C e B2B",f:"Pedidos ganhos do RD Station CRM.",m:"Volume e valor separados entre venda ao produtor e venda ao canal.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
+ {aba:"int-modelos",n:"Modelos de representação",f:"Contratos de representação assinados da safra.",m:"Comparação dos modelos de contrato: comissão, verba, obrigações.",rec:"anual",como:"Revisão na renovação dos contratos (até 30 de agosto).",resp:"Marketing"},
+ {aba:"int-ader",n:"Inteligência × execução",f:"Pedidos ganhos do RD Station CRM · orçamento em Ações de Marketing · Meta Ads · eventos registrados · painel de brindes.",m:"Cada ação e cada IGDB comparados com o que a inteligência aponta (região, público, janela); o que está fora do mapa é sinalizado.",rec:"mensal",como:"Dados ao vivo; leitura mensal.",k:"crm",resp:"Marketing"}];
+function carregarMetStatus(){if(S.metBusy)return;S.metBusy=true;(async()=>{try{const {data}=await sb.rpc("intel_status");S.metSt=data||{};}catch(e){S.metSt={};}S.metBusy=false;render();})();}
+function vIntMetodo(){
+  if(S.metSt===undefined){S.metSt=null;carregarMetStatus();}
+  const St=S.metSt||{};const hoje=Date.now();
+  const linha=x=>{const d=x.k?St[x.k]:null;const r=MET_REC[x.rec];let st="";
+    if(x.k){if(!d)st=`<span class="met-st met-sem">Sem registro</span>`;else{const dias=Math.floor((hoje-new Date(String(d).length<=10?d+"T12:00:00":d))/864e5);st=dias<=r[1]?`<span class="met-st met-ok">Em dia</span>`:`<span class="met-st met-at">Atualizar</span>`;}}
+    const dt=d?(String(d).length>10?fmtDataHora(d):intData(d)):"—";const rod=x.rod&&St[x.rod]?` · ${St[x.rod]}ª rodada`:"";
+    return `<tr><td><button class="link" data-a="pag" data-v="${x.aba}"><strong>${esc(x.n)}</strong></button></td><td style="white-space:normal;min-width:240px">${esc(x.f)}</td><td style="white-space:normal;min-width:220px">${esc(x.m)}</td><td><strong>${r[0]}</strong><span class="meta" style="display:block;white-space:normal;min-width:150px">${esc(x.como)}</span></td><td>${S.metSt?esc(dt)+rod:"…"}${st?"<br>"+st:""}</td></tr>`;};
+  return `<div><span class="rot">Inteligência</span><h1 class="titulo">Metodologia e fontes</h1><p class="sub">Como cada análise da Inteligência é feita, com que fontes, de quanto em quanto tempo é atualizada e quando foi a última atualização.</p></div>
+  <section class="bloco"><h2 class="sec">O método</h2><ol class="rb-fluxo">
+    <li><strong>Pergunta</strong><span>Cada análise parte de uma pergunta de marketing e da decisão que ela apoia, escritas no topo de cada aba.</span></li>
+    <li><strong>Coleta</strong><span>Fonte oficial primeiro (IBGE, MapBiomas, MAPA, Embrapa, Cepea, INMET); depois os dados da Barenbrug (CRM, ERP, Meta Ads); depois o campo (cliente oculto, revendas, RCs).</span></li>
+    <li><strong>Tratamento</strong><span>Cruzamento de pelo menos duas fontes quando possível, data de corte registrada, premissas escritas e limitações declaradas na própria aba.</span></li>
+    <li><strong>Insumo</strong><span>O achado vira insumo para o marketing, com valor e ação sugerida, em Insumos para o marketing.</span></li>
+    <li><strong>Medição</strong><span>Inteligência × execução confere se as ações seguiram o que a análise apontou e o que deu de resultado.</span></li></ol></section>
+  <section class="bloco"><h2 class="sec">Regras de qualidade</h2><ul class="cond">
+    <li>Toda análise mostra a fonte e a data dos dados.</li>
+    <li>Estimativa só quando não há dado oficial, e sempre com a premissa à vista (exemplo: taxa de renovação de 8% ao ano e 10 kg/ha no Potencial de mercado).</li>
+    <li>Dado de ensaio é citado com o ensaio de origem; resultado de fazenda é citado como caso, não como média.</li>
+    <li>Limitações ficam escritas na aba (exemplo: rebanho da PPM inclui leite e confinamento).</li>
+    <li>Dados de cliente e de CRM ficam no banco do portal, com acesso só de administradores; nomes de concorrentes aparecem só aqui.</li></ul></section>
+  <section class="bloco"><h2 class="sec">Tipos de fonte</h2><div class="dir-grid">
+    <div class="dir-card"><strong>Oficiais e públicas</strong><p>IBGE (PPM, Censo Agropecuário, municípios), MapBiomas, Atlas das Pastagens (Lapig-UFG), MAPA (SIGEF, RNC, ZARC), Embrapa, Cepea/Esalq-USP, INMET, CPTEC/INPE.</p></div>
+    <div class="dir-card"><strong>Dados da Barenbrug</strong><p>RD Station CRM, ERP (relatório de pedidos), tabela de preços e frete, Meta Ads, Instagram Insights, NPS, contratos de representação.</p></div>
+    <div class="dir-card"><strong>Pesquisa de campo</strong><p>Cliente oculto de preços (canais e concorrentes), insumos de revendas, RCs e eventos, casos de clientes.</p></div>
+    <div class="dir-card"><strong>Mercado e imprensa</strong><p>Sites e materiais oficiais dos concorrentes, imprensa especializada (Canal Rural, BeefPoint), pesquisas setoriais.</p></div></div></section>
+  <section class="bloco"><h2 class="sec">Cada análise: fontes, método e recorrência</h2>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Análise</th><th>Fontes</th><th>Método</th><th>Recorrência</th><th>Última atualização</th></tr></thead><tbody>${MET_AN.filter(x=>x.aba!=="int-digital"||ehMkt()).map(linha).join("")}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">"Em dia" quando a última atualização está dentro da recorrência; "Atualizar" quando passou do prazo. As análises sem data automática são revisadas no calendário abaixo.</p></section>
+  <section class="bloco"><h2 class="sec">Calendário de estudos</h2><div class="dir-grid">
+    <div class="dir-card"><strong>Todo dia (automático)</strong><ul class="cond" style="margin:6px 0 0"><li>RD Station CRM: 9h, 15h e 19h</li><li>Organizações e mapas: de manhã</li><li>Notícias do mercado: ao longo do dia</li><li>Cepea (arroba e bezerro): uma vez por dia</li></ul></div>
+    <div class="dir-card"><strong>Todo mês</strong><ul class="cond" style="margin:6px 0 0"><li>Marca, mídia e redes</li><li>Campanhas digitais</li><li>Inteligência × execução</li><li>Revisão dos insumos abertos</li></ul></div>
+    <div class="dir-card"><strong>A cada trimestre</strong><ul class="cond" style="margin:6px 0 0"><li>Cliente oculto de canais e concorrentes: dia 15 de janeiro, abril, julho e outubro</li><li>Concorrentes em híbridos (RNC e SIGEF)</li><li>Presença da marca nas IAs</li></ul></div>
+    <div class="dir-card"><strong>Uma vez por safra</strong><ul class="cond" style="margin:6px 0 0"><li>Junho: calendário de plantio</li><li>Julho: fechamento do histórico no ERP, ICPs e personas, Como comunicar</li><li>Agosto: modelos de representação (renovação dos contratos)</li><li>Segundo semestre: potencial de mercado (nova PPM e MapBiomas)</li></ul></div></div>
+    <p class="meta" style="margin:8px 0 0">Responsável pela Inteligência de Mercado: Marketing Barenbrug (Felipe Piccoli). O estudo de oferta de semente no SIGEF é de Gustavo Aguiar.</p></section>`;
+}
+
 function vIntMarca(){
   if(S.marca===undefined){carregarMarca();return `<div class="carregando">Carregando…</div>`;}
   const M=S.marca;if(!M)return `<div class="vazio">Conteúdo não disponível para o seu perfil.</div>`;
@@ -10374,6 +10433,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       if(S.pag==="int-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+      if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
