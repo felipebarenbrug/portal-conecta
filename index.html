@@ -929,6 +929,9 @@ main.largo{max-width:1120px}
 .gt-tab{clear:both}.gt-rodape{margin-top:6px}
 @media (max-width:860px){.gt-corpo{grid-template-columns:1fr}.gt-sum{position:static;max-height:none}.gt-fig,.gt-fig.gt-esq{float:none;width:100%;margin:6px 0 12px}.gt-hero h1{font-size:24px}}
 .msg-aut{font-size:12px;color:var(--azul-escuro)}#msgadm_q{width:100%}
+.nps-dist{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px;align-items:end;max-width:560px}.nps-b{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}.nps-b>div{width:100%;border-radius:5px 5px 0 0}
+.nps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:14px}.nps-peq td{color:var(--apagado)}.nps-ach li span{line-height:1.5}
+@media (max-width:500px){.nps-grid{grid-template-columns:1fr}}
 .cs-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}.cs-form{display:grid;gap:12px;min-width:0}.cs-form .bloco{margin:0}
 .cs-res-w{position:sticky;top:12px;min-width:0}.cs-res .metric{background:var(--papel)}
 .cs-in{display:flex;align-items:center;gap:8px}.cs-in input{flex:1;min-width:0}.cs-in>span{color:var(--apagado);font-size:13px;white-space:nowrap}
@@ -1509,7 +1512,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119095925";
+const APP_VER="20261119100307";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7168,7 +7171,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-pir","Perfil dos RCs"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","Pesquisa NPS"],["gestao-app","App e comunicados"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-pir","Perfil dos RCs"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","NPS plataforma"],["gestao-app","App e comunicados"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC"],"Representantes comerciais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Assessores de vendas digitais",["Assessor de Vendas Digital"],"Assessoras e assessores de vendas digitais, ligados ao Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -7178,7 +7181,7 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-pir":"Perfil dos RCs","gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"Pesquisa NPS do portal","gestao-app":"Portal instalado, notificações e comunicados"}[S.pag]||"Painel de gerenciamento";
+  const tit={"gestao-pir":"Perfil dos RCs","gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"NPS plataforma","gestao-app":"Portal instalado, notificações e comunicados"}[S.pag]||"Painel de gerenciamento";
   const sub={"gestao-pir":"Cada RC responde, no primeiro acesso, 10 perguntas de escolher baseadas no scorecard de Perfil Ideal de Representante. A formação vem do cadastro e o comportamental é avaliado aqui pela Barenbrug.","gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
   const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
@@ -7694,8 +7697,53 @@ function vFilaPainel(){
 }
 
 /* ---------- Inteligência de Marketing ---------- */
+/* ===== Inteligência · NPS dos clientes diretos (B2C) ===== */
+async function carregarNpsB2C(){if(S.npsB2C!==undefined)return;S.npsB2C=null;try{const ids=ehAdmin()?["nps_b2c","nps_b2c_det"]:["nps_b2c"];const {data}=await sb.from("mkt_mapa").select("id,dados").in("id",ids);const m={};(data||[]).forEach(r=>m[r.id]=r.dados);S.npsB2C=m.nps_b2c?{...m.nps_b2c,detLista:(m.nps_b2c_det||{}).lista||null}:false;}catch(e){S.npsB2C=false;}render();}
+const npsDe=(p,d,n)=>n?Math.round(1000*(p-d)/n)/10:null;
+const npsZona=v=>v==null?"":v>=75?"Zona de Excelência":v>=50?"Zona de Qualidade":v>=0?"Zona de Aperfeiçoamento":"Zona Crítica";
+const npsF=v=>v==null?"—":(Math.round(v*10)/10).toLocaleString("pt-BR");
+function vIntNps(){
+  if(S.npsB2C===undefined){carregarNpsB2C();return `<div class="carregando">Carregando a pesquisa…</div>`;}
+  if(S.npsB2C===null)return `<div class="carregando">Carregando a pesquisa…</div>`;
+  const R=S.npsB2C;if(!R)return `<div class="vazio">Pesquisa não disponível para o seu perfil.</div>`;
+  const n=R.n,nps=npsDe(R.prom,R.det,n),pc=x=>(Math.round(1000*x/n)/10).toLocaleString("pt-BR")+"%";
+  const seg=k=>(R.seg.find(s=>s[1]===k)||[,,[]])[2];const row=(k,rot)=>seg(k).find(x=>x[0]===rot)||[rot,0,0,0,0,0];
+  const sNps=r=>npsDe(r[2],r[4],r[1]);
+  const qR=row("Qualidade","Ruim"),qMB=row("Qualidade","Muito Bom"),sI=row("Suporte","Insatisfeito com o suporte"),sS=row("Suporte","Satisfeito com o suporte"),ind=row("Como Conheceu","Indicação de outro produtor");
+  const dif=seg("Facilidade").filter(x=>/Dif/.test(x[0]));const nDif=dif.reduce((a,x)=>a+x[1],0);const nDifP=dif.reduce((a,x)=>a+x[2],0),nDifD=dif.reduce((a,x)=>a+x[4],0);
+  const novo=row("Tempo Cliente","Menos de 1 ano");
+  const mx=Math.max(...R.dist.map(x=>x[1]));const dmap=Object.fromEntries(R.dist);
+  const barras=[0,1,2,3,4,5,6,7,8,9,10].map(s=>{const q=dmap[s]||0;const cor=s>=9?"#2E8B57":s>=7?"#B88700":"#c0392b";return `<div class="nps-b"><span class="meta">${q||""}</span><div style="height:${Math.max(2,q/mx*120)}px;background:${cor}"></div><strong>${s}</strong></div>`;}).join("");
+  const k=(t,v,m,c)=>`<div class="metric"${c?` style="box-shadow:inset 0 0 0 2px ${c}"`:""}><span>${t}</span><strong>${v}</strong><span class="meta">${m}</span></div>`;
+  const tab=([tit,key,L])=>`<div style="min-width:0"><h3 class="pgd-h">${esc(tit)}</h3><div class="tab"><table class="sim-t"><thead><tr><th></th><th class="val">Respostas</th><th class="val">% da base</th><th class="val">NPS</th><th class="val">Nota média</th><th class="val">Prom. · Neut. · Detr.</th></tr></thead><tbody>${L.map(r=>{const v=sNps(r);return `<tr${r[1]<5?' class="nps-peq"':""}><td>${esc(r[0])}</td><td class="val">${isN(r[1])}</td><td class="val">${pc(r[1])}</td><td class="val"><strong style="color:${v>=50?"#1e6b3e":v>=0?"#8a6d00":"#a33426"}">${npsF(v)}</strong></td><td class="val">${npsF(r[5])}</td><td class="val">${r[2]} · ${r[3]} · ${r[4]}</td></tr>`;}).join("")}</tbody></table></div></div>`;
+  const D=R.detLista;
+  return `<div><h1 class="titulo">NPS dos clientes diretos</h1><p class="sub">${esc(R.titulo)}. Coleta de ${esc(R.periodo)}, ${isN(n)} respostas válidas em ${R.estados} estados. É a voz de quem compra direto da Barenbrug (Inside Sales, RCs e time próprio); produtores atendidos só por revenda, cooperativa ou distribuidor não entram, porque a Barenbrug não tem a lista deles.</p></div>
+  <section class="bloco"><div class="metrics">
+   ${k("NPS",npsF(nps),npsZona(nps)+" (50 a 74)","var(--amarelo)")}
+   ${k("Promotores (9 e 10)",isN(R.prom),pc(R.prom)+" da base","#2E8B57")}
+   ${k("Neutros (7 e 8)",isN(R.neu),pc(R.neu)+" da base")}
+   ${k("Detratores (0 a 6)",isN(R.det),pc(R.det)+" da base","#c0392b")}
+   ${k("Nota média",(+R.media).toLocaleString("pt-BR",{maximumFractionDigits:2}),"de 0 a 10")}
+  </div>
+  <h3 class="pgd-h" style="margin-top:14px">Distribuição das notas</h3><div class="nps-dist">${barras}</div></section>
+  <section class="bloco"><h2 class="sec">O que a pesquisa mostra</h2><ol class="is-passos nps-ach">
+   <li><span><strong>Qualidade decide a nota.</strong> ${qR[4]} dos ${R.det} detratores avaliaram a qualidade do produto como ruim. Quem avaliou como muito boa (${qMB[1]} clientes) tem NPS ${npsF(sNps(qMB))}. Cada caso de qualidade ruim é um caso técnico a investigar: estabelecimento, manejo, lote.</span></li>
+   <li><span><strong>Suporte técnico é a alavanca operacional.</strong> Satisfeitos com o suporte: NPS ${npsF(sNps(sS))}. Insatisfeitos (${sI[1]} clientes): NPS ${npsF(sNps(sI))}, com ${sI[4]} detratores. Pós-venda ativo depois do plantio evita a maior parte da detração.</span></li>
+   <li><span><strong>Indicação traz o cliente mais leal.</strong> Quem conheceu a Barenbrug por indicação de outro produtor (${ind[1]} clientes) tem NPS ${npsF(sNps(ind))}, o maior da pesquisa. Um programa de indicação com os ${isN(R.prom)} promotores é o canal de menor custo.</span></li>
+   <li><span><strong>Achar o produto é difícil, mas isso não derruba a nota.</strong> ${pc(nDif)} dos clientes acham difícil ou muito difícil encontrar o produto, e o NPS desse grupo é ${npsF(npsDe(nDifP,nDifD,nDif))}. É demanda reprimida, não insatisfação: argumento para abrir canal onde a venda direta já chega.</span></li>
+   <li><span><strong>A base é nova.</strong> ${isN(novo[1])} clientes (${pc(novo[1])}) compram há menos de 1 ano. É a janela para fidelizar: acompanhamento técnico na primeira safra define a recompra.</span></li>
+   <li><span><strong>Os ${isN(R.neu)} neutros são o maior ganho possível.</strong> Se metade virasse promotor, o NPS iria a ${npsF(npsDe(R.prom+Math.round(R.neu/2),R.det,n))}.</span></li></ol></section>
+  <section class="bloco"><h2 class="sec">NPS por segmento</h2><p class="meta" style="margin:0 0 8px">Linhas em cinza têm menos de 5 respostas: leia como indício, não como resultado.</p><div class="nps-grid">${R.seg.map(tab).join("")}</div></section>
+  ${D&&D.length?`<section class="bloco"><h2 class="sec">Detratores para contato <span class="meta">só administradores</span></h2><div class="tab"><table class="sim-t"><thead><tr><th>Cliente</th><th>UF</th><th>Produto</th><th>Qualidade</th><th>Suporte</th><th>Achar o produto</th><th>Canal</th><th>Cliente há</th><th class="val">Nota</th></tr></thead><tbody>${D.map(d=>`<tr><td>${esc(d.n)}</td><td>${esc(d.uf)}</td><td>${esc(d.prod)}</td><td>${esc(d.qual)}</td><td>${esc(d.sup)}</td><td>${esc(d.fac)}</td><td>${esc(d.canal)}</td><td>${esc(d.tempo)}</td><td class="val"><strong>${d.nota}</strong></td></tr>`).join("")}</tbody></table></div><p class="meta" style="margin:6px 0 0">Sugestão: contato individual do embaixador técnico com cada um, começando pelos casos de qualidade ruim sem suporte.</p></section>`:""}
+  <section class="bloco"><details class="ps-met"><summary><strong>Metodologia e como ler o NPS</strong></summary><ul class="cond">
+   <li><strong>NPS</strong> = % de promotores (notas 9 e 10) − % de detratores (0 a 6), na pergunta de quanto o cliente recomendaria a Barenbrug. Vai de −100 a 100 e não é porcentagem.</li>
+   <li><strong>Zonas mais usadas no Brasil:</strong> Excelência de 75 a 100, Qualidade de 50 a 74, Aperfeiçoamento de 0 a 49 e Crítica abaixo de 0. Com ${npsF(nps)}, a Barenbrug está na Zona de Qualidade, a ${npsF(75-nps)} pontos da Excelência.</li>
+   <li><strong>Base:</strong> ${isN(n)} respostas válidas; ${esc(R.exclusoes)} Todos os números desta página foram recalculados a partir das respostas individuais.</li>
+   <li><strong>Comentários abertos:</strong> a pesquisa tinha campos de comentário, mas os respondentes não os preencheram nesta edição.</li>
+   <li><strong>Comparação com o mercado:</strong> não há referência pública confiável de NPS para sementes forrageiras ou insumos agrícolas no Brasil. A régua mais útil é a própria Barenbrug na próxima pesquisa, com a mesma pergunta e a mesma base.</li></ul></details></section>`;}
+
 const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"],["int-metodo","Metodologia e fontes"]]],
-  ["Para quem",[["int-icp","ICPs e personas"]]],
+  ["Para quem",[["int-icp","ICPs e personas"],["int-nps","NPS dos clientes diretos"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
@@ -7706,6 +7754,7 @@ const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
   "int-digital":["Como a mídia paga está rendendo e se o gasto cabe na verba digital da safra?","Ajustar verba, regiões e criativos das campanhas no Meta Ads e prestar contas do investimento digital."],
+  "int-nps":["O que o cliente que compra direto da Barenbrug acha da empresa, e o que faz ele recomendar ou não?","Priorizar pós-venda e suporte técnico, recuperar detratores, criar um programa de indicação e medir a evolução na próxima pesquisa."],
   "int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
   "int-pot":["Onde está o mercado de híbridos que a Barenbrug ainda não ocupa?","Escolher os estados para campanha regional, mídia segmentada e prospecção de revendas."],
   "int-hh":["Quem já comprou híbrido e parou, e como os canais do Conecta evoluem?","Montar a lista de reativação por RTV e a rodada regional de conversão do Mulato II."],
@@ -10870,7 +10919,7 @@ function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
   const mes={};R.forEach(x=>{const m=String(x.em).slice(0,7);(mes[m]=mes[m]||[]).push(x);});
   const tag=n=>n>=9?["Promotor","seg-ok"]:n>=7?["Neutro","seg-par"]:["Detrator","seg-pen"];
   const tb=(t,L)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Respostas</th><th class="val">NPS</th><th class="val">Nota média</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.v)}</td><td class="val">${x.n}</td><td class="val"><strong>${x.nps}</strong></td><td class="val">${x.med.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td></tr>`).join("")}</tbody></table></div></div>`;
-  return `<section class="bloco"><h2 class="sec">Pesquisa NPS do portal</h2><p class="sub" style="margin:0 0 10px">A pesquisa aparece no início do portal para quem tem acesso há mais de 7 dias e não respondeu nos últimos 90 dias; qualquer pessoa também responde pelo rodapé, em "Avaliar o portal". NPS = % de promotores (9 e 10) menos % de detratores (0 a 6).</p>
+  return `<section class="bloco"><h2 class="sec">NPS plataforma · pesquisa do portal</h2><p class="sub" style="margin:0 0 10px">A pesquisa aparece no início do portal para quem tem acesso há mais de 7 dias e não respondeu nos últimos 90 dias; qualquer pessoa também responde pelo rodapé, em "Avaliar o portal". NPS = % de promotores (9 e 10) menos % de detratores (0 a 6).</p>
    <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>NPS</span><strong>${G.nps==null?"—":G.nps}</strong><span class="meta">${G.n} respostas</span></div><div class="metric"><span>Promotores</span><strong>${G.p}</strong><span class="meta">${G.n?Math.round(G.p/G.n*100):0}%</span></div><div class="metric"><span>Neutros</span><strong>${G.ne}</strong><span class="meta">${G.n?Math.round(G.ne/G.n*100):0}%</span></div><div class="metric"><span>Detratores</span><strong>${G.d}</strong><span class="meta">${G.n?Math.round(G.d/G.n*100):0}%</span></div></div>
    ${(()=>{const A=R.filter(x=>x.ac_nota!=null);if(!A.length)return `<h3 class="pgd-h" style="margin-top:14px">Academia de Híbridos</h3><p class="meta">Ainda sem notas da Academia. A pergunta entrou na pesquisa em 17/11/2026.</p>`;
      const cA=A.map(x=>({...x,nota:x.ac_nota}));const GA=calc(cA);const aj=A.filter(x=>x.ac_ajudou),us=A.filter(x=>x.ac_usou);const tot=(typeof ORDEM!=="undefined"?ORDEM.length:0)||1;
@@ -11065,6 +11114,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       if(S.pag==="int-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+      if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
