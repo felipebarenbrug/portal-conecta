@@ -1014,6 +1014,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .ts-box{display:flex;justify-content:center}.ts-box:empty{display:none}
 .guia-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.guia-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}.guia-l li{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:4px 12px;padding:6px 0;border-top:1px solid #eef1f3}.guia-l li:first-child{border-top:0}.guia-l li>span{color:#555}.guia-l .link{text-align:left;padding:0}.guia-rot{margin:0;padding-left:20px;display:grid;gap:4px}.guia-destaque{box-shadow:inset 4px 0 0 #ffdb00}@media (max-width:600px){.guia-l li{grid-template-columns:1fr}}
 .pj-trab{grid-column:1/-1;display:grid;gap:8px;margin-top:4px}.pj-rl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pj-rc{display:inline-flex;align-items:center;gap:4px;background:#EEF6FA;color:#0B5E7E;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}.pj-rc.eu{background:#FFDB00;color:#1E1E1E}.pj-rx{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:inherit;padding:0 2px}.pj-ta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pj-ta select{width:auto}.pj-com{background:#F6F8FA;border-radius:12px;padding:12px 14px;display:grid;gap:10px}.pj-ci{border-bottom:1px solid var(--linha);padding-bottom:8px}.pj-ch{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.pj-ci p{margin:4px 0 0;white-space:pre-wrap}.pj-cf{display:grid;gap:6px}.pj-cfa{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pj-cfa .btn{margin-left:auto}.pj-radd{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.pj-radd select,.pj-radd input{flex:1 1 220px;width:auto}.lab{display:block;font-weight:700;margin-bottom:4px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.pj-minhas{box-shadow:inset 4px 0 0 #FFDB00}
+.emdev{box-shadow:inset 4px 0 0 #FFDB00}.emdev-p{margin:0;padding-left:22px;display:grid;gap:6px}
 </style>
 </head>
 <body>
@@ -1331,9 +1332,6 @@ const SECOES=[
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
-  {id:"breve-lojinha",nome:"Lojinha de brindes",desc:"Em desenvolvimento: o pedido de brindes e materiais da marca direto pelo portal, mais simples para o time comercial e os parceiros.",ativo:false,breve:"Em desenvolvimento",perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
-  {id:"breve-solo",nome:"Análise de solo",desc:"Ideia em análise: RCs e revendas enviam pelo portal a solicitação de análise de solo dos seus clientes, como um serviço expandido da Barenbrug.",ativo:false,breve:"Em análise",perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
-  {id:"breve-at",nome:"Assistência técnica com revendas",desc:"Em desenvolvimento: gerenciamento e acompanhamento das ações de assistência técnica feitas em parceria com revendas.",ativo:false,breve:"Em desenvolvimento",perfis:["Administrador","Marketing","Comercial Barenbrug","Gestor de Revenda"]},
   {id:"guia",nome:"Guia do portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
@@ -1558,7 +1556,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119173831";
+const APP_VER="20261119174302";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5431,6 +5429,7 @@ function subnavRC(){
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-credito","Crédito do pedido"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
+    ["Em desenvolvimento",[["rc-solo","Análise de solo"]]],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
 }
@@ -6610,6 +6609,7 @@ function subnavRV(){
   }else if(ehRevenda()){
     add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
   }
+  add("Em desenvolvimento",[["rv-solo","Análise de solo"],["rv-at","Assistência técnica"]]);
   if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
   const cur=k=>S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal");
   return navGrupos(G,"Conecta Revendas",cur);
@@ -10645,7 +10645,7 @@ function vVit(){if(!S.vit&&!S.vitBusy)carregarVit();return S.pag==="vit-mapa"?vV
 function subnavBrindes(){
   const g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length;
   const empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
-  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel"]]:[])];
+  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel"]]:[]),["brindes-lojinha","Lojinha · em breve"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Brindes de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Brindes de Marketing</span></div></div>`;
@@ -10846,6 +10846,7 @@ function vBdPainel(){
   <section class="bloco"><div class="int-2">${tb("Quem mais pediu (portal e planilha)",Object.values(sol).sort((a,b)=>b.v-a.v).slice(0,12),[["Pedidos",x=>x.n],["Valor",x=>fmtK0(x.v)]])}${tb("Itens mais pedidos",Object.values(itR).sort((a,b)=>b.v-a.v).slice(0,12),[["Unidades",x=>x.q.toLocaleString("pt-BR")],["Valor",x=>fmtK0(x.v)]])}</div></section>`;
 }
 function vBrindes(){
+  if(S.pag==="brindes-lojinha")return vEmDev("lojinha");
   if(S.pag==="brindes-reqs")return vBdReqs();
   if(S.pag==="brindes-pedir")return vBdPedir();
   if(S.pag==="brindes-item"&&ehMkt())return vBdItem();
@@ -11411,6 +11412,23 @@ function vCasos(){
   ${atual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${atual.yt}?rel=0&autoplay=1" title="${esc(atual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><p style="margin:8px 0 0"><strong>${esc(atual.nome)}</strong> <span class="meta">${esc(atual.cid?atual.cid+" · ":"")}${esc(atual.uf)} · ${esc(atual.reg)}</span></p><p class="meta" style="margin:4px 0 0">Para mandar ao cliente: <span style="user-select:all">https://youtu.be/${atual.yt}</span></p></section>`:""}
   <section class="bloco"><div class="filtros" style="margin:0 0 8px">${regs.map(r=>`<button type="button" class="chip" data-a="casos-reg" data-v="${r}" aria-pressed="${F.reg===r&&!F.uf}">${r}${r!=="Todas"?` · ${L.filter(c=>c.reg===r).length}`:` · ${L.length}`}</button>`).join("")}${F.uf?`<button type="button" class="chip" data-a="casos-uf" data-v="" aria-pressed="true">${F.uf} ✕</button>`:""}</div>
    <div class="int-2" style="align-items:start"><div style="min-width:0">${mapa}</div><div style="min-width:0">${grupos.map(([r,x])=>`<h3 class="pgd-h">${r} · ${x.length}</h3><div class="casos-grid">${x.map(card).join("")}</div>`).join("")||`<div class="vazio">Nenhum caso neste filtro.</div>`}</div></div></section>`;}
+/* ---------- áreas em desenvolvimento: explicam a ideia, sem nada ativo ---------- */
+const EM_DEV={
+ lojinha:{t:"Lojinha de brindes",st:"Em desenvolvimento",o:"Uma loja dentro do portal com os brindes e materiais da marca Barenbrug: foto, descrição e disponibilidade de cada item, e o pedido feito em poucos cliques, sem planilha nem troca de mensagens.",
+  c:["Você escolhe os itens e as quantidades, como num carrinho de compras.","O Marketing analisa e aprova o pedido.","Você acompanha o envio pelo próprio portal.","O estoque e a verba da ação são atualizados sozinhos."],
+  q:"Time comercial Barenbrug, RCs e revendas parceiras.",p:"Simplificar o pedido de material para quem está no campo e dar ao Marketing a visão de onde cada material está sendo usado."},
+ solo:{t:"Análise de solo",st:"Em desenvolvimento",o:"A possibilidade de solicitar, pelo portal, a análise de solo dos seus clientes, como um serviço expandido da Barenbrug. Estamos em conversa com um laboratório parceiro para integrar a solicitação ao portal.",
+  c:["Você registra o pedido com os dados do cliente e da área.","Recebe a orientação de como coletar e enviar a amostra.","O laboratório parceiro faz a análise.","O resultado chega pelo portal para apoiar a recomendação do híbrido e do manejo."],
+  q:"RCs e revendas parceiras.",p:"Levar ao produtor uma recomendação técnica com base no solo da fazenda e fortalecer a parceria com quem vende Barenbrug.",n:"Condições, prazos e custos ainda estão sendo definidos com o parceiro."},
+ at:{t:"Assistência técnica com revendas",st:"Em desenvolvimento",o:"Um espaço para planejar, registrar e acompanhar as ações de assistência técnica feitas em parceria com as revendas: visitas, dias de campo e acompanhamento das áreas.",
+  c:["A ação de AT é combinada com a revenda e registrada no portal.","Cada visita ganha registro, fotos e próximos passos.","Revenda e Barenbrug acompanham o andamento no mesmo lugar.","O resultado vira relatório para a revenda e para o Comercial."],
+  q:"Revendas parceiras e time comercial Barenbrug.",p:"Dar visibilidade ao trabalho técnico feito junto com a revenda e mostrar ao produtor o suporte que vem com o híbrido."}};
+function vEmDev(k){const D=EM_DEV[k];if(!D)return "";
+  return `<div><span class="rot">Em desenvolvimento</span><h1 class="titulo">${esc(D.t)}</h1><p class="sub">Esta área ainda não está ativa. Mostramos aqui a ideia para você entender o que vem e contribuir com ela.</p></div>
+  <section class="bloco emdev"><span class="selo">${esc(D.st)}</span><h2 class="sec" style="margin:10px 0 6px">O que vai ser</h2><p style="margin:0">${esc(D.o)}</p></section>
+  <section class="bloco"><h2 class="sec" style="margin:0 0 8px">Como deve funcionar</h2><ol class="emdev-p">${D.c.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${D.n?`<p class="meta" style="margin:10px 0 0">${esc(D.n)}</p>`:""}</section>
+  <section class="bloco"><div class="int-2"><div><h2 class="sec" style="margin:0 0 6px">Para quem</h2><p style="margin:0">${esc(D.q)}</p></div><div><h2 class="sec" style="margin:0 0 6px">Por que</h2><p style="margin:0">${esc(D.p)}</p></div></div></section>
+  <section class="bloco"><p style="margin:0">Tem uma ideia ou uma necessidade do seu dia a dia para esta área? Conte ao Marketing pelo <button class="link" data-a="secao" data-v="duvidas">Tira-Dúvidas</button>.</p></section>`;}
 /* ---------- Guia do portal: o que cada área faz, com visão por perfil ---------- */
 const GUIA_PERFIL={
  "RC":{t:"RC de campo",serve:"O portal é o seu apoio de campo: treinar os híbridos, montar a proposta, enviar a negociação e acompanhar o seu resultado no Conecta RC.",
@@ -11516,6 +11534,7 @@ const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
+ "brindes-lojinha":"Em desenvolvimento: o pedido de brindes e materiais da marca pelo portal, para o time comercial e os parceiros.","rv-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.","rv-at":"Em desenvolvimento: gestão das ações de assistência técnica com as revendas.","rc-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
  "int-raci":"Atividades, RACI e hierarquia do Marketing Barenbrug.","int-insumos-ed":"Escreva um insumo próprio, que aparece junto com os automáticos.","int-insumos":"As maiores oportunidades de todas as abas, com a ação sugerida e o botão para virar ação de marketing.","int-hh":"Híbridos safra a safra desde 22/23, os canais Conecta e os canais que perderam o foco, com o plano de reativação.","int-pot":"Potencial de semente por estado, premissas ajustáveis e penetração das híbridas na safra.","int-marca":"Alcance da marca, como a mídia vira venda e como a Barenbrug aparece nas IAs.","int-perfil":"Quem são os canais por segmento: volume, preço pago e o que compram.","int-redes":"Barenbrug frente aos concorrentes no Instagram.","int-saz":"Quando chove, quando se planta e quando o produtor compra, por região, com as vendas diretas ao produtor da safra.","int-canais":"Preço praticado pelos canais (cliente oculto).","int-concorrentes":"Preço dos concorrentes por cultivar.","int-hibridos":"Quem são os concorrentes em híbridos: genética, registro, posicionamento e preço.","int-vendas":"Preço e frete das vendas da Barenbrug.","int-rc":"Comparativo entre RCs e Inside Sales.","int-seg":"Comparativo entre venda ao produtor e venda ao canal.","int-mapa":"Mapa das vendas B2B, cobertura dos canais e cruzamento com a venda direta ao produtor.","int-modelos":"Modelos de representação comercial.",
@@ -11557,7 +11576,7 @@ function renderApp(){
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>vEmDev("solo"),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
@@ -11591,7 +11610,7 @@ function renderApp(){
         return;
       }
     }
-    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-faq":vRVFaq,"rv-etapa":vRVEtapa}[S.pag]||vRVApresentacao;
+    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-faq":vRVFaq,"rv-etapa":vRVEtapa,"rv-solo":()=>vEmDev("solo"),"rv-at":()=>vEmDev("at")}[S.pag]||vRVApresentacao;
     app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
