@@ -1552,7 +1552,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119163434";
+const APP_VER="20261119164002";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6657,7 +6657,7 @@ function vRVApresentacao(){
   <section class="bloco"><h2 class="sec">Bônus de performance</h2>
     <div class="tab"><table class="frete"><thead><tr><th>Atingimento da meta</th><th>Pagamento do bônus</th></tr></thead><tbody>${bonus}</tbody></table></div>
     <p class="precos-cap">Pago no fechamento (jul–ago/2027), por valor fixo do Tier. Ações de valorização dos híbridos exigidas por safra: Yellow Master 3, Yellow Pro 2, Yellow e Blue 1 — submetidas à Barenbrug com ao menos 15 dias de antecedência.</p></section>
-  <div class="precos-nota">Guia explicativo, versão 1.0 (jun/2026). O contrato assinado é o documento oficial e prevalece em caso de conflito. Dúvidas sobre regras e percentuais: Thaís Mendonça (tmendonca@barenbrug.com.br) e Felipe Piccoli (felipe@barenbrug.com.br), do Marketing Barenbrug. <a class="link" href="https://materiais.barenbrug.com.br/conecta-revendas-barenbrug" target="_blank" rel="noopener">Página oficial e calculadoras ↗</a></div>`;
+  <div class="precos-nota">Guia explicativo, versão 1.0 (jun/2026). O contrato assinado é o documento oficial e prevalece em caso de conflito. Dúvidas sobre regras e percentuais: Felipe Piccoli (felipe@barenbrug.com.br), de Marketing, Comunicação e Vendas Digitais, e Thaís Mendonça (tmendonca@barenbrug.com.br), do Marketing Tático. <a class="link" href="https://materiais.barenbrug.com.br/conecta-revendas-barenbrug" target="_blank" rel="noopener">Página oficial e calculadoras ↗</a></div>`;
 }
 function vRVCurso(){
   return `<div><h1 class="titulo">Curso</h1><p class="sub">Dois vídeos para entender e operar o Conecta Revendas.</p></div>
@@ -8651,7 +8651,7 @@ const TM_FUNC=[
   comp:["Trade marketing e operação de programa de canais","Eventos e gestão de fornecedores","Controle de verba e compliance","Relatórios e indicadores","Organização e padronização de processos"]}
 ];
 function vTMFuncoes(){
-  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Time e funções</h1><p class="sub">Quem faz o quê no Marketing: as funções de quem responde ao Felipe Piccoli, supervisor de Marketing. Use para saber a quem levar cada assunto.</p></div>
+  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Time e funções</h1><p class="sub">Quem faz o quê no Marketing: as funções de quem responde ao Felipe Piccoli, de Marketing, Comunicação e Vendas Digitais. Use para saber a quem levar cada assunto.</p></div>
   <div class="tf-grid">${TM_FUNC.map(p=>`<section class="bloco tf-card"><div class="tf-cab"><span class="tf-av" aria-hidden="true">${esc(p.nome.split(" ").map(x=>x[0]).slice(0,2).join(""))}</span><div><h2 class="sec" style="margin:0">${esc(p.nome)}</h2><span class="meta">${esc(p.cargo)} · responde a ${esc(p.resp)}${p.desde?" · desde "+esc(p.desde):""}</span></div></div>
     <p>${esc(p.resumo)}</p>${p.nota?`<p class="meta" style="margin:0 0 8px">${esc(p.nota)}</p>`:""}${p.cob?`<div class="aviso-est"><strong>Cobertura</strong>${esc(p.cob)}</div>`:""}
     ${p.blocos.map(([t,L])=>`<h3 class="tf-h">${esc(t)}</h3><ul class="tf-ul">${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`).join("")}
@@ -8691,7 +8691,7 @@ function vIntRaci(){
   const chips=[["","Todas"],...D.areas.map(a=>[a,a])].map(([k,t])=>`<button class="chip" data-a="raci-f" data-v="area:${esc(k)}" aria-pressed="${F.area===k}">${esc(t)}</button>`).join("");
   const nA=D.ativ.length,nConf=D.ativ.filter(a=>a.conf).length;
   return `<div><h1 class="titulo">Mapa de Marketing, Comunicação e Vendas Digitais</h1><p class="sub">Tudo o que o Marketing da Barenbrug faz, quem faz, quem aprova e quem apoia: ${nA} atividades em ${D.areas.length} frentes. Versão de ${esc(D.versao||"")}${nConf?`, com ${nConf} ${nConf===1?"ponto":"pontos"} a confirmar`:""}.</p></div>
-  <section class="bloco"><h2 class="sec">Quem é quem${inf("O Marketing responde ao Gerente Comercial e Marketing. Felipe e Thais tocam juntos o marketing institucional, a comunicação e a inteligência. O Inside Sales é um comercial dentro do marketing. Toque numa pessoa para ver só as atividades dela no mapa.")}</h2>
+  <section class="bloco"><h2 class="sec">Quem é quem${inf("O Marketing responde ao Gerente Comercial e Marketing. Felipe responde por Marketing, Comunicação e Vendas Digitais e lidera o time: Thais, no marketing tático, e o Inside Sales, que é o comercial digital dentro do marketing. Toque numa pessoa para ver só as atividades dela no mapa.")}</h2>
     <div class="org"><ul>${raiz.map(arv).join("")}</ul></div></section>
   <section class="bloco"><h2 class="sec">Como ler o RACI</h2><div class="raci-leg">${["R","A","C","I"].map(k=>`<span>${badge(k)} ${esc(RACI_TXT[k])}</span>`).join("")}</div>
     <p class="meta" style="margin:6px 0 0">Toda atividade tem um único dono que aprova (A). Quando a mesma pessoa faz e aprova, aparece R A.</p></section>
