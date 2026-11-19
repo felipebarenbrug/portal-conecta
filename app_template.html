@@ -897,6 +897,7 @@ main.largo{max-width:1120px}
 #prot-ov .prot-box strong{font-size:1.15rem;color:var(--vermelho)}
 .dre{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dre-l{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:6px 10px;border-radius:6px;background:var(--azul-claro)}.dre-l>span:first-child{font-weight:600}.dre-sub{background:none;border-top:1px solid rgba(0,0,0,.12)}.dre-sub>span:first-child{font-weight:800}.dre-cv{box-shadow:inset 4px 0 0 var(--azul-escuro)}.dre-oc{box-shadow:inset 4px 0 0 var(--amarelo)}
 .dre-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.dre-cv.dre-tag{background:var(--azul-escuro);color:#fff;box-shadow:none}.dre-oc.dre-tag{background:var(--amarelo);color:var(--preto);box-shadow:none}
+.on-n{display:inline-block;min-width:22px;padding:0 7px;border-radius:11px;background:#2E8B57;color:#fff;font-size:13px;line-height:22px;text-align:center;vertical-align:middle}.on-l{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}.on-l li{display:flex;gap:8px;align-items:flex-start}.on-l li>span:last-child{display:flex;flex-direction:column;min-width:0}.on-dot{width:9px;height:9px;border-radius:50%;background:#2E8B57;margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 3px rgba(46,139,87,.18)}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1380,6 +1381,12 @@ function preloadCidades(perfil){
 /* ---------- boot ---------- */
 /* ---------- sessão: expiração por inatividade / tempo ---------- */
 const SESSAO_INATIV_MIN=240, SESSAO_MAX_H=12;
+/* tempo de uso: a cada minuto com o portal visivel e alguma interacao nos ultimos 2 minutos, soma 1 minuto na secao (o banco limita a 1 por minuto) */
+let USO_ACT=Date.now();["pointerdown","keydown","wheel","touchstart","scroll"].forEach(ev=>window.addEventListener(ev,()=>{USO_ACT=Date.now();},{passive:true,capture:true}));
+let USO_MV=0;window.addEventListener("mousemove",()=>{const n=Date.now();if(n-USO_MV>15000){USO_MV=n;USO_ACT=n;}},{passive:true});
+const usoTick=()=>{try{if(document.hidden||!S.user||!S.profile||S.demo||S.profile.precisa_trocar_senha)return;if(Date.now()-USO_ACT>120000)return;
+  sb.rpc("uso_tick",{p_secao:S.secao||(S.pag==="hub"||!S.pag?"inicio":S.pag)}).then(()=>{},()=>{});}catch(_){}};
+setInterval(usoTick,60000);setTimeout(usoTick,8000);
 function marcarAtividade(){try{localStorage.setItem("pc_lastact",String(Date.now()));}catch(e){}}
 function sessaoExpirada(){try{
   const la=+localStorage.getItem("pc_lastact")||0, ss=+localStorage.getItem("pc_sessstart")||0, n=Date.now();
@@ -4018,6 +4025,15 @@ function heroHub(){
 /* secoes que a pessoa enxerga: base do hub e das opcoes da pesquisa de satisfacao */
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id)));}
+/* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
+const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
+function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
+setInterval(()=>{if(!document.hidden&&veOnline()&&!S.secao&&S.pag==="hub")carregarOnline();},60000);
+function onlineHTML(){if(!veOnline())return "";if(S.onEm===undefined){S.onEm=0;carregarOnline();}
+  const O=S.online;if(!O)return `<div class="cx"><h2>Online agora</h2><p class="meta" style="margin:0">${S.onEm?"Não foi possível ver agora.":"Verificando…"}</p></div>`;
+  const L=O.lista||[];
+  return `<div class="cx"><h2>Online agora <span class="on-n">${O.n}</span></h2><p class="meta" style="margin:0 0 6px">${O.n===1?"1 pessoa usando":O.n+" pessoas usando"} o portal neste momento (nos últimos 3 minutos). Visível só para administradores e Comercial Barenbrug.</p>
+    ${L.length?`<ul class="on-l">${L.map(x=>`<li><span class="on-dot" aria-hidden="true"></span><span><strong>${esc(x.nome||"—")}${x.eu?" · você":""}</strong><span class="meta">${esc([x.perfil,typeof USO_NOME==="function"?USO_NOME(x.secao):x.secao].filter(Boolean).join(" · "))}</span></span></li>`).join("")}</ul>`:""}</div>`;}
 function vHub(){
   const secs=secoesVisiveis().filter(x=>x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
@@ -4032,6 +4048,7 @@ function vHub(){
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
+      ${onlineHTML()}
       <div class="cx mkt-cx"><h2>Plataforma de marketing</h2><p>O Portal Conecta é uma iniciativa do Marketing Barenbrug para apoiar revendas, RCs e o time comercial com treinamento, programas de relacionamento, materiais e ferramentas de venda.</p>
         <div class="mkt-lista"><span class="meta">Fale com o Marketing</span>${mktContatosHTML()}</div></div>
     </aside>
@@ -6535,6 +6552,29 @@ function gtRevendas(){
     ${com.length?com.map(k=>{const P=por[k.id].slice().sort((a,b)=>(a.perfil==="Gestor de Revenda"?0:1)-(b.perfil==="Gestor de Revenda"?0:1)||a.nome.localeCompare(b.nome));const g=P.filter(x=>x.perfil==="Gestor de Revenda").length;return `<details class="lote"><summary>${esc(k.nome)} · ${P.length} ${P.length===1?"pessoa":"pessoas"}${g?` (${g} ${g===1?"gestor":"gestores"})`:" (sem gestor)"}</summary><div class="lista" style="margin-top:8px">${P.map(pessoa).join("")}</div></details>`;}).join(""):`<div class="vazio">Nenhuma revenda tem pessoas cadastradas ainda. No cadastro acima, escolha o perfil Gestor ou Vendedor de Revenda e a revenda.</div>`}
     ${sem.length?`<p class="dica">Revendas do Conecta ainda sem ninguém no portal: ${sem.map(k=>esc(k.nome)).join(" · ")}.</p>`:""}</section>`;})()}`;
 }
+const USO_NOME=k=>{const x=SECOES.find(c=>c.id===k);return x?x.nome:({inicio:"Página inicial",privacidade:"Aviso de privacidade",seguranca:"Segurança",perfil:"Meu perfil"})[k]||k;};
+const usoH=m=>{m=Number(m)||0;const h=Math.floor(m/60),r=m%60;return h?`${h} h${r?" "+String(r).padStart(2,"0")+" min":""}`:`${r} min`;};
+function gtTempo(){
+  const D=S.usoDias||30;S.uso=S.uso||{};const U=S.uso[D];
+  if(U===undefined){S.uso[D]=null;(async()=>{try{const {data,error}=await sb.rpc("uso_resumo",{p_dias:D});S.uso[D]=error||!data?{erro:1}:data;}catch(e){S.uso[D]={erro:1};}render();})();}
+  const chips=`<div class="filtros" role="group" aria-label="Período">${[[7,"7 dias"],[30,"30 dias"],[90,"90 dias"]].map(([d,t])=>`<button class="chip" data-a="uso-dias" data-v="${d}" aria-pressed="${d===D}">${t}</button>`).join("")}</div>`;
+  const cab=`<section class="bloco"><h2 class="sec">Tempo no portal${inf("Conta só o tempo com o portal aberto na tela e com alguma interação (clique, tecla, rolagem) nos últimos 2 minutos. Aba esquecida aberta ou em segundo plano não soma. A medição começou em 18/11/2026.")}</h2>`;
+  if(!U)return cab+chips+`<div class="carregando">Calculando o tempo de uso…</div></section>`;
+  if(U.erro)return cab+chips+`<div class="vazio">Não foi possível ler o tempo de uso agora.</div></section>`;
+  const P=(U.pessoas||[]).filter(x=>(S.equipe||[]).some(e=>e.id===x.id)||ehAdmin());const tot=P.reduce((t,x)=>t+x.min,0);const top=P[0];
+  const cn=id=>(((S.canaisLista||[]).find(k=>k.id===id)||{}).nome)||"";
+  return cab+`<p class="sub" style="margin:0 0 8px">Quem mais usa o portal no período e em que áreas passa o tempo.</p>${chips}
+   ${P.length?`<div class="metrics">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Mais tempo de plataforma</span><strong>${esc(top.nome)}</strong><span class="meta">${usoH(top.min)} em ${top.dias} ${top.dias===1?"dia":"dias"} · ${esc(top.perfil||"")}</span></div>
+    <div class="metric"><span>Tempo total</span><strong>${usoH(tot)}</strong><span class="meta">${P.length} ${P.length===1?"pessoa":"pessoas"} com uso no período</span></div>
+    <div class="metric"><span>Média por pessoa</span><strong>${usoH(Math.round(tot/P.length))}</strong><span class="meta">por dia de acesso: ${usoH(Math.round(tot/Math.max(1,P.reduce((t,x)=>t+x.dias,0))))}</span></div>
+    <div class="metric"><span>Área mais usada</span><strong>${esc(USO_NOME(((U.secoes||[])[0]||{}).s||""))}</strong><span class="meta">${usoH(((U.secoes||[])[0]||{}).min)}</span></div></div>
+   <div class="tab" style="margin-top:10px"><table class="sim-t"><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th class="val">Tempo</th><th class="val">Dias com uso</th><th class="val">Média por dia</th><th>Onde passa o tempo</th><th>Último dia</th></tr></thead><tbody>
+    ${P.slice(0,S.usoTodos?500:20).map((x,i)=>`<tr${i===0?' style="background:var(--azul-claro)"':""}><td><strong>${i+1}º</strong></td><td><button class="link" data-a="verusuario" data-v="${x.id}">${esc(x.nome)}</button>${x.canal_id&&cn(x.canal_id)?`<br><span class="meta">${esc(cn(x.canal_id))}</span>`:""}</td><td>${esc(x.perfil||"")}</td><td class="val"><strong>${usoH(x.min)}</strong></td><td class="val">${x.dias}</td><td class="val">${usoH(Math.round(x.min/Math.max(1,x.dias)))}</td><td style="white-space:normal;min-width:180px">${(x.secoes||[]).map(o=>`${esc(USO_NOME(o.s))} <span class="meta">${usoH(o.min)}</span>`).join(" · ")}</td><td>${esc(intData(x.ult))}</td></tr>`).join("")}</tbody></table></div>
+   ${P.length>20&&!S.usoTodos?`<div class="acoes"><button class="btn sec" data-a="uso-todos">Ver todas as ${P.length} pessoas</button></div>`:""}
+   ${(U.secoes||[]).length?`<h3 style="margin:14px 0 6px">Tempo por área</h3><div class="tab"><table class="sim-t"><thead><tr><th>Área</th><th class="val">Tempo</th><th class="val">Pessoas</th><th class="val">% do tempo</th></tr></thead><tbody>${U.secoes.map(o=>`<tr><td>${esc(USO_NOME(o.s))}</td><td class="val">${usoH(o.min)}</td><td class="val">${o.pessoas}</td><td class="val">${tot?Math.round(o.min/tot*100):0}%</td></tr>`).join("")}</tbody></table></div>`:""}`
+   :`<div class="vazio">Ainda sem tempo registrado no período. A medição começou agora: os números aparecem conforme as pessoas usam o portal.</div>`}</section>`;
+}
 function gtRanking(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const nEtapa=x=>x.feitas>=ORDEM.length?"Concluiu":(ETAPAS_ON[x.feitas]?ETAPAS_ON[x.feitas].n:"—");
@@ -6542,7 +6582,7 @@ function gtRanking(){
   const medal=i=>`${i+1}º`;
   const comConhec=S.equipe.filter(x=>x.conhecimento!=null);
   const mediaConhec=comConhec.length?Math.round(comConhec.reduce((s,x)=>s+x.conhecimento,0)/comConhec.length):null;
-  return `  <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
+  return `${ehAdmin()?gtTempo():""}  <section class="bloco"><h2 class="sec">Ranking e evolução</h2>
   <p class="sub" style="margin:0 0 4px">Ordenado por módulos concluídos e conhecimento (acerto médio nas provas). Clique em "Abrir" para ver a evolução completa, editar ou excluir.</p>
   <div class="tab"><table><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th>Módulos</th>${ETAPAS_ATIVAS.map(id=>`<th>${esc(({melhoramento:"Melhoramento",qualcapim:"Qual capim"})[id]||ETAPAS.find(e=>e.id===id).n)}</th>`).join("")}<th>Geral</th><th>Pontos</th><th></th></tr></thead><tbody>${S.equipe.map((x,i)=>{const cel=id=>{const n=x.cult?x.cult[id]:null;return n!=null?`${n}%`:'<span class="meta">—</span>';};return `<tr><td><strong>${medal(i)}</strong></td><td>${esc(x.nome)}<br><span class="meta">${esc(x.email||"")}</span><br><span class="meta">últ. acesso: ${fmtDataHora(x.ultimo_acesso)}</span></td><td>${esc(x.perfil)}${x.canal_id?`<br><span class="meta">${esc(((S.canaisLista||[]).find(k=>k.id===x.canal_id)||{}).nome||"")}</span>`:""}</td><td>${x.feitas} de ${ORDEM.length}</td>${ETAPAS_ATIVAS.map(id=>`<td>${cel(id)}</td>`).join("")}<td>${x.conhecimento!=null?`<strong>${x.conhecimento}%</strong>`:"—"}</td><td>${x.pontos?`<strong>${x.pontos}</strong>`:'<span class="meta">—</span>'}</td><td><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></td></tr>`;}).join("")}</tbody></table></div></section>
   ${(()=>{const pu=S.progPorUser||{},nome={};S.equipe.forEach(x=>{nome[x.id]=x;});
@@ -9601,7 +9641,7 @@ function vPrivacidade(){
   <div class="priv-txt">
   ${sec("1. Quem trata os dados",`<p>A Barenbrug do Brasil é a controladora dos dados tratados no Portal Conecta. O portal é mantido pelo Marketing Barenbrug e serve a revendas, representantes comerciais (RCs), time comercial e parceiros convidados.</p>`)}
   ${sec("2. Que dados usamos",`<p><strong>Seu cadastro:</strong> nome, e-mail, WhatsApp, data de nascimento, cidade e UF, função, empresa ou revenda, CNPJ e razão social quando você representa uma empresa, região de atuação, formação, marcas com que trabalha e foto de perfil, que é opcional.</p>
-   <p><strong>Seu uso do portal:</strong> data do último acesso, progresso e respostas nos cursos e provas, mensagens, dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
+   <p><strong>Seu uso do portal:</strong> data do último acesso, tempo de uso por área do portal (contado só com o portal aberto na tela e em uso), progresso e respostas nos cursos e provas, mensagens, dúvidas e publicações que você faz, pedidos e solicitações, e registros de segurança, como a abertura de contato de lead e ações administrativas.</p>
    <p><strong>Contatos comerciais:</strong> dados de produtores e clientes que pediram atendimento à Barenbrug (nome, telefone, e-mail, cidade e o histórico da negociação), vindos do CRM da Barenbrug, para que a pessoa certa faça o atendimento.</p>`)}
   ${sec("3. Para que usamos",`<ul><li>Liberar, controlar e proteger o seu acesso.</li><li>Oferecer treinamento, provas e certificados.</li><li>Operar os programas de relacionamento Conecta RC e Conecta Revendas, com metas, ranking e materiais, e planejar ações de relacionamento, como datas comemorativas.</li><li>Direcionar contatos de clientes interessados ao atendimento comercial da sua região.</li><li>Apoiar a venda, com tabela de preços, propostas e informações de mercado.</li><li>Cumprir obrigações legais e registrar ações para segurança e auditoria.</li></ul>`)}
   ${sec("4. Bases legais",`<p>Tratamos os dados para executar a relação comercial com você ou com a empresa que você representa (art. 7º, V), pelo legítimo interesse da Barenbrug em treinar e apoiar a sua rede comercial e em atender quem pediu contato (art. 7º, IX), para cumprir obrigações legais (art. 7º, II) e, para a foto de perfil e outros dados opcionais, com o seu consentimento (art. 7º, I), que você pode retirar quando quiser.</p>`)}
@@ -10254,6 +10294,8 @@ document.addEventListener("click",async ev=>{
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
+  if(a==="uso-dias"){S.usoDias=+v;render();return;}
+  if(a==="uso-todos"){S.usoTodos=true;render();return;}
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
   if(a==="pag"){S.ngAb={};irPag(v);}
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
