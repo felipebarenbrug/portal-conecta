@@ -1375,7 +1375,7 @@ const RC_FAQ=[
  ["O que a exclusividade cobre?","Híbridos forrageiros Barenbrug (Sabiá, Cayana, Carcará e Cynodon). É vedado representar cultivares híbridos forrageiros concorrentes dessas espécies."],
  ["Como o programa é formalizado?","Por um Contrato de Representação Comercial 26/27, apresentado pelo Responsável Comercial, que reúne a mecânica, as alíquotas e as regras de exclusividade."]
 ];
-const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Marketing","Financeiro","Administrador"];
+const PERFIS=["RC","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Exportação","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Marketing","Financeiro","Administrador"];
 const VENDEDORAS_IS=["Laura","Maria Giulia","Thaís","Maria Eduarda","Mayane"];
 const UFS=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 const OPC={
@@ -1549,7 +1549,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119123621";
+const APP_VER="20261119124552";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2475,7 +2475,9 @@ function subnavAcademia(){
     ["Vender",[["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]]],
     ["Ferramentas de campo",[["suporte","Capacidade de suporte"],veCalcRent()&&["calc","Calculadora de rentabilidade"]]],
     ["Seu progresso",S.rankOff?[]:[["ranking","Ranking"]]]];
-  return navGrupos(G,"Academia de Híbridos",k=>S.pag===k||(k==="trilha"&&S.pag==="etapa"));
+  if(LANG()==="es")G.forEach(g=>{g[1]=g[1].filter(x=>x&&!ES_SO_BR.includes(x[0]));});
+  const prev=ehAdmin()?`<div class="w" style="display:flex;justify-content:flex-end;padding-top:6px"><button class="link" data-a="lang-prev">${S.langPrev?"Voltar ao português":"Ver como Exportação (espanhol)"}</button></div>`:"";
+  return navGrupos(G.filter(g=>g[1].length),"Academia de Híbridos",k=>S.pag===k||(k==="trilha"&&S.pag==="etapa"))+prev;
 }
 function subnavEnxoval(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -2492,6 +2494,7 @@ function vMktForm(){
     ${s.sub?`<div><label for="m_tema">Tema *</label><select id="m_tema" required>${s.sub.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select></div>`:""}
     <div><label for="m_tipo">Tipo</label><select id="m_tipo"><option value="link">Link / arquivo</option><option value="drive">Pasta do Google Drive</option><option value="video">Vídeo (YouTube)</option></select></div>
     <div><label for="m_url">URL *</label><input id="m_url" type="url" required placeholder="https://…"></div>
+    <div><label for="m_idioma">Idioma</label><select id="m_idioma"><option value="pt">Português</option><option value="es">Espanhol (exportação)</option></select></div>
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Adicionar</button><button type="button" class="btn sec" data-a="mkt-cancel">Cancelar</button></div>
   </form></section>`;
@@ -2575,7 +2578,7 @@ function vDiretriz(){
 }
 function vEnxoval(){
   const admin=ehAdmin()||temPerfil("Comercial Barenbrug");
-  const its=S.mkt;
+  const its=(S.mkt||null)&&(LANG()==="es"?S.mkt.filter(m=>m.idioma==="es"):S.mkt);
   const porSec=(sec,tema)=>(its||[]).filter(m=>m.secao===sec&&(!tema||m.tema===tema));
   const abrir=m=>{if((m.url||"").startsWith("storage:"))return `<button class="link" data-a="mkt-abrir" data-v="${esc(m.url.slice(8))}">Abrir</button>`;const lbl=m.tipo==="drive"?"Abrir no Google Drive ↗":m.tipo==="video"?"Assistir ↗":"Abrir ↗";return m.url?`<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener">${lbl}</a>`:"";};
   const item=m=>`<div class="linha"><div><strong>${esc(m.titulo||"Material")}</strong>${m.descricao?`<span class="meta">${esc(m.descricao)}</span>`:""}</div><div style="display:flex;gap:10px;align-items:center">${abrir(m)}${admin?`<button class="link" data-a="mkt-del" data-v="${m.id}">excluir</button>`:""}</div></div>`;
@@ -4851,7 +4854,27 @@ function heroHub(){
     <p class="slogan-b">CULTIVE <b>CONFIANÇA</b></p></div></section>`;
 }
 /* secoes que a pessoa enxerga: base do hub e das opcoes da pesquisa de satisfacao */
+/* ===== Idioma: espanhol para o perfil Exportação (Academia de Híbridos e Enxoval) =====
+   O texto é traduzido na tela a partir de um dicionário (i18n/es.json: texto em português -> espanhol).
+   Assim o conteúdo continua num lugar só e as provas mantêm a resposta certa. */
+const ehExp=()=>!!(S.user&&S.profile&&temPerfil("Exportação")&&!ehAdmin());
+const LANG=()=>(ehExp()||S.langPrev)?"es":"pt";
+const ES_SO_BR=["calc","ranking"]; /* abas da Academia que são só do Brasil */
+let ES_DIC=null,ES_BUSY=false;const ES_FALTA=new Set();
+async function carregarES(){if(ES_DIC||ES_BUSY)return;ES_BUSY=true;try{const r=await fetch("i18n/es.json",{cache:"no-cache"});ES_DIC=r.ok?await r.json():{};}catch(e){ES_DIC={};}ES_BUSY=false;render();}
+const ES_PADRAO=[[/^(\d+) de (\d+) etapas concluídas$/,"$1 de $2 etapas completadas"],[/^(\d+) de (\d+)$/,"$1 de $2"],[/^Pergunta (\d+) de (\d+)$/,"Pregunta $1 de $2"],[/^(\d+) min$/,"$1 min"]];
+function esTxt(k){if(ES_DIC[k])return ES_DIC[k];for(const [re,to] of ES_PADRAO)if(re.test(k))return k.replace(re,to);return null;}
+function traduzES(root){
+  if(!root)return;if(!ES_DIC){carregarES();return;}
+  const W=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&/^(SCRIPT|STYLE|TEXTAREA|CODE)$/.test(n.parentElement.tagName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  let n;while((n=W.nextNode())){const t=n.nodeValue,k=t.trim().replace(/\s+/g," ");if(!k||!/[A-Za-zÀ-ÿ]/.test(k))continue;const v=esTxt(k);if(v)n.nodeValue=t.replace(t.trim(),v);else ES_FALTA.add(k);}
+  root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(e=>["placeholder","aria-label","title"].forEach(a=>{const k=(e.getAttribute(a)||"").trim();if(!k)return;const v=esTxt(k);if(v)e.setAttribute(a,v);else ES_FALTA.add(k);}));
+  document.documentElement.lang="es";
+}
+window.esFaltando=()=>[...ES_FALTA];
+
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
+  if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
   return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
@@ -11108,7 +11131,7 @@ function cnResHTML(){if(S.cnRes===undefined){carregarCnRes();return `<div class=
      <div class="lista">${R.map(x=>`<div class="linha" style="align-items:flex-start"><div style="min-width:0"><strong>${esc(x.nome||"—")}</strong> <span class="meta">${esc(x.perfil||"")} · ${fmtDataHora(x.em)}${x.area!=null?" · área no portal: "+x.area:""}</span>${x.motivo?`<p style="margin:4px 0 0"><span class="meta">Motivo:</span> ${esc(x.motivo)}</p>`:""}${x.sugestao?`<p style="margin:4px 0 0"><span class="meta">Sugestão:</span> ${esc(x.sugestao)}</p>`:""}</div><span class="seg-st ${x.nota>=9?"seg-ok":x.nota>=7?"seg-par":"seg-pen"}" style="white-space:nowrap">${x.nota}</span></div>`).join("")}</div>`}`;}).join("");}
 async function carregarNpsRes(){if(S.npsResBusy)return;S.npsResBusy=true;try{const {data,error}=await sb.rpc("nps_resultados");S.npsRes=error?[]:(data||[]);}catch(e){S.npsRes=[];}S.npsResBusy=false;render();}
 /* ===== Gestão: app instalado, notificações e comunicados ===== */
-const PERFIS_TODOS=["Administrador","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","RC","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Marketing","Financeiro"];
+const PERFIS_TODOS=["Administrador","Comercial Barenbrug","Gestor de Revenda","Vendedor de Revenda","Exportação","RC","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Marketing","Financeiro"];
 const COM_DESTINOS=[["/","Início do portal"],["/?abrir=academia","Academia de Híbridos"],["/?abrir=mensagens","Mensagens"],["/?abrir=duvidas","Tira-Dúvidas"],["/?abrir=leads","Cotações (leads)"],["/?abrir=conecta-revendas","Conecta Revendas"],["/?abrir=conecta-rc","Conecta RC"],["/?abrir=enxoval","Enxoval de Marketing"],["/?abrir=inside-sales","Inside Sales"]];
 async function carregarGtApp(){if(S.gtAppBusy)return;S.gtAppBusy=true;try{const [a,b,c]=await Promise.all([sb.rpc("app_uso_resumo"),sb.from("push_comunicados").select("*").order("criado_em",{ascending:false}).limit(50),sb.from("profiles").select("id,nome,perfil").eq("ativo",true).order("nome")]);S.gtApp=a.data||{ativos:0,lista:[]};S.gtCom=b.data||[];S.gtPessoas=c.data||[];}catch(e){S.gtApp={ativos:0,lista:[]};S.gtCom=[];S.gtPessoas=[];}S.gtAppBusy=false;render();}
 function gtApp(){if(!ehAdmin())return `<div class="vazio">Só administradores.</div>`;if(S.gtApp===undefined){carregarGtApp();return `<div class="carregando">Carregando…</div>`;}
@@ -11196,7 +11219,7 @@ function rodapeMkt(){
   f.innerHTML=`<div class="rodape-in permite-copia"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
-function render(){renderApp();tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById("app"));else document.documentElement.lang="pt-BR";tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
@@ -11559,6 +11582,7 @@ document.addEventListener("click",async ev=>{
   if(a==="pj-badd"){pjColeta();(S.pjEd.dados.blocos=S.pjEd.dados.blocos||[]).push({titulo:"",texto:""});render();return;}
   if(a==="pj-bdel"){pjColeta();S.pjEd.dados.blocos.splice(+v,1);render();return;}
   if(a==="pj-del"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}const {error}=await sb.from("mkt_projetos").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}S.pjEd=null;S.pjSel=null;S.pj=undefined;render();return;}
+  if(a==="lang-prev"){S.langPrev=!S.langPrev;if(S.langPrev&&!["academia","enxoval"].includes(S.secao)){S.secao="academia";S.pag="trilha";}render();window.scrollTo(0,0);return;}
   if(a==="gc-sel"){S.gcSel=S.gcSel===+v?null:+v;render();const e=document.getElementById("gc-"+v);if(e&&S.gcSel)e.scrollIntoView({behavior:"smooth",block:"nearest"});return;}
   if(a==="gc-f"){const [k,x]=v.split("|");S.gcF[k]=x;render();return;}
   if(a==="gc-novo"){S.gcEd={prioridade:"B",status:"A abordar"};render();return;}
@@ -12117,7 +12141,7 @@ document.addEventListener("submit",async ev=>{
     const temaEl=f.querySelector("#m_tema");const tema=temaEl?temaEl.value:null;
     if(!titulo||!url){S._erro="Preencha título e URL.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
-    const reg={secao:S.mktNovo,titulo,descricao,tipo,url};if(tema)reg.tema=tema;
+    const reg={secao:S.mktNovo,titulo,descricao,tipo,url,idioma:(f.querySelector("#m_idioma")||{}).value||"pt"};if(tema)reg.tema=tema;
     const {error}=await sb.from("materiais_mkt").insert(reg);
     if(error){S._erro="Não foi possível salvar. Verifique se você é administrador.";render();return;}
     S.mktNovo=null;S.mkt=null;S._erro=null;render();aviso("Material adicionado.");
