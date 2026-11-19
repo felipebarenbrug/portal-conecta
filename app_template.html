@@ -2882,6 +2882,48 @@ function vAcoesDigital(){
 
 /* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
 async function carregarCustoTime(){if(!ehAdmin()||S.isCustoT!==undefined)return;S.isCustoT=null;try{const {data}=await sb.from("is_config").select("valor").eq("chave","custo_time_mensal").maybeSingle();S.isCustoT=data?Number(data.valor)||0:0;}catch(e){S.isCustoT=0;}render();}
+/* ===== Inside Sales: referências de mercado e economia da operação ===== */
+const IS_BENCH={
+ mql_sql:{faixa:[0.13,0.22],txt:"13% a 22%",fonte:"Média geral de 13% e B2B de 13% a 15% (First Page Sage); manufatura e indústria de 15% a 22% (compilação de HubSpot State of Marketing, Salesforce State of Sales e Demand Gen Report)"},
+ sql_venda:{faixa:[0.124,0.35],txt:"12% a 35%",fonte:"Agronegócio: 12,4% de conversão no CRM (Benchmarks RD Station, dados de 2025 de clientes brasileiros); B2B em geral: 20% a 35% de oportunidade em venda (compilações de mercado)"},
+ mql_venda:{faixa:[0.02,0.06],txt:"2% a 6%",fonte:"Lead em cliente no B2B: 2% a 6%, variando com ticket e canal (compilações de mercado); a cadeia de referência 13% × 20% dá cerca de 3%"},
+ roas:{faixa:[2.19,3.5],txt:"2,2x a 3,5x",fonte:"Mediana de 2,19x no Facebook em todos os setores (Varos/WhatConverts, dados até abril de 2025); 2x a 3,5x para marcas estabelecidas no Meta"}};
+const isBenchSt=(v,f)=>v==null||!isFinite(v)?`<span class="meta">sem dado</span>`:v<f[0]?`<span class="met-st met-at">Abaixo</span>`:v>f[1]?`<span class="met-st met-ok">Acima</span>`:`<span class="met-st met-sem">Dentro</span>`;
+const isPctF=v=>v==null||!isFinite(v)?"—":(Math.round(v*1000)/10).toLocaleString("pt-BR")+"%";
+function isBenchTab(L,extra){return `<div class="tab" style="margin-top:10px"><table class="sim-t"><thead><tr><th>Indicador</th><th class="val">Inside Sales</th><th class="val">Referência de mercado</th><th>Leitura</th></tr></thead><tbody>${L.map(([t,v,k,fmt])=>{const B=IS_BENCH[k];return `<tr><td>${t}</td><td class="val"><strong>${fmt(v)}</strong></td><td class="val">${B.txt}</td><td>${isBenchSt(v,B.faixa)}</td></tr>`;}).join("")}</tbody></table></div>
+  <details class="is-ajuda"><summary>De onde vêm as referências</summary><ul class="cond">${L.map(([t,,k])=>`<li><strong>${t}:</strong> ${esc(IS_BENCH[k].fonte)}.</li>`).join("")}</ul><p>Não existe estatística oficial pública de funil de inside sales no agronegócio brasileiro. As referências acima são as mais usadas pelo mercado, quase todas de B2B e software, e a de agronegócio vem da base de clientes da RD Station. Use como ordem de grandeza, não como meta.${extra?" "+extra:""}</p></details>`;}
+function isBenchConv(mq,g,p,gm,pm){const tq=(+mq.rec||0)?(+mq.qual||0)/(+mq.rec):null,tv=(g+p)?g/(g+p):null,tvm=(gm+pm)?gm/(gm+pm):null,te=tq!=null&&tvm!=null?tq*tvm:null;
+  return `<section class="bloco"><h2 class="sec">Nossas taxas contra o mercado</h2>${isBenchTab([["MQL → SQL",tq,"mql_sql",isPctF],["SQL → Venda (decididas)",tv,"sql_venda",isPctF],["MQL → Venda (encadeada)",te,"mql_venda",isPctF]],"O SQL → Venda do time conta só negociações decididas (ganhas ÷ ganhas + perdidas); referências de mercado costumam incluir as que ainda estão em aberto, o que deixa a nossa taxa naturalmente maior.")}</section>`;}
+async function carregarMargemIS(){if(!ehAdmin()||S.isMargem!==undefined)return;S.isMargem=null;try{const {data}=await sb.from("is_config").select("valor").eq("chave","margem_bruta").maybeSingle();S.isMargem=data?Number(data.valor)||0:0;}catch(e){S.isMargem=0;}render();}
+function vISEcon(t){if(!ehAdmin())return "";carregarMargemIS();if(S.isHist===undefined)carregarISHist();
+  const mg=Number(S.isMargem)||0;if(S.isMargem==null)return `<div class="carregando">Carregando a margem…</div>`;
+  const T=(S.isp&&S.isp["Time"]&&S.isp["Time"].dados)||{};const RL=T.real||{};const cfg=T.cfg||{};
+  const vend=+RL.rs||0,nv=+RL.n||0,tk=nv?vend/nv:0;
+  const cacM=t.vn?t.g/t.vn:0,cacC=t.vn?(t.g+t.ct)/t.vn:0;
+  const mgR=vend*mg,mgV=tk*mg,contrib=mgR-t.g;const roasEq=mg?1/mg:0,roas=t.g?t.vt/t.g:0;
+  const H=S.isHist||{};const LC=(H.ltv_coortes||[]);const c24=LC.find(x=>x.coorte==="24/25");
+  const ltvMg=c24?c24.ltv*mg:0;const ltvCac=cacM&&c24?ltvMg/cacM:0;
+  const P=(cfg.pessoas||[]).filter(x=>["vendedora","rampagem","supervisao"].includes(x.papel));
+  const linhas=P.map(x=>{const r=((S.isp[x.p]||{}).dados||{}).real||{};const n=+r.n||0,rs=+r.rs||0,tq=n?rs/n:0;return {p:x.p,papel:x.papel,n,rs,tq};}).filter(x=>x.n);
+  const pctTk=tq=>tq&&cacM?isPctF(cacM/tq):"—";
+  const k=(rot,v,m,dest)=>`<div class="metric"${dest?' style="box-shadow:inset 0 0 0 2px var(--amarelo)"':""}><span>${rot}</span><strong>${v}</strong><span class="meta">${m}</span></div>`;
+  return `<section class="bloco"><h2 class="sec">Economia da operação · margem, ticket, CAC e LTV</h2>
+   <form class="mk-barra" id="f-is-margem"><label for="ism_v" style="align-self:center">Margem bruta apurada do Inside Sales (%)</label><input id="ism_v" inputmode="decimal" style="max-width:110px" value="${mg?esc(String(Math.round(mg*1000)/10).replace(".",",")):""}"><button class="btn sec" type="submit">Salvar</button></form>
+   <p class="meta" style="margin:4px 0 10px">Margem bruta já descontando as comissões e a ajuda de custo das assessoras. Fica só com administradores.</p>
+   <div class="metrics">
+    ${k("Ticket médio da operação",isR(tk),`${isR(vend)} ÷ ${isN(nv)} vendas na safra`)}
+    ${k("Margem bruta gerada",isR(mgR),`${isPctF(mg)} do vendido · ${isR(mgV)} por venda`)}
+    ${k("CAC de mídia",cacM?isR(cacM):"—",`${isPctF(tk?cacM/tk:null)} do ticket médio · ${isPctF(mgV?cacM/mgV:null)} da margem de uma venda`,1)}
+    ${k("Margem depois da mídia",isR(contrib),`margem bruta − ${isR(t.g)} de mídia · ${isPctF(vend?contrib/vend:null)} do vendido`)}
+    ${k("ROAS de equilíbrio",roasEq?roasEq.toLocaleString("pt-BR",{maximumFractionDigits:2})+"x":"—",`com ${isPctF(mg)} de margem, a mídia se paga a partir daí · hoje: ${roas.toLocaleString("pt-BR",{maximumFractionDigits:1})}x`,1)}
+    ${c24?k("LTV da coorte 24/25",isR(c24.ltv),`${isN(c24.clientes)} clientes, ${c24.safras} · ${isN(c24.recompra)} recompraram · margem de ${isR(ltvMg)} por cliente`):""}
+    ${c24&&cacM?k("LTV ÷ CAC",ltvCac.toLocaleString("pt-BR",{maximumFractionDigits:1})+"x",`margem do LTV ÷ CAC de mídia · referência de mercado: 3x ou mais`,1):""}
+    ${t.ct?k("CAC completo",isR(cacC),`mídia + custo do time ÷ vendas · ${isPctF(tk?cacC/tk:null)} do ticket`):""}
+   </div>
+   ${linhas.length?`<div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Assessora de vendas digitais</th><th class="val">Vendas</th><th class="val">Vendido</th><th class="val">Ticket médio</th><th class="val">Margem por venda</th><th class="val">CAC de mídia % do ticket</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${esc(x.p)}${x.papel==="rampagem"?' <span class="meta">rampagem</span>':x.papel==="supervisao"?' <span class="meta">supervisão</span>':""}</td><td class="val">${isN(x.n)}</td><td class="val">${isR(x.rs)}</td><td class="val">${isR(x.tq)}</td><td class="val">${isR(x.tq*mg)}</td><td class="val">${pctTk(x.tq)}</td></tr>`).join("")}<tr class="is-tot"><td><strong>Operação</strong></td><td class="val"><strong>${isN(nv)}</strong></td><td class="val"><strong>${isR(vend)}</strong></td><td class="val"><strong>${isR(tk)}</strong></td><td class="val"><strong>${isR(mgV)}</strong></td><td class="val"><strong>${pctTk(tk)}</strong></td></tr></tbody></table></div>`:""}
+   ${LC.length?`<div class="tab" style="margin-top:10px"><table class="sim-t"><thead><tr><th>LTV por coorte</th><th class="val">Clientes</th><th class="val">Recompraram</th><th class="val">LTV por cliente</th><th class="val">Margem do LTV</th></tr></thead><tbody>${LC.map(x=>`<tr><td>Clientes da safra ${esc(x.coorte)} <span class="meta">(${esc(x.safras)})</span></td><td class="val">${isN(x.clientes)}</td><td class="val">${isN(x.recompra)} · ${isPctF(x.clientes?x.recompra/x.clientes:null)}</td><td class="val">${isR(x.ltv)}</td><td class="val">${isR(x.ltv*mg)}</td></tr>`).join("")}</tbody></table></div>`:""}
+   ${isAjuda(`Ticket médio = vendido pelo time na safra ÷ vendas ganhas (todas as origens). CAC de mídia = investimento em Meta Ads ÷ vendas fechadas. Como a margem de ${isPctF(mg)} já desconta comissões e ajuda de custo das assessoras, o CAC comparado com a margem usa só a mídia, para não contar o custo do time duas vezes. ROAS de equilíbrio = 1 ÷ margem bruta: abaixo dele a mídia custa mais do que a margem que as vendas deixam. LTV por coorte = receita somada dos clientes que compraram pela primeira vez no Inside Sales naquela safra, nas safras seguintes até hoje, dividida pelo número de clientes da coorte. 24/25 e 25/26 vêm do ERP (híbridos, responsável de vendas = Inside Sales) e 26/27 do CRM, ligado pelo nome do cliente; compras por outro canal não entram, então a recompra real pode ser maior. A margem por assessora usa a margem média da operação; o CAC por assessora usa o CAC médio, porque a mídia não é dividida por pessoa.`)}</section>`;}
+
 function vISCac(){
   const T=S.isp&&S.isp["Time"];const MQ=(T&&T.dados&&T.dados.mql)||{},VM=(T&&T.dados&&T.dados.vend_mes)||{};
   if(!S.md){carregarMidia();return `<div class="carregando">Carregando mídia…</div>`;}
@@ -2906,6 +2948,8 @@ function vISCac(){
     <div class="metric"><span>CAC da operação</span><strong>${rs(div(t.g+t.ct,t.vn))}</strong><span class="meta">${ct?"mídia + custo do time":"mídia"} ÷ vendas fechadas</span></div>
   </div>
   <p class="meta" style="margin:8px 0 0">A mídia não trabalha só para o Inside Sales: ${pm}% dela vai para reconhecimento, alcance e conteúdo da marca, que ajudam também as revendas, os RCs e o time de campo. O ROAS da operação usa o total investido contra o total vendido pelo time, como a diretoria acompanha.</p></section>
+  ${vISEcon(t)}
+  <section class="bloco"><h2 class="sec">ROAS contra o mercado</h2>${isBenchTab([["ROAS da operação",div(t.vt,t.g)||null,"roas",v=>v?v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"x":"—"],["ROAS dos MQL",div(t.vrs,t.gd)||null,"roas",v=>v?v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"x":"—"]],"O ROAS de mercado é medido pela própria plataforma (vendas atribuídas ao anúncio); o nosso usa as vendas reais do CRM, o que é mais exigente. A régua que importa para a Barenbrug é o ROAS de equilíbrio pela margem, na seção de economia.")}</section>
   ${vMdDestino()}
   <section class="bloco"><h2 class="sec">Funil de MQL · só a mídia de geração de demanda</h2><div class="metrics">
     <div class="metric"><span>Mídia de geração de demanda</span><strong>${isR(t.gd)}</strong><span class="meta">campanhas de leads</span></div>
@@ -3298,6 +3342,7 @@ function vISBloco(nome,row,cfg,ehTime){
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Realizado da safra</span><strong>${isT(real.kgh)}</strong><span class="meta">híbridos · ${isN(real.n)} vendas · ${isR(real.rs)}</span>${+real.kgc?`<span class="meta"> · ${isT(real.kgc)} de convencionais</span>`:""}</div>
     <div class="metric"><span>${ehTime?"% da meta":"Contribuição para a meta"}</span><strong>${isPct(real.kgh,meta)}</strong><span class="meta">de ${isT(meta)}${contrib}</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção</span><strong>${isT(proj)}</strong><span class="meta">${isPct(proj,meta)} da meta · realizado + ponderado</span></div>
+    <div class="metric"><span>Ticket médio</span><strong>${real.n?isR((+real.rs||0)/real.n):"—"}</strong><span class="meta">${isR(real.rs)} ÷ ${isN(real.n)} vendas</span></div>
     ${ehTime?`<div class="metric"><span>Gap da projeção</span><strong>${gap?isT(gap):"meta coberta"}</strong><span class="meta">meta − projeção</span></div>`:""}
     <div class="metric"><span>Em andamento</span><strong>${isN(ab.n)} negociações</strong><span class="meta">${isT(ab.kgh)} bruto · ${isT(ab.pond)} ponderado · ${isR(ab.rs)}</span>${+ab.kgc?`<span class="meta"> · ${isT(ab.kgc)} de convencionais${ab.pondc!=null?" ("+isT(ab.pondc)+" ponderado)":""}</span>`:""}</div></div>`;
   const passos=ehTime?`<section class="bloco"><h2 class="sec">Conta da projeção</h2><ol class="is-passos">
@@ -3368,7 +3413,7 @@ function vISBloco(nome,row,cfg,ehTime){
   {const semR=Object.entries(mot).filter(([k])=>/sem retorno/i.test(k)).reduce((t,[,v])=>t+(v.n||0),0),tot=Object.values(mot).reduce((t,v)=>t+(v.n||0),0);if(tot)ok(semR/tot<=.4,"Perdas por sem retorno",Math.round(100*semR/tot)+"%","até 40% das perdas","Sinal de cadência curta: 6 tentativas em 10 dias, em 2 canais ou mais");}
   const nOk=rgI.filter(x=>x.c).length;
   const regua=rgI.length?`<section class="bloco"><h2 class="sec">Régua do Playbook ${isMat(ms)}</h2><p class="sub" style="margin:0 0 8px">${nOk} de ${rgI.length} indicadores dentro da régua. Cada um vem de uma boa prática do Playbook do Inside Sales.</p><div class="metrics">${rgI.map(x=>`<div class="metric" style="box-shadow:inset 0 0 0 2px ${x.c?"#2E8B57":"#c0392b"}"><span>${x.t}</span><strong>${x.v}</strong><span class="meta">meta: ${x.meta}${x.d?" · "+x.d:""}</span></div>`).join("")}</div>${isAjuda("As tentativas de contato por lead não são registradas uma a uma no CRM; por isso a régua usa a parte das perdas por sem retorno como sinal de cadência. Registre cada tentativa como anotação na negociação.")}<div class="mk-link" style="margin-top:6px"><button type="button" class="link" data-a="pag" data-v="is-playbook">Abrir o Playbook</button></div></section>`:"";
-  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${regua}${ehTime?vISPlano(A,cfg):""}${conv}${ehTime?vISLtv(A.ltv,A.ltv_lista):""}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
+  return `${selo?`<p style="margin:0 0 8px">${selo}</p>`:""}${cards}${passos}${ehTime?"":regua}${ehTime?vISPlano(A,cfg):""}${conv}${ehTime?isBenchConv(mq,g,p,gm,pm):""}${ehTime?vISLtv(A.ltv,A.ltv_lista):""}${atrib}${funil}${conven}${curva}${higiene}${radar}`;
 }
 const IS_AL={sem_tarefa:"sem próximo passo",parada:"parada",vencida:"data vencida",sem_data:"sem data",est_data:"estrela × data",fech:"pedido finalizado sem ganho"};
 function isListaHTML(L,mostraDono){
@@ -10444,6 +10489,7 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-is-margem"){if(!ehAdmin())return;const v=mkNum(val("ism_v"));if(!(v>0&&v<100)){aviso("Informe a margem em %, entre 0 e 100.");return;}const {error}=await sb.from("is_config").upsert({chave:"margem_bruta",valor:v/100});if(error){aviso("Não foi possível salvar.");return;}S.isMargem=v/100;aviso("Margem salva");render();return;}
   if(f.id==="f-is-custo"){if(!ehAdmin())return;const v=mkNum(val("isc_v"));if(!(v>=0)){aviso("Confira o valor.");return;}const {error}=await sb.from("is_config").upsert({chave:"custo_time_mensal",valor:v,atualizado_em:new Date().toISOString()},{onConflict:"chave"});if(error){aviso("Não foi possível salvar.");return;}S.isCustoT=v;render();aviso("Custo do time salvo.");return;}
   if(f.id==="f-bd-budget"){if(!ehMkt())return;const v=mkNum(val("bdb_v"));if(!(v>=0)){aviso("Confira o valor do budget.");return;}
     const {data,error}=await sb.from("brinde_budget").update({valor:v}).eq("id",BD_SAFRA).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o budget.");return;}S.bdBudget=data;render();aviso("Budget de brindes salvo.");return;}
