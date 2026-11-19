@@ -1015,6 +1015,62 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .guia-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.guia-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}.guia-l li{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:4px 12px;padding:6px 0;border-top:1px solid #eef1f3}.guia-l li:first-child{border-top:0}.guia-l li>span{color:#555}.guia-l .link{text-align:left;padding:0}.guia-rot{margin:0;padding-left:20px;display:grid;gap:4px}.guia-destaque{box-shadow:inset 4px 0 0 #ffdb00}@media (max-width:600px){.guia-l li{grid-template-columns:1fr}}
 .pj-trab{grid-column:1/-1;display:grid;gap:8px;margin-top:4px}.pj-rl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pj-rc{display:inline-flex;align-items:center;gap:4px;background:#EEF6FA;color:#0B5E7E;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}.pj-rc.eu{background:#FFDB00;color:#1E1E1E}.pj-rx{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:inherit;padding:0 2px}.pj-ta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pj-ta select{width:auto}.pj-com{background:#F6F8FA;border-radius:12px;padding:12px 14px;display:grid;gap:10px}.pj-ci{border-bottom:1px solid var(--linha);padding-bottom:8px}.pj-ch{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.pj-ci p{margin:4px 0 0;white-space:pre-wrap}.pj-cf{display:grid;gap:6px}.pj-cfa{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pj-cfa .btn{margin-left:auto}.pj-radd{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.pj-radd select,.pj-radd input{flex:1 1 220px;width:auto}.lab{display:block;font-weight:700;margin-bottom:4px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.pj-minhas{box-shadow:inset 4px 0 0 #FFDB00}
 .emdev{box-shadow:inset 4px 0 0 #FFDB00}.emdev-p{margin:0;padding-left:22px;display:grid;gap:6px}
+
+/* ===== mobile: experiência de app ===== */
+.barra-app{display:none}
+@media (max-width:760px){
+ body.com-barra{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+ .barra-app{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid #e3e8ee;box-shadow:0 -6px 20px rgba(0,40,60,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+ .barra-app button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:6px 2px;min-height:52px;font:inherit;font-size:11.5px;font-weight:700;color:#5A6B74;cursor:pointer;border-radius:12px}
+ .barra-app svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .barra-app button[aria-current="page"]{color:#00658f}
+ .barra-app button[aria-current="page"] svg{stroke-width:2.3}
+ .barra-app button[aria-current="page"]::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:3px;background:#FFDB00}
+ .barra-app b{position:absolute;top:2px;left:calc(50% + 6px);background:var(--vermelho,#d33);color:#fff;font-size:10px;padding:2px 5px;border-radius:999px}
+ .quem .q1{display:none}.quem .q2{font-size:12.5px}
+ .topo{position:sticky;top:0;z-index:40}
+ input,select,textarea{font-size:16px!important}
+ .btn,button.btn{min-height:44px}
+ .chip{min-height:36px}
+ main{overflow-wrap:anywhere}
+ main img,main video,main iframe,main svg{max-width:100%}
+ /* tabelas em cartões */
+ .mt-w{overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
+ table.mt-card{min-width:0!important;width:100%;border:0}
+ table.mt-card thead{display:none}
+ table.mt-card,table.mt-card tbody,table.mt-card tfoot,table.mt-card tr,table.mt-card td,table.mt-card th{display:block;width:100%}
+ table.mt-card tr{background:#fff;border:1px solid #e3e8ee;border-radius:14px;padding:10px 14px;margin:0 0 10px;box-shadow:0 2px 6px rgba(0,40,60,.04)}
+ table.mt-card td,table.mt-card tbody th{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0!important;border:0;border-bottom:1px solid #eef1f3;text-align:right!important;background:none;white-space:normal!important;min-width:0!important;max-width:none!important;height:auto!important}
+ table.mt-card td::before,table.mt-card tbody th::before{content:attr(data-label);flex:0 0 42%;text-align:left;font-size:12px;font-weight:700;letter-spacing:.02em;color:#5A6B74;text-transform:uppercase}
+ table.mt-card td:not([data-label])::before,table.mt-card td[data-label=""]::before{display:none}
+ table.mt-card tr>:first-child{display:block;text-align:left!important;font-size:16px;font-weight:800;color:var(--preto,#1e1e1e);padding:2px 0 8px!important}
+ table.mt-card tr>:first-child::before{display:none}
+ table.mt-card tr>:last-child{border-bottom:0}
+ table.mt-card tr.mt-linha{background:#F3F6F8}
+ table.mt-card tr.mt-linha>*{display:block;text-align:left!important;border:0}
+ table.mt-card tr.mt-linha>*::before{display:none}
+ /* tabelas largas: primeira coluna fixa e rolagem lateral */
+ table.mt-sticky{font-size:13px}
+ table.mt-sticky tr>:first-child{position:sticky;left:0;z-index:1;background:#fff;box-shadow:1px 0 0 #e3e8ee}
+ table.mt-sticky thead tr>:first-child{background:#fff}
+ .tab,.tab-wrap{-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+}
+.so-mob{display:none}
+@media (max-width:760px){.so-mob{display:block}.quem{display:none}
+ .app-topo-in{padding-top:8px;padding-bottom:8px;gap:8px}.app-topo-l small,.app-topo-l span{display:none}.app-topo-l strong{font-size:13.5px;line-height:1.3}.app-topo-b .btn{min-height:34px;padding:6px 12px;font-size:13px}
+ .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+ .nav button{flex:0 0 auto}
+}
+@media (max-width:760px){
+ table.mt-sticky{min-width:max-content!important}
+ table.mt-sticky th,table.mt-sticky td{white-space:nowrap}
+ table.mt-sticky tr>:first-child{max-width:46vw;white-space:normal}
+ .cal-sel-c{display:grid!important;gap:4px;width:100%}.cal-sel-c select{width:100%}
+ .cal-filtros{display:grid!important;gap:10px}
+ .cal-filtros .chk{display:flex;align-items:center;gap:8px}
+ .cal-filtros .chk input{width:auto}
+}
+.mt-dica{display:none}@media (max-width:760px){.mt-dica{display:block;margin:4px 0 6px;font-size:12.5px;color:#5A6B74}}
 </style>
 </head>
 <body>
@@ -1841,7 +1897,7 @@ function vProgPerfil(){
     ${grupos.map(g=>{const L=R.I.filter(x=>x.g===g),o=L.filter(x=>x.ok).length;return `<details class="lote" ${o<L.length?"open":""}><summary>${esc(g)} · ${o} de ${L.length}</summary><div class="lista" style="margin-top:6px">${L.map(item).join("")}</div></details>`;}).join("")}</section>`;
 }
 function vPerfil(){
-  return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p></div>
+  return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p><p class="so-mob" style="margin:8px 0 0"><button type="button" class="btn sec" data-a="sair">Sair do portal</button></p></div>
   ${S.demo?"":vProgPerfil()}
   ${S.demo?"":pushPerfilHTML()}
   <div class="cx" id="prog-dados"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
@@ -11501,13 +11557,39 @@ function vGuia(){
    <li><strong>O sinal "i"</strong><span>Toque para ver o que um número ou um bloco quer dizer.</span></li>
    <li><strong>Tira-Dúvidas</strong><span>Pergunte sobre híbridos, manejo e programas. O time técnico-comercial responde.</span></li></ul></section>`;}
 
+/* ---------- camada mobile: tabelas legíveis e barra de navegação de app ---------- */
+function mobTabelas(root){(root||document).querySelectorAll("#app table:not([data-mob])").forEach(t=>{t.dataset.mob="1";
+  if(/obj-heat|no-card|tp-ed/.test(t.className))return;
+  const thead=t.tHead;const temInput=!!t.querySelector("input,select,textarea");
+  const hr=thead&&thead.rows.length?thead.rows[thead.rows.length-1]:null;
+  const comp=thead&&[...thead.querySelectorAll("th,td")].some(c=>c.colSpan>1||c.rowSpan>1);
+  const H=hr?[...hr.cells].map(c=>c.textContent.trim()):[];
+  if(!H.length||temInput||comp||H.length>7){t.classList.add("mt-sticky");const w=t.closest(".tab,.tab-wrap")||t.parentElement;if(w&&!(w.previousElementSibling&&w.previousElementSibling.classList.contains("mt-dica"))){const d=document.createElement("p");d.className="mt-dica";d.textContent="Arraste a tabela para o lado para ver todas as colunas.";w.before(d);}return;}
+  t.classList.add("mt-card");
+  [...t.tBodies].concat(t.tFoot?[t.tFoot]:[]).forEach(b=>[...b.rows].forEach(r=>{const cs=[...r.cells];if(cs.length===1||cs.some(c=>c.colSpan>1)){r.classList.add("mt-linha");return;}cs.forEach((c,i)=>{if(H[i])c.setAttribute("data-label",H[i]);});}));
+  const w=t.closest(".tab,.tab-wrap");if(w)w.classList.add("mt-w");});}
+(()=>{let tm=null;const mo=new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(()=>mobTabelas(),60);});const ini=()=>{const a=document.getElementById("app");if(a)mo.observe(a,{childList:true,subtree:true});};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ini);else ini();})();
+const BA_ICO={
+ inicio:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+ guia:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2zM8 7h7M8 11h7"/></svg>',
+ duvidas:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17.5v.01"/></svg>',
+ mensagens:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+ perfil:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'};
+function barraApp(){let n=document.getElementById("barra-app");const app=document.getElementById("app");
+  const ok=S.user&&S.profile&&app&&!app.querySelector(".acesso")&&LANG()!=="es";
+  if(!ok){if(n)n.remove();document.body.classList.remove("com-barra");return;}
+  if(!n){n=document.createElement("nav");n.id="barra-app";n.className="barra-app";n.setAttribute("aria-label","Navegação principal");document.body.appendChild(n);}
+  const nMsg=typeof msgNaoLidas==="function"&&veMsgs()?msgNaoLidas():0;
+  const it=[["inicio","Início",'data-a="inicio"',!S.secao&&S.pag!=="perfil"],["guia","Guia",'data-a="secao" data-v="guia"',S.secao==="guia"],["duvidas","Dúvidas",'data-a="secao" data-v="duvidas"',S.secao==="duvidas"],veMsgs()&&["mensagens","Mensagens",'data-a="secao" data-v="mensagens"',S.secao==="mensagens"],["perfil","Perfil",'data-a="perfil"',S.pag==="perfil"]].filter(Boolean);
+  n.innerHTML=it.map(([k,t,a,on])=>`<button type="button" ${a} ${on?'aria-current="page"':""}>${BA_ICO[k]}<span>${t}</span>${k==="mensagens"&&nMsg?`<b>${nMsg>99?"99+":nMsg}</b>`:""}</button>`).join("");
+  document.body.classList.add("com-barra");}
 function rodapeMkt(){
   const app=document.getElementById("app");if(!app||!S.user||!S.profile||app.querySelector(".acesso"))return;
   const f=document.createElement("footer");f.className="rodape-mkt";
   f.innerHTML=`<div class="rodape-in permite-copia"><p><strong>Portal Conecta Barenbrug</strong> · ${PORTAL_TOM}. Uma iniciativa do Marketing Barenbrug.</p><p>Fale com o Marketing: ${mktContatosHTML()}</p><p>Perguntas técnicas: <strong>${esc(EMBAIXADOR.nome)}</strong>, embaixador técnico · <a class="link" href="mailto:${esc(EMBAIXADOR.email)}?subject=${encodeURIComponent("Pergunta técnica · Portal Conecta")}">${esc(EMBAIXADOR.email)}</a></p><p><button type="button" class="link" data-a="nps-abrir">Avaliar o portal</button> · <button type="button" class="link" data-a="priv-abrir">Aviso de privacidade</button></p>${ehAdmin()&&!S.demo?`<p>Administradores: <button type="button" class="link" data-a="seg-abrir">Segurança e proteção de dados</button></p>`:""}</div>`;
   app.append(f);
 }
-function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById("app"));else document.documentElement.lang="pt-BR";tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
+function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById("app"));else document.documentElement.lang="pt-BR";tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();mobTabelas();barraApp();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
