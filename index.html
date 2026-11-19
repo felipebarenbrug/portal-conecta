@@ -1548,7 +1548,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119120424";
+const APP_VER="20261119120708";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3692,7 +3692,7 @@ function vISFluxo(){
     ${no("mkt","Marketing · 3","Página de obrigado",`<p>O lead escolhe como quer seguir:</p><div class="fx-ramos"><div class="fx-par"><strong>Falar com a Barenbrug</strong><br>Abre uma conversa no WhatsApp e é atendido direto pelo Inside Sales.</div><div class="fx-par"><strong>Achar um canal ou RC perto</strong><br>Digita o CEP e vê a revenda ou o RC mais próximo, com os dados de contato.</div></div><p style="margin-top:6px"><strong>Nos dois casos</strong>, o lead entra no CRM.</p><p><a class="link" href="https://materiais.barenbrug.com.br/atendimento-comercial-direto-ou-canal" target="_blank" rel="noopener">Abrir a página de obrigado ↗</a> · <a class="link" href="https://materiais.barenbrug.com.br/encontre-um-canal-barenbrug" target="_blank" rel="noopener">Abrir a busca de canal ↗</a></p>`)}
     ${seta("todo lead entra no CRM")}
     <div class="fx-ramos" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
-      ${no("is","Inside Sales · 4","Funil de MQL no CRM","<p>O lead chega como MQL na fila das assessoras de vendas.</p>")}
+      ${no("is","Inside Sales · 4","Funil de MQL no CRM, na esteira de Pré-Vendas",`<p>O lead entra no funil MQL do CRM em nome do perfil <strong>Pré-Vendas Barenbrug</strong>, que é uma fila, não uma pessoa. Ele fica ali até uma assessora de vendas digitais atribuir a negociação para o próprio nome e fazer o primeiro atendimento.</p><p>Quem estiver online puxa primeiro. A esteira favorece o cliente, que é atendido mais rápido, e não a assessora.</p>`)}
       ${no("mkt","Marketing · em paralelo","Nutrição",ul(["E-mail e WhatsApp com informações das cultivares","Reenvio da página para encontrar o canal mais perto"]))}
     </div>
     ${seta()}
@@ -3712,6 +3712,7 @@ function vISFluxo(){
   </div>
   <aside class="fx-lado">
     <div class="fx-regra"><b>Regra 1 · atendimento perto</b><p>Se durante a negociação o lead pedir para ser atendido por alguém perto, a assessora tem o compromisso de passar o contato do RC ou da revenda mais próxima.</p></div>
+    <div class="fx-regra"><b>Como medimos a esteira</b><p>Para cada assessora acompanhamos a taxa de MQL para SQL e a de SQL para venda, além do tempo até a atribuição.</p><p>Assim fica claro quem está convertendo bem e quem está puxando muitos MQLs sem dar o atendimento devido. Os números estão em Inside Sales · Por vendedora.</p></div>
     <div class="fx-regra"><b>Regra 2 · lead não atendido</b><p>Se o lead foi passado para a revenda ou o RC e volta dizendo que não foi atendido, mesmo em região de canal Yellow Master, o Inside Sales avança na negociação.</p><p><strong>Condição:</strong> ter registrado no CRM que o lead não foi atendido.</p></div>
     <div class="fx-regra" style="background:#fff;border-color:var(--linha)"><b>As páginas do fluxo</b><p><a class="link" href="https://materiais.barenbrug.com.br/atendimentocomercial" target="_blank" rel="noopener">Página de captura ↗</a><br><a class="link" href="https://materiais.barenbrug.com.br/atendimento-comercial-direto-ou-canal" target="_blank" rel="noopener">Página de obrigado ↗</a><br><a class="link" href="https://materiais.barenbrug.com.br/encontre-um-canal-barenbrug" target="_blank" rel="noopener">Encontre um canal ↗</a></p><p class="meta">Na busca de canal, o produtor digita o CEP e vê os distribuidores e cooperativas com híbridos mais perto. Se não houver, a página leva ao WhatsApp do time de vendas.</p></div>
   </aside></div>
