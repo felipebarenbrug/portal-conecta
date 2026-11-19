@@ -899,6 +899,7 @@ main.largo{max-width:1120px}
 .dre-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.dre-cv.dre-tag{background:var(--azul-escuro);color:#fff;box-shadow:none}.dre-oc.dre-tag{background:var(--amarelo);color:var(--preto);box-shadow:none}
 .on-n{display:inline-block;min-width:22px;padding:0 7px;border-radius:11px;background:#2E8B57;color:#fff;font-size:13px;line-height:22px;text-align:center;vertical-align:middle}.on-l{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}.on-l li{display:flex;gap:8px;align-items:flex-start}.on-l li>span:last-child{display:flex;flex-direction:column;min-width:0}.on-dot{width:9px;height:9px;border-radius:50%;background:#2E8B57;margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 3px rgba(46,139,87,.18)}
 .tm-proc{border:1px solid rgba(0,0,0,.12);border-radius:10px;background:var(--branco,#fff)}.tm-proc>summary{cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.tm-corpo{padding:0 14px 14px}.tm-filtros{display:grid;gap:8px;margin-bottom:6px}.tm-filtros input{max-width:420px}
+.ps-f{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.ps-fl{border:0;cursor:pointer;display:inline-block;min-width:20px;padding:0 6px;border-radius:9px;background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;font-weight:700;line-height:18px;text-align:center;text-decoration:none}.ps-nao{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,.07);box-shadow:inset 3px 0 0 #c0392b;font-size:14px}.ps-frase{margin:10px 0 0;font-style:italic;color:var(--azul-escuro)}.ps-fontes li{margin:4px 0}.ps-on{background:var(--amarelo);border-radius:4px}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1470,7 +1471,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118214112";
+const APP_VER="20261118215119";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1773,11 +1774,209 @@ function cabecalho0(){
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${msgBotao()}${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
 }
 function veCalcRent(){const ac=Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];return ehAdmin()||ac.includes("calculadora");}
+/* ===== Academia · Onde posicionar cada híbrido e Objeções do produtor (B2C) =====
+   Fontes: Barenbrug (bases de conhecimento oficiais e curso de forrageiras do Dr. Ulisses Figueiredo), Embrapa, CNA/Senar, Unesp. Sem nome de concorrente. */
+const PS_FONTES={
+  bb:["Barenbrug: bases de conhecimento oficiais do Sabiá, do Cayana e do Carcará (ensaios de VCU do MAPA, UFU, IFTO) e curso de forrageiras do Dr. Ulisses Figueiredo, na trilha da Academia.",""],
+  palha:["Oliveira, Kluthcouski, Borghi, Ceccon e Castro. Atributos da braquiária como condicionador de solos sob ILP e ILPF. Embrapa, livro ILPF, cap. 18.","https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1022418/1/ILPFcap18.pdf"],
+  gly:["Brighenti e colaboradores. Doses de glyphosate na dessecação da braquiária ruziziensis pela altura do dossel. Embrapa Gado de Leite.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1179726/1/Estabelecimento-de-doses-de-glyphosate-na-dessecacao-da-braquiaria.pdf"],
+  safrinha:["Vilela, Manjabosco, Marchão e Guimarães Júnior. Boi safrinha na integração lavoura-pecuária no Oeste Baiano. Embrapa Cerrados, Circular Técnica 35, 2017.","https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1077948/1/Cirtec35LourivalVilela.pdf"],
+  dif:["Santos e Cavalcante. Diferimento do uso de pastagens. Embrapa.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/862854/1/OK-DiferimentoUsoPastagens.pdf"],
+  irr:["Alencar, Cunha, Martins, Cóser, Rocha e Araújo. Irrigação de pastagem: atualidade e recomendações para uso e manejo. Revista Brasileira de Zootecnia, 2009.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/696924/1/Irrigacao-de-pastagem-atualidade-e-recomendacoes-para-uso-e-manejo.pdf"],
+  smb:["Assis, Andrade, Jank, Barrios, Valentim e Santos. Síndrome da morte do braquiarão: avaliação e seleção de forrageiras tolerantes. Embrapa Acre, Documentos 178, 2023.","https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1161526/1/27665.pdf"],
+  monta:["Rosa, Nogueira e Camargo Júnior. Estação de monta em rebanhos de gado de corte. Embrapa Gado de Corte, Comunicado Técnico 134, 2017.","https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1072647/1/Estacaodemontaemrebanhos.pdf"],
+  conf:["Lopes, Alvarenga, Gontijo Neto, Silveira, Rodrigues e Barbosa. Confinamento como estratégia de intensificação em sistema de integração lavoura-pecuária. Embrapa.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1167569/1/Confinamento-como-estrategia-de-intensificacao-em-sistema-de-integracao-lavoura-pecuaria.pdf"],
+  recria:["Gomes, R. C. Qual a decisão que você tomou para a sua recria? Embrapa Gado de Corte, Revista AG, 2019.","https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1117740/1/Qualadecisaoquevocetomouparasuarecria.pdf"],
+  tip:["CNA/Senar. Especialistas debatem terminação intensiva a pasto (Iorrano Cidrini, Unesp Jaboticabal e Apta, e Matheus Moretti).","https://cnabrasil.org.br/noticias/especialistas-debatem-terminacao-intensiva-a-pasto"],
+  tip2:["Canal Rural. Terminação na seca: engorda em pasto diferido com TIP (Iorrano Cidrini).","https://www.canalrural.com.br/pecuaria/terminacao-na-seca-como-engordar-o-gado-em-pasto-diferido-e-garantir-rentabilidade/"],
+  custo:["Coeficiente Agro (Corteva). Quanto custa a formação de um hectare de pasto: tabela de custo do Brasil Central, 2022.","https://www.corteva.com/br/coeficiente-agro/artigos/quanto-custa-a-formacao-de-um-hectare-de-pasto.html"]};
+const psF=(...k)=>`<span class="ps-f">${k.map(x=>`<button type="button" class="ps-fl" data-a="ps-fonte" data-v="${x}" aria-label="Fonte ${Object.keys(PS_FONTES).indexOf(x)+1}">${Object.keys(PS_FONTES).indexOf(x)+1}</button>`).join("")}</span>`;
+function psPrecoHa(c,kg){try{const p=(PRECOS||[]).find(x=>x.cult===c);if(!p||!p.v)return null;const v=parseFloat(String(p.v[PRECOS_MES_ATUAL]||p.v[0]).replace(/\./g,"").replace(",","."));return v>0?v*kg:null;}catch(e){return null;}}
+const psR=x=>"R$ "+Math.round(x).toLocaleString("pt-BR");
+
+/* posicionamento por sistema */
+const PS_SIS=[
+ {id:"cria",n:"Cria",ind:"Sabiá",alt:"Cayana nas melhores terras, para as novilhas de reposição",
+  pq:["A vaca de cria tem exigência menor que o boi de recria: o que ela precisa é chegar ao parto e à estação de monta em boa condição corporal.","A estação de monta recomendada no Brasil Central vai de outubro a março, com as águas; o aperto é na seca, antes do parto. O Sabiá produz de 30% a 35% da forragem na seca, contra cerca de 20% do Marandu, e acumula 42% mais forragem e 50% mais folhas na estação seca.","É de média exigência em fertilidade (V% de 50% a 60%, fósforo a partir de 5 mg/dm³): cabe no solo que a cria costuma ocupar.","Aceita bem o diferimento: vedado no fim das águas, entrega mais folha na seca para as vacas no terço final da gestação."],
+  nao:"Não indique Carcará para cria extensiva: exige adubação de produção e manejo rotacionado rigoroso, e a vaca não paga essa conta.",
+  frase:"Seu bezerro nasce na seca. O capim que segura a vaca na seca é o que define a sua taxa de prenhez no ano seguinte.",fontes:["bb","monta","dif"]},
+ {id:"recria",n:"Recria a pasto",ind:"Cayana em solo corrigido · Sabiá em fertilidade média",alt:"Carcará em módulo rotacionado adubado, para a recria de águas",
+  pq:["A recria é onde mais se ganha ou se perde dinheiro: a primeira seca depois da desmama decide se o animal será precoce.","Cayana: +42,2% de produtividade animal sobre o Marandu (cerca de 8 @/ha/ano a mais, 6 nas águas e 2 na seca), com 66% mais carne produzida na seca no ensaio da UFU.","Sabiá: +36% sobre o Marandu, cerca de 7 @/ha/ano a mais na recria com sal mineral, com menos exigência de solo.","Recria bem feita entrega o boi mais pesado e mais jovem para a terminação, e dilui o ágio da reposição."],
+  nao:"Cayana sem calagem e fosfatagem não entrega o ganho do ensaio (V% acima de 60% e fósforo a partir de 7 mg/dm³). Nesse caso, Sabiá.",
+  frase:"Cada arroba que o garrote ganha no pasto é uma arroba a menos que você paga no cocho depois.",fontes:["bb","recria"]},
+ {id:"ciclo",n:"Ciclo completo",ind:"Sabiá como base · Cayana e Carcará nos módulos intensivos",alt:"",
+  pq:["Quem faz ciclo completo tem categorias com exigências diferentes ao mesmo tempo: vaca, bezerro, garrote e boi.","Base de Sabiá dá segurança na seca e no diferimento para todo o rebanho.","Os módulos de Cayana (recria) e Carcará (águas, intensivo) concentram os animais que respondem a pasto melhor, e liberam a base na época certa.","Veja o modelo de fazenda em módulos mais abaixo."],
+  nao:"Não venda um capim só para a fazenda inteira: um capim para tudo é sempre o segundo melhor em cada situação.",
+  frase:"Não existe o melhor capim. Existe o capim certo para cada pasto e cada categoria da sua fazenda.",fontes:["bb"]},
+ {id:"tip",n:"Terminação intensiva a pasto (TIP)",ind:"Carcará ou Cayana nas águas · Sabiá ou Cayana diferidos na seca",alt:"",
+  pq:["Na TIP o animal recebe concentrado em torno de 1,5% a 2% do peso vivo no pasto, por 90 a 120 dias, com ganho de 1,2 a 1,6 kg por dia.","O pasto continua essencial: mesmo com 2% de ração, a fibra do pasto regula o rúmen. Pasto com muita folha e boa digestibilidade reduz o concentrado necessário.","TIP de águas: Carcará e Cayana sustentam lotação alta com folha de qualidade (Carcará com até 19% de proteína nas folhas).","TIP de seca: o pasto precisa ser vedado antes. Sabiá e Cayana florescem tarde e mantêm folha verde no diferimento."],
+  nao:"Não indique Carcará para diferimento: capins do grupo Panicum têm pico de florescimento no outono, alongam o colmo e perdem qualidade quando vedados.",
+  frase:"Na TIP o concentrado é caro. Quanto melhor o pasto embaixo do animal, menos cocho você precisa.",fontes:["tip","tip2","dif","bb"]},
+ {id:"semi",n:"Semiconfinamento e terminação na seca",ind:"Sabiá ou Cayana diferidos",alt:"",
+  pq:["Vede a área no fim das águas (em geral março, no Brasil Central) para usar entre julho e setembro.","O Sabiá vedado entrega proporção de folhas mais de 100% maior e mais de 130% de massa de folhas em relação ao Marandu e à decumbens no fim do diferimento.","O Cayana vedado em 20 de março manteve de 10 a 14 t de MS/ha ao longo da seca, com mais de 40% mais folhas que o Marandu (IFTO, Colinas do Tocantins).","No pasto vedado, proteinado dá de 100 a 300 g/dia e proteico-energético até cerca de 600 g/dia; para terminar, a TIP leva a 1,3 a 1,6 kg/dia."],
+  nao:"Diferimento sozinho só se sustenta em lotação de até cerca de 1,8 a 2,5 UA/ha. Acima disso, precisa de suplementação ou volumoso.",
+  frase:"O pasto que você veda em março é a ração mais barata que você vai ter em agosto.",fontes:["dif","bb","tip2"]},
+ {id:"conf",n:"Confinador",ind:"Cayana ou Carcará para a recria antes do cocho · Sabiá na área liberada",alt:"Cayana, Sabiá e Carcará também para silagem e pré-secado",
+  pq:["O confinamento começa no pasto: o peso de entrada vem da recria. Em sistema integrado da Embrapa, o Nelore entrou no cocho com 13 a 14 @ e o cruzado com 15 a 16 @, depois de cerca de 12 meses de recria em pasto de Panicum.","Tirar os animais pesados do pasto na seca libera a pastagem para a recria, de menor exigência.","Volumoso é o maior custo do confinamento. A forragem dos três híbridos é indicada para silagem e pré-secado: no ensaio de safrinha em Guaíra (SP), o Cayana colhido em julho produziu 10 t de MS/ha, contra 8 t da ruziziensis, e chegou a 15 t em setembro.","Silagem de capim tem custo por kg de MS bem menor que a de milho (no levantamento citado no curso de forrageiras, cerca de R$ 0,10 contra R$ 0,36 por kg de MS, no Sul de Minas)."],
+  nao:"Silagem de capim tem menos energia que a de milho: entra como volumoso, com o concentrado ajustado pelo nutricionista.",
+  frase:"Seu lucro no confinamento é decidido no peso de entrada. E o peso de entrada é decidido no pasto.",fontes:["conf","bb"]},
+ {id:"ilp",n:"Agricultor com boi safrinha (ILP)",ind:"Cayana",alt:"Sabiá nas áreas mais fracas ou de chuva irregular",
+  pq:["Terra de lavoura tem fertilidade construída (V% acima de 60%, fósforo alto): é onde o Cayana, de alta exigência e alta resposta, entrega o máximo.","Na Embrapa Cerrados (Oeste Baiano), o boi safrinha ganhou de 0,80 a 0,98 kg por dia e produziu de 3,4 a 6,9 @/ha em 134 dias de pastejo na entressafra, com 2,5 kg de suplemento por dia; a braquiária mais produtiva dobrou as arrobas por hectare.","A soja sobre palhada de braquiária produziu 24% mais (4.049 contra 3.275 kg/ha), e o pisoteio não afetou a lavoura.","Sabiá e Cayana podem ir em consórcio com milho: em 50 cm de entrelinha, o milho sombreia o capim sem herbicida; em 70 a 80 cm, pode ser preciso subdose."],
+  nao:"Para dessecar sem problema: rebaixe o pasto com o gado e desseque a rebrota nova. A dessecação funciona melhor em folha jovem; deixar massa velha alta é o que dá trabalho.",
+  frase:"Sua terra já está pronta. Na entressafra, ela pode produzir arroba em vez de ficar parada.",fontes:["bb","safrinha","palha"]},
+ {id:"palha",n:"Só palhada para o plantio direto (sem boi)",ind:"Não é a melhor venda de híbrido",alt:"Se ele aceitar colocar boi na entressafra, passa a ser venda de Cayana",
+  pq:["O que o produtor quer aqui é cobertura: de 7 a 10 t de MS/ha cobrem o solo, e a braquiária ruziziensis faz isso com semente mais barata.","A ruziziensis é a mais fácil de dessecar, com dose menor de herbicida que as brizantha; capins de touceira densa e massa alta exigem mais dose e mais tempo entre dessecação e plantio.","O diferencial do Sabiá e do Cayana é produzir mais arroba por hectare. Sem animal, esse ganho não aparece, e o produtor vai achar a semente cara para o que ela entrega.","Venda errada hoje é cliente perdido amanhã: indique o que resolve o problema dele e ganhe a confiança para a venda do boi safrinha."],
+  nao:"Não force o híbrido em área só de cobertura: ele vai comparar preço por quilo com a semente de cobertura e não vai ver o retorno.",
+  frase:"Se o seu objetivo é só palhada, um capim de cobertura resolve. Se quiser fazer dinheiro com essa palhada, aí conversamos sobre o boi safrinha.",fontes:["palha","gly","bb"]},
+ {id:"irr",n:"Pasto irrigado (pivô)",ind:"Carcará · Cayana e Sabiá também respondem",alt:"",
+  pq:["Irrigação só paga onde o inverno é quente: com temperatura média acima de 15 °C no inverno (regiões de baixa latitude e altitude), a produção de outono e inverno chegou a 76% a 80% da de verão; em região mais fria, ficou em cerca de 30%.","Carcará: alta resposta à adubação e à água, manejo rotacionado (entrada a 70 a 80 cm, saída a 35 a 40 cm) e adubação de produção de 150 a 200 kg de N/ha/ano.","No curso de forrageiras da Barenbrug, os novos híbridos de braquiária produziram cerca de 7 @ a mais que o Marandu sob irrigação, com ganho de 0,8 kg/dia só com sal mineral.","Faça a conta da energia e da água antes: pivô sem análise de água e sem manejo de adubação não se paga."],
+  nao:"Não indique pivô para ganhar pasto no inverno do Sul ou de altitude: frio e dia curto limitam o capim tropical, com ou sem água.",
+  frase:"No pivô, o capim é o motor e a água é o combustível. Motor fraco desperdiça combustível.",fontes:["irr","bb"]},
+ {id:"leite",n:"Leite",ind:"Carcará em rotacionado · Cayana",alt:"Sabiá para vacas secas e novilhas",
+  pq:["A vaca em lactação precisa de folha de alta digestibilidade e oferta constante.","Carcará: +19% de produtividade animal e +26% de folhas sobre o Mombaça, folhas mais largas e boa aceitação.","Cayana: digestibilidade da MS total de 76% a 80% e alta relação folha/colmo, com pastejo contínuo ou rotacionado.","Sabiá cobre as categorias de menor exigência com segurança na seca."],
+  nao:"Carcará com manejo atrasado passa do ponto rápido: se a fazenda não tem rotação disciplinada, prefira Cayana.",
+  frase:"Leite se faz com folha. Escolha o capim pela folha que ele entrega, não pelo tamanho da touceira.",fontes:["bb"]},
+ {id:"dif",n:"Morro, solo arenoso e seca longa",ind:"Sabiá",alt:"",
+  pq:["Sistema radicular profundo e calibroso (cerca de 8 t de MS de raiz por hectare, contra cerca de 6 do Marandu e 4 da ruziziensis).","Perfilhamento intenso cobre o solo rápido em área de declive (12 a 15 kg/ha de semente em morro).","Na Fazenda Redenção (Pureza, RN), com 250 mm de chuva no ano, o Sabiá se manteve verde e a área passou de 30 para 200 hectares.","Em solo arenoso, correção e adubação pesam mais no resultado: avise antes."],
+  nao:"Abaixo de 800 mm de chuva por ano, nenhum dos três é indicado para produção.",
+  frase:"Onde a seca aperta, o que segura o pasto é a raiz que você não vê.",fontes:["bb"]},
+ {id:"agua",n:"Várzea, encharcamento e risco de morte do braquiarão",ind:"Nenhum dos três nas partes que alagam",alt:"Braquiária humidicola para solo encharcado; Carcará tolera melhor a má drenagem que as braquiárias híbridas",
+  pq:["Sabiá e Cayana têm baixa tolerância à má drenagem e não toleram encharcamento.","A síndrome da morte do braquiarão aparece em solos mal drenados ou compactados que encharcam nas chuvas, sobretudo na Amazônia Legal acima de cerca de 2.100 mm por ano; a recomendação da Embrapa é diversificar com forrageiras tolerantes.","O Carcará tem tolerância média à má drenagem e, nos testes de campo, tolerou melhor o encharcamento temporário que outros materiais.","Na mesma fazenda, separe as partes baixas das altas: a parte alta pode ser Sabiá ou Cayana."],
+  nao:"Vender Sabiá ou Cayana para área que alaga é perder o pasto e o cliente.",
+  frase:"Antes de escolher o capim, me mostre onde a água para na sua fazenda.",fontes:["bb","smb"]}];
+
+/* modelo de fazenda em módulos (ilustrativo) */
+const PS_MOD=[
+ ["Base da fazenda","Sabiá","55% a 70%","Cria, recria extensiva e categorias de menor exigência. Vedar de 15% a 25% da base no fim das águas para a seca.","Segurança: produção na seca, diferimento, média exigência de solo."],
+ ["Recria intensiva","Cayana","15% a 25%","Melhores solos, corrigidos. Rotacionado ou contínuo a 30 a 35 cm, adubação de manutenção de 50 a 80 kg de N/ha/ano ou mais.","Teto de arroba em braquiária: +8 @/ha/ano sobre o Marandu."],
+ ["Módulo intensivo de águas","Carcará","5% a 15%","Rotacionado, 150 a 200 kg de N/ha/ano, irrigado onde o inverno é quente. Lotação alta nas águas e TIP de águas.","Máxima produção nas águas: +19% sobre o Mombaça."],
+ ["Integração com lavoura","Cayana","onde houver lavoura","Boi safrinha na entressafra da soja; rebaixar com o gado e dessecar a rebrota.","Arroba na terra de cultura e palhada para a soja."]];
+const PS_CAL=[
+ ["Águas (out a mar)","Concentre a lotação no Carcará e no Cayana, que produzem a maior parte do ano nas chuvas. Monta das vacas na base de Sabiá. Adubação de produção nos módulos intensivos."],
+ ["Transição (mar a mai)","Vede parte da base de Sabiá e do Cayana (diferimento). Desmame no início da seca. Reduza a lotação do Carcará conforme o crescimento cai."],
+ ["Seca (jun a set)","Use os pastos vedados de Sabiá e Cayana com proteinado ou TIP. Tire os animais pesados para o confinamento e libere pasto para a recria. Carcará em descanso, ou no pivô onde o inverno é quente."],
+ ["Volta das chuvas (set a out)","Sabiá rebrota rápido porque chega à seca com mais folha viva. Retome a adubação e a rotação dos módulos."]];
+
+function vPosicionar(){
+  const F=S.psSis||"";const L=F?PS_SIS.filter(x=>x.id===F):PS_SIS;
+  const pSab=psPrecoHa("Sabiá",10),pCar=psPrecoHa("Carcará",10);
+  const card=x=>`<details class="tm-proc" ${F||S.psAberto===x.id?"open":""}><summary><strong>${esc(x.n)}</strong><span class="meta">Indicação: ${esc(x.ind)}</span></summary><div class="tm-corpo">
+    ${x.alt?`<p class="meta" style="margin:0 0 6px"><strong>Alternativa:</strong> ${esc(x.alt)}</p>`:""}
+    <ul class="cond" style="margin:0">${x.pq.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+    <div class="ps-nao"><strong>Cuidado:</strong> ${esc(x.nao)}</div>
+    <p class="ps-frase">“${esc(x.frase)}”</p>${psF(...x.fontes)}</div></details>`;
+  return `<div><h1 class="titulo">Onde posicionar cada híbrido</h1><p class="sub">Qual híbrido indicar em cada sistema de produção, por que, e quando o híbrido não é a melhor venda. Pense como consultor: primeiro o diagnóstico, depois o capim.</p></div>
+  <section class="bloco"><h2 class="sec">A regra de bolso</h2><div class="dir-grid">
+    <div class="dir-card"><strong>Sabiá · segurança</strong><p>Seca, diferimento, fertilidade média, cria e ciclo completo, morro e solo arenoso. É a base da fazenda.</p></div>
+    <div class="dir-card"><strong>Cayana · teto em braquiária</strong><p>Solo corrigido, recria intensiva, boi safrinha na terra de lavoura, silagem e pré-secado. É o módulo de ganho.</p></div>
+    <div class="dir-card"><strong>Carcará · intensificação nas águas</strong><p>Rotacionado com adubação de produção, pivô onde o inverno é quente, leite e TIP de águas. É o motor do verão.</p></div></div>
+    <p class="meta" style="margin:8px 0 0">Os três: mínimo de 800 mm de chuva por ano, até 1.800 m de altitude, até 6 meses sem chuva, semente com Yellow Jacket®. ${pSab?`Na tabela deste mês, 10 kg/ha de Sabiá ou Cayana custam cerca de ${psR(pSab)} por hectare${pCar?` e 10 kg/ha de Carcará, cerca de ${psR(pCar)}`:""}.`:""}</p></section>
+  <section class="bloco"><h2 class="sec">Antes de indicar: o diagnóstico</h2><ol class="rent-ol">
+    <li><strong>Qual é o sistema?</strong> Cria, recria, ciclo completo, terminação, confinamento, leite ou lavoura com boi.</li>
+    <li><strong>Como está o solo?</strong> Peça a análise: saturação por bases (V%), fósforo e potássio. Sem análise, não prometa resultado.</li>
+    <li><strong>Ele vai corrigir e adubar?</strong> Se não, o caminho é o Sabiá. Cayana e Carcará pedem correção.</li>
+    <li><strong>Como é a chuva e a seca?</strong> Seca longa e chuva irregular puxam para o Sabiá.</li>
+    <li><strong>Onde a água para?</strong> Partes que encharcam ficam fora dos híbridos de braquiária.</li>
+    <li><strong>Como ele maneja o pasto?</strong> Rotacionado com disciplina comporta Carcará; contínuo ou manejo frouxo, Sabiá ou Cayana.</li>
+    <li><strong>O que ele quer da área?</strong> Arroba, leite, volumoso ou só palhada. Isso muda a indicação.</li></ol></section>
+  <section class="bloco"><h2 class="sec">Por sistema de produção</h2>
+    <div class="filtros" role="group" aria-label="Sistema">${[["","Todos"],...PS_SIS.map(x=>[x.id,x.n])].map(([k,t])=>`<button class="chip" data-a="ps-sis" data-v="${k}" aria-pressed="${k===F}">${esc(t)}</button>`).join("")}</div>
+    <div class="lista" style="margin-top:8px">${L.map(card).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">A fazenda em módulos: um híbrido para cada estratégia</h2>
+    <p class="sub" style="margin:0 0 8px">Pânicos e braquiárias se completam. Os pânicos, como o Carcará, concentram cerca de 90% da produção nas águas e são feitos para lotação alta no verão; o Sabiá produz de 30% a 35% na seca e aceita o diferimento, que o Panicum não aceita bem. Dividir a fazenda em módulos põe cada categoria no capim certo em cada época.${psF("bb","dif")}</p>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Módulo</th><th>Híbrido</th><th>Área (exemplo)</th><th>Como usar</th><th>Por quê</th></tr></thead><tbody>${PS_MOD.map(r=>`<tr><td><strong>${esc(r[0])}</strong></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td style="white-space:normal;min-width:220px">${esc(r[3])}</td><td style="white-space:normal;min-width:180px">${esc(r[4])}</td></tr>`).join("")}</tbody></table></div>
+    <h3 style="margin:14px 0 6px">O ano na fazenda em módulos</h3>
+    <ol class="rb-fluxo">${PS_CAL.map(([t,d])=>`<li><strong>${esc(t)}</strong><span>${esc(d)}</span></li>`).join("")}</ol>
+    <p class="meta" style="margin:8px 0 0">As porcentagens são um ponto de partida para a conversa. A divisão real depende do rebanho, do solo, da água e do caixa, e deve ser feita com o técnico da fazenda. Comece reformando pelas melhores terras: é onde o híbrido devolve o investimento mais rápido.</p></section>
+  <section class="bloco"><h2 class="sec">Quando o híbrido não é a melhor venda</h2><ul class="cond">
+    <li><strong>Área só de palhada, sem boi:</strong> uma semente de cobertura resolve com custo menor e dessecação mais fácil.</li>
+    <li><strong>Parte da fazenda que alaga:</strong> nenhum dos três; braquiária humidicola é a indicada.</li>
+    <li><strong>Cayana ou Carcará sem correção do solo:</strong> sem calagem e fósforo, ofereça Sabiá ou ajude a planejar a correção antes.</li>
+    <li><strong>Carcará sem rotação disciplinada ou para vedar:</strong> passa do ponto rápido e perde qualidade no diferimento.</li>
+    <li><strong>Pivô em região de inverno frio:</strong> a irrigação quase não aumenta o capim tropical no inverno.</li></ul>
+    <p class="meta" style="margin:8px 0 0">Dizer não a uma venda errada é o que dá credibilidade para a próxima venda certa.</p></section>
+  ${psFontesHTML()}`;
+}
+
+/* objeções do produtor */
+const PS_PER=[["cria","Cria"],["recria","Recria e engorda"],["ilp","Agricultor (ILP)"],["conf","Confinador"],["leite","Leite"],["peq","Pequeno produtor"]];
+const PS_OBJ=[
+ {p:["cria","recria","peq","leite"],o:"Semente de híbrido é cara.",
+  trs:"Ele está comparando preço por quilo de semente, não o resultado por hectare.",
+  r:["Mude a conta para o hectare: com 10 kg/ha, a semente é uma parte pequena da formação. Numa tabela de custo do Brasil Central (2022), a semente foi 7,7% do custo de formar 1 hectare; calcário, adubo e máquina somaram a maior parte, e custam o mesmo com qualquer capim.","Mostre o retorno: o Sabiá produziu cerca de 7 @/ha/ano a mais que o Marandu e o Cayana cerca de 8 @/ha/ano a mais, nos ensaios oficiais. Compare o custo da semente por hectare com o valor da arroba do dia, na aba Mercado: o ganho dos ensaios é de 7 a 8 arrobas por hectare por ano.","Use a calculadora de rentabilidade com os números da fazenda dele, na frente dele."],
+  prova:"Ensaios de VCU (MAPA, UFU) e tabela de custo de formação.",fontes:["bb","custo"]},
+ {p:["cria","recria","peq"],o:"Meu pai sempre plantou Marandu e sempre funcionou.",
+  trs:"Ele não quer correr risco com algo que não conhece.",
+  r:["Concorde com o histórico: o Marandu foi adotado justamente por resistir à cigarrinha que derrubou a decumbens.","Mostre o risco do contrário: fazenda inteira num capim só fica exposta a uma praga, a uma seca forte ou à morte do braquiarão. A recomendação da Embrapa para essas áreas é diversificar.","Proponha um piquete de teste do lado do Marandu: ele vê a diferença no próprio gado."],
+  prova:"+36% (Sabiá) e +42,2% (Cayana) de produtividade animal sobre o Marandu nos ensaios oficiais.",fontes:["bb","smb"]},
+ {p:["cria","recria","peq"],o:"Capim bom não precisa de adubo.",
+  trs:"Ele não quer ou não pode investir em correção agora.",
+  r:["Seja honesto: nenhum capim produz sem reposição. Para braquiária, a manutenção é de 50 a 80 kg de N/ha/ano; para Carcará, adubação de produção de 150 a 200 kg.","Se ele não vai corrigir, indique o Sabiá, de média exigência, e explique o que ele deixa de ganhar.","Não venda Cayana ou Carcará para quem não vai corrigir: o pasto não entrega, e a culpa cai na semente."],
+  prova:"Exigências de solo das bases de conhecimento oficiais.",fontes:["bb"]},
+ {p:["cria","recria","peq","leite"],o:"Na seca, todo capim para.",
+  trs:"Ele já se frustrou com promessa de capim de seca.",
+  r:["Nenhum capim tropical cresce igual na seca, mas a diferença entre eles é grande: o Marandu faz cerca de 20% da produção do ano na seca; o Sabiá, de 30% a 35%.","Na seca, o Sabiá acumula 42% mais forragem e 50% mais folhas que o Marandu.","Some o diferimento: o Sabiá vedado chega ao fim da vedação com mais que o dobro de folhas do Marandu."],
+  prova:"Ensaios de VCU e de diferimento.",fontes:["bb","dif"]},
+ {p:["recria","leite"],o:"Pânico dá muito trabalho: passa do ponto e vira capim duro.",
+  trs:"Ele já perdeu o controle de um pasto de pânico.",
+  r:["Ele tem razão: o Carcará é para quem roda o pasto com disciplina (entrada a 70 a 80 cm, saída a 35 a 40 cm).","Se a fazenda não tem esse manejo, indique Cayana ou Sabiá, manejados mais baixos e com mais folga.","Se tiver, mostre o ganho: +19% de produtividade animal e +26% de folhas sobre o Mombaça."],
+  prova:"VCU sob pastejo do Carcará (UFU).",fontes:["bb"]},
+ {p:["cria","recria","peq"],o:"Demora para formar.",
+  trs:"Ele teme ficar sem pasto ou acha que a semente não nasceu.",
+  r:["O primeiro pastejo sai entre 60 e 90 dias, conforme fertilidade e chuva.","O Sabiá investe primeiro na raiz: pode parecer mais lento no começo e é isso que o segura na seca depois.","O erro mais comum é enterrar a semente: a profundidade é de 1 a 2 cm (0,5 a 1 cm no Carcará). Grade pesada depois da semeadura mata o estande."],
+  prova:"Recomendações de plantio das bases de conhecimento.",fontes:["bb"]},
+ {p:["ilp"],o:"Braquiária forte dá trabalho para dessecar antes da soja.",
+  trs:"Ele tem medo de atrasar o plantio da soja.",
+  r:["A dessecação funciona melhor em folha nova. Com o boi safrinha rebaixando o pasto, a rebrota jovem é dessecada com facilidade.","O que dá problema é massa velha alta e touceira densa: quanto mais massa, mais dose e mais dias entre a dessecação e o plantio.","Se ele quer só cobertura, sem boi, seja honesto: uma semente de cobertura é mais barata e mais fácil de dessecar."],
+  prova:"Embrapa: dessecação e palhada na ILP; boi safrinha com soja 24% mais produtiva sobre palhada.",fontes:["palha","gly","safrinha","bb"]},
+ {p:["ilp"],o:"Eu sou agricultor, não pecuarista.",
+  trs:"Ele não quer complicação nem mais um negócio para administrar.",
+  r:["O boi safrinha usa a terra parada na entressafra: de 0,8 a 1 kg de ganho por dia e de 3 a 7 @/ha em cerca de 4 meses, com suplemento, nos dados da Embrapa Cerrados.","A soja seguinte ganha com a palhada e com a melhoria do solo.","Há modelos de parceria e arrendamento de pasto para quem não quer ter gado."],
+  prova:"Embrapa Cerrados, Circular Técnica 35.",fontes:["safrinha"]},
+ {p:["conf"],o:"Eu confino: o pasto não faz diferença para mim.",
+  trs:"Ele enxerga o pasto como custo, não como parte da engorda.",
+  r:["O peso de entrada no cocho vem da recria: animal mais pesado fica menos dias no confinamento.","Tirar o boi pesado do pasto na seca libera pastagem para a recria.","O capim também vira volumoso: silagem e pré-secado de capim custam bem menos por kg de MS que a silagem de milho."],
+  prova:"Embrapa: confinamento integrado à recria a pasto; curso de forrageiras da Barenbrug.",fontes:["conf","bb"]},
+ {p:["peq","cria"],o:"Não tenho dinheiro para reformar agora.",
+  trs:"O caixa está apertado e a reforma parece grande demais.",
+  r:["Reforme por etapas: de 10% a 20% da área por ano, começando pela melhor terra, onde o retorno vem mais rápido.","Mostre o custo de não reformar: pasto degradado carrega menos animal todo ano, e a perda se acumula.","Verifique as condições de pagamento da tabela e o crédito rural da região."],
+  prova:"Use a calculadora com a área que ele pode reformar neste ano.",fontes:["bb"]},
+ {p:["cria","recria","peq","leite","ilp","conf"],o:"Isso é transgênico?",
+  trs:"Ele desconfia do que é novo.",
+  r:["Não. Híbrido é o cruzamento entre plantas selecionadas, como se faz há décadas no milho e no gado.","O Sabiá e o Cayana vêm do cruzamento de duas braquiárias conhecidas (brizantha e ruziziensis); o Carcará, do cruzamento dentro da espécie Panicum maximum.","Os três passaram pelos ensaios oficiais de Valor de Cultivo e Uso exigidos pelo Ministério da Agricultura."],
+  prova:"Registro no MAPA após os ensaios de VCU.",fontes:["bb"]},
+ {p:["cria","recria","peq"],o:"O vizinho plantou e não deu certo.",
+  trs:"Ele viu um caso ruim e generalizou.",
+  r:["Pergunte o que aconteceu: profundidade de plantio, correção do solo, época, primeiro pastejo e área que alaga explicam quase todo insucesso.","Ofereça o acompanhamento na implantação: a Barenbrug e a revenda ajudam no plantio.","Leve um caso de sucesso da mesma região ou do mesmo sistema."],
+  prova:"Casos de sucesso na aba da Academia.",fontes:["bb"]},
+ {p:["leite"],o:"Minhas vacas estão bem no Mombaça.",
+  trs:"Ele confia no que já conhece e não quer mexer na produção.",
+  r:["O Carcará é a evolução do Mombaça: mais folha e mais produção, com o mesmo tipo de manejo rotacionado.","Proponha trocar um piquete por vez e acompanhar a produção.","Folhas mais largas e boa aceitação ajudam o consumo da vaca."],
+  prova:"VCU do Carcará: +19% de produtividade animal e +26% de folhas sobre o Mombaça.",fontes:["bb"]}];
+function vObjecoes(){
+  const F=S.psPer||"";const L=F?PS_OBJ.filter(x=>x.p.includes(F)):PS_OBJ;
+  return `<div><h1 class="titulo">Objeções do produtor</h1><p class="sub">O que o pecuarista fala quando vai comprar um híbrido, o que está por trás e como responder com dado. Escolha o perfil do cliente.</p></div>
+  <section class="bloco"><div class="filtros" role="group" aria-label="Perfil do produtor">${[["","Todos"],...PS_PER].map(([k,t])=>`<button class="chip" data-a="ps-per" data-v="${k}" aria-pressed="${k===F}">${esc(t)}</button>`).join("")}</div>
+    <div class="lista" style="margin-top:8px">${L.map((x,i)=>`<details class="tm-proc"${i===0&&!F?"":""}><summary><strong>“${esc(x.o)}”</strong><span class="meta">${x.p.map(k=>(PS_PER.find(p=>p[0]===k)||[,""])[1]).join(" · ")}</span></summary><div class="tm-corpo">
+      <p><strong>O que está por trás:</strong> ${esc(x.trs)}</p>
+      <h3 style="margin:10px 0 6px">Como responder</h3><ul class="cond" style="margin:0">${x.r.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+      <p class="meta" style="margin:8px 0 0"><strong>A prova:</strong> ${esc(x.prova)}</p>${psF(...x.fontes)}</div></details>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Regras de ouro na conversa</h2><ul class="cond">
+    <li>Pergunte antes de oferecer: sistema, solo, chuva, água e manejo.</li>
+    <li>Fale em arroba e em reais por hectare, não em preço por quilo de semente.</li>
+    <li>Sem análise de solo, não prometa número. A correção é recomendação do agrônomo da fazenda.</li>
+    <li>Não fale de marca concorrente. Compare com Marandu e Mombaça, que são a referência dos ensaios oficiais.</li>
+    <li>Se o híbrido não é a solução, diga. A confiança é o que traz a próxima venda.</li></ul></section>
+  ${psFontesHTML()}`;
+}
+function psFontesHTML(){return `<section class="bloco" id="ps-fontes"><h2 class="sec">Fontes</h2><ol class="ps-fontes">${Object.entries(PS_FONTES).map(([k,[t,u]])=>`<li id="psf-${k}">${esc(t)}${u?` <a class="link" href="${esc(u)}" target="_blank" rel="noopener">abrir ↗</a>`:""}</li>`).join("")}</ol>
+  <p class="meta">Material de apoio comercial. Não substitui a recomendação do engenheiro agrônomo ou zootecnista da fazenda.</p></section>`;}
+
 function subnavAcademia(){
-  const abas=[["trilha","Cursos"],["manejo","Guia de manejo"],...(veCalcRent()?[["calc","Calculadora de rentabilidade"]]:[]),...(S.rankOff?[]:[["ranking","Ranking"]]),["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]];
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Academia de Híbridos">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Academia de Híbridos</span></div></div>`;
+  const G=[["Aprender",[["trilha","Cursos"],["manejo","Guia de manejo"],["base","Base de conhecimento"],["faq","Perguntas e respostas"]]],
+    ["Vender",[["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],veCalcRent()&&["calc","Calculadora de rentabilidade"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"]]],
+    ["Seu progresso",S.rankOff?[]:[["ranking","Ranking"]]]];
+  return navGrupos(G,"Academia de Híbridos",k=>S.pag===k||(k==="trilha"&&S.pag==="etapa"));
 }
 function subnavEnxoval(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
@@ -10016,7 +10215,7 @@ function rodapeMkt(){
 }
 function render(){renderApp();tsMontar();pushAbrirPendente();setTimeout(appModal,0);protMarca();document.body.classList.toggle("prot-sel",protAtiva());document.querySelectorAll("#f-criar,#f-lote").forEach(cadAbasSync);injetarAvisoCRM();rodapeMkt();paintTour();const n=document.querySelector(".nav"),c=n&&n.querySelector("[aria-current=page]");if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.offsetLeft-(n.clientWidth-c.offsetWidth)/2);}
 const COMERCIAIS_EXTRA=["Mayane Costa"];
-const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
+const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
@@ -10119,9 +10318,9 @@ function renderApp(){
     app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
-    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar}[S.pag]||vTrilha;
+    const corpo={trilha:vTrilha,etapa:vEtapa,base:vBase,manejo:vManejo,calc:()=>veCalcRent()?vRent():vTrilha(),faq:vFaq,cert:vCert,precos:vPrecos,ranking:vRanking,casos:vCasos,apostilas:vApostilas,comunicar:vComunicar,posicionar:vPosicionar,objecoes:vObjecoes}[S.pag]||vTrilha;
     if(S.pag==="faq"&&S.faq===undefined&&!S.faqBusy){S.faqBusy=true;fetch("faq.json?v="+APP_VER).then(r=>r.json()).then(j=>{S.faq=j;}).catch(()=>{S.faq=null;}).then(()=>{S.faqBusy=false;render();});}
-    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"?' class="largo"':""}>${corpo()}</main>`;return;
+    app.innerHTML=cabecalho()+subnavAcademia()+`<main${S.pag==="casos"||S.pag==="apostilas"||S.pag==="comunicar"||S.pag==="posicionar"||S.pag==="objecoes"?' class="largo"':""}>${corpo()}</main>`;return;
   }
   if(S.secao==="enxoval"){app.innerHTML=cabecalho()+subnavEnxoval()+`<main>${S.pag==="enx-diretriz"?vDiretriz():vEnxoval()}</main>`;if(!S.mkt){carregarEnxoval().then(render);}return;}
   if(S.secao==="leads"){
@@ -10355,6 +10554,9 @@ document.addEventListener("click",async ev=>{
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
+  if(a==="ps-sis"){S.psSis=v;render();return;}
+  if(a==="ps-per"){S.psPer=v;render();return;}
+  if(a==="ps-fonte"){const e=document.getElementById("psf-"+v);if(e){e.scrollIntoView({behavior:"smooth",block:"center"});e.classList.add("ps-on");setTimeout(()=>e.classList.remove("ps-on"),1800);}return;}
   if(a==="tm-novo"){S.pbEd=null;render();return;}
   if(a==="tm-ed"){S.pbEd=v;render();setTimeout(()=>document.getElementById("f-tm")?.scrollIntoView({behavior:"smooth"}),0);return;}
   if(a==="tm-cancela"){S.pbEd=undefined;render();return;}
