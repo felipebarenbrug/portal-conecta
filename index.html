@@ -1552,7 +1552,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119163415";
+const APP_VER="20261119163434";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8633,7 +8633,7 @@ function vTMProj(){
 
 /* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
 const TM_FUNC=[
- {nome:"Mayane Costa",cargo:"Analista de Vendas Internas e Marketing",resp:"Felipe Piccoli",
+ {nome:"Mayane Costa",cargo:"Analista de Vendas Digitais",resp:"Felipe Piccoli",
   cob:"De 20/11/2026 a julho de 2027, a supervisão do Inside Sales e o suporte aos RCs ficam com Laura Alteia Costa, sob supervisão do Felipe.",
   resumo:"Supervisiona a operação diária do Inside Sales e dá o suporte operacional dos pedidos às assessoras de vendas digitais e aos RCs de campo que passaram a ser responsabilidade do Inside Sales na safra 26/27. Funciona como um comercial dentro do Marketing.",
   nota:"A função foi ajustada ao longo do tempo. Campanhas, prospecção ativa e as demais ações de marketing previstas na contratação ficaram com o Marketing; hoje ela responde pelo que está no RACI do time.",
