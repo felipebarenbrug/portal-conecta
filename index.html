@@ -898,6 +898,7 @@ main.largo{max-width:1120px}
 .dre{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dre-l{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:6px 10px;border-radius:6px;background:var(--azul-claro)}.dre-l>span:first-child{font-weight:600}.dre-sub{background:none;border-top:1px solid rgba(0,0,0,.12)}.dre-sub>span:first-child{font-weight:800}.dre-cv{box-shadow:inset 4px 0 0 var(--azul-escuro)}.dre-oc{box-shadow:inset 4px 0 0 var(--amarelo)}
 .dre-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.dre-cv.dre-tag{background:var(--azul-escuro);color:#fff;box-shadow:none}.dre-oc.dre-tag{background:var(--amarelo);color:var(--preto);box-shadow:none}
 .on-n{display:inline-block;min-width:22px;padding:0 7px;border-radius:11px;background:#2E8B57;color:#fff;font-size:13px;line-height:22px;text-align:center;vertical-align:middle}.on-l{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}.on-l li{display:flex;gap:8px;align-items:flex-start}.on-l li>span:last-child{display:flex;flex-direction:column;min-width:0}.on-dot{width:9px;height:9px;border-radius:50%;background:#2E8B57;margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 3px rgba(46,139,87,.18)}
+.tm-proc{border:1px solid rgba(0,0,0,.12);border-radius:10px;background:var(--branco,#fff)}.tm-proc>summary{cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.tm-corpo{padding:0 14px 14px}.tm-filtros{display:grid;gap:8px;margin-bottom:6px}.tm-filtros input{max-width:420px}
 fieldset.rb-tela{border:0;margin:0;padding:0;min-width:0}.rb-tela-box{border:2px dashed #c9c9c9;border-radius:12px;padding:14px;margin-top:10px}fieldset.rb-tela input,fieldset.rb-tela select,fieldset.rb-tela textarea,fieldset.rb-tela button{cursor:not-allowed}
 body.prot-oculto #app,body.prot-fora #app{filter:blur(18px)}body.prot-fora::before{content:"Conteúdo protegido. Volte para a janela do portal para continuar.";position:fixed;inset:auto 0 45% 0;text-align:center;z-index:9999;font:600 16px Arial,sans-serif;color:#1e1e1e;pointer-events:none}
 body.prot-sel main,body.prot-sel .home{-webkit-user-select:none;user-select:none}
@@ -1245,6 +1246,7 @@ const SECOES=[
   {id:"acoes-mkt",nome:"Ações de Marketing",desc:"Quadro das ações de marketing institucionais: cartões com valores, arquivos, links e comentários; verba e saldo da safra.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
+  {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
 const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Tabela de preços"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência"],["financeiro","Marketing + Financeiro"]];
@@ -1468,7 +1470,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261118212222";
+const APP_VER="20261118214112";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2161,7 +2163,7 @@ const DIG_FONTES=[
  {n:"48%",t:"já usam ferramentas online para planejar compras",d:"Dado apresentado no 17º Congresso de Marketing do Agro da ABMRA.",f:"17º Congresso ABMRA (painel WPP e TV Globo), set/2025",u:"https://mundocoop.com.br/acontece-no-setor/17o-congresso-da-abmra-debate-os-5-ps-do-marketing-para-um-agro-digital-mais-eficiente/"},
  {n:"40%",t:"usam WhatsApp e mensagens na jornada de compra",d:"E 28% preferem o WhatsApp para fazer compras agrícolas.",f:"McKinsey, A mente do agricultor brasileiro 2024",u:"https://agfeed.com.br/economia/biologicos-whatsapp-e-pagamento-a-vista-a-mente-do-agricultor-segundo-a-mckinsey"}];
 function digPorqueHTML(R){
-  if(S.isp==null&&!S.ispBusy&&!S.demo){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(S.pag==="acoes-digital")render();});}
+  if(S.isp==null&&!S.ispBusy&&!S.demo){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(S.pag==="acoes-digital"||S.pag==="int-digital")render();});}
   const T=S.isp&&S.isp["Time"];const MQ=(T&&T.dados&&T.dados.mql)||{},VM=(T&&T.dados&&T.dados.vend_mes)||{};const ini=MK_SAFRA_INI.slice(0,7);
   const sm=(O,f)=>Object.entries(O).filter(([k])=>k>=ini).reduce((t,[,v])=>t+(+((v||{})[f])||0),0);
   const rec=sm(MQ,"rec"),qual=sm(MQ,"qual"),ven=sm(MQ,"venda"),vrs=sm(MQ,"vrs"),vn=sm(VM,"n"),vt=sm(VM,"rs");const g=R.tot||0;
@@ -3445,6 +3447,7 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.icpov||!ehAdmin())return;const n=t.dataset.icpov,v=t.value;const {data,error}=await sb.from("cliente_icp").upsert({nome_erp:n,icp:v,atualizado_em:new Date().toISOString()},{onConflict:"nome_erp"}).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar o perfil.");return;}S.icpOv=S.icpOv||{};S.icpOv[n]=data;const y=window.scrollY;render();window.scrollTo(0,y);aviso("Perfil do canal atualizado.");});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.vitf)return;(S.vitF||(S.vitF={}))[t.dataset.vitf]=t.value;render();});
 let _cobT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="cob_cq")return;S.cobCq=t.value;clearTimeout(_cobT);_cobT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("cob_cq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
+let _tmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="tm_q")return;S.pbQ=t.value;clearTimeout(_tmT);_tmT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("tm_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _vitT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vit_q")return;(S.vitF||(S.vitF={})).q=t.value;clearTimeout(_vitT);_vitT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vit_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},300);});
 let _loT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="lo_q")return;(S.loF||(S.loF={})).q=t.value;clearTimeout(_loT);_loT=setTimeout(()=>{loLista(false).then(()=>{const pos=t.selectionStart;render();const n=document.getElementById("lo_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}});},400);});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.mfaexige||!ehAdmin())return;const id=t.dataset.mfaexige,ex=t.checked;t.disabled=true;
@@ -3487,7 +3490,13 @@ document.addEventListener("click",async ev=>{
     if(error){aviso("Não foi possível gravar.");return;}if(x.deal_id){try{await sb.functions.invoke("rd-crm",{body:{acao:"proposta_crm",id:x.id}});}catch(e){}}await carregarPropostas();render();aviso(a==="prop-aprova"?"Desconto aprovado. O RC já pode gerar a proposta com o novo preço.":"Desconto recusado.");return;}
 },true);
 document.addEventListener("submit",async ev=>{
-  const f=ev.target;if(!f||(f.id!=="f-prop"&&f.id!=="f-prop-cfg"))return;ev.preventDefault();ev.stopImmediatePropagation();
+  const f=ev.target;if(f&&f.id==="f-tm"){ev.preventDefault();ev.stopImmediatePropagation();if(!ehAdmin())return;const g=id=>(f.querySelector("#"+id)||{}).value||"";
+    const id=f.dataset.id||("p"+Date.now().toString(36));const x={id,titulo:g("tm_t").trim(),area:g("tm_a"),objetivo:g("tm_o").trim(),gatilho:g("tm_g").trim(),resp:g("tm_r").trim(),aprova:g("tm_ap").trim(),prazo:g("tm_pz").trim(),passos:g("tm_p").trim(),links:g("tm_l").trim(),atualizado_em:new Date().toISOString(),por:(S.profile&&S.profile.nome)||""};
+    if(!x.titulo){aviso("Dê um nome ao processo.");return;}
+    const L=(S.pb.processos||[]).filter(p=>p.id!==id).concat([x]);const b=f.querySelector("button[type=submit]");b.disabled=true;
+    const {error}=await sb.from("mkt_mapa").upsert({id:"playbook_mkt",dados:{processos:L}});b.disabled=false;if(error){aviso("Não foi possível salvar: "+(error.message||""));return;}
+    S.pb.processos=L;S.pbEd=undefined;S.pbAberto=id;render();aviso("Processo salvo.");return;}
+  if(!f||(f.id!=="f-prop"&&f.id!=="f-prop-cfg"))return;ev.preventDefault();ev.stopImmediatePropagation();
   if(f.id==="f-prop-cfg"){if(!ehAdmin())return;const {error}=await sb.from("proposta_config").upsert({id:1,condicoes:f.querySelector("#pc_txt").value.trim(),validade_dias:parseInt(f.querySelector("#pc_dias").value)||7,atualizado_em:new Date().toISOString()});if(error){aviso("Não foi possível salvar.");return;}await carregarPropostas();render();aviso("Condições salvas.");return;}
   const P=propLerForm();const C=propCalc(P);
   if(!P.cliente_nome){aviso("Informe o cliente.");return;}{const d=docLimpo(P.cliente_doc||"");if(d.length!==11&&d.length!==14){aviso("Informe o CPF (11 números) ou o CNPJ (14 números) do cliente.");return;}}if(!C.its.length){aviso("Informe pelo menos um produto com quantidade.");return;}
@@ -4024,7 +4033,7 @@ function heroHub(){
 }
 /* secoes que a pessoa enxerga: base do hub e das opcoes da pesquisa de satisfacao */
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -6857,12 +6866,13 @@ const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["i
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
-  ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"]]],
+  ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"],["int-digital","Campanhas digitais"]]],
   ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]],
   ["Execução",[["int-ader","Inteligência × execução"]]]];
 const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
+  "int-digital":["Como a mídia paga está rendendo e se o gasto cabe na verba digital da safra?","Ajustar verba, regiões e criativos das campanhas no Meta Ads e prestar contas do investimento digital."],
   "int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
   "int-pot":["Onde está o mercado de híbridos que a Barenbrug ainda não ocupa?","Escolher os estados para campanha regional, mídia segmentada e prospecção de revendas."],
   "int-hh":["Quem já comprou híbrido e parou, e como os canais do Conecta evoluem?","Montar a lista de reativação por RTV e a rodada regional de conversão do Mulato II."],
@@ -7257,6 +7267,52 @@ function vIntMarca(){
 }
 async function carregarRaci(){if(S.raciBusy)return;S.raciBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados,atualizado_em").eq("id","raci").maybeSingle();S.raci=data?data.dados:null;S.raciEm=data?data.atualizado_em:null;}catch(e){S.raci=null;}S.raciBusy=false;render();}
 const RACI_TXT={R:"Responsável: faz a atividade",A:"Aprova e responde pelo resultado",C:"Consultado: apoia e opina antes",I:"Informado: fica sabendo do andamento"};
+/* ===== Time de Marketing: o playbook do time (mapa RACI, processos passo a passo, como pedir ao Marketing) ===== */
+const veTimeMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing")||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"));
+function subnavTM(){return navGrupos([["",[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-pedir","Como pedir ao Marketing"]]]],"Time de Marketing",k=>S.pag===k);}
+function carregarPlaybook(){if(S.pbBusy)return;S.pbBusy=true;(async()=>{try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","playbook_mkt").maybeSingle();S.pb=(data&&data.dados&&Array.isArray(data.dados.processos))?data.dados:{processos:[]};}catch(e){S.pb={processos:[]};}S.pbBusy=false;render();})();}
+const TM_AREAS=["Estratégia e budget","Ações de marketing","Eventos","Comunicação e conteúdo","Mídia e campanhas digitais","Inside Sales","Conecta Revendas","Conecta RC","Brindes e materiais","Inteligência de mercado","Portal Conecta","Outro"];
+function tmLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
+function tmLinks(t){return tmLinhas(t).map(l=>{const k=l.lastIndexOf("|");const u=(k>=0?l.slice(k+1):l).trim(),n=(k>=0?l.slice(0,k):l).trim();return /^https?:\/\//i.test(u)?`<a class="link" href="${esc(u)}" target="_blank" rel="noopener">${esc(n||u)} ↗</a>`:esc(l);});}
+function tmCartao(x,adm){const P=tmLinhas(x.passos);
+  return `<details class="tm-proc" ${S.pbAberto===x.id?"open":""}><summary><strong>${esc(x.titulo)}</strong><span class="meta">${esc([x.area,x.resp?"Responsável: "+x.resp:"",x.prazo?"Prazo: "+x.prazo:""].filter(Boolean).join(" · "))}</span></summary>
+    <div class="tm-corpo">${x.objetivo?`<p><strong>Para que serve:</strong> ${esc(x.objetivo)}</p>`:""}${x.gatilho?`<p><strong>Quando acontece:</strong> ${esc(x.gatilho)}</p>`:""}
+    <div class="dir-grid">${x.resp?`<div class="dir-card"><span class="meta">Quem faz</span><strong style="display:block">${esc(x.resp)}</strong></div>`:""}${x.aprova?`<div class="dir-card"><span class="meta">Quem aprova</span><strong style="display:block">${esc(x.aprova)}</strong></div>`:""}${x.prazo?`<div class="dir-card"><span class="meta">Prazo</span><strong style="display:block">${esc(x.prazo)}</strong></div>`:""}</div>
+    ${P.length?`<h3 style="margin:12px 0 6px">Passo a passo</h3><ol class="rent-ol">${P.map(t=>`<li>${esc(t)}</li>`).join("")}</ol>`:""}
+    ${x.links?`<p style="margin-top:10px"><strong>Ferramentas e materiais:</strong> ${tmLinks(x.links).join(" · ")}</p>`:""}
+    <p class="meta" style="margin-top:8px">Atualizado em ${esc(intData(x.atualizado_em))}${x.por?" por "+esc(x.por):""}</p>
+    ${adm?`<div class="acoes" style="margin:6px 0 0"><button class="link" data-a="tm-ed" data-v="${esc(x.id)}">Editar</button><button class="link perigo" data-a="tm-del" data-v="${esc(x.id)}">Excluir</button></div>`:""}</div></details>`;}
+function tmForm(x){x=x||{};const v=k=>esc(x[k]||"");
+  return `<form class="form-card" id="f-tm" data-id="${esc(x.id||"")}"><h3 class="sec">${x.id?"Editar processo":"Novo processo"}</h3>
+    <div class="dupla"><div><label for="tm_t">Nome do processo *</label><input id="tm_t" required maxlength="120" value="${v("titulo")}" placeholder="Ex.: Aprovar uma ação de marketing com canal"></div>
+      <div><label for="tm_a">Área</label><select id="tm_a">${TM_AREAS.map(a=>`<option ${a===(x.area||"")?"selected":""}>${a}</option>`).join("")}</select></div></div>
+    <div><label for="tm_o">Para que serve</label><textarea id="tm_o" rows="2" maxlength="600">${v("objetivo")}</textarea></div>
+    <div><label for="tm_g">Quando acontece (o gatilho)</label><input id="tm_g" maxlength="300" value="${v("gatilho")}" placeholder="Ex.: quando o RC ou o canal pede uma ação"></div>
+    <div class="dupla"><div><label for="tm_r">Quem faz</label><input id="tm_r" maxlength="120" value="${v("resp")}"></div><div><label for="tm_ap">Quem aprova</label><input id="tm_ap" maxlength="120" value="${v("aprova")}"></div></div>
+    <div><label for="tm_pz">Prazo</label><input id="tm_pz" maxlength="120" value="${v("prazo")}" placeholder="Ex.: resposta em até 3 dias úteis"></div>
+    <div><label for="tm_p">Passo a passo (um passo por linha)</label><textarea id="tm_p" rows="8">${v("passos")}</textarea></div>
+    <div><label for="tm_l">Ferramentas e materiais (um por linha; para link use: nome | https://...)</label><textarea id="tm_l" rows="3">${v("links")}</textarea></div>
+    <div class="acoes"><button class="btn" type="submit">Salvar processo</button><button class="btn sec" type="button" data-a="tm-cancela">Cancelar</button></div></form>`;}
+function vTMProc(){
+  if(S.pb===undefined){S.pb=null;carregarPlaybook();}
+  const adm=ehAdmin();const head=`<div><span class="rot">Time de Marketing</span><h1 class="titulo">Processos do Marketing</h1><p class="sub">O playbook do time: cada processo com para que serve, quando acontece, quem faz, quem aprova, o prazo e o passo a passo. ${adm?"Só administradores incluem e editam.":"Ficou alguma dúvida ou falta um processo? Fale com o Marketing."}</p></div>`;
+  if(!S.pb)return head+`<div class="carregando">Carregando os processos…</div>`;
+  const L=(S.pb.processos||[]).slice().sort((a,b)=>String(a.area).localeCompare(String(b.area))||String(a.titulo).localeCompare(String(b.titulo)));
+  const q=(S.pbQ||"").toLowerCase();const F=S.pbArea||"";const ok=x=>(!F||x.area===F)&&(!q||[x.titulo,x.objetivo,x.passos,x.resp,x.area].join(" ").toLowerCase().includes(q));
+  const ar=[...new Set(L.map(x=>x.area))];const vis=L.filter(ok);
+  const grupos=ar.filter(a=>vis.some(x=>x.area===a)).map(a=>`<section class="bloco"><h2 class="sec">${esc(a)}</h2><div class="lista">${vis.filter(x=>x.area===a).map(x=>tmCartao(x,adm)).join("")}</div></section>`).join("");
+  return head+`${adm?(S.pbEd!==undefined?tmForm(S.pbEd&&L.find(x=>x.id===S.pbEd)):`<div class="acoes" style="margin:0 0 10px"><button class="btn" data-a="tm-novo">+ Novo processo</button></div>`):""}
+    ${L.length?`<div class="tm-filtros"><input id="tm_q" type="search" placeholder="Buscar processo" value="${esc(S.pbQ||"")}" aria-label="Buscar processo"><div class="filtros" role="group" aria-label="Área">${["",...ar].map(a=>`<button class="chip" data-a="tm-area" data-v="${esc(a)}" aria-pressed="${a===F}">${a?esc(a):"Todas as áreas"} (${a?L.filter(x=>x.area===a).length:L.length})</button>`).join("")}</div></div>${grupos||`<div class="vazio">Nenhum processo com esse filtro.</div>`}`
+    :`<div class="vazio">Nenhum processo cadastrado ainda.${adm?" Comece pelos que mais geram dúvida: como pedir uma ação, como aprovar verba, como planejar um evento.":""}</div>`}`;
+}
+function vTMPedir(){
+  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Como pedir ao Marketing</h1><p class="sub">O caminho certo para cada tipo de pedido, para que nada se perca e tudo tenha resposta.</p></div>
+  <section class="bloco"><div class="dir-grid">
+    <div class="dir-card"><strong>Ação de marketing com canal, RC ou evento</strong><p>Abra uma solicitação em Ações de Marketing, com objetivo, data, local, público e verba pedida. O Marketing analisa e responde por lá.</p><button class="btn sec" data-a="tm-ir" data-v="acoes-mkt|acoes-solic">Abrir Solicitações</button></div>
+    <div class="dir-card"><strong>Brindes e materiais</strong><p>Faça a requisição em Brindes de Marketing, escolhendo o item do catálogo. A baixa no estoque acontece na aprovação.</p><button class="btn sec" data-a="tm-ir" data-v="brindes|brindes-catalogo">Abrir Brindes</button></div>
+    <div class="dir-card"><strong>Artes, marca e materiais prontos</strong><p>Antes de pedir uma arte, veja o Enxoval de Marketing: logos, artes para redes, folders e banco de imagens já aprovados.</p><button class="btn sec" data-a="tm-ir" data-v="enxoval|">Abrir Enxoval</button></div>
+    <div class="dir-card"><strong>Dúvida sobre produto, manejo ou programa</strong><p>Pergunte no Tira-Dúvidas: o time técnico-comercial responde e a resposta fica para todos.</p><button class="btn sec" data-a="tm-ir" data-v="duvidas|">Abrir Tira-Dúvidas</button></div></div></section>
+  <section class="bloco"><h2 class="sec">Quem decide</h2><p class="sub" style="margin:0">As ações de marketing são aprovadas pelo Felipe Piccoli, caso a caso. O dia a dia com canais, comercial e RCs é com a Thaís Mendonça. O detalhe de quem faz o quê em cada atividade está no Mapa do Marketing.</p></section>`;}
 function vIntRaci(){
   if(S.raci===undefined){carregarRaci();return `<div class="carregando">Carregando o mapa do Marketing…</div>`;}
   const D=S.raci;if(!D)return `<div><h1 class="titulo">Mapa do Marketing</h1></div><div class="vazio">O mapa não está disponível para o seu perfil.</div>`;
@@ -7294,7 +7350,7 @@ function vIntRaci(){
   ${(D.aberto||[]).length?`<section class="bloco"><h2 class="sec">Em aberto: o que ainda precisamos fechar</h2><div class="lista">${D.aberto.map((t,i)=>`<div class="linha"><div><strong>${i+1}. ${esc(t.split(":")[0])}</strong><span class="meta">${esc(t.split(":").slice(1).join(":").trim())}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function subnavInt(){
-  return navGrupos(INT_GRUPOS,"Inteligência",k=>S.pag===k);
+  return navGrupos(INT_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="int-digital"||ehMkt())]),"Inteligência",k=>S.pag===k);
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
@@ -8323,10 +8379,9 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const abas=[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],...(ehMkt()||ehAdmin()?[["acoes-mapa","Mapa da safra"]]:[]),["acoes-eventos","Eventos e resultado"],...(ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]]:[])];
-  return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Ações de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
-    <span class="secao-nome">Ações de Marketing</span></div></div>`;
+  const G=[["Operação",[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"]]],
+    ["Gestão e verba",ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
+  return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova"));
 }
 async function carregarMkt(){
   if(S.mkBusy)return;S.mkBusy=true;
@@ -8985,9 +9040,7 @@ function vAcoesMkt(){
   if(S.pag==="acoes-nova"&&ehMkt())return vAcoesNova();
   if(S.pag==="acoes-card")return vAcoesCard();
   if(S.pag==="acoes-painel"&&ehMkt())return vAcoesPainel();
-  if(S.pag==="acoes-digital"&&ehMkt())return vAcoesDigital();
   if(S.pag==="acoes-gd")S.pag="acoes-quadro"; /* plano de geracao de demanda retirado a pedido do Felipe (18/11) */
-  if(S.pag==="acoes-raci"&&ehMkt())return vIntRaci();
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
   if(S.pag==="acoes-mapa")return (ehMkt()||ehAdmin())?vAcoesMapa():vAcoesCal();
@@ -9970,7 +10023,8 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["ra
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"],["acoes-digital","Campanhas digitais"],["acoes-raci","Mapa do Marketing"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
+  "time-mkt":[["tm-mapa","Mapa do Marketing"],["tm-proc","Processos"],["tm-pedir","Como pedir ao Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
 (()=>{let pop=null,dono=null;const fecha=()=>{if(pop){pop.remove();pop=null;dono=null;}};
@@ -10111,7 +10165,8 @@ function renderApp(){
   }
   if(S.secao==="inteligencia"){
     if(veInt()){
-      if(S.pag==="int-raci"){S.secao="acoes-mkt";S.pag="acoes-raci";render();return;}
+      if(S.pag==="int-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+      if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
       const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-insumos-ed"?vIntInsumosEd():S.pag==="int-icp"?vIntICP():S.pag==="int-ader"?vIntAder():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
@@ -10123,7 +10178,13 @@ function renderApp(){
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="acoes-mkt"){
+    if(S.pag==="acoes-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+    if(S.pag==="acoes-digital"){S.secao="inteligencia";S.pag="int-digital";render();return;}
     if(veAcoesMkt()){if(!/^acoes-/.test(S.pag))S.pag="acoes-quadro";app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vAcoesMkt()}</main>`;if(!S.mk)carregarMkt();return;}
+    S.secao=null;S.pag="hub";
+  }
+  if(S.secao==="time-mkt"){
+    if(veTimeMkt()){if(!/^tm-/.test(S.pag))S.pag="tm-mapa";app.innerHTML=cabecalho()+subnavTM()+`<main class="largo">${S.pag==="tm-proc"?vTMProc():S.pag==="tm-pedir"?vTMPedir():vIntRaci()}</main>`;return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="vitrines"){
@@ -10294,6 +10355,12 @@ document.addEventListener("click",async ev=>{
   if(a==="icp-seg"){S.icpSeg=v;render();return;}
   if(a==="ins-ver"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;render();window.scrollTo(0,0);return;}
   if(a==="seg-abrir"){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();window.scrollTo(0,0);}
+  if(a==="tm-novo"){S.pbEd=null;render();return;}
+  if(a==="tm-ed"){S.pbEd=v;render();setTimeout(()=>document.getElementById("f-tm")?.scrollIntoView({behavior:"smooth"}),0);return;}
+  if(a==="tm-cancela"){S.pbEd=undefined;render();return;}
+  if(a==="tm-area"){S.pbArea=v;render();return;}
+  if(a==="tm-ir"){const [sc,pg]=v.split("|");S.secao=sc;S.pag=pg||"";render();window.scrollTo(0,0);return;}
+  if(a==="tm-del"){if(!ehAdmin())return;if(S.pbDel!==v){S.pbDel=v;aviso("Clique em Excluir de novo para confirmar.");return;}S.pbDel=null;const L=(S.pb.processos||[]).filter(x=>x.id!==v);const {error}=await sb.from("mkt_mapa").upsert({id:"playbook_mkt",dados:{processos:L}});if(error){aviso("Não foi possível excluir.");return;}S.pb.processos=L;render();aviso("Processo excluído.");return;}
   if(a==="uso-dias"){S.usoDias=+v;render();return;}
   if(a==="uso-todos"){S.usoTodos=true;render();return;}
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
