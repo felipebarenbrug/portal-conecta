@@ -961,6 +961,7 @@ main.largo{max-width:1120px}
 .rg-p.gat{background:var(--amarelo);border-color:var(--amarelo);color:#1E1E1E}.rg-p.mail{border-top:3px solid var(--azul)}.rg-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado)}.rg-p.gat .rg-t{color:#1E1E1E}.rg-p p{margin:0;font-size:14px}
 .cs-bars{display:flex;gap:14px;align-items:flex-end;height:170px;max-width:520px}.cs-b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}.cs-b i{display:block;width:100%;border-radius:6px 6px 0 0}.cs-v{font-weight:800;font-size:14px}
 .tf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}.tf-card{margin:0}.tf-cab{display:flex;gap:12px;align-items:center;margin-bottom:10px}.tf-av{width:44px;height:44px;border-radius:50%;background:var(--amarelo);color:#1E1E1E;font-weight:900;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.tf-h{margin:14px 0 6px;font-size:15px}.tf-ul{margin:0;padding-left:18px;display:grid;gap:4px}.tf-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rvm-et{display:grid;gap:10px}.rvm-e{display:flex;gap:12px;border:1px solid var(--linha);border-radius:10px;padding:12px 14px}.rvm-e p{margin:6px 0 0;font-size:14px}.rvm-e .selo{display:inline-block;margin-top:8px}.rvm-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--azul);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center}.rvm-st{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rvm-st span{background:var(--papel);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700}.rvm-st i{color:var(--apagado);font-style:normal}.rvm-ol{margin:0;padding-left:20px;display:grid;gap:8px}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
 .gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
 .gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
@@ -6501,12 +6502,69 @@ document.addEventListener("change",ev=>{const t=ev.target;if(!t)return;
   if(t.id==="cal_canal"){S.calCanal=t.value;S.calSel=null;render();}else if(t.id==="cal_nat"){S.calNat=t.value;render();}
   else if(t.id==="cal_marcos"){S.calMarcos=t.checked;render();}else if(t.id==="mz_marcos"){S.mzMarcos=t.checked;render();}});
 
+/* ===== Conecta Revendas · Como a meta de híbridos de cada canal é definida (só administradores e Comercial Barenbrug; nunca o canal) ===== */
+const veMetaRV=()=>!!(S.user&&!S.demo&&!ehRevenda()&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
+const RVM_PAD={pesos_media:[1,2,3,4],pesos_vetor:[1,2,3],vetor_teto:.5,vetor_piso:.1,vetor_padrao:.15,fator_piso:1.1,fator_teto:1.1,arred:1000,piso_abs:5000};
+async function carregarRVM(){if(S.rvmBusy)return;S.rvmBusy=true;try{const {data}=await sb.from("mkt_mapa").select("dados").eq("id","rv_meta_param").maybeSingle();S.rvm={...RVM_PAD,...((data&&data.dados)||{})};}catch(e){S.rvm={...RVM_PAD};}S.rvmBusy=false;render();}
+/* cálculo da meta-modelo de um canal; h = volumes das 4 safras (mais antiga -> mais recente, null = sem dado) */
+function rvmCalc(P,h,fA,fT){
+  const H=h.map(x=>x===null||x===""||isNaN(+x)?null:+x);const com=H.map((v,i)=>[v,P.pesos_media[i]]).filter(([v])=>v!==null);
+  const media=com.length?com.reduce((s,[v,w])=>s+v*w,0)/com.reduce((s,[,w])=>s+w,0):0;
+  const pares=[];for(let i=1;i<H.length;i++)if(H[i]!==null&&H[i-1]!==null&&H[i-1]>0)pares.push([H[i]/H[i-1]-1,P.pesos_vetor[i-1]||1]);
+  let vetor,vetorBruto=null;if(com.length<2||!pares.length)vetor=P.vetor_padrao;else{vetorBruto=pares.reduce((s,[g,w])=>s+g*w,0)/pares.reduce((s,[,w])=>s+w,0);vetor=Math.min(P.vetor_teto,Math.max(P.vetor_piso,vetorBruto));}
+  const ult=[...H].reverse().find(v=>v!==null)||0;const a=media*(1+vetor),b=ult*P.fator_piso,c=+fA||0;
+  let base=Math.max(a,b,c),teto=null,tetoAplica=false;const fTot=+fT||0;
+  if(fTot>0&&fTot>=ult){teto=fTot*P.fator_teto;tetoAplica=base>teto;if(tetoAplica)base=teto;}
+  const arred=Math.round(base/P.arred)*P.arred;const meta=Math.max(arred,P.piso_abs);
+  return {media,vetor,vetorBruto,ult,a,b,c,teto,tetoAplica,fTot,arred,meta,padrao:com.length<2||!pares.length};}
+const rvmN=v=>String(v).replace(".",",");const rvmKg=v=>Math.round(v).toLocaleString("pt-BR")+" kg";const rvmPct=v=>(v*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+function vRVMeta(){
+  if(!veMetaRV())return `<div class="vazio">Área restrita.</div>`;
+  if(!S.rvm){carregarRVM();return `<div class="carregando">Carregando…</div>`;}
+  const P=S.rvm,sim=S.rvmSim||(S.rvmSim={h:["8000","10000","12000","15000"],fA:"14000",fT:"20000"});const r=rvmCalc(P,sim.h,sim.fA,sim.fT);
+  const etapas=[["1","Marketing","Estudo e proposta de meta","Histórico de pedidos por canal (4 safras, kg líquidos de híbridos) e forecast comercial da safra por nível de confiança.","Planilha com a memória de cálculo por canal: histórico, média ponderada, vetor, forecast, piso, teto e meta final, mais o total da safra.","Estudo gerado"],
+    ["2","Comercial (RV/RTV do canal)","Indicação da meta","O estudo enviado pelo Marketing.","O RV analisa a meta-modelo, alinha antes com a revenda que atende e registra a meta que entende correta. Fica registrada a meta-modelo, a meta indicada e a diferença. Canal sem preenchimento fica pendente.","Aguardando comercial › Meta indicada"],
+    ["3","Marketing envia · Gerente Comercial valida","Validação","As metas indicadas pelos RVs, consolidadas pelo Marketing.","Documento com meta-modelo x meta do comercial por canal, total aprovado x total de referência e alertas: pendentes, ressalvas de crédito ou estoque e canais abaixo do piso de 5.000 kg. Só termina com a validação registrada: aprovado, aprovado com ajustes ou reprovado, com data e responsável.","Em validação › Validada"],
+    ["4","Marketing","Formalização","A validação da etapa 3.","As metas finais entram no documento do Programa Conecta Revendas (contrato e classificação da safra) e a versão aprovada é arquivada. Meta só entra no programa depois da validação.","Inserida no documento do programa"]];
+  const st=["Estudo gerado","Aguardando comercial","Meta indicada","Em validação","Validada","Inserida no documento do programa"];
+  const ed=ehAdmin();const inp=(k,v,step)=>ed?`<input id="rvm_${k}" value="${esc(String(v))}" ${step?`inputmode="decimal"`:""} style="max-width:160px">`:`<strong>${esc(String(v))}</strong>`;
+  const pr=[["pesos_media","Pesos da média ponderada (4 safras, da mais antiga à mais recente)",P.pesos_media.join(", ")],["pesos_vetor","Pesos do vetor (3 pares de safras, do mais antigo ao mais recente)",P.pesos_vetor.join(", ")],["vetor_teto","Teto do vetor",P.vetor_teto],["vetor_piso","Piso do vetor",P.vetor_piso],["vetor_padrao","Vetor padrão (menos de 2 safras de histórico)",P.vetor_padrao],["fator_piso","Fator de piso sobre a última safra",P.fator_piso],["fator_teto","Fator de teto sobre o forecast total",P.fator_teto],["arred","Arredondamento (kg)",P.arred],["piso_abs","Piso absoluto do programa (kg)",P.piso_abs]];
+  const simIn=(id,v,l)=>`<div><label for="${id}">${l}</label><input id="${id}" inputmode="numeric" value="${esc(v)}"></div>`;
+  return `<div><span class="rot">Conecta Revendas · restrito a administradores e Comercial Barenbrug</span><h1 class="titulo">Como a meta de híbridos de cada canal é definida</h1><p class="sub">O processo e as premissas que o Marketing usa para propor a meta de cada canal a cada safra, e como o Comercial e a Gerência Comercial participam até a meta entrar no programa.</p></div>
+  <div class="aviso-est"><strong>Visão de marketing</strong>Esta análise é uma proposta do Marketing. A avaliação comercial, de crédito e financeira de cada canal é das áreas Comercial e Financeira. Nada desta página é mostrado aos canais.</div>
+  <section class="bloco"><h2 class="sec">Escopo</h2><ul class="tf-ul"><li>Só híbridos: Sabiá, Cayana e Carcará. Convencionais e Mulato II ficam fora.</li><li>Meta calculada canal a canal, e não a partir do budget total ou do volume do mercado.</li><li>Unidade: kg líquidos, com devoluções deduzidas. Bonificações não contam.</li></ul></section>
+  <section class="bloco"><h2 class="sec">O processo em 4 etapas</h2><div class="rvm-et">${etapas.map(([n,q,t,e,s2,stt])=>`<div class="rvm-e"><span class="rvm-n">${n}</span><div style="min-width:0"><h3 style="margin:0">${t}</h3><span class="meta">${q}</span><p><strong>Entra:</strong> ${e}</p><p><strong>Sai:</strong> ${s2}</p><span class="selo">${stt}</span></div></div>`).join("")}</div>
+    <h3 class="tf-h">Situação de cada canal</h3><div class="rvm-st">${st.map((x,i)=>`<span>${i+1}. ${x}</span>`).join("<i>›</i>")}</div></section>
+  <section class="bloco"><h2 class="sec">Metodologia de cálculo da meta-modelo</h2>
+    <p class="meta" style="margin:0 0 10px">Fontes: pedidos por canal das últimas 4 safras (volume líquido de híbridos) e o forecast comercial da safra, por cultivar híbrido e por nível de confiança (Muito Alta, Alta, Média, Baixa e Muito Baixa).</p>
+    <ol class="rvm-ol"><li><strong>Média ponderada histórica.</strong> Média das 4 safras anteriores com peso maior para as mais recentes (pesos ${P.pesos_media.join(", ")}). Usa média ponderada, e não simples, para refletir a trajetória de crescimento do canal.</li>
+    <li><strong>Vetor de crescimento.</strong> Crescimento ano a ano de cada par de safras com dado nos dois anos, em média ponderada com pesos ${P.pesos_vetor.join(", ")} do par mais antigo ao mais recente. Limitado entre ${rvmPct(P.vetor_piso)} e ${rvmPct(P.vetor_teto)}. Canal com menos de 2 safras de histórico usa ${rvmPct(P.vetor_padrao)}.</li>
+    <li><strong>Meta base com piso duplo.</strong> <code>MAX( média ponderada × (1 + vetor) ; última safra × ${rvmN(P.fator_piso)} ; forecast Muito Alta + Alta )</code>. A meta nunca fica abaixo de +${rvmPct(P.fator_piso-1)} sobre a última safra nem abaixo do que o próprio Comercial classificou como confiança alta e muito alta.</li>
+    <li><strong>Teto de realismo.</strong> Se o forecast total (todos os níveis) for maior ou igual ao volume da última safra, a meta fica limitada a forecast total × ${rvmN(P.fator_teto)}. Se o forecast total for menor que a última safra, o Comercial foi conservador e o teto não se aplica, para não penalizar canal em aceleração.</li>
+    <li><strong>Arredondamento e piso do programa.</strong> Arredonda para múltiplo de ${rvmKg(P.arred)} e aplica o piso de ${rvmKg(P.piso_abs)}, o mínimo de híbridos para participar do Conecta.</li></ol>
+    <div class="aviso-est" style="margin-top:12px"><strong>Premissa do forecast comercial</strong>O forecast do Comercial entra duas vezes: o que foi qualificado como confiança Muito Alta e Alta vira piso da meta (passo 3), e o forecast total, de todos os níveis, define o teto de realismo (passo 4).</div></section>
+  <section class="bloco"><h2 class="sec">Simule um canal</h2><div class="pj-fg">${sim.h.map((v,i)=>simIn("rvm_h"+i,v,`Safra ${["-4","-3","-2","-1 (última)"][i]} · kg`)).join("")}${simIn("rvm_fa",sim.fA,"Forecast Muito Alta + Alta · kg")}${simIn("rvm_ft",sim.fT,"Forecast total · kg")}</div>
+    <table class="tab" style="margin-top:12px"><tbody>
+    <tr><td>Média ponderada</td><td>${rvmKg(r.media)}</td></tr><tr><td>Vetor de crescimento</td><td>${rvmPct(r.vetor)}${r.padrao?" (padrão)":r.vetorBruto!==null&&Math.abs(r.vetorBruto-r.vetor)>1e-9?` (calculado ${rvmPct(r.vetorBruto)}, limitado)`:""}</td></tr>
+    <tr><td>Média × (1 + vetor)</td><td>${rvmKg(r.a)}</td></tr><tr><td>Última safra × ${rvmN(P.fator_piso)}</td><td>${rvmKg(r.b)}</td></tr><tr><td>Forecast Muito Alta + Alta</td><td>${rvmKg(r.c)}</td></tr>
+    <tr><td>Teto de realismo</td><td>${r.teto===null?(r.fTot>0?"não se aplica: forecast total abaixo da última safra":"sem forecast"):rvmKg(r.teto)+(r.tetoAplica?" · aplicado":" · não limitou")}</td></tr>
+    <tr><td>Arredondado</td><td>${rvmKg(r.arred)}</td></tr><tr><td><strong>Meta-modelo</strong></td><td><strong>${rvmKg(r.meta)}</strong>${r.meta>r.arred?" (piso do programa)":""}</td></tr></tbody></table>
+    <p class="meta">Simulação só nesta tela, nada é gravado.</p></section>
+  <section class="bloco"><h2 class="sec">Organização dos canais</h2><ul class="tf-ul"><li><strong>Bloco 1:</strong> canais classificados no programa pelo histórico e pelo volume da safra anterior. A meta é obrigatória para participar.</li><li><strong>Bloco 2:</strong> canais incluídos por decisão comercial, com o motivo de cada inclusão e a decisão do gerente registrados.</li><li><strong>Inside Sales:</strong> meta própria, projetada com a mesma taxa de crescimento da safra anterior sobre a anterior, ancorada nas vendas já realizadas no início da safra.</li></ul></section>
+  <section class="bloco"><h2 class="sec">Ajustes e registros</h2><ul class="tf-ul"><li>Ajuste manual no histórico, como devolução de operação de safra anterior que distorce a base, só com justificativa registrada.</li><li>Todo canal guarda: meta-modelo, meta do comercial, meta validada, quem alterou e quando.</li><li>Todo documento do processo deixa explícito que a análise é uma visão de marketing.</li></ul></section>
+  <section class="bloco"><h2 class="sec">Modelo de documento</h2>
+    <h3 class="tf-h">Etapa 2 · envio ao Comercial (uma linha por canal)</h3><div class="tab-wrap"><table class="tab"><thead><tr><th>Canal</th><th>Bloco</th><th>RV/RTV</th><th>Safras -4 a -1 (kg)</th><th>Média ponderada</th><th>Vetor</th><th>Forecast MA+A</th><th>Forecast total</th><th>Piso</th><th>Teto</th><th>Meta-modelo</th><th>Meta indicada pelo RV</th><th>Diferença</th><th>Observação do RV</th></tr></thead><tbody><tr><td colspan="14" class="meta">Canais sem meta indicada ficam marcados como pendentes.</td></tr></tbody></table></div>
+    <h3 class="tf-h">Etapa 3 · envio ao Gerente Comercial</h3><div class="tab-wrap"><table class="tab"><thead><tr><th>Canal</th><th>Meta-modelo</th><th>Meta do comercial</th><th>Diferença</th><th>Alertas</th><th>Decisão</th></tr></thead><tbody><tr><td colspan="6" class="meta">Cabeçalho com total aprovado x total de referência. Alertas: pendentes, ressalvas de crédito ou estoque e canais abaixo de ${rvmKg(P.piso_abs)}. Rodapé com a validação: aprovado, aprovado com ajustes ou reprovado, data e responsável.</td></tr></tbody></table></div>
+    <p class="meta">Os dois documentos levam no topo: "Análise do Marketing. A avaliação comercial, de crédito e financeira é das áreas Comercial e Financeira."</p></section>
+  <section class="bloco"><h2 class="sec">Parâmetros</h2>${ed?`<form id="f-rvm">`:""}<table class="tab"><tbody>${pr.map(([k,l,v])=>`<tr><td>${l}</td><td>${inp(k,v,1)}</td></tr>`).join("")}</tbody></table>${ed?`<div class="acoes" style="margin-top:10px"><button class="btn" type="submit">Salvar parâmetros</button></div></form>`:`<p class="meta">Só administradores alteram os parâmetros.</p>`}</section>`;}
+let _rvmT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||!/^rvm_(h\d|fa|ft)$/.test(t.id||""))return;const s=S.rvmSim;if(!s)return;if(t.id==="rvm_fa")s.fA=t.value;else if(t.id==="rvm_ft")s.fT=t.value;else s.h[+t.id.slice(5)]=t.value;clearTimeout(_rvmT);_rvmT=setTimeout(()=>{const id=t.id,pos=t.selectionStart;render();const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},350);});
+
 function subnavRV(){
   /* abas em grupos, na ordem da jornada (como em Inside Sales e Inteligência) */
   const G=[];const add=(g,ab)=>{ab=ab.filter(Boolean);if(ab.length)G.push([g,ab]);};
   add("Comece aqui",[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"]]);
   if(veBarenbrugRV()){
-    add("Acompanhar",[["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-cal","Calendário"]]);
+    add("Acompanhar",[["rv-painel","Painel do programa"],["rv-canais","Canais"],veMetaRV()&&["rv-meta","Metas dos canais"],["rv-cal","Calendário"]]);
     add("Validar e pagar",[ehMaster()&&["rv-validacao","Validação"],ehAdmin()&&["rv-reembolsos","Reembolsos"]]);
   }else if(ehRevenda()){
     add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
@@ -10823,6 +10881,10 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-rvm"){if(!ehAdmin())return;const g=k=>(document.getElementById("rvm_"+k)||{}).value||"";const num=x=>+String(x).replace(",",".");const lst=x=>String(x).split(/[;,]\s*|\s+/).filter(Boolean).map(num);
+    const o={pesos_media:lst(g("pesos_media")),pesos_vetor:lst(g("pesos_vetor")),vetor_teto:num(g("vetor_teto")),vetor_piso:num(g("vetor_piso")),vetor_padrao:num(g("vetor_padrao")),fator_piso:num(g("fator_piso")),fator_teto:num(g("fator_teto")),arred:num(g("arred")),piso_abs:num(g("piso_abs"))};
+    if(o.pesos_media.length!==4||o.pesos_vetor.length!==3||Object.values(o).some(v=>Array.isArray(v)?v.some(isNaN):isNaN(v))){aviso("Confira os parâmetros: 4 pesos da média, 3 do vetor e números válidos.");return;}
+    const {error}=await sb.from("mkt_mapa").upsert({id:"rv_meta_param",dados:o});if(error){aviso("Não foi possível salvar.");return;}S.rvm={...RVM_PAD,...o};aviso("Parâmetros salvos");render();return;}
   if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim());
     const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
     const r=p.id?await sb.from("mkt_projetos").update(o).eq("id",p.id).select("id").single():await sb.from("mkt_projetos").insert(o).select("id").single();if(r.error){aviso("Não foi possível salvar o projeto.");return;}
@@ -11344,6 +11406,7 @@ function renderApp(){
     }
     if(S.pag==="rv-cal"){if(!(veBarenbrugRV()||ehRevenda()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVCal()}</main>`;return;}}
     if(S.pag==="rv-reembolsos"){if(!(ehAdmin()&&veBarenbrugRV()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolsos()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
+    if(S.pag==="rv-meta"){if(!veMetaRV())S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVMeta()}</main>`;return;}}
     if(S.pag==="rv-reembolso"){if(!(ehRevenda()&&temPerfil("Gestor de Revenda")))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolso()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
     if(S.pag==="rv-meucanal"){
       if(!ehRevenda()){S.pag="rv-apresentacao";}
