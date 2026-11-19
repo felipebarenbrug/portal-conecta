@@ -7748,8 +7748,7 @@ const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["i
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
   ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"],["int-digital","Campanhas digitais"]]],
-  ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]],
-  ["Execução",[["int-ader","Inteligência × execução"]]]];
+  ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
 const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
@@ -8153,7 +8152,6 @@ const MET_AN=[
  {aba:"int-rc",n:"RCs e Inside Sales",f:"Funil de vendas do RD Station CRM (campo Representante) e contratos de representação.",m:"Pedidos fechados com faturamento na safra, por representante e região.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"is",resp:"Marketing"},
  {aba:"int-seg",n:"B2C e B2B",f:"Pedidos ganhos do RD Station CRM.",m:"Volume e valor separados entre venda ao produtor e venda ao canal.",rec:"continuo",como:"Automático, 3 vezes ao dia.",k:"crm",resp:"Marketing"},
  {aba:"int-modelos",n:"Modelos de representação",f:"Contratos de representação assinados da safra.",m:"Comparação dos modelos de contrato: comissão, verba, obrigações.",rec:"anual",como:"Revisão na renovação dos contratos (até 30 de agosto).",resp:"Marketing"},
- {aba:"int-ader",n:"Inteligência × execução",f:"Pedidos ganhos do RD Station CRM · orçamento em Ações de Marketing · Meta Ads · eventos registrados · painel de brindes.",m:"Cada ação e cada IGDB comparados com o que a inteligência aponta (região, público, janela); o que está fora do mapa é sinalizado.",rec:"mensal",como:"Dados ao vivo; leitura mensal.",k:"crm",resp:"Marketing"}];
 function carregarMetStatus(){if(S.metBusy)return;S.metBusy=true;(async()=>{try{const {data}=await sb.rpc("intel_status");S.metSt=data||{};}catch(e){S.metSt={};}S.metBusy=false;render();})();}
 function vIntMetodo(){
   if(S.metSt===undefined){S.metSt=null;carregarMetStatus();}
