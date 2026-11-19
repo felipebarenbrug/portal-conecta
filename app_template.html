@@ -2765,8 +2765,12 @@ function vLeads(){
 }
 /* ===== Painel de performance do Inside Sales (dados de is_painel, calculados na rotina do servidor) ===== */
 const veTimeIS=()=>ehAdmin()||S.isTime===true;
+/* Regra da meta de 60 t: quem tem papel "fora_meta" (Tobias / Leite e Tobias, negociações em nome do Felipe no CRM) aparece à parte e sai da linha Time. A rotina do servidor ainda soma essa pessoa no Time, então o desconto é feito aqui ao carregar. */
+const IS_FORA_META_ROT="Tobias (Leite e Tobias)";
+function isSubtrai(t,x){if(!t||!x||typeof t!=="object"||typeof x!=="object"||Array.isArray(t))return;for(const k of Object.keys(x)){const v=x[k];if(typeof v==="number"&&typeof t[k]==="number")t[k]=Math.round((t[k]-v)*100)/100;else if(v&&typeof v==="object"&&!Array.isArray(v)&&t[k]&&typeof t[k]==="object")isSubtrai(t[k],v);}}
+function isTiraForaMeta(){const T=S.isp&&S.isp.Time;if(!T||T._semForaMeta)return;Object.values(S.isp).filter(r=>r.papel==="fora_meta").forEach(r=>{const d=JSON.parse(JSON.stringify(r.dados||{}));delete d.cfg;delete d.lista;isSubtrai(T.dados,d);});T._semForaMeta=true;}
 async function carregarISP(){
-  try{const [a,b]=await Promise.all([sb.from("is_painel").select("*"),S.demo?Promise.resolve({data:false}):sb.rpc("is_ve_time")]);S.isTime=!!b.data;S.isp={};(a.data||[]).forEach(r=>{S.isp[r.pessoa]=r;});}catch(e){S.isp={};}
+  try{const [a,b]=await Promise.all([sb.from("is_painel").select("*"),S.demo?Promise.resolve({data:false}):sb.rpc("is_ve_time")]);S.isTime=!!b.data;S.isp={};(a.data||[]).forEach(r=>{S.isp[r.pessoa]=r;});isTiraForaMeta();}catch(e){S.isp={};}
   if(!Object.keys(S.isp).length&&!S.crm)await carregarCRM();
 }
 /* ===== Mídia digital (Meta Ads via MCP) ===== */
@@ -3300,7 +3304,7 @@ function subnavIS(){
   const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
   return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
-const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",outros:"Fila de qualificação",time:"Time"};
+const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",fora_meta:"À parte, fora da meta",outros:"Fila de qualificação",time:"Time"};
 const IS_ETAPAS=["Forecast","Prospecção","Qualificação","Influenciadores & Proposta de Valor","Influenciadores & Proposta","Negociação e Fechamento","Cadastro de novo cliente","Análise de Crédito","Pedido Finalizado","Solicitação de alteração","Pedidos Finalizados Alterados"];
 const IS_NMES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const isNomeMes=k=>{const [a,b]=String(k).split("-");return (IS_NMES[(+b||1)-1]||"")+"/"+String(a).slice(2);};
@@ -3491,14 +3495,16 @@ function vISVend(cfg){
   const ms=isPeriodo(cfg);const meta=+cfg.meta_kg||60000;const P=cfg.pessoas||[];
   const linha=(nome,rot,extra)=>{const r=S.isp[nome];if(!r)return "";const A=r.dados||{};const re=A.real||{},ab=A.ab||{};const mq=isSoma(A.mql,ms),dc=isSoma(A.dec,ms);let g=0,p=0;Object.entries(dc).forEach(([k,v])=>{if(k.endsWith("_g"))g+=v;else if(k.endsWith("_p"))p+=v;});const at=isEst(isLista(A.atrib,ms));
     const clic=nome!=="Time"?`<button class="link" data-a="is-abrir" data-v="${esc(nome)}">${esc(rot||nome)}</button>`:`<strong>${esc(rot||nome)}</strong>`;
-    return `<tr${nome==="Time"?' class="is-tot"':""}><td>${clic}${extra?`<br><span class="meta">${extra}</span>`:""}</td><td class="val">${isN(re.n)}</td><td class="val"><strong>${isT(re.kgh)}</strong></td><td class="val">${+re.kgc?isT(re.kgc):"—"}</td><td class="val">${isR(re.rs)}</td><td class="val">${re.n?isR(re.rs/re.n):"—"}</td><td class="val">${isPct(re.kgh,meta)}</td><td class="val">${isN(ab.n)} · ${isT(ab.kgh)}${+ab.kgc?`<br><span class="meta">+ ${isT(ab.kgc)} conv.</span>`:""}</td><td class="val">${isT(ab.pond)}</td><td class="val">${isN(mq.rec)}</td><td class="val">${isTaxa(+mq.qual||0,+mq.rec||0)}</td><td class="val">${isTaxa(g,g+p)}<br><span class="meta">${isN(g)}×${isN(p)}</span></td><td class="val">${isTaxa(+mq.venda||0,+mq.rec||0)}</td><td class="val">${at?isH(at.med):"—"}</td><td class="val">${at?Math.round(100*at.mais3d)+"%":"—"}</td><td class="val">${nome==="Time"||["supervisao","fora_cobranca"].includes(r.papel)||nome==="Carteira com RC"?"—":isN(((A.alerta||{}).sem_tarefa||{}).n)}</td></tr>`;};
+    return `<tr${nome==="Time"?' class="is-tot"':""}><td>${clic}${extra?`<br><span class="meta">${extra}</span>`:""}</td><td class="val">${isN(re.n)}</td><td class="val"><strong>${isT(re.kgh)}</strong></td><td class="val">${+re.kgc?isT(re.kgc):"—"}</td><td class="val">${isR(re.rs)}</td><td class="val">${re.n?isR(re.rs/re.n):"—"}</td><td class="val">${isPct(re.kgh,meta)}</td><td class="val">${isN(ab.n)} · ${isT(ab.kgh)}${+ab.kgc?`<br><span class="meta">+ ${isT(ab.kgc)} conv.</span>`:""}</td><td class="val">${isT(ab.pond)}</td><td class="val">${isN(mq.rec)}</td><td class="val">${isTaxa(+mq.qual||0,+mq.rec||0)}</td><td class="val">${isTaxa(g,g+p)}<br><span class="meta">${isN(g)}×${isN(p)}</span></td><td class="val">${isTaxa(+mq.venda||0,+mq.rec||0)}</td><td class="val">${at?isH(at.med):"—"}</td><td class="val">${at?Math.round(100*at.mais3d)+"%":"—"}</td><td class="val">${nome==="Time"||["supervisao","fora_cobranca","fora_meta"].includes(r.papel)||nome==="Carteira com RC"?"—":isN(((A.alerta||{}).sem_tarefa||{}).n)}</td></tr>`;};
   const vend=P.filter(p=>p.papel==="vendedora"||p.papel==="rampagem");
   const outros=[...P.filter(p=>p.papel==="supervisao").map(p=>[p.p,p.p+" · supervisão/carteira",""]),["Carteira com RC","Carteira com RC","negociações da supervisão com RC no campo Representante"],...P.filter(p=>p.papel==="fora_cobranca").map(p=>[p.p,p.p,"nos números, fora da cobrança"])];
+  const aparte=P.filter(p=>p.papel==="fora_meta").map(p=>[p.p,IS_FORA_META_ROT,"negociações em nome do Felipe no CRM · fora do Time e da meta de 60 t"]);
   return `<section class="bloco"><h2 class="sec">Por vendedora ${isMat(ms)}</h2><div class="tab"><table class="is-tab"><thead><tr><th>Pessoa</th><th class="val">Vendas</th><th class="val">Híbridos</th><th class="val">Convencionais</th><th class="val">Valor</th><th class="val">Ticket médio</th><th class="val">% da meta</th><th class="val">Em andamento</th><th class="val">Ponderado</th><th class="val">MQL recebidos</th><th class="val">MQL → SQL</th><th class="val">SQL → Venda</th><th class="val">Lead → venda</th><th class="val">Atribuição (mediana)</th><th class="val">Acima de 3 dias</th><th class="val">Sem próximo passo</th></tr></thead><tbody>
     ${vend.map(p=>linha(p.p,p.p,p.papel==="rampagem"&&p.ton_desde?"rampagem · tonelada a partir de "+isNomeMes(p.ton_desde.slice(0,7)):"")).join("")}
     <tr><td colspan="16" class="meta" style="padding-top:12px">Supervisão e carteira (fora da cobrança)</td></tr>
     ${outros.map(([n,r,e])=>linha(n,r,e)).join("")}
-    ${linha("Time","Time")}</tbody></table></div>
+    ${linha("Time","Time")}
+    ${aparte.length?`<tr><td colspan="16" class="meta" style="padding-top:12px">À parte, fora da meta de 60 t</td></tr>${aparte.map(([n,r,e])=>linha(n,r,e)).join("")}`:""}</tbody></table></div>
     <p class="dica">Vendas, híbridos, convencionais, valor e % da meta: safra inteira (contribuição de cada pessoa para as ${isT(meta)} do time). MQL, SQL → Venda, lead → venda e atribuição: período escolhido acima. SQL → Venda mostra ganhas × perdidas. Taxa em cinza: menos de 10 casos, não serve para ranquear. Toque no nome para abrir o painel da pessoa.</p></section>`;
 }
 
@@ -3773,7 +3779,7 @@ function vInsideSales(){
   const seletor=manager?`<div class="filtros">${nomes.map(n=>`<button class="chip" data-a="is-sel" data-v="${esc(n)}" aria-pressed="${alvo===n}">${esc(n)}</button>`).join("")}</div>`:"";
   if(!row)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div>${seletor}<section class="bloco"><div class="vazio">${manager?"Sem dados para esta pessoa.":"Seu acesso ainda não está vinculado a uma consultora do Inside Sales ou o painel ainda não foi calculado. Fale com o administrador."}</div></section>`;
   const cfgP=cfg.safra?cfg:{meta_kg:60000,safra:["2026-07-01","2027-06-30"],cesta:["Sabiá","Cayana","Carcará","Carcará 3 kg"],regua:{1:.05,2:.15,3:.35,4:.7,5:.9},pessoas:[]};
-  const L=(row.dados||{}).lista||[];const semCobr=["supervisao","fora_cobranca","carteira_rc"].includes(row.papel)||alvo==="CROP Agrícola";
+  const L=(row.dados||{}).lista||[];const semCobr=["supervisao","fora_cobranca","fora_meta","carteira_rc"].includes(row.papel)||alvo==="CROP Agrícola";
   return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1></div>${seletor}${isCabecalho(cfgP,row)}${isPerSel(cfgP)}${vISBloco(alvo,row,cfgP,false)}
     <section class="bloco"><h2 class="sec">${manager?"Negociações em andamento":"Minhas negociações em andamento"}</h2>${semCobr?`<p class="sub" style="margin:0 0 6px">Lista para acompanhamento: esta carteira não entra na cobrança das vendedoras.</p>`:""}${isListaHTML(L,false)}</section>${rodape}`;
 }
@@ -4607,7 +4613,7 @@ async function atualizarLeads(prog){
   S.leadsCache=null;return `leads: ${tot} sem contato concluído${ab}`;
 }
 async function carregarCRM(){
-  if(temPerfil("Comercial Barenbrug")||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];}catch(e){S.crm=[];}}
+  if(temPerfil("Comercial Barenbrug")||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];const it=S.crm.find(x=>x.dono==="Inside Sales"),f=S.crm.find(x=>x.dono==="IS: Felipe");if(it&&f){for(const k of Object.keys(f)){if(["dono","equipe","atualizado_em"].includes(k))continue;const v=f[k];if(v!=null&&v!==""&&!isNaN(+v)&&typeof v!=="object"&&it[k]!=null&&!isNaN(+it[k]))it[k]=+it[k]-(+v);else if(v&&typeof v==="object"&&!Array.isArray(v)&&it[k]&&typeof it[k]==="object")isSubtrai(it[k],v);}}}catch(e){S.crm=[];}}
 function vMeuCRM(){
   const m=S.crmVista==="mapa";
   return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button></div>`+(m?vMapaGeo("crm"):vMeuCRMPainel());
