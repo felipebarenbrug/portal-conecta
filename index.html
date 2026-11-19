@@ -932,6 +932,15 @@ main.largo{max-width:1120px}
 .nps-dist{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px;align-items:end;max-width:560px}.nps-b{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}.nps-b>div{width:100%;border-radius:5px 5px 0 0}
 .nps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:14px}.nps-peq td{color:var(--apagado)}.nps-ach li span{line-height:1.5}
 @media (max-width:500px){.nps-grid{grid-template-columns:1fr}}
+.gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}.gc-mapa-w{position:sticky;top:12px;margin:0}
+.gc-mapa{width:100%;height:auto;display:block}.gc-uf{fill:var(--papel);stroke:#9fb3bd;stroke-width:.06}.gc-pin{cursor:pointer}.gc-pin circle{stroke:#fff;stroke-width:.15}.gc-pin.on circle{stroke:var(--preto);stroke-width:.2}
+.gc-leg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px;vertical-align:middle}
+.gc-lista{display:grid;gap:8px;min-width:0}.gc-card{margin:0;padding:0;overflow:hidden}.gc-card.on{box-shadow:inset 0 0 0 2px var(--azul)}
+.gc-cab{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}.gc-t{display:grid;gap:2px;flex:1;min-width:0}
+.gc-pr{flex:0 0 auto;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.gc-det{padding:0 14px 14px}.gc-det dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:6px 12px;margin:0 0 10px;font-size:14px}.gc-det dt{color:var(--apagado);font-weight:700}.gc-det dd{margin:0;line-height:1.45;overflow-wrap:anywhere}
+.gc-fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.gc-larga{grid-column:1/-1}.gc-fg textarea{width:100%}
+@media (max-width:860px){.gc-grid{grid-template-columns:1fr}.gc-mapa-w{position:static}.gc-det dl{grid-template-columns:1fr}}
 .cs-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}.cs-form{display:grid;gap:12px;min-width:0}.cs-form .bloco{margin:0}
 .cs-res-w{position:sticky;top:12px;min-width:0}.cs-res .metric{background:var(--papel)}
 .cs-in{display:flex;align-items:center;gap:8px}.cs-in input{flex:1;min-width:0}.cs-in>span{color:var(--apagado);font-size:13px;white-space:nowrap}
@@ -1512,7 +1521,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119111240";
+const APP_VER="20261119111932";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7786,8 +7795,38 @@ function vIntNps(){
    <li><strong>Comentários abertos:</strong> a pesquisa tinha campos de comentário, mas os respondentes não os preencheram nesta edição.</li>
    <li><strong>Comparação com o mercado:</strong> não há referência pública confiável de NPS para sementes forrageiras ou insumos agrícolas no Brasil. A régua mais útil é a própria Barenbrug na próxima pesquisa, com a mesma pergunta e a mesma base.</li></ul></details></section>`;}
 
+/* ===== Inteligência · Grandes contas da pecuária ===== */
+const GC_CAMPOS=[["nome","Nome da conta *"],["tipo","Tipo de operação"],["uf","UF da sede"],["cidade","Município da sede"],["outras_ufs","Outras áreas (estados e municípios)"],["rebanho","Rebanho"],["area","Área"],["sistema","Sistema de produção"],["resumo","Quem é",1],["decisores","Decisores e gestores",1],["contatos","Contatos",1],["site","Site"],["oportunidade","Oportunidade para a Barenbrug",1],["prioridade","Prioridade"],["status","Situação"],["responsavel","Responsável na Barenbrug"],["fontes","Fontes",1],["obs","Observações",1]];
+const GC_ST=["A abordar","Em contato","Reunião marcada","Em negociação","Cliente","Descartada"];
+const GC_COR={A:"#c0392b",B:"#D96D00",C:"#7f8c8d"};
+async function carregarGC(){if(S.gcBusy)return;S.gcBusy=true;try{await carregarGeo();}catch(e){}try{const {data}=await sb.from("grandes_contas").select("*").order("prioridade").order("nome");S.gc=data||[];}catch(e){S.gc=[];}S.gcBusy=false;render();}
+function vIntContas(){
+  if(S.gc===undefined){carregarGC();return `<div class="carregando">Carregando as contas…</div>`;}
+  const F=S.gcF||(S.gcF={p:"Todas",st:"Todas",q:""});const q=(F.q||"").toLowerCase();
+  const L=(S.gc||[]).filter(c=>(F.p==="Todas"||c.prioridade===F.p)&&(F.st==="Todas"||c.status===F.st)&&(!q||JSON.stringify(c).toLowerCase().includes(q)));
+  const sel=(S.gc||[]).find(c=>c.id===S.gcSel);
+  let mapa="";if(GEO){const pins=L.map(c=>{const l=localMapa({uf:c.uf,cidade:c.cidade});return l?{c,l}:null;}).filter(Boolean);
+    mapa=`<svg viewBox="0 0 ${GEO.W} ${GEO.H}" class="gc-mapa" role="img" aria-label="Mapa das grandes contas">${GEO.st.map(e=>`<path d="${e.d}" class="gc-uf"/>`).join("")}${pins.map(({c,l})=>`<g class="gc-pin${c.id===S.gcSel?" on":""}" data-a="gc-sel" data-v="${c.id}" tabindex="0"><circle cx="${l.x.toFixed(2)}" cy="${l.y.toFixed(2)}" r="${c.id===S.gcSel?0.85:0.6}" fill="${GC_COR[c.prioridade]||"#00A8E2"}"/><title>${esc(c.nome)} · ${esc(l.nome)}</title></g>`).join("")}</svg>`;}
+  const chip=(k,v,cur,t)=>`<button class="chip" data-a="gc-f" data-v="${k}|${esc(v)}" aria-pressed="${cur===v}">${esc(t||v)}</button>`;
+  const ed=S.gcEd;const form=ed?`<section class="bloco gc-form"><h2 class="sec">${ed.id?"Editar conta":"Nova conta"}</h2><form id="f-gc"><div class="gc-fg">${GC_CAMPOS.map(([k,t,area])=>{const v=ed[k]==null?"":String(ed[k]);
+     if(k==="prioridade")return `<div><label for="gc_${k}">${t}</label><select id="gc_${k}">${["A","B","C"].map(x=>`<option ${v===x?"selected":""}>${x}</option>`).join("")}</select></div>`;
+     if(k==="status")return `<div><label for="gc_${k}">${t}</label><select id="gc_${k}">${GC_ST.map(x=>`<option ${v===x?"selected":""}>${x}</option>`).join("")}</select></div>`;
+     return `<div${area?' class="gc-larga"':""}><label for="gc_${k}">${t}</label>${area?`<textarea id="gc_${k}" rows="3">${esc(v)}</textarea>`:`<input id="gc_${k}" value="${esc(v)}"${k==="uf"?' maxlength="2"':""}>`}</div>`;}).join("")}</div>
+    <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="link" type="button" data-a="gc-cancel">Cancelar</button>${ed.id&&ehAdmin()?`<button class="link" type="button" data-a="gc-del" data-v="${ed.id}" style="color:#a33426">Excluir conta</button>`:""}</div></form></section>`:"";
+  const det=c=>`<div class="gc-det"><dl>${[["Tipo","tipo"],["Sede",null],["Outras áreas","outras_ufs"],["Rebanho","rebanho"],["Área","area"],["Sistema","sistema"],["Quem é","resumo"],["Decisores","decisores"],["Contatos","contatos"],["Oportunidade","oportunidade"],["Responsável","responsavel"],["Observações","obs"]].map(([t,k])=>{const v=k?c[k]:[c.cidade,c.uf].filter(Boolean).join(" · ");return v?`<dt>${t}</dt><dd>${esc(v)}</dd>`:"";}).join("")}${c.site?`<dt>Site</dt><dd><a class="link" href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site.replace(/^https?:\/\//,""))} ↗</a></dd>`:""}${c.fontes?`<dt>Fontes</dt><dd class="gc-fontes">${esc(c.fontes).replace(/(https?:\/\/[^\s;]+)/g,'<a class="link" href="$1" target="_blank" rel="noopener">abrir ↗</a>')}</dd>`:""}</dl>
+    <div class="acoes"><button class="btn sec" data-a="gc-edit" data-v="${c.id}">Editar</button><span class="meta">Atualizado em ${c.atualizado_em?new Date(c.atualizado_em).toLocaleDateString("pt-BR"):"—"}</span></div></div>`;
+  return `<div><h1 class="titulo">Grandes contas da pecuária</h1><p class="sub">Os maiores grupos pecuários e de integração lavoura-pecuária do país que a Barenbrug precisa acessar: quem são, onde estão, quem decide e qual a oportunidade. Clique num ponto do mapa ou numa conta para ver o detalhe; todos com acesso podem editar e incluir contas.</p></div>
+  <div class="filtros" role="group" aria-label="Prioridade">${chip("p","Todas",F.p)}${chip("p","A",F.p,"Prioridade A")}${chip("p","B",F.p,"Prioridade B")}${chip("p","C",F.p,"Prioridade C")}</div>
+  <div class="filtros" role="group" aria-label="Situação" style="margin-top:6px">${chip("st","Todas",F.st,"Todas as situações")}${GC_ST.map(s=>chip("st",s,F.st)).join("")}</div>
+  <div class="acoes" style="margin:10px 0"><input type="search" id="gc_q" placeholder="Buscar por nome, estado, decisor…" value="${esc(F.q||"")}" style="max-width:360px"><button class="btn" data-a="gc-novo">+ Incluir conta</button></div>
+  ${form}
+  <div class="gc-grid"><section class="bloco gc-mapa-w"><h2 class="sec">Onde estão <span class="meta">${L.length} contas</span></h2>${mapa||`<div class="carregando">Carregando o mapa…</div>`}<p class="meta gc-leg"><span style="background:${GC_COR.A}"></span>Prioridade A <span style="background:${GC_COR.B}"></span>B <span style="background:${GC_COR.C}"></span>C · o ponto fica na sede; várias contas operam em mais estados.</p></section>
+  <section class="gc-lista">${L.length?L.map(c=>`<div class="bloco gc-card${c.id===S.gcSel?" on":""}" id="gc-${c.id}"><button class="gc-cab" data-a="gc-sel" data-v="${c.id}" aria-expanded="${c.id===S.gcSel}"><span class="gc-pr" style="background:${GC_COR[c.prioridade]||"#00A8E2"}">${esc(c.prioridade||"–")}</span><span class="gc-t"><strong>${esc(c.nome)}</strong><span class="meta">${esc([c.tipo,[c.cidade,c.uf].filter(Boolean).join(" · ")].filter(Boolean).join(" · "))}</span><span class="meta">${esc(c.rebanho||"")}</span></span><span class="selo">${esc(c.status||"")}</span></button>${c.id===S.gcSel?det(c):""}</div>`).join(""):`<div class="vazio">Nenhuma conta com esse filtro.</div>`}</section></div>
+  <section class="bloco"><details class="ps-met"><summary><strong>Como esta lista foi montada</strong></summary><ul class="cond"><li>Pesquisa em reportagens e relatórios públicos de 2021 a 2026 (AgFeed, Bloomberg Línea, Forbes, Canal Rural, PwC, The AgriBiz, Repórter Brasil e o ranking de confinadores da DBO). Cada conta traz a fonte e a data do dado.</li><li>Prioridade A: rebanho ou área de pasto grande e sistema que depende de pasto de alta qualidade (ILP, TIP, ciclo completo). B: escala grande com menos sinal de reforma ou dados antigos. C: acesso indireto, risco de crédito ou de compliance.</li><li>Contatos ficam só no nível da empresa e do cargo. Telefones e e-mails pessoais entram só depois de um contato real, registrados por quem atendeu.</li><li>Rebanhos e áreas mudam rápido nesses grupos: confirme na primeira conversa e atualize aqui.</li></ul></details></section>`;}
+let _gcT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="gc_q")return;(S.gcF||(S.gcF={p:"Todas",st:"Todas"})).q=t.value;clearTimeout(_gcT);_gcT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("gc_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
+
 const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"],["int-metodo","Metodologia e fontes"]]],
-  ["Para quem",[["int-icp","ICPs e personas"],["int-nps","NPS dos clientes diretos"]]],
+  ["Para quem",[["int-icp","ICPs e personas"],["int-contas","Grandes contas da pecuária"],["int-nps","NPS dos clientes diretos"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
@@ -7797,6 +7836,7 @@ const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
   "int-digital":["Como a mídia paga está rendendo e se o gasto cabe na verba digital da safra?","Ajustar verba, regiões e criativos das campanhas no Meta Ads e prestar contas do investimento digital."],
+  "int-contas":["Quem são os grandes grupos pecuários e de ILP que a Barenbrug precisa acessar, e como chegar a eles?","Priorizar as contas, dividir quem aborda cada uma e acompanhar a situação de cada conversa."],
   "int-nps":["O que o cliente que compra direto da Barenbrug acha da empresa, e o que faz ele recomendar ou não?","Priorizar pós-venda e suporte técnico, recuperar detratores, criar um programa de indicação e medir a evolução na próxima pesquisa."],
   "int-icp":["Para quem a Barenbrug vende e como cada um quer ser atendido: canais, produtores e representantes?","Escolher onde investir verba e tempo do time, adaptar a mensagem a cada perfil e decidir onde abrir novos parceiros especialistas."],
   "int-pot":["Onde está o mercado de híbridos que a Barenbrug ainda não ocupa?","Escolher os estados para campanha regional, mídia segmentada e prospecção de revendas."],
@@ -10580,6 +10620,8 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.rpc("brinde_decidir",{p_id:+f.dataset.id,p_status:st,p_obs:val("bdd_obs")||null,p_retirado_por:val("bdd_ret")||null});
     if(error){if(btn)btn.disabled=false;aviso(/estoque insuficiente/i.test(error.message||"")?"Estoque insuficiente para aprovar. Ajuste o item ou recuse.":"Não foi possível registrar a decisão.");return;}
     S.bdReqSel=null;S.bd=null;S.bdReqs=null;carregarBrindes();aviso(st==="Aprovada"?"Aprovada. O estoque foi baixado.":st==="Entregue"?"Entrega registrada.":"Requisição recusada.");return;}
+  if(f.id==="f-gc"){const o={};GC_CAMPOS.forEach(([k])=>{const el=document.getElementById("gc_"+k);o[k]=el?el.value.trim()||null:null;});if(!o.nome){aviso("Informe o nome da conta.");return;}if(o.uf)o.uf=o.uf.toUpperCase();o.atualizado_em=new Date().toISOString();
+    const r=S.gcEd&&S.gcEd.id?await sb.from("grandes_contas").update(o).eq("id",S.gcEd.id):await sb.from("grandes_contas").insert(o);if(r.error){aviso("Não foi possível salvar.");return;}aviso("Conta salva");S.gcEd=null;S.gc=undefined;render();return;}
   if(f.id==="f-is-margem"){if(!ehAdmin())return;const v=mkNum(val("ism_v"));if(!(v>0&&v<100)){aviso("Informe a margem em %, entre 0 e 100.");return;}const {error}=await sb.from("is_config").upsert({chave:"margem_bruta",valor:v/100});if(error){aviso("Não foi possível salvar.");return;}S.isMargem=v/100;aviso("Margem salva");render();return;}
   if(f.id==="f-is-custo"){if(!ehAdmin())return;const v=mkNum(val("isc_v"));if(!(v>=0)){aviso("Confira o valor.");return;}const {error}=await sb.from("is_config").upsert({chave:"custo_time_mensal",valor:v,atualizado_em:new Date().toISOString()},{onConflict:"chave"});if(error){aviso("Não foi possível salvar.");return;}S.isCustoT=v;render();aviso("Custo do time salvo.");return;}
   if(f.id==="f-bd-budget"){if(!ehMkt())return;const v=mkNum(val("bdb_v"));if(!(v>=0)){aviso("Confira o valor do budget.");return;}
@@ -11156,6 +11198,7 @@ function renderApp(){
   if(S.secao==="inteligencia"){
     if(veInt()){
       if(S.pag==="int-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
+      if(S.pag==="int-contas"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntContas()}</main>`;return;}
       if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
@@ -11355,6 +11398,12 @@ document.addEventListener("click",async ev=>{
   if(a==="cs-pt"||a==="cs-pes"){const V=csEstado(),k=a==="cs-pt"?"pts":"pesagens";const L=V[k]=V[k]||[];if(v==="1")L.push(L.length?L[L.length-1]:"");else if(L.length>1)L.pop();csSalvar();render();return;}
   if(a==="gt-abre"){S.gtSel=v||null;render();window.scrollTo(0,0);return;}
   if(a==="gt-ir"){const el=document.getElementById(v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
+  if(a==="gc-sel"){S.gcSel=S.gcSel===+v?null:+v;render();const e=document.getElementById("gc-"+v);if(e&&S.gcSel)e.scrollIntoView({behavior:"smooth",block:"nearest"});return;}
+  if(a==="gc-f"){const [k,x]=v.split("|");S.gcF[k]=x;render();return;}
+  if(a==="gc-novo"){S.gcEd={prioridade:"B",status:"A abordar"};render();return;}
+  if(a==="gc-edit"){S.gcEd={...(S.gc||[]).find(c=>c.id===+v)};render();window.scrollTo(0,0);return;}
+  if(a==="gc-cancel"){S.gcEd=null;render();return;}
+  if(a==="gc-del"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}const {error}=await sb.from("grandes_contas").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}S.gcEd=null;S.gc=undefined;render();return;}
   if(a==="cs-prem"){csEstado().prem=v;csSalvar();render();return;}
   if(a==="cs-efic"){csEstado().efic=v;csSalvar();render();return;}
   if(a==="cs-ms"){csEstado().msModo=v;csSalvar();render();return;}
