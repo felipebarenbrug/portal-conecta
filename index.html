@@ -1549,7 +1549,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119123156";
+const APP_VER="20261119123621";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2765,10 +2765,10 @@ function vLeads(){
 }
 /* ===== Painel de performance do Inside Sales (dados de is_painel, calculados na rotina do servidor) ===== */
 const veTimeIS=()=>ehAdmin()||S.isTime===true;
-/* Regra da meta de 60 t: quem tem papel "fora_meta" (Tobias / Leite e Tobias, negociações em nome do Felipe no CRM) aparece à parte e sai da linha Time. A rotina do servidor ainda soma essa pessoa no Time, então o desconto é feito aqui ao carregar. */
+/* Regra da meta de 60 t: quem tem papel "fora_meta" (Tobias / Leite e Tobias, negociações em nome do Felipe no CRM) aparece à parte e sai da linha Time. O desconto é feito no banco por gatilho (is_painel, is_fotos, crm_painel), que marca sem_fora_meta; o desconto aqui só vale para dado antigo sem a marca. */
 const IS_FORA_META_ROT="Tobias (Leite e Tobias)";
 function isSubtrai(t,x){if(!t||!x||typeof t!=="object"||typeof x!=="object"||Array.isArray(t))return;for(const k of Object.keys(x)){const v=x[k];if(typeof v==="number"&&typeof t[k]==="number")t[k]=Math.round((t[k]-v)*100)/100;else if(v&&typeof v==="object"&&!Array.isArray(v)&&t[k]&&typeof t[k]==="object")isSubtrai(t[k],v);}}
-function isTiraForaMeta(){const T=S.isp&&S.isp.Time;if(!T||T._semForaMeta)return;Object.values(S.isp).filter(r=>r.papel==="fora_meta").forEach(r=>{const d=JSON.parse(JSON.stringify(r.dados||{}));delete d.cfg;delete d.lista;isSubtrai(T.dados,d);});T._semForaMeta=true;}
+function isTiraForaMeta(){const T=S.isp&&S.isp.Time;if(!T||T._semForaMeta||((T.dados||{}).cfg||{}).sem_fora_meta)return;Object.values(S.isp).filter(r=>r.papel==="fora_meta").forEach(r=>{const d=JSON.parse(JSON.stringify(r.dados||{}));delete d.cfg;delete d.lista;isSubtrai(T.dados,d);});T._semForaMeta=true;}
 async function carregarISP(){
   try{const [a,b]=await Promise.all([sb.from("is_painel").select("*"),S.demo?Promise.resolve({data:false}):sb.rpc("is_ve_time")]);S.isTime=!!b.data;S.isp={};(a.data||[]).forEach(r=>{S.isp[r.pessoa]=r;});isTiraForaMeta();}catch(e){S.isp={};}
   if(!Object.keys(S.isp).length&&!S.crm)await carregarCRM();
@@ -4613,7 +4613,7 @@ async function atualizarLeads(prog){
   S.leadsCache=null;return `leads: ${tot} sem contato concluído${ab}`;
 }
 async function carregarCRM(){
-  if(temPerfil("Comercial Barenbrug")||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];const it=S.crm.find(x=>x.dono==="Inside Sales"),f=S.crm.find(x=>x.dono==="IS: Felipe");if(it&&f){for(const k of Object.keys(f)){if(["dono","equipe","atualizado_em"].includes(k))continue;const v=f[k];if(v!=null&&v!==""&&!isNaN(+v)&&typeof v!=="object"&&it[k]!=null&&!isNaN(+it[k]))it[k]=+it[k]-(+v);else if(v&&typeof v==="object"&&!Array.isArray(v)&&it[k]&&typeof it[k]==="object")isSubtrai(it[k],v);}}}catch(e){S.crm=[];}}
+  if(temPerfil("Comercial Barenbrug")||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];const it=S.crm.find(x=>x.dono==="Inside Sales"),f=S.crm.find(x=>x.dono==="IS: Felipe");if(it&&f&&!((it.qtd||{}).sem_fora_meta)){for(const k of Object.keys(f)){if(["dono","equipe","atualizado_em"].includes(k))continue;const v=f[k];if(v!=null&&v!==""&&!isNaN(+v)&&typeof v!=="object"&&it[k]!=null&&!isNaN(+it[k]))it[k]=+it[k]-(+v);else if(v&&typeof v==="object"&&!Array.isArray(v)&&it[k]&&typeof it[k]==="object")isSubtrai(it[k],v);}}}catch(e){S.crm=[];}}
 function vMeuCRM(){
   const m=S.crmVista==="mapa";
   return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button></div>`+(m?vMapaGeo("crm"):vMeuCRMPainel());
