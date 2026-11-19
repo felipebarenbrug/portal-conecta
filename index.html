@@ -1552,7 +1552,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119164002";
+const APP_VER="20261119164322";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3807,15 +3807,21 @@ function vInsideSales(){
   if(manager&&S.pag==="is-neg"){const L=(cfg.pessoas||[]).filter(p=>p.papel==="vendedora"||p.papel==="rampagem").flatMap(p=>((S.isp[p.p]||{}).dados||{}).lista||[]);
     return `<div><h1 class="titulo">Inside Sales · Negociações</h1><p class="sub">Negociações em andamento das vendedoras, com os alertas que pedem ação. Supervisão e carteira com RC ficam fora desta lista.</p></div>${isCabecalho(cfg,T)}<section class="bloco">${isListaHTML(L,true)}</section>${rodape}`;}
   // painel individual
-  const nomes=linhasP.filter(n=>n!=="Pré-Vendas");const alvo=manager?(S.isSel&&S.isp[S.isSel]?S.isSel:(nomes[0]||"")):(S.profile&&S.profile.is_vendedora);
+  const nomes=linhasP.filter(n=>n!=="Pré-Vendas"&&n!=="CROP Agrícola");const alvo=manager?(S.isSel&&S.isp[S.isSel]?S.isSel:(nomes[0]||"")):(S.profile&&S.profile.is_vendedora);
   const row=S.isp[alvo];
   const seletor=manager?`<div class="filtros">${nomes.map(n=>`<button class="chip" data-a="is-sel" data-v="${esc(n)}" aria-pressed="${alvo===n}">${esc(n)}</button>`).join("")}</div>`:"";
   if(!row)return `<div><h1 class="titulo">Meu painel · Inside Sales</h1></div>${seletor}<section class="bloco"><div class="vazio">${manager?"Sem dados para esta pessoa.":"Seu acesso ainda não está vinculado a uma consultora do Inside Sales ou o painel ainda não foi calculado. Fale com o administrador."}</div></section>`;
   const cfgP=cfg.safra?cfg:{meta_kg:60000,safra:["2026-07-01","2027-06-30"],cesta:["Sabiá","Cayana","Carcará","Carcará 3 kg"],regua:{1:.05,2:.15,3:.35,4:.7,5:.9},pessoas:[]};
   const L=(row.dados||{}).lista||[];const semCobr=["supervisao","fora_cobranca","fora_meta","carteira_rc"].includes(row.papel)||alvo==="CROP Agrícola";
   return `<div><h1 class="titulo">${manager?esc(alvo):"Meu painel"} · Inside Sales</h1></div>${seletor}${isCabecalho(cfgP,row)}${isPerSel(cfgP)}${vISBloco(alvo,row,cfgP,false)}
-    <section class="bloco"><h2 class="sec">${manager?"Negociações em andamento":"Minhas negociações em andamento"}</h2>${semCobr?`<p class="sub" style="margin:0 0 6px">Lista para acompanhamento: esta carteira não entra na cobrança das vendedoras.</p>`:""}${isListaHTML(L,false)}</section>${rodape}`;
+    <section class="bloco"><h2 class="sec">${manager?"Negociações em andamento":"Minhas negociações em andamento"}</h2>${semCobr?`<p class="sub" style="margin:0 0 6px">Lista para acompanhamento: esta carteira não entra na cobrança das vendedoras.</p>`:""}${isListaHTML(L,false)}</section>${isCropFelipe(alvo,cfgP,manager)}${rodape}`;
 }
+/* CROP Agrícola é conduzida pelo Felipe: aparece dentro do painel dele, não como pessoa à parte. Os números da CROP seguem no total do time. */
+function isCropFelipe(alvo,cfgP,manager){const rc=S.isp&&S.isp["CROP Agrícola"];if(!manager||alvo!=="Felipe"||!rc)return "";
+  const Lc=(rc.dados||{}).lista||[];
+  return `<div style="margin-top:18px"><span class="rot">Também sob responsabilidade do Felipe</span><h2 class="titulo" style="font-size:22px;margin:4px 0 6px">CROP Agrícola</h2><p class="sub" style="margin:0 0 10px">Canal conduzido pelo Felipe. Diferente das vendas acima, os números da CROP entram no total e na meta do time, fora das listas de cobrança das vendedoras.</p></div>
+  ${vISBloco("CROP Agrícola",rc,cfgP,false)}
+  <section class="bloco"><h2 class="sec">Negociações em andamento da CROP Agrícola</h2>${isListaHTML(Lc,false)}</section>`;}
 
 function vInsideSalesAntigo(){
   const all=S.crm,manager=veTimeIS();
