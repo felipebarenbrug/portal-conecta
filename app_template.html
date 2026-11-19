@@ -1330,6 +1330,9 @@ const SECOES=[
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
+  {id:"breve-lojinha",nome:"Lojinha de brindes",desc:"Em desenvolvimento: o pedido de brindes e materiais da marca direto pelo portal, mais simples para o time comercial e os parceiros.",ativo:false,breve:"Em desenvolvimento",perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
+  {id:"breve-solo",nome:"Análise de solo",desc:"Ideia em análise: RCs e revendas enviam pelo portal a solicitação de análise de solo dos seus clientes, como um serviço expandido da Barenbrug.",ativo:false,breve:"Em análise",perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
+  {id:"breve-at",nome:"Assistência técnica com revendas",desc:"Em desenvolvimento: gerenciamento e acompanhamento das ações de assistência técnica feitas em parceria com revendas.",ativo:false,breve:"Em desenvolvimento",perfis:["Administrador","Marketing","Comercial Barenbrug","Gestor de Revenda"]},
   {id:"guia",nome:"Guia do portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
@@ -4914,7 +4917,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -4931,7 +4934,7 @@ function vHub(){
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
   const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
-    if(!x.ativo)return `<button class="area-b" disabled><span>${x.nome}</span><span class="meta">em breve</span></button>`;
+    if(!x.ativo)return `<button class="area-b" disabled title="${esc(x.desc||"")}"><span>${x.nome}</span><span class="meta">${esc((x.breve||"em breve").toLowerCase())}</span></button>`;
     if(bloq&&!secaoLiberada(x.id))return `<button class="area-b" disabled title="Conclua os cursos obrigatórios para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
   return `${banner}${npsCard()}<div class="home">
@@ -11439,7 +11442,7 @@ function vGuia(){
   const secs=prev?SECOES.filter(x=>x.ativo&&x.id!=="guia"&&(P.secs||[]).includes(x.id)).sort((a,b)=>P.secs.indexOf(a.id)-P.secs.indexOf(b.id)):vis;
   const ir=(s,p,t)=>prev?`<span class="chip" style="cursor:default">${esc(t)}</span>`:`<button type="button" class="chip" data-a="guia-ir" data-v="${esc(s)}" data-p="${esc(p)}">${esc(t)}</button>`;
   const sel=ehAdmin()?`<section class="bloco"><h2 class="sec" style="margin:0 0 6px">Ver o guia como</h2><p class="meta" style="margin:0 0 8px">Cada pessoa vê o guia do próprio perfil, só com as áreas a que tem acesso. Use para conferir o que cada público lê.</p><div class="filtros">${Object.keys(GUIA_PERFIL).map(k=>`<button type="button" class="chip" data-a="guia-ver" data-v="${esc(k)}" aria-pressed="${(S.guiaVer||"Administrador")===k}">${esc(GUIA_PERFIL[k].t)}</button>`).join("")}</div>${prev?`<p class="meta" style="margin:8px 0 0">Prévia: áreas típicas deste perfil. As abas de cada área dependem dos acessos de cada pessoa, por isso só aparecem no guia dela.</p>`:""}</section>`:"";
-  const cards=secs.map(x=>{const ab=prev?[]:guiaAbas(x.id);const grupos=[];ab.forEach(a=>{let g=grupos.find(y=>y[0]===a.g);if(!g)grupos.push(g=[a.g,[]]);g[1].push(a);});
+  const cards=secs.filter(x=>!x.breve).map(x=>{const ab=prev?[]:guiaAbas(x.id);const grupos=[];ab.forEach(a=>{let g=grupos.find(y=>y[0]===a.g);if(!g)grupos.push(g=[a.g,[]]);g[1].push(a);});
     return `<section class="bloco guia-sec"><div class="guia-cab"><h2 class="sec" style="margin:0">${esc(x.nome)}</h2>${prev?"":`<button type="button" class="btn sec" data-a="secao" data-v="${esc(x.id)}">Abrir</button>`}</div><p style="margin:6px 0 ${ab.length?"10px":"0"}">${esc(x.desc)}</p>
     ${grupos.map(([g,L])=>`${g?`<h3 class="pgd-h" style="margin:8px 0 4px">${esc(g)}</h3>`:""}<ul class="guia-l">${L.map(a=>`<li><button type="button" class="link" data-a="guia-ir" data-v="${esc(x.id)}" data-p="${esc(a.k)}"><strong>${esc(a.t)}</strong></button>${ABA_DESC[a.k]?`<span>${esc(ABA_DESC[a.k])}</span>`:""}</li>`).join("")}</ul>`).join("")}</section>`;}).join("");
   return `<div><span class="rot">Guia do portal</span><h1 class="titulo">Como usar o Portal Conecta</h1><p class="sub">O que cada área faz e para que serve, na visão de ${esc(P.t)}. ${prev?"":"Você vê aqui só o que está liberado para você."}</p></div>
@@ -11448,6 +11451,7 @@ function vGuia(){
    ${P.rotina.length?`<h3 class="pgd-h" style="margin:12px 0 4px">Uma rotina que funciona</h3><ol class="guia-rot">${P.rotina.map(r=>`<li>${esc(r)}</li>`).join("")}</ol>`:""}
    ${P.comece.length?`<h3 class="pgd-h" style="margin:12px 0 6px">Comece por</h3><div class="filtros">${P.comece.filter(([s])=>prev||s==="gestao"?(prev||gerePessoas()):vis.some(x=>x.id===s)).map(([s,p,t])=>ir(s,p,t)).join("")}</div>`:""}</section>
   ${cards}
+  ${(()=>{const B=(prev?SECOES.filter(x=>x.breve&&(x.perfis||[]).includes(pf)):secoesVisiveis().filter(x=>x.breve));return B.length?`<section class="bloco guia-breve"><h2 class="sec" style="margin:0 0 6px">Em breve no portal</h2><p class="meta" style="margin:0 0 8px">O portal continua crescendo. Estas frentes estão em desenvolvimento ou em análise.</p><ul class="guia-l">${B.map(x=>`<li><strong>${esc(x.nome)} <span class="selo">${esc(x.breve)}</span></strong><span>${esc((d=>d.charAt(0).toUpperCase()+d.slice(1))(x.desc.replace(/^(Em desenvolvimento|Ideia em análise): /,"")))}</span></li>`).join("")}</ul></section>`:"";})()}
   <section class="bloco"><h2 class="sec" style="margin:0 0 6px">Em qualquer tela</h2><ul class="guia-l">
    <li><strong>Início</strong><span>Comunicados da Barenbrug, perguntas e respostas e o seu progresso nos cursos.</span></li>
    <li><strong>Sino no topo</strong><span>Quantas novidades chegaram desde a sua última visita.</span></li>
