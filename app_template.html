@@ -1090,6 +1090,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
  .metric .meta{text-transform:none!important;letter-spacing:0!important;font-size:12.5px;line-height:1.35}
  .metrics{gap:10px}
 }
+.fs-g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fs-c{background:#fff;border:1px solid var(--linha,#e3e8ee);border-radius:14px;padding:18px;display:grid;gap:6px;align-content:start}.fs-c strong{font-size:30px;line-height:1.1;color:var(--azul-escuro,#00557f)}.fs-r{font-weight:800;font-size:14px}.fs-a{box-shadow:inset 0 4px 0 #FFDB00}.fs-b{box-shadow:inset 0 4px 0 #00A8E2}.fs-ok{box-shadow:inset 0 4px 0 #2E8B57}.fs-al{box-shadow:inset 0 4px 0 var(--vermelho,#c0392b)}.fin-det{margin-top:6px}.fin-det>summary{cursor:pointer;font-weight:800;color:var(--azul-escuro,#00557f);padding:10px 0}@media (max-width:760px){.fs-g{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1407,6 +1408,7 @@ const SECOES=[
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
+  {id:"analise-solo",nome:"Análise de solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
   {id:"guia",nome:"Guia do portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
 ];
@@ -4991,7 +4993,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -5010,7 +5012,7 @@ function vHub(){
   const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
     if(!x.ativo)return `<button class="area-b" disabled title="${esc(x.desc||"")}"><span>${x.nome}</span><span class="meta">${esc((x.breve||"em breve").toLowerCase())}</span></button>`;
     if(bloq&&!secaoLiberada(x.id))return `<button class="area-b" disabled title="Conclua os cursos obrigatórios para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
-    return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${seta}</button>`;}).join("");
+    return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${x.emdev?`<span class="meta">em desenvolvimento</span>`:seta}</button>`;}).join("");
   return `${banner}${npsCard()}<div class="home">
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
@@ -5493,7 +5495,6 @@ function subnavRC(){
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
-    ["Em desenvolvimento",[["rc-solo","Análise de solo"]]],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
 }
@@ -6673,7 +6674,7 @@ function subnavRV(){
   }else if(ehRevenda()){
     add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
   }
-  add("Em desenvolvimento",[["rv-solo","Análise de solo"],["rv-at","Assistência técnica"]]);
+  add("Em desenvolvimento",[["rv-at","Assistência técnica"]]);
   if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
   const cur=k=>S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal");
   return navGrupos(G,"Conecta Revendas",cur);
@@ -9682,19 +9683,18 @@ function vFinConecta(C){
   return `<div><h1 class="titulo">Conecta Revendas · visão financeira</h1><p class="sub">Quanto cada revenda tem a receber, frente ao pool de ${pctTxt(Number(P.pool_rv)||0)} de todas as vendas, com exportação (${fmtK0(C.pools.rv)}). O IGDB só é devido com o PGD submetido e aprovado; o BF, só com 90% ou mais da meta.</p></div>
   ${finAvisoTopo(C)}
   <div class="aviso-est" role="note" style="margin-bottom:12px"><strong>Onde entra no resultado</strong><p>O Conecta Revendas (IGDB e Bônus de Performance) sai do custo da venda: fica embutido no custo do produto e reduz a margem bruta. Não sai do budget de Marketing, cujas outras contas (eventos, publicidade, brindes) ficam em other costs. A explicação completa está em Investimento do Marketing.</p></div>
-  <div class="metrics">
-    <div class="metric"><span>IGDB previsto na safra (pedidos encarteirados)</span><strong>${fmtK0(C.rv.igdb)}</strong><span class="meta">já faturado: ${fmtK0(C.rv.igdbFat)} · não é obrigação sem PGD aprovado</span></div>
-    <div class="metric"><span>IGDB aprovado (a reembolsar)</span><strong>${fmtK0(C.rv.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(C.rv.aprovIG)}, limitado ao IGDB do canal · campanhas de BF: ${fmtK0(C.rv.aprovBP)}</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado (validado)${inf("Soma das revendas cujos números o Marketing validou com o relatório de pedidos do BI e o Financeiro Analítico: IGDB sobre o que a revenda já pagou.")}</span><strong>${fmtK0(C.rv.igdbPago)}</strong><span class="meta">${C.rv.nPub} de ${C.canais.length} revendas validadas${C.rv.nPub?" · notas em aberto "+fmtK0(C.rv.abertoPub):""}</span></div>
-    <div class="metric"><span>BF projetado</span><strong>${fmtK0(C.rv.bonus)}</strong><span class="meta">pelo atingimento de hoje; abaixo de 90% é zero</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Provisionar (todo o IGDB + BF de quem atingiu)</span><strong>${fmtK0(C.rv.total)}</strong><span class="meta">${C.plano?finPct(C.rv.total,C.plano.pool)+" do pool previsto na safra":finPct(C.rv.total,C.pools.rv)+" do pool"} · com o PGD aprovado até hoje: ${fmtK0(C.rv.aPagar)}</span></div>
-  </div>
-  ${finBarra(C.plano?C.rv.total/C.plano.pool:C.pools.rv?C.rv.total/C.pools.rv:null,C.plano?"do pool previsto na safra":"")}
+  ${(()=>{const tot=C.rv.total,agora=C.rv.igdbPago,base=C.tot,meta=Number(P.pool_rv)||0,uso=base?tot/base:null;const ok=uso!=null&&uso<=meta;
+    return `<section class="bloco fin-simples"><div class="fs-g">
+     <div class="fs-c fs-a"><span class="fs-r">Total a provisionar na safra</span><strong>${fmtK0(tot)}</strong><span class="meta">IGDB ${fmtK0(C.rv.igdb)} + Bônus de Performance ${fmtK0(C.rv.bonus)}. É o total a pagar até o fim da safra; o BF é pago no fim.</span></div>
+     <div class="fs-c fs-b"><span class="fs-r">Disponível agora para os canais requisitarem</span><strong>${fmtK0(agora)}</strong><span class="meta">IGDB sobre o que as revendas já pagaram. É o que o Financeiro pode ter de pagar agora se um canal pedir o reembolso de uma ação aprovada.${C.rv.nPub<C.canais.length?` ${C.rv.nPub} de ${C.canais.length} revendas validadas até agora.`:""}</span></div>
+     <div class="fs-c ${ok?"fs-ok":"fs-al"}"><span class="fs-r">Conecta sobre o total faturado</span><strong>${uso==null?"—":pctTxt(uso)}</strong><span class="meta">Limite de ${pctTxt(meta)} sobre todas as vendas da safra (${fmtK0(base)}, com exportação). ${uso==null?"":ok?"Dentro do limite.":"Acima do limite."}</span></div></div>
+     ${finBarra(meta&&uso!=null?uso/meta:null,"do limite de "+pctTxt(meta))}</section>`;})()}
+  <details class="fin-det"><summary>Ver o detalhe: cenários, plano e valores por revenda</summary>
   ${rvCenariosHTML(C)}
   ${rvPlanoHTML(C)}
   <section class="bloco"><h2 class="sec">Por revenda</h2>
   ${C.canais.length?`<div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Meta atingida</th><th class="val">Sell-in na safra</th><th class="val">IGDB previsto</th><th class="val">IGDB já faturado</th><th class="val">IGDB liberado (pago)${inf("Só para revendas validadas pelo Marketing: IGDB sobre o valor que a revenda já pagou, conferido nota a nota no Financeiro.")}</th><th class="val">IGDB aprovado</th><th class="val">BF hoje</th><th class="val">A pagar (aprovado + BF)</th><th class="val">Todo IGDB + BF atual</th><th class="val">Full (meta batida)</th><th class="val">Ações aprovadas com comprovante</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="vazio">Nenhuma revenda com contrato.</div>`}
-  <p class="precos-nota">IGDB previsto: percentual do tier sobre o sell-in de híbridos e convencionais. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. Só vira pagamento pelas ações de PGD submetidas, aprovadas e comprovadas, por trimestre, até o limite do IGDB do canal (coluna IGDB aprovado). Potencial: quanto seria com todo o IGDB aprovado. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section>`;
+  <p class="precos-nota">IGDB previsto: percentual do tier sobre o sell-in de híbridos e convencionais. Volumes: pedidos encarteirados (ganhos no CRM). O IGDB e o BF só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. Só vira pagamento pelas ações de PGD submetidas, aprovadas e comprovadas, por trimestre, até o limite do IGDB do canal (coluna IGDB aprovado). Potencial: quanto seria com todo o IGDB aprovado. BF: só híbridos, 100% do tier com a meta batida, 70% entre 90% e 99,99%, zero abaixo, pago no fim da safra. Teto de ${fmtK0(RV_TETO)} por revenda. Os comprovantes de cada ação (fotos, contratos, notas fiscais) ficam na página da revenda, em Conecta Revendas.</p></section></details>`;
 }
 
 async function carregarMInv(){if(S.minvBusy)return;S.minvBusy=true;try{const {data,error}=await sb.rpc("mkt_investimento");S.minv=error?{erro:1}:(data||{});}catch(e){S.minv={erro:1};}S.minvBusy=false;render();}
@@ -9710,17 +9710,7 @@ function finDreHTML(T,G){
    <div class="dir-grid" style="margin-top:12px">
     <div class="dir-card"><strong>Conecta Revendas · custo da venda</strong><ul class="cond" style="margin:6px 0 0"><li>O IGDB e o Bônus de Performance só existem porque a revenda comprou: são uma condição comercial da venda, calculada em % sobre o sell-in.</li><li>Por isso ficam embutidos no custo do produto vendido e reduzem a <strong>margem bruta</strong> (gross margin), antes das despesas.</li><li>Sobem e descem com o volume: mais venda pelos canais, mais Conecta.</li><li>Na prática, funcionam como parte do preço líquido que a Barenbrug recebe da revenda.</li></ul></div>
     <div class="dir-card"><strong>Demais contas do Marketing · other costs</strong><ul class="cond" style="margin:6px 0 0"><li>Eventos (1108), publicidade (1119) e brindes (1221) saem do budget de Marketing, na linha de other costs.</li><li>São despesa operacional: entram <strong>depois</strong> da margem bruta e não mudam o custo do produto.</li><li>São um orçamento aprovado para a safra: não dependem de uma venda específica.</li><li>É este valor que se compara com o budget de Marketing e com o % de Marketing sobre as vendas.</li></ul></div></div>
-   <h3 style="margin:16px 0 6px">O caminho na DRE</h3>
-   <ol class="dre">${L("Receita bruta","vendas faturadas")}${L("(−) Deduções","impostos sobre a venda, devoluções e descontos")}${L("= Receita líquida","","dre-sub")}${L("(−) Custo do produto vendido","aqui entra o Conecta Revendas (IGDB e Bônus de Performance)","dre-cv")}${L("= Margem bruta (gross margin)","","dre-sub")}${L("(−) Despesas operacionais","aqui entram os other costs do Marketing: eventos, publicidade, brindes","dre-oc")}${L("= EBITDA","resultado da operação, antes de depreciação, juros e impostos sobre o lucro","dre-sub")}${L("(−) Depreciação, amortização, juros e IR","")}${L("= Lucro líquido","","dre-sub")}</ol>
-   <h3 style="margin:16px 0 6px">A diferença em números (exemplo)</h3>
-   <p class="meta" style="margin:0 0 6px">Venda de R$ 1.000.000, custo do produto de R$ 600.000, R$ 50.000 de Conecta e R$ 50.000 de outras contas do Marketing.</p>
-   <div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Conecta no custo da venda (como é)</th><th class="val">Se o Conecta fosse despesa de Marketing</th></tr></thead><tbody>
-    <tr><td>Receita líquida</td><td class="val">R$ 1.000.000</td><td class="val">R$ 1.000.000</td></tr>
-    <tr><td>(−) Custo do produto + Conecta</td><td class="val">R$ 650.000</td><td class="val">R$ 600.000</td></tr>
-    <tr><td><strong>Margem bruta</strong></td><td class="val"><strong>R$ 350.000 (35%)</strong></td><td class="val"><strong>R$ 400.000 (40%)</strong></td></tr>
-    <tr><td>(−) Despesas de Marketing</td><td class="val">R$ 50.000</td><td class="val">R$ 100.000</td></tr>
-    <tr><td><strong>EBITDA</strong></td><td class="val"><strong>R$ 300.000 (30%)</strong></td><td class="val"><strong>R$ 300.000 (30%)</strong></td></tr></tbody></table></div>
-   <p class="precos-nota">O EBITDA é o mesmo nos dois casos: o dinheiro que sai é o mesmo. O que muda é a leitura. Com o Conecta no custo da venda, a margem bruta mostra o quanto a venda pelos canais rende de verdade, já descontado o incentivo, e o budget de Marketing mostra só o que o Marketing decide investir. Somar os dois como "gasto de Marketing" inflaria o % de Marketing sobre as vendas e esconderia o custo real de vender pelos canais.</p></section>`;}
+  </section>`;}
 function vFinInvest(C){
   if(S.minv===undefined){carregarMInv();return `<div class="carregando">Carregando o investimento do Marketing…</div>`;}
   const I=S.minv||{};if(I.erro)return `<div class="vazio">Não foi possível ler o orçamento do Marketing agora.</div>`;
@@ -11728,6 +11718,7 @@ function renderApp(){
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
+  if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de solo")+`<main>${vEmDev("solo")}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
   if(S.secao==="duvidas"){
