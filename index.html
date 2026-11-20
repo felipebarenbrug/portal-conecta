@@ -1311,7 +1311,7 @@ const ETAPAS=[
  {id:"qualcapim",n:"Qual capim encaixa melhor na sua fazenda?",d:"Posicionamento comercial: diagnosticar o cliente, responder objeções e indicar Sabiá, Cayana ou Carcará para cada sistema.",
   v:[{t:"Qual capim encaixa melhor na sua fazenda?",yt:"GZlCjclo2mE"}],mat:[],quiz:[]},
  {id:"vender",n:"Como vender",d:"Objeções, preço e argumentação.",
-  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Tabela de preços — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Crédito do pedido (guia do RC)",tipo:"Guia",pagina:"rc-credito"}],
+  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Tabela de preços — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Crédito do pedido (na Tabela de preços)",tipo:"Guia",pagina:"precos"}],
   quiz:[q("O que avaliar antes de indicar um cultivar?",["Só o preço do saco","Solo, sistema e janela de plantio do produtor","A cor da embalagem"]),
         q("Peso do saco de Sabiá, Cayana e Carcará?",["3 kg","10 kg","25 kg"]),
         q("A comunicação pode citar cultivares concorrentes?",["Não","Sim, sempre","Sim, nos impressos"])]},
@@ -1631,7 +1631,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261119183851";
+const APP_VER="20261120103758";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5312,17 +5312,6 @@ function vPrecos(){
   const linhas=PRECOS.map(p=>`<tr><td class="cult">${p.cult}</td><td>${p.cod}</td><td>${esc(p.cat)}</td><td>${p.trat}</td><td>${p.emb}</td>${p.v.map((x,i)=>`<td class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${x}</td>`).join("")}</tr>`).join("");
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
   const polc=polHTML("pol_comercial");
-  const coH=(()=>{if(!(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing")||temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital")))return "";
-    if(S.coRes===undefined){S.coRes=null;(async()=>{try{const {data}=await sb.rpc("cliente_oculto_resumo");S.coRes=Array.isArray(data)?data:[];}catch(e){S.coRes=[];}render();})();}
-    const D=S.coRes;if(!D||!D.length)return "";const cults=[...new Set(D.map(x=>x.cult))].sort();
-    const num=t=>parseFloat(String(t||"").replace(/\./g,"").replace(",","."))||0;const r2=x=>"R$ "+(+x).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-    const lin=cults.map(k=>{const L=D.filter(x=>x.cult===k).sort((a,b)=>a.rodada-b.rodada),u=L[L.length-1],a=L.length>1?L[L.length-2]:null;
-      const t=(PRECOS.find(p=>p.cult===k)||{}).v;const tab=t?num(t[PRECOS_MES_ATUAL]):0;
-      return `<tr><td><strong>${esc(k)}</strong></td><td class="val">${tab?r2(tab):"—"}</td><td class="val"><strong>${r2(u.med)}</strong>${a?`<span class="meta" style="display:block">${a.rodada}ª rodada: ${r2(a.med)}</span>`:""}</td><td class="val">${r2(u.min)} a ${r2(u.max)}</td><td class="val">${u.n}</td><td class="val">${tab?((u.med/tab-1)*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—"}</td></tr>`;}).join("");
-    const ru=Math.max(...D.map(x=>x.rodada));
-    return `<section class="bloco"><h2 class="sec">Preço praticado pelos canais (cliente oculto)${inf("Preço por kg que os canais do Conecta cobram do produtor, levantado no cliente oculto. Comparado com a tabela ao produtor do mês atual. Visível só para a equipe Barenbrug.")}</h2>
-      <div class="tab"><table class="sim-t"><thead><tr><th>Cultivar</th><th class="val">Tabela (${esc(PRECOS_MESES[PRECOS_MES_ATUAL]||"")})</th><th class="val">Média dos canais · ${ru}ª rodada</th><th class="val">Faixa</th><th class="val">Canais</th><th class="val">Média vs tabela</th></tr></thead><tbody>${lin}</tbody></table></div>
-      <p class="meta" style="margin:6px 0 0">Uso interno: não aparece para RCs e revendas. A margem de cada canal está em Inteligência, Preços dos canais.</p></section>`;})();
   return `${voltar}
   <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Tabela de preços</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
   ${S.tpEd&&tpPodeEditar()?`<section class="bloco"><h2 class="sec">Editar a tabela</h2>${tpEditor()}</section>`:`
@@ -5339,8 +5328,8 @@ function vPrecos(){
     <li>Descontos por canal de vendas seguem a política comercial vigente, resumida logo abaixo.</li>
     <li>Inadimplência: multa de 2,0% + juros de mora de 2,0% ao mês, pro rata die.</li>
     <li>Esta tabela cancela as versões anteriores e pode ser revogada a qualquer momento, sem aviso prévio.</li></ul></div></div>
-  ${coH}
   ${polc}
+  ${polHTML("pol_credito")}
   `;
 }
 /* ---------- Conecta RC ---------- */
@@ -5501,7 +5490,7 @@ function subnavRC(){
   if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
-  const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-credito","Crédito do pedido"],["rc-faq","Perguntas frequentes"]]],
+  const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
     ["Em desenvolvimento",[["rc-solo","Análise de solo"]]],
@@ -11507,7 +11496,7 @@ function vEmDev(k){const D=EM_DEV[k];if(!D)return "";
 /* ---------- Guia do portal: o que cada área faz, com visão por perfil ---------- */
 const GUIA_PERFIL={
  "RC":{t:"RC de campo",serve:"O portal é o seu apoio de campo: treinar os híbridos, montar a proposta, enviar a negociação e acompanhar o seu resultado no Conecta RC.",
-  rotina:["Antes da visita: veja a Tabela de preços e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
+  rotina:["Antes da visita: veja a Tabela de preços e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira na Tabela de preços o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
   comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"],["conecta-rc","rc-pedido","Enviar negociação"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Franqueado Nutron":{t:"Franqueado Nutron",serve:"O portal reúne o treinamento dos híbridos, a tabela de preços e os materiais com a marca para você vender Barenbrug na sua franquia.",
@@ -11515,7 +11504,7 @@ const GUIA_PERFIL={
   comece:[["academia","trilha","Cursos da Academia"],["conecta-rc","rc-apresentacao","Como funciona o Conecta RC"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","mural","duvidas","mercado"]},
  "Assessor de Vendas Digital":{t:"RC digital",serve:"O portal é o seu apoio para vender à distância: treinamento, proposta, envio da negociação e acompanhamento no Conecta RC.",
-  rotina:["Ao começar o dia: LeadsBaren e as negociações em andamento.","Na conversa: Objeções do produtor, Comunicação e encantamento e Casos de sucesso.","Ao fechar: envie a negociação e confira o que o pedido precisa para o crédito."],
+  rotina:["Ao começar o dia: LeadsBaren e as negociações em andamento.","Na conversa: Objeções do produtor, Comunicação e encantamento e Casos de sucesso.","Ao fechar: envie a negociação e confira na Tabela de preços o que o pedido precisa para o crédito."],
   comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Inside Sales":{t:"Inside Sales",serve:"O portal organiza o seu dia: o que fazer hoje e em que ordem, as negociações que pedem ação, o treinamento e as ferramentas para cada conversa.",
@@ -11612,7 +11601,7 @@ function render(){renderApp();if(LANG()==="es")traduzES(document.getElementById(
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-credito","Crédito do pedido"],["rc-faq","Perguntas frequentes"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-faq","Perguntas frequentes"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
