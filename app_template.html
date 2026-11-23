@@ -5597,7 +5597,7 @@ function subnavRC(){
 const veMeusRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
 const rcNorm=t=>finNorm(String(t||"")).replace(/[^a-z0-9 ]/g," ").replace(/\b(ltda|eireli|me|epp|s a|sa)\b/g," ").replace(/\s+/g," ").trim();
 async function carregarMeusRC(){if(S.mrcBusy)return;S.mrcBusy=true;
-  try{const [c,pd,m]=await Promise.all([sb.from("rc_contratos").select("codigo_erp,nome,crm_nomes,modelo,status,cidade,uf,regional,comercial_nome,assinado_em,core_venc"),sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt"),sb.from("crm_mapa").select("st,rep,nome,cidade,uf,kg_h,kg_c,rs,fat,dono").neq("rep","")]);
+  try{const [c,pd,m]=await Promise.all([sb.from("rc_contratos").select("codigo_erp,nome,crm_nomes,modelo,status,cidade,uf,regional,comercial_nome,assinado_em,core_venc"),sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt"),sb.from("crm_mapa").select("st,rep,nome,cidade,uf,kg_h,kg_c,rs,fat,dono,resp").neq("rep","")]);
     S.mrc={ct:c.data||[],ped:pd.data||[],neg:m.data||[]};}catch(e){S.mrc={ct:[],ped:[],neg:[]};}
   if(!RC_RANKING.length){try{await carregarRanking();}catch(e){}}
   S.mrcBusy=false;render();}
@@ -5621,6 +5621,8 @@ function vRCMeus(){
       ${x.ab.length?`<h3 class="sec" style="font-size:15px;margin:6px 0">Negociações em aberto no CRM</h3><div class="tab"><table class="sim-t"><thead><tr><th>Cliente</th><th>Cidade</th><th class="val">Híbridos</th><th class="val">Valor</th><th>Previsão</th></tr></thead><tbody>${x.ab.sort((a,b)=>(+b.kg_h||0)-(+a.kg_h||0)).map(n=>`<tr><td>${esc(n.nome||"—")}</td><td>${esc([n.cidade,n.uf].filter(Boolean).join("/"))}</td><td class="val">${kg(n.kg_h)}</td><td class="val">${fmtK0(n.rs)}</td><td>${n.fat?esc(String(n.fat).slice(0,10).split("-").reverse().join("/")):"—"}</td></tr>`).join("")}</tbody></table></div>`:`<p class="meta">Nenhuma negociação em aberto no CRM com este RC.</p>`}
       ${x.vd.length?`<p class="meta">${x.vd.length} ${x.vd.length===1?"venda ganha":"vendas ganhas"} na safra no CRM${x.pd.length?" · "+x.pd.length+" itens de pedido":""}.</p>`:""}
       ${!x.nm.length?`<p class="dica">Este RC ainda não aparece no CRM com o mesmo nome do contrato, então as vendas não foram ligadas.</p>`:""}
+      ${adm?(()=>{const dn=n=>{let r=String(n.resp||"").trim();const d=String(n.dono||"").trim();const it=IS_TIME.find(t=>finNorm(t[0])===finNorm(r));if(it)r=it[1];return r&&!/^inside sales$/i.test(r)?r:d;};const cont={};x.ab.forEach(n=>{const k=dn(n);if(k)cont[k]=(cont[k]||0)+1;});const top=Object.entries(cont).sort((a,b)=>b[1]-a[1])[0];
+        return top&&finNorm(top[0])!==finNorm(c.comercial_nome||"")?`<div class="is-alerta" style="margin:8px 0"><strong>No CRM, as negociações em aberto deste RC estão com ${esc(top[0])}</strong> (${top[1]} de ${x.ab.length}). No contrato, o responsável é ${esc(c.comercial_nome||"ninguém")}.<div class="acoes" style="margin-top:6px"><button class="btn sec" data-a="mrc-passar" data-v="${esc(c.codigo_erp+"|"+top[0])}">Passar o RC para ${esc(top[0])}</button></div></div>`:"";})():""}
       <p class="meta">${c.assinado_em?"Contrato assinado em "+esc(String(c.assinado_em).slice(0,10).split("-").reverse().join("/"))+". ":""}${c.core_venc?"CORE vence em "+esc(String(c.core_venc).slice(0,10).split("-").reverse().join("/"))+".":""}</p></details>`;};
   return `<div><h1 class="titulo">${adm?"RCs por comercial":"Meus RCs"}</h1><p class="sub">RCs com contrato em que ${adm?"cada comercial":"você"} é o responsável: vendas de híbridos da safra 26/27 pela data de faturamento, negociações em aberto e pedidos no CRM. Aparecem mesmo os RCs que ainda não têm acesso ao portal.</p></div>
   ${adm||meus.length>1?`<div class="filtros" style="margin-bottom:10px">${(adm?coms:meus).map(n=>`<button class="chip" data-a="mrc-sel" data-v="${esc(n)}" aria-pressed="${sel===n}">${esc(n===eu&&!adm?"Os meus":n==="Inside Sales"?"Time Inside Sales":n)}</button>`).join("")}</div>`:""}
@@ -12627,6 +12629,8 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
   if(a==="pag"){S.ngAb={};irPag(v);}
   if(a==="ver-como"){await verComoEntrar(v);return;}
+  if(a==="mrc-passar"){if(!ehAdmin())return;const k=v.indexOf("|");const cod=v.slice(0,k),novo=v.slice(k+1);b.disabled=true;const {data,error}=await sb.from("rc_contratos").update({comercial_nome:novo}).eq("codigo_erp",cod).select("codigo_erp,comercial_nome").maybeSingle();
+    if(error||!data||data.comercial_nome!==novo){b.disabled=false;aviso("Esta alteração NÃO foi gravada. Tente de novo.");return;}S.mrc=null;S.rcContr=null;S.mrcSel=novo;aviso("RC passado para "+novo+".");render();return;}
   if(a==="vc-pf"){S.vcPf=v;render();return;}
   if(a==="ver-como-sair"){verComoSair();return;}
   if(a==="fin-resp"){S.finResp=v||null;render();return;}
