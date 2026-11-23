@@ -450,6 +450,15 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .st-tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap;background:var(--papel);color:var(--preto)}
 .st-amarelo{background:var(--amarelo-claro);color:var(--preto)}.st-azul{background:var(--azul-claro);color:var(--azul-escuro)}.st-verde{background:#E3F4E8;color:#1E6B34}.st-vermelho{background:#FDE7E7;color:#A12B2B}.st-cinza{background:var(--papel);color:var(--apagado)}
 .mk-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mk-barra input[type=search]{flex:1 1 240px;min-width:0}.mk-barra select{flex:0 1 220px}
+.mk-qw{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,280px);gap:12px;align-items:start}
+@media (max-width:820px){.mk-qw{grid-template-columns:minmax(0,1fr)}}
+.mk-qw .mk-quadro{grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
+.mk-qw .mk-col header{flex-direction:column;align-items:flex-start;gap:0}
+.mk-cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mk-cl button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;width:100%;padding:7px 8px;border-radius:6px;font-size:14px;line-height:1.3}
+.mk-cl button:hover,.mk-cl button:focus-visible{background:var(--branco);outline:2px solid transparent}
+.mk-cl button:focus-visible{box-shadow:0 0 0 2px var(--azul)}
+.mk-cl li+li{border-top:1px solid var(--linha,rgba(0,0,0,.08))}
 .mk-quadro{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;align-items:start}
 .mk-col{background:var(--papel);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .mk-col header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:2px 4px}
@@ -1976,11 +1985,20 @@ async function carregarMeuContrato(){if(S.meuContrBusy)return;S.meuContrBusy=tru
 /* ---------- shell ---------- */
 function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes as telas de senha e de cadastro"+(pirDevo()?" e o perfil do representante":"")+"."}</span><span class="meta" style="color:#ddd">Modo de visualização: nada do que você fizer aqui é salvo.</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
 /* No modo "ver como", nada é gravado: o cliente do banco passa a recusar escrita, funções, arquivos e mudanças de login. */
+/* Na visão "ver como", as leituras ainda saem com o login do administrador; aqui o portal reaplica as mesmas regras do banco para as tabelas do CRM, para mostrar só o que a pessoa veria. Na dúvida, mostra menos. */
+function vcFiltra(tb,b){const p=S.profile||{};const pf=[p.perfil,...(p.perfis||[])].filter(Boolean);const adm=p.nivel==="Administrador"||pf.includes("Administrador");const ve=adm||pf.includes("Comercial Barenbrug");const intel=Array.isArray(p.acessos)&&p.acessos.includes("inteligencia");
+  const q=v=>'"'+String(v).replace(/\\/g,"\\\\").replace(/"/g,'\\"')+'"';const NADA="__ver_como_sem_acesso__";
+  if(tb==="crm_mapa"){if(adm||intel)return b;const o=[];if(p.crm_dono)o.push("dono.eq."+q(p.crm_dono));if(p.rc_crm)o.push("rep.eq."+q(p.rc_crm));return o.length?b.or(o.join(",")):b.eq("dono",NADA);}
+  if(tb==="mkt_acoes"){if(adm||pf.includes("Marketing"))return b;const id=p.id||NADA;return /^[0-9a-f-]{36}$/.test(id)?b.or(`envolvidos.cs.{${id}},responsavel.eq.${id},solicitante.eq.${id}`):b.eq("titulo",NADA);}
+  if(tb==="crm_painel"){if(adm)return b;return b.eq("dono",p.crm_dono||NADA);}
+  if(tb==="rc_pedidos"){if(ve)return b;return b.eq("rep",p.rc_crm||NADA);}
+  if(tb==="rc_contratos"||tb==="crm_chaves"){if(ve||intel||pf.includes("Financeiro"))return b;return b.eq(tb==="crm_chaves"?"chave":"nome",NADA);}
+  return b;}
 function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visualização: nada é salvo."}};
   const nada=()=>{const p=new Proxy(function(){},{get:(t,k)=>k==="then"?(ok)=>Promise.resolve(bloq).then(ok):()=>p,apply:()=>p});return p;};
   const ESCR=["insert","update","upsert","delete"];const RPC_LER=/^(minhas_|meus_|meu_|lead_out_lista|lead_out_resumo|pj_pessoas|pj_vejo|mkt_pessoas|evt_|adm_lead_out_stats|adm_lead_out_acessos|crm_donos|financeiro_dados|fin_mkt_acoes|is_|vejo_|tm_|int_|rv_le|rv_pub)/;
   return new Proxy(real,{get(t,k){
-    if(k==="from")return tb=>new Proxy(t.from(tb),{get(q,m){return ESCR.includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return nada();}):(typeof q[m]==="function"?q[m].bind(q):q[m]);}});
+    if(k==="from")return tb=>new Proxy(t.from(tb),{get(q,m){if(m==="select")return (...a)=>vcFiltra(tb,q.select(...a));return ESCR.includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return nada();}):(typeof q[m]==="function"?q[m].bind(q):q[m]);}});
     if(k==="rpc")return (n,a)=>RPC_LER.test(String(n))?t.rpc(n,a):(aviso("Modo de visualização: nada é salvo."),nada());
     if(k==="functions")return {invoke:()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}};
     if(k==="storage")return {from:b=>{const r=t.storage.from(b);return new Proxy(r,{get(o,m){return ["upload","remove","update","move","copy"].includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}):(typeof o[m]==="function"?o[m].bind(o):o[m]);}});}};
@@ -1989,9 +2007,9 @@ function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visua
 async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
   S._real={profile:S.profile,perfil:S.perfil,perfis:S.perfis,nivel:S.nivel,secao:S.secao,pag:S.pag,adminUser:S.adminUser};
   S.profile={...t,precisa_trocar_senha:false};S.perfil=t.perfil||"RC";aplicaPerfis(t);S._sbVC=sb;sb=vcSbSoLeitura(sb);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
-  ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
+  ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont","crmOrig","isMapa","mrc"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"||k==="crmOrig"||k==="isMapa"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
 function verComoSair(){const R=S._real;if(!R)return;if(S._sbVC){sb=S._sbVC;S._sbVC=null;}S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
-  ["crm","leadsCache","canais","fin","loOk","msgCont"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
+  ["crm","leadsCache","canais","fin","loOk","msgCont","mrc"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd","crmOrig","isMapa"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
 function cabecalho0(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${msgBotao()}${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
@@ -10798,8 +10816,10 @@ function vAcoesQuadro(){
   ${g?`<p class="meta" style="margin:0">${L.filter(mkConta).length} ações · ${fmtK0(tot)} no total (realizado quando houver, senão previsto)</p>`:""}
   ${g&&frc&&frc!=="sem"?(()=>{const X=S.mk.filter(a=>!a.agrupador&&finNorm(a.rc_envolvido||"")===finNorm(frc)&&a.status!=="Recusada"&&a.status!=="Cancelada");const ped=X.reduce((t,a)=>t+(+a.verba_pedida||0),0);const an=X.filter(a=>a.status==="Em análise"||a.status==="Solicitada");const ap=X.filter(a=>!an.includes(a));const sAp=ap.reduce((t,a)=>t+mkCusto(a),0);
     return `<section class="bloco" style="margin:8px 0;box-shadow:inset 4px 0 0 var(--amarelo)"><h2 class="sec" style="margin:0 0 6px">${esc(frc)}: soma das ações com este RC envolvido</h2><div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="metric"><span>Pedido pelo RC</span><strong>${fmtK0(ped)}</strong><span class="meta">${X.length} ${X.length===1?"ação":"ações"}</span></div><div class="metric"><span>Aprovado</span><strong>${fmtK0(sAp)}</strong><span class="meta">${ap.length} ${ap.length===1?"ação aprovada":"ações aprovadas"}</span></div><div class="metric"><span>Ainda em análise</span><strong>${an.length}</strong><span class="meta">${an.length?"somam "+fmtK0(an.reduce((t,a)=>t+(+a.verba_pedida||0),0))+" pedidos":"nada pendente"}</span></div></div><p class="meta" style="margin:6px 0 0">Aprovado é o valor previsto (ou realizado) de cada cartão que já saiu de Em análise. Canceladas e recusadas ficam fora da conta.</p></section>`;})():""}
-  <div class="mk-quadro">${cols.map(st=>{const xs=L.filter(a=>a.status===st);const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
-    return `<section class="mk-col" aria-label="${esc(st)}"><header><strong>${esc(st)}</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.map(mkCardHTML).join("")||`<div class="vazio" style="padding:12px">Nada aqui.</div>`}</section>`;}).join("")}</div>`;
+  <div class="mk-qw"><div class="mk-quadro">${cols.filter(st=>st!=="Concluída").map(st=>{const xs=L.filter(a=>a.status===st);const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
+    return `<section class="mk-col" aria-label="${esc(st)}"><header><strong>${esc(st)}</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.map(mkCardHTML).join("")||`<div class="vazio" style="padding:12px">Nada aqui.</div>`}</section>`;}).join("")}</div>
+  ${(()=>{const xs=L.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
+    return `<section class="mk-col mk-conc" aria-label="Concluída"><header><strong>Concluída</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.length?`<ul class="mk-cl">${xs.map(a=>`<li><button data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong><span class="meta">${esc([a.inicio?mkData(a.fim||a.inicio):"",a.responsavel_nome?String(a.responsavel_nome).split(" ")[0]:""].filter(Boolean).join(" · "))}${g?" · "+fmtK0(mkCusto(a)):""}</span></button></li>`).join("")}</ul>`:`<div class="vazio" style="padding:12px">Nada concluído ainda.</div>`}</section>`;})()}</div>`;
 }
 function mkFormHTML(a){
   const P=S.mkPessoas||[],env=new Set(a.envolvidos||[]);
