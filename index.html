@@ -1676,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123124017";
+const APP_VER="20261123133040";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -10741,12 +10741,12 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
 function vAcoesQuadro(){
   if(!S.mk)return `<div class="carregando">Carregando as ações…</div>`;
   const g=ehMkt(),busca=finNorm(S.mkBusca||""),ft=S.mkTipo||"Todos";
-  const fr=S.mkResp||"",fd=S.mkMes||"";
+  const fr=S.mkResp||"",fd=S.mkMes||"",frc=S.mkRcF||"";
   const resps=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>a.responsavel_nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const meses=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>String(a.inicio||"").slice(0,7)).filter(Boolean))].sort();
   const mesNome=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
   const okData=a=>{if(!fd)return true;if(fd==="sem")return !a.inicio;if(fd==="passou")return !!a.inicio&&String(a.fim||a.inicio)<mkHoje();if(fd==="vem")return !!a.inicio&&String(a.fim||a.inicio)>=mkHoje();const i=String(a.inicio||"").slice(0,7),f=String(a.fim||a.inicio||"").slice(0,7);return !!i&&i<=fd&&f>=fd;};
-  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&(!frc||(frc==="sem"?!a.rc_envolvido:finNorm(a.rc_envolvido||"")===finNorm(frc)))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
   const verCanc=!!S.mkCanc;const cols=MK_COLS.filter(s=>s!=="Cancelada"||verCanc);
   const tot=L.filter(mkConta).reduce((t,a)=>t+mkCusto(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
@@ -10754,9 +10754,10 @@ function vAcoesQuadro(){
     <input type="search" id="mk_busca" placeholder="Buscar ação, local ou pessoa" value="${esc(S.mkBusca||"")}" aria-label="Buscar">
     <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...MK_TIPOS].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
     <select id="mk_resp_f" aria-label="Responsável"><option value="">Todos os responsáveis</option><option value="sem" ${fr==="sem"?"selected":""}>Sem responsável</option>${resps.map(n=>`<option ${fr===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
+    ${(()=>{const R=[...new Set(S.mk.map(a=>a.rc_envolvido).filter(Boolean))].sort((a,b)=>a.localeCompare(b));return R.length?`<select id="mk_rc_f" aria-label="RC envolvido"><option value="">Todos os RCs</option><option value="sem" ${frc==="sem"?"selected":""}>Sem RC</option>${R.map(n=>`<option ${frc===n?"selected":""}>${esc(n)}${(()=>{const k=S.mk.filter(a=>a.rc_envolvido===n&&a.status!=="Solicitada"&&a.status!=="Recusada"&&!a.agrupador).length;return k?" ("+k+")":"";})()}</option>`).join("")}</select>`:"";})()}
     <select id="mk_mes_f" aria-label="Data da ação"><option value="">Qualquer data</option><option value="vem" ${fd==="vem"?"selected":""}>Daqui para a frente</option><option value="passou" ${fd==="passou"?"selected":""}>Já passaram</option>${meses.map(m=>`<option value="${m}" ${fd===m?"selected":""}>${mesNome(m)}</option>`).join("")}<option value="sem" ${fd==="sem"?"selected":""}>Sem data</option></select>
     <select id="mk_sit_f" aria-label="Situação">${MK_SIT_F.map(([k,t])=>`<option value="${k}" ${(S.mkSitF||"")===k?"selected":""}>${t}</option>`).join("")}</select>
-    ${fr||fd||S.mkSitF||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
+    ${fr||fd||frc||S.mkSitF||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
     <label class="check"><input type="checkbox" data-a="mk-canc" ${verCanc?"checked":""}> Mostrar canceladas</label>
     ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}
   </div>
@@ -10779,13 +10780,17 @@ function mkFormHTML(a){
       <div><label for="mk_pg">Pago em</label><input id="mk_pg" type="date" value="${esc(a.pago_em||"")}"></div></div>
     ${mkLinhas(a).length?`<p class="meta" style="margin:0">O previsto e o realizado são a soma dos custos lançados no cartão da ação.</p>`:""}<div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
       <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
-    <div><label for="mk_resp">Responsável</label><select id="mk_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)} · ${esc(p.perfil||"")}</option>`).join("")}</select></div>
+    <div class="dupla"><div><label for="mk_resp">Responsável comercial</label><select id="mk_resp"><option value="">—</option>${(()=>{const ehC=p=>p.perfil==="Comercial Barenbrug"||(Array.isArray(p.perfis)&&p.perfis.includes("Comercial Barenbrug"));const o=p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)}${ehC(p)?"":" · "+esc(p.perfil||"")}</option>`;const C=P.filter(ehC),O=P.filter(p=>!ehC(p));return `<optgroup label="Comercial Barenbrug">${C.map(o).join("")}</optgroup>${O.length?`<optgroup label="Outros (Marketing, Inside Sales)">${O.map(o).join("")}</optgroup>`:""}`;})()}</select><span class="meta">O comercial Barenbrug que responde pela ação.</span></div>
+      <div><label for="mk_rc">RC envolvido</label><input id="mk_rc" list="mk_rc_l" maxlength="120" value="${esc(a.rc_envolvido||"")}" placeholder="O RC que pediu ou participa"><datalist id="mk_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist><span class="meta">Para saber depois quantas ações cada RC teve.</span></div></div>
     <div><label>Pessoas envolvidas</label><span class="meta">Quem for marcado vê esta ação no quadro, pode comentar e anexar arquivos. O acesso à seção é liberado automaticamente.</span>
       <input type="search" id="mk_penv" placeholder="Filtrar pessoas" aria-label="Filtrar pessoas" style="margin:6px 0">
       <div class="checks mk-pessoas">${P.map(p=>`<label class="check" data-nome="${esc(finNorm(p.nome+" "+(p.perfil||"")))}"><input type="checkbox" data-mkenv="${esc(p.id)}" ${env.has(p.id)?"checked":""}> ${esc(p.nome)} <span class="meta">${esc(p.perfil||"")}</span></label>`).join("")}</div></div>
     <div class="acoes"><button class="btn" type="submit">${a.id?"Salvar":"Criar ação"}</button><button type="button" class="btn sec" data-a="${a.id?"mk-abrir":"pag"}" data-v="${a.id||"acoes-quadro"}">Cancelar</button></div>
   </form>`;
 }
+function mkRcOps(){if(S.rcContr==null&&typeof carregarContratos==="function"&&!S._mkRcLoad){S._mkRcLoad=1;try{carregarContratos();}catch(e){}}
+  const tc=t=>String(t||"").toLowerCase().replace(/\b(ltda|eireli|me|epp|s\/a|sa)\b\.?/g,"").replace(/\s+/g," ").trim().replace(/(^|\s)\S/g,x=>x.toUpperCase());
+  return [...new Set([...(S.rcContr||[]).map(c=>tc(c.nome)),...(S.mkPessoas||[]).filter(p=>p.perfil==="RC"||p.perfil==="Franqueado Nutron").map(p=>p.nome),...(S.mk||[]).map(a=>a.rc_envolvido)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
 function mkSolLinha(a){if(a.agrupador){const R=mkGrupoResumo(a);return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button><span class="meta">${esc([a.solicitante_nome?"pedido por "+a.solicitante_nome:"",R.F.length+" eventos",a.local||""].filter(Boolean).join(" · "))}</span><span class="bd-tags">${stTag("Pedido agrupado","azul")}${R.pend.length?stTag(R.pend.length+" aguardando","amarelo"):""}</span></div><div style="text-align:right"><strong class="val">${fmtK0(R.ped)}</strong><span class="meta" style="display:block">pedido</span><span class="meta" style="display:block">aprovado ${fmtK0(R.apr)}${R.ped?" ("+pctTxt(R.apr/R.ped)+")":""}</span></div></div>`;}
   const st=a.status==="Solicitada"?stTag("Aguardando o Marketing","amarelo"):a.status==="Em análise"?stTag("Em análise pelo Marketing"+(a.decidido_nome?" · "+String(a.decidido_nome).split(" ")[0]:""),"azul"):a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Cancelada"?stTag("Cancelada","cinza"):stTag("Aprovada · "+a.status,"verde");
   return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>
@@ -10819,6 +10824,7 @@ function vAcoesSolicNova(){
     <div><label for="ms_desc">Objetivo e o que o Marketing deve apoiar *</label><textarea id="ms_desc" rows="4" required maxlength="4000" placeholder="Para que é a ação, o que você espera dela e o que precisa do Marketing: verba, material, divulgação, palestrante…"></textarea></div>
     <div class="dupla"><div><label for="ms_pub">Público esperado</label><input id="ms_pub" maxlength="300" placeholder="Ex.: 40 pecuaristas da região, clientes da revenda X"></div><div><label for="ms_val">Verba pedida (R$)</label><input id="ms_val" inputmode="decimal" placeholder="0,00"><span class="meta">Deixe em branco se não precisar de verba.</span></div></div>
     <section class="mz-sol"><h3 class="pgd-h">Sobre o público e o seguimento</h3><p class="meta">Responda pensando em quem vai estar na ação e em quem atende os contatos depois. As respostas ajudam o Marketing a priorizar os pedidos da safra.</p>${mzCampos({},true)}</section>
+    <div><label for="ms_rc">RC envolvido (se houver)</label><input id="ms_rc" list="ms_rc_l" maxlength="120" placeholder="Ex.: o RC que pediu a ação"><datalist id="ms_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
     <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
 }
@@ -10842,7 +10848,7 @@ function vAcoesCard(){
     <div class="metric"><span>Valor previsto</span><strong>${fmtK0(a.valor_prev)}</strong></div>
     <div class="metric"><span>Valor realizado</span><strong>${Number(a.valor_real)>0?fmtK0(a.valor_real):"—"}</strong></div>
     ${g&&S.mkBrAcao&&S.mkBrAcao[a.id]?`<div class="metric"><span>Brindes vinculados</span><strong>${fmtK0(S.mkBrAcao[a.id])}</strong><span class="meta">requisições aprovadas</span></div>`:""}
-    <div class="metric"><span>Responsável</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong></div>
+    <div class="metric"><span>Responsável comercial</span><strong style="font-size:16px">${esc(a.responsavel_nome||"—")}</strong>${a.rc_envolvido?`<span class="meta">RC: ${esc(a.rc_envolvido)}</span>`:""}</div>
   </div>
   ${a.descricao||g?`<section class="bloco"><h2 class="sec">Descrição${g?` <button class="link" data-a="mk-editar" style="font-size:14px;margin-left:8px">editar</button>`:""}</h2>${a.descricao?`<p style="white-space:pre-wrap;margin:0">${esc(a.descricao)}</p>`:`<div class="vazio">Sem descrição.</div>`}</section>`:""}
   ${a.agrupador?"":vMkCustos(a)+vMkSementes(a)+vMkVitrines(a)+vMkFonte(a)}${mkChecklistHTML(a)}
@@ -10984,7 +10990,7 @@ function vAcoesCal(){
 }
 function mkLinhaHTML(a){const c=mkChk(a),g=ehMkt();
   return `<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong></button>
-    <span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"sem data",a.local||"",a.responsavel_nome?"resp. "+a.responsavel_nome:"",a.status].filter(Boolean).join(" · "))}</span>
+    <span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"sem data",a.local||"",a.responsavel_nome?"resp. "+a.responsavel_nome:"",a.rc_envolvido?"RC "+a.rc_envolvido:"",a.status].filter(Boolean).join(" · "))}</span>
     <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):""}</span></div>
     ${g?`<strong class="val">${fmtK0(mkCusto(a))}</strong>`:""}</div>`;}
 const MK_ETAPAS=[
@@ -11592,6 +11598,7 @@ document.addEventListener("change",async ev=>{
   const t=ev.target;if(!t)return;
   if(t.id==="mk_tipo"){S.mkTipo=t.value;render();return;}
   if(t.id==="mk_resp_f"){S.mkResp=t.value;render();return;}
+  if(t.id==="mk_rc_f"){S.mkRcF=t.value.replace(/ \(\d+\)$/,"");render();return;}
   if(t.id==="mk_mes_f"){S.mkMes=t.value;render();return;}
   if(t.id==="mk_sit_f"){S.mkSitF=t.value;render();return;}
   if(t.id==="bd_cat"){S.bdCat=t.value;render();return;}
@@ -11618,7 +11625,7 @@ document.addEventListener("submit",async ev=>{
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
     const d={titulo:val("mk_tit"),tipo:val("mk_tp"),programa:(document.getElementById("mk_prog")?val("mk_prog"):undefined),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
-      fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
+      fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,rc_envolvido:val("mk_rc")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
     if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.fin==="Paga"&&!d.pago_em)d.pago_em=mkHoje();if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
     if(btn)btn.disabled=true;const id=f.dataset.id?+f.dataset.id:null;
     const orig=id?(S.mk||[]).find(x=>x.id===id):null;if(orig&&(orig.status==="Solicitada"||orig.status==="Em análise")){d.status=orig.status;d.valor_prev=orig.valor_prev;d.fin=orig.fin;}
@@ -11628,6 +11635,7 @@ document.addEventListener("submit",async ev=>{
   if(f.id==="f-mk-solic"){const d={p_titulo:val("ms_tit"),p_tipo:val("ms_tp"),p_descricao:val("ms_desc"),p_local:val("ms_loc")||null,p_inicio:val("ms_ini")||null,p_fim:val("ms_fim")||null,p_valor:mkNum(val("ms_val"))||0,p_publico:val("ms_pub")||null,p_brindes:val("ms_br")||null,p_matriz:mzLer(f)};
     if(!d.p_titulo||!d.p_descricao){aviso("Conte o que é a ação e o objetivo.");return;}{const F=mzFaltam(d.p_matriz);if(F.length){aviso("Falta responder: "+F.join(", ")+".");return;}}if(btn)btn.disabled=true;
     const {data,error}=await sb.rpc("mkt_solicitar",d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível enviar a solicitação.");return;}
+    {const rc=val("ms_rc");if(rc&&data){try{await sb.rpc("mkt_set_rc",{p_id:+data,p_rc:rc});}catch(e){}}}
     S.mk=null;await carregarMkt();S.mkSel=data;S.pag="acoes-card";carregarMkCard(data);render();window.scrollTo(0,0);aviso("Solicitação enviada ao Marketing.");return;}
   if(f.id==="f-mk-decidir"){if(!ehMkt())return;const okv=(ev.submitter&&ev.submitter.dataset.ok);const ok=okv==="1";const v=mkNum(val("md_val"));
     const sc=val("md_sc"),sk=parseInt(String(val("md_sk")).replace(/\D/g,""))||0;if(sc&&!sk&&okv!=="0"){aviso("Informe a quantidade de sementes em kg.");return;}
@@ -12490,7 +12498,7 @@ document.addEventListener("click",async ev=>{
       const out=rvvCalcular(X.ped,X.finRows,X.hoje,S.canaisAll||[]);const rows=Object.entries(out).map(([id,o])=>({canal_id:id,canal_nome:o.canal_nome,dados:o.dados,situacao_em:rvvISO(X.hoje),fontes:a1.name+" + "+a2.name,gerado_em:new Date().toISOString()}));
       const {error}=await sb.from("rv_validacao").upsert(rows);if(error)throw error;S.rvv=undefined;aviso("Validação recalculada para "+rows.length+" canais.");render();}catch(e){aviso("Não foi possível calcular: "+(e.message||e));}b.disabled=false;if(pg)pg.textContent="";return;}
   if(a==="mk-sol-f"){S.mkSolF=v||"";render();return;}
-  if(a==="mk-limpa-f"){S.mkResp="";S.mkMes="";S.mkSitF="";S.mkTipo="Todos";S.mkBusca="";render();return;}
+  if(a==="mk-limpa-f"){S.mkResp="";S.mkRcF="";S.mkMes="";S.mkSitF="";S.mkTipo="Todos";S.mkBusca="";render();return;}
   if(a==="mfa-copiar"){const k=(S.mfa&&S.mfa.secret)||"";try{await navigator.clipboard.writeText(k);aviso("Chave copiada. Cole no aplicativo autenticador.");}catch(e){aviso("Não deu para copiar: selecione a chave na tela e copie.");}return;}
   if(a==="sair"){if(S.demo){await sbReal.auth.signOut();location.reload();return;}await sb.auth.signOut();S={user:null,profile:null,perfil:null,feitas:[],notas:{},secao:null,pag:"hub",etapa:null,video:0,vistos:{},res:null,fCult:"Todos",fTipo:"Todos",busca:"",equipe:null,_erro:null,novoAcesso:null,_erroCriar:null,form:null,formAlvo:"form",cidadesCache:{},adminUser:null,adminForm:null,confirmExcluir:false,canais:null,acoesCanal:{},canalSel:null,acaoSel:null,editCanal:false,novaAcao:false};render();}
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
