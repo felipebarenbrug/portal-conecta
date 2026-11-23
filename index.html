@@ -1707,7 +1707,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123173530";
+const APP_VER="20261123174307";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7393,17 +7393,19 @@ function pgdPagColeta(f,p,a,adm){const g=id=>{const e=f.querySelector("#"+p+"_"+
 addEventListener("change",ev=>{const t=ev.target;if(!t||!t.closest)return;if(t.dataset&&t.dataset.pgdpag){pgdPagAtual(t);return;}const b=t.closest(".pgd-pag");if(b)pgdPagAtual(b.querySelector("[data-pgdpag]"));});
 addEventListener("input",ev=>{const t=ev.target;const b=t&&t.closest&&t.closest(".pgd-pag");if(b)pgdPagAtual(b.querySelector("[data-pgdpag]"));});
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
-function vNovaAcao(modo){
-  const bp=modo==="bp";
+function vNovaAcao(modo,ed){
+  const bp=modo==="bp";const a=ed||{};const v=x=>esc(x==null?"":String(x));
   const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Evento","Outro"].includes(x[0])):ACAO_TIPOS;
-  return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"><h3 class="sec">${bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
-    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(([t,h])=>`<option value="${esc(t)}">${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta">Os mesmos tipos das Ações de Marketing, para o calendário juntar tudo.</span></div>
-    ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option>${t}</option>`).join("")}</select></div>`}
-    <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
-    ${bp?`<div><label for="na_valor">Custo estimado (R$) *</label><input id="na_valor" inputmode="decimal" placeholder="0,00" style="max-width:220px"></div>`:pgdPagForm("na",null,ehAdmin())}
-    <div><label for="na_descr">${bp?"Regra da campanha *":"O que será feito *"}</label><textarea id="na_descr" rows="3" placeholder="${bp?"Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos.":"Ex: dia de campo com 40 pecuaristas na fazenda X, com área de Sabiá. Inclui almoço e transporte."}"></textarea></div>
-    <p class="meta" style="margin:0">A ação entra como Em análise e não desconta do saldo até o Marketing aprovar. Depois de adicionar, anexe orçamento, fotos ou material em "Fotos e documentos". Se faltar alguma informação, o Marketing avisa no comentário da ação.</p>
-    <div class="acoes"><button class="btn" type="submit">${bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="novaacao" data-v="fechar">Cancelar</button></div></form>`;
+  const aprov=ed&&ed.status==="Aprovado"&&!ehAdmin();
+  return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"${ed?` data-id="${esc(ed.id)}" style="box-shadow:inset 0 0 0 2px var(--azul)"`:""}><h3 class="sec">${ed?(bp?"Editar campanha":"Editar ação"):bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
+    ${aprov?`<div class="is-alerta" style="margin:0"><strong>Esta ação já foi aprovada.</strong> Se você salvar uma alteração, ela volta para análise e precisa ser aprovada de novo pelo Marketing.</div>`:""}
+    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(([t,h])=>`<option value="${esc(t)}" ${a.tipo===t?"selected":""}>${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta">Os mesmos tipos das Ações de Marketing, para o calendário juntar tudo.</span></div>
+    ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option ${a.categoria===t?"selected":""}>${t}</option>`).join("")}</select></div>`}
+    <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" value="${v(a.cidade)}" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" value="${v(a.data_acao)}" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
+    ${bp?`<div><label for="na_valor">Custo estimado (R$) *</label><input id="na_valor" inputmode="decimal" value="${a.valor_igdb?v(String(a.valor_igdb).replace(".",",")):""}" placeholder="0,00" style="max-width:220px"></div>`:pgdPagForm("na",ed||null,ehAdmin())}
+    <div><label for="na_descr">${bp?"Regra da campanha *":"O que será feito *"}</label><textarea id="na_descr" rows="3" placeholder="${bp?"Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos.":"Ex: dia de campo com 40 pecuaristas na fazenda X, com área de Sabiá. Inclui almoço e transporte."}">${v(a.descricao)}</textarea></div>
+    ${ed?"":`<p class="meta" style="margin:0">A ação entra como Em análise e não desconta do saldo até o Marketing aprovar. Depois de adicionar, anexe orçamento, fotos ou material em "Fotos e documentos". Se faltar alguma informação, o Marketing avisa no comentário da ação.</p>`}
+    <div class="acoes"><button class="btn" type="submit">${ed?(aprov?"Salvar e enviar para nova aprovação":"Salvar alterações"):bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="${ed?"editacao":"novaacao"}" data-v="fechar">Cancelar</button></div></form>`;
 }
 const PAPEIS_CANAL=["Financeiro","Marketing","Gerente Comercial","Gestor/Responsável Legal"];
 function vCanalContatos(c){
@@ -7533,7 +7535,7 @@ function vRVCanal(){
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
     ${pgdPagTxt(a)?`<div class="meta pgd-pt">${pgdPagTxt(a)}</div>`:""}
     ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
-    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
+    <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${!veBarenbrugRV()&&podePgdArq()?`<button class="link" data-a="editacao" data-v="${a.id}">${S.editAcao===a.id?"Fechar edição":"Editar"}</button>`:""}${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
   const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
   const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
   const B=veBarenbrugRV(),adm=ehAdmin(),eq=S.equipeCanal||[];
@@ -7551,12 +7553,14 @@ function vRVCanal(){
   ${m.pub?"":vPlanoXIgdb(m)}
   ${S.editCanal?vCanalEditor(c):""}
   ${S.novaAcao&&S.novaAcao!=="bp"?vNovaAcao():""}
+  ${(()=>{const e=S.editAcao&&acIG.find(x=>x.id===S.editAcao);return e?vNovaAcao("",e):"";})()}
   ${acIG.length?`<div class="acoes-grid">${acIG.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma ação de IGDB cadastrada.</div>`}
   ${sel&&!ehBP(sel)?(adm?vAcaoEditor(sel):podePgdArq()?vAcaoArquivos(sel):""):""}
   </section>
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · campanhas do Bônus de Performance (${acBP.length})</h2>${adm||!B?`<button class="btn" data-a="novaacao" data-v="bp">${B?"+ Nova campanha":"Propor campanha"}</button>`:""}</div>
   <p class="sub" style="margin:0 0 8px">Como o canal vai usar o Bônus de Performance: premiações, viagens e incentivo por saco vendido. Estimativa disponível: <strong>${fmtK0(m.bonus)}</strong>${m.bonus<m.bonusCheio?` (com a meta batida: ${fmtK0(m.bonusCheio)})`:""} · já comprometido em campanhas aprovadas: ${fmtK0(m.aprovBP)} · saldo ${fmtK0(m.bonus-m.aprovBP)}.</p>
   ${S.novaAcao==="bp"?vNovaAcao("bp"):""}
+  ${(()=>{const e=S.editAcao&&acBP.find(x=>x.id===S.editAcao);return e?vNovaAcao("bp",e):"";})()}
   ${acBP.length?`<div class="acoes-grid">${acBP.map(cardFn).join("")}</div>`:`<div class="vazio">Nenhuma campanha de Bônus de Performance cadastrada.</div>`}
   ${sel&&ehBP(sel)?(adm?vAcaoEditor(sel):podePgdArq()?vAcaoArquivos(sel):""):""}
   </section>
@@ -12832,6 +12836,7 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="estoque-del"){await sb.from("canal_estoque").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="preco-del"){await sb.from("canal_precos").delete().eq("id",v);S.canais=null;render();return;}
   if(a==="veracao"){S.acaoSel=S.acaoSel===v?null:v;render();}
+  if(a==="editacao"){S.editAcao=v==="fechar"||S.editAcao===v?null:v;S.novaAcao=false;render();if(S.editAcao){const f=document.getElementById("f-novaacao");if(f)f.scrollIntoView({behavior:"smooth",block:"start"});}return;}
   if(a==="editarcanal"){S.editCanal=!S.editCanal;S.novaAcao=false;render();}
   if(a==="novaacao"){S.novaAcao=v==="fechar"?false:v==="bp"?(S.novaAcao==="bp"?false:"bp"):(S.novaAcao===true?false:true);S.editCanal=false;render();}
   if(a==="fecharacao"){S.acaoSel=null;render();}
@@ -13259,7 +13264,10 @@ document.addEventListener("submit",async ev=>{
     const dados={canal_id:S.canalSel,tipo:q("na_tipo"),categoria:bpv?null:q("na_cat")||null,cidade:q("na_cidade"),data_acao:q("na_data"),valor_igdb:bpv?mkNum(q("na_valor")):0,descricao:q("na_descr"),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
     let FP=[];if(!bpv){const [o,E]=pgdPagColeta(f,"na",null,ehAdmin());Object.assign(dados,o);FP=E;}
     {const F=[];if(!bpv&&!dados.cidade)F.push("cidade");if(!dados.data_acao)F.push("quando");if(bpv&&!(dados.valor_igdb>0))F.push("valor");F.push(...FP);if(!dados.descricao)F.push(bpv?"regra da campanha":"o que será feito");if(F.length){aviso("Preencha: "+F.join(", ")+".");return;}}
-    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent=f.dataset.id?"Salvando…":"Adicionando…";
+    if(f.dataset.id){const ant=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===f.dataset.id)||{};delete dados.canal_id;delete dados.status;delete dados.verba;
+      const {error:eu}=await sb.from("acoes_pgd").update(dados).eq("id",f.dataset.id);if(eu){aviso("Não foi possível salvar a alteração.");render();return;}
+      S.canais=null;S.editAcao=null;render();aviso(ant.status==="Aprovado"&&!ehAdmin()?"Ação alterada. Como já estava aprovada, ela voltou para análise do Marketing.":"Ação atualizada.");return;}
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
     S.canais=null;S.novaAcao=false;render();aviso(ehAdmin()?"Ação adicionada.":"Ação enviada. Ela fica em análise até o Marketing validar.");return;
