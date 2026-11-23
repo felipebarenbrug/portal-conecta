@@ -967,7 +967,8 @@ main.largo{max-width:1120px}
 .fs-alvo{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed var(--linha);font-size:13.5px;color:#1E1E1E}
 .pgd-prod{background:#FFFBE6;border:1px solid #F2E3A0;border-radius:10px;padding:10px 12px;margin-top:8px}.pgd-pt{color:#7A5A00;font-weight:600}
 @media (max-width:760px){.ev-wrap td,.ev-wrap .ev-sel,.ev-wrap .meta{white-space:normal!important;overflow-wrap:anywhere}.ev-wrap .ev-sel{display:inline-block;max-width:100%}}
-#f-evt{max-width:1100px}.ev-lig{display:grid;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--linha);border-radius:10px;padding:8px 10px;background:#fff}.ev-st-participamos{background:#DFF3E7!important;color:#1E6B3A!important}.ev-st-vamos{background:#E3F4FB!important;color:#005F86!important}.ev-st-avaliando{background:#FFF3B0!important;color:#5C4B00!important}.ev-st-nao{background:#F3E1E1!important;color:#8A2B2B!important}
+#f-evt{max-width:1100px}.cobr>summary{cursor:pointer;list-style:none}.cobr>summary::-webkit-details-marker{display:none}.cobr-v{font-size:12.5px;font-weight:700;color:#005F86;text-decoration:underline;margin-left:6px}.cobr[open] .cobr-v{text-decoration:none}
+.ev-lig{display:grid;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--linha);border-radius:10px;padding:8px 10px;background:#fff}.ev-st-participamos{background:#DFF3E7!important;color:#1E6B3A!important}.ev-st-vamos{background:#E3F4FB!important;color:#005F86!important}.ev-st-avaliando{background:#FFF3B0!important;color:#5C4B00!important}.ev-st-nao{background:#F3E1E1!important;color:#8A2B2B!important}
 .pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
 body:has(.pj-full){overflow:hidden}
 .pj-ed{min-height:100%}
@@ -1676,7 +1677,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123102613";
+const APP_VER="20261123102709";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4607,7 +4608,7 @@ function montaPainelCRM(dono,deals,perdMes){
   R.top=ab.slice().sort((a,b)=>b.rs-a.rs).slice(0,8).map(x=>({id:x.id,n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg}));
   R.desat=ab.filter(x=>x.dias>15).sort((a,b)=>b.dias-a.dias).slice(0,10).map(x=>({id:x.id,n:x.n,rs:x.rs,rt:x.rt,dt:br(x),stg:x.stg,dias:x.dias,venc:x.venc}));
   R.rcs=Object.values(rcs).sort((a,b)=>(b.ars+b.vrs)-(a.ars+a.vrs)).slice(0,16).map(x=>({...x,vrs:Math.round(x.vrs),ars:Math.round(x.ars),b30rs:Math.round(x.b30rs)}));
-  R.abertas=ab.map(x=>[x.n,x.rs,iso(x.dt),x.rep,x.rt,x.h,x.c,x.id]);
+  R.abertas=ab.map(x=>[x.n,x.rs,iso(x.dt),x.rep,x.rt,x.h,x.c,x.id,x.dias]);
   R.vend_cult=q.vcult;R.qtd=q;["vendido_rs","aberto_rs","ponderado_rs"].forEach(k=>{R[k]=Math.round(R[k]);});R.atualizado_em=new Date().toISOString();
   return R;
 }
@@ -4833,6 +4834,10 @@ function vMeuCRMPainel(X){
     <div class="metric" style="${r.atrasadas_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Faturamento vencido</span><strong>${fmtN(r.atrasadas_n)}</strong></div>
     <div class="metric" style="${r.sem_data_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Sem data de faturamento</span><strong>${fmtN(r.sem_data_n)}</strong></div>
   </div>
+  ${(()=>{const A=Array.isArray(r.abertas)?r.abertas:[];if(!A.length)return "";const hj=new Date();hj.setHours(0,0,0,0);const vc=d=>d[2]&&new Date(d[2]+"T00:00:00")<hj;const temD=A.some(d=>d[8]!=null);
+    const lin=d=>`<div class="neg"><div class="l1"><span>${esc(d[0])}</span><span>${fmtK(d[1])}</span></div><span class="meta">${d[8]!=null?`${fmtN(d[8])} dias sem interação · `:""}${d[2]?(vc(d)?`<b style="color:#c0392b">faturamento vencido em ${d[2].split("-").reverse().join("/")}</b>`:"fatura em "+d[2].split("-").reverse().join("/")):"sem data de faturamento"} · ${d[3]?esc(d[3]):"venda direta"} · ${estr(d[4])}</span>${crmLnk(d[7])}</div>`;
+    const bl=(t,L,n,ok)=>n?`<details class="lote"><summary>${t} · ${fmtN(n)} · ver quais</summary><div class="lista" style="margin-top:8px">${ok?(L.length?L.map(lin).join(""):`<p class="meta">Nenhuma agora.</p>`):`<p class="meta" style="margin:0">A lista com os nomes aparece na próxima atualização do CRM.</p>`}</div></details>`:"";
+    return bl("Sem interação há +15 dias",A.filter(d=>d[8]>15).sort((a,b)=>b[8]-a[8]),r.sem_att_n,temD)+bl("Faturamento vencido",A.filter(vc).sort((a,b)=>a[2].localeCompare(b[2])),r.atrasadas_n,true)+bl("Sem data de faturamento",A.filter(d=>!d[2]).sort((a,b)=>b[1]-a[1]),r.sem_data_n,true);})()}
   <section class="bloco"><h2 class="sec">Em aberto por mês de faturamento</h2>
     ${meses.length?meses.map(m=>`<div class="mesbar"><span>${nomeMes(m.m)}</span><span class="trilho"><i style="width:${Math.round(100*(m.rs||0)/maxM)}%"></i><b style="width:${Math.round(100*(m.pond||0)/maxM)}%"></b></span><span class="v"><strong>${fmtK(m.rs)}</strong> <span class="meta">· ponderado ${fmtK(m.pond)} · ${fmtN(m.n)} neg.</span></span></div>`).join("")+`<p class="dica" style="margin-top:8px">Barra azul: valor em aberto com faturamento previsto no mês. Barra amarela: o mesmo valor ponderado pela chance de fechar (estrelas da negociação).</p>`:`<div class="vazio">Nenhuma negociação em aberto com data de faturamento.</div>`}
   </section>
@@ -4852,7 +4857,9 @@ function vMeuCRMPainel(X){
     <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
     <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc==="(sem representante)"?"Venda direta (sem RC)":x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
       <span class="meta">${fmtN(x.an)} em aberto · vendido ${fmtK(x.vrs)} em ${fmtN(x.vn)} pedidos${x.b30?` · fatura em 30 dias: ${fmtN(x.b30)} (${fmtK(x.b30rs)})`:""}</span>
-      ${al?`<span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span>`:(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
+      ${al?(()=>{const A=(Array.isArray(r.abertas)?r.abertas:[]).filter(d=>(x.rc==="(sem representante)"?!d[3]:d[3]===x.rc));const hj=new Date();hj.setHours(0,0,0,0);const vc=d=>d[2]&&new Date(d[2]+"T00:00:00")<hj;
+        const L=A.filter(d=>(d[8]!=null&&d[8]>15)||vc(d)).sort((a,b)=>(b[8]||0)-(a[8]||0));const temDias=A.some(d=>d[8]!=null);
+        return `<details class="cobr"><summary><span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span> <span class="cobr-v">ver quais</span></summary><div class="lista" style="margin-top:6px">${L.length?L.map(d=>`<div class="neg"><div class="l1"><span>${esc(d[0])}</span><span>${fmtK(d[1])}</span></div><span class="meta">${d[8]!=null&&d[8]>15?`<b style="color:#c0392b">${fmtN(d[8])} dias sem interação</b>`:"interação recente"}${vc(d)?` · <b style="color:#c0392b">faturamento vencido em ${d[2].split("-").reverse().join("/")}</b>`:d[2]?" · fatura em "+d[2].split("-").reverse().join("/"):" · sem data de faturamento"} · ${estr(d[4])}</span>${crmLnk(d[7])}</div>`).join(""):`<p class="meta" style="margin:0">${temDias?"Nenhuma negociação nessa situação agora.":"A lista com os nomes aparece na próxima atualização do CRM."}</p>`}</div></details>`;})():(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
     ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" reúne as vendas diretas da Barenbrug ao cliente ou ao canal, sem RC.</p>`:""}
   </section>`:""}
   ${X?"":(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
