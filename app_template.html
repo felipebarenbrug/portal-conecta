@@ -953,6 +953,32 @@ main.largo{max-width:1120px}
 .pj-saida{background:var(--papel);border-radius:8px;padding:12px 14px;font-size:14px;align-self:start}.pj-saida b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--apagado);margin-bottom:4px}
 .pj-op{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.pj-box{border:1px solid var(--linha);border-radius:10px;padding:16px 18px;min-width:0}.pj-box h3{margin:0 0 8px}.pj-box ul{margin:0;padding-left:18px;display:grid;gap:5px}.pj-box p{margin:0}
 .pj-box.dest{background:var(--azul);color:#fff;border:0}.pj-box.dest h3{color:#FFDB00}
+.pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
+body:has(.pj-full){overflow:hidden}
+.pj-ed{min-height:100%}
+.pj-edh{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid var(--linha);box-shadow:0 4px 16px rgba(0,40,60,.06);display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.pj-edt{display:grid;min-width:0;flex:1 1 220px}.pj-edt strong{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pj-edt .rot{margin:0}
+.pj-edn{display:flex;gap:4px;overflow-x:auto;flex:0 1 auto}.pj-edn button{border:0;background:#EEF6FA;color:#0B5E7E;font-weight:700;border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap;font:inherit;font-size:13px;font-weight:700}
+.pj-eda{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#pj_sujo{color:#9A6A00}
+.pj-edc{max-width:1180px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}.pj-ed label.chk{display:flex;gap:8px;align-items:center;text-align:left;margin-top:22px}.pj-ed .pj-fg input[type=checkbox]{width:auto}
+.pj-edc>section{scroll-margin-top:90px;margin:0}.pj-edc>*{min-width:0}.pj-edc>.bloco{grid-template-columns:minmax(0,1fr);background:#fff;border:1px solid var(--linha);border-radius:14px;padding:16px 18px}.pj-edc>.bloco>.sec{margin-top:0}.pj-edc>.bloco>*{min-width:0}
+.pj-prev{margin:0;max-width:100%;overflow:hidden}.pj-prev #pj_prev,.pj-prev>summary{max-width:100%;min-width:0}.pj-prev>summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.pj-prev>summary::-webkit-details-marker{display:none}.pj-prev>summary::before{content:"▸";color:#00A8E2}.pj-prev[open]>summary::before{content:"▾"}
+.pj-prev #pj_prev{margin-top:10px}
+.pj-av{margin:8px 0 0;padding:10px 14px 10px 30px;background:#FFF8D6;border-radius:10px;font-size:13.5px;display:grid;gap:4px}.pj-ok{margin:8px 0 0;color:#0B6E3B;font-weight:700;font-size:13.5px}
+.pj-dica{margin:-4px 0 10px;color:#5B6B77;font-size:13px}
+.pj-fl{display:grid;gap:8px;margin-bottom:10px;grid-template-columns:minmax(0,1fr)}.pj-fb,.pj-ml{grid-template-columns:minmax(0,1fr)}.pj-fd{min-width:0}
+.pj-fd{border:1px solid var(--linha);border-radius:12px;background:#fff}.pj-fd[open]{border-color:#00A8E2;box-shadow:0 0 0 1px #00A8E2 inset}
+.pj-fd>summary{cursor:pointer;list-style:none;display:flex;gap:12px;align-items:center;padding:10px 14px}.pj-fd>summary::-webkit-details-marker{display:none}
+.pj-fn{flex:0 0 28px;height:28px;border-radius:50%;background:#1E1E1E;color:#FFDB00;font-weight:800;display:grid;place-items:center;font-size:13px}
+.pj-st{display:grid;min-width:0;gap:1px}.pj-sn{font-weight:800}.pj-sm{font-size:13px;color:#5B6B77}.pj-sr{font-size:13px;color:#0B5E7E;font-weight:700}
+.pj-fb{padding:4px 14px 14px;display:grid;gap:12px;border-top:1px solid var(--linha)}
+.pj-grp{padding-top:10px}.pj-grp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#005F86}
+.pj-facs{border-top:1px dashed var(--linha);padding-top:10px;flex-wrap:wrap}
+.pj-ml{display:grid;gap:8px;margin-bottom:10px}.pj-mr{display:grid;grid-template-columns:170px 1fr auto;gap:8px;align-items:center}
+.pj-edfim{justify-content:flex-start}.pj-edc>.bloco>.btn{justify-self:start}.pj-ed select,.pj-ed input{max-width:100%;min-width:0}
+.pj-mi{display:inline-block;background:#FFDB00;color:#1E1E1E;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:800;justify-self:start}
+.pj-rtop{margin:6px 0 2px}.pj-fase.alvo{box-shadow:0 0 0 2px #FFDB00}.pj-fase{scroll-margin-top:80px}
+@media (max-width:760px){.pj-edh{gap:8px}.pj-edn{order:3;flex:1 1 100%}.pj-eda{flex:1 1 100%;justify-content:flex-end}.pj-eda .meta{margin-right:auto}.pj-ed .pj-fg{grid-template-columns:minmax(0,1fr)}.pj-mr{grid-template-columns:minmax(0,1fr);border-bottom:1px dashed var(--linha);padding-bottom:8px}.pj-edc>section{scroll-margin-top:150px}}
 .pj-fs{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;margin:0 0 10px}.pj-fs legend{font-weight:800;padding:0 6px}
 .pj-fg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.pj-l2{grid-column:span 2}.pj-l3{grid-column:1/-1}.pj-fg textarea,.pj-fg input,.pj-fg select{width:100%}
 @media (max-width:860px){.rg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:520px){.rg{grid-template-columns:1fr}}
@@ -8679,55 +8705,91 @@ function vPJDet(p){const d=p.dados||{};if(!(S.pjCom||{})[p.id]){(S.pjCom=S.pjCom
   <section class="pj-topo"><span class="rot">Projeto de marketing · ${esc(p.status||"")}${p.restrito?" · restrito a administradores e Marketing":""}</span><h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
     <div class="pj-chaves">${M.slice(0,6).map(m=>`<span>${esc(m.n)} <b>${pjF(m.d)}</b></span>`).join("")}</div>
     <p class="meta">${d.dono?"Responsável: "+esc(d.dono)+" · ":""}${feitas} de ${F.length} fases concluídas · atualizado em ${p.atualizado_em?new Date(p.atualizado_em).toLocaleDateString("pt-BR"):"—"}${p.atualizado_por?" por "+esc(p.atualizado_por):""}</p>
-    ${ed?`<div class="acoes"><button class="btn sec" data-a="pj-edit" data-v="${p.id}">Editar projeto</button></div>`:""}</section>
+    ${ed?`<div class="acoes"><button class="btn" data-a="pj-edit" data-v="${p.id}">Editar projeto</button><span class="meta">fases, datas, responsáveis, marcos e quadros</span></div>`:""}</section>
+  ${(()=>{const Mi=F.filter(f=>pjSouResp(f));if(!Mi.length)return "";const ab=Mi.filter(f=>f.status!=="Feito");return `<section class="bloco pj-minhas"><h2 class="sec" style="margin:0 0 4px">Suas fases neste projeto</h2><p class="meta" style="margin:0 0 8px">${ab.length?`${ab.length} em aberto. Mude a situação e comente direto na fase.`:"Todas as suas fases estão feitas."}</p><ul class="guia-l">${Mi.map(f=>`<li><button type="button" class="link" data-a="pj-ir" data-v="${p.id}" data-f="${esc(f.fid||"")}"><strong>${esc(f.nome)}</strong></button><span>${esc(f.status||"A fazer")}${f.fim?" · até "+esc(pjF(f.fim)):""}</span></li>`).join("")}</ul></section>`;})()}
   ${F.length?`<section class="bloco"><h2 class="sec">Linha do tempo</h2><p class="meta">Cada faixa é um público ou uma frente. As linhas tracejadas marcam os marcos e a linha azul é hoje. No celular, arraste para o lado.</p>${pjGantt(p)}</section>`:""}
-  ${F.length?`<section class="bloco"><h2 class="sec">As fases, uma a uma</h2><div class="pj-fases">${F.map(f=>{const [dt,sub]=pjDataFase(f);return `<div class="pj-fase st-${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":"fz"}">
+  ${F.length?`<section class="bloco"><h2 class="sec">As fases, uma a uma</h2><div class="pj-fases">${F.map(f=>{const [dt,sub]=pjDataFase(f);return `<div class="pj-fase st-${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":"fz"}${S.pjAberta===f.fid?" alvo":""}" id="pjfase_${esc(f.fid||"")}">
       <div class="pj-data">${esc(f.status==="Feito"?"Feito":dt)}<small>${esc(f.status==="Feito"?dt:sub)}</small></div>
-      <div style="min-width:0">${f.quem?`<div class="pj-quem">${esc(f.quem)}</div>`:""}<h3>${esc(f.nome)} <span class="pj-tag ${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":""}">${esc(f.status||"A fazer")}</span>${f.tag?` <span class="pj-tag mud">${esc(f.tag)}</span>`:""}</h3>${pjLinhas(f.itens).length?`<ul>${pjLinhas(f.itens).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>
+      <div style="min-width:0">${f.quem?`<div class="pj-quem">${esc(f.quem)}</div>`:""}<h3>${esc(f.nome)} <span class="pj-tag ${f.status==="Feito"?"ok":f.status==="Em andamento"?"and":""}">${esc(f.status||"A fazer")}</span>${f.tag?` <span class="pj-tag mud">${esc(f.tag)}</span>`:""}</h3><div class="pj-rl pj-rtop">${(f.resp||[]).length?`<span class="meta">Responsáveis:</span> ${pjRespChips(f,false)}`:`<span class="meta">Sem responsável marcado.</span>`}</div>${pjLinhas(f.itens).length?`<ul>${pjLinhas(f.itens).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>
       ${f.saida?`<div class="pj-saida"><b>${esc(f.saida_rot||"Pronto quando")}</b>${esc(f.saida)}</div>`:"<div></div>"}
-      ${f.fid?(()=>{const nC=((S.pjCom||{})[p.id]||[]).filter(c=>c.fid===f.fid).length;const ab=S.pjAberta===f.fid;return `<div class="pj-trab"><div class="pj-rl">${(f.resp||[]).length?`<span class="meta">Responsáveis:</span> ${pjRespChips(f,false)}`:`<span class="meta">Sem responsável marcado.</span>`}</div>
+      ${f.fid?(()=>{const nC=((S.pjCom||{})[p.id]||[]).filter(c=>c.fid===f.fid).length;const ab=S.pjAberta===f.fid;return `<div class="pj-trab">
       <div class="pj-ta">${pjPodeStatus(f)?`<label class="sr" for="pjst_${esc(f.fid)}">Situação</label><select id="pjst_${esc(f.fid)}" data-pjst="${esc(f.fid)}" data-pid="${p.id}">${PJ_FST.map(x=>`<option ${x===(f.status||"A fazer")?"selected":""}>${x}</option>`).join("")}</select>`:""}<button type="button" class="btn sec" data-a="pj-com" data-v="${esc(f.fid)}" aria-expanded="${ab}">${ab?"Fechar":"Comentários e arquivos"}${nC?` (${nC})`:""}</button></div>${ab?pjComPainel(p,f):""}</div>`;})():""}</div>`;}).join("")}</div></section>`:""}
   ${(d.blocos||[]).length?`<section class="bloco"><h2 class="sec">Leitura, ideias e decisões</h2><div class="pj-op">${d.blocos.map(b=>`<div class="pj-box${b.destaque?" dest":""}"><h3>${esc(b.titulo||"")}</h3>${pjLinhas(b.texto).length>1?`<ul>${pjLinhas(b.texto).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p>${esc(b.texto||"")}</p>`}</div>`).join("")}</div></section>`:""}`;}
-function pjForm(p){const d=p.dados||{};carregarPJPessoas();const v=x=>esc(x==null?"":String(x));
-  const fase=(f,i)=>`<fieldset class="pj-fs" data-i="${i}"><legend>Fase ${i+1}</legend><div class="pj-fg">
+function pjMarcosRaw(t){return String(t||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const k=l.indexOf("|");return k>=0?{d:l.slice(0,k).trim(),n:l.slice(k+1).trim()}:{d:"",n:l};});}
+function pjSum(f){const dt=f.ini&&f.fim?`${pjCurta(f.ini)} a ${pjCurta(f.fim)}`:(f.ini||f.fim?pjCurta(f.ini||f.fim):"sem datas");const R=(f.resp||[]).map(r=>r.nome).filter(Boolean);
+  return `<span class="pj-sn">${esc((f.nome||"").trim()||"Fase sem nome")}</span><span class="pj-sm">${esc(dt)}${f.faixa?" · "+esc(f.faixa):""} · ${esc(f.status||"A fazer")}</span><span class="pj-sr">${R.length?"Responsáveis: "+esc(R.join(", ")):"Sem responsável"}</span>`;}
+function pjPrev(p){const d=p.dados||{};const F=d.fases||[];const av=[];
+  const sem=F.filter(f=>(f.nome||"").trim()&&!(pjD(f.ini)&&pjD(f.fim)));if(sem.length)av.push(`Sem início e fim, não entram na linha do tempo: ${sem.map(f=>esc(f.nome)).join(", ")}.`);
+  const inv=F.filter(f=>pjD(f.ini)&&pjD(f.fim)&&pjD(f.fim)<pjD(f.ini));if(inv.length)av.push(`Fim antes do início: ${inv.map(f=>esc(f.nome||"fase sem nome")).join(", ")}.`);
+  const sn=F.filter(f=>!(f.nome||"").trim()).length;if(sn)av.push(`${sn===1?"Uma fase está":sn+" fases estão"} sem nome e ${sn===1?"será descartada":"serão descartadas"} ao salvar.`);
+  const sr=F.filter(f=>(f.nome||"").trim()&&!(f.resp||[]).length);if(sr.length)av.push(`Sem responsável: ${sr.map(f=>esc(f.nome)).join(", ")}.`);
+  const V=F.filter(f=>pjD(f.ini)&&pjD(f.fim));const sol=pjMarcos(d.marcos).filter(m=>!V.some(f=>pjD(f.ini)<=pjD(m.d)&&pjD(m.d)<=pjD(f.fim)));if(sol.length&&V.length)av.push(`Marcos fora do período de qualquer fase (confira se ainda fazem sentido): ${sol.map(m=>esc(m.n)+" "+pjCurta(m.d)).join(", ")}.`);
+  const fx=[...new Set(V.map(f=>f.faixa||"Geral"))];
+  return `${pjGantt({dados:{...d,fases:V.map(f=>pjD(f.fim)<pjD(f.ini)?{...f,fim:f.ini}:f)}})||`<p class="meta">A linha do tempo aparece quando alguma fase tiver início e fim.</p>`}
+    <p class="meta" style="margin:6px 0 0">${V.length} ${V.length===1?"fase":"fases"} na linha do tempo, em ${fx.length} ${fx.length===1?"faixa":"faixas"}${fx.length?": "+fx.map(esc).join(", "):""}. Os marcos são as linhas tracejadas.</p>
+    ${av.length?`<ul class="pj-av">${av.map(x=>`<li>${x}</li>`).join("")}</ul>`:`<p class="pj-ok">Tudo certo: toda fase tem datas e responsável.</p>`}`;}
+function pjForm(p){const d=p.dados||{};carregarPJPessoas();const v=x=>esc(x==null?"":String(x));const AB=S.pjAb||new Set();
+  if(!d._m)d._m=pjMarcosRaw(d.marcos);const nF=(d.fases||[]).length;
+  const dica=t=>`<p class="pj-dica">${t}</p>`;
+  const fase=(f,i)=>`<details class="pj-fd" data-fid="${esc(f.fid||"")}" ${AB.has(f.fid)?"open":""}><summary><span class="pj-fn">${i+1}</span><span class="pj-st" id="pjsum_${i}">${pjSum(f)}</span></summary><div class="pj-fb">
+    <div class="pj-grp"><h4>Na linha do tempo</h4>${dica("Estes campos desenham a barra da fase na linha do tempo.")}<div class="pj-fg">
     <div class="pj-l2"><label for="pjf_nome_${i}">Nome da fase *</label><input id="pjf_nome_${i}" value="${v(f.nome)}"></div>
     <div><label for="pjf_status_${i}">Situação</label><select id="pjf_status_${i}">${PJ_FST.map(x=>`<option ${x===(f.status||"A fazer")?"selected":""}>${x}</option>`).join("")}</select></div>
     <div><label for="pjf_ini_${i}">Início</label><input type="date" id="pjf_ini_${i}" value="${v(f.ini)}"></div><div><label for="pjf_fim_${i}">Fim</label><input type="date" id="pjf_fim_${i}" value="${v(f.fim)}"></div>
-    <div><label for="pjf_faixa_${i}">Faixa na linha do tempo</label><input id="pjf_faixa_${i}" value="${v(f.faixa)}" placeholder="Ex.: Revendas"></div>
-    <div><label for="pjf_barra_${i}">Texto curto da barra</label><input id="pjf_barra_${i}" value="${v(f.barra)}" maxlength="40"></div>
-    <div class="pj-l2"><label for="pjf_quem_${i}">Quem participa ou faz</label><input id="pjf_quem_${i}" value="${v(f.quem)}"></div>
-    <div class="pj-l3"><span class="lab">Responsáveis por esta fase</span><div class="pj-rl">${pjRespChips(f,true,i)}</div>
-      <div class="pj-radd"><label class="sr" for="pjf_rsel_${i}">Pessoa do portal</label><select id="pjf_rsel_${i}"><option value="">${S.pjPes===null?"Carregando pessoas…":"Escolher pessoa do portal"}</option>${(S.pjPes||[]).filter(x=>!(f.resp||[]).some(r=>r.id===x.id)).map(x=>`<option value="${esc(x.id)}">${esc(x.nome)} · ${esc(x.perfil||"")}</option>`).join("")}</select><label class="sr" for="pjf_rnome_${i}">Ou nome de quem ainda não tem acesso</label><input id="pjf_rnome_${i}" placeholder="ou nome de quem ainda não tem acesso"><button class="btn sec" type="button" data-a="pj-radd" data-v="${i}">Incluir</button></div></div>
-    <div><label for="pjf_tag_${i}">Marcação (opcional)</label><input id="pjf_tag_${i}" value="${v(f.tag)}" placeholder="Ex.: ajuste, novo"></div>
+    <div><label for="pjf_faixa_${i}">Faixa (linha onde a barra fica)</label><input id="pjf_faixa_${i}" list="pj_faixas" value="${v(f.faixa)}" placeholder="Ex.: Revendas"></div>
+    <div class="pj-l2"><label for="pjf_barra_${i}">Texto curto da barra (opcional; se vazio, usa o nome)</label><input id="pjf_barra_${i}" value="${v(f.barra)}" maxlength="40"></div></div></div>
+    <div class="pj-grp"><h4>Quem é responsável</h4>${dica("Quem está aqui recebe a fase em “Suas fases neste projeto”, pode mudar a situação e comentar. Quem participa é só um texto que aparece acima do nome da fase.")}
+      <div class="pj-rl">${pjRespChips(f,true,i)}</div>
+      <div class="pj-radd"><label class="sr" for="pjf_rsel_${i}">Pessoa do portal</label><select id="pjf_rsel_${i}"><option value="">${S.pjPes===null?"Carregando pessoas…":"Escolher pessoa do portal"}</option>${(S.pjPes||[]).filter(x=>!(f.resp||[]).some(r=>r.id===x.id)).map(x=>`<option value="${esc(x.id)}">${esc(x.nome)} · ${esc(x.perfil||"")}</option>`).join("")}</select><label class="sr" for="pjf_rnome_${i}">Ou nome de quem ainda não tem acesso</label><input id="pjf_rnome_${i}" placeholder="ou nome de quem ainda não tem acesso"><button class="btn sec" type="button" data-a="pj-radd" data-v="${i}">Incluir</button></div>
+      <div class="pj-fg" style="margin-top:10px"><div class="pj-l3"><label for="pjf_quem_${i}">Quem participa (texto livre)</label><input id="pjf_quem_${i}" value="${v(f.quem)}" placeholder="Ex.: Inside Sales e Comercial"></div></div></div>
+    <div class="pj-grp"><h4>No detalhe da fase</h4>${dica("Aparece no cartão da fase, abaixo da linha do tempo.")}<div class="pj-fg">
     <div class="pj-l3"><label for="pjf_itens_${i}">O que acontece (um item por linha)</label><textarea id="pjf_itens_${i}" rows="4">${v(f.itens)}</textarea></div>
+    <div><label for="pjf_tag_${i}">Marcação (opcional)</label><input id="pjf_tag_${i}" value="${v(f.tag)}" placeholder="Ex.: ajuste, novo"></div>
     <div><label for="pjf_saida_rot_${i}">Título do quadro lateral</label><input id="pjf_saida_rot_${i}" value="${v(f.saida_rot)}" placeholder="Pronto quando"></div>
-    <div class="pj-l2"><label for="pjf_saida_${i}">Texto do quadro lateral</label><textarea id="pjf_saida_${i}" rows="2">${v(f.saida)}</textarea></div></div>
-    <div class="acoes"><button class="link" type="button" data-a="pj-fsub" data-v="${i}">Subir</button><button class="link perigo" type="button" data-a="pj-fdel" data-v="${i}">Remover fase</button></div></fieldset>`;
+    <div class="pj-l3"><label for="pjf_saida_${i}">Texto do quadro lateral</label><textarea id="pjf_saida_${i}" rows="2">${v(f.saida)}</textarea></div></div></div>
+    <div class="acoes pj-facs"><button class="btn sec" type="button" data-a="pj-fsub" data-v="${i}" ${i?"":"disabled"}>Subir</button><button class="btn sec" type="button" data-a="pj-fdesce" data-v="${i}" ${i<nF-1?"":"disabled"}>Descer</button><button class="btn sec" type="button" data-a="pj-fdup" data-v="${i}">Duplicar</button><button class="link perigo" type="button" data-a="pj-fdel" data-v="${i}">Remover fase</button></div></div></details>`;
+  const marco=(m,i)=>`<div class="pj-mr"><label class="sr" for="pjm_d_${i}">Data</label><input type="date" id="pjm_d_${i}" value="${v(m.d)}"><label class="sr" for="pjm_n_${i}">Nome do marco</label><input id="pjm_n_${i}" value="${v(m.n)}" placeholder="Nome do marco"><button class="link perigo" type="button" data-a="pj-mdel" data-v="${i}">Remover</button></div>`;
   const bloco=(b,i)=>`<fieldset class="pj-fs" data-b="${i}"><legend>Quadro ${i+1}</legend><div class="pj-fg"><div class="pj-l2"><label for="pjb_titulo_${i}">Título</label><input id="pjb_titulo_${i}" value="${v(b.titulo)}"></div><div><label class="chk"><input type="checkbox" id="pjb_destaque_${i}" ${b.destaque?"checked":""}> Em destaque</label></div>
     <div class="pj-l3"><label for="pjb_texto_${i}">Texto (cada linha vira um item)</label><textarea id="pjb_texto_${i}" rows="4">${v(b.texto)}</textarea></div></div><div class="acoes"><button class="link perigo" type="button" data-a="pj-bdel" data-v="${i}">Remover quadro</button></div></fieldset>`;
-  return `<button class="link" data-a="pj-cancel">‹ Voltar sem salvar</button><form id="f-pj" class="form-card"><h2 class="sec">${p.id?"Editar projeto":"Novo projeto de marketing"}</h2>
+  const faixas=[...new Set((d.fases||[]).map(f=>f.faixa).filter(Boolean))];
+  return `<div class="pj-full" role="dialog" aria-modal="true" aria-labelledby="pj_edtit"><form id="f-pj" class="pj-ed" novalidate>
+   <header class="pj-edh"><div class="pj-edt"><span class="rot">${p.id?"Editando projeto":"Novo projeto de marketing"}</span><strong id="pj_edtit">${v((p.titulo||"").trim()||"Projeto sem nome")}</strong></div>
+    <nav class="pj-edn" aria-label="Partes do projeto"><button type="button" data-a="pj-salto" data-v="pje_proj">Projeto</button><button type="button" data-a="pj-salto" data-v="pje_fases">Fases (${nF})</button><button type="button" data-a="pj-salto" data-v="pje_marcos">Marcos (${d._m.length})</button><button type="button" data-a="pj-salto" data-v="pje_quadros">Quadros (${(d.blocos||[]).length})</button></nav>
+    <div class="pj-eda"><span class="meta" id="pj_sujo">${S.pjSujo?"Alterações não salvas":""}</span><button type="button" class="btn sec" data-a="pj-cancel">${S.pjSujo?"Sair sem salvar":"Fechar"}</button><button class="btn" type="submit">Salvar projeto</button></div></header>
+   <div class="pj-edc"><datalist id="pj_faixas">${faixas.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    <details class="pj-prev bloco" ${S.pjPrevF?"":"open"} id="pj_prevd"><summary><strong>Prévia da linha do tempo</strong> <span class="meta">muda na hora, enquanto você edita</span></summary><div id="pj_prev">${pjPrev(p)}</div></details>
+    <section class="bloco" id="pje_proj"><h2 class="sec">1. Projeto</h2>${dica("Aparece no topo da página do projeto e no cartão da lista.")}
     <div class="pj-fg"><div class="pj-l2"><label for="pj_titulo">Nome do projeto *</label><input id="pj_titulo" required value="${v(p.titulo)}"></div><div><label for="pj_status">Situação</label><select id="pj_status">${PJ_ST.map(x=>`<option ${x===(p.status||"Planejamento")?"selected":""}>${x}</option>`).join("")}</select></div>
     <div class="pj-l3"><label for="pj_resumo">Resumo em uma ou duas frases</label><textarea id="pj_resumo" rows="2">${v(d.resumo)}</textarea></div>
-    <div><label for="pj_dono">Responsável</label><input id="pj_dono" value="${v(d.dono)}"></div><div><label for="pj_ordem">Ordem na lista</label><input id="pj_ordem" type="number" value="${v(p.ordem||0)}"></div><div><label class="chk"><input type="checkbox" id="pj_restrito" ${p.restrito?"checked":""}> Restrito a administradores e Marketing</label></div>
-    <div class="pj-l3"><label for="pj_marcos">Marcos (um por linha, no formato 2026-11-24 | Kickoff)</label><textarea id="pj_marcos" rows="4">${v(d.marcos)}</textarea></div></div>
-    <h3 style="margin:18px 0 8px">Fases</h3>${(d.fases||[]).map(fase).join("")}<button class="btn sec" type="button" data-a="pj-fadd">+ Incluir fase</button>
-    <h3 style="margin:18px 0 8px">Leitura, ideias e decisões</h3>${(d.blocos||[]).map(bloco).join("")}<button class="btn sec" type="button" data-a="pj-badd">+ Incluir quadro</button>
-    <div class="acoes" style="margin-top:18px"><button class="btn" type="submit">Salvar projeto</button><button class="link" type="button" data-a="pj-cancel">Cancelar</button>${p.id&&ehAdmin()?`<button class="link perigo" type="button" data-a="pj-del" data-v="${p.id}">Excluir projeto</button>`:""}</div></form>`;}
+    <div><label for="pj_dono">Dono do projeto</label><input id="pj_dono" value="${v(d.dono)}"></div><div><label for="pj_ordem">Ordem na lista</label><input id="pj_ordem" type="number" value="${v(p.ordem||0)}"></div><div><label class="chk"><input type="checkbox" id="pj_restrito" ${p.restrito?"checked":""}> Restrito a administradores e Marketing</label></div></div></section>
+    <section class="bloco" id="pje_fases"><h2 class="sec">2. Fases</h2>${dica("Toque numa fase para abrir. Remover, mudar datas ou trocar a faixa já aparece na prévia acima; só vale para todos depois de salvar.")}
+     <div class="pj-fl">${(d.fases||[]).map(fase).join("")||`<p class="meta">Nenhuma fase ainda.</p>`}</div><div class="acoes"><button class="btn sec" type="button" data-a="pj-fadd">+ Incluir fase</button>${nF?`<button class="link" type="button" data-a="pj-fabre" data-v="${(d.fases||[]).every(f=>AB.has(f.fid))?0:1}">${(d.fases||[]).every(f=>AB.has(f.fid))?"Fechar todas":"Abrir todas"}</button>`:""}</div></section>
+    <section class="bloco" id="pje_marcos"><h2 class="sec">3. Marcos</h2>${dica("Datas-chave que viram linhas tracejadas na linha do tempo. São independentes das fases: ao remover uma fase, confira se o marco dela ainda faz sentido. A prévia avisa quando um marco fica fora de todas as fases.")}
+     <div class="pj-ml">${d._m.map(marco).join("")||`<p class="meta">Nenhum marco ainda.</p>`}</div><div class="acoes"><button class="btn sec" type="button" data-a="pj-madd">+ Incluir marco</button></div></section>
+    <section class="bloco" id="pje_quadros"><h2 class="sec">4. Leitura, ideias e decisões</h2>${dica("Quadros de texto no fim da página do projeto.")}${(d.blocos||[]).map(bloco).join("")}<button class="btn sec" type="button" data-a="pj-badd">+ Incluir quadro</button></section>
+    <div class="acoes pj-edfim"><button class="btn" type="submit">Salvar projeto</button><button class="btn sec" type="button" data-a="pj-cancel">${S.pjSujo?"Sair sem salvar":"Fechar"}</button>${p.id&&ehAdmin()?`<button class="link perigo" type="button" data-a="pj-del" data-v="${p.id}">Excluir projeto</button>`:""}</div>
+   </div></form></div>`;}
 function pjColeta(){const p=S.pjEd;if(!p)return;const g=id=>{const e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value):undefined;};
   if(!document.getElementById("pj_titulo"))return;
-  p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;p.restrito=!!g("pj_restrito");const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");d.marcos=g("pj_marcos");
-  d.fases=(d.fases||[]).map((f,i)=>{const o={};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);o[k]=x===undefined?f[k]:x;});o.fid=f.fid||pjFid();o.resp=f.resp||[];return o;});
+  p.titulo=g("pj_titulo");p.status=g("pj_status");p.ordem=+g("pj_ordem")||0;p.restrito=!!g("pj_restrito");const d=p.dados=p.dados||{};d.resumo=g("pj_resumo");d.dono=g("pj_dono");
+  d.fases=(d.fases||[]).map((f,i)=>{const o={...f};["nome","status","ini","fim","faixa","barra","quem","tag","itens","saida_rot","saida"].forEach(k=>{const x=g(`pjf_${k}_${i}`);if(x!==undefined)o[k]=x;});o.fid=f.fid||pjFid();o.resp=f.resp||[];return o;});
+  S.pjAb=new Set([...document.querySelectorAll(".pj-fd[open]")].map(e=>e.dataset.fid).filter(Boolean));
+  const pv=document.getElementById("pj_prevd");if(pv)S.pjPrevF=!pv.open;
+  d._m=(d._m||pjMarcosRaw(d.marcos)).map((m,i)=>({d:g(`pjm_d_${i}`)??m.d,n:g(`pjm_n_${i}`)??m.n}));
+  d.marcos=d._m.filter(m=>pjD(m.d)&&(m.n||"").trim()).map(m=>`${m.d} | ${m.n.trim()}`).join("\n");
   d.blocos=(d.blocos||[]).map((b,i)=>({titulo:g(`pjb_titulo_${i}`)??b.titulo,destaque:g(`pjb_destaque_${i}`)??b.destaque,texto:g(`pjb_texto_${i}`)??b.texto}));}
+let _pjT;addEventListener("input",ev=>{if(!ev.target.closest||!ev.target.closest("#f-pj"))return;S.pjSujo=true;const sj=document.getElementById("pj_sujo");if(sj)sj.textContent="Alterações não salvas";clearTimeout(_pjT);_pjT=setTimeout(()=>{pjColeta();const p=S.pjEd;if(!p)return;const pv=document.getElementById("pj_prev");if(pv)pv.innerHTML=pjPrev(p);const t=document.getElementById("pj_edtit");if(t)t.textContent=(p.titulo||"").trim()||"Projeto sem nome";(p.dados.fases||[]).forEach((f,i)=>{const e=document.getElementById("pjsum_"+i);if(e)e.innerHTML=pjSum(f);});},250);});
+addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-pj"))ev.target.dispatchEvent(new Event("input",{bubbles:true}));});
+function pjMinhasDe(p){return ((p.dados||{}).fases||[]).filter(f=>pjSouResp(f));}
 function vTMProj(){
   if(S.pj===undefined){carregarPJ();return `<div class="carregando">Carregando os projetos…</div>`;}
-  if(S.pjEd)return pjForm(S.pjEd);
+  if(S.pjEd){pjColeta();return pjForm(S.pjEd);}
   const p=(S.pj||[]).find(x=>x.id===S.pjSel);if(p)return vPJDet(p);
   const L=S.pj||[];
-  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Projetos de marketing</h1><p class="sub">Os projetos do Marketing no mesmo método: fases com datas, quem participa, o que precisa estar pronto, uma linha do tempo e os marcos. ${pjEdita()?"Você pode incluir e editar projetos.":"Ficou alguma dúvida sobre um projeto? Fale com o Marketing."}</p></div>
+  return `<div><span class="rot">Time de Marketing</span><h1 class="titulo">Projetos de marketing</h1><p class="sub">Os projetos do Marketing no mesmo método: fases com datas, responsáveis, o que precisa estar pronto, uma linha do tempo e os marcos. Abra um projeto para ver as fases que estão com você. ${pjEdita()?"Você pode incluir e editar projetos.":"Ficou alguma dúvida sobre um projeto? Fale com o Marketing."}</p></div>
   ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
-  ${(()=>{const M=pjMinhas();return M.length?`<section class="bloco pj-minhas"><h2 class="sec" style="margin:0 0 8px">Marcadas para você (${M.length})</h2><ul class="guia-l">${M.map(([p,f])=>`<li><button type="button" class="link" data-a="pj-ir" data-v="${p.id}" data-f="${esc(f.fid||"")}"><strong>${esc(f.nome)}</strong></button><span>${esc(p.titulo)} · ${esc(f.status||"A fazer")}${f.fim?" · até "+esc(pjF(f.fim)):""}</span></li>`).join("")}</ul></section>`:"";})()}
-  ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));
-    return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}${x.restrito?" · restrito":""}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
+  ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));const mi=pjMinhasDe(x).filter(f=>f.status!=="Feito").length;
+    return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}${x.restrito?" · restrito":""}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}${mi?`<span class="pj-mi">${mi} ${mi===1?"fase em aberto com você":"fases em aberto com você"}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
 
 /* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
 const TM_FUNC=[
@@ -11047,9 +11109,10 @@ document.addEventListener("submit",async ev=>{
       const path=`projetos/${pid}/${fid}/${Date.now().toString(36)}-${mkLimpo(arq.name)}`;const up=await sb.storage.from("mkt").upload(path,arq,{contentType:arq.type,upsert:false});if(up.error){if(btn)btn.disabled=false;aviso("Não foi possível enviar o arquivo.");return;}Object.assign(o,{arq_path:path,arq_nome:arq.name.slice(0,160),arq_tipo:arq.type,arq_tam:arq.size});}
     const {error}=await sb.from("mkt_proj_coment").insert(o);if(error){if(btn)btn.disabled=false;if(o.arq_path){try{await sb.storage.from("mkt").remove([o.arq_path]);}catch(e){}}aviso("Não foi possível comentar.");return;}aviso("Comentário enviado.");carregarPJCom(pid);return;}
   if(f.id==="f-pj"){pjColeta();const p=S.pjEd;if(!p.titulo||!p.titulo.trim()){aviso("Informe o nome do projeto.");return;}p.dados.fases=(p.dados.fases||[]).filter(x=>(x.nome||"").trim()).map(x=>({...x,fid:x.fid||pjFid(),resp:x.resp||[]}));
-    const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,restrito:!!p.restrito,dados:p.dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
+    const dd={...p.dados};delete dd._m;dd.fases=dd.fases.map(f=>pjD(f.ini)&&pjD(f.fim)&&pjD(f.fim)<pjD(f.ini)?{...f,fim:f.ini}:f);
+    const o={titulo:p.titulo.trim(),status:p.status,ordem:p.ordem,restrito:!!p.restrito,dados:dd,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
     const r=p.id?await sb.from("mkt_projetos").update(o).eq("id",p.id).select("id").single():await sb.from("mkt_projetos").insert(o).select("id").single();if(r.error){aviso("Não foi possível salvar o projeto.");return;}
-    aviso("Projeto salvo");S.pjEd=null;S.pjSel=r.data.id;S.pj=undefined;render();return;}
+    aviso("Projeto salvo. A linha do tempo já está atualizada.");S.pjEd=null;S.pjSujo=false;S.pjSel=r.data.id;S.pj=undefined;S.pjCom={};render();window.scrollTo(0,0);return;}
   if(f.id==="f-gc"){const o={};GC_CAMPOS.forEach(([k])=>{const el=document.getElementById("gc_"+k);o[k]=el?el.value.trim()||null:null;});if(!o.nome){aviso("Informe o nome da conta.");return;}if(o.uf)o.uf=o.uf.toUpperCase();o.atualizado_em=new Date().toISOString();
     const r=S.gcEd&&S.gcEd.id?await sb.from("grandes_contas").update(o).eq("id",S.gcEd.id):await sb.from("grandes_contas").insert(o);if(r.error){aviso("Não foi possível salvar.");return;}aviso("Conta salva");S.gcEd=null;S.gc=undefined;render();return;}
   if(f.id==="f-is-margem"){if(!ehAdmin())return;const v=mkNum(val("ism_v"));if(!(v>0&&v<100)){aviso("Informe a margem em %, entre 0 e 100.");return;}const {error}=await sb.from("is_config").upsert({chave:"margem_bruta",valor:v/100});if(error){aviso("Não foi possível salvar.");return;}S.isMargem=v/100;aviso("Margem salva");render();return;}
@@ -11951,22 +12014,28 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="gt-abre"){S.gtSel=v||null;render();window.scrollTo(0,0);return;}
   if(a==="gt-ir"){const el=document.getElementById(v);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="pj-abrir"){S.pjSel=+v;S.pjAberta=null;render();window.scrollTo(0,0);return;}
-if(a==="pj-ir"){S.pjSel=+v;S.pjAberta=b.dataset.f||null;render();setTimeout(()=>{const e=document.querySelector(`[data-a="pj-com"][data-v="${b.dataset.f}"]`);if(e)e.scrollIntoView({block:"center"});},50);return;}
+if(a==="pj-ir"){S.pjSel=+v;S.pjAberta=b.dataset.f||null;render();setTimeout(()=>{const e=document.getElementById("pjfase_"+b.dataset.f);if(e)e.scrollIntoView({block:"start",behavior:"smooth"});},60);return;}
 if(a==="pj-com"){S.pjAberta=S.pjAberta===v?null:v;render();return;}
-if(a==="pj-radd"){pjColeta();const i=+v,F=S.pjEd.dados.fases[i];const sel=document.getElementById("pjf_rsel_"+i),nm=document.getElementById("pjf_rnome_"+i);const id=sel&&sel.value,n=(nm&&nm.value||"").trim();
+if(a==="pj-radd"){pjColeta();S.pjSujo=true;const i=+v,F=S.pjEd.dados.fases[i];const sel=document.getElementById("pjf_rsel_"+i),nm=document.getElementById("pjf_rnome_"+i);const id=sel&&sel.value,n=(nm&&nm.value||"").trim();
   F.resp=F.resp||[];if(id){const x=(S.pjPes||[]).find(y=>y.id===id);if(x&&!F.resp.some(r=>r.id===id))F.resp.push({id,nome:x.nome});}else if(n){F.resp.push({nome:n.slice(0,80)});}else{aviso("Escolha uma pessoa ou digite um nome.");return;}render();return;}
-if(a==="pj-rdel"){pjColeta();const [i,k]=v.split(":").map(Number);S.pjEd.dados.fases[i].resp.splice(k,1);render();return;}
+if(a==="pj-rdel"){pjColeta();S.pjSujo=true;const [i,k]=v.split(":").map(Number);S.pjEd.dados.fases[i].resp.splice(k,1);render();return;}
 if(a==="pj-cdel"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="confirmar";return;}const c=Object.values(S.pjCom||{}).flat().find(x=>x.id===+v);const {error}=await sb.from("mkt_proj_coment").delete().eq("id",+v);if(error){aviso("Não foi possível apagar.");return;}if(c&&c.arq_path){try{await sb.storage.from("mkt").remove([c.arq_path]);}catch(e){}}carregarPJCom(S.pjSel);return;}
 if(a==="pj-baixar"){try{const {data}=await sb.storage.from("mkt").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
   if(a==="pj-lista"){S.pjSel=null;render();return;}
-  if(a==="pj-novo"){S.pjEd={titulo:"",status:"Planejamento",ordem:0,dados:{fases:[{status:"A fazer"}],blocos:[]}};render();window.scrollTo(0,0);return;}
-  if(a==="pj-edit"){const x=(S.pj||[]).find(y=>y.id===+v);S.pjEd=JSON.parse(JSON.stringify(x));render();window.scrollTo(0,0);return;}
-  if(a==="pj-cancel"){S.pjEd=null;render();return;}
-  if(a==="pj-fadd"){pjColeta();const F=S.pjEd.dados.fases=S.pjEd.dados.fases||[];const ult=F[F.length-1]||{};F.push({status:"A fazer",faixa:ult.faixa||""});render();return;}
-  if(a==="pj-fdel"){pjColeta();S.pjEd.dados.fases.splice(+v,1);render();return;}
-  if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]]=[F[i],F[i-1]];render();return;}
-  if(a==="pj-badd"){pjColeta();(S.pjEd.dados.blocos=S.pjEd.dados.blocos||[]).push({titulo:"",texto:""});render();return;}
-  if(a==="pj-bdel"){pjColeta();S.pjEd.dados.blocos.splice(+v,1);render();return;}
+  if(a==="pj-novo"){const fid=pjFid();S.pjEd={titulo:"",status:"Planejamento",ordem:0,dados:{fases:[{status:"A fazer",fid,resp:[]}],blocos:[]}};S.pjAb=new Set([fid]);S.pjSujo=false;render();return;}
+  if(a==="pj-edit"){const x=(S.pj||[]).find(y=>y.id===+v);S.pjEd=JSON.parse(JSON.stringify(x));const d=S.pjEd.dados=S.pjEd.dados||{};d.fases=(d.fases||[]).map(f=>({...f,fid:f.fid||pjFid(),resp:f.resp||[]}));d._m=pjMarcosRaw(d.marcos);S.pjAb=new Set();S.pjSujo=false;render();return;}
+if(a==="pj-cancel"){if(S.pjSujo&&b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar: sair sem salvar";return;}S.pjEd=null;S.pjSujo=false;render();return;}
+if(a==="pj-salto"){const e=document.getElementById(v);if(e)e.scrollIntoView({block:"start",behavior:"smooth"});return;}
+if(a==="pj-fdesce"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i<F.length-1)[F[i+1],F[i]]=[F[i],F[i+1]];S.pjSujo=true;render();return;}
+if(a==="pj-fdup"){pjColeta();const F=S.pjEd.dados.fases,i=+v;const c={...JSON.parse(JSON.stringify(F[i])),fid:pjFid(),nome:(F[i].nome||"")+" (cópia)",status:"A fazer"};F.splice(i+1,0,c);S.pjAb.add(c.fid);S.pjSujo=true;render();return;}
+if(a==="pj-fabre"){pjColeta();S.pjAb=v==="1"?new Set(S.pjEd.dados.fases.map(f=>f.fid)):new Set();render();return;}
+if(a==="pj-madd"){pjColeta();S.pjEd.dados._m.push({d:"",n:""});S.pjSujo=true;render();setTimeout(()=>{const e=document.getElementById("pjm_d_"+(S.pjEd.dados._m.length-1));if(e)e.focus();},30);return;}
+if(a==="pj-mdel"){pjColeta();S.pjEd.dados._m.splice(+v,1);pjColeta();S.pjSujo=true;render();return;}
+  if(a==="pj-fadd"){pjColeta();const F=S.pjEd.dados.fases=S.pjEd.dados.fases||[];const ult=F[F.length-1]||{};const fid=pjFid();F.push({status:"A fazer",faixa:ult.faixa||"",fid,resp:[]});S.pjAb.add(fid);S.pjSujo=true;render();setTimeout(()=>{const e=document.getElementById("pjf_nome_"+(F.length-1));if(e){e.scrollIntoView({block:"center"});e.focus();}},30);return;}
+if(a==="pj-fdel"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar remoção";return;}pjColeta();S.pjEd.dados.fases.splice(+v,1);S.pjSujo=true;render();return;}
+if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]]=[F[i],F[i-1]];S.pjSujo=true;render();return;}
+  if(a==="pj-badd"){pjColeta();S.pjSujo=true;(S.pjEd.dados.blocos=S.pjEd.dados.blocos||[]).push({titulo:"",texto:""});render();return;}
+  if(a==="pj-bdel"){pjColeta();S.pjSujo=true;S.pjEd.dados.blocos.splice(+v,1);render();return;}
   if(a==="pj-del"){if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}const {error}=await sb.from("mkt_projetos").delete().eq("id",+v);if(error){aviso("Não foi possível excluir.");return;}S.pjEd=null;S.pjSel=null;S.pj=undefined;render();return;}
   if(a==="lang-prev"){S.langPrev=!S.langPrev;if(S.langPrev&&!["academia","enxoval"].includes(S.secao)){S.secao="academia";S.pag="trilha";}render();window.scrollTo(0,0);return;}
   if(a==="b2c-sf"){S.b2cSf=v;render();return;}
