@@ -1453,7 +1453,7 @@ const SECOES=[
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]},
   {id:"guia",nome:"Guia do Portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
-  {id:"analise-solo",nome:"Análise de Solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
+  {id:"analise-solo",nome:"Análise de Solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null}
@@ -1676,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123121944";
+const APP_VER="20261123123753";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2083,7 +2083,7 @@ const PS_CAL=[
 
 /* Sabiá, Cayana ou Carcará: o que desempata (perfil do produtor e da área) */
 const PS_FAT=[
- ["Tecnificação do produtor","Pouca análise de solo, corrige quando sobra dinheiro, assistência técnica eventual.","Análise de Solo todo ano, segue a recomendação, tem agrônomo ou consultor.","Alta: análise de solo, recomendação do agrônomo e adubação de produção planejada.","A recomendação de calagem e adubação parte da análise de solo e do nível de manejo do sistema. Sem análise, não há como garantir a exigência de um cultivar de alta resposta.",["adub","recsolo"]],
+ ["Tecnificação do produtor","Pouca análise de solo, corrige quando sobra dinheiro, assistência técnica eventual.","Análise de solo todo ano, segue a recomendação, tem agrônomo ou consultor.","Alta: análise de solo, recomendação do agrônomo e adubação de produção planejada.","A recomendação de calagem e adubação parte da análise de solo e do nível de manejo do sistema. Sem análise, não há como garantir a exigência de um cultivar de alta resposta.",["adub","recsolo"]],
  ["Correção do solo","V% de 50% a 60% e fósforo a partir de 5 mg/dm³ (o mínimo do Sabiá).","V% acima de 60% e fósforo a partir de 7 mg/dm³, ou terra de lavoura.","V% acima de 55% a 60% e fósforo de 8 a 10 mg/dm³.","As bases oficiais dão o mínimo de cada cultivar: Sabiá de média exigência, Cayana e Carcará de alta. A Embrapa agrupa as forrageiras por exigência em fertilidade e põe o Panicum no grupo dos sistemas de alta tecnologia.",["bb","recsolo","adub"]],
  ["Adubação","Não garante adubação todo ano.","Manutenção todo ano (a partir de 50 a 80 kg de N/ha), com fósforo e potássio.","Adubação de produção de 150 a 200 kg de N/ha/ano, parcelada nas águas.","Quanto mais o capim produz, mais nutriente ele extrai. A Embrapa indica de 40 a 50 kg de N/ha no manejo extensivo, de 100 a 150 no médio e de 200 a 300 no intensivo; sem reposição, a pastagem perde produção e degrada.",["adub","bb"]],
  ["Clima e água","Seca longa, chuva irregular, veranico na implantação, região de transição.","Chuva regular e bem distribuída, seca de até 5 a 6 meses.","Chuva regular; concentra cerca de 90% da produção nas águas. Irrigado, só onde o inverno é quente.","O Sabiá produz de 30% a 35% do ano na seca, contra cerca de 20% do Marandu. Os Panicum concentram cerca de 90% nas águas. Na irrigação, com inverno acima de 15 °C de média, a produção de inverno chegou a 76% a 80% da de verão; em região fria, a cerca de 30%.",["bb","irr"]],
@@ -6772,7 +6772,7 @@ function subnavRV(){
   }else if(ehRevenda()){
     add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
   }
-  add("Em desenvolvimento",[["rv-at","Assistência técnica"]]);
+  if(veEmBreve())add("Em desenvolvimento",[["rv-at","Assistência técnica"]]);
   if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
   const cur=k=>S.pag===k||(k==="rv-canais"&&S.pag==="rv-canal");
   return navGrupos(G,"Conecta Revendas",cur);
@@ -7411,7 +7411,7 @@ function vManejo(){
     <p class="meta">O CAS informa a data-limite da semente. Em dúvida sobre o lote, validar a germinação em laboratório credenciado antes do plantio.</p>
     <div class="mj-check"><strong>Checklist antes do plantio</strong>${mjLi(["Sacos íntegros, sem furos, mofo ou odor estranho","Lote e validade conferem com a nota fiscal","Galpão seco, ventilado e sem contato com defensivos","Até 5 sacos empilhados sobre estrado de madeira","Temperatura abaixo de 25 °C e umidade abaixo de 60%","Semeadora calibrada para o dia do plantio"])}</div></section>
 
-  <section class="bloco" id="mj-solo"><h2 class="sec">Etapa 2 · Análise de Solo, correção e preparo</h2>
+  <section class="bloco" id="mj-solo"><h2 class="sec">Etapa 2 · Análise de solo, correção e preparo</h2>
     ${mjTab(["Item","Recomendação"],[["Amostragem","Camadas de 0 a 20 cm (química) e 20 a 40 cm (subsuperfície). No máximo 20 ha por talhão homogêneo."],["Análise química","pH, MO, P, K, Ca, Mg, S, micronutrientes, V%, Al e CTC."],["Análise física","Textura e densidade, em áreas com suspeita de compactação."],["Calagem","60 a 90 dias antes do plantio, com o solo úmido."],["Gessagem","Quando há alumínio em subsuperfície ou camadas profundas de baixa fertilidade."],["Fosfatagem corretiva","Em solos muito pobres em fósforo, no preparo, antes da adubação de plantio."],["Micronutrientes","Zinco e boro costumam ser limitantes em solos de Cerrado."]])}
     <p class="meta">As doses de calcário, gesso e adubo dependem do laudo da análise e da recomendação do agrônomo. A Barenbrug não emite recomendação personalizada de adubação.</p></section>
 
@@ -8904,6 +8904,7 @@ const EVT_ST=[["participamos","Participamos"],["vamos","Vamos participar"],["ava
 const EVT_FORMAS=["IGDB de revenda (Conecta)","Bônus de Performance","Verba institucional","Publicidade e Propaganda","Conecta RC","Brindes e materiais","Parceiro, sem custo para a Barenbrug","Visita do time, sem estande"];
 const EVT_MOTIVOS=["Fora da janela de decisão","Sem verba na safra","Baixa aderência a pastagens","Região sem canal ou time","Conflito de agenda","Custo alto para o retorno esperado","Evento cancelado ou sem edição","Outro"];
 const EVT_PRIOS=["MÁXIMA","ALTA","MÉDIA","BAIXA","ANÁLISE","A classificar"];
+const veEmBreve=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
 const evtVe=()=>!S.demo&&(ehAdmin()||ehMkt()||temPerfil("Comercial Barenbrug"));
 const evtEdita=()=>!S.demo&&(ehAdmin()||ehMkt());
 const evtPartSt=e=>(e.part&&e.part.status)||null;
@@ -10438,7 +10439,7 @@ function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
   const am=veAcoesMkt(),g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length,empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
   const G=[["Operação",!am?[]:[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"],evtVe()&&["acoes-evtmerc","Eventos do mercado"]]],
-    ["Brindes de Marketing",veBrindes()?[["brindes-catalogo","Catálogo de brindes"],["brindes-reqs",g?`Requisições de brindes${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel de brindes"]]:[]),["brindes-lojinha","Lojinha · em breve"]]:[]],
+    ["Brindes de Marketing",veBrindes()?[["brindes-catalogo","Catálogo de brindes"],["brindes-reqs",g?`Requisições de brindes${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel de brindes"]]:[]),veEmBreve()&&["brindes-lojinha","Lojinha · em breve"]]:[]],
     ["Áreas demonstrativas",veVit()?[["vit-lista","Áreas"],["vit-mapa","Mapa das áreas"]]:[]],
     ["Gestão e verba",am&&ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
   return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")||(k==="vit-lista"&&/^vit-(card|form)/.test(S.pag))||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo"));
@@ -11324,7 +11325,7 @@ function vVit(){if(!S.vit&&!S.vitBusy)carregarVit();return S.pag==="vit-mapa"?vV
 function subnavBrindes(){
   const g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length;
   const empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
-  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel"]]:[]),["brindes-lojinha","Lojinha · em breve"]];
+  const abas=[["brindes-catalogo","Catálogo"],["brindes-reqs",g?`Requisições${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel"]]:[]),...(veEmBreve()?[["brindes-lojinha","Lojinha · em breve"]]:[])];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Brindes de Marketing">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo")?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">Brindes de Marketing</span></div></div>`;
@@ -11525,7 +11526,7 @@ function vBdPainel(){
   <section class="bloco"><div class="int-2">${tb("Quem mais pediu (portal e planilha)",Object.values(sol).sort((a,b)=>b.v-a.v).slice(0,12),[["Pedidos",x=>x.n],["Valor",x=>fmtK0(x.v)]])}${tb("Itens mais pedidos",Object.values(itR).sort((a,b)=>b.v-a.v).slice(0,12),[["Unidades",x=>x.q.toLocaleString("pt-BR")],["Valor",x=>fmtK0(x.v)]])}</div></section>`;
 }
 function vBrindes(){
-  if(S.pag==="brindes-lojinha")return vEmDev("lojinha");
+  if(S.pag==="brindes-lojinha")return veEmBreve()?vEmDev("lojinha"):(S.pag="brindes-catalogo",vBrindes());
   if(S.pag==="brindes-reqs")return vBdReqs();
   if(S.pag==="brindes-pedir")return vBdPedir();
   if(S.pag==="brindes-item"&&ehMkt())return vBdItem();
@@ -12282,7 +12283,7 @@ function renderApp(){
   if(S.secao==="conecta-rc"){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
-    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>vEmDev("solo"),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
@@ -12316,7 +12317,7 @@ function renderApp(){
         return;
       }
     }
-    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-faq":vRVFaq,"rv-etapa":vRVEtapa,"rv-solo":()=>vEmDev("solo"),"rv-at":()=>vEmDev("at")}[S.pag]||vRVApresentacao;
+    const corpo={"rv-apresentacao":vRVApresentacao,"rv-curso":vRVCurso,"rv-faq":vRVFaq,"rv-etapa":vRVEtapa,"rv-solo":()=>veEmBreve()?vEmDev("solo"):vRVApresentacao(),"rv-at":()=>veEmBreve()?vEmDev("at"):vRVApresentacao()}[S.pag]||vRVApresentacao;
     app.innerHTML=cabecalho()+subnavRV()+`<main>${cnAviso("conecta_rv")}${corpo()}</main>`;return;
   }
   if(S.secao==="academia"){
@@ -12344,6 +12345,7 @@ function renderApp(){
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
+  if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
