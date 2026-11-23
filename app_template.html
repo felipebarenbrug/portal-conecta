@@ -1979,7 +1979,7 @@ async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").
   S.profile={...t};S.perfil=t.perfil||"RC";aplicaPerfis(t);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
   ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
 function verComoSair(){const R=S._real;if(!R)return;S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
-  ["crm","leadsCache","canais","fin","loOk","msgCont"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd"].forEach(k=>S[k]=undefined);S.secao="gestao";S.pag="usuario";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
+  ["crm","leadsCache","canais","fin","loOk","msgCont"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
 function cabecalho0(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${msgBotao()}${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
@@ -7614,6 +7614,15 @@ function vAcomp(){
   const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
+function vcPainel(){const q=finNorm(S.vcQ||""),pf=S.vcPf||"";const E=(S.equipe||[]).filter(x=>x.id!==(S.user&&S.user.id));
+  const perfis=[...new Set(E.map(x=>x.perfil).filter(Boolean))].sort();
+  const L=E.filter(x=>(!pf||x.perfil===pf||(Array.isArray(x.perfis)&&x.perfis.includes(pf)))&&(!q||finNorm((x.nome||"")+" "+(x.perfil||"")).includes(q))).slice(0,q||pf?40:8);
+  return `<section class="bloco" id="vc_sec"><h2 class="sec">Ver o portal como outra pessoa</h2><p class="meta" style="margin:0 0 8px">Escolha a pessoa para ver as seções, abas e menus exatamente como ela vê. Para voltar, use o botão na faixa preta do topo.</p>
+    <input id="vc_q" type="search" autocomplete="off" placeholder="Buscar por nome" value="${esc(S.vcQ||"")}" style="width:100%;margin-bottom:8px">
+    <div class="filtros" style="margin-bottom:8px"><button class="chip" data-a="vc-pf" data-v="" aria-pressed="${!pf}">Todos</button>${perfis.map(p=>`<button class="chip" data-a="vc-pf" data-v="${esc(p)}" aria-pressed="${pf===p}">${esc(p)}</button>`).join("")}</div>
+    <div class="lista">${L.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"—")}</strong><span class="meta">${esc((Array.isArray(x.perfis)&&x.perfis.length?x.perfis:[x.perfil]).join(" + "))}${x.ultimo_acesso?"":" · nunca entrou"}</span></div><button class="btn sec" data-a="ver-como" data-v="${esc(x.id)}">Ver como</button></div>`).join("")||`<div class="vazio">Ninguém com esse filtro.</div>`}</div>
+    ${!q&&!pf&&E.length>8?`<p class="meta" style="margin:8px 0 0">Mostrando 8 de ${E.length}. Busque pelo nome ou escolha um perfil.</p>`:""}</section>`;}
+let _vcT;addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vc_q")return;S.vcQ=t.value;clearTimeout(_vcT);_vcT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vc_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},200);});
 function gtHome(R){
   const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";
   const soltos=S.equipe.filter(x=>rev(x)&&!x.canal_id).length;const comGente=new Set(S.equipe.filter(x=>x.canal_id).map(x=>x.canal_id));const semNing=(S.canaisLista||[]).filter(k=>!comGente.has(k.id)).length;
@@ -7632,6 +7641,7 @@ function gtHome(R){
     <div class="metric"><span>Nunca entraram</span><strong>${R.nunca}</strong></div>
     <div class="metric"><span>Concluíram os cursos dos híbridos</span><strong>${R.conc}</strong>${R.med!=null?`<span class="meta">conhecimento médio ${R.med}%</span>`:""}</div></div>
   <section class="bloco"><h2 class="sec">Precisa da sua atenção</h2>${at.join("")||`<div class="vazio">Nada pendente.</div>`}</section>
+  ${ehMaster()?vcPainel():""}
   <div class="int-2"><section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Uso por time</h2><div class="tab"><table class="sim-t"><thead><tr><th>Time</th><th class="val">Pessoas</th><th class="val">Ativas em 30 dias</th></tr></thead><tbody>${porTime.map(o=>`<tr><td><button class="link" data-a="gt-time" data-v="${esc(o.t)}">${esc(o.t)}</button></td><td class="val">${o.n}</td><td class="val">${o.a30} (${Math.round(o.a30/o.n*100)}%)</td></tr>`).join("")}</tbody></table></div></section>
   <section class="bloco" style="margin:0;min-width:0"><h2 class="sec">Primeiros do ranking</h2>${top.map((x,i)=>`<div class="linha"><div><strong>${i+1}º ${esc(x.nome)}</strong><span class="meta">${esc(x.perfil||"")} · ${x.feitas} de ${ORDEM.length} módulos${x.conhecimento!=null?" · "+x.conhecimento+"% de acerto":""}</span></div><button class="link" data-a="verusuario" data-v="${x.id}">Abrir</button></div>`).join("")}<button class="btn sec" data-a="pag" data-v="gestao-rank" style="margin-top:8px">Ver o ranking completo</button></section></div>`;
 }
@@ -12606,6 +12616,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
   if(a==="pag"){S.ngAb={};irPag(v);}
   if(a==="ver-como"){await verComoEntrar(v);return;}
+  if(a==="vc-pf"){S.vcPf=v;render();return;}
   if(a==="ver-como-sair"){verComoSair();return;}
   if(a==="fin-resp"){S.finResp=v||null;render();return;}
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
