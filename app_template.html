@@ -703,6 +703,7 @@ main.largo{max-width:1120px}
 .rcc-marca{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:4px}.rcc-marca input[type=text],.rcc-marca input:not([type]){flex:1 1 200px}
 .rcc-it{all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:10px 4px;border-bottom:1px solid var(--linha)}.rcc-it:hover{background:var(--papel)}.rcc-it:focus-visible{box-shadow:0 0 0 2px var(--azul)}
 .rcc-ro{display:grid;gap:12px}
+.crm-sp{display:grid;gap:2px;margin-top:6px;padding-top:6px;border-top:1px solid var(--linha);font-size:13px}.crm-sp>span{display:grid;gap:0}.crm-sp>span+span{margin-top:4px}.crm-sp b{font-weight:700;color:var(--tinta,#1E1E1E);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
 .mk-vd{border-left:4px solid var(--amarelo);background:var(--branco);border-radius:8px;padding:14px 16px}
 .mk-dec{border-left:4px solid var(--azul)}.mk-dec-l{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}.mk-dec-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mk-dec-f input{width:140px}.mk-dec-f input#msit_o{width:200px}
 .raci-leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 4px}.raci-leg span{display:flex;align-items:center;gap:6px;font-size:13px}
@@ -4650,16 +4651,20 @@ function montaPainelCRM(dono,deals,perdMes){
   const kgs=d=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const v=Number(kg)||0;if(ehHibrida(cultivarDe(n)))h+=v;else c+=v;});return [h,c];};const meses={},rcs={},ab=[];
   const rc=k=>{const id=repChave(k);return rcs[id]||(rcs[id]={rc:k||"(sem representante)",vn:0,vrs:0,an:0,ars:0,sem:0,venc:0,b30:0,b30rs:0});};
   const soma=(d,alvoH,alvoC,cult)=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(ehHibrida(k))h+=v;else c+=v;cult[k]=(cult[k]||0)+v;});q[alvoH]+=h;q[alvoC]+=c;return [h,c];};
+  /* divide o valor da negociação entre híbridos e convencionais pelo total de cada produto; sem valor nos produtos, pelos quilos */
+  const rsDiv=(d,tp)=>{let rh=0,rc=0,kh=0,kc=0;(d.pr||[]).forEach(([n,kg,t])=>{const hib=ehHibrida(cultivarDe(n));const v=Number(t)||0,k=Number(kg)||0;if(hib){rh+=v;kh+=k;}else{rc+=v;kc+=k;}});
+    const sr=rh+rc,sk=kh+kc;if(sr>0)return [tp*rh/sr,tp*rc/sr,0];if(sk>0)return [tp*kh/sk,tp*kc/sk,0];return [0,0,tp];};
+  const somaRs=(pre,tp,d,w)=>{const [a,b,z]=rsDiv(d,tp);q[pre+"h"]=(q[pre+"h"]||0)+a*w;q[pre+"c"]=(q[pre+"c"]||0)+b*w;q[pre+"s"]=(q[pre+"s"]||0)+z*w;};
   for(const d of deals){
     const b=dt(d.fat),tp=Number(d.tot)||0,rp=repN(d.rep);
     if(d.st==="P"){R.pausadas_n++;const [h,c]=kgs(d);q.pkgh+=h;q.pkg+=h+c;q.prs+=tp;continue;}
     if(d.st==="V"&&String(d.cl||"").slice(0,7)===mesK&&!/bonif/i.test(d.n)){const [h,c]=kgs(d);q.mes.n++;q.mes.kgh+=h;q.mes.kg+=h+c;q.mes.rs+=tp;}
     if(CRM_FECH.includes(d.stg)&&d.st!=="V"){q.fech_n=(q.fech_n||0)+1;q.fech_rs=Math.round((q.fech_rs||0)+tp);}
     const fech=d.st==="V";
-    if(fech){if(b&&b>=ini&&b<=fim){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
+    if(fech){if(b&&b>=ini&&b<=fim){if(/bonif/i.test(d.n))continue;R.vendido_n++;R.vendido_rs+=tp;somaRs("rsv",tp,d,1);const [h,c]=soma(d,"vh","vc",q.vcult);R.vendido_kg+=h+c;const x=rc(rp);x.vn++;x.vrs+=tp;}continue;}
     const rt=d.rt||1,w=CRM_PESO[rt]||.05,dias=Math.round((hoje-new Date(String(d.upd).slice(0,10)+"T00:00:00"))/864e5),venc=!!(b&&b<hoje);
     const [h,c]=soma(d,"ah","ac",q.acult);
-    q.pondh+=h*w;q.pondc=(q.pondc||0)+c*w;R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
+    q.pondh+=h*w;q.pondc=(q.pondc||0)+c*w;somaRs("rsa",tp,d,1);somaRs("rsp",tp,d,w);R.aberto_n++;R.aberto_rs+=tp;R.ponderado_rs+=tp*w;if(dias>15)R.sem_att_n++;if(venc)R.atrasadas_n++;if(!b)R.sem_data_n++;
     if(b&&b>=new Date(hoje.getFullYear(),hoje.getMonth(),1)){const k=iso(b).slice(0,7);const m=meses[k]||(meses[k]={m:k,rs:0,pond:0,n:0});m.rs+=tp;m.pond+=tp*w;m.n++;}
     const x=rc(rp);x.an++;x.ars+=tp;if(dias>15)x.sem++;if(venc)x.venc++;if(b&&(b-hoje)/864e5>=0&&(b-hoje)/864e5<=30){x.b30++;x.b30rs+=tp;}
     ab.push({id:String(d.id||""),n:String(d.n).slice(0,70),rs:Math.round(tp),rt,dt:b,stg:CRM_ETAPA[d.stg]||"-",rep:rp,dias,venc,h,c});
@@ -4900,14 +4905,14 @@ function vMeuCRMPainel(X){
   ${X?X.topo:""}${seletor}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
-    <div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?`<span class="meta">híbridos ${ton(Q.vh)} · convencionais ${ton(Q.vc)}</span>`:""}</div>
-    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações${Q?` · ${ton(Q.ah+Q.ac)}`:""}</span>${Q?`<span class="meta">híbridos ${ton(Q.ah)} · convencionais ${ton(Q.ac)}</span>`:""}</div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção ponderada</span><strong>${fmtK(r.ponderado_rs)}</strong><span class="meta">em aberto × chance de fechar</span></div>
-    <div class="metric"><span>Pausadas</span><strong>${fmtN(r.pausadas_n)}</strong></div>
+    ${(()=>{const N=x=>Number(x)||0;const temRs=Q&&("rsvh" in Q);const sp=(rh,th,rc,tc)=>Q?`<span class="crm-sp"><span><b>Híbridos</b>${temRs?fmtK(rh)+" · ":""}${ton(th)}</span><span><b>Convencionais</b>${temRs?fmtK(rc)+" · ":""}${ton(tc)}</span></span>`:"";
+      const ph=Q?N(Q.pondh):0,pc=Q?N(Q.pondc):0;const projRs=N(r.vendido_rs)+N(r.ponderado_rs);
+      return `<div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?sp(Q.rsvh,Q.vh,Q.rsvc,Q.vc):""}</div>
+    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações${Q?` · ${ton(Q.ah+Q.ac)}`:""}</span>${Q?sp(Q.rsah,Q.ah,Q.rsac,Q.ac):""}</div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção da safra${inf("Projeção = o que já foi vendido na safra + o ponderado do funil. Ponderado = cada negociação em aberto vezes a chance de fechar pelas estrelas.")}</span><strong>${fmtK(projRs)}</strong><span class="meta">vendido + ponderado${Q?` · ${ton(Q.vh+Q.vc+ph+pc)}`:""}</span>${Q?sp(N(Q.rsvh)+N(Q.rsph),Q.vh+ph,N(Q.rsvc)+N(Q.rspc),Q.vc+pc):""}<span class="meta">ponderado do funil: ${fmtK(r.ponderado_rs)}${Q?` · ${ton(ph+pc)}`:""}</span></div>
+    <div class="metric"><span>Pausadas</span><strong>${fmtN(r.pausadas_n)}</strong>${Q&&N(Q.pkg)?`<span class="meta">${ton(Q.pkg)} · híbridos ${ton(Q.pkgh)}</span>`:""}</div>`;})()}
   </div>
-  ${Q?(()=>{const kg=n=>Math.round(Number(n)||0).toLocaleString("pt-BR")+" kg";const ph=+Q.pondh||0,pc=+Q.pondc||0;const temP=("pondh" in Q);
-    const cartao=(t,tot,h,c,sub)=>`<div class="metric"><span>${t}</span><strong>${kg(tot)}</strong><span class="meta">híbridos ${kg(h)}</span><span class="meta">convencionais ${kg(c)}</span>${sub?`<span class="meta">${sub}</span>`:""}</div>`;
-    return `<section class="bloco"><h2 class="sec">Volume em quilos</h2><div class="metrics">${cartao("Vendido na safra",Q.vh+Q.vc,Q.vh,Q.vc)}${cartao("Em aberto",Q.ah+Q.ac,Q.ah,Q.ac)}${temP?cartao("Ponderado",ph+pc,ph,pc,"em aberto × chance de fechar"):""}${temP?cartao("Vendido + ponderado",Q.vh+Q.vc+ph+pc,Q.vh+ph,Q.vc+pc,"projeção da safra"):""}</div></section>`;})():""}
+  ${Q&&!("rsvh" in Q)?`<p class="meta" style="margin:4px 0 0">A divisão em reais entre híbridos e convencionais aparece depois da próxima atualização do CRM.</p>`:""}
   <div class="metrics" style="margin-top:10px">
     <div class="metric" style="${r.sem_att_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Sem atualização há +15 dias</span><strong>${fmtN(r.sem_att_n)}</strong></div>
     <div class="metric" style="${r.atrasadas_n?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Faturamento vencido</span><strong>${fmtN(r.atrasadas_n)}</strong></div>
