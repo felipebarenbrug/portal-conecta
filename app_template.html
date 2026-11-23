@@ -963,6 +963,7 @@ main.largo{max-width:1120px}
 .lo-ed{padding:4px 14px 14px;border-top:1px solid var(--linha)}.lo-edh{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:8px 0 6px}.lo-edh .filtros{gap:10px}
 .lo-imp>summary{cursor:pointer}
 @media (max-width:760px){.lo-ph{grid-template-columns:minmax(0,1fr) auto}.lo-pr{grid-column:1/-1;grid-row:2}}
+.rv-comp{display:grid;border:1px solid var(--linha);border-radius:12px;background:#fff;overflow:hidden}.rv-comp>div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--linha)}.rv-comp>div:last-child{border-bottom:0}.rv-comp span{min-width:0}.rv-comp small{display:block;color:#5B6B77;font-size:12.5px}.rv-comp b{white-space:nowrap;font-variant-numeric:tabular-nums}.rv-comp .tot{background:#FFF8D6;font-weight:800}.rv-comp .sep{border-top:2px solid var(--linha)}
 .fs-alvo{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed var(--linha);font-size:13.5px;color:#1E1E1E}
 .pgd-prod{background:#FFFBE6;border:1px solid #F2E3A0;border-radius:10px;padding:10px 12px;margin-top:8px}.pgd-pt{color:#7A5A00;font-weight:600}
 .pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
@@ -9759,13 +9760,13 @@ function rvPlanoHTML(C){
     <div class="metric"><span>Cenário full do plano</span><strong>${fmtK0(PL.full)}</strong><span class="meta">${pctTxt(PL.full_pct_meta||.6)} dos canais na meta · ${finPct(PL.full,PL.pool)} do pool previsto</span></div>
     <div class="metric"><span>Se todos batessem a meta</span><strong>${fmtK0(PL.todos_meta)}</strong><span class="meta">IGDB + BF de todos os canais · ${finPct(PL.todos_meta,PL.pool)} do pool previsto</span></div>
   </div>
-  <div class="int-2" style="margin-top:10px"><div style="min-width:0"><h3 class="pgd-h">Composição do cenário full</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Valor</th></tr></thead><tbody>
-    ${Object.entries(ig).map(([t,v])=>`<tr><td>IGDB ${esc(t)}</td><td class="val">${fmtK0(v)}</td></tr>`).join("")}
-    <tr><td>Bônus de Performance (${pctTxt(PL.full_pct_meta||.6)} na meta)</td><td class="val">${fmtK0(bf)}</td></tr>
-    ${Math.abs(dif)>1?`<tr><td>Diferença até o total do plano <span class="meta">(não detalhada)</span></td><td class="val">${fmtK0(dif)}</td></tr>`:""}
-    <tr style="font-weight:700"><td>Total do cenário full</td><td class="val">${fmtK0(PL.full)}</td></tr>
-    <tr><td>BF se todos batessem a meta</td><td class="val">${fmtK0(PL.todos_meta-PL.full+bf)}</td></tr>
-    <tr style="font-weight:700"><td>Total com todos na meta</td><td class="val">${fmtK0(PL.todos_meta)}</td></tr></tbody></table></div></div>
+  <div class="int-2" style="margin-top:10px"><div style="min-width:0"><h3 class="pgd-h">Composição do cenário full</h3><p class="meta" style="margin:0 0 8px">Quanto o plano reservou para cada parte do programa.</p><div class="rv-comp">
+    ${Object.entries(ig).map(([t,v])=>`<div><span>IGDB · tier ${esc(t)}</span><b>${fmtK0(v)}</b></div>`).join("")}
+    <div><span>Bônus de Performance <small>${pctTxt(PL.full_pct_meta||.6)} dos canais na meta</small></span><b>${fmtK0(bf)}</b></div>
+    ${Math.abs(dif)>1?`<div><span>Outros valores do plano <small>diferença até o total do cenário full, sem detalhe no plano de junho</small></span><b>${fmtK0(dif)}</b></div>`:""}
+    <div class="tot"><span>Total do cenário full</span><b>${fmtK0(PL.full)}</b></div>
+    <div class="sep"><span>Bônus de Performance se todos batessem a meta</span><b>${fmtK0(PL.todos_meta-PL.full+bf)}</b></div>
+    <div class="tot"><span>Total com todos na meta</span><b>${fmtK0(PL.todos_meta)}</b></div></div></div>
   <div style="min-width:0"><h3 class="pgd-h">Estamos dentro do previsto?</h3><p style="margin:0 0 8px">${veredito}</p>
     <dl class="rv-plano-dl">
       <div><dt>Compras dos canais até hoje</dt><dd>${fmtK0(cr)} · ${finPct(cr,fat)} do previsto</dd></div>
