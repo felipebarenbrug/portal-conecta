@@ -1097,6 +1097,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 /* ===== mobile: experiência de app ===== */
 .barra-app{display:none}
 @media (max-width:760px){
+ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}
  body.com-barra{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
  .barra-app{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid #e3e8ee;box-shadow:0 -6px 20px rgba(0,40,60,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
  .barra-app button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:6px 2px;min-height:52px;font:inherit;font-size:11.5px;font-weight:700;color:#5A6B74;cursor:pointer;border-radius:12px}
@@ -1710,7 +1711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123183251";
+const APP_VER="20261123190610";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
