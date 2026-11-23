@@ -1678,7 +1678,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123103608";
+const APP_VER="20261123103827";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4584,6 +4584,10 @@ const CRM_ETAPA={"61eea2f980f7d4001007111c":"Forecast","61eea2f980f7d4001007111d
 const CRM_PESO={1:.05,2:.15,3:.35,4:.70,5:.90};
 function cultivarDe(nome){const l=String(nome||"").toLowerCase();const M=[["cayana","Cayana"],["convert 330","Sabiá"],["sabi","Sabiá"],["carcar","Carcará"],["mulato","Mulato II"],["marandu","Marandu"],["piat","Piatã"],["xara","Xaraés"],["basilisk","Basilisk"],["llanero","Humidícola"],["momba","Mombaça"],["massai","Massai"],["tanz","Tanzânia"],["sabanera","Sabanera"],["ruzi","Ruziziensis"],["cynodon","Cynodon"],["trifolium","Trevo"],["trevo","Trevo"],["azev","Azevém"],["barjumbo","Azevém"],["bar mx","Azevém"],["bar hq","Azevém"],["ribeye","Azevém"],["santa adelaida","Azevém"],["barmix","BARMIX"],["pennisetum","Milheto"]];for(const [k,v] of M)if(l.includes(k))return v;return "Outros";}
 const ehHibrida=c=>c==="Sabiá"||c==="Cayana"||c==="Carcará";
+const repChave=k=>String(k||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")||"(sem representante)";
+const REP_IS=["laura","mariagiulia","thais","mariaeduarda","mayane"];
+const repTipo=k=>!k||k==="(sem representante)"?"direta":REP_IS.some(p=>repChave(k).startsWith(p))?"is":"rc";
+function repJuntar(L){const m={};(L||[]).forEach(x=>{const id=repChave(x.rc==="(sem representante)"?"":x.rc);const y=m[id];if(!y){m[id]={...x};return;}["vn","vrs","an","ars","sem","venc","b30","b30rs"].forEach(k=>y[k]=(+y[k]||0)+(+x[k]||0));if(String(x.rc).length>String(y.rc).length)y.rc=x.rc;});return Object.values(m);}
 function montaPainelCRM(dono,deals,perdMes){
   const hoje=new Date();hoje.setHours(0,0,0,0);const ini=new Date(2026,6,1),fim=new Date(2027,5,30);
   const dt=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
@@ -4592,7 +4596,7 @@ function montaPainelCRM(dono,deals,perdMes){
   const R={dono,equipe:dono==="Inside Sales"?"Inside Sales":"Campo",vendido_n:0,vendido_kg:0,vendido_rs:0,aberto_n:0,aberto_rs:0,ponderado_rs:0,pausadas_n:0,sem_att_n:0,atrasadas_n:0,sem_data_n:0};
   const q={vh:0,vc:0,ah:0,ac:0,vcult:{},acult:{},mes:{n:0,kgh:0,kg:0,rs:0,perd:Number(perdMes)||0},pkgh:0,pkg:0,prs:0,pondh:0};const mesK=new Date(Date.now()-3*3600e3).toISOString().slice(0,7);
   const kgs=d=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const v=Number(kg)||0;if(ehHibrida(cultivarDe(n)))h+=v;else c+=v;});return [h,c];};const meses={},rcs={},ab=[];
-  const rc=k=>rcs[k]||(rcs[k]={rc:k||"(sem representante)",vn:0,vrs:0,an:0,ars:0,sem:0,venc:0,b30:0,b30rs:0});
+  const rc=k=>{const id=repChave(k);return rcs[id]||(rcs[id]={rc:k||"(sem representante)",vn:0,vrs:0,an:0,ars:0,sem:0,venc:0,b30:0,b30rs:0});};
   const soma=(d,alvoH,alvoC,cult)=>{let h=0,c=0;(d.pr||[]).forEach(([n,kg])=>{const k=cultivarDe(n),v=Number(kg)||0;if(ehHibrida(k))h+=v;else c+=v;cult[k]=(cult[k]||0)+v;});q[alvoH]+=h;q[alvoC]+=c;return [h,c];};
   for(const d of deals){
     const b=dt(d.fat),tp=Number(d.tot)||0,rp=repN(d.rep);
@@ -4765,7 +4769,7 @@ async function atualizarCRM(prog){
     if(dono==="Inside Sales")continue;
     const L=await ler(dono,dono);if(!L){res.push(dono+": erro na leitura");continue;}
     cache[dono]=L;const todos=L.todos;
-    if(dono==="Felipe Piccoli"){await sb.from("crm_painel").delete().eq("dono","Felipe Piccoli");continue;}
+    if(dono==="Felipe Piccoli"||dono==="Mayane Costa"){await sb.from("crm_painel").delete().eq("dono",dono);continue;}
     const linha=montaPainelCRM(dono,todos,L.pm);
     const up=await sb.from("crm_painel").upsert(linha,{onConflict:"dono"});
     const em=dono==="Mayane Costa"?null:await gravaMapa(dono,linhasMapa(dono,todos));
@@ -4858,13 +4862,14 @@ function vMeuCRMPainel(X){
     const sr=A.filter(x=>!x[3]);
     return `<section class="bloco"><h2 class="sec">Em aberto por prazo de faturamento</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto com data de faturamento nos próximos 90 dias. Toque em cada faixa para abrir a lista.</p>${fx.map(([t,f],i)=>bloco(t,A.filter(f),i===1)).join("")||`<div class="vazio">Nenhuma negociação em aberto fatura nos próximos 90 dias.</div>`}</section>
     ${sr.length?`<section class="bloco"><h2 class="sec">Venda direta, sem representante (${sr.length})</h2><p class="sub" style="margin:0 0 6px">Negociações em aberto fechadas direto entre a Barenbrug e o cliente ou o canal, sem RC no campo Representante.</p>${bloco("Ver as negociações",sr,false)}</section>`:""}`;})()}
-  ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">${X?"Por representante":"Meus representantes"} (${r.rcs.length})</h2>
+  ${Array.isArray(r.rcs)&&r.rcs.length?`<section class="bloco"><h2 class="sec">${X?"Por representante":"Meus representantes"} (${repJuntar(r.rcs).filter(x=>repTipo(x.rc==="(sem representante)"?"":x.rc)==="rc").length} RCs)</h2>
     <p class="sub" style="margin:0 0 6px">Cada RC com o que já vendeu, o que tem em aberto e o que pede cobrança: sem interação há mais de 15 dias, faturamento vencido e o que fatura nos próximos 30 dias.</p>
-    <div class="lista">${r.rcs.map(x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc==="(sem representante)"?"Venda direta (sem RC)":x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
+    ${(()=>{const RJ=repJuntar(r.rcs);const card=x=>{const al=(x.sem||0)+(x.venc||0);return `<div class="neg"><div class="l1"><span>${esc(x.rc==="(sem representante)"?"Venda direta (sem RC)":x.rc)}</span><span>${fmtK(x.ars)} em aberto</span></div>
       <span class="meta">${fmtN(x.an)} em aberto · vendido ${fmtK(x.vrs)} em ${fmtN(x.vn)} pedidos${x.b30?` · fatura em 30 dias: ${fmtN(x.b30)} (${fmtK(x.b30rs)})`:""}</span>
       ${al?(()=>{const A=(Array.isArray(r.abertas)?r.abertas:[]).filter(d=>(x.rc==="(sem representante)"?!d[3]:d[3]===x.rc));const hj=new Date();hj.setHours(0,0,0,0);const vc=d=>d[2]&&new Date(d[2]+"T00:00:00")<hj;
         const L=A.filter(d=>(d[8]!=null&&d[8]>15)||vc(d)).sort((a,b)=>(b[8]||0)-(a[8]||0));const temDias=A.some(d=>d[8]!=null);
-        return `<details class="cobr"><summary><span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span> <span class="cobr-v">ver quais</span></summary><div class="lista" style="margin-top:6px">${L.length?L.map(d=>`<div class="neg"><div class="l1"><span>${esc(d[0])}</span><span>${fmtK(d[1])}</span></div><span class="meta">${d[8]!=null&&d[8]>15?`<b style="color:#c0392b">${fmtN(d[8])} dias sem interação</b>`:"interação recente"}${vc(d)?` · <b style="color:#c0392b">faturamento vencido em ${d[2].split("-").reverse().join("/")}</b>`:d[2]?" · fatura em "+d[2].split("-").reverse().join("/"):" · sem data de faturamento"} · ${estr(d[4])}</span>${crmLnk(d[7])}</div>`).join(""):`<p class="meta" style="margin:0">${temDias?"Nenhuma negociação nessa situação agora.":"A lista com os nomes aparece na próxima atualização do CRM."}</p>`}</div></details>`;})():(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;}).join("")}</div>
+        return `<details class="cobr"><summary><span class="meta" style="color:#c0392b">Cobrar: ${x.sem?`${fmtN(x.sem)} sem interação há +15 dias`:""}${x.sem&&x.venc?" · ":""}${x.venc?`${fmtN(x.venc)} com faturamento vencido`:""}</span> <span class="cobr-v">ver quais</span></summary><div class="lista" style="margin-top:6px">${L.length?L.map(d=>`<div class="neg"><div class="l1"><span>${esc(d[0])}</span><span>${fmtK(d[1])}</span></div><span class="meta">${d[8]!=null&&d[8]>15?`<b style="color:#c0392b">${fmtN(d[8])} dias sem interação</b>`:"interação recente"}${vc(d)?` · <b style="color:#c0392b">faturamento vencido em ${d[2].split("-").reverse().join("/")}</b>`:d[2]?" · fatura em "+d[2].split("-").reverse().join("/"):" · sem data de faturamento"} · ${estr(d[4])}</span>${crmLnk(d[7])}</div>`).join(""):`<p class="meta" style="margin:0">${temDias?"Nenhuma negociação nessa situação agora.":"A lista com os nomes aparece na próxima atualização do CRM."}</p>`}</div></details>`;})():(x.an?`<span class="meta" style="color:#1e8449">Em dia</span>`:"")}</div>`;};const G=[["direta","Venda direta, sem representante"],["rc","Representantes comerciais (RCs)"],["is","Assessoras de vendas digital"]];
+      return G.map(([k,t])=>{const L=RJ.filter(x=>repTipo(x.rc==="(sem representante)"?"":x.rc)===k);return L.length?`<h3 class="pgd-h" style="margin:12px 0 6px">${t} (${L.length})</h3><div class="lista">${L.map(card).join("")}</div>`:"";}).join("");})()}
     ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" reúne as vendas diretas da Barenbrug ao cliente ou ao canal, sem RC.</p>`:""}
   </section>`:""}
   ${X?"":(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
