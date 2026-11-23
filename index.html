@@ -1676,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123133638";
+const APP_VER="20261123134147";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1973,7 +1973,7 @@ function vPerfil(){
 async function carregarMeuContrato(){if(S.meuContrBusy)return;S.meuContrBusy=true;try{const {data}=await sb.rpc("meu_contrato");S.meuContr=data||null;}catch(e){S.meuContr=null;}S.meuContrBusy=false;render();}
 
 /* ---------- shell ---------- */
-function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes a tela para completar o cadastro."}</span><span class="meta" style="color:#ddd">Modo de visualização: nada do que você fizer aqui é salvo.</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
+function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes as telas de senha e de cadastro"+(pirDevo()?" e o perfil do representante":"")+"."}</span><span class="meta" style="color:#ddd">Modo de visualização: nada do que você fizer aqui é salvo.</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
 /* No modo "ver como", nada é gravado: o cliente do banco passa a recusar escrita, funções, arquivos e mudanças de login. */
 function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visualização: nada é salvo."}};
   const nada=()=>{const p=new Proxy(function(){},{get:(t,k)=>k==="then"?(ok)=>Promise.resolve(bloq).then(ok):()=>p,apply:()=>p});return p;};
@@ -12279,13 +12279,13 @@ function renderApp(){
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
   if(!cadastroCompleto()&&!S.verComo){app.innerHTML=vCadastroObrig();S._erro=null;return;}
-  if(pirDevo()){if(S.pirMeu===undefined){carregarPirMeu();app.innerHTML=`<div class="carregando">Carregando…</div>`;return;}if(S.pirMeu===false){app.innerHTML=vPirForm();return;}}
+  if(pirDevo()&&!S.verComo){if(S.pirMeu===undefined){carregarPirMeu();app.innerHTML=`<div class="carregando">Carregando…</div>`;return;}if(S.pirMeu===false){app.innerHTML=vPirForm();return;}}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"&&S.secao!=="mensagens"){const P=cursosPend();if(!secaoLiberada(S.secao)){const c=P[0]||CURSOS_OBRIG[0];S.secao=c[3];S.pag=c[4];}else if(PAGS_CURSO[S.secao]&&!PAGS_CURSO[S.secao].includes(S.pag))S.pag=PAGS_CURSO[S.secao][0];}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
   if(S.pag==="nps"){app.innerHTML=cabecalho()+`<main>${vNps()}</main>`;return;}
   if(S.pag==="seguranca"){if(!ehAdmin()){S.pag="hub";}else{app.innerHTML=cabecalho()+`<main>${vSeguranca()}</main>`;return;}}
-  if(!S.secao){talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
-  talvezTour(S.secao);
+  if(!S.secao){if(!S.verComo)talvezTour("portal");app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();if(S.posts!=null&&S.duvidas!=null)marcarFeedVisto();return;}
+  if(!S.verComo)talvezTour(S.secao);
   if(S.secao==="gestao"){
     if(!gerePessoas()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();return;}
     if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
