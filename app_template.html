@@ -1470,10 +1470,7 @@ const ENXOVAL=[
  {id:"guia",n:"Guia de uso de Marca",d:"Como aplicar a marca corretamente — o brandbook oficial.",link:""}
 ];
 const RC_CURSO=[
- {n:"O Programa e o Modelo de Parceria",d:"O que é o Conecta RC e a representação comercial autônoma (PJ, Lei 4.886/1965): autonomia, inscrição no CORE, responsabilidades de cada parte, vigência por prazo indeterminado e o papel do Responsável Comercial.",yt:"yZBbZ1xkwwE"},
- {n:"Como Atuar, Regras de Campo e Portfólio",d:"Portfólio autorizado (híbridos, Cynodon, tropicais convencionais, Barmix e temperadas), exclusividade estrita em híbridos, atuação nacional sem exclusividade de praça, aprovação prévia fora do estado sede e cobrança amigável (vedado o del credere).",yt:"DvwjcUYObnQ"},
- {n:"Como Funciona a Remuneração e Comissões",d:"Taxas fixas das convencionais x alíquotas progressivas em tiers (Blue, Yellow, Yellow Pro, Yellow Master), volume unificado produtor + canal, adiantamento mensal pelo piso e excedente flat sobre 100% da safra no fechamento.",yt:"eyR8xSdxwlI"},
- {n:"Rotina Operacional, do Pedido ao Pagamento",d:"Do registro no portal e análise cadastral à liquidação; calendário financeiro (demonstrativo até o 5º dia útil, NF até o dia 10, pagamento até o dia 15), estornos, prazos de fechamento, aviso prévio e indenização de 1/12, e o checklist da primeira semana.",yt:"9mCU_uNWkD0"}
+ {n:"Conecta RC de ponta a ponta",d:"O programa e o modelo de parceria, como atuar no campo, a remuneração e as comissões, e a rotina do pedido ao pagamento.",yt:"_e0CsJOta2o"}
 ];
 const RC_TIERS=[
  {t:"Blue",vol:"0 a 3.000 kg",prod:"10,0%",canal:"8,0%"},
@@ -1649,7 +1646,7 @@ const TOURS={
   ]},
   "conecta-rc":{t:"Conecta RC",p:[
     ["Apresentação","Entenda o programa de representação: tiers por volume, comissões e como funciona."],
-    ["Curso","Quatro vídeos para dominar o Conecta RC de ponta a ponta."],
+    ["Curso","Um vídeo e a prova para dominar o Conecta RC de ponta a ponta."],
     ["Ranking","Acompanhe sua posição por volume de híbridas na safra, o que já faturou e o que vai faturar, e quanto falta para subir de tier."]
   ]},
   "conecta-revendas":{t:"Conecta Revendas",p:[
@@ -6142,8 +6139,9 @@ function vRCApresentacao(){
   <div class="precos-nota">Vigência safra 26/27 (jul/2026 a jun/2027). O Contrato de Representação Comercial assinado é o documento oficial e prevalece em caso de conflito. <a class="link" href="https://materiais.barenbrug.com.br/conecta-rcs-barenbrug" target="_blank" rel="noopener">Página oficial e calculadoras ↗</a></div>`;
 }
 function vRCCurso(){
-  return `<div><h1 class="titulo">Curso de integração</h1><p class="sub">Quatro vídeos para você entender o Conecta RC de ponta a ponta. Assista na ordem que preferir — não é obrigatório.</p></div>
-  <div class="cards">${RC_CURSO.map((e,i)=>`<button class="card" data-a="rc-abrir" data-v="${i}"><span class="card-tag">Vídeo ${i+1} de ${RC_CURSO.length}</span><h3>${e.n}</h3><p>${e.d}</p><span class="card-cta">Assistir →</span></button>`).join("")}</div>
+  const e=RC_CURSO[0];
+  return `<div><h1 class="titulo">Curso de integração</h1><p class="sub">Um vídeo para você entender o Conecta RC de ponta a ponta. Depois de assistir, faça a prova logo abaixo.</p></div>
+  <section class="bloco"><h2 class="sec">${esc(e.n)}</h2><p class="sub" style="margin:0 0 10px">${esc(e.d)}</p><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${e.yt}?rel=0" title="${esc(e.n)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></section>
   ${vProvaExtra("conecta_rc")}`;
 }
 function vRCEtapa(){
