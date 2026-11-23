@@ -1686,7 +1686,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123143726";
+const APP_VER="20261123144932";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1999,7 +1999,11 @@ function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visua
   const ESCR=["insert","update","upsert","delete"];const RPC_LER=/^(minhas_|meus_|meu_|lead_out_lista|lead_out_resumo|pj_pessoas|pj_vejo|mkt_pessoas|evt_|adm_lead_out_stats|adm_lead_out_acessos|crm_donos|financeiro_dados|fin_mkt_acoes|is_|vejo_|tm_|int_|rv_le|rv_pub)/;
   return new Proxy(real,{get(t,k){
     if(k==="from")return tb=>new Proxy(t.from(tb),{get(q,m){if(m==="select")return (...a)=>vcFiltra(tb,q.select(...a));return ESCR.includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return nada();}):(typeof q[m]==="function"?q[m].bind(q):q[m]);}});
-    if(k==="rpc")return (n,a)=>RPC_LER.test(String(n))?t.rpc(n,a):(aviso("Modo de visualização: nada é salvo."),nada());
+    if(k==="rpc")return (n,a)=>{const uid=S.profile&&S.profile.id;
+      if(n==="lead_out_lista")return t.rpc("vc_lead_out_lista",{p_user:uid,...(a||{})});
+      if(n==="lead_out_resumo")return t.rpc("vc_lead_out_resumo",{p_user:uid});
+      if(n==="lead_out_contato"){aviso("Modo de visualização: o contato não é aberto nem registrado.");return Promise.resolve(bloq);}
+      return RPC_LER.test(String(n))?t.rpc(n,a):(aviso("Modo de visualização: nada é salvo."),nada());};
     if(k==="functions")return {invoke:()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}};
     if(k==="storage")return {from:b=>{const r=t.storage.from(b);return new Proxy(r,{get(o,m){return ["upload","remove","update","move","copy"].includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}):(typeof o[m]==="function"?o[m].bind(o):o[m]);}});}};
     if(k==="auth")return new Proxy(t.auth,{get(a,m){return ["updateUser","signOut","mfa","resetPasswordForEmail"].includes(m)?(m==="mfa"?a.mfa:(()=>{aviso("Modo de visualização: nada é alterado no login.");return Promise.resolve(bloq);})):(typeof a[m]==="function"?a[m].bind(a):a[m]);}});
@@ -2007,9 +2011,9 @@ function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visua
 async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
   S._real={profile:S.profile,perfil:S.perfil,perfis:S.perfis,nivel:S.nivel,secao:S.secao,pag:S.pag,adminUser:S.adminUser};
   S.profile={...t,precisa_trocar_senha:false};S.perfil=t.perfil||"RC";aplicaPerfis(t);S._sbVC=sb;sb=vcSbSoLeitura(sb);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
-  ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont","crmOrig","isMapa","mrc"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"||k==="crmOrig"||k==="isMapa"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
+  ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont","crmOrig","isMapa","mrc","loRes","loRows","loVistos"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"||k==="crmOrig"||k==="isMapa"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
 function verComoSair(){const R=S._real;if(!R)return;if(S._sbVC){sb=S._sbVC;S._sbVC=null;}S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
-  ["crm","leadsCache","canais","fin","loOk","msgCont","mrc"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd","crmOrig","isMapa"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
+  ["crm","leadsCache","canais","fin","loOk","msgCont","mrc","loRes","loRows","loVistos"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd","crmOrig","isMapa"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
 function cabecalho0(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${msgBotao()}${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
