@@ -1973,12 +1973,23 @@ function vPerfil(){
 async function carregarMeuContrato(){if(S.meuContrBusy)return;S.meuContrBusy=true;try{const {data}=await sb.rpc("meu_contrato");S.meuContr=data||null;}catch(e){S.meuContr=null;}S.meuContrBusy=false;render();}
 
 /* ---------- shell ---------- */
-function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes a tela para completar o cadastro."}</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
+function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes a tela para completar o cadastro."}</span><span class="meta" style="color:#ddd">Modo de visualização: nada do que você fizer aqui é salvo.</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
+/* No modo "ver como", nada é gravado: o cliente do banco passa a recusar escrita, funções, arquivos e mudanças de login. */
+function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visualização: nada é salvo."}};
+  const nada=()=>{const p=new Proxy(function(){},{get:(t,k)=>k==="then"?(ok)=>Promise.resolve(bloq).then(ok):()=>p,apply:()=>p});return p;};
+  const ESCR=["insert","update","upsert","delete"];const RPC_LER=/^(minhas_|meus_|meu_|lead_out_lista|lead_out_resumo|pj_pessoas|pj_vejo|mkt_pessoas|evt_|adm_lead_out_stats|adm_lead_out_acessos|crm_donos|financeiro_dados|fin_mkt_acoes|is_|vejo_|tm_|int_|rv_le|rv_pub)/;
+  return new Proxy(real,{get(t,k){
+    if(k==="from")return tb=>new Proxy(t.from(tb),{get(q,m){return ESCR.includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return nada();}):(typeof q[m]==="function"?q[m].bind(q):q[m]);}});
+    if(k==="rpc")return (n,a)=>RPC_LER.test(String(n))?t.rpc(n,a):(aviso("Modo de visualização: nada é salvo."),nada());
+    if(k==="functions")return {invoke:()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}};
+    if(k==="storage")return {from:b=>{const r=t.storage.from(b);return new Proxy(r,{get(o,m){return ["upload","remove","update","move","copy"].includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}):(typeof o[m]==="function"?o[m].bind(o):o[m]);}});}};
+    if(k==="auth")return new Proxy(t.auth,{get(a,m){return ["updateUser","signOut","mfa","resetPasswordForEmail"].includes(m)?(m==="mfa"?a.mfa:(()=>{aviso("Modo de visualização: nada é alterado no login.");return Promise.resolve(bloq);})):(typeof a[m]==="function"?a[m].bind(a):a[m]);}});
+    const v=t[k];return typeof v==="function"?v.bind(t):v;}});}
 async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
   S._real={profile:S.profile,perfil:S.perfil,perfis:S.perfis,nivel:S.nivel,secao:S.secao,pag:S.pag,adminUser:S.adminUser};
-  S.profile={...t};S.perfil=t.perfil||"RC";aplicaPerfis(t);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
+  S.profile={...t,precisa_trocar_senha:false};S.perfil=t.perfil||"RC";aplicaPerfis(t);S._sbVC=sb;sb=vcSbSoLeitura(sb);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
   ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
-function verComoSair(){const R=S._real;if(!R)return;S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
+function verComoSair(){const R=S._real;if(!R)return;if(S._sbVC){sb=S._sbVC;S._sbVC=null;}S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
   ["crm","leadsCache","canais","fin","loOk","msgCont"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd"].forEach(k=>S[k]=undefined);S.secao=R.secao||"gestao";S.pag=R.pag||"gestao-home";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
 function cabecalho0(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
@@ -12247,7 +12258,7 @@ function renderApp(){
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(S.pag==="privacidade"){app.innerHTML=(S.user&&S.profile?cabecalho():"")+`<main>${vPrivacidade()}</main>`;return;}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
-  if(S.profile&&S.profile.precisa_trocar_senha){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
+  if(S.profile&&S.profile.precisa_trocar_senha&&!S.verComo){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
   if(S.pag!=="usuario")S.formAlvo="form";
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
