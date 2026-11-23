@@ -966,6 +966,8 @@ main.largo{max-width:1120px}
 .rv-comp{display:grid;border:1px solid var(--linha);border-radius:12px;background:#fff;overflow:hidden}.rv-comp>div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--linha)}.rv-comp>div:last-child{border-bottom:0}.rv-comp span{min-width:0}.rv-comp small{display:block;color:#5B6B77;font-size:12.5px}.rv-comp b{white-space:nowrap;font-variant-numeric:tabular-nums}.rv-comp .tot{background:#FFF8D6;font-weight:800}.rv-comp .sep{border-top:2px solid var(--linha)}
 .fs-alvo{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed var(--linha);font-size:13.5px;color:#1E1E1E}
 .pgd-prod{background:#FFFBE6;border:1px solid #F2E3A0;border-radius:10px;padding:10px 12px;margin-top:8px}.pgd-pt{color:#7A5A00;font-weight:600}
+@media (max-width:760px){.ev-wrap td,.ev-wrap .ev-sel,.ev-wrap .meta{white-space:normal!important;overflow-wrap:anywhere}.ev-wrap .ev-sel{display:inline-block;max-width:100%}}
+#f-evt{max-width:1100px}.ev-lig{display:grid;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--linha);border-radius:10px;padding:8px 10px;background:#fff}.ev-st-participamos{background:#DFF3E7!important;color:#1E6B3A!important}.ev-st-vamos{background:#E3F4FB!important;color:#005F86!important}.ev-st-avaliando{background:#FFF3B0!important;color:#5C4B00!important}.ev-st-nao{background:#F3E1E1!important;color:#8A2B2B!important}
 .pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
 body:has(.pj-full){overflow:hidden}
 .pj-ed{min-height:100%}
@@ -1674,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123101422";
+const APP_VER="20261123102613";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8209,7 +8211,7 @@ function vIntB2C(){
 const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["int-insumos-ed","Escrever insumo"],["int-metodo","Metodologia e fontes"]]],
   ["Para quem",[["int-icp","ICPs e personas"],["int-contas","Grandes contas da pecuária"],["int-b2c","B2C por responsável"],["int-nps","NPS dos clientes diretos"]]],
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
-  ["Quando atuar",[["int-saz","Calendário de plantio"]]],
+  ["Quando atuar",[["int-saz","Calendário de plantio"],["int-eventos","Eventos e janela de compra"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
   ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"],["int-digital","Campanhas digitais"]]],
   ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
@@ -8846,6 +8848,418 @@ function vTMProj(){
   ${pjEdita()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="pj-novo">+ Novo projeto</button></div>`:""}
   ${L.length?`<div class="pj-lista">${L.map(x=>{const F=(x.dados&&x.dados.fases)||[];const dts=F.map(f=>f.ini).concat(F.map(f=>f.fim)).filter(Boolean).sort();const feitas=F.filter(f=>f.status==="Feito").length;const prox=pjMarcos(x.dados&&x.dados.marcos).find(m=>pjD(m.d)>=new Date(new Date().toDateString()));const mi=pjMinhasDe(x).filter(f=>f.status!=="Feito").length;
     return `<button class="bloco pj-card" data-a="pj-abrir" data-v="${x.id}"><span class="selo">${esc(x.status||"")}${x.restrito?" · restrito":""}</span><strong>${esc(x.titulo)}</strong><span class="meta">${dts.length?esc(pjCurta(dts[0])+" a "+pjCurta(dts[dts.length-1])+" · "):""}${feitas} de ${F.length} fases concluídas</span>${prox?`<span class="meta">Próximo marco: <b>${esc(prox.n)}</b>, ${esc(pjF(prox.d))}</span>`:""}${mi?`<span class="pj-mi">${mi} ${mi===1?"fase em aberto com você":"fases em aberto com você"}</span>`:""}<span class="pj-prog"><i style="width:${F.length?Math.round(100*feitas/F.length):0}%"></i></span></button>`;}).join("")}</div>`:`<div class="vazio">Nenhum projeto cadastrado ainda.</div>`}`;}
+
+/* ===== Eventos do mercado e janela de decisão de compra (Ações de Marketing e Inteligência) =====
+   Base editável no banco (evt_mercado e evt_mercado_meta). As fases, o índice, a matriz e as lacunas
+   são recalculados aqui a cada carga, a partir da grade de sazonalidade guardada no banco. */
+let EVT_DATA=null;
+const EVT_ST=[["participamos","Participamos"],["vamos","Vamos participar"],["avaliando","Em avaliação"],["nao","Não vamos participar"]];
+const EVT_FORMAS=["IGDB de revenda (Conecta)","Bônus de Performance","Verba institucional","Publicidade e Propaganda","Conecta RC","Brindes e materiais","Parceiro, sem custo para a Barenbrug","Visita do time, sem estande"];
+const EVT_MOTIVOS=["Fora da janela de decisão","Sem verba na safra","Baixa aderência a pastagens","Região sem canal ou time","Conflito de agenda","Custo alto para o retorno esperado","Evento cancelado ou sem edição","Outro"];
+const EVT_PRIOS=["MÁXIMA","ALTA","MÉDIA","BAIXA","ANÁLISE","A classificar"];
+const evtVe=()=>!S.demo&&(ehAdmin()||ehMkt()||temPerfil("Comercial Barenbrug"));
+const evtEdita=()=>!S.demo&&(ehAdmin()||ehMkt());
+const evtPartSt=e=>(e.part&&e.part.status)||null;
+function evtPartSelo(e){const s=evtPartSt(e);if(!s)return `<span class="meta">sem decisão</span>`;const t=(EVT_ST.find(x=>x[0]===s)||[,s])[1];const f=((e.part||{}).formas||[])[0];
+  return `<span class="selo ev-st-${s}">${esc(t)}</span>${s!=="nao"&&f?`<span class="meta" style="display:block">${esc(f)}${(e.part.formas||[]).length>1?" +"+((e.part.formas||[]).length-1):""}</span>`:s==="nao"&&e.part.motivo?`<span class="meta" style="display:block">${esc(e.part.motivo)}</span>`:""}`;}
+function evtInvest(e){const p=e.part||{};const A=(p.acoes||[]).map(id=>(S.mk||[]).find(a=>a.id===+id)).filter(Boolean);const G=(p.pgd||[]).map(id=>(S.evtPgd||[]).find(a=>a.id===id)).filter(Boolean);
+  const vA=A.reduce((t,a)=>t+(typeof mkCusto==="function"?mkCusto(a):0),0),vG=G.reduce((t,a)=>t+(Number(a.valor_igdb)||0),0),vD=Number(p.investimento)||0;
+  return {A,G,vA,vG,vD,tot:vA+vG+vD};}
+function evtPartBloco(e){const p=e.part||{},s=evtPartSt(e);const iv=evtInvest(e);
+  const t=s?(EVT_ST.find(x=>x[0]===s)||[,s])[1]:"Sem decisão registrada";
+  return `<div class="mp-box"><h3>Participação da Barenbrug · ${esc(t)}</h3>
+    ${s==="nao"?`<div class="mp-row"><span>Motivo</span><strong>${esc([p.motivo,p.motivo_txt].filter(Boolean).join(": ")||"não informado")}</strong></div>`:""}
+    ${(p.formas||[]).length?`<div class="mp-row"><span>Forma</span><strong>${esc(p.formas.join(", "))}</strong></div>`:""}
+    ${p.parceiro?`<div class="mp-row"><span>Parceiro de canal</span><strong>${esc(p.parceiro)}</strong></div>`:""}
+    ${p.quando?`<div class="mp-row"><span>Quando</span><strong>${esc(p.quando)}</strong></div>`:""}
+    ${iv.A.length?`<div class="mp-row"><span>Ações de Marketing</span><strong>${iv.A.map(a=>esc(a.titulo)+" ("+esc(evtRs(mkCusto(a)))+")").join("; ")}</strong></div>`:""}
+    ${iv.G.length?`<div class="mp-row"><span>Ações do PGD</span><strong>${iv.G.map(a=>esc((a.canais&&a.canais.nome)||"Revenda")+": "+esc(a.tipo||"ação")+" ("+esc(evtRs(a.valor_igdb))+")").join("; ")}</strong></div>`:""}
+    ${iv.vD?`<div class="mp-row"><span>Outros custos</span><strong>${esc(evtRs(iv.vD))}</strong></div>`:""}
+    ${iv.tot?`<div class="mp-row"><span>Investimento total</span><strong>${esc(evtRs(iv.tot))}</strong></div>`:""}
+    ${p.nota?`<p class="meta">${esc(p.nota)}</p>`:""}
+    ${!s&&evtEdita()?`<p class="meta">Registre se vamos participar, de que forma, ou o motivo de não participar.</p>`:""}</div>`;}
+const EVT_MESES=[7,8,9,10,11,12,1,2,3,4,5,6];
+function evtMontar(meta,rows){
+  const D={safra:meta.safra||"",fontes:meta.fontes||[],meses:EVT_MESES,mes_nome:EVT_MN,fase:meta.fase,regioes:meta.regioes,linhas_nome:meta.linhas_nome,potencial:meta.potencial||{},grupos:meta.grupos||{}};
+  D.matriz=(meta.grade||[]).map(([reg,linha,main,s])=>{const c=String(s).split(",").filter(Boolean);const R=D.regioes[reg]||{};
+    return {reg,linha,main:!!main,nome:R.nome||reg,linha_nome:D.linhas_nome[linha]||linha,ufs:R.ufs||"",cel:EVT_MESES.map((m,i)=>({m,c:(c[i]||"NA").replace("+",""),canal:/\+$/.test(c[i]||""),ev:[]}))};});
+  const linhaDe=reg=>D.matriz.find(r=>r.reg===reg&&r.main),secDe=reg=>D.matriz.filter(r=>r.reg===reg&&!r.main);
+  const fm=(reg,m)=>{const R=linhaDe(reg);if(!R)return {c:"NA",canal:false,sec:{},ate:null};const i=EVT_MESES.indexOf(+m);const cel=R.cel[i];
+    let ate=null;for(let k=0;k<12;k++){if(R.cel[(i+k)%12].c==="P"){ate=k;break;}}
+    const sec={};secDe(reg).forEach(r=>{const x=r.cel[i].c;if(["P","PRE","PA"].includes(x))sec[r.linha]=x;});return {c:cel.c,canal:cel.canal,sec,ate};};
+  const jan=f=>{const p=(D.fase[f.c]||{pts:0}).pts;return Math.max(p,Object.keys(f.sec).length?2:0);};
+  const mercado={A:3,B:2,C:1};
+  D.eventos=rows.map(r=>{const e={...(r.dados||{}),id:r.id};e.regiao=e.regiao||"NA";e.part=e.part||{};
+    e.pot_t=e.uf?(D.potencial[e.uf]||null):null;e.grupo=e.uf?(D.grupos[e.uf]||null):null;
+    const pts={prio:EVT_PRIO_ORD[e.prio]||0,mercado:mercado[e.grupo]||0,janela:0};e.fase_sec={};e.fases_faixa=null;e.ate_pico=null;e.fase_canal=false;
+    if(e.mes){e.mes_incerto=false;if(e.regiao==="NA"){e.fase="NA";}else{const f=fm(e.regiao,e.mes);e.fase=f.c;e.fase_sec=f.sec;e.fase_canal=f.canal;e.ate_pico=f.ate;pts.janela=jan(f);}}
+    else{e.mes_incerto=true;e.fase=null;
+      if(e.faixa&&e.faixa.length===2){const ms=[];let m=+e.faixa[0];for(let k=0;k<12;k++){ms.push(m);if(m===+e.faixa[1])break;m=m%12+1;}
+        e.fases_faixa=ms.map(m=>{const f=e.regiao==="NA"?{c:"NA",canal:false,sec:{},ate:null}:fm(e.regiao,m);return {m,c:f.c,canal:f.canal,ate:f.ate,sec:f.sec};});
+        e.fase_canal=e.fases_faixa.some(x=>x.canal);pts.janela=e.regiao==="NA"?0:e.fases_faixa.reduce((t,f)=>t+jan(f),0)/e.fases_faixa.length;}
+      else pts.janela=null;}
+    e.pts=pts;return e;});
+  D.matriz.forEach(r=>{if(!r.main)return;r.cel.forEach(c=>{c.ev=D.eventos.filter(e=>e.regiao===r.reg&&e.mes===c.m).map(e=>e.id);});});
+  D.lacunas={};D.matriz.filter(r=>r.main).forEach(r=>{D.lacunas[r.reg]=r.cel.filter(c=>(D.fase[c.c]||{}).grp==="dec").map(c=>({m:c.m,fase:c.c,n:c.ev.length,eventos:c.ev.map(id=>(D.eventos.find(e=>e.id===id)||{}).nome)}));});
+  return D;}
+async function carregarEvt(){if(S.evtBusy)return;S.evtBusy=true;
+  try{const [m,r]=await Promise.all([sb.from("evt_mercado_meta").select("dados").eq("id",1).maybeSingle(),sb.from("evt_mercado").select("id,dados").eq("ativo",true).order("id")]);
+    if(m.error||r.error||!m.data)throw new Error("evt");EVT_DATA=evtMontar(m.data.dados,r.data||[]);S.evtRows=r.data||[];}catch(e){EVT_DATA={erro:true};}
+  S.evtBusy=false;render();}
+async function carregarEvtPgd(){S.evtPgd=null;try{const {data}=await sb.from("acoes_pgd").select("id,tipo,cidade,data_acao,valor_igdb,status,verba,canal_id,canais(nome)").order("criado_em",{ascending:false});S.evtPgd=data||[];}catch(e){S.evtPgd=[];}render();}
+function evtAbrirForm(id){const r=id==null?null:(S.evtRows||[]).find(x=>x.id===id);const d=r?JSON.parse(JSON.stringify(r.dados||{})):{regiao:"NA",prio:"MÉDIA",fit:"Direta",tipo:"Feira multissetorial"};
+  d.part=d.part||{};d.part.formas=d.part.formas||[];d.part.acoes=d.part.acoes||[];d.part.pgd=d.part.pgd||[];S.evtEd={id:r?r.id:null,d};S.evtQ="";render();}
+const EVT_UF_REG={MT:"CO",GO:"CO",MS:"CO",TO:"CO",DF:"CO",RO:"N",PA:"N",BA:"MP",MA:"MP",PI:"MP",SP:"SE",MG:"SE",RS:"SUL",SC:"SUL",PR:"PRN"};
+function evtForm(){const E=S.evtEd,d=E.d,p=d.part;const v=x=>esc(x==null?"":String(x));const D=EVT_DATA;
+  const sug=t=>{const w=String(d.nome||"").toLowerCase().split(/\s+/).filter(x=>x.length>3);return w.some(x=>String(t||"").toLowerCase().includes(x));};
+  const q=(S.evtQ||"").toLowerCase();
+  const MK=(S.mk||[]).filter(a=>!a.agrupador);const mkL=MK.filter(a=>p.acoes.includes(a.id)||(!q?sug(a.titulo):String(a.titulo||"").toLowerCase().includes(q))).slice(0,30);
+  const PG=(S.evtPgd||[]);const pgL=PG.filter(a=>p.pgd.includes(a.id)||(!q?false:((a.canais&&a.canais.nome)+" "+a.tipo+" "+a.cidade).toLowerCase().includes(q))).slice(0,30);
+  const canaisN=[...new Set(PG.map(a=>a.canais&&a.canais.nome).filter(Boolean))].sort();
+  const mesOpt=sel=>`<option value="">—</option>`+EVT_MESES.map(m=>`<option value="${m}" ${+sel===m?"selected":""}>${EVT_MN[m]}</option>`).join("");
+  return `<div class="ev-wrap"><button class="link" data-a="evt-cancel" data-v="1">‹ Voltar sem salvar</button>
+  <form id="f-evt" class="form-card"><h2 class="sec">${E.id?"Editar evento":"Incluir evento"}</h2>
+   <h3 class="pgd-h">O evento</h3>
+   <div class="pj-fg"><div class="pj-l2"><label for="ev_nome">Nome *</label><input id="ev_nome" required value="${v(d.nome)}"></div><div><label for="ev_tipo">Tipo</label><input id="ev_tipo" list="ev_tipos" value="${v(d.tipo)}"><datalist id="ev_tipos">${[...new Set(D.eventos.map(e=>e.tipo).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>
+    <div><label for="ev_cidade">Cidade</label><input id="ev_cidade" value="${v(d.cidade)}"></div><div><label for="ev_uf">UF</label><select id="ev_uf"><option value="">—</option>${UF_LISTA.map(u=>`<option ${u===d.uf?"selected":""}>${u}</option>`).join("")}</select></div>
+    <div><label for="ev_reg">Região da janela de compra</label><select id="ev_reg">${Object.entries(D.regioes).map(([k,r])=>`<option value="${k}" ${k===d.regiao?"selected":""}>${esc(r.nome)}</option>`).join("")}<option value="NA" ${d.regiao==="NA"?"selected":""}>Sem janela mapeada</option></select><span class="meta">Preenchida pela UF; no Paraná, escolha Sul para os Campos Gerais.</span></div>
+    <div><label for="ev_mes">Mês do evento</label><select id="ev_mes">${mesOpt(d.mes)}</select><span class="meta">Sem mês certo? Deixe vazio e use a faixa ao lado.</span></div>
+    <div><label>Faixa possível (mês a confirmar)</label><div style="display:flex;gap:6px"><select id="ev_fx0" aria-label="De">${mesOpt(d.faixa&&d.faixa[0])}</select><select id="ev_fx1" aria-label="Até">${mesOpt(d.faixa&&d.faixa[1])}</select></div></div>
+    <div><label for="ev_pub">Público estimado</label><input id="ev_pub" inputmode="numeric" value="${v(d.publico)}"></div>
+    <div><label for="ev_d26">Edição de referência</label><input id="ev_d26" value="${v(d.data26)}" placeholder="Ex.: 21 a 25/jul"></div><div><label for="ev_prox">Próxima edição</label><input id="ev_prox" value="${v(d.prox)}" placeholder="Ex.: 26 a 30/abr/2027 (confirmada)"></div><div><label for="ev_ciclo">Periodicidade</label><input id="ev_ciclo" value="${v(d.ciclo)}" placeholder="Ex.: bienal"></div>
+    <div><label for="ev_prio">Relevância</label><select id="ev_prio">${EVT_PRIOS.map(x=>`<option ${x===d.prio?"selected":""}>${x}</option>`).join("")}</select></div><div><label for="ev_fit">Aderência a pastagens</label><select id="ev_fit">${["Direta","Indireta","A verificar"].map(x=>`<option ${x===d.fit?"selected":""}>${x}</option>`).join("")}</select></div>
+    <div><label for="ev_lat">Latitude e longitude (para o mapa)</label><div style="display:flex;gap:6px"><input id="ev_lat" inputmode="decimal" placeholder="-21,17" value="${v(d.lat)}" aria-label="Latitude"><input id="ev_lon" inputmode="decimal" placeholder="-47,81" value="${v(d.lon)}" aria-label="Longitude"></div></div>
+    <div class="pj-l3"><label for="ev_nota">Sobre o evento</label><textarea id="ev_nota" rows="2">${v(d.nota)}</textarea></div></div>
+   <h3 class="pgd-h" style="margin-top:14px">Participação da Barenbrug</h3>
+   <div class="pj-fg"><div><label for="ev_st">Decisão</label><select id="ev_st"><option value="">Sem decisão</option>${EVT_ST.map(([k,t])=>`<option value="${k}" ${p.status===k?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div data-evnao ${p.status==="nao"?"":"hidden"}><label for="ev_mot">Motivo de não participar</label><select id="ev_mot"><option value="">—</option>${EVT_MOTIVOS.map(x=>`<option ${x===p.motivo?"selected":""}>${x}</option>`).join("")}</select></div>
+    <div data-evnao ${p.status==="nao"?"":"hidden"}><label for="ev_mott">Detalhe do motivo</label><input id="ev_mott" value="${v(p.motivo_txt)}"></div>
+    <div class="pj-l3" data-evsim ${p.status&&p.status!=="nao"?"":"hidden"}><span class="lab">Forma de participação</span><div class="filtros">${EVT_FORMAS.map(f=>`<label class="check"><input type="checkbox" data-evforma value="${esc(f)}" ${p.formas.includes(f)?"checked":""}> ${esc(f)}</label>`).join("")}</div></div>
+    <div data-evsim ${p.status&&p.status!=="nao"?"":"hidden"}><label for="ev_parc">Parceiro de canal (revenda ou RC)</label><input id="ev_parc" list="ev_canais" value="${v(p.parceiro)}"><datalist id="ev_canais">${canaisN.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
+    <div data-evsim ${p.status&&p.status!=="nao"?"":"hidden"}><label for="ev_quando">Quando participamos</label><input id="ev_quando" value="${v(p.quando)}" placeholder="Ex.: ago/26"></div>
+    <div data-evsim ${p.status&&p.status!=="nao"?"":"hidden"}><label for="ev_inv">Outros custos (R$)</label><input id="ev_inv" inputmode="decimal" value="${v(p.investimento)}"><span class="meta">Só o que não está numa ação ligada abaixo, para não contar duas vezes.</span></div>
+    <div class="pj-l3"><label for="ev_pnota">Observação</label><textarea id="ev_pnota" rows="2">${v(p.nota)}</textarea></div></div>
+   <h3 class="pgd-h" style="margin-top:14px">Ações ligadas a este evento</h3>
+   <p class="meta" style="margin:0 0 6px">Marque as Ações de Marketing e as ações do PGD das revendas que pagaram a participação. O valor delas entra no investimento do evento. ${q?"":"Sem busca, aparecem as ações com nome parecido com o do evento."}</p>
+   <input id="ev_q" type="search" autocomplete="off" placeholder="Buscar ação por nome, revenda ou cidade" value="${esc(S.evtQ||"")}" style="width:100%;margin-bottom:8px">
+   <div class="int-2"><div><span class="lab">Ações de Marketing</span><div class="ev-lig">${S.mk===undefined?`<span class="meta">Carregando…</span>`:mkL.length?mkL.map(a=>`<label class="check"><input type="checkbox" data-evacao value="${a.id}" ${p.acoes.includes(a.id)?"checked":""}> ${esc(a.titulo)} <span class="meta">${esc(a.status||"")} · ${esc(evtRs(mkCusto(a)))}</span></label>`).join(""):`<span class="meta">Nenhuma ação encontrada${q?"":" com nome parecido; use a busca"}.</span>`}</div></div>
+    <div><span class="lab">Ações do PGD (IGDB e BF das revendas)</span><div class="ev-lig">${S.evtPgd==null?`<span class="meta">Carregando…</span>`:pgL.length?pgL.map(a=>`<label class="check"><input type="checkbox" data-evpgd value="${esc(a.id)}" ${p.pgd.includes(a.id)?"checked":""}> ${esc((a.canais&&a.canais.nome)||"Revenda")}: ${esc(a.tipo||"ação")} <span class="meta">${esc([a.cidade,a.data_acao,a.status].filter(Boolean).join(" · "))} · ${esc(evtRs(a.valor_igdb))}</span></label>`).join(""):`<span class="meta">${q?"Nenhuma ação do PGD com essa busca.":"Busque pelo nome da revenda ou da cidade."}</span>`}</div></div></div>
+   <div class="acoes" style="margin-top:14px"><button class="btn" type="submit">Salvar evento</button><button class="btn sec" type="button" data-a="evt-cancel" data-v="1">Cancelar</button>${E.id?`<button class="link perigo" type="button" data-a="evt-del" data-v="${E.id}">Excluir evento</button>`:""}</div></form></div>`;}
+function evtColeta(){const E=S.evtEd;if(!E)return;const f=document.getElementById("f-evt");if(!f)return;const g=id=>{const x=f.querySelector("#"+id);return x?x.value.trim():"";};const d=E.d,p=d.part;
+  d.nome=g("ev_nome");d.tipo=g("ev_tipo");d.cidade=g("ev_cidade");d.uf=g("ev_uf")||null;d.regiao=g("ev_reg")||"NA";d.mes=+g("ev_mes")||null;const a0=+g("ev_fx0"),a1=+g("ev_fx1");d.faixa=!d.mes&&a0&&a1?[a0,a1]:null;
+  const n=x=>{const t=String(x||"").replace(",",".");return t&&isFinite(+t)?+t:null;};d.publico=parseInt(String(g("ev_pub")).replace(/\D/g,""))||null;d.data26=g("ev_d26");d.prox=g("ev_prox")||null;d.ciclo=g("ev_ciclo")||null;d.prio=g("ev_prio");d.fit=g("ev_fit");d.lat=n(g("ev_lat"));d.lon=n(g("ev_lon"));d.nota=g("ev_nota");
+  p.status=g("ev_st")||null;p.motivo=g("ev_mot")||null;p.motivo_txt=g("ev_mott")||null;p.parceiro=g("ev_parc")||null;p.quando=g("ev_quando")||null;p.investimento=mkNum(g("ev_inv"))||null;p.nota=g("ev_pnota")||null;
+  p.formas=[...f.querySelectorAll("[data-evforma]:checked")].map(x=>x.value);
+  f.querySelectorAll("[data-evacao]").forEach(x=>{const id=+x.value;const i=p.acoes.indexOf(id);if(x.checked&&i<0)p.acoes.push(id);if(!x.checked&&i>=0)p.acoes.splice(i,1);});
+  f.querySelectorAll("[data-evpgd]").forEach(x=>{const id=x.value;const i=p.pgd.indexOf(id);if(x.checked&&i<0)p.pgd.push(id);if(!x.checked&&i>=0)p.pgd.splice(i,1);});}
+async function evtSalvar(){evtColeta();const E=S.evtEd,d=E.d;if(!d.nome){aviso("Informe o nome do evento.");return;}
+  const lim=o=>{const r={};Object.entries(o).forEach(([k,x])=>{if(x!=null&&x!==""&&!(Array.isArray(x)&&!x.length))r[k]=x;});return r;};
+  const dados=lim({...d,part:lim(d.part)});const o={dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null};
+  const r=E.id?await sb.from("evt_mercado").update(o).eq("id",E.id).select("id").single():await sb.from("evt_mercado").insert(o).select("id").single();
+  if(r.error){aviso("Não foi possível salvar o evento.");return;}
+  S.evtEd=null;EVT_DATA=null;evtEst().sel=r.data.id;aviso("Evento salvo.");render();}
+async function evtExcluir(id){const b=document.querySelector(`[data-a="evt-del"][data-v="${id}"]`);if(b&&b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Confirmar exclusão";return;}
+  const {error}=await sb.from("evt_mercado").update({ativo:false,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null}).eq("id",+id);if(error){aviso("Não foi possível excluir.");return;}
+  S.evtEd=null;EVT_DATA=null;evtEst().sel=null;aviso("Evento excluído.");render();}
+document.addEventListener("submit",ev=>{if(ev.target&&ev.target.id==="f-evt"){ev.preventDefault();ev.stopPropagation();evtSalvar();}},true);
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.closest||!t.closest("#f-evt"))return;
+  if(t.id==="ev_st"){const s=t.value;document.querySelectorAll("#f-evt [data-evnao]").forEach(x=>x.hidden=s!=="nao");document.querySelectorAll("#f-evt [data-evsim]").forEach(x=>x.hidden=!s||s==="nao");}
+  if(t.id==="ev_uf"&&EVT_UF_REG[t.value]){const r=document.getElementById("ev_reg");if(r)r.value=EVT_UF_REG[t.value];}
+  if(t.id==="ev_mes"&&t.value){["ev_fx0","ev_fx1"].forEach(i=>{const x=document.getElementById(i);if(x)x.value="";});}},true);
+let _evQT;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="ev_q")return;clearTimeout(_evQT);_evQT=setTimeout(()=>{evtColeta();S.evtQ=t.value;const pos=t.selectionStart;render();const n=document.getElementById("ev_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
+const EVT_CSS=`
+.ev-wrap{display:grid;gap:22px}
+.ev-heat{border-collapse:separate;border-spacing:3px;min-width:700px;font-variant-numeric:tabular-nums}
+.ev-heat th{font-size:12px;font-weight:600;color:var(--apagado,#5a6b74);padding:4px 6px;text-align:center}
+.ev-heat tbody th{text-align:left;min-width:176px;color:var(--preto,#1e1e1e);font-size:13px;line-height:1.3;position:sticky;left:0;background:var(--branco,#fff);z-index:1}
+.ev-heat tbody th small{display:block;font-weight:400;color:var(--apagado,#5a6b74)}
+.ev-heat td{width:54px;height:40px;text-align:center;border-radius:5px;padding:0;line-height:1.1}
+.ev-heat td b{display:block;font-size:15px}
+.ev-heat td i{display:block;font-style:normal;font-size:10px;font-weight:600}
+.ev-heat td[data-a]{cursor:pointer}
+.ev-heat td[data-a]:hover{outline:2px solid var(--amarelo,#ffdb00)}
+.ev-g-dec{background:var(--azul-escuro,#00557a);color:#fff}
+.ev-g-cmp{background:#8fd0ee;color:#00334a}
+.ev-g-apo{background:#cfe9f5;color:var(--azul-escuro,#00557a)}
+.ev-g-fora{background:#eef4f7;color:var(--apagado,#5a6b74)}
+.ev-g-na{background:repeating-linear-gradient(45deg,#e6e9ec,#e6e9ec 4px,#f4f6f7 4px,#f4f6f7 8px);color:var(--apagado,#5a6b74)}
+.ev-g-inc{background:var(--amarelo-claro,#fff7bf);color:#5c4b00;box-shadow:inset 0 0 0 1.5px var(--amarelo,#ffdb00)}
+.ev-leg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;color:var(--apagado,#5a6b74)}
+.ev-leg span{display:inline-flex;align-items:center;gap:6px}
+.ev-leg i{display:inline-block;width:14px;height:14px;border-radius:4px}
+.ev-leg i.ev-ring{background:#fff;box-shadow:inset 0 0 0 2.5px var(--preto,#1e1e1e);border-radius:50%}
+.ev-sel{font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap;display:inline-block}
+.ev-pin{cursor:pointer;stroke:#fff;stroke-width:.12;opacity:.95}
+.ev-pin.ev-p-dec{fill:var(--azul-escuro,#00557a)}
+.ev-pin.ev-p-cmp{fill:#2fb2e6}
+.ev-pin.ev-p-apo{fill:#cfe9f5;stroke:var(--azul-escuro,#00557a)}
+.ev-pin.ev-p-fora{fill:#eef4f7;stroke:#8a8f94}
+.ev-pin.ev-p-na{fill:#c9ced2;stroke:#8a8f94}
+.ev-pin.ev-p-inc{fill:var(--amarelo,#ffdb00);stroke:#7a6500}
+.ev-pin.ev-part{stroke:var(--preto,#1e1e1e);stroke-width:.34}
+.ev-pin.on{stroke:var(--preto,#1e1e1e);stroke-width:.5;opacity:1}
+.ev-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:860px){.ev-grid{grid-template-columns:minmax(0,1fr)}}
+.ev-barra{display:grid;grid-template-columns:78px 1fr 40px;gap:10px;align-items:center;font-size:14px}
+.ev-barra .t{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--obj-h0,#eef4f7)}
+.ev-barra .t i{display:block;height:100%}
+.ev-barra b{text-align:right}
+.ev-ufbarra{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.ev-ufbarra .t{height:14px;border-radius:7px;background:var(--obj-h0,#eef4f7);overflow:hidden}
+.ev-ufbarra .t i{display:block;height:100%;background:var(--azul,#00a8e2)}
+.ev-ufbarra .t i.d{background:var(--azul-escuro,#00557a)}
+.ev-filtro{display:grid;gap:6px}
+.ev-filtro>strong{font-size:12px;color:var(--apagado,#5a6b74);text-transform:uppercase;letter-spacing:.04em}
+.ev-lac{display:grid;gap:8px}
+.ev-lac p{margin:0;line-height:1.5}
+.ev-det{display:grid;gap:12px;border-left:4px solid var(--amarelo,#ffdb00);padding-left:14px}
+.ev-det h3{font-size:20px;font-weight:800;color:var(--azul-escuro,#00557a)}
+.ev-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px}
+.ev-kv div{font-size:14px}
+.ev-kv span{display:block;font-size:12px;color:var(--apagado,#5a6b74);text-transform:uppercase;letter-spacing:.04em}
+.ev-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.ev-res div{background:var(--azul-claro,#e3f5fc);border-radius:8px;padding:10px}
+.ev-res strong{display:block;font-size:18px;color:var(--azul-escuro,#00557a)}
+.ev-res span{font-size:12px;color:var(--apagado,#5a6b74)}
+.ev-peso{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.ev-peso>span{min-width:150px}
+tr.ev-row{cursor:pointer}
+tr.ev-row.ev-on td{background:var(--amarelo-claro,#fff7bf)}
+.ev-idx{font-weight:800;color:var(--azul-escuro,#00557a)}
+@media(max-width:640px){.ev-heat tbody th{min-width:118px;font-size:12px}.ev-heat td{width:48px}}
+`;
+
+const EVT_MN={1:"jan",2:"fev",3:"mar",4:"abr",5:"mai",6:"jun",7:"jul",8:"ago",9:"set",10:"out",11:"nov",12:"dez"};
+const EVT_FC={P:"Pico",PA:"Pico antecip.",PRE:"Pré-pico",C:"Compra",A:"Antecip.",POS:"Pós",S:"Sell-in",F:"Fora",NA:"Sem janela"};
+const EVT_GRP_NOME={dec:"Decisão (pico e pré-pico)",cmp:"Compra e antecipação",apo:"Apoio (pós-compra e sell-in)",fora:"Fora da janela",na:"Sem janela mapeada",inc:"Mês a confirmar"};
+const EVT_PRIO_ORD={"MÁXIMA":4,"ALTA":3,"MÉDIA":2,"BAIXA":1,"ANÁLISE":1,"A classificar":0};
+
+function evtEst(){if(!S.evt)S.evt={mes:"Todos",reg:"Todos",fase:"Todos",prio:"Todos",part:"Todos",ord:"indice",sel:null,w:[1,1,1],mapa:"eventos"};return S.evt;}
+const evtFmt=n=>Math.round(Number(n)||0).toLocaleString("pt-BR");
+const evtT=n=>n==null?"n/d":(n>=1000?(n/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil t":evtFmt(n)+" t");
+const evtRs=n=>"R$ "+evtFmt(n);
+const evtTon=n=>Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+" t";
+function evtGrp(e){if(e.mes_incerto)return "inc";if(e.regiao==="NA")return "na";return EVT_DATA.fase[e.fase].grp;}
+function evtIdx(e,w){const p=e.pts,tw=w[0]+w[1]+w[2];if(!tw)return 0;return (w[0]*(p.prio/4)+w[1]*((p.janela||0)/3)+w[2]*(p.mercado/3))/tw*10;}
+function evtFaseTxt(e){
+  if(e.regiao==="NA"&&!e.mes_incerto)return "Sem janela mapeada para "+(e.uf||"este evento");
+  if(e.mes_incerto){
+    if(e.fases_faixa){const n=e.fases_faixa.length,d=e.fases_faixa.filter(x=>EVT_DATA.fase[x.c].grp==="dec").length;
+      return "Mês a confirmar ("+EVT_MN[e.faixa[0]]+" a "+EVT_MN[e.faixa[1]]+"): "+d+" de "+n+" meses possíveis caem na janela de decisão";}
+    return "Sem data definida";}
+  return EVT_DATA.fase[e.fase].rot+(e.regiao==="SUL"?" (temperadas)":"");
+}
+function evtPicoTxt(e){if(e.mes_incerto||e.regiao==="NA"||e.ate_pico==null)return "";return e.ate_pico===0?"pico do produtor em curso":"pico do produtor em "+e.ate_pico+(e.ate_pico===1?" mês":" meses");}
+function evtSecTxt(e){const L=EVT_DATA.linhas_nome,o=[];for(const k in (e.fase_sec||{}))o.push(L[k]+": "+EVT_DATA.fase[e.fase_sec[k]].rot.toLowerCase());return o.join(" · ");}
+function evtMesTxt(e){if(e.mes)return EVT_MN[e.mes];if(e.faixa)return EVT_MN[e.faixa[0]]+"–"+EVT_MN[e.faixa[1]]+" (a confirmar)";return "sem data";}
+function evtNoMes(e,m){return e.mes?e.mes===+m:(e.faixa?evtNaFaixa(e.faixa,+m):false);}
+function evtNaFaixa(f,m){return f[0]<=f[1]?(m>=f[0]&&m<=f[1]):(m>=f[0]||m<=f[1]);}
+function evtFiltrados(){
+  const E=evtEst();
+  return EVT_DATA.eventos.filter(e=>(E.mes==="Todos"||evtNoMes(e,E.mes))&&(E.reg==="Todos"||e.regiao===E.reg)&&(E.fase==="Todos"||evtGrp(e)===E.fase)
+    &&(E.part==="Todos"||(E.part==="sem"?!evtPartSt(e):E.part==="Sim"?["participamos","vamos"].includes(evtPartSt(e)):evtPartSt(e)===E.part))&&(E.prio==="Todos"||(EVT_PRIO_ORD[e.prio]||0)>=3));
+}
+function evtMesOrd(e){const m=e.mes||(e.faixa&&e.faixa[0])||0;if(!m)return 99;return m>=7?m-7:m+5;}
+function evtOrdenar(l){
+  const E=evtEst(),w=E.w,f={indice:(a,b)=>evtIdx(b,w)-evtIdx(a,w),mes:(a,b)=>evtMesOrd(a)-evtMesOrd(b)||evtIdx(b,w)-evtIdx(a,w),
+    pot:(a,b)=>(b.pot_t||0)-(a.pot_t||0),pub:(a,b)=>(b.publico||0)-(a.publico||0),nome:(a,b)=>a.nome.localeCompare(b.nome,"pt-BR")};
+  return l.slice().sort(f[E.ord]||f.indice);
+}
+function evtChips(rot,acao,atual,opts){
+  return `<div class="ev-filtro"><strong>${esc(rot)}</strong><div class="filtros" role="group" aria-label="${esc(rot)}">${opts.map(([v,t])=>`<button class="chip" data-a="${acao}" data-v="${esc(v)}" aria-pressed="${String(atual)===String(v)}">${esc(t)}</button>`).join("")}</div></div>`;
+}
+function evtGeo(){
+  if(typeof GEO!=="undefined"&&GEO)return true;
+  if(!S._evtGeo&&typeof carregarGeo==="function"){S._evtGeo=1;carregarGeo().then(()=>render()).catch(()=>{S._evtGeo=2;render();});}
+  return false;
+}
+function evtCSS(){if(!document.getElementById("evt-css")){const s=document.createElement("style");s.id="evt-css";s.textContent=EVT_CSS;document.head.appendChild(s);}}
+
+/* ---------- blocos ---------- */
+function evtKpis(){
+  const ev=EVT_DATA.eventos,def=ev.filter(e=>!e.mes_incerto&&e.regiao!=="NA");
+  const dec=def.filter(e=>EVT_DATA.fase[e.fase].grp==="dec").length,cmp=def.filter(e=>EVT_DATA.fase[e.fase].grp==="cmp").length;
+  const inc=ev.filter(e=>e.mes_incerto).length,part=ev.filter(e=>evtPartSt(e)==="participamos").length,vamos=ev.filter(e=>evtPartSt(e)==="vamos").length,aval=ev.filter(e=>evtPartSt(e)==="avaliando").length,nao=ev.filter(e=>evtPartSt(e)==="nao").length;
+  const lac=Object.values(EVT_DATA.lacunas).reduce((t,l)=>t+l.filter(x=>!x.n).length,0);
+  return `<div class="metrics">
+    <div class="metric"><span>Eventos mapeados</span><strong>${ev.length}</strong><span class="meta">${ev.length-inc} com mês definido, ${inc} a confirmar</span></div>
+    <div class="metric"><span>Na janela de decisão</span><strong>${dec} de ${def.length}</strong><span class="meta">pico ou até 3 meses antes do pico do produtor</span></div>
+    <div class="metric"><span>Na compra ou antecipação</span><strong>${cmp} de ${def.length}</strong><span class="meta">produtor comprando ou safra seguinte</span></div>
+    <div class="metric"><span>Participamos na safra ${EVT_DATA.safra}</span><strong>${part}</strong><span class="meta">${vamos} confirmados para participar · ${aval} em avaliação · ${nao} decididos que não</span></div>
+    <div class="metric"><span>Janelas sem evento</span><strong>${lac}</strong><span class="meta">meses de decisão sem evento mapeado</span></div></div>`;
+}
+function evtHeat(){
+  const E=evtEst();
+  const th=EVT_DATA.meses.map(m=>`<th scope="col">${EVT_MN[m]}</th>`).join("");
+  const rows=EVT_DATA.matriz.map(r=>`<tr><th scope="row">${esc(r.nome)}<small>${esc(r.linha_nome)}${r.main?" · "+esc(r.ufs):""}</small></th>${r.cel.map(c=>{
+    const g=EVT_DATA.fase[c.c].grp,n=c.ev.length;
+    const tip=r.nome+" · "+EVT_MN[c.m]+": "+EVT_DATA.fase[c.c].rot+(c.canal?" · canal em sell-in":"")+(n?" · "+n+" evento"+(n>1?"s":""):"");
+    const on=E.reg===r.reg&&E.mes==String(c.m)&&r.main;
+    return `<td class="ev-g-${g}" ${n&&r.main?`data-a="evt-cel" data-v="${r.reg}|${c.m}" tabindex="0"`:""} ${on?'style="outline:2px solid var(--preto,#1e1e1e)"':""} title="${esc(tip)}">${n&&r.main?`<b>${n}</b>`:""}<i>${EVT_FC[c.c]}</i></td>`;}).join("")}</tr>`).join("");
+  return `<section class="bloco"><h2 class="sec">Janela de decisão de compra por região</h2>
+    <p class="meta">Meses da safra (jul a jun). A cor mostra em que momento da decisão de compra está cada região; o número é a quantidade de eventos mapeados naquele mês, e ao tocar nele a lista abaixo é filtrada. Linhas sem número são linhas secundárias (ILP, temperadas).</p>
+    <div class="tab"><table class="ev-heat" aria-label="Janela de decisão de compra por região e mês"><thead><tr><th scope="col"></th>${th}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="ev-leg" role="list">${["dec","cmp","apo","fora"].map(g=>`<span role="listitem"><i class="ev-g-${g}"></i>${esc(EVT_GRP_NOME[g])}</span>`).join("")}</div>
+  </section>`;
+}
+function evtMapa(){
+  const E=evtEst(),ev=EVT_DATA.eventos;
+  const nUF={},nDec={};
+  ev.forEach(e=>{if(!e.uf)return;nUF[e.uf]=(nUF[e.uf]||0)+1;if(!e.mes_incerto&&e.regiao!=="NA"&&EVT_DATA.fase[e.fase].grp==="dec")nDec[e.uf]=(nDec[e.uf]||0)+1;});
+  const pot=EVT_DATA.potencial,ufs=Object.keys(nUF);
+  const base=E.mapa==="potencial"?pot:nUF;const mx=Math.max(1,...Object.values(base));
+  const chips=evtChips("O mapa mostra","evt-mapa",E.mapa,[["eventos","Quantidade de eventos"],["potencial","Potencial de mercado (t)"]]);
+  let mapa;
+  if(!evtGeo())mapa=`<div class="vazio">Carregando o mapa…</div>`;
+  else{
+    let svg=`<svg class="mp-svg" viewBox="0 0 ${GEO.W.toFixed(1)} ${GEO.H.toFixed(1)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa do Brasil com os eventos mapeados por cidade e a fase da janela de decisão">`;
+    for(const e of GEO.st){const v=base[e.uf]||0;const al=v?(0.12+0.62*Math.sqrt(v/mx)):0;
+      svg+=`<path class="mp-st ${v?"":"zero"}" d="${e.d}" ${v?`style="fill-opacity:${al.toFixed(2)}"`:""}><title>${e.uf}: ${nUF[e.uf]||0} evento(s)${pot[e.uf]?" · potencial "+evtT(pot[e.uf]):""}</title></path>`;}
+    const FIX={RJ:[0,1.5],ES:[1.2,0],SE:[1.2,0],AL:[1.3,0],PB:[1.5,0],RN:[1.3,-.5],DF:[0,-1],SC:[0,.5]};
+    for(const e of GEO.st){const f=FIX[e.uf]||[0,0];svg+=`<text class="mp-stl" x="${(e.cx+f[0]).toFixed(1)}" y="${(e.cy+f[1]+.4).toFixed(1)}">${e.uf}</text>`;}
+    const porCid={};ev.filter(e=>e.lat!=null).forEach(e=>{const k=e.lat+"|"+e.lon;(porCid[k]=porCid[k]||[]).push(e);});
+    Object.values(porCid).forEach(l=>l.forEach((e,i)=>{
+      const n=l.length,ang=i/n*2*Math.PI,off=n>1?.55:0;
+      const x=GEO.px(e.lon)+Math.cos(ang)*off,y=GEO.py(e.lat)+Math.sin(ang)*off,r=.34+.09*(e.pts.prio);
+      svg+=`<circle class="ev-pin ev-p-${evtGrp(e)} ${["participamos","vamos"].includes(evtPartSt(e))?"ev-part":""} ${E.sel===e.id?"on":""}" data-a="evt-sel" data-v="${e.id}" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}"><title>${esc(e.nome)} · ${esc(e.cidade)}/${esc(e.uf||"")} · ${esc(evtMesTxt(e))} · ${esc(evtFaseTxt(e))}</title></circle>`;}));
+    svg+=`</svg>`;mapa=svg;
+  }
+  const rank=ufs.sort((a,b)=>(nUF[b]-nUF[a])||((pot[b]||0)-(pot[a]||0))).slice(0,10);
+  const mxn=Math.max(1,...rank.map(u=>nUF[u]));
+  const lado=`<div class="mp-lado"><div class="mp-box"><h3>Onde se concentram</h3><p class="meta">Eventos por UF; a parte escura são os que caem na janela de decisão (mês definido).</p>
+    ${rank.map(u=>`<div class="ev-ufbarra"><b>${u}</b><div class="t"><i class="d" style="width:${(nDec[u]||0)/mxn*100}%;display:inline-block"></i><i style="width:${((nUF[u]-(nDec[u]||0))/mxn*100)}%;display:inline-block;opacity:.45"></i></div><span>${nUF[u]} · ${evtT(pot[u])}</span></div>`).join("")}
+    <p class="meta">Potencial = mercado de forrageiras da UF (Estudo Barenbrug v4.0). RR, AL e DF não constam do estudo; RS, SC e AC são valores aproximados.</p></div></div>`;
+  return `<section class="bloco"><h2 class="sec">Onde os eventos estão</h2>${chips}
+    <div class="ev-grid"><div>${mapa}<div class="ev-leg" style="margin-top:8px"><span><i class="ev-g-dec"></i>decisão</span><span><i class="ev-g-cmp"></i>compra e antecipação</span><span><i class="ev-g-apo"></i>apoio</span><span><i class="ev-g-fora"></i>fora da janela</span><span><i class="ev-g-inc"></i>mês a confirmar</span><span><i class="ev-ring"></i>participamos na safra ${esc(EVT_DATA.safra)}</span></div><p class="meta">Tamanho do ponto = relevância do estudo de março; eventos da mesma cidade aparecem lado a lado.</p></div>${lado}</div></section>`;
+}
+function evtMeses(){
+  const g=["dec","cmp","apo","fora"],cor={dec:"var(--azul-escuro,#00557a)",cmp:"#8fd0ee",apo:"#cfe9f5",fora:"#dfe5ea"};
+  const por=EVT_DATA.meses.map(m=>{const o={dec:0,cmp:0,apo:0,fora:0,na:0,t:0};EVT_DATA.eventos.filter(e=>e.mes===m).forEach(e=>{const k=evtGrp(e);o[k==="na"?"na":k]++;o.t++;});return {m,o};});
+  const mx=Math.max(1,...por.map(x=>x.o.t));const inc=EVT_DATA.eventos.filter(e=>e.mes_incerto).length;
+  return `<section class="bloco"><h2 class="sec">Quando os eventos acontecem</h2>
+    <p class="meta">Eventos com mês definido, por mês da safra, separados pela fase da decisão de compra da região do evento.</p>
+    <div class="obj-barras">${por.map(({m,o})=>`<div class="ev-barra"><span>${EVT_MN[m]}</span><div class="t">${g.map(k=>o[k]?`<i style="width:${o[k]/mx*100}%;background:${cor[k]}" title="${esc(EVT_GRP_NOME[k])}: ${o[k]}"></i>`:"").join("")}${o.na?`<i style="width:${o.na/mx*100}%;background:#c9ced2" title="Sem janela mapeada: ${o.na}"></i>`:""}</div><b>${o.t}</b></div>`).join("")}</div>
+    <p class="meta">Mais ${inc} eventos ainda sem mês definido (faixa de datas ou sem data). Eles aparecem na lista abaixo com o mês marcado como "a confirmar".</p></section>`;
+}
+function evtLacunas(){
+  const R=EVT_DATA.regioes,pot=EVT_DATA.potencial;
+  const linhas=Object.entries(EVT_DATA.lacunas).map(([r,l])=>{
+    const sem=l.filter(x=>!x.n),com=l.filter(x=>x.n);
+    const p=R[r].ul.reduce((t,u)=>t+(pot[u]||0),0);
+    return {r,nome:R[r].nome,ufs:R[r].ul.join(", "),p,sem,com};
+  }).filter(x=>x.sem.length).sort((a,b)=>b.p-a.p);
+  const fm=x=>EVT_MN[x.m]+" ("+EVT_DATA.fase[x.fase].rot.toLowerCase().replace("pico de compra do produtor","pico").replace("pré-pico: 1 a 3 meses antes da compra","pré-pico").replace("pico de antecipação da safra seguinte","antecipação")+")";
+  return `<section class="bloco"><h2 class="sec">Janelas de decisão sem evento mapeado</h2>
+    <p class="meta">Meses em que a região está em pico, pré-pico ou antecipação (linha de tropicais, ou temperadas no Sul) e o estudo não tem nenhum evento com mês definido. São candidatas a evento próprio, ação com o canal Conecta ou dia de campo.</p>
+    <div class="ev-lac">${linhas.map(x=>`<div class="mp-box"><h3>${esc(x.nome)} <span class="selo">${esc(evtT(x.p))}</span></h3><p>${esc(x.ufs)}</p><p><strong>Sem evento:</strong> ${esc(x.sem.map(fm).join(", "))}</p>${x.com.length?`<p class="meta">Com evento: ${esc(x.com.map(c=>EVT_MN[c.m]+" ("+c.eventos.join(", ")+")").join(" · "))}</p>`:""}</div>`).join("")}</div>
+    <div class="is-alerta"><strong>Atenção.</strong> Eventos com mês a confirmar (por exemplo Acricorte, Encorte, GlobalSynch) podem cobrir parte destas janelas; a leitura muda quando as datas de 2027 saírem.</div></section>`;
+}
+function evtLista(){
+  const E=evtEst(),w=E.w;
+  const lista=evtOrdenar(evtFiltrados());
+  const f=[
+    evtChips("Mês","evt-mes",E.mes,[["Todos","Todos"],...EVT_DATA.meses.map(m=>[String(m),EVT_MN[m]])]),
+    evtChips("Região","evt-reg",E.reg,[["Todos","Todas"],...Object.entries(EVT_DATA.regioes).map(([k,v])=>[k,v.nome]),["NA","Sem janela mapeada"]]),
+    evtChips("Fase da decisão","evt-fase",E.fase,[["Todos","Todas"],...Object.entries(EVT_GRP_NOME).map(([k,t])=>[k,t])]),
+    `<div class="ev-filtro"><strong>Outros filtros</strong><div class="filtros" role="group" aria-label="Outros filtros">
+      <button class="chip" data-a="evt-prio" data-v="${E.prio==="Todos"?"Alta":"Todos"}" aria-pressed="${E.prio!=="Todos"}">Só relevância máxima e alta</button>
+      <button class="chip" data-a="evt-part" data-v="${E.part==="Sim"?"Todos":"Sim"}" aria-pressed="${E.part==="Sim"}">Participamos ou vamos</button><button class="chip" data-a="evt-part" data-v="${E.part==="avaliando"?"Todos":"avaliando"}" aria-pressed="${E.part==="avaliando"}">Em avaliação</button><button class="chip" data-a="evt-part" data-v="${E.part==="nao"?"Todos":"nao"}" aria-pressed="${E.part==="nao"}">Não vamos</button><button class="chip" data-a="evt-part" data-v="${E.part==="sem"?"Todos":"sem"}" aria-pressed="${E.part==="sem"}">Sem decisão</button>
+      <button class="chip" data-a="evt-limpar" data-v="1">Limpar filtros</button></div></div>`,
+    evtChips("Ordenar por","evt-ord",E.ord,[["indice","Índice de oportunidade"],["mes","Mês da safra"],["pot","Potencial da UF"],["pub","Público"],["nome","Nome"]])
+  ].join("");
+  const pesos=[["Relevância do estudo",0],["Janela de decisão",1],["Mercado da UF",2]].map(([t,i])=>`<div class="ev-peso"><span>${t}</span>${[0,1,2,3].map(x=>`<button class="chip" data-a="evt-peso" data-v="${i}:${x}" aria-pressed="${w[i]===x}">${x===0?"Ignorar":"Peso "+x}</button>`).join("")}</div>`).join("");
+  const linhas=lista.map(e=>{
+    const g=evtGrp(e),ix=evtIdx(e,w),parcial=e.pts.janela==null;
+    return `<tr class="ev-row ${E.sel===e.id?"ev-on":""}" data-a="evt-sel" data-v="${e.id}" tabindex="0">
+      <td><strong>${esc(e.nome)}</strong><span class="meta" style="display:block">${esc(e.cidade)}${e.uf?"/"+esc(e.uf):""} · ${esc(e.tipo)}</span></td>
+      <td>${esc(evtMesTxt(e))}<span class="meta" style="display:block">ref. 2026: ${esc(e.data26)}</span></td>
+      <td><span class="ev-sel ev-g-${g}">${esc(g==="inc"?"Mês a confirmar":g==="na"?"Sem janela":EVT_DATA.fase[e.fase].rot.split(":")[0])}</span>${e.fase_canal&&!e.mes_incerto?`<span class="meta" style="display:block">canal em sell-in</span>`:""}</td>
+      <td>${esc(e.prio)}</td><td class="val">${e.pot_t?esc(evtT(e.pot_t)):"n/d"}</td>
+      <td class="val ev-idx">${ix.toFixed(1).replace(".",",")}${parcial?"*":""}</td>
+      <td>${evtPartSelo(e)}</td></tr>`;}).join("");
+  return `<section class="bloco" id="ev-lista"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><h2 class="sec" style="margin:0">Eventos (${lista.length} de ${EVT_DATA.eventos.length})</h2>${evtEdita()?`<button class="btn" data-a="evt-novo" data-v="1">+ Incluir evento</button>`:""}</div>
+    <div class="ev-lac">${f}</div>
+    <details class="is-ajuda" ${E.ajuda?"open":""}><summary>Como o índice de oportunidade é calculado e ajuste de pesos</summary>
+      <p>O índice vai de 0 a 10 e combina três eixos normalizados: relevância do estudo de março (máxima 4, alta 3, média 2, baixa 1), janela de decisão (pico, pré-pico e antecipação = 3; compra = 2; pós-compra e sell-in = 1; fora = 0) e mercado da UF (potencial de forrageiras: grupo A = 3, B = 2, C = 1). Cada eixo entra com o peso abaixo. Com mês a confirmar, a janela é a média dos meses possíveis. Um asterisco indica evento sem data nem região para calcular a janela.</p>
+      ${pesos}</details>
+    ${lista.length?`<div class="tab"><table class="sim-t fin-t" style="min-width:820px"><thead><tr><th>Evento</th><th>Quando</th><th>Fase da decisão</th><th>Relevância</th><th class="val">Mercado da UF</th><th class="val">Índice</th><th>Participação</th></tr></thead><tbody>${linhas}</tbody></table></div>`:`<div class="vazio">Nenhum evento com esses filtros.</div>`}
+    ${evtDetalhe()}</section>`;
+}
+function evtDetalhe(){
+  const E=evtEst();if(E.sel==null)return "";const e=EVT_DATA.eventos.find(x=>x.id===E.sel);if(!e)return "";
+  const ix=evtIdx(e,E.w),p=e.part,rs=p&&p.resultado;
+  const prox=e.prox||(e.ciclo?e.ciclo:"2027, data a confirmar");
+  return `<div class="ev-det" id="ev-det"><div><h3>${esc(e.nome)}</h3><p class="meta">${esc(e.cidade||"")}${e.uf?"/"+esc(e.uf):""} · ${esc(e.tipo||"")} · relevância ${esc(String(e.prio||"").toLowerCase())} · aderência a pastagens: ${esc(String(e.fit||"").toLowerCase())}</p></div>
+    ${e.nota?`<p>${esc(e.nota)}</p>`:""}
+    <div class="ev-kv">
+      <div><span>Edição de referência (2026)</span>${esc(e.data26)}</div>
+      <div><span>Próxima edição</span>${esc(prox)}</div>
+      <div><span>Público estimado</span>${e.publico?evtFmt(e.publico)+" pessoas":"n/d"}</div>
+      <div><span>Fase da decisão de compra</span>${esc(evtFaseTxt(e))}${evtPicoTxt(e)?`<br><span class="meta" style="text-transform:none;letter-spacing:0">${esc(evtPicoTxt(e))}</span>`:""}</div>
+      ${evtSecTxt(e)?`<div><span>Linhas secundárias no mês</span>${esc(evtSecTxt(e))}</div>`:""}
+      <div><span>Mercado da UF</span>${e.pot_t?esc(evtT(e.pot_t))+" · grupo "+esc(e.grupo):"n/d"}</div>
+      <div><span>Índice de oportunidade</span><span class="ev-idx" style="font-size:18px;text-transform:none;letter-spacing:0">${ix.toFixed(1).replace(".",",")}</span></div></div>
+    ${e.janela_aprox&&e.regiao!=="NA"?`<p class="meta">Janela aproximada: a cidade fica na borda das regiões do estudo de sazonalidade.</p>`:""}
+    ${e.regiao==="NA"?`<p class="meta">O estudo de sazonalidade não cobre esta região; a decisão fica no critério comercial.</p>`:""}
+    ${evtPartBloco(e)}
+    ${rs?`<div class="mp-box"><h3>Resultado medido no CRM (posição em ${esc(rs.posicao)})</h3>
+      <div class="ev-res"><div><strong>${rs.leads}</strong><span>contatos qualificados</span></div><div><strong>${rs.neg}</strong><span>negociações abertas</span></div><div><strong>${esc(evtTon(rs.vendido_t))}</strong><span>vendidas · ${esc(evtRs(rs.vendido_rs))} (${rs.neg_v} negociações)</span></div><div><strong>${esc(evtTon(rs.perdido_t))}</strong><span>perdidas · ${esc(evtRs(rs.perdido_rs))} (${rs.neg_p})</span></div><div><strong>${esc(evtTon(rs.aberto_t))}</strong><span>em aberto · ${esc(evtRs(rs.aberto_rs))} (${rs.neg_a})</span></div><div><strong>${esc(evtTon(rs.total_t))}</strong><span>total · ${esc(evtRs(rs.total_rs))}</span></div></div>
+      <p class="meta">Negociações decididas: ${rs.neg_v+rs.neg_p?Math.round(100*rs.neg_v/(rs.neg_v+rs.neg_p)):0}% ganhas.${evtInvest(e).tot?` Investimento ligado ao evento: ${esc(evtRs(evtInvest(e).tot))}; vendido por real investido: ${(rs.vendido_rs/evtInvest(e).tot).toLocaleString("pt-BR",{maximumFractionDigits:1})}.`:" O custo do evento ainda não está ligado, então não há retorno calculado."}</p></div>`:""}
+    <div class="acoes" style="margin:0">${evtEdita()?`<button class="btn" data-a="evt-ed" data-v="${e.id}">Editar evento e participação</button>`:""}<button class="btn sec" data-a="evt-sel" data-v="${e.id}">Fechar detalhe</button></div></div>`;
+}
+function evtParticipacao(){
+  const st=["participamos","vamos","avaliando","nao"];const tit={participamos:"Onde participamos",vamos:"Onde vamos participar",avaliando:"Em avaliação",nao:"Onde decidimos não participar"};
+  const L=s=>EVT_DATA.eventos.filter(e=>evtPartSt(e)===s).sort((a,b)=>evtMesOrd(a)-evtMesOrd(b));
+  const totInv=EVT_DATA.eventos.filter(e=>["participamos","vamos"].includes(evtPartSt(e))).reduce((t,e)=>t+evtInvest(e).tot,0);
+  const porForma={};EVT_DATA.eventos.filter(e=>["participamos","vamos"].includes(evtPartSt(e))).forEach(e=>((e.part||{}).formas||[]).forEach(f=>porForma[f]=(porForma[f]||0)+1));
+  return `<section class="bloco"><h2 class="sec">Participação da Barenbrug na safra ${esc(EVT_DATA.safra)}</h2>
+    <p class="meta">Cada evento registra se participamos, de que forma (IGDB de revenda, verba institucional, publicidade, Conecta RC, parceiro) e, quando não, o motivo. As Ações de Marketing e as ações do PGD ligadas ao evento entram no investimento.</p>
+    <div class="metrics"><div class="metric"><span>Investimento ligado aos eventos</span><strong>${esc(evtRs(totInv))}</strong><span class="meta">eventos em que participamos ou vamos participar</span></div><div class="metric"><span>Formas de participação</span><strong>${Object.keys(porForma).length}</strong><span class="meta">${Object.entries(porForma).sort((a,b)=>b[1]-a[1]).map(([f,n])=>esc(f)+" "+n).join(" · ")||"—"}</span></div></div>
+    ${st.map(s=>{const l=L(s);return l.length?`<h3 class="pgd-h" style="margin-top:12px">${tit[s]} (${l.length})</h3><div class="tab"><table class="sim-t"><thead><tr><th>Evento</th><th>Quando</th><th>${s==="nao"?"Motivo":"Forma"}</th><th>Parceiro</th><th class="val">Investimento</th></tr></thead><tbody>${l.map(e=>{const p=e.part||{},iv=evtInvest(e);return `<tr class="ev-row" data-a="evt-sel" data-v="${e.id}"><td><strong>${esc(e.nome)}</strong><span class="meta" style="display:block">${esc(e.cidade||"")}${e.uf?"/"+esc(e.uf):""}</span></td><td>${esc(p.quando||evtMesTxt(e))}</td><td>${s==="nao"?esc([p.motivo,p.motivo_txt].filter(Boolean).join(": ")||"—"):esc((p.formas||[]).join(", ")||"—")}</td><td>${esc(p.parceiro||"—")}</td><td class="val">${iv.tot?esc(evtRs(iv.tot)):"—"}</td></tr>`;}).join("")}</tbody></table></div>`:"";}).join("")}
+    <p class="meta">Eventos sem decisão registrada: ${EVT_DATA.eventos.filter(e=>!evtPartSt(e)).length}. Filtre a lista por "Sem decisão" para registrar.</p></section>`;
+}
+function evtMetodo(){
+  return `<section class="bloco"><details class="is-ajuda"><summary>Fontes e premissas</summary>
+    <p><strong>Fontes.</strong> ${EVT_DATA.fontes.map(esc).join("; ")}.</p>
+    <p><strong>Janela de decisão.</strong> Vem da aba Janela de Compra Produtor e Canal da planilha de sazonalidade: o canal compra da Barenbrug 90 a 120 dias antes do plantio e o produtor compra 30 a 60 dias antes. O pré-pico (1 a 3 meses antes do pico do produtor) é uma premissa do Marketing: evento nesse intervalo ajuda a formar a demanda antes da decisão. A linha principal é a de tropicais (híbridos); no Sul é a de temperadas. ILP (ruziziensis) e sobressemeadura aparecem como linhas secundárias e garantem no mínimo 2 pontos de janela quando estão em pico ou pré-pico.</p>
+    <p><strong>Regiões.</strong> Centro-Oeste (MT, GO, MS, TO, DF), Norte (RO, PA), Matopiba (BA, MA, PI), Sudeste (SP, MG), Sul (RS, SC e Campos Gerais do PR) e Paraná Norte e Oeste. RR e AL não constam do estudo e ficam sem janela. Cascavel, Palotina, Campo Mourão, Brasília e Imperatriz usam a região vizinha como aproximação.</p>
+    <p><strong>Datas.</strong> O mês é o da edição de 2026 do levantamento de março, tratado como mês típico. Datas de 2027 confirmadas: Agrishow (26 a 30/abr) e Expodireto Cotrijal (8 a 12/mar). BeefDay é bienal. Eventos com "a confirmar" devem ser conferidos com o organizador antes de qualquer decisão.</p>
+    <p><strong>Limites.</strong> Estas leituras orientam a escolha de eventos, não substituem a matriz de participação preenchida pelo time nem o custo por evento.</p></details></section>`;
+}
+function vIntEventos(){
+  evtCSS();
+  if(!EVT_DATA){carregarEvt();return `<div class="carregando">Carregando os eventos…</div>`;}
+  if(EVT_DATA.erro)return `<section class="bloco"><div class="vazio">Não foi possível carregar os eventos agora.</div></section>`;
+  if(evtEdita()&&S.mk===undefined&&typeof carregarMkt==="function"&&!S.mkBusy)carregarMkt();
+  if(S.evtPgd===undefined)carregarEvtPgd();
+  if(S.evtEd)return evtForm();
+  return `<div class="ev-wrap"><div><h1 class="titulo">Eventos do mercado e janela de decisão de compra</h1>
+    <p class="sub">Os principais eventos de pecuária do país cruzados com o momento em que o canal e o produtor decidem a compra de forrageiras em cada região, e a participação da Barenbrug em cada um. Uso interno do Marketing e do Comercial: as revendas e os RCs não veem esta área.</p></div>
+    ${evtKpis()}${evtParticipacao()}${evtLista()}${evtHeat()}${evtMapa()}${evtMeses()}${evtLacunas()}${evtMetodo()}</div>`;
+}
+
+/* ---------- ações (listener próprio, não depende do handler principal) ---------- */
+function evtAcao(a,v){
+  const E=evtEst();let rolar=null;
+  if(a==="evt-mes")E.mes=v;
+  else if(a==="evt-reg")E.reg=v;
+  else if(a==="evt-fase")E.fase=v;
+  else if(a==="evt-prio")E.prio=v;
+  else if(a==="evt-part")E.part=v;
+  else if(a==="evt-ord")E.ord=v;
+  else if(a==="evt-mapa")E.mapa=v;
+  else if(a==="evt-sel"){E.sel=(E.sel===+v?null:+v);rolar=E.sel==null?null:"ev-det";}
+  else if(a==="evt-cel"){const [r,m]=String(v).split("|");E.reg=r;E.mes=m;E.fase="Todos";rolar="ev-lista";}
+  else if(a==="evt-peso"){const [i,x]=String(v).split(":");E.w[+i]=+x;E.ajuda=true;}
+  else if(a==="evt-limpar"){S.evt=null;evtEst();}
+  else if(a==="evt-ed"||a==="evt-novo"){evtAbrirForm(a==="evt-novo"?null:+v);window.scrollTo(0,0);return;}
+  else if(a==="evt-cancel"){S.evtEd=null;render();return;}
+  else if(a==="evt-del"){evtExcluir(v);return;}
+  render();
+  if(rolar){const el=document.getElementById(rolar);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
+}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='evt-']");if(b&&b.closest("#f-evt")&&b.type==="submit")return;if(!b)return;ev.preventDefault();ev.stopPropagation();evtAcao(b.dataset.a,b.dataset.v);},true);
+document.addEventListener("keydown",ev=>{if(ev.key!=="Enter"&&ev.key!==" ")return;const b=ev.target.closest&&ev.target.closest("tr[data-a^='evt-'],td[data-a^='evt-']");if(!b)return;ev.preventDefault();evtAcao(b.dataset.a,b.dataset.v);},true);
 
 /* ===== Time de Marketing · Time e funções (job descriptions de quem responde ao Felipe; sem remuneração) ===== */
 const TM_FUNC=[
@@ -9976,7 +10390,7 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
   const am=veAcoesMkt(),g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length,empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
-  const G=[["Operação",!am?[]:[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"]]],
+  const G=[["Operação",!am?[]:[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"],evtVe()&&["acoes-evtmerc","Eventos do mercado"]]],
     ["Brindes de Marketing",veBrindes()?[["brindes-catalogo","Catálogo de brindes"],["brindes-reqs",g?`Requisições de brindes${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel de brindes"]]:[]),["brindes-lojinha","Lojinha · em breve"]]:[]],
     ["Áreas demonstrativas",veVit()?[["vit-lista","Áreas"],["vit-mapa","Mapa das áreas"]]:[]],
     ["Gestão e verba",am&&ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
@@ -11761,7 +12175,7 @@ const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["gu
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
-  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
+  "acoes-mkt":[["acoes-quadro","Quadro"],["acoes-solic","Solicitações"],["acoes-cal","Calendário"],["acoes-eventos","Eventos e resultado"],["acoes-evtmerc","Eventos do mercado"],["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]],
   "time-mkt":[["tm-mapa","Mapa de Marketing, Comunicação e Vendas Digitais"],["tm-func","Time e funções"],["tm-proc","Processos"],["tm-proj","Projetos de marketing"],["tm-pedir","Como pedir ao Marketing"]],
   "brindes":[["brindes-catalogo","Catálogo"],["brindes-reqs","Requisições"],["brindes-emp","Empréstimos"],["brindes-painel","Painel"]]};
 const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-label="O que é isto: ${esc(t)}">i</button>`:"";
@@ -11915,7 +12329,7 @@ function renderApp(){
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
-      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-insumos-ed"?vIntInsumosEd():S.pag==="int-icp"?vIntICP():S.pag==="int-ader"?vIntAder():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
+      const corpo=an?(S.intMapa?(S.pag==="int-perfil"?vIntPerfil():S.pag==="int-saz"?vIntSaz():S.pag==="int-rc"?vIntRC(intCalc()):S.pag==="int-seg"?vIntSeg(intCalc()):vIntVendas(intCalc())):`<div class="carregando">Carregando os pedidos do CRM…</div>`):S.pag==="int-raci"?vIntRaci():(S.pag==="int-marca"||S.pag==="int-redes")?vIntMarca():S.pag==="int-pot"?vIntPot():S.pag==="int-hh"?vIntHH():S.pag==="int-insumos"?vIntInsumos():S.pag==="int-insumos-ed"?vIntInsumosEd():S.pag==="int-icp"?vIntICP():S.pag==="int-eventos"?vIntEventos():S.pag==="int-ader"?vIntAder():S.pag==="int-diretriz"?vDiretriz():S.pag==="int-redes"?vIntRedes():S.pag==="int-mapa"?vIntMapa():S.pag==="int-hibridos"?vConcorrentes():S.pag==="int-modelos"?vIntModelos():S.pag==="int-concorrentes"?vIntConcorrentes():vIntCanais();
       app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${corpo}</main>`;if(!S.insOk&&S.pag!=="int-insumos"&&S.pag!=="int-insumos-ed")carregarInsumos();
       if(an&&!S.intMapa)carregarIntMapa().then(render);
       else if(S.pag==="int-modelos"){if(!S.rcContr)carregarContratos();if(!MODELOS_REP)carregarModelosRep();}
@@ -11928,6 +12342,7 @@ function renderApp(){
     if(S.pag==="acoes-digital"){S.secao="inteligencia";S.pag="int-digital";render();return;}
     if(/^vit-/.test(S.pag)&&veVit()){app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vVit()}</main>`;return;}
     if(/^brindes-/.test(S.pag)&&veBrindes()){app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vBrindes()}</main>`;if(!S.bd)carregarBrindes();return;}
+    if(S.pag==="acoes-evtmerc"&&evtVe()){app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vIntEventos()}</main>`;return;}
     if(veAcoesMkt()){if(!/^acoes-/.test(S.pag))S.pag="acoes-quadro";app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vAcoesMkt()}</main>`;if(!S.mk)carregarMkt();return;}
     if(veBrindes()||veVit()){S.pag=veBrindes()?"brindes-catalogo":"vit-lista";render();return;}
     S.secao=null;S.pag="hub";
