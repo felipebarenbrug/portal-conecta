@@ -7919,7 +7919,7 @@ function vUsuarioAdmin(){
   <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
   ${evolucaoHTML(u.id)}
   ${(afTem("RC")||afTem("Assessor de Vendas Digital")||afTem("Inside Sales"))?(S.rcContr?(contratoCard(contratoDe(S.adminForm.rc_crm||S.adminForm.nome,u.email),"Contrato 26/27 (mapeamento)")||`<div class="nota-admin">Nenhum contrato 26/27 mapeado para este usuário. O vínculo é pelo nome no CRM ou pelo e-mail do contrato.</div>`):(carregarContratos(),"")):""}
-  <form class="form-card" id="f-usuario">
+  <form class="form-card" id="f-usuario" novalidate>
     <div><label for="f_perfil">${"nivel" in u?"Perfil principal *":"Perfil de acesso *"}</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.filter(p=>!("nivel" in u)||p!=="Administrador"||S.adminForm.perfil===p).map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>${"nivel" in u?`<span class="meta">O que a pessoa faz. Define o cadastro e como ela aparece no portal.</span>`:""}</div>
     ${"nivel" in u?`<div><label>Outros perfis</label><span class="meta">Marque se a pessoa também atua em outra frente. Ela passa a ver o que cada perfil marcado vê.</span><div class="checks">${PERFIS.filter(p=>p!=="Administrador"&&p!==S.adminForm.perfil).map(p=>`<label class="check"><input type="checkbox" data-perfis="${esc(p)}" ${(S.adminForm.perfis||[]).includes(p)?"checked":""}> ${esc(p)}</label>`).join("")}</div></div>
     <div><label for="f_nivel">Nível de acesso *</label><select id="f_nivel" data-fk="nivel">${["Padrão","Gestor","Administrador"].map(n=>`<option value="${n}" ${(S.adminForm.nivel||"Padrão")===n?"selected":""}>${NIVEL_NOME[n]}</option>`).join("")}</select><span class="meta">Gestor de acessos: entra no Painel de gerenciamento, vê todas as pessoas e cadastra pessoas novas, mas não altera perfil, nível nem seções de quem já está cadastrado, não exclui e não vê as áreas do marketing.</span><span class="meta">Administrador vê tudo, gerencia usuários, aprova ações e altera premissas. Padrão vê só o que os perfis e as áreas liberadas permitem.</span></div>`:""}
@@ -13022,7 +13022,8 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-usuario"){
     const perfil=S.adminForm.perfil;const schema=schemaDoPerfil(perfil);
-    if(schema.some(c=>c.req&&!((S.adminForm[c.k]||"").trim()))){S._erro="Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
+    const ehOutro=S.adminUser&&S.user&&S.adminUser.id!==S.user.id;
+    if(schema.some(c=>c.req&&(!ehOutro||c.k==="nome")&&!((S.adminForm[c.k]||"").trim()))){S._erro=ehOutro?"Informe pelo menos o nome.":"Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
     const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=valCampo(c,S.adminForm[c.k]);});
     if("nivel" in S.adminUser){dados.perfis=[perfil,...(S.adminForm.perfis||[]).filter(x=>x!==perfil&&x!=="Administrador")];const nv=f.querySelector("#f_nivel");dados.nivel=nv?nv.value:"Padrão";}
     dados.acessos=[...new Set([...f.querySelectorAll("[data-acesso]:checked:not(:disabled)")].map(c=>c.getAttribute("data-acesso")).concat([...f.querySelectorAll("[data-acesso]:disabled")].map(c=>c.getAttribute("data-acesso")).filter(id=>(S.adminForm.acessos||[]).includes(id))))];
