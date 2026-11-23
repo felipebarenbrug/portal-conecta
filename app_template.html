@@ -9562,7 +9562,7 @@ const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará, Mulato II e Barmi
 
 /* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||temPerfil("Financeiro")||temAcessoExtra("financeiro");
-const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-invest","Investimento do Marketing"],["fin-premissas","Premissas"]];
+const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-resp","Verba por responsável"],["fin-invest","Investimento do Marketing"],["fin-premissas","Premissas"]];
 function subnavFin(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Marketing + Financeiro">${semOcultas(FIN_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -9673,7 +9673,7 @@ function vFin(){
   if(!S.fin)return `<div class="carregando">Carregando os números…</div>`;
   if(S.fin.erro)return `<div><h1 class="titulo">Marketing + Financeiro</h1></div><section class="bloco"><p class="sub" style="margin:0">Não foi possível carregar os dados agora. Se o painel acabou de ser criado, a ativação no banco ainda está pendente.</p><div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="fin-recarregar">Tentar de novo</button></div></section>`;
   const C=finCalc();
-  const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-premissas"?vFinPremissas(C):S.pag==="fin-invest"?vFinInvest(C):vFinResumo(C);
+  const v=S.pag==="fin-mensal"?vFinMensal(C):S.pag==="fin-comissoes"?vFinComissoes(C):S.pag==="fin-conecta"?vFinConecta(C):S.pag==="fin-resp"?vFinResp(C):S.pag==="fin-premissas"?vFinPremissas(C):S.pag==="fin-invest"?vFinInvest(C):vFinResumo(C);
   return v;
 }
 function vFinResumo(C){
@@ -9797,6 +9797,30 @@ function rvCenariosHTML(C){
     ${PL&&k===2?`<div><dt>Plano jun/26 · todos na meta</dt><dd>${fmtK0(PL.todos_meta)}</dd></div><div><dt>Plano jun/26 · 60% na meta</dt><dd>${fmtK0(PL.full)}</dd></div>`:""}</dl></div>`).join("")}</div>
   <p class="precos-nota">${PL?`Pool previsto na safra: ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} sobre a previsão de vendas do plano de junho de 2026). Formado até hoje: ${fmtK0(C.pools.rv)}, com ${pctTxt(C.dSafra)} da safra decorrida. Ruziziensis e temperadas vendem mais tarde, então o pool formado cresce no segundo semestre da safra.`:`Pool de ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} de todas as vendas, com exportação).`} Teto de ${fmtK0(RV_TETO)} por revenda em todos os cenários. No cenário full, a meta de híbridos de cada revenda entra ao preço médio que ela já pratica (ou ao valor por kg do contrato), mais os convencionais já comprados.</p></section>`;
 }
+function vFinResp(C){
+  const nomeR=c=>{const t=String(c.responsavel||"").trim();return t?t.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()):"Sem responsável";};
+  const G={};C.canais.forEach(x=>{const k=finNorm(nomeR(x.c));(G[k]=G[k]||{nome:nomeR(x.c),L:[]}).L.push(x);});
+  const met=x=>{const m=x.m;const saldo=Math.max(0,(m.igdb||0)-(m.aprovIG||0));return {ig:m.igdb||0,bf:m.bonus||0,tot:m.total!=null?m.total:(m.igdb||0)+(m.bonus||0),apr:m.aprovIG||0,saldo,agora:m.pub?(m.pub.igdbPago||0):0,mTot:m.mTotal||0};};
+  const soma=L=>L.reduce((t,x)=>{const v=met(x);Object.keys(v).forEach(k=>t[k]=(t[k]||0)+v[k]);return t;},{});
+  const R=Object.values(G).map(g=>({...g,t:soma(g.L)})).sort((a,b)=>b.t.tot-a.t.tot);
+  const T=soma(C.canais);const sel=R.find(r=>finNorm(r.nome)===S.finResp)||null;
+  const cols=t=>`<td class="val">${fmtK0(t.ig)}</td><td class="val">${fmtK0(t.bf)}</td><td class="val"><strong>${fmtK0(t.tot)}</strong></td><td class="val">${fmtK0(t.apr)}</td><td class="val">${fmtK0(t.saldo)}</td><td class="val" style="color:#2E8B57;font-weight:700">${fmtK0(t.agora)}</td>`;
+  const cab=`<th class="val">IGDB previsto</th><th class="val">BF</th><th class="val">Verba total</th><th class="val">Em ações aprovadas</th><th class="val">Saldo de IGDB para ações</th><th class="val">Disponível agora</th>`;
+  return `<div><h1 class="titulo">Verba por responsável</h1><p class="sub">Quanto de verba do Conecta Revendas está com cada comercial, somando as revendas que ele gerencia. Toque no nome para ver revenda por revenda.</p></div>
+  ${finAvisoTopo(C)}
+  <section class="bloco"><div class="metrics">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Verba total do Conecta na safra</span><strong>${fmtK0(T.tot)}</strong><span class="meta">IGDB ${fmtK0(T.ig)} + BF ${fmtK0(T.bf)} · ${C.canais.length} revendas</span></div>
+    <div class="metric"><span>Saldo de IGDB para novas ações</span><strong>${fmtK0(T.saldo)}</strong><span class="meta">IGDB previsto menos o que já está em ações aprovadas</span></div>
+    <div class="metric"><span>Disponível agora</span><strong>${fmtK0(T.agora)}</strong><span class="meta">IGDB sobre o que as revendas já pagaram; pode ser pedido em reembolso</span></div></div>
+  <div class="tab"><table class="fin-t"><thead><tr><th>Responsável</th><th>Revendas</th>${cab}</tr></thead><tbody>
+    ${R.map(r=>`<tr${sel===r?' class="sim-on"':""}><td><button class="link" data-a="fin-resp" data-v="${esc(finNorm(r.nome))}"><strong>${esc(r.nome)}</strong></button></td><td>${r.L.length}</td>${cols(r.t)}</tr>`).join("")}
+    <tr><td><strong>Total</strong></td><td>${C.canais.length}</td>${cols(T)}</tr></tbody></table></div>
+  <p class="precos-nota">Verba total: IGDB previsto pelo que cada revenda já comprou na safra, mais o BF pelo atingimento de hoje, com o teto por revenda. Em ações aprovadas: o IGDB das ações do PGD já aprovadas. Saldo de IGDB para ações: o que a revenda ainda pode propor em ações. Disponível agora: o IGDB sobre as notas já pagas, que a revenda pode pedir em reembolso de ações aprovadas. O BF é pago no fim da safra.</p></section>
+  ${sel?`<section class="bloco"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h2 class="sec" style="margin:0">${esc(sel.nome)} · ${sel.L.length} ${sel.L.length===1?"revenda":"revendas"}</h2><button class="link" data-a="fin-resp" data-v="">Fechar</button></div>
+    <div class="metrics" style="margin-top:10px"><div class="metric"><span>Verba total com ${esc(sel.nome.split(" ")[0])}</span><strong>${fmtK0(sel.t.tot)}</strong><span class="meta">${finPct(sel.t.tot,T.tot)} da verba do Conecta · se todos baterem a meta: ${fmtK0(sel.t.mTot)}</span></div><div class="metric"><span>Saldo de IGDB para ações</span><strong>${fmtK0(sel.t.saldo)}</strong></div><div class="metric"><span>Disponível agora</span><strong>${fmtK0(sel.t.agora)}</strong></div></div>
+    <div class="tab"><table class="fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Ating.</th>${cab}</tr></thead><tbody>
+    ${sel.L.slice().sort((a,b)=>met(b).tot-met(a).tot).map(x=>`<tr><td>${esc(x.c.nome)}${x.m.pub?"":`<br><span class="meta">pelo CRM</span>`}</td><td><span class="selo">${esc(x.c.tier||"—")}</span></td><td class="val">${x.m.ating==null?"—":pctTxt(x.m.ating)}</td>${cols(met(x))}</tr>`).join("")}
+    </tbody></table></div></section>`:""}`;}
 function vFinConecta(C){
   const P=C.P;
   const st=a=>(a.status||"Em Análise");
@@ -12128,6 +12152,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="uso-todos"){S.usoTodos=true;render();return;}
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
   if(a==="pag"){S.ngAb={};irPag(v);}
+  if(a==="fin-resp"){S.finResp=v||null;render();return;}
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
   if(a==="mat")aviso("No lançamento, este botão abre o material.");
