@@ -1091,6 +1091,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
  .metrics{gap:10px}
 }
 .fs-g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fs-c{background:#fff;border:1px solid var(--linha,#e3e8ee);border-radius:14px;padding:18px;display:grid;gap:6px;align-content:start}.fs-c strong{font-size:30px;line-height:1.1;color:var(--azul-escuro,#00557f)}.fs-r{font-weight:800;font-size:14px}.fs-a{box-shadow:inset 0 4px 0 #FFDB00}.fs-b{box-shadow:inset 0 4px 0 #00A8E2}.fs-ok{box-shadow:inset 0 4px 0 #2E8B57}.fs-al{box-shadow:inset 0 4px 0 var(--vermelho,#c0392b)}.fin-det{margin-top:6px}.fin-det>summary{cursor:pointer;font-weight:800;color:var(--azul-escuro,#00557f);padding:10px 0}@media (max-width:760px){.fs-g{grid-template-columns:1fr}}
+.msg-busca{padding:8px 12px;border-bottom:1px solid var(--linha,#e3e8ee)}.msg-busca input{width:100%}.msg-cont{overflow-y:auto;max-height:min(70vh,640px)}.av-msg{cursor:pointer;transition:box-shadow .15s}.av-msg:hover,.av-msg:focus-visible{box-shadow:0 0 0 3px #FFDB00}
 </style>
 </head>
 <body>
@@ -1633,7 +1634,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261120104423";
+const APP_VER="20261123092558";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4011,7 +4012,8 @@ function vMensagens(){
   if(S.msgConv===undefined||S.msgCont===undefined){if(!S.msgBusy){S.msgBusy=true;carregarMsgs().then(()=>{S.msgBusy=false;render();});}return `<div class="carregando">Carregando…</div>`;}
   const cont=S.msgCont||[];const conv=(S.msgConv||[]).find(c=>c.id===S.msgAberta);
   const grupos=MSG_G;
-  const nova=`<div class="msg-topo"><button class="link" data-a="msg-voltar">‹ Conversas</button><strong>Nova conversa</strong></div><div class="msg-cont">${cont.length?grupos.map(([k,t])=>{const xs=cont.filter(c=>c.papel===k);return xs.length?`<h3>${t}</h3>${xs.map(c=>`<button class="msg-item" data-a="msg-com" data-v="${c.id}">${avatar(c.id,c.nome,36)}<span class="msg-item-t"><strong>${esc(c.nome)}</strong><span class="meta">${esc(c.detalhe||"")}</span></span></button>`).join("")}`:"";}).join(""):`<div class="vazio">Você ainda não tem com quem conversar por aqui.</div>`}</div>`;
+  const mq=(S.msgQ||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");const casa=c=>!mq||((c.nome||"")+" "+(c.detalhe||"")).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(mq);
+  const nova=`<div class="msg-topo"><button class="link" data-a="msg-voltar">‹ Conversas</button><strong>Nova conversa</strong><span class="meta">${cont.length} pessoas</span></div><div class="msg-busca"><input type="search" id="msg_q" placeholder="Buscar por nome, revenda, cidade ou área" value="${esc(S.msgQ||"")}" aria-label="Buscar pessoa"><p class="meta" style="margin:6px 0 0">Aparecem todas as pessoas com acesso ativo ao portal com quem você pode conversar.</p></div><div class="msg-cont">${cont.length?grupos.map(([k,t])=>{const xs=cont.filter(c=>c.papel===k&&casa(c));return xs.length?`<h3>${t}</h3>${xs.map(c=>`<button class="msg-item" data-a="msg-com" data-v="${c.id}">${avatar(c.id,c.nome,36)}<span class="msg-item-t"><strong>${esc(c.nome)}</strong><span class="meta">${esc(c.detalhe||"")}</span></span></button>`).join("")}`:"";}).join(""):`<div class="vazio">Você ainda não tem com quem conversar por aqui.</div>`}</div>`;
   const fio=conv?`<div class="msg-topo"><button class="link msg-so-mob" data-a="msg-voltar">‹ Conversas</button>${avatar(conv.outro,conv.nome,36)}<span><strong>${esc(conv.nome)}</strong><span class="meta">${esc(conv.detalhe||"")}</span></span></div>
     <div class="msg-fio" aria-live="polite">${S.msgFio==null?`<div class="carregando">Carregando…</div>`:S.msgFio.length?S.msgFio.map(msgBolha).join(""):`<div class="vazio">Escreva a primeira mensagem.</div>`}</div>
     ${conv.pode===false?`<div class="vazio">Esta conversa está encerrada.</div>`:`<form id="f-msg" class="msg-form"><label for="msg_txt" class="sr-only">Mensagem</label><textarea id="msg_txt" rows="2" maxlength="4000" placeholder="Escreva sua mensagem. Enter envia, Shift+Enter quebra a linha."></textarea><button class="btn" type="submit">Enviar</button></form>`}`
@@ -4028,11 +4030,12 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
   if(a==="msg-nova"){S.msgNova=true;S.msgAberta=null;render();return;}
   if(a==="msg-voltar"){S.msgNova=false;S.msgAberta=null;render();return;}
   if(a==="msg-abrir"){msgAbrirConv(+v);return;}
-  if(a==="msg-com"){b.disabled=true;const {data,error}=await sb.rpc("abrir_conversa",{p_outro:v});if(error||!data){b.disabled=false;aviso("Não foi possível abrir a conversa.");return;}
+  if(a==="msg-com"){if(S.secao!=="mensagens"){S.secao="mensagens";S.pag="mensagens";S.msgNova=false;}b.disabled=true;const {data,error}=await sb.rpc("abrir_conversa",{p_outro:v});if(error||!data){b.disabled=false;aviso("Não foi possível abrir a conversa.");return;}
     if(!(S.msgConv||[]).some(c=>c.id===data)){const c=(S.msgCont||[]).find(x=>x.id===v)||{};S.msgConv=[{id:data,outro:v,nome:c.nome,detalhe:c.detalhe,foto_url:c.foto_url,ult_em:null,ult_txt:"",nao_lidas:0,pode:true},...(S.msgConv||[])];}
     msgAbrirConv(data);return;}
 },true);
-document.addEventListener("keydown",ev=>{if(ev.target&&ev.target.id==="msg_txt"&&ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=document.getElementById("f-msg");if(f)f.requestSubmit();}});
+document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="msg_q"){S.msgQ=ev.target.value;const pos=ev.target.selectionStart;render();const i=document.getElementById("msg_q");if(i){i.focus();try{i.setSelectionRange(pos,pos);}catch(e){}}}});
+document.addEventListener("keydown",ev=>{if(ev.target&&ev.target.classList&&ev.target.classList.contains("av-msg")&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();ev.target.click();return;}if(ev.target&&ev.target.id==="msg_txt"&&ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=document.getElementById("f-msg");if(f)f.requestSubmit();}});
 document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-msg")return;ev.preventDefault();ev.stopImmediatePropagation();
   const t=f.querySelector("#msg_txt");const txt=t.value.trim();if(!txt||!S.msgAberta)return;const btn=f.querySelector("button");btn.disabled=true;
   const {data,error}=await sb.from("mensagens").insert({conversa_id:S.msgAberta,texto:txt}).select("id,conversa_id,autor,texto,criado_em,lida_em").single();btn.disabled=false;
@@ -4043,7 +4046,8 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
 },true);
 
 function avatar(id,nome,tam){const d=dirDe(id);const n=String((d&&d.nome)||nome||"?");const ini=n.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();const t=tam||40;
-  return d&&d.foto_url?`<img class="avatar" src="${esc(urlOk(d.foto_url))}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px">`:`<span class="avatar ini" aria-hidden="true" style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px">${esc(ini)}</span>`;}
+  const fala=id&&S.user&&id!==S.user.id&&!S.demo&&(S.msgCont||[]).some(c=>c.id===id);const at=fala?` data-a="msg-com" data-v="${esc(id)}" role="button" tabindex="0" title="Mandar mensagem para ${esc(n)}"`:"";
+  return d&&d.foto_url?`<img class="avatar${fala?" av-msg":""}" src="${esc(urlOk(d.foto_url))}" alt="" width="${t}" height="${t}" loading="lazy" style="width:${t}px;height:${t}px"${at}>`:`<span class="avatar ini${fala?" av-msg":""}" ${fala?"":'aria-hidden="true"'} style="width:${t}px;height:${t}px;font-size:${Math.round(t*.38)}px"${at}>${esc(ini)}</span>`;}
 async function carregarFeed(){
   await Promise.all([carregarPosts(),carregarDuvidas(),carregarMsgs(),
     (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
