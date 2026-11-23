@@ -1707,7 +1707,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123174307";
+const APP_VER="20261123175042";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7404,6 +7404,7 @@ function vNovaAcao(modo,ed){
     <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" value="${v(a.cidade)}" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" value="${v(a.data_acao)}" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
     ${bp?`<div><label for="na_valor">Custo estimado (R$) *</label><input id="na_valor" inputmode="decimal" value="${a.valor_igdb?v(String(a.valor_igdb).replace(".",",")):""}" placeholder="0,00" style="max-width:220px"></div>`:pgdPagForm("na",ed||null,ehAdmin())}
     <div><label for="na_descr">${bp?"Regra da campanha *":"O que será feito *"}</label><textarea id="na_descr" rows="3" placeholder="${bp?"Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos.":"Ex: dia de campo com 40 pecuaristas na fazenda X, com área de Sabiá. Inclui almoço e transporte."}">${v(a.descricao)}</textarea></div>
+    ${ed&&ed.status!=="Em Análise"&&!ehAdmin()?`<div><label for="na_alt">O que foi alterado e por quê *</label><textarea id="na_alt" rows="2" maxlength="1000" placeholder="Ex.: mudamos a data para abril porque o produtor adiou o plantio; o valor subiu R$ 800 pelo transporte."></textarea><span class="meta">O Marketing lê isto para aprovar de novo mais rápido.</span></div>`:""}
     ${ed?"":`<p class="meta" style="margin:0">A ação entra como Em análise e não desconta do saldo até o Marketing aprovar. Depois de adicionar, anexe orçamento, fotos ou material em "Fotos e documentos". Se faltar alguma informação, o Marketing avisa no comentário da ação.</p>`}
     <div class="acoes"><button class="btn" type="submit">${ed?(aprov?"Salvar e enviar para nova aprovação":"Salvar alterações"):bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="${ed?"editacao":"novaacao"}" data-v="fechar">Cancelar</button></div></form>`;
 }
@@ -7534,6 +7535,7 @@ function vRVCanal(){
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
     ${pgdPagTxt(a)?`<div class="meta pgd-pt">${pgdPagTxt(a)}</div>`:""}
+    ${a.alteracao_obs&&(a.status||"Em Análise")==="Em Análise"?`<div class="meta" style="color:var(--azul-escuro,#00557f)"><strong>Alterada pela revenda:</strong> ${esc(a.alteracao_obs.slice(0,160))}</div>`:""}
     ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
     <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${!veBarenbrugRV()&&podePgdArq()?`<button class="link" data-a="editacao" data-v="${a.id}">${S.editAcao===a.id?"Fechar edição":"Editar"}</button>`:""}${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
   const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
@@ -13266,7 +13268,8 @@ document.addEventListener("submit",async ev=>{
     {const F=[];if(!bpv&&!dados.cidade)F.push("cidade");if(!dados.data_acao)F.push("quando");if(bpv&&!(dados.valor_igdb>0))F.push("valor");F.push(...FP);if(!dados.descricao)F.push(bpv?"regra da campanha":"o que será feito");if(F.length){aviso("Preencha: "+F.join(", ")+".");return;}}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent=f.dataset.id?"Salvando…":"Adicionando…";
     if(f.dataset.id){const ant=(S.acoesCanal[S.canalSel]||[]).find(x=>x.id===f.dataset.id)||{};delete dados.canal_id;delete dados.status;delete dados.verba;
-      const {error:eu}=await sb.from("acoes_pgd").update(dados).eq("id",f.dataset.id);if(eu){aviso("Não foi possível salvar a alteração.");render();return;}
+      const altEl=f.querySelector("#na_alt");if(altEl){const t=altEl.value.trim();if(!t){btn.disabled=false;btn.textContent="Salvar e enviar para nova aprovação";aviso("Conte o que foi alterado e por quê.");altEl.focus();return;}dados.alteracao_obs=t;}
+      const {error:eu}=await sb.from("acoes_pgd").update(dados).eq("id",f.dataset.id);if(eu){btn.disabled=false;aviso(/alterado e por qu/i.test(eu.message||"")?"Conte o que foi alterado e por quê.":"Não foi possível salvar a alteração.");return;}
       S.canais=null;S.editAcao=null;render();aviso(ant.status==="Aprovado"&&!ehAdmin()?"Ação alterada. Como já estava aprovada, ela voltou para análise do Marketing.":"Ação atualizada.");return;}
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
