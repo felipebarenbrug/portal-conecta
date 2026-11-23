@@ -1706,7 +1706,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123165340";
+const APP_VER="20261123173026";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1894,7 +1894,7 @@ function vLogin(erro){
       ${err}<button class="btn" type="submit">Enviar solicitação</button>${voltar}</form>`;
   else form=`<form class="acesso-form" id="f-login"><h2>Entrar</h2><p>Use o e-mail e a senha que você recebeu.</p>
       <div><label for="email">E-mail</label><input id="email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false"></div>
-      <div><label for="senha">Senha</label><span class="senha-campo"><input id="senha" type="password" required autocomplete="current-password">${olhoSenha("senha")}</span></div>
+      <div><label for="senha">Senha</label><span class="senha-campo"><input id="senha" type="password" required autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">${olhoSenha("senha")}</span></div>
       <div id="ts-box" class="ts-box"></div>
       ${err}
       <button class="btn" type="submit">Entrar</button>
@@ -1906,7 +1906,7 @@ function vLogin(erro){
 function msgAcesso(c){
   const pn=c.nome?", "+String(c.nome).trim().split(" ")[0]:"";
   return (c.reset?`Olá${pn}! Sua senha do Portal Conecta Barenbrug foi redefinida.`:`Olá${pn}! Seu acesso ao Portal Conecta Barenbrug está liberado.`)
-    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
+    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n(digite exatamente assim, com o Bb- do começo e as letras maiúsculas e minúsculas)\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
 }
 function caixaCred(c){
   const msg=msgAcesso(c);S.copias=S.copias||{};S.copias[c.k]=msg;
@@ -13266,12 +13266,12 @@ document.addEventListener("submit",async ev=>{
     const {data:{session}}=await sbReal.auth.getSession();S.mfa=null;iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();return;
   }
   if(f.id==="f-login"){
-    const email=f.querySelector("#email").value.trim();const senha=f.querySelector("#senha").value;
+    const email=f.querySelector("#email").value.trim().toLowerCase();const senha=f.querySelector("#senha").value.replace(/^\s+|\s+$/g,"");
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Entrando…";
     const captchaToken=await tsToken();
     if(!captchaToken&&TS.wid!==null){S._erro="Confirme a verificação de segurança (a caixa \"Confirme que é humano\" acima do botão) e clique em Entrar de novo.";render();return;}
     const {error}=await sb.auth.signInWithPassword({email,password:senha,options:captchaToken?{captchaToken}:undefined});
-    if(error){S._erro=/invalid login/i.test(error.message)?"E-mail ou senha incorretos.":/captcha/i.test(error.message)?"A verificação de segurança não foi concluída. Confira a conexão, recarregue a página e tente de novo.":"Não foi possível entrar. Tente de novo.";render();return;}
+    if(error){S._erro=/invalid login/i.test(error.message)?"E-mail ou senha incorretos. A senha diferencia letras maiúsculas e minúsculas: toque no olho ao lado do campo para conferir o que foi digitado. Na senha provisória, digite também o Bb- do começo.":/captcha/i.test(error.message)?"A verificação de segurança não foi concluída. Confira a conexão, recarregue a página e tente de novo.":"Não foi possível entrar. Tente de novo.";render();return;}
     const {data:{session}}=await sb.auth.getSession();iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();
   }
   if(f.id==="f-esqueci"||f.id==="f-solicitar"){
