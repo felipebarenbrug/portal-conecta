@@ -963,6 +963,8 @@ main.largo{max-width:1120px}
 .lo-ed{padding:4px 14px 14px;border-top:1px solid var(--linha)}.lo-edh{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:8px 0 6px}.lo-edh .filtros{gap:10px}
 .lo-imp>summary{cursor:pointer}
 @media (max-width:760px){.lo-ph{grid-template-columns:minmax(0,1fr) auto}.lo-pr{grid-column:1/-1;grid-row:2}}
+.fs-alvo{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed var(--linha);font-size:13.5px;color:#1E1E1E}
+.pgd-prod{background:#FFFBE6;border:1px solid #F2E3A0;border-radius:10px;padding:10px 12px;margin-top:8px}.pgd-pt{color:#7A5A00;font-weight:600}
 .pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
 body:has(.pj-full){overflow:hidden}
 .pj-ed{min-height:100%}
@@ -1670,7 +1672,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123093718";
+const APP_VER="20261123094304";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7005,7 +7007,7 @@ function vRVPainel(){
   ${semPgd.length?`<p class="precos-nota">Sem PGD cadastrado: ${semPgd.map(esc).join(", ")}.</p>`:""}</section>
   <section class="bloco"><h2 class="sec">Plano de Geração de Demanda · ações</h2>
   <div class="filtros" style="margin-bottom:10px">${["Todas","Em Análise","Aprovado","Reprovado"].map(t=>`<button class="chip" data-a="pgd-filtro" data-v="${t}" aria-pressed="${fl===t}">${t}</button>`).join("")}</div>
-  ${acoes.length?`<div class="tab"><table><thead><tr><th>Canal</th><th>Ação</th><th>Onde / quando</th><th>Status</th><th class="val">Valor</th><th></th></tr></thead><tbody>${acoes.map(({a,c})=>`<tr><td>${esc(c.nome)}</td><td><strong>${esc(a.tipo||"Ação")}</strong><br><span class="meta">${esc(a.verba||"IGDB")} · ${esc((a.descricao||"").slice(0,90))}</span></td><td>${esc(a.cidade||"—")}${a.data_acao?`<br><span class="meta">${esc(a.data_acao)}</span>`:""}</td><td>${stBadge(a.status)}</td><td class="val">${Number(a.valor_igdb)?fmtK0(a.valor_igdb):`<span class="meta">a definir</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir canal</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma ação com esse status.</div>`}
+  ${acoes.length?`<div class="tab"><table><thead><tr><th>Canal</th><th>Ação</th><th>Onde / quando</th><th>Status</th><th class="val">Valor</th><th></th></tr></thead><tbody>${acoes.map(({a,c})=>`<tr><td>${esc(c.nome)}</td><td><strong>${esc(a.tipo||"Ação")}</strong><br><span class="meta">${esc(a.verba||"IGDB")} · ${esc((a.descricao||"").slice(0,90))}</span>${pgdPagTxt(a)?`<br><span class="meta pgd-pt">${pgdPagTxt(a)}</span>`:""}</td><td>${esc(a.cidade||"—")}${a.data_acao?`<br><span class="meta">${esc(a.data_acao)}</span>`:""}</td><td>${stBadge(a.status)}</td><td class="val">${Number(a.valor_igdb)?fmtK0(a.valor_igdb):`<span class="meta">a definir</span>`}</td><td><button class="link" data-a="vercanal" data-v="${c.id}">Abrir canal</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="vazio">Nenhuma ação com esse status.</div>`}
   </section>
   <section class="bloco"><h2 class="sec">Premissas do cálculo</h2>
   <div class="tab"><table><thead><tr><th>Tier</th><th class="val">IGDB híbridos</th><th class="val">IGDB convencionais</th><th class="val">Bônus de Performance</th></tr></thead><tbody>${Object.entries(RV_REGRA).map(([t,g])=>`<tr><td><strong>${t}</strong></td><td class="val">${pctTxt(g.ih)}</td><td class="val">${pctTxt(g.ic)}</td><td class="val">+${pctTxt(g.b)} sobre híbridos</td></tr>`).join("")}</tbody></table></div>
@@ -7096,7 +7098,8 @@ function vAcaoEditor(a){
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}${a.data_acao?" · "+esc(a.data_acao):""}</div>
     <div><label>Descrição</label><textarea id="a_descr" rows="3">${esc(a.descricao||"")}</textarea></div>
     <div class="dupla"><div><label>Status (aprovação Barenbrug)</label><select id="a_status">${["Em Análise","Aprovado","Reprovado"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div><label>Valor de IGDB da ação (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div></div>
+      ${(a.verba||"IGDB")==="Bônus de Performance"?`<div><label>Custo da campanha (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div>`:"<div></div>"}</div>
+    ${(a.verba||"IGDB")==="Bônus de Performance"?"":pgdPagForm("a",a,true)+`<p class="meta" style="margin:0">Desconta da verba hoje: <strong>${fmtR(a.valor_igdb)}</strong>.</p>`}
     <div><label>Comentário de status (Barenbrug)</label><textarea id="a_coment" rows="2" placeholder="Observações sobre esta ação…">${esc(a.comentario||"")}</textarea></div>
     <div>${vAcaoArquivos(a,true)}
       <div class="dupla" style="margin-top:8px"><input id="a_anexo_nome" placeholder="Nome do link (opcional)"><input id="a_anexo_url" placeholder="Ou cole um link (https://…)"></div></div>
@@ -7122,6 +7125,29 @@ function vCanalEditor(c){
     <div><label for="c_ni">Nota interna (só Barenbrug: parecer, validação, uso da verba)</label><textarea id="c_ni" rows="4" maxlength="1500">${esc(((S.cni||{})[c.id]||{}).nota||"")}</textarea></div>
     <div class="acoes"><button class="btn" type="submit">Salvar</button><button class="btn sec" type="button" data-a="editarcanal">Cancelar</button></div></form>`;
 }
+const PGD_PAG=["Dinheiro","Produto (bonificação)","Dinheiro e produto"];
+const pgdTemDin=p=>(p||"Dinheiro")!=="Produto (bonificação)";const pgdTemProd=p=>!!p&&p!=="Dinheiro";
+function pgdPagTxt(a){if(!pgdTemProd(a.pagamento))return "";const L=Array.isArray(a.sementes)?a.sementes:[];const prod=L.map(x=>`${(Number(x.kg)||0).toLocaleString("pt-BR")} kg de ${esc(x.cult)}`).join(" + ");
+  const din=pgdTemDin(a.pagamento)?Number(a.valor_dinheiro!=null?a.valor_dinheiro:a.valor_igdb)||0:0;
+  return `${din?"Dinheiro "+fmtR(din)+" + ":""}Produto: ${prod||"a definir"}${a.valor_produto?" ("+fmtR(a.valor_produto)+")":""} · ${a.desconta_verba===false?"bonificação fora da verba":"desconta da verba"}`;}
+function pgdPagForm(p,a,adm){a=a||{};const pag=a.pagamento||"Dinheiro";const L=(Array.isArray(a.sementes)?a.sementes:[])[0]||{};const din=a.valor_dinheiro!=null?a.valor_dinheiro:(pgdTemDin(pag)?a.valor_igdb:"");
+  if(!S.precosOk&&!S._pgdPrBusy){S._pgdPrBusy=1;carregarPrecos().then(()=>{S._pgdPrBusy=0;pgdPagAtual(document.getElementById(p+"_pag"));});}
+  return `<div class="pgd-pag" data-pre="${p}"><div class="dupla"><div><label for="${p}_pag">Forma de pagamento</label><select id="${p}_pag" data-pgdpag="${p}">${PGD_PAG.map(x=>`<option ${x===pag?"selected":""}>${x}</option>`).join("")}</select><span class="meta">Como nas Ações de Marketing: em dinheiro, em produto (bonificação) ou os dois.</span></div>
+    <div data-pgd-din ${pgdTemDin(pag)?"":"hidden"}><label for="${p}_valor">Valor em dinheiro (R$) *</label><input id="${p}_valor" inputmode="decimal" placeholder="0,00" value="${din?esc(String(din).replace(".",",")):""}" style="max-width:220px"><span class="meta">Quanto da verba de IGDB do canal vai em dinheiro.</span></div></div>
+    <div data-pgd-prod class="pgd-prod" ${pgdTemProd(pag)?"":"hidden"}><div class="dupla"><div><label for="${p}_scult">Produto da bonificação</label><select id="${p}_scult">${MK_SEM_CULT.map(c=>`<option ${c===L.cult?"selected":""}>${c}</option>`).join("")}</select></div><div><label for="${p}_skg">Quantidade (kg) *</label><input id="${p}_skg" inputmode="decimal" placeholder="Ex.: 200" value="${L.kg?esc(String(L.kg)):""}" style="max-width:180px"></div></div>
+      <p class="meta" id="${p}_sval" style="margin:4px 0 0"></p>
+      ${adm?`<label class="chk"><input type="checkbox" id="${p}_desc" ${a.desconta_verba!==false?"checked":""}> Desconta da verba de IGDB</label><span class="meta">Desmarque quando a bonificação for um apoio extra da Barenbrug, fora da verba do canal. O valor fica registrado, mas não reduz o saldo.</span>`:`<p class="meta" style="margin:4px 0 0">A bonificação desconta da verba de IGDB pelo valor da tabela do mês. Na aprovação, o Marketing pode definir que ela fica fora da verba.</p>`}</div></div>`;}
+function pgdPagAtual(sel){if(!sel)return;const box=sel.closest(".pgd-pag");if(!box)return;const p=box.dataset.pre,pag=sel.value;box.querySelector("[data-pgd-din]").hidden=!pgdTemDin(pag);box.querySelector("[data-pgd-prod]").hidden=!pgdTemProd(pag);
+  const c=(document.getElementById(p+"_scult")||{}).value,kg=mkNum((document.getElementById(p+"_skg")||{}).value),pr=mkSemPreco(c);const o=document.getElementById(p+"_sval");
+  if(o)o.textContent=!pr?"Valor de referência: carregando a tabela de preços…":kg>0?`Valor de referência: ${fmtR(kg*pr)} (${c} a ${fmtR(pr)}/kg, tabela do mês)`:`${c}: ${fmtR(pr)}/kg na tabela do mês.`;}
+function pgdPagColeta(f,p,a,adm){const g=id=>{const e=f.querySelector("#"+p+"_"+id);return e?e.value.trim():"";};const pag=g("pag")||"Dinheiro";
+  const din=pgdTemDin(pag)?mkNum(g("valor")):0;let sem=[],vp=0;
+  if(pgdTemProd(pag)){const c=g("scult"),kg=mkNum(g("skg")),pr=mkSemPreco(c);vp=Math.round((kg||0)*pr*100)/100;sem=[{id:((a&&Array.isArray(a.sementes)&&a.sementes[0]&&a.sementes[0].id)||Date.now().toString(36)),cult:c,fin:"Bonificação (pagamento em produto)",kg:kg||0,preco:pr||null}];}
+  const dc=f.querySelector("#"+p+"_desc");const desc=adm&&dc?dc.checked:(a?a.desconta_verba!==false:true);
+  const o={pagamento:pag,sementes:sem.length?sem:null,valor_dinheiro:din||0,valor_produto:vp||null,valor_igdb:(din||0)+(desc?vp:0)};if(adm)o.desconta_verba=desc;
+  const F=[];if(pgdTemDin(pag)&&!(din>0))F.push("valor em dinheiro");if(pgdTemProd(pag)&&!(sem[0]&&sem[0].kg>0))F.push("quantidade do produto");if(isNaN(din))F.push("valor em dinheiro válido");return [o,F];}
+addEventListener("change",ev=>{const t=ev.target;if(!t||!t.closest)return;if(t.dataset&&t.dataset.pgdpag){pgdPagAtual(t);return;}const b=t.closest(".pgd-pag");if(b)pgdPagAtual(b.querySelector("[data-pgdpag]"));});
+addEventListener("input",ev=>{const t=ev.target;const b=t&&t.closest&&t.closest(".pgd-pag");if(b)pgdPagAtual(b.querySelector("[data-pgdpag]"));});
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
 function vNovaAcao(modo){
   const bp=modo==="bp";
@@ -7130,7 +7156,7 @@ function vNovaAcao(modo){
     <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(([t,h])=>`<option value="${esc(t)}">${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta">Os mesmos tipos das Ações de Marketing, para o calendário juntar tudo.</span></div>
     ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option>${t}</option>`).join("")}</select></div>`}
     <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
-    <div><label for="na_valor">${bp?"Custo estimado (R$) *":"Valor de IGDB pedido (R$) *"}</label><input id="na_valor" inputmode="decimal" placeholder="0,00" style="max-width:220px"><span class="meta">${bp?"":"Quanto da verba de IGDB do canal esta ação vai usar."}</span></div>
+    ${bp?`<div><label for="na_valor">Custo estimado (R$) *</label><input id="na_valor" inputmode="decimal" placeholder="0,00" style="max-width:220px"></div>`:pgdPagForm("na",null,ehAdmin())}
     <div><label for="na_descr">${bp?"Regra da campanha *":"O que será feito *"}</label><textarea id="na_descr" rows="3" placeholder="${bp?"Ex: R$ 4,50 por saco de híbrido vendido; os 3 melhores vendedores ganham viagem a Barretos.":"Ex: dia de campo com 40 pecuaristas na fazenda X, com área de Sabiá. Inclui almoço e transporte."}"></textarea></div>
     <p class="meta" style="margin:0">A ação entra como Em análise e não desconta do saldo até o Marketing aprovar. Depois de adicionar, anexe orçamento, fotos ou material em "Fotos e documentos". Se faltar alguma informação, o Marketing avisa no comentário da ação.</p>
     <div class="acoes"><button class="btn" type="submit">${bp?"Adicionar campanha":"Adicionar ação"}</button><button class="btn sec" type="button" data-a="novaacao" data-v="fechar">Cancelar</button></div></form>`;
@@ -7261,6 +7287,7 @@ function vRVCanal(){
   const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
+    ${pgdPagTxt(a)?`<div class="meta pgd-pt">${pgdPagTxt(a)}</div>`:""}
     ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
     <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
   const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
@@ -9780,7 +9807,7 @@ function vFinConecta(C){
     return `<section class="bloco fin-simples"><div class="fs-g">
      <div class="fs-c fs-a"><span class="fs-r">Total a provisionar na safra</span><strong>${fmtK0(tot)}</strong><span class="meta">IGDB ${fmtK0(C.rv.igdb)} + Bônus de Performance ${fmtK0(C.rv.bonus)}. É o total a pagar até o fim da safra; o BF é pago no fim.</span></div>
      <div class="fs-c fs-b"><span class="fs-r">Disponível agora para os canais requisitarem</span><strong>${fmtK0(agora)}</strong><span class="meta">IGDB sobre o que as revendas já pagaram. É o que o Financeiro pode ter de pagar agora se um canal pedir o reembolso de uma ação aprovada.${C.rv.nPub<C.canais.length?` ${C.rv.nPub} de ${C.canais.length} revendas validadas até agora.`:""}</span></div>
-     <div class="fs-c ${ok?"fs-ok":"fs-al"}"><span class="fs-r">Conecta sobre o total faturado</span><strong>${uso==null?"—":pctTxt(uso)}</strong><span class="meta">Limite de ${pctTxt(meta)} sobre todas as vendas da safra (${fmtK0(base)}, com exportação). ${uso==null?"":ok?"Dentro do limite.":"Acima do limite."}</span></div></div>
+     <div class="fs-c ${ok?"fs-ok":"fs-al"}"><span class="fs-r">Conecta sobre o total faturado</span><strong>${uso==null?"—":pctTxt(uso)}</strong><span class="meta">Limite de ${pctTxt(meta)} sobre todas as vendas da safra (${fmtK0(base)}, com exportação). ${uso==null?"":ok?"Dentro do limite.":"Acima do limite."}</span>${meta&&tot?(()=>{const prec=tot/meta,falta=prec-base;return `<span class="fs-alvo">Para ${fmtK0(tot)} caberem em ${pctTxt(meta)}, a safra precisa vender <b>${fmtK0(prec)}</b> no total${falta>0?`, ou seja, mais <b>${fmtK0(falta)}</b> além do faturado até agora`:`; já vendemos ${fmtK0(base)}`}.</span>`;})():""}</div></div>
      ${finBarra(meta&&uso!=null?uso/meta:null,"do limite de "+pctTxt(meta))}</section>`;})()}
   <details class="fin-det"><summary>Ver o detalhe: cenários, plano e valores por revenda</summary>
   ${rvCenariosHTML(C)}
@@ -12336,7 +12363,8 @@ document.addEventListener("submit",async ev=>{
     const an=sel&&Array.isArray(sel.anexos)?sel.anexos.slice():[];
     const nome=f.querySelector("#a_anexo_nome").value.trim(),url=f.querySelector("#a_anexo_url").value.trim();
     if(url)an.push({nome:nome||url,url});
-    const dados={descricao:f.querySelector("#a_descr").value.trim(),status:f.querySelector("#a_status").value,valor_igdb:+f.querySelector("#a_valor").value||0,comentario:f.querySelector("#a_coment").value.trim(),anexos:an};
+    const dados={descricao:f.querySelector("#a_descr").value.trim(),status:f.querySelector("#a_status").value,comentario:f.querySelector("#a_coment").value.trim(),anexos:an};
+    if(f.querySelector("#a_pag")){const [o,E]=pgdPagColeta(f,"a",sel,true);if(E.length){aviso("Preencha: "+E.join(", ")+".");return;}Object.assign(dados,o);}else dados.valor_igdb=+f.querySelector("#a_valor").value||0;
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("acoes_pgd").update(dados).eq("id",id);
     if(error){aviso("Erro ao salvar a ação.");render();return;}
@@ -12376,8 +12404,9 @@ document.addEventListener("submit",async ev=>{
   }
   if(f.id==="f-novaacao"){
     const q=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};const bpv=f.dataset.verba==="Bônus de Performance";
-    const dados={canal_id:S.canalSel,tipo:q("na_tipo"),categoria:bpv?null:q("na_cat")||null,cidade:q("na_cidade"),data_acao:q("na_data"),valor_igdb:mkNum(q("na_valor")),descricao:q("na_descr"),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
-    {const F=[];if(!bpv&&!dados.cidade)F.push("cidade");if(!dados.data_acao)F.push("quando");if(!(dados.valor_igdb>0))F.push("valor");if(!dados.descricao)F.push(bpv?"regra da campanha":"o que será feito");if(F.length){aviso("Preencha: "+F.join(", ")+".");return;}}
+    const dados={canal_id:S.canalSel,tipo:q("na_tipo"),categoria:bpv?null:q("na_cat")||null,cidade:q("na_cidade"),data_acao:q("na_data"),valor_igdb:bpv?mkNum(q("na_valor")):0,descricao:q("na_descr"),verba:f.dataset.verba||"IGDB",status:"Em Análise"};
+    let FP=[];if(!bpv){const [o,E]=pgdPagColeta(f,"na",null,ehAdmin());Object.assign(dados,o);FP=E;}
+    {const F=[];if(!bpv&&!dados.cidade)F.push("cidade");if(!dados.data_acao)F.push("quando");if(bpv&&!(dados.valor_igdb>0))F.push("valor");F.push(...FP);if(!dados.descricao)F.push(bpv?"regra da campanha":"o que será feito");if(F.length){aviso("Preencha: "+F.join(", ")+".");return;}}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Adicionando…";
     const {error}=await sb.from("acoes_pgd").insert(dados);
     if(error){aviso("Erro ao adicionar.");render();return;}
