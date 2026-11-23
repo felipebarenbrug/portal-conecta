@@ -703,6 +703,10 @@ main.largo{max-width:1120px}
 .rcc-marca{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:4px}.rcc-marca input[type=text],.rcc-marca input:not([type]){flex:1 1 200px}
 .rcc-it{all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:10px 4px;border-bottom:1px solid var(--linha)}.rcc-it:hover{background:var(--papel)}.rcc-it:focus-visible{box-shadow:0 0 0 2px var(--azul)}
 .rcc-ro{display:grid;gap:12px}
+.ev-rap{background:var(--branco);border-radius:8px;padding:14px 16px}.ev-rl{display:grid;gap:6px;max-height:70vh;overflow:auto}
+.ev-ri{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.4fr) auto;gap:8px;align-items:center;padding:8px;border-radius:8px;background:var(--papel)}.ev-ri.ok{box-shadow:inset 4px 0 0 var(--azul)}
+.ev-rn{display:grid;min-width:0}.ev-ri select,.ev-ri input{min-width:0;width:100%}
+@media (max-width:820px){.ev-ri{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ev-rn{grid-column:1/-1}}
 .ish-2{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr);gap:20px;align-items:start}@media (max-width:900px){.ish-2{grid-template-columns:minmax(0,1fr)}}
 .crm-sp{display:grid;gap:2px;margin-top:6px;padding-top:6px;border-top:1px solid var(--linha);font-size:13px}.crm-sp>span{display:grid;gap:0}.crm-sp>span+span{margin-top:4px}.crm-sp b{font-weight:700;color:var(--tinta,#1E1E1E);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
 .mk-vd{border-left:4px solid var(--amarelo);background:var(--branco);border-radius:8px;padding:14px 16px}
@@ -1702,7 +1706,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123162933";
+const APP_VER="20261123165340";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9491,10 +9495,34 @@ function vIntEventos(){
   if(S.evtEd)return evtForm();
   return `<div class="ev-wrap"><div><h1 class="titulo">Eventos do mercado e janela de decisão de compra</h1>
     <p class="sub">Os principais eventos de pecuária do país cruzados com o momento em que o canal e o produtor decidem a compra de forrageiras em cada região, e a participação da Barenbrug em cada um. Uso interno do Marketing e do Comercial: as revendas e os RCs não veem esta área.</p></div>
+    ${evtEdita()?(S.evtRap?evtRapido():`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="evt-rap">Registrar participação (edição rápida)</button></div>`):""}
     ${evtKpis()}${evtParticipacao()}${evtLista()}${evtHeat()}${evtMapa()}${evtMeses()}${evtLacunas()}${evtMetodo()}</div>`;
 }
 
 /* ---------- ações (listener próprio, não depende do handler principal) ---------- */
+const EVT_VIA=[["institucional","Institucional","Verba institucional"],["revenda","Revenda (Conecta)","IGDB de revenda (Conecta)"],["rc","RC","Conecta RC"]];
+function evtViaDe(p){p=p||{};if(p.via)return p.via;const f=p.formas||[];if(f.includes("Conecta RC"))return "rc";if(f.some(x=>/IGDB|Bônus/.test(x)))return "revenda";if(f.some(x=>/institucional|Publicidade/i.test(x)))return "institucional";return "";}
+function evtRapido(){
+  const R=(S.evtRows||[]).slice().sort((a,b)=>{const m=x=>{const d=x.dados||{};const k=d.mes||(d.faixa||[])[0]||99;return k>=7?k-7:k+5;};return m(a)-m(b)||String(a.dados.nome).localeCompare(String(b.dados.nome));});
+  const q=finNorm(S.evtRapQ||"");const L=R.filter(r=>!q||finNorm([r.dados.nome,r.dados.cidade,r.dados.uf,(r.dados.part||{}).parceiro].join(" ")).includes(q));
+  const nP=R.filter(r=>((r.dados||{}).part||{}).status==="participamos").length;
+  return `<section class="bloco ev-rap"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><h2 class="sec" style="margin:0">Registrar participação</h2><div class="acoes" style="margin:0"><button class="btn sec" data-a="evt-novo">+ Evento que não está na lista</button><button class="btn sec" data-a="evt-rap">Fechar</button></div></div>
+    <p class="meta" style="margin:4px 0 8px">${nP} eventos com participação registrada. Para cada evento: participamos ou não, por qual via e com quem. Salve linha por linha.</p>
+    <input type="search" id="evt_rap_q" placeholder="Buscar evento, cidade ou parceiro" value="${esc(S.evtRapQ||"")}" aria-label="Buscar evento" style="margin-bottom:8px">
+    <div class="ev-rl">${L.map(r=>{const d=r.dados||{},p=d.part||{},st=p.status||"",via=evtViaDe(p);
+      return `<div class="ev-ri${st==="participamos"?" ok":""}"><div class="ev-rn"><strong>${esc(d.nome||"")}</strong><span class="meta">${esc([d.cidade,d.uf].filter(Boolean).join("/"))}${d.data26?" · "+esc(d.data26):""}</span></div>
+        <select id="er_st_${r.id}" aria-label="Participação em ${esc(d.nome||"")}"><option value="">Sem decisão</option>${EVT_ST.map(([k,t])=>`<option value="${k}" ${st===k?"selected":""}>${t}</option>`).join("")}</select>
+        <select id="er_via_${r.id}" aria-label="Via"><option value="">Via…</option>${EVT_VIA.map(([k,t])=>`<option value="${k}" ${via===k?"selected":""}>${t}</option>`).join("")}</select>
+        <input id="er_par_${r.id}" value="${esc(p.parceiro||"")}" placeholder="Com quem: revenda ou RC" aria-label="Com quem" maxlength="120">
+        <button class="btn sec" data-a="evt-rsave" data-v="${r.id}">Salvar</button></div>`;}).join("")||`<div class="vazio">Nenhum evento com esse termo.</div>`}</div></section>`;}
+let _evRqT=null;document.addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="evt_rap_q")return;S.evtRapQ=t.value;clearTimeout(_evRqT);_evRqT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("evt_rap_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},250);});
+async function evtRapSalvar(id){const r=(S.evtRows||[]).find(x=>x.id===id);if(!r)return;const g=k=>((document.getElementById(k+"_"+id)||{}).value||"").trim();
+  const st=g("er_st"),via=g("er_via"),par=g("er_par");const d=JSON.parse(JSON.stringify(r.dados||{}));const p=d.part||{};
+  p.status=st||null;p.via=st==="nao"?null:(via||null);p.parceiro=st==="nao"?(p.parceiro||null):(par||null);
+  const fv=(EVT_VIA.find(x=>x[0]===via)||[])[2];let f=(p.formas||[]).filter(x=>!EVT_VIA.some(v=>v[2]===x));if(fv&&st!=="nao")f=[fv,...f];p.formas=f;
+  if(!p.quando&&st==="participamos")p.quando="safra 26/27";d.part=p;
+  const {error}=await sb.from("evt_mercado").update({dados:d,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||null}).eq("id",id);
+  if(error){aviso("Não foi possível salvar.");return;}r.dados=d;EVT_DATA=null;aviso("Participação salva: "+(d.nome||"evento")+".");render();}
 function evtAcao(a,v){
   const E=evtEst();let rolar=null;
   if(a==="evt-mes")E.mes=v;
@@ -9510,6 +9538,8 @@ function evtAcao(a,v){
   else if(a==="evt-limpar"){S.evt=null;evtEst();}
   else if(a==="evt-ed"||a==="evt-novo"){evtAbrirForm(a==="evt-novo"?null:+v);window.scrollTo(0,0);return;}
   else if(a==="evt-cancel"){S.evtEd=null;render();return;}
+  else if(a==="evt-rap"){S.evtRap=!S.evtRap;render();if(S.evtRap)window.scrollTo(0,0);return;}
+  else if(a==="evt-rsave"){evtRapSalvar(+v);return;}
   else if(a==="evt-del"){evtExcluir(v);return;}
   render();
   if(rolar){const el=document.getElementById(rolar);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
