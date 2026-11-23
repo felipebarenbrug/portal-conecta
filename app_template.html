@@ -703,6 +703,7 @@ main.largo{max-width:1120px}
 .rcc-marca{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:4px}.rcc-marca input[type=text],.rcc-marca input:not([type]){flex:1 1 200px}
 .rcc-it{all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:10px 4px;border-bottom:1px solid var(--linha)}.rcc-it:hover{background:var(--papel)}.rcc-it:focus-visible{box-shadow:0 0 0 2px var(--azul)}
 .rcc-ro{display:grid;gap:12px}
+.rcc-ufs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 6px}
 .ev-rap{background:var(--branco);border-radius:8px;padding:14px 16px}.ev-rl{display:grid;gap:6px;max-height:70vh;overflow:auto}
 .ev-ri{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.4fr) auto;gap:8px;align-items:center;padding:8px;border-radius:8px;background:var(--papel)}.ev-ri.ok{box-shadow:inset 4px 0 0 var(--azul)}
 .ev-rn{display:grid;min-width:0}.ev-ri select,.ev-ri input{min-width:0;width:100%}
@@ -5686,14 +5687,14 @@ async function carregarRcCadMeu(){if(S.rcCadBusy)return;S.rcCadBusy=true;const u
 function rcCadFichaForm(f,bn){const o={};RCCAD_F.forEach(([,L])=>L.forEach(([k])=>o[k]=f[k]||""));RCCAD_BANCO.forEach(([k])=>o["b_"+k]=(bn||{})[k]||"");
   [0,1,2].forEach(i=>{const s=(f.socios||[])[i]||{};o["s_nome_"+i]=s.nome||"";o["s_cpf_"+i]=s.cpf||"";o["s_pct_"+i]=s.pct||"";});
   [0,1].forEach(i=>{const r=(f.refs||[])[i]||{},x=(f.outras||[])[i]||{};o["r_emp_"+i]=r.empresa||"";o["r_tel_"+i]=r.tel||"";o["r_con_"+i]=r.contato||"";o["o_emp_"+i]=x.empresa||"";o["o_tel_"+i]=x.tel||"";o["o_con_"+i]=x.contato||"";});
-  o.area=f.area||"";return o;}
+  o.area=f.area||"";o.area_ufs=Array.isArray(f.area_ufs)?f.area_ufs.slice():[];o.area_base=f.area_base||"";o.area_raio=f.area_raio||"";return o;}
 function rcCadFichaDe(o){const f={};RCCAD_F.forEach(([,L])=>L.forEach(([k])=>f[k]=String(o[k]||"").trim()));["core_uf","uf"].forEach(k=>f[k]=f[k].toUpperCase().slice(0,2));
   f.socios=[0,1,2].map(i=>({nome:String(o["s_nome_"+i]||"").trim(),cpf:String(o["s_cpf_"+i]||"").trim(),pct:String(o["s_pct_"+i]||"").trim()})).filter(s=>s.nome||s.cpf);
   f.refs=[0,1].map(i=>({empresa:String(o["r_emp_"+i]||"").trim(),tel:String(o["r_tel_"+i]||"").trim(),contato:String(o["r_con_"+i]||"").trim()})).filter(r=>r.empresa);
   f.outras=[0,1].map(i=>({empresa:String(o["o_emp_"+i]||"").trim(),tel:String(o["o_tel_"+i]||"").trim(),contato:String(o["o_con_"+i]||"").trim()})).filter(r=>r.empresa);
-  f.area=String(o.area||"").trim();return f;}
+  f.area=String(o.area||"").trim();f.area_ufs=Array.isArray(o.area_ufs)?o.area_ufs.slice():[];f.area_base=String(o.area_base||"").trim();f.area_raio=String(o.area_raio||"").trim();return f;}
 function rcCadFaltam(o,docs){const L=[];RCCAD_F.forEach(([,F])=>F.forEach(([k,t,ob])=>{if(ob&&!String(o[k]||"").trim())L.push(t);}));RCCAD_BANCO.forEach(([k,t])=>{if(!String(o["b_"+k]||"").trim())L.push(t);});
-  if(!String(o.s_nome_0||"").trim()||!String(o.s_cpf_0||"").trim())L.push("Nome e CPF de pelo menos um sócio");if(!String(o.area||"").trim())L.push("Área de atuação");
+  if(!String(o.s_nome_0||"").trim()||!String(o.s_cpf_0||"").trim())L.push("Nome e CPF de pelo menos um sócio");if(!(o.area_ufs||[]).length)L.push("Estado(s) de atuação");if(!String(o.area_base||"").trim())L.push("Cidade-base da atuação");
   RCCAD_OBRIG.forEach(k=>{const d=(docs||{})[k];if(!d||!d.path||d.st==="pendente")L.push(RCCAD_DOCS.find(x=>x[0]===k)[1]);});return L;}
 function rcCadPassos(st){const P=[["Ficha e documentos",["Aguardando ficha","Pendências"]],["Conferência",["Enviado"]],["Contrato pela Clicksign",["Conferido","Contrato enviado"]],["Acesso liberado",["Assinado"]]];const i=P.findIndex(p=>p[1].includes(st));
   return `<ol class="mk-etapas" style="margin:0 0 12px">${P.map((p,j)=>`<li class="${j<i?"feito":j===i?"atual":""}"${j===i?' aria-current="step"':""}><span class="mk-n">${j+1}</span>${p[0]}</li>`).join("")}</ol>`;}
@@ -5705,7 +5706,11 @@ function rcCadFormHTML(o,ed){
   <section class="bloco rcc-b"><h2 class="sec">Sócios</h2>${[0,1,2].map(i=>grade(rcIn(o,"s_nome_"+i,"Nome completo"+(i?"":""),!i,ed)+rcIn(o,"s_cpf_"+i,"CPF",!i,ed,'inputmode="numeric"')+rcIn(o,"s_pct_"+i,"Participação (%)",0,ed,'inputmode="decimal"'))).join("")}</section>
   <section class="bloco rcc-b"><h2 class="sec">Dados bancários para a comissão</h2><p class="meta" style="margin:0">A conta precisa ser da empresa. Estes dados ficam visíveis só para o Customer Service e o Financeiro da Barenbrug.</p>${grade(RCCAD_BANCO.map(([k,t,ob])=>rcIn(o,"b_"+k,t,ob,ed)).join(""))}</section>
   <section class="bloco rcc-b"><h2 class="sec">Referências</h2><p class="meta" style="margin:0">Opcional. Empresas com quem você já trabalha e outras marcas que você representa.</p>${[0,1].map(i=>tri("r_","Referência comercial",i)).join("")}${[0,1].map(i=>tri("o_","Outra representada",i)).join("")}</section>
-  <section class="bloco rcc-b"><h2 class="sec">Área de atuação</h2><label for="rcc_area">Municípios e estados que você vai atender</label><textarea id="rcc_area" data-rcc="area" rows="3" ${ed?"":"disabled"}>${esc(o.area||"")}</textarea></section>`;}
+  <section class="bloco rcc-b"><h2 class="sec">Área de atuação</h2><p class="meta" style="margin:0">Não precisa listar os municípios. Marque o estado ou os estados em que vai atuar, a cidade de onde sai para o campo e até que distância costuma ir.</p>
+    <span class="meta" style="font-weight:700;margin-top:4px">Estado(s) de atuação</span>
+    <div class="rcc-ufs">${["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"].map(u=>`<label class="check"><input type="checkbox" data-rccuf="${u}" ${(o.area_ufs||[]).includes(u)?"checked":""} ${ed?"":"disabled"}> ${u}</label>`).join("")}</div>
+    ${grade(rcIn(o,"area_base","Cidade-base (de onde você sai para o campo)",1,ed)+`<div><label for="rcc_area_raio">Raio de atuação estimado</label><select id="rcc_area_raio" data-rcc="area_raio" ${ed?"":"disabled"}><option value="">Escolha</option>${["até 100 km","até 200 km","até 300 km","até 500 km","mais de 500 km","o estado todo"].map(x=>`<option ${o.area_raio===x?"selected":""}>${x}</option>`).join("")}</select></div>`)}
+    <label for="rcc_area">Regiões ou municípios principais <span class="meta">(opcional)</span></label><textarea id="rcc_area" data-rcc="area" rows="2" placeholder="Ex.: Vale do Araguaia, norte de Goiás" ${ed?"":"disabled"}>${esc(o.area||"")}</textarea></section>`;}
 function rcCadDocsHTML(c,modo){const docs=c.docs||{};const ed=modo==="rc"&&(c.status==="Aguardando ficha"||c.status==="Pendências");const conf=modo==="gestor"&&(c.status==="Enviado"||c.status==="Pendências");
   return `<section class="bloco rcc-b"><h2 class="sec">Documentos</h2>${modo==="rc"?`<p class="meta" style="margin:0">PDF ou foto legível, até 15 MB cada. Consultas gratuitas: situação do CNPJ na <a class="link" href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener">Receita Federal ↗</a> e da inscrição estadual no <a class="link" href="http://www.sintegra.gov.br" target="_blank" rel="noopener">Sintegra ↗</a>.</p>`:""}
     <div class="lista">${RCCAD_DOCS.map(([k,t])=>{const d=docs[k];const tg=!d||!d.path?(k==="outro"?"":stTag("Falta enviar","amarelo")):d.st==="ok"?stTag("Conferido","verde"):d.st==="pendente"?stTag("Pendente","vermelho"):stTag("Enviado","azul");
@@ -5760,6 +5765,7 @@ function vRCCadastroDet(){
   ${bnTxt?`<p class="meta">${bnTxt}</p>`:""}
   <div class="rcc-ro">${rcCadFormHTML(o,false).replace(/<section class="bloco rcc-b"><h2 class="sec">Dados bancários[\s\S]*?<\/section>/,g?"$&":"")}</div>`;}
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rcc)return;(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
   if(t.dataset.rcdoc){const f=t.files&&t.files[0];if(!f)return;if(f.size>15*1024*1024){aviso("Arquivo acima de 15 MB.");return;}const k=t.dataset.rcdoc,uid=S.profile.id;const ext=(f.name.split(".").pop()||"pdf").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);
     const path=`${uid}/${k}-${Date.now().toString(36)}.${ext}`;aviso("Enviando "+f.name+"…");const up=await sb.storage.from("rc-cadastro").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false});if(up.error){aviso("Não foi possível enviar o arquivo.");return;}
