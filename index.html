@@ -1674,7 +1674,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123101002";
+const APP_VER="20261123101422";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9797,30 +9797,44 @@ function rvCenariosHTML(C){
     ${PL&&k===2?`<div><dt>Plano jun/26 · todos na meta</dt><dd>${fmtK0(PL.todos_meta)}</dd></div><div><dt>Plano jun/26 · 60% na meta</dt><dd>${fmtK0(PL.full)}</dd></div>`:""}</dl></div>`).join("")}</div>
   <p class="precos-nota">${PL?`Pool previsto na safra: ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} sobre a previsão de vendas do plano de junho de 2026). Formado até hoje: ${fmtK0(C.pools.rv)}, com ${pctTxt(C.dSafra)} da safra decorrida. Ruziziensis e temperadas vendem mais tarde, então o pool formado cresce no segundo semestre da safra.`:`Pool de ${fmtK0(pool)} (${pctTxt(Number(C.P.pool_rv)||0)} de todas as vendas, com exportação).`} Teto de ${fmtK0(RV_TETO)} por revenda em todos os cenários. No cenário full, a meta de híbridos de cada revenda entra ao preço médio que ela já pratica (ou ao valor por kg do contrato), mais os convencionais já comprados.</p></section>`;
 }
+async function carregarFinMkt(){if(S.finMktBusy)return;S.finMktBusy=true;let L=null;
+  try{const {data,error}=await sb.rpc("fin_mkt_acoes");if(!error&&Array.isArray(data))L=data;}catch(e){}
+  if(!L){try{const {data}=await sb.from("mkt_acoes").select("id,titulo,status,agrupador,mae_id,fonte,canal_id,inicio,fin,valor_prev,valor_real,responsavel_nome,solicitante_nome,safra");L=data||[];}catch(e){L=[];}}
+  S.finMkt=L;S.finMktBusy=false;render();}
+const FIN_MK_FORA=["Cancelada","Recusada"],FIN_MK_ANALISE=["Solicitada","Em análise","Pausada"];
 function vFinResp(C){
+  if(S.finMkt===undefined){carregarFinMkt();}
+  const MK=(S.finMkt||[]).filter(a=>!a.agrupador&&!FIN_MK_FORA.includes(a.status)&&mkEhFonteMkt(a.fonte)&&mkCusto(a)>0);
   const nomeR=c=>{const t=String(c.responsavel||"").trim();return t?t.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()):"Sem responsável";};
-  const G={};C.canais.forEach(x=>{const k=finNorm(nomeR(x.c));(G[k]=G[k]||{nome:nomeR(x.c),L:[]}).L.push(x);});
+  const tc=t=>{t=String(t||"").trim();return t?t.toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase()):"";};
+  const G={};const gr=n=>{const k=finNorm(n);return G[k]=G[k]||{nome:n,L:[],A:[]};};
+  C.canais.forEach(x=>gr(nomeR(x.c)).L.push(x));
+  MK.forEach(a=>gr(tc(a.responsavel_nome)||tc(a.solicitante_nome)||"Marketing institucional").A.push(a));
+  const mkSoma=A=>({ac:A.filter(a=>!FIN_MK_ANALISE.includes(a.status)).reduce((t,a)=>t+mkCusto(a),0),an:A.filter(a=>FIN_MK_ANALISE.includes(a.status)).reduce((t,a)=>t+mkCusto(a),0)});
   const met=x=>{const m=x.m;const saldo=Math.max(0,(m.igdb||0)-(m.aprovIG||0));return {ig:m.igdb||0,bf:m.bonus||0,tot:m.total!=null?m.total:(m.igdb||0)+(m.bonus||0),apr:m.aprovIG||0,saldo,agora:m.pub?(m.pub.igdbPago||0):0,mTot:m.mTotal||0};};
   const soma=L=>L.reduce((t,x)=>{const v=met(x);Object.keys(v).forEach(k=>t[k]=(t[k]||0)+v[k]);return t;},{});
-  const R=Object.values(G).map(g=>({...g,t:soma(g.L)})).sort((a,b)=>b.t.tot-a.t.tot);
-  const T=soma(C.canais);const sel=R.find(r=>finNorm(r.nome)===S.finResp)||null;
-  const cols=t=>`<td class="val">${fmtK0(t.ig)}</td><td class="val">${fmtK0(t.bf)}</td><td class="val"><strong>${fmtK0(t.tot)}</strong></td><td class="val">${fmtK0(t.apr)}</td><td class="val">${fmtK0(t.saldo)}</td><td class="val" style="color:#2E8B57;font-weight:700">${fmtK0(t.agora)}</td>`;
-  const cab=`<th class="val">IGDB previsto</th><th class="val">BF</th><th class="val">Verba total</th><th class="val">Em ações aprovadas</th><th class="val">Saldo de IGDB para ações</th><th class="val">Disponível agora</th>`;
-  return `<div><h1 class="titulo">Verba por responsável</h1><p class="sub">Quanto de verba do Conecta Revendas está com cada comercial, somando as revendas que ele gerencia. Toque no nome para ver revenda por revenda.</p></div>
+  const R=Object.values(G).map(g=>{const t=soma(g.L),m=mkSoma(g.A);t.mk=m.ac;t.mkAn=m.an;t.geral=(t.tot||0)+m.ac;return {...g,t};}).sort((a,b)=>b.t.geral-a.t.geral);
+  const T=soma(C.canais);{const m=mkSoma(MK);T.mk=m.ac;T.mkAn=m.an;T.geral=(T.tot||0)+m.ac;}const sel=R.find(r=>finNorm(r.nome)===S.finResp)||null;
+  const cols=t=>`<td class="val">${fmtK0(t.ig||0)}</td><td class="val">${fmtK0(t.bf||0)}</td><td class="val"><strong>${fmtK0(t.tot||0)}</strong></td><td class="val">${fmtK0(t.apr||0)}</td><td class="val">${fmtK0(t.saldo||0)}</td><td class="val" style="color:#2E8B57;font-weight:700">${fmtK0(t.agora||0)}</td>`;
+  const colsR=t=>cols(t)+`<td class="val">${fmtK0(t.mk||0)}${t.mkAn?`<br><span class="meta">+ ${fmtK0(t.mkAn)} em análise ou pausadas</span>`:""}</td><td class="val"><strong>${fmtK0(t.geral||0)}</strong></td>`;
+  const cab=`<th class="val">IGDB previsto</th><th class="val">BF</th><th class="val">Verba do Conecta</th><th class="val">Em ações aprovadas</th><th class="val">Saldo de IGDB para ações</th><th class="val">Disponível agora</th>`;
+  const cabR=cab+`<th class="val">Ações de Marketing</th><th class="val">Total de marketing</th>`;
+  return `<div><h1 class="titulo">Verba por responsável</h1><p class="sub">Quanto de verba de marketing está com cada comercial: o Conecta Revendas das revendas que ele gerencia (IGDB e BF) mais as Ações de Marketing em que ele é o responsável, como eventos e patrocínios. Toque no nome para ver o detalhe.</p></div>
   ${finAvisoTopo(C)}
   <section class="bloco"><div class="metrics">
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Verba total do Conecta na safra</span><strong>${fmtK0(T.tot)}</strong><span class="meta">IGDB ${fmtK0(T.ig)} + BF ${fmtK0(T.bf)} · ${C.canais.length} revendas</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total de marketing com os responsáveis</span><strong>${fmtK0(T.geral)}</strong><span class="meta">Conecta ${fmtK0(T.tot)} (IGDB ${fmtK0(T.ig)} + BF ${fmtK0(T.bf)}) + Ações de Marketing ${fmtK0(T.mk)}${S.finMkt===undefined?" · carregando as ações…":""}</span></div>
     <div class="metric"><span>Saldo de IGDB para novas ações</span><strong>${fmtK0(T.saldo)}</strong><span class="meta">IGDB previsto menos o que já está em ações aprovadas</span></div>
     <div class="metric"><span>Disponível agora</span><strong>${fmtK0(T.agora)}</strong><span class="meta">IGDB sobre o que as revendas já pagaram; pode ser pedido em reembolso</span></div></div>
-  <div class="tab"><table class="fin-t"><thead><tr><th>Responsável</th><th>Revendas</th>${cab}</tr></thead><tbody>
-    ${R.map(r=>`<tr${sel===r?' class="sim-on"':""}><td><button class="link" data-a="fin-resp" data-v="${esc(finNorm(r.nome))}"><strong>${esc(r.nome)}</strong></button></td><td>${r.L.length}</td>${cols(r.t)}</tr>`).join("")}
-    <tr><td><strong>Total</strong></td><td>${C.canais.length}</td>${cols(T)}</tr></tbody></table></div>
-  <p class="precos-nota">Verba total: IGDB previsto pelo que cada revenda já comprou na safra, mais o BF pelo atingimento de hoje, com o teto por revenda. Em ações aprovadas: o IGDB das ações do PGD já aprovadas. Saldo de IGDB para ações: o que a revenda ainda pode propor em ações. Disponível agora: o IGDB sobre as notas já pagas, que a revenda pode pedir em reembolso de ações aprovadas. O BF é pago no fim da safra.</p></section>
+  <div class="tab"><table class="fin-t"><thead><tr><th>Responsável</th><th>Revendas</th>${cabR}</tr></thead><tbody>
+    ${R.map(r=>`<tr${sel===r?' class="sim-on"':""}><td><button class="link" data-a="fin-resp" data-v="${esc(finNorm(r.nome))}"><strong>${esc(r.nome)}</strong></button>${r.A.length?`<br><span class="meta">${r.A.length} ${r.A.length===1?"ação de marketing":"ações de marketing"}</span>`:""}</td><td>${r.L.length}</td>${colsR(r.t)}</tr>`).join("")}
+    <tr><td><strong>Total</strong></td><td>${C.canais.length}</td>${colsR(T)}</tr></tbody></table></div>
+  <p class="precos-nota">Verba total: IGDB previsto pelo que cada revenda já comprou na safra, mais o BF pelo atingimento de hoje, com o teto por revenda. Em ações aprovadas: o IGDB das ações do PGD já aprovadas. Saldo de IGDB para ações: o que a revenda ainda pode propor em ações. Disponível agora: o IGDB sobre as notas já pagas, que a revenda pode pedir em reembolso de ações aprovadas. O BF é pago no fim da safra. Ações de Marketing: o custo das ações institucionais (fonte Marketing) em que a pessoa é a responsável, ou a solicitante quando não há responsável; usa o valor realizado quando já lançado, senão o previsto. Ações solicitadas, em análise ou pausadas aparecem à parte e não entram no total; canceladas e recusadas ficam fora. Ações pagas pela verba do Conecta não entram aqui para não contar duas vezes.</p></section>
   ${sel?`<section class="bloco"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h2 class="sec" style="margin:0">${esc(sel.nome)} · ${sel.L.length} ${sel.L.length===1?"revenda":"revendas"}</h2><button class="link" data-a="fin-resp" data-v="">Fechar</button></div>
-    <div class="metrics" style="margin-top:10px"><div class="metric"><span>Verba total com ${esc(sel.nome.split(" ")[0])}</span><strong>${fmtK0(sel.t.tot)}</strong><span class="meta">${finPct(sel.t.tot,T.tot)} da verba do Conecta · se todos baterem a meta: ${fmtK0(sel.t.mTot)}</span></div><div class="metric"><span>Saldo de IGDB para ações</span><strong>${fmtK0(sel.t.saldo)}</strong></div><div class="metric"><span>Disponível agora</span><strong>${fmtK0(sel.t.agora)}</strong></div></div>
-    <div class="tab"><table class="fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Ating.</th>${cab}</tr></thead><tbody>
+    <div class="metrics" style="margin-top:10px"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total de marketing com ${esc(sel.nome.split(" ")[0])}</span><strong>${fmtK0(sel.t.geral)}</strong><span class="meta">Conecta ${fmtK0(sel.t.tot||0)} + Ações de Marketing ${fmtK0(sel.t.mk||0)} · ${finPct(sel.t.geral,T.geral)} do total</span></div><div class="metric"><span>Verba do Conecta</span><strong>${fmtK0(sel.t.tot||0)}</strong><span class="meta">se todas as revendas baterem a meta: ${fmtK0(sel.t.mTot||0)}</span></div><div class="metric"><span>Saldo de IGDB para ações</span><strong>${fmtK0(sel.t.saldo)}</strong></div><div class="metric"><span>Disponível agora</span><strong>${fmtK0(sel.t.agora)}</strong></div></div>
+    ${sel.L.length?`<div class="tab"><table class="fin-t"><thead><tr><th>Revenda</th><th>Tier</th><th class="val">Ating.</th>${cab}</tr></thead><tbody>
     ${sel.L.slice().sort((a,b)=>met(b).tot-met(a).tot).map(x=>`<tr><td>${esc(x.c.nome)}${x.m.pub?"":`<br><span class="meta">pelo CRM</span>`}</td><td><span class="selo">${esc(x.c.tier||"—")}</span></td><td class="val">${x.m.ating==null?"—":pctTxt(x.m.ating)}</td>${cols(met(x))}</tr>`).join("")}
-    </tbody></table></div></section>`:""}`;}
+    </tbody></table></div>`:""}
+    ${sel.A.length?`<h3 class="pgd-h" style="margin-top:14px">Ações de Marketing com ${esc(sel.nome.split(" ")[0])}</h3><div class="tab"><table class="fin-t"><thead><tr><th>Ação</th><th>Situação</th><th>Quando</th><th class="val">Valor</th></tr></thead><tbody>${sel.A.slice().sort((a,b)=>mkCusto(b)-mkCusto(a)).map(a=>`<tr><td><strong>${esc(a.titulo||"Ação")}</strong><br><span class="meta">${esc(a.fonte||"")}</span></td><td>${esc(a.status||"")}${FIN_MK_ANALISE.includes(a.status)?`<br><span class="meta">fora do total por enquanto</span>`:""}</td><td>${a.inicio?esc(String(a.inicio).slice(0,10).split("-").reverse().join("/")):"—"}</td><td class="val">${fmtK0(mkCusto(a))}${(Number(a.valor_real)||0)>0?`<br><span class="meta">realizado</span>`:`<br><span class="meta">previsto</span>`}</td></tr>`).join("")}</tbody></table></div>`:""}</section>`:""}`;}
 function vFinConecta(C){
   const P=C.P;
   const st=a=>(a.status||"Em Análise");
