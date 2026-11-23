@@ -7587,6 +7587,7 @@ function vCriarAcesso(){
     ${cadAbasHTML("n")}
     <div><label for="n_canal">Revenda do Conecta <span class="meta">— obrigatório para Gestor de Revenda e Vendedor de Revenda</span></label><select id="n_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}${k.tier?" · "+esc(k.tier):""}</option>`).join("")}</select><span class="meta">Só entram no portal pessoas de revendas que estão no programa Conecta. Se a revenda não está na lista, cadastre-a antes em Conecta Revendas.</span></div>
     <div><label for="n_rccrm">Vínculo no ranking (nome no CRM) <span class="meta">— para RC e Assessor de Vendas Digital</span></label><select id="n_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}">${esc(x.nome)}</option>`).join("")}</select></div>
+    <div><label for="n_resp">Responsável comercial <span class="meta">— para RC, Assessor de Vendas Digital e Franqueado Nutron</span></label><select id="n_resp"><option value="">— definir depois —</option>${(()=>{const L=[...new Set([...(S.crmDonos||[]).filter(d=>!/^IS:|^Inside Sales$/.test(d)),...CRM_DONOS.filter(d=>d!=="Inside Sales"),...COMERCIAIS_EXTRA].filter(Boolean))].sort((a,b)=>a.localeCompare(b));return L.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");})()}</select><span class="meta">Quem acompanha esta pessoa. Ao escolher o vínculo no CRM, o portal sugere o responsável do contrato.</span></div>
     <div><label for="n_crmdono">Nome no CRM (painel Meu CRM) <span class="meta">— para Comercial Barenbrug</span></label><select id="n_crmdono"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA])].map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select></div>
     <details class="cad-com" ${S.nComAberto?"open":""}><summary><strong>Carteira do comercial</strong> <span class="meta">— para Comercial Barenbrug: revendas e RCs pelos quais ele responde</span></summary>
       <div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">Gravado junto com o acesso. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canaisLista||[]).map(k=>`<label class="check"><input type="checkbox" data-nrev="${esc(k.id)}"> ${esc(k.nome)}${k.comercial_id?' <span class="meta">(hoje com outro responsável)</span>':""}</label>`).join("")||'<span class="meta">Nenhuma revenda cadastrada.</span>'}</div></div>
@@ -7637,6 +7638,8 @@ function vcPainel(){const q=finNorm(S.vcQ||""),pf=S.vcPf||"";const E=(S.equipe||
     <div class="filtros" style="margin-bottom:8px"><button class="chip" data-a="vc-pf" data-v="" aria-pressed="${!pf}">Todos</button>${perfis.map(p=>`<button class="chip" data-a="vc-pf" data-v="${esc(p)}" aria-pressed="${pf===p}">${esc(p)}</button>`).join("")}</div>
     <div class="lista">${L.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"—")}</strong><span class="meta">${esc((Array.isArray(x.perfis)&&x.perfis.length?x.perfis:[x.perfil]).join(" + "))}${x.ultimo_acesso?"":" · nunca entrou"}</span></div><button class="btn sec" data-a="ver-como" data-v="${esc(x.id)}">Ver como</button></div>`).join("")||`<div class="vazio">Ninguém com esse filtro.</div>`}</div>
     ${!q&&!pf&&E.length>8?`<p class="meta" style="margin:8px 0 0">Mostrando 8 de ${E.length}. Busque pelo nome ou escolha um perfil.</p>`:""}</section>`;}
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||t.id!=="n_rccrm"||!t.value)return;const r=document.getElementById("n_resp");if(!r||r.value)return;
+  const k=repCanon(t.value);const c=(S.rcContr||[]).find(c=>(Array.isArray(c.crm_nomes)?c.crm_nomes:[]).concat([c.nome]).some(n=>repCanon(n)===k));if(c&&c.comercial_nome&&[...r.options].some(o=>o.value===c.comercial_nome))r.value=c.comercial_nome;});
 let _vcT;addEventListener("input",ev=>{const t=ev.target;if(!t||t.id!=="vc_q")return;S.vcQ=t.value;clearTimeout(_vcT);_vcT=setTimeout(()=>{const pos=t.selectionStart;render();const n=document.getElementById("vc_q");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}},200);});
 function gtHome(R){
   const rev=x=>x.perfil==="Gestor de Revenda"||x.perfil==="Vendedor de Revenda";
@@ -13097,6 +13100,7 @@ document.addEventListener("submit",async ev=>{
     const acessos=[...f.querySelectorAll(".n_acesso:checked")].map(c=>c.value);
     const abasOc=cadAbasOcultas(f,"n");
     const rcCrm=(perfil==="RC"||perfil==="Assessor de Vendas Digital")?(f.querySelector("#n_rccrm").value||null):null;
+    const respN=["RC","Assessor de Vendas Digital","Franqueado Nutron"].includes(perfil)?((f.querySelector("#n_resp")||{}).value||null):null;
     const cobN=[...f.querySelectorAll("[data-ncobrig]:checked")].map(x=>x.dataset.ncobrig);const exigeCurso=cobN.includes("hibridos");
     S._erroCriar=null;
     const ehRev=perfil==="Gestor de Revenda"||perfil==="Vendedor de Revenda";const canalId=ehRev?(f.querySelector("#n_canal").value||null):null;
@@ -13108,7 +13112,7 @@ document.addEventListener("submit",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
-    await sb.from("profiles").update({acessos,exige_curso:exigeCurso,cursos_obrig:cobN,abas_ocultas:abasOc}).eq("email",email);
+    await sb.from("profiles").update({acessos,exige_curso:exigeCurso,cursos_obrig:cobN,abas_ocultas:abasOc,...(respN?{comercial_resp:respN}:{})}).eq("email",email);
     if(canalId){const rc=await sb.from("profiles").update({canal_id:canalId}).eq("email",email).select("canal_id").maybeSingle();if(rc.error||!rc.data||rc.data.canal_id!==canalId)aviso("Acesso criado, mas a revenda não foi vinculada. Abra a pessoa e escolha a revenda.");}
     const elCdN=f.querySelector("#n_crmdono");if(perfil==="Comercial Barenbrug"&&elCdN&&elCdN.value){await sb.from("profiles").update({crm_dono:elCdN.value}).eq("email",email);}
     if(perfil==="Comercial Barenbrug"){const revs=[...f.querySelectorAll("[data-nrev]:checked")].map(x=>x.dataset.nrev),cts=[...f.querySelectorAll("[data-nrcct]:checked")].map(x=>x.dataset.nrcct),pfs=[...f.querySelectorAll("[data-nrcpf]:checked")].map(x=>x.dataset.nrcpf);
