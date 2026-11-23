@@ -1676,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123123753";
+const APP_VER="20261123124017";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6858,11 +6858,13 @@ async function carregarCanais(){
   const {data:as}=await sb.from("acoes_pgd").select("*");
   const porCanal={};(as||[]).forEach(a=>{(porCanal[a.canal_id]=porCanal[a.canal_id]||[]).push(a);});
   const ord={"Yellow Master":0,"Yellow Pro":1,"Yellow":2,"Blue":3};
-  S.canaisAll=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));S.canais=canaisDaSecao();
+  S.canaisAll=(cs||[]).sort((a,b)=>(ord[a.tier]??9)-(ord[b.tier]??9)||a.nome.localeCompare(b.nome));
+  if(S.verComo&&S.profile){const P=S.profile;S.canaisAll=P.canal_id?S.canaisAll.filter(k=>k.id===P.canal_id):(temPerfil("Comercial Barenbrug")&&!ehAdmin())?S.canaisAll.filter(k=>k.comercial_id===P.id):(temPerfil("Gestor de Revenda")||temPerfil("Vendedor de Revenda"))?[]:S.canaisAll;}
+  S.canais=canaisDaSecao();
   S.acoesCanal=porCanal;
   try{const {data:rs}=await sb.from("canal_resultado").select("*");S.canalRes={};(rs||[]).forEach(r=>{S.canalRes[r.canal_id]=r;});}catch(e){S.canalRes={};}
   S.cni={};if(veBarenbrugRV()&&!S.demo){try{const {data:ni}=await sb.from("canal_nota_interna").select("canal_id,nota,atualizado_em");(ni||[]).forEach(x=>{S.cni[x.canal_id]=x;});}catch(e){}}
-  if(temPerfil("Gestor de Revenda")&&S.canais[0]){S.canalSel=S.canais[0].id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:S.canais[0].id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
+  if(temPerfil("Gestor de Revenda")&&S.canais[0]){const k0=(S.profile&&S.profile.canal_id&&S.canais.find(k=>k.id===S.profile.canal_id))||S.canais[0];S.canalSel=k0.id;try{const {data:eq}=await sb.rpc("equipe_do_canal",{c:k0.id});S.equipeCanal=eq||[];}catch(e){S.equipeCanal=[];}}
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
     try{const {data:pb}=await sb.from("rv_publicado").select("*");S.rvPub={};(pb||[]).forEach(x=>{S.rvPub[x.canal_id]=rvvScFix(x);});}catch(e){S.rvPub={};}
