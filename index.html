@@ -969,6 +969,7 @@ main.largo{max-width:1120px}
 @media (max-width:760px){.ev-wrap td,.ev-wrap .ev-sel,.ev-wrap .meta{white-space:normal!important;overflow-wrap:anywhere}.ev-wrap .ev-sel{display:inline-block;max-width:100%}}
 #f-evt{max-width:1100px}.cobr>summary{cursor:pointer;list-style:none}.cobr>summary::-webkit-details-marker{display:none}.cobr-v{font-size:12.5px;font-weight:700;color:#005F86;text-decoration:underline;margin-left:6px}.cobr[open] .cobr-v{text-decoration:none}
 .lo-crm{display:block;margin-top:4px;background:#FDECEC;color:#8A2B2B;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
+.vc-bar{position:sticky;top:0;z-index:70;display:flex;gap:10px 16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#1E1E1E;color:#fff;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));font-size:14px}.vc-bar strong{color:#FFDB00}.vc-bar .btn{background:#FFDB00;color:#1E1E1E;border-color:#FFDB00}
 .ev-lig{display:grid;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--linha);border-radius:10px;padding:8px 10px;background:#fff}.ev-st-participamos{background:#DFF3E7!important;color:#1E6B3A!important}.ev-st-vamos{background:#E3F4FB!important;color:#005F86!important}.ev-st-avaliando{background:#FFF3B0!important;color:#5C4B00!important}.ev-st-nao{background:#F3E1E1!important;color:#8A2B2B!important}
 .pj-full{position:fixed;inset:0;z-index:1000;background:#F3F6F8;overflow-y:auto;overscroll-behavior:contain}
 body:has(.pj-full){overflow:hidden}
@@ -1457,7 +1458,7 @@ const SECOES=[
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["meu-crm","Meu CRM"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["inteligencia","Inteligência"],["acoes-mkt","Ações de Marketing"],["brindes","Ações de Marketing › Brindes de Marketing"],["vitrines","Ações de Marketing › Áreas demonstrativas"],["enxoval","Enxoval de Marketing"],["mercado","Notícias de Mercado"],["financeiro","Marketing + Financeiro"],["calculadora","Calculadora de rentabilidade"],["duvidas","Tira-Dúvidas"],["mural","Mural"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["calculadora","Academia › Calculadora de rentabilidade"],["meu-crm","Meu CRM"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["inteligencia","Inteligência"],["acoes-mkt","Ações de Marketing"],["brindes","Ações de Marketing › Brindes de Marketing"],["vitrines","Ações de Marketing › Áreas demonstrativas"],["enxoval","Enxoval de Marketing"],["mercado","Notícias de Mercado"],["financeiro","Marketing + Financeiro"],["duvidas","Tira-Dúvidas"],["mural","Mural"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
@@ -1675,7 +1676,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123112814";
+const APP_VER="20261123113314";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1689,7 +1690,7 @@ async function recarregarPermissoes(){
   try{const {data:d0}=await sb.from("profiles").select("*").eq("id",S.user.id).maybeSingle();if(!d0)return;
     const data={};["perfil","perfis","nivel","acessos","abas_ocultas","exige_curso","cursos_obrig","rc_crm","crm_dono","is_vendedora","ufs_atendidas","canal_id","comercial_resp"].forEach(k=>{if(k in d0)data[k]=d0[k];});
     const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
-    if(antes!==depois){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;aplicaPerfis(S.profile);S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
+    if(antes!==depois&&!S.verComo){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;aplicaPerfis(S.profile);S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
   }catch(e){}
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){recarregarPermissoes();if(S.user)sb.auth.getSession().then(({data})=>{const id=data&&data.session&&data.session.user&&data.session.user.id;if(id&&id!==S.user.id)location.reload();}).catch(()=>{});}});
@@ -1972,7 +1973,13 @@ function vPerfil(){
 async function carregarMeuContrato(){if(S.meuContrBusy)return;S.meuContrBusy=true;try{const {data}=await sb.rpc("meu_contrato");S.meuContr=data||null;}catch(e){S.meuContr=null;}S.meuContrBusy=false;render();}
 
 /* ---------- shell ---------- */
-function cabecalho(){return cabecalho0()+appTopo();}
+function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>Você está vendo o portal como <strong>${esc(S.verComo.nome)}</strong> (${esc(S.verComo.perfil)}). Seções, abas e menus seguem o perfil dele; os números ainda seguem a sua permissão de administrador.${cadastroCompleto()?"":" No primeiro acesso, ele verá antes a tela para completar o cadastro."}</span><button class="btn" data-a="ver-como-sair">Voltar à minha visão</button></div>`:"")+cabecalho0()+appTopo();}
+async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
+  S._real={profile:S.profile,perfil:S.perfil,perfis:S.perfis,nivel:S.nivel,secao:S.secao,pag:S.pag,adminUser:S.adminUser};
+  S.profile={...t};S.perfil=t.perfil||"RC";aplicaPerfis(t);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
+  ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
+function verComoSair(){const R=S._real;if(!R)return;S.profile=R.profile;S.perfil=R.perfil;S.perfis=R.perfis;S.nivel=R.nivel;S.verComo=null;S._real=null;
+  ["crm","leadsCache","canais","fin","loOk","msgCont"].forEach(k=>S[k]=null);["mapa","pj","mk","evtPgd"].forEach(k=>S[k]=undefined);S.secao="gestao";S.pag="usuario";S.adminUser=R.adminUser;render();window.scrollTo(0,0);}
 function cabecalho0(){
   return `<header class="topo"><div class="topo-in"><button class="logo-b" data-a="inicio" aria-label="Início"><img class="logo" src="${LOGO}" alt="Barenbrug"></button>
     <div class="topo-acoes"><div class="quem"><span class="q1"><strong>${esc(S.profile.nome||S.user.email)}</strong><span class="qp"> · ${esc(S.demo?S.perfil:[...new Set((S.perfis||[S.perfil]).filter(x=>x!=="Administrador"))].join(" + ")||S.perfil)}${!S.demo&&S.nivel==="Administrador"&&S.perfil!=="Administrador"?" · Administrador":""}</span></span><span class="q2"><button data-a="perfil">Meu perfil</button> · <button data-a="sair">Sair</button></span></div>${msgBotao()}${(()=>{const n=(S.posts!=null&&S.duvidas!=null)?novidades().total:0;return `<button class="sino topo-ic" data-a="inicio" title="Novidades no início" aria-label="${n?n+" novidades no início":"Início e novidades"}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>${n?`<b>${n>99?"99+":n}</b>`:""}</button>`;})()}<button class="ajuda-b topo-ic" data-a="tour-ajuda" title="Ver o tour desta área" aria-label="Ajuda">?</button></div></div></header>${S.demo?`<div class="demo-b"><div class="demo-in"><strong>Demonstração</strong><span>Todos os nomes e números são fictícios. Ver como:</span>${(window.demoVisoes||[]).map(v=>`<button class="chip" data-a="demo-ver" data-v="${esc(v)}" aria-pressed="${S.perfil===v}">${esc(v)}</button>`).join("")}</div></div>`:""}`;
@@ -5084,7 +5091,7 @@ function vHub(){
   const secs=secoesVisiveis().filter(x=>x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
   const bloq=bloqueadoCurso();
   const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
-  const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
+  const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: ${prazoCursoTxt()?"até "+prazoCursoTxt():PRAZO_CURSO_DIAS+" dias a partir do primeiro acesso"}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
   const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de Gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
     if(!x.ativo)return `<button class="area-b" disabled title="${esc(x.desc||"")}"><span>${x.nome}</span><span class="meta">${esc((x.breve||"em breve").toLowerCase())}</span></button>`;
@@ -7916,7 +7923,7 @@ function vUsuarioAdmin(){
   const pelPerfil=admF?SECOES_ACESSO.map(x=>x[0]):[...(afTem("Comercial Barenbrug")?["inteligencia","acoes-mkt","brindes"]:[]),...(afTem("Marketing")?["acoes-mkt","brindes"]:[]),...(afTem("Financeiro")?["financeiro"]:[])];
   const secAbas=[...new Set([...ac,...pelPerfil])].filter(id=>ABAS_REG[id]&&ABAS_REG[id].length);
   return `<button class="voltar" data-a="pag" data-v="${S.gtVolta||"gestao-pessoas"}">‹ ${esc((GT_ABAS.find(x=>x[0]===(S.gtVolta||"gestao-pessoas"))||["","Pessoas"])[1])}</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p></div>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p>${ehMaster()&&!ehEu?`<div class="acoes" style="margin:8px 0 0"><button class="btn sec" data-a="ver-como" data-v="${esc(u.id)}">Ver o portal como ${esc((S.adminForm.nome||"esta pessoa").split(" ")[0])}</button><span class="meta">Abre o portal com o perfil e as seções desta pessoa. Salve as alterações antes.</span></div>`:""}</div>
   ${evolucaoHTML(u.id)}
   ${(afTem("RC")||afTem("Assessor de Vendas Digital")||afTem("Inside Sales"))?(S.rcContr?(contratoCard(contratoDe(S.adminForm.rc_crm||S.adminForm.nome,u.email),"Contrato 26/27 (mapeamento)")||`<div class="nota-admin">Nenhum contrato 26/27 mapeado para este usuário. O vínculo é pelo nome no CRM ou pelo e-mail do contrato.</div>`):(carregarContratos(),"")):""}
   <form class="form-card" id="f-usuario" novalidate>
@@ -12234,7 +12241,7 @@ function renderApp(){
   if(S.pag!=="usuario")S.formAlvo="form";
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
-  if(!cadastroCompleto()){app.innerHTML=vCadastroObrig();S._erro=null;return;}
+  if(!cadastroCompleto()&&!S.verComo){app.innerHTML=vCadastroObrig();S._erro=null;return;}
   if(pirDevo()){if(S.pirMeu===undefined){carregarPirMeu();app.innerHTML=`<div class="carregando">Carregando…</div>`;return;}if(S.pirMeu===false){app.innerHTML=vPirForm();return;}}
   if(bloqueadoCurso()&&S.secao&&S.secao!=="academia"&&S.secao!=="mensagens"){const P=cursosPend();if(!secaoLiberada(S.secao)){const c=P[0]||CURSOS_OBRIG[0];S.secao=c[3];S.pag=c[4];}else if(PAGS_CURSO[S.secao]&&!PAGS_CURSO[S.secao].includes(S.pag))S.pag=PAGS_CURSO[S.secao][0];}
   if(S.pag==="perfil"){app.innerHTML=cabecalho()+`<main>${vPerfil()}</main>`;return;}
@@ -12598,6 +12605,8 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="uso-todos"){S.usoTodos=true;render();return;}
   if(a==="ng"){const i=v.lastIndexOf("|");S.ngAb={...(S.ngAb||{}),[v.slice(0,i)]:+v.slice(i+1)};render();return;}
   if(a==="pag"){S.ngAb={};irPag(v);}
+  if(a==="ver-como"){await verComoEntrar(v);return;}
+  if(a==="ver-como-sair"){verComoSair();return;}
   if(a==="fin-resp"){S.finResp=v||null;render();return;}
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
