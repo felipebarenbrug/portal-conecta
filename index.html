@@ -1353,7 +1353,7 @@ const ETAPAS=[
  {id:"qualcapim",n:"Qual capim encaixa melhor na sua fazenda?",d:"Posicionamento comercial: diagnosticar o cliente, responder objeções e indicar Sabiá, Cayana ou Carcará para cada sistema.",
   v:[{t:"Qual capim encaixa melhor na sua fazenda?",yt:"GZlCjclo2mE"}],mat:[],quiz:[]},
  {id:"vender",n:"Como vender",d:"Objeções, preço e argumentação.",
-  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Condições comerciais — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Crédito do pedido (nas Condições comerciais)",tipo:"Guia",pagina:"precos"}],
+  v:[{t:"Vender valor, não saco",m:5},{t:"Objeções mais comuns no campo",m:5},{t:"Preço e papel de cada canal",m:5}],mat:[{n:"Condições Comerciais — Safra 26/27",tipo:"Tabela",pagina:"precos"},{n:"Crédito do pedido (nas Condições Comerciais)",tipo:"Guia",pagina:"precos"}],
   quiz:[q("O que avaliar antes de indicar um cultivar?",["Só o preço do saco","Solo, sistema e janela de plantio do produtor","A cor da embalagem"]),
         q("Peso do saco de Sabiá, Cayana e Carcará?",["3 kg","10 kg","25 kg"]),
         q("A comunicação pode citar cultivares concorrentes?",["Não","Sim, sempre","Sim, nos impressos"])]},
@@ -1433,27 +1433,27 @@ async function carregarPrecos(){
 }
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
+  {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
-  {id:"tabela-precos",nome:"Condições comerciais",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
-  {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
-  {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens e vídeo institucional — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
+  {id:"tabela-precos",nome:"Condições Comerciais",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
   {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram à Barenbrug (inbound) e a base de prospecção do Marketing (outbound).",ativo:true,perfis:null},
   {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null},
-  {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
-  {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
-  {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null},
-  {id:"mercado",nome:"Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
   {id:"inteligencia",nome:"Inteligência",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"acoes-mkt",nome:"Ações de Marketing",desc:"Quadro das ações de marketing institucionais: cartões com valores, arquivos, links e comentários; verba e saldo da safra.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"vitrines",nome:"Áreas demonstrativas",desc:"Vitrines de híbridos com revendas, RCs ou institucionais: responsável, local, cultivares, área, plantio, bonificação, documentos e o mapa de todas as áreas.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
   {id:"brindes",nome:"Brindes de Marketing",desc:"Catálogo de brindes e materiais com foto, código, valor e saldo; requisições aprovadas pelo Marketing com baixa no estoque.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
+  {id:"enxoval",nome:"Enxoval de Marketing",desc:"Marca, artes para redes, banners, folders, banco de imagens e vídeo institucional — tudo o que você precisa para divulgar.",ativo:true,perfis:null},
+  {id:"mercado",nome:"Notícias de Mercado",desc:"Informação de mercado sempre fresca: notícias da pecuária, arroba do boi por estado e condições de clima.",ativo:true,perfis:null},
   {id:"time-mkt",nome:"Time de Marketing",desc:"O playbook do Marketing Barenbrug: quem faz o quê, os processos passo a passo e como pedir ao Marketing.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"]},
-  {id:"analise-solo",nome:"Análise de solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
-  {id:"guia",nome:"Guia do portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
-  {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]}
+  {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]},
+  {id:"guia",nome:"Guia do Portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
+  {id:"analise-solo",nome:"Análise de Solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Marketing","Comercial Barenbrug","RC","Assessor de Vendas Digital","Franqueado Nutron","Gestor de Revenda","Vendedor de Revenda"]},
+  {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
+  {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
+  {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições comerciais"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência"],["financeiro","Marketing + Financeiro"]];
+const SECOES_ACESSO=[["vitrines","Áreas demonstrativas"],["academia","Academia de Híbridos"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["calculadora","Calculadora de rentabilidade"],["enxoval","Enxoval de Marketing"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["meu-crm","Meu CRM"],["duvidas","Tira-Dúvidas"],["mural","Mural"],["mercado","Mercado"],["acoes-mkt","Ações de Marketing"],["brindes","Brindes de Marketing"],["inteligencia","Inteligência"],["financeiro","Marketing + Financeiro"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
@@ -1674,7 +1674,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123095843";
+const APP_VER="20261123100640";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2064,7 +2064,7 @@ const PS_CAL=[
 
 /* Sabiá, Cayana ou Carcará: o que desempata (perfil do produtor e da área) */
 const PS_FAT=[
- ["Tecnificação do produtor","Pouca análise de solo, corrige quando sobra dinheiro, assistência técnica eventual.","Análise de solo todo ano, segue a recomendação, tem agrônomo ou consultor.","Alta: análise de solo, recomendação do agrônomo e adubação de produção planejada.","A recomendação de calagem e adubação parte da análise de solo e do nível de manejo do sistema. Sem análise, não há como garantir a exigência de um cultivar de alta resposta.",["adub","recsolo"]],
+ ["Tecnificação do produtor","Pouca análise de solo, corrige quando sobra dinheiro, assistência técnica eventual.","Análise de Solo todo ano, segue a recomendação, tem agrônomo ou consultor.","Alta: análise de solo, recomendação do agrônomo e adubação de produção planejada.","A recomendação de calagem e adubação parte da análise de solo e do nível de manejo do sistema. Sem análise, não há como garantir a exigência de um cultivar de alta resposta.",["adub","recsolo"]],
  ["Correção do solo","V% de 50% a 60% e fósforo a partir de 5 mg/dm³ (o mínimo do Sabiá).","V% acima de 60% e fósforo a partir de 7 mg/dm³, ou terra de lavoura.","V% acima de 55% a 60% e fósforo de 8 a 10 mg/dm³.","As bases oficiais dão o mínimo de cada cultivar: Sabiá de média exigência, Cayana e Carcará de alta. A Embrapa agrupa as forrageiras por exigência em fertilidade e põe o Panicum no grupo dos sistemas de alta tecnologia.",["bb","recsolo","adub"]],
  ["Adubação","Não garante adubação todo ano.","Manutenção todo ano (a partir de 50 a 80 kg de N/ha), com fósforo e potássio.","Adubação de produção de 150 a 200 kg de N/ha/ano, parcelada nas águas.","Quanto mais o capim produz, mais nutriente ele extrai. A Embrapa indica de 40 a 50 kg de N/ha no manejo extensivo, de 100 a 150 no médio e de 200 a 300 no intensivo; sem reposição, a pastagem perde produção e degrada.",["adub","bb"]],
  ["Clima e água","Seca longa, chuva irregular, veranico na implantação, região de transição.","Chuva regular e bem distribuída, seca de até 5 a 6 meses.","Chuva regular; concentra cerca de 90% da produção nas águas. Irrigado, só onde o inverno é quente.","O Sabiá produz de 30% a 35% do ano na seca, contra cerca de 20% do Marandu. Os Panicum concentram cerca de 90% nas águas. Na irrigação, com inverno acima de 15 °C de média, a produção de inverno chegou a 76% a 80% da de verão; em região fria, a cerca de 30%.",["bb","irr"]],
@@ -3406,14 +3406,14 @@ const TM_ASV={
  vinculo:"Prestadoras de serviço autônomas (pessoa jurídica), com contrato de vendedor autônomo por prazo indeterminado, sem vínculo trabalhista. Trabalham de forma remota e respondem à supervisão do Inside Sales e ao Felipe Piccoli.",
  papel:"Vender os produtos Barenbrug ao produtor e às revendas pelos canais digitais, do primeiro atendimento ao pós-venda, com assistência técnica a pecuaristas (formação e reforma de pastagens) e a agricultores (cobertura e integração lavoura-pecuária).",
  linhas:[
-  ["O que vendem","Os produtos da marca Barenbrug listados no contrato, seguindo a tabela de preços e as condições de prazo vigentes.","Foco nos híbridos Sabiá, Cayana e Carcará, que contam na meta de 60 t da safra 26/27. Preço e prazo sempre pelas Condições comerciais do portal."],
+  ["O que vendem","Os produtos da marca Barenbrug listados no contrato, seguindo a tabela de preços e as condições de prazo vigentes.","Foco nos híbridos Sabiá, Cayana e Carcará, que contam na meta de 60 t da safra 26/27. Preço e prazo sempre pelas Condições Comerciais do portal."],
   ["Onde atuam","Região definida no contrato, sem exclusividade. A Barenbrug pode indicar outras regiões, sempre com confirmação antes.","Os leads chegam pela esteira Pré-Vendas Barenbrug no CRM, e quem estiver online puxa primeiro. Nas regiões dos canais Yellow Master, só atendem com anuência do canal."],
   ["Atendimento e pós-venda","Venda, intermediação e agenciamento de pedidos, mais assistência técnica e pós-venda. A comissão sobre vendas feitas diretamente pela Barenbrug na área depende desse pós-venda.","Primeiro atendimento pelo WhatsApp no RD Conversas, qualificação (MQL para SQL), proposta, acompanhamento do plantio e da formação. Toda negociação com tarefa e próximo passo no CRM."],
   ["Cliente novo","Fazer o levantamento cadastral do cliente novo e enviar a ficha com o primeiro pedido. A assessora responde pela veracidade das informações.","Ficha cadastral completa antes do pedido. O Financeiro pode recusar o pedido em até 5 dias úteis, e cliente com crédito suspenso não compra até regularizar."],
   ["Pedido","Lançar o pedido no sistema de pedidos da Barenbrug com o próprio usuário, que é pessoal e intransferível, e só nas condições comerciais vigentes. Pedido lançado por outra pessoa não gera comissão, e pedido faturado não muda.","Conferir cultivar, quantidade, preço, prazo e frete antes de lançar. Erro de pedido que gere devolução é notificado e, se repetir, pode encerrar o contrato."],
   ["Metas e informação de mercado","Cumprir as metas de vendas, manter contato com os clientes da área e informar à Barenbrug o comportamento do mercado e a previsão de vendas.","Meta do time e de cada uma no painel do Inside Sales. Motivos de perda, objeções e preço da concorrência registrados no CRM, que alimentam a pesquisa de preço e o playbook."],
   ["Comunicação com o cliente","Manter cópia de toda correspondência com clientes e seguir as circulares de comunicação da Barenbrug.","Conversas pelo WhatsApp corporativo no RD Conversas e pelo e-mail corporativo, nunca por canais pessoais. A satisfação do atendimento é medida pela nota que o robô pede ao fim da conversa."],
-  ["Ferramentas","A Barenbrug fornece CRM, sistema de pedidos, chatbot, Intexfy, Microsoft 365 e uma conta de e-mail corporativa, além de folhetos, manuais, listas de preço e catálogos.","RD Station CRM, RD Conversas, Intexfy para prospecção e o Portal Conecta, com Academia, Playbook IS e Condições comerciais."],
+  ["Ferramentas","A Barenbrug fornece CRM, sistema de pedidos, chatbot, Intexfy, Microsoft 365 e uma conta de e-mail corporativa, além de folhetos, manuais, listas de preço e catálogos.","RD Station CRM, RD Conversas, Intexfy para prospecção e o Portal Conecta, com Academia, Playbook IS e Condições Comerciais."],
   ["Marca, sigilo e dados","Não autorizar o uso da marca Barenbrug em fachadas ou lojas sem autorização por escrito. Manter sigilo sobre sistemas e informações. Os dados de clientes são da Barenbrug e seguem a LGPD. Valem o termo de confidencialidade e a política antissuborno e anticorrupção (NP.16.001).","Nada de exportar ou copiar listas de clientes do CRM. Pedido de material com a marca passa pelo Marketing."],
   ["Exclusividade","Pode vender outros produtos, mas é proibido vender produtos concorrentes ou similares aos da Barenbrug, e é preciso informar as outras marcas com que trabalha.","Qualquer outra representação é comunicada ao Felipe antes."],
   ["Local de trabalho","Trabalho remoto. Pode usar o escritório de Ribeirão Preto avisando com 1 dia útil de antecedência. Presencial só de forma excepcional e combinada.","Reunião semanal do Inside Sales com a Laura e o Felipe. Eventos e ações comerciais podem pedir presença e roupa com a marca, sempre combinados antes."],
@@ -5052,7 +5052,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesMkt():x.id==="brindes"?veBrindes():x.id==="vitrines"?veVit():x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
 /* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -5068,7 +5068,7 @@ function vHub(){
   const PCs=cursosPend();const lst=PCs.map(c=>`<button type="button" class="link" data-a="curso-ir" data-v="${c[0]}">${c[1]}</button> (${c[2]})`).join("; ");
   const banner=bloq?`<div class="aviso-bloq" style="margin:0">Passaram ${PRAZO_CURSO_DIAS} dias e você ainda não concluiu ${PCs.length===1?"o curso obrigatório":"os cursos obrigatórios"}: ${lst}. Conclua para liberar as demais áreas.</div>`:PCs.length?`<div class="aviso-est" role="note" style="margin:0"><strong>${PCs.length===1?"Curso obrigatório":"Cursos obrigatórios"} para você</strong><p>${lst}. Prazo: até ${prazoCursoTxt()}. Depois disso, as demais áreas ficam bloqueadas até a conclusão.</p></div>`:"";
   const seta=`<span aria-hidden="true">›</span>`;
-  const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
+  const areas=(gerePessoas()?`<button class="area-b" data-a="secao" data-v="gestao"><span>Painel de Gerenciamento</span>${seta}</button>`:"")+secs.map(x=>{
     if(!x.ativo)return `<button class="area-b" disabled title="${esc(x.desc||"")}"><span>${x.nome}</span><span class="meta">${esc((x.breve||"em breve").toLowerCase())}</span></button>`;
     if(bloq&&!secaoLiberada(x.id))return `<button class="area-b" disabled title="Conclua os cursos obrigatórios para liberar"><span>${x.nome}</span><span class="meta">bloqueado</span></button>`;
     return `<button class="area-b" data-a="secao" data-v="${x.id}" title="${esc(x.desc)}"><span>${x.nome}</span>${x.emdev?`<span class="meta">em desenvolvimento</span>`:seta}</button>`;}).join("");
@@ -5367,14 +5367,14 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
 
 function vPrecos(){
   if(S.precosOk===undefined){if(!S.precosBusy)carregarPrecos().then(render);return `<div class="carregando">Carregando as condições comerciais…</div>`;}
-  if(!S.precosOk)return `<div><h1 class="titulo">Condições comerciais</h1></div><section class="bloco"><p class="sub" style="margin:0">As condições comerciais não estão liberadas para o seu acesso. Peça ao administrador do portal.</p></section>`;
+  if(!S.precosOk)return `<div><h1 class="titulo">Condições Comerciais</h1></div><section class="bloco"><p class="sub" style="margin:0">As condições comerciais não estão liberadas para o seu acesso. Peça ao administrador do portal.</p></section>`;
   const voltar=S.secao==="tabela-precos"?"":S.secao==="conecta-rc"?`<button class="voltar" data-a="pag" data-v="rc-apresentacao">‹ Conecta RC</button>`:`<button class="voltar" data-a="pag" data-v="base">‹ Base de conhecimento</button>`;
   const th=PRECOS_MESES.map((m,i)=>`<th class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${m}</th>`).join("");
   const linhas=PRECOS.map(p=>`<tr><td class="cult">${p.cult}</td><td>${p.cod}</td><td>${esc(p.cat)}</td><td>${p.trat}</td><td>${p.emb}</td>${p.v.map((x,i)=>`<td class="mes ${i===PRECOS_MES_ATUAL?"mes-on":""}">${x}</td>`).join("")}</tr>`).join("");
   const frete=FRETE.map(f=>`<tr><td><strong>${f.uf}</strong></td><td class="val">${f.f}</td><td class="val">${f.frac}</td></tr>`).join("");
   const polc=polHTML("pol_comercial");
   return `${voltar}
-  <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Condições comerciais</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
+  <div><span class="rot">${esc(PRECOS_VER)}</span><h1 class="titulo">Condições Comerciais</h1><p class="sub">Preços ao produtor rural, em <strong>R$/kg</strong>. O <strong>mês de pagamento</strong> indica o preço de referência na tabela — destacado o mês atual (${PRECOS_MESES[PRECOS_MES_ATUAL]}).</p></div>
   ${S.tpEd&&tpPodeEditar()?`<section class="bloco"><h2 class="sec">Editar a tabela</h2>${tpEditor()}</section>`:`
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 class="sec">Preços ao produtor (R$/kg)</h2>${tpPodeEditar()?`<button class="btn sec" data-a="tp-editar">Editar tabela</button>`:""}</div>
     <div class="tab"><table class="precos"><thead><tr><th>Cultivar</th><th>Código</th><th>Gênero/Categoria</th><th>Tratamento</th><th>Embalagem</th>${th}</tr></thead><tbody>${linhas}</tbody></table></div>
@@ -7372,7 +7372,7 @@ function vManejo(){
     <p class="meta">O CAS informa a data-limite da semente. Em dúvida sobre o lote, validar a germinação em laboratório credenciado antes do plantio.</p>
     <div class="mj-check"><strong>Checklist antes do plantio</strong>${mjLi(["Sacos íntegros, sem furos, mofo ou odor estranho","Lote e validade conferem com a nota fiscal","Galpão seco, ventilado e sem contato com defensivos","Até 5 sacos empilhados sobre estrado de madeira","Temperatura abaixo de 25 °C e umidade abaixo de 60%","Semeadora calibrada para o dia do plantio"])}</div></section>
 
-  <section class="bloco" id="mj-solo"><h2 class="sec">Etapa 2 · Análise de solo, correção e preparo</h2>
+  <section class="bloco" id="mj-solo"><h2 class="sec">Etapa 2 · Análise de Solo, correção e preparo</h2>
     ${mjTab(["Item","Recomendação"],[["Amostragem","Camadas de 0 a 20 cm (química) e 20 a 40 cm (subsuperfície). No máximo 20 ha por talhão homogêneo."],["Análise química","pH, MO, P, K, Ca, Mg, S, micronutrientes, V%, Al e CTC."],["Análise física","Textura e densidade, em áreas com suspeita de compactação."],["Calagem","60 a 90 dias antes do plantio, com o solo úmido."],["Gessagem","Quando há alumínio em subsuperfície ou camadas profundas de baixa fertilidade."],["Fosfatagem corretiva","Em solos muito pobres em fósforo, no preparo, antes da adubação de plantio."],["Micronutrientes","Zinco e boro costumam ser limitantes em solos de Cerrado."]])}
     <p class="meta">As doses de calcário, gesso e adubo dependem do laudo da análise e da recomendação do agrônomo. A Barenbrug não emite recomendação personalizada de adubação.</p></section>
 
@@ -8014,7 +8014,7 @@ function vIntAudCanais(nome){
     <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th>${CU.map(c=>`<th class="val">${c}: mar → out</th>`).join("")}</tr></thead><tbody>
     ${evRows.map(([k,o])=>`<tr><td><strong>${esc(k)}</strong></td>${CU.map(cu=>{const a=o[cu+"|1"],b=o[cu+"|3"];return `<td class="val">${a?fmtR(a):"—"} → ${b?fmtR(b):"—"}<br>${audVarTxt(audVar(a,b))}</td>`;}).join("")}</tr>`).join("")}</tbody></table></div>
     <p class="precos-nota">Vermelho: queda de 10% ou mais. Verde: alta de 10% ou mais.</p></section>`:""}
-  ${conds.length?`<section class="bloco"><h2 class="sec">Condições comerciais e margem · 3ª rodada</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Cartão</th><th>A prazo</th><th>Frete</th><th>Linha cotada</th><th class="val">Margem Sabiá</th><th class="val">Cayana</th><th class="val">Carcará</th></tr></thead><tbody>
+  ${conds.length?`<section class="bloco"><h2 class="sec">Condições Comerciais e margem · 3ª rodada</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Revenda</th><th>Cartão</th><th>A prazo</th><th>Frete</th><th>Linha cotada</th><th class="val">Margem Sabiá</th><th class="val">Cayana</th><th class="val">Carcará</th></tr></thead><tbody>
     ${conds.map(x=>{const m=x.margem||{};return `<tr><td><strong>${esc(x.canal)}</strong></td><td>${esc(x.cartao||"—")}</td><td>${esc(x.prazo||"—")}</td><td>${esc(x.frete||"—")}</td><td>${esc(x.linha||"—")}</td><td class="val">${pct(m["Sabiá"])}</td><td class="val">${pct(m["Cayana"])}</td><td class="val">${pct(m["Carcará"])}</td></tr>`;}).join("")}</tbody></table></div>
     <p class="precos-nota">Margem = (preço de venda à vista na auditoria − preço médio de compra nas notas) ÷ preço de venda. Frete referente à cidade de destino da cotação.</p></section>`:""}
   ${notas.length?`<section class="bloco"><h2 class="sec">Observações de campo</h2><div class="aud-notas">${notas.map(x=>`<div class="aud-nota ${x.nota_tipo==="Atenção"?"at":x.nota_tipo==="Destaque"?"de":""}"><span class="selo">${esc(x.nota_tipo||"")}</span><strong>${esc(x.canal)}</strong><p>${esc(x.nota)}</p></div>`).join("")}</div></section>`:""}`;
@@ -8034,7 +8034,7 @@ function vIntConcorrentes(){
     ${marcas.map(m=>{const v=media(m,ult);return `<div class="metric"><span>${esc(m)} · média</span><strong>${v?fmtR(v):"—"}/kg</strong><span class="meta">${bb&&v?audVarTxt(v/bb-1)+" frente à Barenbrug":""}</span></div>`;}).join("")}</div>
   <section class="bloco"><h2 class="sec">Preço por produto em cada rodada</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Marca · produto</th>${rods.map(r=>`<th class="val">${r}ª rodada</th>`).join("")}<th class="val">Última variação</th><th class="val">Desde a 1ª</th><th class="val">Frente à média Barenbrug</th></tr></thead><tbody>
   ${P.map(p=>{const eh=p.marca==="Barenbrug";const ant=rods.length>1?p.r[rods[rods.length-2]]:null;return `<tr${eh?' style="background:var(--amarelo-claro);font-weight:700"':""}><td>${esc(p.marca)} · ${esc(p.produto)}</td>${rods.map(r=>`<td class="val">${p.r[r]?fmtR(p.r[r]):"—"}</td>`).join("")}<td class="val">${audVarTxt(audVar(ant,p.r[ult]))}</td><td class="val">${audVarTxt(audVar(p.r[rods[0]],p.r[ult]))}</td><td class="val">${eh?"—":audVarTxt(bb&&p.r[ult]?p.r[ult]/bb-1:null)}</td></tr>`;}).join("")}</tbody></table></div></section>
-  ${cond.length?`<section class="bloco"><h2 class="sec">Condições comerciais · ${esc(ROD_NOME[ult]||"")}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Marca</th><th>Frete</th><th>Formas de pagamento</th><th>Desconto à vista</th></tr></thead><tbody>
+  ${cond.length?`<section class="bloco"><h2 class="sec">Condições Comerciais · ${esc(ROD_NOME[ult]||"")}</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Marca</th><th>Frete</th><th>Formas de pagamento</th><th>Desconto à vista</th></tr></thead><tbody>
     ${cond.map(x=>`<tr${x.marca==="Barenbrug"?' style="background:var(--amarelo-claro)"':""}><td><strong>${esc(x.marca)}</strong></td><td>${esc(x.frete||"—")}</td><td>${esc(x.pagamento||"—")}</td><td>${esc(x.desconto||"—")}</td></tr>`).join("")}</tbody></table></div>
     <p class="precos-nota">Cotação para 50 ha com destino a Luís Eduardo Magalhães (BA). A Barenbrug dá o maior desconto à vista, mas é a única que parcela com juros.</p></section>`:""}`;
 }
@@ -9897,6 +9897,7 @@ const meusAcessos=()=>Array.isArray(S.profile&&S.profile.acessos)?S.profile.aces
 const veAcoesMkt=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
 const mkPodeSolic=()=>!S.demo&&(ehMkt()||ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
 const MK_FORA=["Cancelada","Solicitada","Recusada"];const mkConta=a=>!MK_FORA.includes(a.status);
+const veAcoesArea=()=>veAcoesMkt()||veBrindes()||veVit();
 const veBrindes=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("brindes"));
 const MK_STATUS=["Em análise","A fazer","Em andamento","Concluída","Cancelada"];
 const MK_COLS=["Em análise","Pausada","A fazer","Em andamento","Concluída","Cancelada"];
@@ -9936,9 +9937,12 @@ function stTag(t,cor){return `<span class="st-tag st-${cor||"cinza"}">${esc(t)}<
 /* ---------- Ações de Marketing ---------- */
 function subnavAcoes(){
   const nSol=(S.mk||[]).filter(a=>a.status==="Solicitada"&&!a.agrupador).length;
-  const G=[["Operação",[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"]]],
-    ["Gestão e verba",ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
-  return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova"));
+  const am=veAcoesMkt(),g=ehMkt(),pend=(S.bdReqs||[]).filter(r=>r.status==="Pendente").length,empA=(S.bdEmp||[]).filter(e=>!e.encerrado).length;
+  const G=[["Operação",!am?[]:[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"]]],
+    ["Brindes de Marketing",veBrindes()?[["brindes-catalogo","Catálogo de brindes"],["brindes-reqs",g?`Requisições de brindes${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel de brindes"]]:[]),["brindes-lojinha","Lojinha · em breve"]]:[]],
+    ["Áreas demonstrativas",veVit()?[["vit-lista","Áreas"],["vit-mapa","Mapa das áreas"]]:[]],
+    ["Gestão e verba",am&&ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
+  return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")||(k==="vit-lista"&&/^vit-(card|form)/.test(S.pag))||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo"));
 }
 async function carregarMkt(){
   if(S.mkBusy)return;S.mkBusy=true;
@@ -11594,7 +11598,7 @@ const EM_DEV={
  lojinha:{t:"Lojinha de brindes",st:"Em desenvolvimento",o:"Uma loja dentro do portal com os brindes e materiais da marca Barenbrug: foto, descrição e disponibilidade de cada item, e o pedido feito em poucos cliques, sem planilha nem troca de mensagens.",
   c:["Você escolhe os itens e as quantidades, como num carrinho de compras.","O Marketing analisa e aprova o pedido.","Você acompanha o envio pelo próprio portal.","O estoque e a verba da ação são atualizados sozinhos."],
   q:"Time comercial Barenbrug, RCs e revendas parceiras.",p:"Simplificar o pedido de material para quem está no campo e dar ao Marketing a visão de onde cada material está sendo usado."},
- solo:{t:"Análise de solo",st:"Em desenvolvimento",o:"A possibilidade de solicitar, pelo portal, a análise de solo dos seus clientes, como um serviço expandido da Barenbrug. Estamos em conversa com um laboratório parceiro para integrar a solicitação ao portal.",
+ solo:{t:"Análise de Solo",st:"Em desenvolvimento",o:"A possibilidade de solicitar, pelo portal, a análise de solo dos seus clientes, como um serviço expandido da Barenbrug. Estamos em conversa com um laboratório parceiro para integrar a solicitação ao portal.",
   c:["Você registra o pedido com os dados do cliente e da área.","Recebe a orientação de como coletar e enviar a amostra.","O laboratório parceiro faz a análise.","O resultado chega pelo portal para apoiar a recomendação do híbrido e do manejo."],
   q:"RCs e revendas parceiras.",p:"Levar ao produtor uma recomendação técnica com base no solo da fazenda e fortalecer a parceria com quem vende Barenbrug.",n:"Condições, prazos e custos ainda estão sendo definidos com o parceiro."},
  at:{t:"Assistência técnica com revendas",st:"Em desenvolvimento",o:"Um espaço para planejar, registrar e acompanhar as ações de assistência técnica feitas em parceria com as revendas: visitas, dias de campo e acompanhamento das áreas.",
@@ -11606,22 +11610,22 @@ function vEmDev(k){const D=EM_DEV[k];if(!D)return "";
   <section class="bloco"><h2 class="sec" style="margin:0 0 8px">Como deve funcionar</h2><ol class="emdev-p">${D.c.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${D.n?`<p class="meta" style="margin:10px 0 0">${esc(D.n)}</p>`:""}</section>
   <section class="bloco"><div class="int-2"><div><h2 class="sec" style="margin:0 0 6px">Para quem</h2><p style="margin:0">${esc(D.q)}</p></div><div><h2 class="sec" style="margin:0 0 6px">Por que</h2><p style="margin:0">${esc(D.p)}</p></div></div></section>
   <section class="bloco"><p style="margin:0">Tem uma ideia ou uma necessidade do seu dia a dia para esta área? Conte ao Marketing pelo <button class="link" data-a="secao" data-v="duvidas">Tira-Dúvidas</button>.</p></section>`;}
-/* ---------- Guia do portal: o que cada área faz, com visão por perfil ---------- */
+/* ---------- Guia do Portal: o que cada área faz, com visão por perfil ---------- */
 const GUIA_PERFIL={
  "RC":{t:"RC de campo",serve:"O portal é o seu apoio de campo: treinar os híbridos, montar a proposta, enviar a negociação e acompanhar o seu resultado no Conecta RC.",
-  rotina:["Antes da visita: veja as Condições comerciais e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira nas Condições comerciais o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
+  rotina:["Antes da visita: veja as Condições Comerciais e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira nas Condições Comerciais o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
   comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"],["conecta-rc","rc-pedido","Enviar negociação"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Franqueado Nutron":{t:"Franqueado Nutron",serve:"O portal reúne o treinamento dos híbridos, as condições comerciais e os materiais com a marca para você vender Barenbrug na sua franquia.",
-  rotina:["Antes da visita: Condições comerciais e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing, com artes e folders prontos."],
+  rotina:["Antes da visita: Condições Comerciais e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing, com artes e folders prontos."],
   comece:[["academia","trilha","Cursos da Academia"],["conecta-rc","rc-apresentacao","Como funciona o Conecta RC"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","mural","duvidas","mercado"]},
  "Assessor de Vendas Digital":{t:"RC digital",serve:"O portal é o seu apoio para vender à distância: treinamento, proposta, envio da negociação e acompanhamento no Conecta RC.",
-  rotina:["Ao começar o dia: LeadsBaren e as negociações em andamento.","Na conversa: Objeções do produtor, Comunicação e encantamento e Casos de sucesso.","Ao fechar: envie a negociação e confira nas Condições comerciais o que o pedido precisa para o crédito."],
+  rotina:["Ao começar o dia: LeadsBaren e as negociações em andamento.","Na conversa: Objeções do produtor, Comunicação e encantamento e Casos de sucesso.","Ao fechar: envie a negociação e confira nas Condições Comerciais o que o pedido precisa para o crédito."],
   comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Inside Sales":{t:"Inside Sales",serve:"O portal organiza o seu dia: o que fazer hoje e em que ordem, as negociações que pedem ação, o treinamento e as ferramentas para cada conversa.",
-  rotina:["Ao começar o dia: abra o seu painel do Inside Sales e veja os alertas, as negociações paradas e o que fatura nos próximos dias.","Em cada atendimento: Playbook IS, Objeções do produtor, Condições comerciais e Calculadora de rentabilidade.","Ao fim do dia: confira se toda negociação tem tarefa e próximo passo.","Toda semana: o funil de MQL a venda e a sua posição frente à meta do time."],
+  rotina:["Ao começar o dia: abra o seu painel do Inside Sales e veja os alertas, as negociações paradas e o que fatura nos próximos dias.","Em cada atendimento: Playbook IS, Objeções do produtor, Condições Comerciais e Calculadora de rentabilidade.","Ao fim do dia: confira se toda negociação tem tarefa e próximo passo.","Toda semana: o funil de MQL a venda e a sua posição frente à meta do time."],
   comece:[["inside-sales","is-playbook","Playbook IS"],["inside-sales","is-painel","Meu painel"],["academia","trilha","Cursos da Academia"]],
   secs:["inside-sales","academia","tabela-precos","enxoval","leads","time-mkt","mural","duvidas","mercado"]},
  "Comercial Barenbrug":{t:"Comercial Barenbrug",serve:"O portal dá ao Comercial a visão da carteira e dos canais: seu painel de vendas, os RCs e as revendas, a inteligência de mercado e as ações de marketing.",
@@ -11633,7 +11637,7 @@ const GUIA_PERFIL={
   comece:[["conecta-revendas","rv-meucanal","Meu canal"],["conecta-revendas","rv-curso","Curso do Conecta Revendas"],["academia","trilha","Cursos da Academia"]],
   secs:["conecta-revendas","academia","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Vendedor de Revenda":{t:"Vendedor de revenda",serve:"O portal é o seu treinamento e o seu kit de venda: os cursos dos híbridos, as condições comerciais, a calculadora e os materiais para mostrar ao produtor.",
-  rotina:["No balcão ou na visita: Condições comerciais e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing.","Ficou com dúvida: pergunte no Tira-Dúvidas."],
+  rotina:["No balcão ou na visita: Condições Comerciais e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing.","Ficou com dúvida: pergunte no Tira-Dúvidas."],
   comece:[["academia","trilha","Cursos da Academia"],["conecta-revendas","rv-curso","Curso do Conecta Revendas"]],
   secs:["academia","conecta-revendas","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Marketing":{t:"Marketing",serve:"O portal é onde o Marketing opera: ações e verba, brindes, áreas demonstrativas, materiais, comunicados e o playbook do time.",
@@ -11664,7 +11668,7 @@ function vGuia(){
   const cards=secs.filter(x=>!x.breve).map(x=>{const ab=prev?[]:guiaAbas(x.id);const grupos=[];ab.forEach(a=>{let g=grupos.find(y=>y[0]===a.g);if(!g)grupos.push(g=[a.g,[]]);g[1].push(a);});
     return `<section class="bloco guia-sec"><div class="guia-cab"><h2 class="sec" style="margin:0">${esc(x.nome)}</h2>${prev?"":`<button type="button" class="btn sec" data-a="secao" data-v="${esc(x.id)}">Abrir</button>`}</div><p style="margin:6px 0 ${ab.length?"10px":"0"}">${esc(x.desc)}</p>
     ${grupos.map(([g,L])=>`${g?`<h3 class="pgd-h" style="margin:8px 0 4px">${esc(g)}</h3>`:""}<ul class="guia-l">${L.map(a=>`<li><button type="button" class="link" data-a="guia-ir" data-v="${esc(x.id)}" data-p="${esc(a.k)}"><strong>${esc(a.t)}</strong></button>${ABA_DESC[a.k]?`<span>${esc(ABA_DESC[a.k])}</span>`:""}</li>`).join("")}</ul>`).join("")}</section>`;}).join("");
-  return `<div><span class="rot">Guia do portal</span><h1 class="titulo">Como usar o Portal Conecta</h1><p class="sub">O que cada área faz e para que serve, na visão de ${esc(P.t)}. ${prev?"":"Você vê aqui só o que está liberado para você."}</p></div>
+  return `<div><span class="rot">Guia do Portal</span><h1 class="titulo">Como usar o Portal Conecta</h1><p class="sub">O que cada área faz e para que serve, na visão de ${esc(P.t)}. ${prev?"":"Você vê aqui só o que está liberado para você."}</p></div>
   ${sel}
   <section class="bloco guia-destaque"><h2 class="sec" style="margin:0 0 6px">Para que o portal serve para você</h2><p style="margin:0">${esc(P.serve)}</p>
    ${P.rotina.length?`<h3 class="pgd-h" style="margin:12px 0 4px">Uma rotina que funciona</h3><ol class="guia-rot">${P.rotina.map(r=>`<li>${esc(r)}</li>`).join("")}</ol>`:""}
@@ -11841,8 +11845,8 @@ function renderApp(){
     if(S.isp==null&&!S.ispBusy){S.ispBusy=true;carregarISP().then(()=>{S.ispBusy=false;if(veTimeIS()&&S.pag==="is-painel"&&!S.isSel)S.pag="is-time";render();});}
     return;
   }
-  if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de solo")+`<main>${vEmDev("solo")}</main>`;return;}
-  if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do portal")+`<main>${vGuia()}</main>`;return;}
+  if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
+  if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
   if(S.secao==="duvidas"){
     app.innerHTML=cabecalho()+subnavSimples("Tira-Dúvidas")+`<main>${vDuvidas()}</main>`;
@@ -11850,7 +11854,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="calculadora"){S.secao="academia";S.pag="calc";return render();}
-  if(S.secao==="tabela-precos"){app.innerHTML=cabecalho()+subnavSimples("Condições comerciais")+`<main>${vPrecos()}</main>`;return;}
+  if(S.secao==="tabela-precos"){app.innerHTML=cabecalho()+subnavSimples("Condições Comerciais")+`<main>${vPrecos()}</main>`;return;}
   if(S.secao==="meu-crm"){
     app.innerHTML=cabecalho()+subnavSimples("Meu CRM")+`<main>${vMeuCRM()}</main>`;
     if(!S.crm){carregarCRM().then(render);}
@@ -11884,7 +11888,10 @@ function renderApp(){
   if(S.secao==="acoes-mkt"){
     if(S.pag==="acoes-raci"){S.secao="time-mkt";S.pag="tm-mapa";render();return;}
     if(S.pag==="acoes-digital"){S.secao="inteligencia";S.pag="int-digital";render();return;}
+    if(/^vit-/.test(S.pag)&&veVit()){app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vVit()}</main>`;return;}
+    if(/^brindes-/.test(S.pag)&&veBrindes()){app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vBrindes()}</main>`;if(!S.bd)carregarBrindes();return;}
     if(veAcoesMkt()){if(!/^acoes-/.test(S.pag))S.pag="acoes-quadro";app.innerHTML=cabecalho()+subnavAcoes()+`<main class="largo">${vAcoesMkt()}</main>`;if(!S.mk)carregarMkt();return;}
+    if(veBrindes()||veVit()){S.pag=veBrindes()?"brindes-catalogo":"vit-lista";render();return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="time-mkt"){
@@ -11892,11 +11899,11 @@ function renderApp(){
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="vitrines"){
-    if(veVit()){if(!/^vit-/.test(S.pag))S.pag="vit-lista";app.innerHTML=cabecalho()+subnavVit()+`<main class="largo">${vVit()}</main>`;return;}
+    if(veVit()){if(!/^vit-/.test(S.pag))S.pag="vit-lista";S.secao="acoes-mkt";render();return;app.innerHTML=cabecalho()+subnavVit()+`<main class="largo">${vVit()}</main>`;return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="brindes"){
-    if(veBrindes()){if(!/^brindes-/.test(S.pag))S.pag="brindes-catalogo";app.innerHTML=cabecalho()+subnavBrindes()+`<main class="largo">${vBrindes()}</main>`;if(!S.bd)carregarBrindes();return;}
+    if(veBrindes()){if(!/^brindes-/.test(S.pag))S.pag="brindes-catalogo";S.secao="acoes-mkt";render();return;app.innerHTML=cabecalho()+subnavBrindes()+`<main class="largo">${vBrindes()}</main>`;if(!S.bd)carregarBrindes();return;}
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="financeiro"){
