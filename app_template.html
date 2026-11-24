@@ -1502,7 +1502,7 @@ async function carregarPrecos(){
 const SECOES=[
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
-  {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Administrador"]},
+  {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Customer Service","Administrador"]},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"tabela-precos",nome:"Condições Comerciais",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
   {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram à Barenbrug (inbound) e a base de prospecção do Marketing (outbound).",ativo:true,perfis:null},
@@ -5987,7 +5987,9 @@ async function rcCadSalvar(enviar){const o=S.rcCadForm||{};const ficha=rcCadFich
   const {data,error}=await sb.rpc("rc_cad_salvar",{p_ficha:ficha,p_banco:banco,p_enviar:!!enviar});if(error){aviso("Não foi possível "+(enviar?"enviar":"salvar")+": "+(error.message||"erro"));return;}
   if(enviar){S.rcCadMeu=undefined;S.rcCadForm=null;window.scrollTo(0,0);}else S.rcCadMeu={...S.rcCadMeu,ficha};render();aviso(enviar?"Ficha enviada para conferência.":"Ficha salva. Você pode continuar depois.");}
 
+const soCSRC=()=>!S.demo&&temPerfil("Customer Service")&&!ehAdmin()&&!temPerfil("Comercial Barenbrug")&&!temPerfil("RC")&&!temPerfil("Franqueado Nutron");
 function subnavRC(){
+  if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cadastros","Cadastro de novos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k);
   const g=[];const ger=[];
   if(veGuiaRC())ger.push(["rc-guia","Jornada do novo RC"]);
   if(veRcCadastros())ger.push(["rc-cadastros","Cadastro de novos RCs"]);
@@ -12931,6 +12933,7 @@ function renderApp(){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
+    if(soCSRC()){if(!["rc-cadastros","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
     const corpo={"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
