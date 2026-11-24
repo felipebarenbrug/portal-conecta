@@ -1822,7 +1822,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124163116";
+const APP_VER="20261124163651";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2143,6 +2143,7 @@ function vPerfil(){
   ${S.demo?"":vProgPerfil()}
   ${S.demo?"":pushPerfilHTML()}
   ${S.demo||S.verComo?"":avisosRecebidosHTML()}
+  ${S.demo||S.verComo?"":notifPrefHTML()}
   <div class="cx" id="prog-dados"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -5182,6 +5183,72 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/
     await farAcao(id,"anexar",g("#fara_obs"),{arquivos:out},"Arquivos enviados. "+((G.lista||[]).find(x=>x.id===id)?.autor===S.user.id?"O responsável comercial foi avisado.":"Quem abriu o FAR foi avisado."),"anexos");return;}
 },true);
 
+/* ===== Engajamento: fluxos de e-mail e avisos no celular ===== */
+const ENG_GRUPOS=[["movimentos","Movimentos do portal","Saem na hora, a cada movimento. A pessoa do outro lado fica sabendo sem precisar entrar para conferir."],["comunicados","Comunicados","Os avisos que o Marketing escreve em App e comunicados."],["lembretes","Lembretes","Saem uma vez por dia (9h), só para quem se encaixa, respeitando o intervalo entre um lembrete e outro."],["resumos","Resumos","Saem no dia da semana marcado, com os números de cada pessoa."]];
+const ENG_DIAS=[[1,"seg"],[2,"ter"],[3,"qua"],[4,"qui"],[5,"sex"],[6,"sáb"],[7,"dom"]];
+const NOTIF_PREF=[["movimentos","Movimentos das minhas negociações e FAR","Quando alguém envia, aprova, devolve ou manda mensagem em algo que é seu."],["lembretes","Lembretes","Cadastro incompleto, cursos pendentes e avisos para não perder nada."],["resumo","Resumo semanal","Para quem tem carteira no CRM: o resumo da semana toda segunda-feira."],["comunicados","Comunicados por e-mail","Avisos do Marketing que também saem por e-mail."]];
+async function engCarregar(){const E=S.eng||(S.eng={});
+  const [fl,em,lg]=await Promise.all([sb.from("notif_fluxos").select("*").order("ordem"),sb.rpc("notif_admin",{p_acao:"emails"}),sb.from("notif_email").select("id,fluxo,assunto,status,erro,criado_em,enviado_em").order("id",{ascending:false}).limit(40)]);
+  E.fluxos=fl.data||[];E.base=em.data||{};E.log=lg.data||[];E.erro=fl.error?fl.error.message:null;
+  try{const {data}=await sb.rpc("notif_admin",{p_acao:"previa"});E.previa=data||{};}catch(e){E.previa={};}
+  render();}
+function engFluxoHTML(f){const E=S.eng,ab=E.aberto===f.id,ag=f.tipo==="agendado",ce=(f.canais||[]).includes("email"),cp=(f.canais||[]).includes("push");
+  const pv=ag&&E.previa&&E.previa[f.id]!=null?`<span class="meta">${E.previa[f.id]} ${E.previa[f.id]===1?"pessoa se encaixa":"pessoas se encaixam"} hoje</span>`:"";
+  const n30=(E.base.por_fluxo||{})[f.id]||0;
+  const quando=ag?(f.dias_semana&&f.dias_semana.length?"Toda "+f.dias_semana.map(d=>(ENG_DIAS.find(x=>x[0]===d)||["",""])[1]).join(", "):"Diário")+` · no máximo 1 a cada ${f.frequencia_dias||7} dias por pessoa`:f.id==="comunicado"?"Na hora do envio do comunicado":"Na hora do movimento";
+  const cab=`<div class="linha" style="align-items:flex-start;gap:12px"><div style="min-width:0;display:grid;gap:3px"><strong>${esc(f.nome)}</strong><span class="meta">${esc(f.descricao||"")}</span><span class="meta">${esc(quando)} · ${[cp?"celular":"",ce?"e-mail":""].filter(Boolean).join(" e ")||"sem canal"} · ${n30} e-mail${n30===1?"":"s"} em 30 dias</span>${pv}</div>
+   <div style="display:grid;gap:6px;justify-items:end;flex-shrink:0"><label class="check" style="white-space:nowrap"><input type="checkbox" data-engativo="${esc(f.id)}" ${f.ativo?"checked":""}> ${f.ativo?"Ligado":"Desligado"}</label><button type="button" class="btn sec" style="padding:6px 12px" data-a="eng-abre" data-v="${esc(f.id)}">${ab?"Fechar":"Editar"}</button></div></div>`;
+  if(!ab)return `<div class="cx" style="display:grid;gap:8px">${cab}</div>`;
+  const vars=String(f.variaveis||"").split(",").map(x=>x.trim()).filter(Boolean);
+  return `<div class="cx" style="display:grid;gap:10px">${cab}
+   <form class="form-card" id="f-eng" data-id="${esc(f.id)}" style="max-width:none;display:grid;gap:10px;margin:0">
+    <fieldset style="border:1px solid var(--linha);border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:14px"><legend style="font-weight:700;padding:0 6px">Canais</legend>
+     <label class="check"><input type="checkbox" name="push" ${cp?"checked":""}> Aviso no celular</label><label class="check"><input type="checkbox" name="email" ${ce?"checked":""} ${f.id==="comunicado"?"disabled":""}> E-mail${f.id==="comunicado"?" (marcado em cada comunicado)":""}</label></fieldset>
+    ${ag?`<fieldset style="border:1px solid var(--linha);border-radius:10px;padding:10px;display:grid;gap:8px"><legend style="font-weight:700;padding:0 6px">Frequência</legend>
+     <label>Intervalo mínimo entre dois envios para a mesma pessoa (dias)<input name="freq" type="number" min="1" max="365" value="${esc(f.frequencia_dias||7)}" style="max-width:120px"></label>
+     <div style="display:flex;flex-wrap:wrap;gap:10px"><span class="meta" style="width:100%">Dias da semana em que pode sair (nenhum marcado = qualquer dia)</span>${ENG_DIAS.map(([d,t])=>`<label class="check"><input type="checkbox" name="dia" value="${d}" ${(f.dias_semana||[]).includes(d)?"checked":""}> ${t}</label>`).join("")}</div></fieldset>`:""}
+    ${cp?`<label>Título do aviso no celular<input name="titulo_push" maxlength="120" value="${esc(f.titulo_push||"")}"></label><label>Texto do aviso no celular<textarea name="corpo_push" rows="2" maxlength="600">${esc(f.corpo_push||"")}</textarea></label>`:""}
+    <label>Assunto do e-mail<input name="assunto" maxlength="180" value="${esc(f.assunto||"")}"></label>
+    <label>Texto do e-mail<textarea name="corpo_email" rows="7">${esc(f.corpo_email||"")}</textarea><span class="meta">Deixe uma linha em branco para separar parágrafos.</span></label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"><label>Texto do botão<input name="botao" maxlength="60" value="${esc(f.botao||"")}"></label>${ag?`<label>Página que o botão abre<input name="url" maxlength="200" value="${esc(f.url||"")}"></label>`:""}</div>
+    ${vars.length?`<p class="meta" style="margin:0">Variáveis que você pode usar: ${vars.map(v=>`<code>{{${esc(v)}}}</code>`).join(" ")}. Elas são trocadas pelos dados de cada pessoa.</p>`:""}
+    ${E.msg&&E.msg.id===f.id?`<div class="${E.msg.erro?"erro":"meta"}" role="status">${esc(E.msg.t)}</div>`:""}
+    <div class="acoes" style="margin:0;flex-wrap:wrap;gap:8px"><button class="btn" type="submit">Salvar</button><button type="button" class="btn sec" data-a="eng-teste" data-v="${esc(f.id)}">Enviar teste para mim</button>${ag?`<button type="button" class="btn sec" data-a="eng-rodar" data-v="${esc(f.id)}" ${f.ativo?"":"disabled title='Ligue o lembrete antes'"}>Enviar agora para quem se encaixa</button>`:""}</div>
+   </form></div>`;}
+function gtEngaja(){if(!ehAdmin())return `<div class="vazio">Só administradores.</div>`;const E=S.eng;if(!E||E.fluxos===undefined){if(!E||!E.busy){S.eng={busy:true};engCarregar();}return `<div class="carregando">Carregando…</div>`;}
+  const B=E.base||{},m=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v??"-"}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const st={enviado:"Enviado",pendente:"Na fila",enviando:"Enviando",erro:"Erro"};
+  return `<p class="sub" style="margin:0 0 12px">Fluxos automáticos de e-mail e de aviso no celular para manter todo mundo engajado. Cada fluxo pode ser ligado, desligado e editado aqui. As pessoas escolhem o que receber em Meu perfil, em Notificações.</p>
+  <section class="bloco"><h2 class="sec">Base de e-mails</h2><div class="metrics">${m("Pessoas ativas",B.ativos)}${m("E-mail confirmado",B.validados,"pelo código no primeiro acesso")}${m("Nunca entraram",B.nunca)}${m("Com aviso no celular",B.com_push)}${m("E-mail corporativo",B.corporativos)}${m("E-mail pessoal",B.pessoais,"gmail, hotmail e parecidos")}${m("E-mail genérico",B.genericos,"vendas@, contato@: chega para um grupo")}${m("Enviados em 30 dias",B.enviados_30d,B.erros_30d?B.erros_30d+" com erro":"")}</div>
+   <p class="meta" style="margin:8px 0 0">O e-mail de cada pessoa é o mesmo do login. Para segmentar, cada fluxo já escolhe o público pelo perfil e pela situação da pessoa (cadastro, cursos, carteira no CRM, último acesso).</p></section>
+  ${E.erro?`<div class="erro">${esc(E.erro)}</div>`:""}
+  ${ENG_GRUPOS.map(([g,t,d])=>{const fs=E.fluxos.filter(f=>f.grupo===g);return fs.length?`<section class="bloco"><h2 class="sec">${t}</h2><p class="meta" style="margin:-4px 0 10px">${d}</p><div style="display:grid;gap:10px">${fs.map(engFluxoHTML).join("")}</div></section>`:"";}).join("")}
+  <section class="bloco"><h2 class="sec">Últimos e-mails</h2>${E.log.length?`<div class="lista">${E.log.map(e=>`<div class="linha"><div style="min-width:0"><strong>${esc(e.assunto)}</strong><span class="meta">${esc(((E.fluxos.find(f=>f.id===e.fluxo)||{}).nome)||e.fluxo||"")} · ${new Date(e.enviado_em||e.criado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}${e.erro?" · "+esc(e.erro):""}</span></div><span class="meta" style="flex-shrink:0">${st[e.status]||esc(e.status)}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum e-mail enviado ainda.</div>`}
+   <p class="meta" style="margin:8px 0 0">Por privacidade, a lista não mostra para quem foi cada e-mail.</p></section>`;}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='eng-']");if(!b||!ehAdmin())return;ev.preventDefault();ev.stopImmediatePropagation();const E=S.eng;if(!E)return;const a=b.dataset.a,id=b.dataset.v;
+  if(a==="eng-abre"){E.aberto=E.aberto===id?null:id;E.msg=null;const y=window.scrollY;render();window.scrollTo(0,y);return;}
+  if(a==="eng-teste"||a==="eng-rodar"){if(a==="eng-rodar"&&!engConfirma(b))return;b.disabled=true;b.textContent="Enviando…";
+    const {data,error}=await sb.rpc("notif_admin",{p_acao:a==="eng-teste"?"teste":"rodar",p_fluxo:id});
+    E.msg={id,erro:!!error,t:error?error.message:a==="eng-teste"?(data&&data.sem_dados?"Teste enviado com dados de exemplo (ninguém se encaixa neste lembrete hoje). Veja o seu e-mail e o celular.":"Teste enviado para você. Veja o seu e-mail e o celular em até 1 minuto."):`Enviado para ${(data&&data[id])||0} pessoa(s).`};
+    await engCarregar();return;}
+});
+function engConfirma(b){if(b.dataset.conf==="1")return true;b.dataset.conf="1";b.textContent="Confirmar envio";b.classList.remove("sec");setTimeout(()=>{if(b.isConnected){b.dataset.conf="";b.textContent="Enviar agora para quem se encaixa";b.classList.add("sec");}},5000);return false;}
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.engativo||!ehAdmin()||!S.eng)return;const id=t.dataset.engativo;const {error}=await sb.from("notif_fluxos").update({ativo:t.checked,atualizado_em:new Date().toISOString()}).eq("id",id);
+  if(error){t.checked=!t.checked;aviso("Não foi possível salvar: "+error.message);return;}aviso(t.checked?"Fluxo ligado":"Fluxo desligado");await engCarregar();});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-eng")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehAdmin()||!S.eng)return;const id=f.dataset.id,E=S.eng,F=E.fluxos.find(x=>x.id===id);if(!F)return;
+  const v=n=>{const e=f.elements[n];return e?e.value.trim():undefined;};
+  const canais=[];if(f.elements.push&&f.elements.push.checked)canais.push("push");if(id==="comunicado"?(F.canais||[]).includes("email"):(f.elements.email&&f.elements.email.checked))canais.push("email");
+  if(!canais.length){E.msg={id,erro:true,t:"Escolha pelo menos um canal."};render();return;}
+  const up={canais,assunto:v("assunto")||null,corpo_email:v("corpo_email")||null,botao:v("botao")||null,atualizado_em:new Date().toISOString()};
+  if(f.elements.titulo_push){up.titulo_push=v("titulo_push")||null;up.corpo_push=v("corpo_push")||null;}
+  if(F.tipo==="agendado"){up.frequencia_dias=Math.max(1,Math.min(365,parseInt(v("freq"),10)||7));const ds=[...f.querySelectorAll("input[name=dia]:checked")].map(x=>+x.value);up.dias_semana=ds.length?ds:null;const u=v("url");up.url=u?(u.startsWith("/")?u:"/"+u):"/";}
+  const {error}=await sb.from("notif_fluxos").update(up).eq("id",id);E.msg={id,erro:!!error,t:error?"Não foi possível salvar: "+error.message:"Salvo. Os próximos envios já usam este texto."};await engCarregar();});
+/* preferências de notificação da pessoa (Meu perfil) */
+function notifPrefHTML(){const P=(S.profile&&S.profile.notif_pref)||{};const resumo=temPerfil("Comercial Barenbrug")||ehAdmin();
+  return `<section class="cx" id="notif-pref" style="display:grid;gap:8px"><h2 class="sec" style="margin:0">Notificações</h2><p class="meta" style="margin:0">Escolha o que você quer receber por e-mail e no celular. Avisos de segurança e de acesso sempre chegam.</p>
+   ${NOTIF_PREF.filter(x=>x[0]!=="resumo"||resumo).map(([k,t,d])=>`<label class="check" style="align-items:flex-start"><input type="checkbox" data-notifpref="${k}" ${P[k]===false?"":"checked"}> <span><strong>${t}</strong><br><span class="meta">${d}</span></span></label>`).join("")}</section>`;}
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.notifpref||S.verComo||S.demo)return;const k=t.dataset.notifpref;const {data,error}=await sb.rpc("notif_pref_salvar",{p:{[k]:t.checked}});
+  if(error){t.checked=!t.checked;aviso("Não foi possível salvar agora");return;}S.profile.notif_pref=data&&typeof data==="object"?data:{...(S.profile.notif_pref||{}),[k]:t.checked};aviso("Preferência salva");});
 /* ===== Propostas do RC ===== */
 const PROP_CULTS=["Sabiá","Cayana","Carcará","Cynodon"];
 const propBRL=x=>"R$ "+(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -6108,7 +6175,7 @@ function vMercado(){
 }
 function subnavGestao(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
-    <nav class="nav" aria-label="Painel de gerenciamento">${GT_ABAS.filter(x=>(x[0]!=="gestao-nps"&&x[0]!=="gestao-app")||ehAdmin()).map(([k,t])=>{const cur=S.pag===k||(S.pag==="usuario"&&(S.gtVolta||"gestao-pessoas")===k);const n=k==="gestao-cad"?(S.solic||[]).length:0;return `<button data-a="pag" data-v="${k}" ${cur?'aria-current="page"':""}>${t}${n?` <span class="badge">${n}</span>`:""}</button>`;}).join("")}</nav>
+    <nav class="nav" aria-label="Painel de gerenciamento">${GT_ABAS.filter(x=>(x[0]!=="gestao-nps"&&x[0]!=="gestao-app"&&x[0]!=="gestao-engaja")||ehAdmin()).map(([k,t])=>{const cur=S.pag===k||(S.pag==="usuario"&&(S.gtVolta||"gestao-pessoas")===k);const n=k==="gestao-cad"?(S.solic||[]).length:0;return `<button data-a="pag" data-v="${k}" ${cur?'aria-current="page"':""}>${t}${n?` <span class="badge">${n}</span>`:""}</button>`;}).join("")}</nav>
     <span class="secao-nome">Painel de gerenciamento</span></div></div>`;
 }
 function heroHub(){
@@ -8907,7 +8974,7 @@ function vCriarAcesso(){
   </details>
   </section>`;
 }
-const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-pir","Perfil dos RCs"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","NPS plataforma"],["gestao-app","App e comunicados"]];
+const GT_ABAS=[["gestao-home","Visão geral"],["gestao-cad","Cadastro"],["gestao-pessoas","Pessoas"],["gestao-times","Times"],["gestao-vinc","Vínculos"],["gestao-pir","Perfil dos RCs"],["gestao-msg","Mensagens"],["gestao-rank","Ranking e evolução"],["gestao-nps","NPS plataforma"],["gestao-app","App e comunicados"],["gestao-engaja","E-mails e avisos"]];
 const GT_TIMES=[["Revendas",["Gestor de Revenda","Vendedor de Revenda"],"Gestores e vendedores das revendas do Conecta Revendas."],["Representantes (RC)",["RC"],"Representantes comerciais do Conecta RC."],["Comercial Barenbrug",["Comercial Barenbrug"],"Time comercial de campo."],["Inside Sales",["Inside Sales"],"Vendedoras do Inside Sales."],["Assessores de vendas digitais",["Assessor de Vendas Digital"],"Assessoras e assessores de vendas digitais, ligados ao Inside Sales."],["Marketing",["Marketing"],"Time de marketing."],["Financeiro",["Financeiro"],"Financeiro."],["Administração",["Administrador"],"Administradores master e gestores de acessos do portal."],["Franqueados Nutron",["Franqueado Nutron"],"Franqueados Nutron."]];
 const gtNoTime=(x,ps)=>ps.includes("Administrador")?(x.nivel==="Administrador"||x.nivel==="Gestor"||(x.perfis||[]).includes("Administrador")||x.perfil==="Administrador"):(x.perfis||[x.perfil]).some(p=>ps.includes(p)&&p!=="Administrador");
 const gtDias=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
@@ -8917,9 +8984,9 @@ function gtResumo(){const E=S.equipe,a7=E.filter(x=>{const d=gtDias(x.ultimo_ace
 function vAcomp(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
   const R=gtResumo();
-  const tit={"gestao-pir":"Perfil dos RCs","gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"NPS plataforma","gestao-app":"Portal instalado, notificações e comunicados"}[S.pag]||"Painel de gerenciamento";
+  const tit={"gestao-pir":"Perfil dos RCs","gestao-home":"Painel de gerenciamento","gestao-cad":"Cadastro","gestao-pessoas":"Pessoas cadastradas","gestao-times":"Times","gestao-vinc":"Vínculos","gestao-msg":"Quem conversa com quem","gestao-rank":"Ranking e evolução","gestao-nps":"NPS plataforma","gestao-app":"Portal instalado, notificações e comunicados","gestao-engaja":"E-mails e avisos automáticos"}[S.pag]||"Painel de gerenciamento";
   const sub={"gestao-pir":"Cada RC responde, no primeiro acesso, 10 perguntas de escolher baseadas no scorecard de Perfil Ideal de Representante. A formação vem do cadastro e o comportamental é avaliado aqui pela Barenbrug.","gestao-msg":"Defina quais grupos podem trocar mensagens entre si no portal e abra exceções para pessoas específicas.","gestao-home":"O que precisa da sua atenção e como está o uso do portal.","gestao-cad":"Solicitações de acesso pendentes e cadastro de pessoas, uma a uma ou em lote.","gestao-pessoas":"Todas as pessoas com acesso. Busque pelo nome ou e-mail e filtre por perfil e por último acesso. Toque na pessoa para editar perfil, seções e abas, redefinir senha ou excluir.","gestao-times":"Quem está no portal em cada time e como cada time está usando.","gestao-vinc":"Quem responde por cada revenda do Conecta e por cada RC: alguém do Comercial ou do Inside Sales. E quem está no time de Inside Sales, com a supervisão de cada pessoa.","gestao-rank":"Módulos concluídos, acerto por cultivar e pontos de cada pessoa, e as provas dos programas Conecta."}[S.pag]||"";
-  const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
+  const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-engaja"?gtEngaja():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
 function vcPainel(){const q=finNorm(S.vcQ||""),pf=S.vcPf||"";const E=(S.equipe||[]).filter(x=>x.id!==(S.user&&S.user.id));
@@ -13454,7 +13521,7 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
 /* avisos enviados pelo portal (notificação): ficam registrados e aparecem em pop-up ao abrir até a pessoa marcar como lido */
-const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança","financeiro":"Análise de crédito","far":"FAR · Reclamações","ajuda":"Problemas para entrar"};
+const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança","financeiro":"Análise de crédito","far":"FAR · Reclamações","ajuda":"Problemas para entrar","perfil":"Meu perfil","meu-crm":"Meu CRM"};
 function comDestino(u){try{const v=new URL(u||"/",location.origin).searchParams.get("abrir");return v&&COM_DEST[v]?v:null;}catch(_){return null;}}
 let _comBusy=false,_comFila=[],_comUlt=0;
 async function comPendentesMostrar(forcar){try{if(!S.user||!S.profile||S.demo||S.verComo||S.profile.precisa_trocar_senha)return;if(document.getElementById("notif-pop")||_comBusy)return;if(!forcar&&Date.now()-_comUlt<20000)return;_comBusy=true;_comUlt=Date.now();
@@ -13476,7 +13543,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function avisosRecebidosHTML(){const L=S.comHist;if(L===undefined){setTimeout(()=>comPendentesMostrar(true),0);return "";}if(!L.length)return "";
   return `<div class="cx" id="avisos"><strong>Avisos recebidos</strong><span class="meta">Os avisos que o Portal Conecta enviou para você nos últimos 30 dias.</span><div style="display:grid;gap:10px;margin-top:6px">${L.map(c=>{const d=comDestino(c.url);return `<div style="border-left:4px solid ${c.lido?"var(--cinza-cl,#ddd)":"var(--amarelo,#FFDB00)"};padding:4px 0 4px 12px;display:grid;gap:4px"><strong>${esc(c.titulo||"Aviso")}</strong>${c.corpo?`<span style="white-space:pre-line">${esc(c.corpo)}</span>`:""}<span class="meta">${esc(c.enviado_em?new Date(c.enviado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"")}${c.lido?"":" · não lido"}</span>${d?`<button type="button" class="btn sec" style="width:fit-content;padding:6px 12px" data-a="com-pop-ir" data-v="${c.id}" data-d="${d}">Abrir ${esc(COM_DEST[d])}</button>`:""}</div>`;}).join("")}</div></div>`;}
 let _notifVisto=false;
-function pushAbrirPendente(){if(PUSH_ABRIR==="ajuda"){render();return;}if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="far"){PUSH_ABRIR=null;setTimeout(()=>{if(!(ehAdmin()||temAcessoExtra("far")))return;S.secao="far";S.pag="far";if(S.far){S.far.lista=undefined;S.far.aberta=null;}render();window.scrollTo(0,0);},0);return;}if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
+function pushAbrirPendente(){if(PUSH_ABRIR==="ajuda"){render();return;}if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="far"){PUSH_ABRIR=null;setTimeout(()=>{if(!(ehAdmin()||temAcessoExtra("far")))return;S.secao="far";S.pag="far";if(S.far){S.far.lista=undefined;S.far.aberta=null;}render();window.scrollTo(0,0);},0);return;}if(PUSH_ABRIR==="perfil"){PUSH_ABRIR=null;setTimeout(()=>{S.secao=null;S.pag="perfil";render();window.scrollTo(0,0);},0);return;}if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro","meu-crm"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 /* Customer Service copia e cola livremente: usa os dados da ficha para montar e assinar o contrato */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin()&&!temPerfil("Customer Service"));
@@ -13592,6 +13659,7 @@ function gtApp(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
      <label class="check"><input type="radio" name="com_alvo" value="pessoas" ${F.alvo==="pessoas"?"checked":""} data-comalvo="pessoas"> Pessoas específicas</label>
      ${F.alvo==="pessoas"?`<div style="padding-left:22px;display:grid;gap:6px"><input id="com_q" placeholder="Buscar pelo nome" value="${esc(F.q)}"><div style="max-height:220px;overflow:auto;display:grid;gap:4px;border:1px solid var(--linha);border-radius:8px;padding:8px">${pessoas.map(p=>`<label class="check"><input type="checkbox" data-compessoa="${p.id}" ${F.ids.includes(p.id)?"checked":""}> ${esc(p.nome||"")} <span class="meta">${esc(p.perfil||"")}</span></label>`).join("")||`<span class="meta">Ninguém encontrado.</span>`}</div><span class="meta">${F.ids.length} selecionadas</span></div>`:""}
     </fieldset>
+    <label class="check"><input type="checkbox" id="com_email" ${F.email?"checked":""}> Enviar também por e-mail <span class="meta">(para quem não desligou os comunicados por e-mail em Meu perfil)</span></label>
     <fieldset style="border:1px solid var(--linha);border-radius:10px;padding:10px;display:grid;gap:8px"><legend style="font-weight:700;padding:0 6px">Quando</legend>
      <label class="check"><input type="radio" name="com_q" value="agora" ${F.quando==="agora"?"checked":""} data-comquando="agora"> Enviar agora</label>
      <label class="check"><input type="radio" name="com_q" value="agendar" ${F.quando==="agendar"?"checked":""} data-comquando="agendar"> Programar data e hora</label>
@@ -14383,7 +14451,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
 document.addEventListener("change",async ev=>{
   const c=ev.target;
   if(c.id==="foto_arq"&&c.files&&c.files[0]){await enviarFoto(c.files[0]);return;}
-  if(c.dataset&&(c.dataset.comalvo||c.dataset.comquando||c.dataset.comperfil!==undefined||c.dataset.compessoa)){const F=S.comF;if(!F)return;const t=document.getElementById("com_t"),k=document.getElementById("com_c"),u=document.getElementById("com_u"),d=document.getElementById("com_d");if(t)F.titulo=t.value;if(k)F.corpo=k.value;if(u)F.url=u.value;if(d)F.data=d.value;
+  if(c.dataset&&(c.dataset.comalvo||c.dataset.comquando||c.dataset.comperfil!==undefined||c.dataset.compessoa)){const F=S.comF;if(!F)return;const t=document.getElementById("com_t"),k=document.getElementById("com_c"),u=document.getElementById("com_u"),d=document.getElementById("com_d");if(t)F.titulo=t.value;if(k)F.corpo=k.value;if(u)F.url=u.value;if(d)F.data=d.value;const em_=document.getElementById("com_email");if(em_)F.email=em_.checked;
     if(c.dataset.comalvo)F.alvo=c.dataset.comalvo;else if(c.dataset.comquando)F.quando=c.dataset.comquando;else if(c.dataset.comperfil!==undefined){const pp=c.dataset.comperfil;F.perfis=c.checked?[...new Set([...F.perfis,pp])]:F.perfis.filter(x=>x!==pp);}else{const id=c.dataset.compessoa;F.ids=c.checked?[...new Set([...F.ids,id])]:F.ids.filter(x=>x!==id);}
     const y=window.scrollY;render();window.scrollTo(0,y);return;}
   if(c.dataset&&c.dataset.desp!==undefined&&ehAdmin()){const pe=c.dataset.desp;const {error}=await sb.from("is_desafio_status").upsert({pessoa:pe,pago_ok:c.checked,atualizado_em:new Date().toISOString(),por:(S.profile&&S.profile.nome)||null},{onConflict:"pessoa"});if(error){aviso("Não foi possível gravar.");c.checked=!c.checked;return;}const x=(S.des||[]).find(y=>y.pessoa===pe);if(x)x.pago_ok=c.checked;render();aviso(c.checked?"Pagamento confirmado: fim de semana liberado.":"Confirmação retirada.");return;}
@@ -14493,11 +14561,11 @@ document.addEventListener("submit",async ev=>{
     if(error){aviso("Erro ao salvar a ação.");render();return;}
     S.canais=null;render();aviso("Ação atualizada.");return;
   }
-  if(f.id==="f-com"){if(!ehAdmin())return;const F=S.comF;F.titulo=f.querySelector("#com_t").value.trim();F.corpo=f.querySelector("#com_c").value.trim();F.url=f.querySelector("#com_u").value;const d=f.querySelector("#com_d");if(d)F.data=d.value;
+  if(f.id==="f-com"){if(!ehAdmin())return;const F=S.comF;F.titulo=f.querySelector("#com_t").value.trim();F.corpo=f.querySelector("#com_c").value.trim();F.url=f.querySelector("#com_u").value;const d=f.querySelector("#com_d");if(d)F.data=d.value;const em_=f.querySelector("#com_email");F.email=!!(em_&&em_.checked);
     if(F.titulo.length<3||F.corpo.length<3){aviso("Escreva o título e o texto.");return;}if(F.alvo==="perfis"&&!F.perfis.length){aviso("Escolha pelo menos um perfil.");return;}if(F.alvo==="pessoas"&&!F.ids.length){aviso("Escolha pelo menos uma pessoa.");return;}
     let quando=new Date();if(F.quando==="agendar"){if(!F.data){aviso("Escolha a data e a hora.");return;}quando=new Date(F.data+":00-03:00");if(isNaN(quando)||quando<new Date(Date.now()-60000)){aviso("Escolha uma data e hora no futuro.");return;}}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;
-    const {data,error}=await sb.from("push_comunicados").insert({titulo:F.titulo,corpo:F.corpo,url:F.url,perfis:F.alvo==="perfis"?F.perfis:null,ids:F.alvo==="pessoas"?F.ids:null,quando:quando.toISOString(),criado_nome:(S.profile&&S.profile.nome)||null}).select().maybeSingle();
+    const {data,error}=await sb.from("push_comunicados").insert({titulo:F.titulo,corpo:F.corpo,url:F.url,perfis:F.alvo==="perfis"?F.perfis:null,ids:F.alvo==="pessoas"?F.ids:null,email:!!F.email,quando:quando.toISOString(),criado_nome:(S.profile&&S.profile.nome)||null}).select().maybeSingle();
     if(error||!data){btn.disabled=false;aviso("Não foi possível salvar o comunicado.");return;}
     if(F.quando==="agora")await sb.rpc("push_comunicado_agora",{p_id:data.id});
     S.comF=null;S.gtApp=undefined;render();aviso(F.quando==="agora"?"Comunicado enviado.":"Comunicado programado.");return;}
