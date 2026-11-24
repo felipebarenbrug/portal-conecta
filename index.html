@@ -151,6 +151,11 @@ button.etapa-b:hover h3{text-decoration:underline}
 .check{display:flex;gap:7px;align-items:center;font-size:14px;margin:0;font-weight:500;cursor:pointer}
 .check input{width:18px;height:18px;accent-color:var(--azul-escuro)}
 .bloco{display:grid;gap:12px}
+.crm-aviso{background:#fff6d6;border-left:4px solid var(--amarelo,#FFDB00);border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.45;color:#3d3a2a}
+.crm-meta{background:var(--branco,#fff);border-radius:12px;padding:16px;border-top:4px solid var(--amarelo,#FFDB00);box-shadow:0 1px 3px rgba(30,30,30,.06)}
+.crm-meta .metric{background:#f4f7fa}.crm-meta .metric-dest{background:#fff8d1}
+.crm-meta-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:4px;padding-top:12px;border-top:1px solid var(--linha,#dde3ea)}
+.crm-meta-f label[for]{font-weight:700;font-size:13px}.crm-meta-f input[type=number]{width:110px}.crm-meta-f .check{margin:0}
 
 .perg{background:var(--branco);padding:16px;border:0;margin:0;border-radius:6px}
 .perg legend{font-weight:700;padding:0;margin-bottom:10px}
@@ -1742,7 +1747,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124104314";
+const APP_VER="20261124104653";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2985,21 +2990,30 @@ async function loImportar(arq,prog){
 }
 async function loEnriquecer(arq,prog,tipo){
   await loLib();const wb=XLSX.read(await arq.arrayBuffer(),{type:"array",cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];
-  const L=XLSX.utils.sheet_to_json(ws,{defval:null,raw:false});if(!L.length)throw new Error("A planilha está vazia.");
+  const L=XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});if(!L.length)throw new Error("A planilha está vazia.");
   const nk=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
-  const H=Object.keys(L[0]);const col=(...pats)=>H.find(h=>pats.some(p=>p.test(nk(h))));
-  const cE=col(/^e ?mail$/,/^email/),cCargo=col(/^cargo$/,/job title/,/^cargo /),cEmp=col(/^empresa$/,/^company/,/nome da empresa/),
-    cCult=col(/qual o cultivar/,/^cultivar/,/far cultivar/,/interesse.*cultivar/),cArea=col(/area a plantar/,/tamanho da area.*deseja usar/,/formar quantos hect/,/area de reforma/,/hectares.*plantar/),
-    cQtd=col(/quantidade de semente/,/quantidade kg de interesse/,/sacos de 10kg/,/^quantidade kg/,/far quantidade/),cPerf=col(/^perfil/,/perfil profissional/),
-    cInt=col(/^interesse$/),cConvs=H.filter(h=>/conversao|conversoes|identificador|evento/.test(nk(h))&&!/data|origem|total/.test(nk(h))),cData=col(/data da ultima conversao/,/ultima conversao.*data/,/data.*conversao/);
+  const H=Object.keys(L[0]);
+  /* colunas em ordem de prioridade: a primeira com valor em cada linha vale */
+  const cols=(...pats)=>{const o=[];pats.forEach(p=>H.forEach(h=>{if(p.test(nk(h))&&!o.includes(h))o.push(h);}));return o;};const col=(...p)=>cols(...p)[0];
+  const cE=col(/^e ?mail$/,/^email/),cCargo=cols(/^cargo$/,/job title/),cEmp=cols(/^empresa$/,/^company/,/nome da empresa/),
+    cCult=cols(/^cultivar$/,/qual e o cultivar que voce tem maior interesse/,/qual o cultivar voce tem maior interesse/,/far cultivar/),
+    cArea=cols(/area a plantar/,/tamanho da area ha que deseja usar/,/formar quantos hect/,/area de reforma/),
+    cQtd=cols(/quantidade de semente/,/sacos de 10kg/,/quantidade kg de interesse/,/^quantidade kg$/,/^qual a quantidade kg$/,/far quantidade/),cPerf=col(/^perfil profissional$/,/^perfil/),
+    cInt=col(/^interesse$/),cCore=cols(/registro ativo no core/,/estrutura para trabalhar por comissao/,/experiencia com venda de sementes forrageiras/),
+    cConvs=H.filter(h=>/conversao|conversoes|identificador|evento/.test(nk(h))&&!/data|origem|total/.test(nk(h))),cData=col(/^data da conversao$/,/data da ultima conversao/,/data.*conversao/);
   if(!cE)throw new Error("Não achei a coluna de e-mail.");
-  const v=x=>x==null?null:String(x).trim()||null;const iso=x=>{if(!x)return null;if(x instanceof Date)return x.toISOString().slice(0,19);const m=String(x).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);if(m)return `${m[3]}-${m[2]}-${m[1]}T${m[4]||"00"}:${m[5]||"00"}:00`;return /^\d{4}-\d{2}-\d{2}/.test(String(x))?String(x).slice(0,19):null;};
-  const M=L.map(r=>{const conv=cConvs.map(h=>v(r[h])).filter(Boolean).join(" | ");const c=nk(conv),perf=nk(cPerf?r[cPerf]:"");
-    const iv=cInt?nk(r[cInt]):"";const interesse=tipo||(/^rc$|represent/.test(iv)?"rc":/revenda|canal/.test(iv)?"revenda":null)||(/canal de distribuicao/.test(c)?"revenda":(/representante comercial|conecta rcs barenbrug/.test(c)||(/atendimento ?comercial/.test(c)&&/represent/.test(perf)))?"rc":null);
-    const ult=cConvs.map(h=>v(r[h])).filter(Boolean).pop()||null;
-    return {email:v(r[cE]),cargo:cCargo?v(r[cCargo]):null,empresa:cEmp?v(r[cEmp]):null,cultivar:cCult?v(r[cCult]):null,area_sem:cArea?v(r[cArea]):null,qtd_sem:cQtd?v(r[cQtd]):null,conv_evento:ult?ult.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
+  const v=x=>x==null?null:String(x).trim()||null;const pv=(r,cs)=>{for(const h of cs){const x=v(r[h]);if(x)return {x,h};}return null;};
+  const iso=x=>{if(!x)return null;if(x instanceof Date)return x.toISOString().slice(0,19);const m=String(x).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);if(m)return `${m[3]}-${m[2]}-${m[1]}T${m[4]||"00"}:${m[5]||"00"}:00`;return /^\d{4}-\d{2}-\d{2}/.test(String(x))?String(x).slice(0,19):null;};
+  const CRMEV=/^(tarefa|negociacao) |rd station crm/;
+  const M=L.map(r=>{const evs=cConvs.flatMap(h=>String(r[h]||"").split(" / ")).map(x=>x.trim()).filter(x=>x&&!CRMEV.test(nk(x)));const ev=evs.map(nk);const perf=nk(cPerf?r[cPerf]:"");
+    const iv=cInt?nk(r[cInt]):"";const temCore=cCore.some(h=>v(r[h]));
+    const interesse=tipo||(/^rc$|represent/.test(iv)?"rc":/revenda|canal/.test(iv)?"revenda":null)||(ev.some(x=>/^canal de distribuicao$/.test(x))?"revenda":(ev.some(x=>/^(representante comercial|representante|conecta rcs barenbrug)$/.test(x))||temCore||(ev.some(x=>/atendimento ?comercial/.test(x))&&/represent/.test(perf)))?"rc":null);
+    const cu=pv(r,cCult),ar=pv(r,cArea),qt=pv(r,cQtd);
+    const area=ar?(/^\d+([.,]\d+)?$/.test(ar.x)?ar.x+" ha":ar.x):null,qtd=qt?(/^\d+([.,]\d+)?$/.test(qt.x)?qt.x+" kg":qt.x):null;
+    const pref=evs.find(x=>/atendimento|repres|canal|cultivar|hibrido|sabia|cayana|carcara/i.test(x))||evs[0]||null;
+    return {email:v(r[cE]),cargo:(pv(r,cCargo)||{}).x||null,empresa:(pv(r,cEmp)||{}).x||null,cultivar:cu?cu.x.replace(/^cultivar\s+/i,""):null,area_sem:area,qtd_sem:qtd,conv_evento:pref?pref.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
   let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_enriquecer",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Completando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
-  return {n,cols:[cCargo&&"cargo",cEmp&&"empresa",cCult&&"cultivar",cArea&&"área",cQtd&&"quantidade",cConvs.length&&"conversões",cData&&"data"].filter(Boolean)};}
+  return {n,cols:[cCargo.length&&"cargo",cEmp.length&&"empresa",cCult.length&&"cultivar",cArea.length&&"área",cQtd.length&&"quantidade",cConvs.length&&"conversões",cData&&"data"].filter(Boolean),rc:M.filter(x=>x.interesse==="rc").length,rv:M.filter(x=>x.interesse==="revenda").length,cu:M.filter(x=>x.cultivar).length};}
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
   if(!inbound)return vLeadsOut();
@@ -5088,13 +5102,13 @@ function vCRMTodos(rows,seletor){
   const avisoMeta=meta&&meta.com_mulato!==mu?`<div class="aviso-est" style="margin:8px 0 0">A meta de ${ton(mk)} ${meta.com_mulato?"inclui":"não inclui"} o Mulato II. Para comparar com ela, use a visão ${meta.com_mulato?"“Híbridos + Mulato II”":"“Sabiá, Cayana e Carcará”"}.</div>`:"";
   const ex=X.exp||[];const exH=(V,st)=>V.filter(x=>x.st===st).reduce((t,x)=>t+N(x.kg_h)+(mu?N((x.cults||{})["Mulato II"]):0),0);const exT=(V,st)=>V.filter(x=>x.st===st).reduce((t,x)=>t+N(x.kg_h)+N(x.kg_c),0);
   const barra=mk?`<div class="resumo" style="margin-top:10px"><div class="barra"><i style="width:${Math.min(100,pv)}%"></i></div><span>Vendido: <strong>${pv}%</strong> da meta · com o ponderado: <strong>${pct}%</strong> · ${proj>=mk?"meta coberta pela projeção":"faltam <strong>"+ton(mk-proj)+"</strong> além do ponderado"}</span></div>`:"";
-  return `<div><h1 class="titulo">Barenbrug · todos</h1><p class="sub">Soma dos painéis de todos os vendedores do campo e do time do Inside Sales, na safra 26/27. As vendas fora da meta do Inside Sales e as negociações duplicadas já estão descontadas. Dados do CRM, não são os números oficiais do faturamento.</p></div>
+  return `<div><h1 class="titulo">Barenbrug · todos</h1><p class="sub">Soma dos painéis de todos os vendedores do campo e do time do Inside Sales, na safra 26/27. As vendas fora da meta do Inside Sales e as negociações duplicadas já estão descontadas. </p></div>
   ${seletor}
   <div class="filtros" style="margin:0 0 8px"><button class="chip" data-a="crm-mul" data-v="0" aria-pressed="${!mu}">Híbridos: Sabiá, Cayana e Carcará</button><button class="chip" data-a="crm-mul" data-v="1" aria-pressed="${mu}">Híbridos + Mulato II</button></div>
-  <section class="bloco" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><h2 class="sec">Meta de híbridos da safra${mk?` · ${ton(mk)}${meta.com_mulato?" (com Mulato II)":" (sem Mulato II)"}`:""}</h2>
-    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>${mu?"Híbridos + Mulato II":"Híbridos"} vendidos</span><strong>${ton(hv)}</strong></div><div class="metric"><span>Em aberto</span><strong>${ton(ha)}</strong></div><div class="metric"><span>Ponderado do funil</span><strong>${ton(hp)}</strong></div><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção (vendido + ponderado)</span><strong>${ton(proj)}</strong></div></div>
+  <section class="bloco crm-meta"><h2 class="sec">Meta de híbridos da safra${mk?` · ${ton(mk)}${meta.com_mulato?" (com Mulato II)":" (sem Mulato II)"}`:""}</h2>
+    <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>${mu?"Híbridos + Mulato II":"Híbridos"} vendidos</span><strong>${ton(hv)}</strong></div><div class="metric"><span>Em aberto</span><strong>${ton(ha)}</strong></div><div class="metric"><span>Ponderado do funil</span><strong>${ton(hp)}</strong></div><div class="metric metric-dest"><span>Projeção (vendido + ponderado)</span><strong>${ton(proj)}</strong></div></div>
     ${barra}${avisoMeta}
-    <form id="f-meta-hib" class="acoes" style="margin-top:10px;align-items:center;flex-wrap:wrap;gap:8px"><label for="mt_kg" class="meta">Meta (t)</label><input id="mt_kg" type="number" min="0" step="1" style="width:110px" value="${mk?Math.round(mk/1000):""}"><label class="meta"><input type="checkbox" id="mt_mul" ${!meta||meta.com_mulato?"checked":""}> inclui Mulato II</label><button class="btn sec" type="submit">Salvar meta</button>${meta&&meta.atualizado_por?`<span class="meta">${esc(meta.atualizado_por)}${meta.atualizado_em?" · "+fmtDataHora(meta.atualizado_em):""}</span>`:""}</form></section>
+    <form id="f-meta-hib" class="crm-meta-f"><label for="mt_kg">Meta da safra (t)</label><input id="mt_kg" type="number" min="0" step="1" value="${mk?Math.round(mk/1000):""}"><label class="check"><input type="checkbox" id="mt_mul" ${!meta||meta.com_mulato?"checked":""}> inclui Mulato II</label><button class="btn sec" type="submit">Salvar meta</button>${meta&&meta.atualizado_por?`<span class="meta">${esc(meta.atualizado_por)}${meta.atualizado_em?" · "+fmtDataHora(meta.atualizado_em):""}</span>`:""}</form></section>
   <div class="metrics"><div class="metric"><span>Já vendido na safra</span><strong>${fK(T.vrs)}</strong><span class="meta">${T.vn.toLocaleString("pt-BR")} pedidos · ${ton(T.vh+T.vc)} no total · convencionais ${ton(T.vh+T.vc-hv)}</span></div><div class="metric"><span>Em aberto</span><strong>${fK(T.ars)}</strong><span class="meta">${T.an.toLocaleString("pt-BR")} negociações · ${ton(T.ah+T.ac)}</span></div><div class="metric"><span>Projeção em reais</span><strong>${fK(T.vrs+T.prs)}</strong><span class="meta">ponderado ${fK(T.prs)}</span></div></div>
   ${S.crmTodosX?`<section class="bloco"><h2 class="sec">Exportação (já incluída nos números acima)</h2><div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>Vendido para exportação</span><strong>${ton(exT(ex,"V"))}</strong><span class="meta">${mu?"híbridos + Mulato II":"híbridos"} ${ton(exH(ex,"V"))}</span></div><div class="metric"><span>Em aberto para exportação</span><strong>${ton(exT(ex,"A"))}</strong><span class="meta">${mu?"híbridos + Mulato II":"híbridos"} ${ton(exH(ex,"A"))}</span></div></div></section>`:`<div class="carregando">Carregando meta e exportação…</div>`}
   ${(()=>{if(S.crmPerdas===undefined){S.crmPerdas=null;carregarCrmPerdas();}if(!S.crmPerdas)return `<div class="carregando">Calculando a conversão…</div>`;
@@ -13082,7 +13096,7 @@ function renderApp(){
   if(S.secao==="calculadora"){S.secao="academia";S.pag="calc";return render();}
   if(S.secao==="tabela-precos"){app.innerHTML=cabecalho()+subnavSimples("Condições Comerciais")+`<main>${vPrecos()}</main>`;return;}
   if(S.secao==="meu-crm"){
-    app.innerHTML=cabecalho()+subnavSimples("Meu CRM")+`<main>${vMeuCRM()}</main>`;
+    app.innerHTML=cabecalho()+subnavSimples("Meu CRM")+`<main class="largo"><div class="crm-aviso" role="note"><strong>Estes números vêm do CRM da RD Station e são estimativas.</strong> Podem ter diferenças e não substituem o ERP nem o BI dos relatórios de Pedidos, que são os dados oficiais. Antes de usar um número para decidir ou repassar, confira no ERP ou no BI.</div>${vMeuCRM()}</main>`;
     if(!S.crm){carregarCRM().then(render);}
     if(S.crmVista==="mapa")pedirMapa();
     return;
