@@ -3365,6 +3365,7 @@ function vAcoesDigital(){
 }
 
 /* ===== Inteligência: alcance e eficiência da comunicação (Meta) ===== */
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mp-recarregar']");if(!b)return;ev.preventDefault();S.mp=undefined;render();});
 async function carregarMidiaPainel(){if(S.mp!==undefined)return;S.mp=null;try{const {data}=await sb.from("midia_painel").select("*").order("feito_em",{ascending:false}).limit(1);S.mp=(data&&data[0])||false;}catch(e){S.mp=false;}render();}
 const mpPct=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
 const MP_UFN={AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MT:"Mato Grosso",MS:"Mato Grosso do Sul",MG:"Minas Gerais",PA:"Pará",PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins"};
@@ -3373,7 +3374,7 @@ function vIntAlcance(){
   if(!ehMkt())return `<div class="vazio">Área do Marketing.</div>`;
   if(S.mp===undefined){carregarMidiaPainel();return `<div class="carregando">Carregando…</div>`;}
   if(S.mp===null)return `<div class="carregando">Carregando…</div>`;
-  if(!S.mp)return `<div class="vazio">Os dados da Meta ainda não foram carregados.</div>`;
+  if(!S.mp)return `<div class="vazio">Os dados da Meta ainda não foram carregados. <button type="button" class="link" data-a="mp-recarregar">Tentar de novo</button></div>`;
   const P=S.mp,D=P.dados||{},T=D.tot||{},M=D.meses||[],U=D.uf||[],I=D.idade||[],PO=(D.posicoes||[]).slice().sort((a,b)=>b.alcance-a.alcance),C=D.campanhas||[],PE=(D.pecas||[]).slice().sort((a,b)=>b.alcance-a.alcance);
   const m=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
   const mxU=Math.max(1,...U.map(x=>x.alcance)),mxKg=Math.max(1,...U.map(x=>x.crm_kg_h||0));
@@ -6279,14 +6280,14 @@ window.esFaltando=()=>[...ES_FALTA];
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
   return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
-/* quem esta online agora (uso nos ultimos 3 minutos): so administradores e Comercial Barenbrug */
-const veOnline=()=>!!(S.user&&S.profile&&!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")));
+/* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
+const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
 setInterval(()=>{if(!document.hidden&&veOnline()&&!S.secao&&S.pag==="hub")carregarOnline();},60000);
 function onlineHTML(){if(!veOnline())return "";if(S.onEm===undefined){S.onEm=0;carregarOnline();}
   const O=S.online;if(!O)return `<div class="cx"><h2>Online agora</h2><p class="meta" style="margin:0">${S.onEm?"Não foi possível ver agora.":"Verificando…"}</p></div>`;
   const L=O.lista||[];
-  return `<div class="cx"><h2>Online agora <span class="on-n">${O.n}</span></h2><p class="meta" style="margin:0 0 6px">${O.n===1?"1 pessoa usando":O.n+" pessoas usando"} o portal neste momento (nos últimos 3 minutos). Visível só para administradores e Comercial Barenbrug.</p>
+  return `<div class="cx"><h2>Online agora <span class="on-n">${O.n}</span></h2><p class="meta" style="margin:0 0 6px">${O.n===1?"1 pessoa usando":O.n+" pessoas usando"} o portal neste momento (nos últimos 3 minutos). ${O.interno?"Você vê todo mundo que está on-line.":ehRevenda()?"Você vê as pessoas da sua revenda.":"Você vê as pessoas do seu grupo e o time Barenbrug."}</p>
     ${L.length?`<ul class="on-l">${L.map(x=>`<li><span class="on-dot" aria-hidden="true"></span><span><strong>${esc(x.nome||"—")}${x.eu?" · você":""}</strong><span class="meta">${esc([x.perfil,typeof USO_NOME==="function"?USO_NOME(x.secao):x.secao].filter(Boolean).join(" · "))}</span></span></li>`).join("")}</ul>`:""}</div>`;}
 function vHub(){
   const secs=secoesVisiveis().filter(x=>x.id!=="duvidas"&&x.id!=="mural"&&x.id!=="calculadora");
