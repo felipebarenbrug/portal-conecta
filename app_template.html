@@ -6015,10 +6015,11 @@ function vMeuCRMPainel(X){
   const adm=X?false:ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
   const fmtK=n=>"R$ "+Math.round(Number(n)||0).toLocaleString("pt-BR");
   const supIS=!X&&!adm&&S.profile&&S.profile.crm_dono&&rows.some(x=>x.dono==="Inside Sales");const meuD=S.profile&&S.profile.crm_dono;const cobre=!X&&!adm&&!supIS&&rows.length>1;
-  const opSup=supIS?[S.profile.crm_dono,"Inside Sales"].filter(d=>rows.some(x=>x.dono===d)):cobre?[meuD,...rows.map(x=>x.dono).filter(d=>d!==meuD)].filter(d=>d&&rows.some(x=>x.dono===d)):[];
+  const opSup=supIS?["Inside Sales",S.profile.crm_dono].filter(d=>rows.some(x=>x.dono===d)):cobre?[meuD,...rows.map(x=>x.dono).filter(d=>d!==meuD)].filter(d=>d&&rows.some(x=>x.dono===d)):[];
   const rotD=d=>d==="Inside Sales"?"Inside Sales · time":d===meuD?"Minhas negociações":/^IS: /.test(d)?"Carteira de "+d.slice(4)+" (cobertura)":d;
-  const alvo=X?X.r.dono:adm?(S.crmSel||"__todos"):(supIS||cobre)?(opSup.includes(S.crmSel)?S.crmSel:(opSup[0]||meuD)):(S.profile&&S.profile.crm_dono);
-  const seletor=(supIS||cobre)&&opSup.length>1?`<div class="filtros">${opSup.map(d=>`<button class="chip" data-a="crm-sel" data-v="${esc(d)}" aria-pressed="${alvo===d}">${esc(rotD(d))}</button>`).join("")}</div>`:adm&&rows.length?`<div class="filtros"><button class="chip" data-a="crm-sel" data-v="__todos" aria-pressed="${alvo==="__todos"}">Barenbrug · todos</button>${rows.map(x=>`<button class="chip" data-a="crm-sel" data-v="${esc(x.dono)}" aria-pressed="${alvo===x.dono}">${esc(x.dono)}</button>`).join("")}</div>`:"";
+  const admIS=adm&&rows.some(x=>x.dono==="Inside Sales");const admRows=adm?[...rows].sort((a,b)=>(a.dono==="Inside Sales"?0:1)-(b.dono==="Inside Sales"?0:1)):rows;
+  const alvo=X?X.r.dono:adm?(S.crmSel||(admIS?"Inside Sales":"__todos")):(supIS||cobre)?(opSup.includes(S.crmSel)?S.crmSel:(opSup[0]||meuD)):(S.profile&&S.profile.crm_dono);
+  const seletor=(supIS||cobre)&&opSup.length>1?`<div class="filtros">${opSup.map(d=>`<button class="chip" data-a="crm-sel" data-v="${esc(d)}" aria-pressed="${alvo===d}">${esc(rotD(d))}</button>`).join("")}</div>`:adm&&rows.length?`<div class="filtros">${admRows.map(x=>`<button class="chip" data-a="crm-sel" data-v="${esc(x.dono)}" aria-pressed="${alvo===x.dono}">${esc(x.dono)}</button>`).join("")}<button class="chip" data-a="crm-sel" data-v="__todos" aria-pressed="${alvo==="__todos"}">Barenbrug · todos</button></div>`:"";
   if(adm&&alvo==="__todos")return vCRMTodos(rows,seletor);
   if(!adm&&!alvo)return `<div><h1 class="titulo">Meu CRM</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado ao seu nome no CRM. Peça ao administrador para fazer o vínculo e o seu painel aparece aqui.</p></section>`;
   let r=rows.find(x=>x.dono===alvo);
