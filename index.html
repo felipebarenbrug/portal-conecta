@@ -622,6 +622,13 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .mp-row:last-child{border-bottom:0}
 .mp-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--apagado)}
 .mp-leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.cod-faixa{display:flex;gap:14px;align-items:center;border-radius:10px;padding:14px 16px;margin:0 0 4px}
+.cod-faixa strong{display:block;font-size:22px;line-height:1.2;font-weight:900;letter-spacing:.01em}
+.cod-faixa span{display:block;font-size:15px;line-height:1.4;margin-top:4px}
+.cod-faixa svg{flex:0 0 auto}
+.cod-email{background:#FFDB00;color:#1E1E1E}
+.cod-app{background:#00A8E2;color:#fff}
+.cod-email-in{border:3px solid #E0B400 !important;background:#FFFBE0 !important}
 main.largo{max-width:1120px}
 @media (min-width:900px){body:has(main.largo) .topo-in{max-width:1120px;padding-left:30px}}
 .home{display:grid;grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
@@ -1833,7 +1840,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124173146";
+const APP_VER="20261124173953";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1958,14 +1965,14 @@ function vMFA(){
   const sec=M.secret?M.secret.replace(/(.{4})/g,"$1 ").trim():"";
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
     <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">${cad?"Por segurança, o acesso ao portal usa verificação em duas etapas: sua senha e um código do celular. Leva uns 3 minutos e é feito uma vez só.":"Verificação em duas etapas."}</p></div></div>
-    <form class="acesso-form" id="f-mfa"><h2>${cad?"Ative a verificação em duas etapas":"Digite o código do autenticador"}</h2>
+    <form class="acesso-form" id="f-mfa"><div class="cod-faixa cod-app" role="note"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><div><strong>Código do APLICATIVO no celular</strong><span>Use o Google ou Microsoft Authenticator. Este código não chega por e-mail.</span></div></div><h2>${cad?"Ative a verificação em duas etapas":"Digite o código do autenticador"}</h2>
       ${cad?`<ol class="mfa-ol"><li>Instale no celular o <strong>Google Authenticator</strong> (Play Store ou App Store, gratuito).</li>
         <li>No aplicativo, toque em <strong>+</strong> e em <strong>Ler código QR</strong>. Aponte para o código abaixo. Está no celular? Use o botão <strong>Abrir no aplicativo autenticador</strong>.</li><li>Digite os 6 números que aparecerem no aplicativo.</li></ol>
         <div class="mfa-qr">${M.qr?`<img src="${esc(M.qr)}" alt="QR Code para o aplicativo autenticador" width="200" height="200">`:M.erro?"":`<span class="meta">Gerando o QR Code…</span>`}</div>
         ${M.uri?`<div class="acoes" style="margin:0;justify-content:center"><a class="btn sec" href="${esc(M.uri)}">Abrir no aplicativo autenticador</a>${sec?`<button type="button" class="btn sec" data-a="mfa-copiar">Copiar a chave</button>`:""}</div>`:""}
         ${sec?`<p class="meta">Chave para digitar no aplicativo, se preferir: <strong class="mfa-sec">${esc(sec)}</strong></p>`:""}`
       :`<p>Abra o aplicativo autenticador no seu celular (Google ou Microsoft Authenticator) e digite o código de 6 números que aparece em "Portal Conecta Barenbrug".</p>`}
-      <div><label for="mfa_cod">Código de 6 números</label><input id="mfa_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required placeholder="000000"></div>
+      <div><label for="mfa_cod" style="font-size:17px;font-weight:800">Código de 6 números do aplicativo autenticador</label><input id="mfa_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required placeholder="000000"></div>
       ${M.erro?`<div class="erro" role="alert">${esc(M.erro)}</div>`:""}
       <button class="btn" type="submit" ${cad&&!M.qr?"disabled":""}>${cad?"Ativar e entrar":"Entrar"}</button>
       ${vMFAAjuda(cad)}
@@ -4968,27 +4975,29 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/
 /* ===== confirmação do e-mail por código (uma vez por pessoa) ===== */
 function vEmailCod(){const E=S.emailCod||{};
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug"><div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Confirmação do seu e-mail.</p></div></div>
-    <form class="acesso-form" id="f-ecod" novalidate><h2>Confirme seu e-mail</h2>
+    <form class="acesso-form" id="f-ecod" novalidate><div class="cod-faixa cod-email" role="note"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><div><strong>Agora é o código do E-MAIL</strong><span>Não é o código do Google ou Microsoft Authenticator. Abra a sua caixa de e-mail e procure a mensagem do Portal Conecta.</span></div></div><h2>Confirme seu e-mail</h2>
       <p>${E.para?`Enviamos um código de 6 números para <strong>${esc(E.para)}</strong>. Ele vale por 10 minutos. Olhe também a caixa de spam.`:E.busy?"Enviando o código para o seu e-mail…":"Vamos enviar um código de 6 números para o e-mail do seu acesso."}</p>
       <p class="meta" style="margin:0">É uma vez só: confirma que o e-mail é seu e garante que você recebe o link quando esquecer a senha.</p>
-      <div><label for="ecod_c">Código</label><input id="ecod_c" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" style="font-size:22px;letter-spacing:6px;text-align:center"></div>
+      <div><label for="ecod_c" style="font-size:17px;font-weight:800">Código que chegou no seu e-mail</label><input id="ecod_c" class="cod-email-in" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" style="font-size:26px;letter-spacing:8px;text-align:center"></div>
       ${E.erro?`<div class="erro" role="alert">${esc(E.erro)}</div>`:""}${E.ok?`<div class="nota-admin" role="status">${esc(E.ok)}</div>`:""}
-      <button class="btn" type="submit">Confirmar</button>
-      <p class="dica"><button type="button" class="link" data-a="ecod-reenviar" ${E.busy?"disabled":""}>Enviar outro código</button> · <button type="button" class="link" data-a="sair">Sair</button></p>
+      <button class="btn" type="submit">Confirmar o código do e-mail</button>
+      <p class="dica"><button type="button" class="link" id="ecod-reenv" data-a="ecod-reenviar" ${E.busy||ecodEspera()>0?"disabled":""}>${ecodEspera()>0?`Não chegou? Você pode pedir outro código em ${ecodEspera()} s`:"Não chegou? Enviar outro código para o e-mail"}</button> · <button type="button" class="link" data-a="sair">Sair</button></p>
       ${ajDet("email",!!E.erro)}<p class="meta" style="margin:8px 0 0">Este código é o do e-mail, diferente do código do aplicativo autenticador. Ainda com problema? ${AJ_CONTATO}</p>
     </form></div>`;}
+function ecodEspera(){const E=S.emailCod;if(!E||!E.em)return 0;return Math.max(0,60-Math.floor((Date.now()-E.em)/1000));}
+setInterval(()=>{const b=document.getElementById("ecod-reenv");if(!b||!S.emailCod)return;const w=ecodEspera();if(S.emailCod.busy)return;b.disabled=w>0;b.textContent=w>0?`Não chegou? Você pode pedir outro código em ${w} s`:"Não chegou? Enviar outro código para o e-mail";},1000);
 async function ecodChamar(body){try{const r=await sbReal.functions.invoke("email-codigo",{body});if(r.error){let m="";try{m=(await r.error.context.json()).error||"";}catch(e){}return {erro:m||"Não foi possível agora. Tente de novo."};}return r.data||{};}catch(e){return {erro:"Não foi possível agora. Tente de novo."};}}
 async function ecodEnviar(){const E=S.emailCod;if(!E||E.busy)return;E.busy=true;E.erro=null;E.ok=null;render();
   const d=await ecodChamar({acao:"enviar"});E.busy=false;E.enviado=true;
   if(d.ja){S.emailCod=null;render();return;}
-  if(d.erro){E.erro=d.erro;if(/não configurado/i.test(d.erro)){S.emailCod=null;}}else{E.para=d.para;E.ok="Código enviado.";}
+  if(d.erro){E.erro=d.erro;if(/não configurado/i.test(d.erro)){S.emailCod=null;}}else{E.para=d.para;E.em=Date.now();E.ok="Código enviado para o seu e-mail.";}
   render();}
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='ecod-reenviar']");if(!b)return;ev.preventDefault();ev.stopPropagation();if(S.emailCod){S.emailCod.enviado=true;ecodEnviar();}},true);
 document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-ecod")return;ev.preventDefault();ev.stopImmediatePropagation();const E=S.emailCod;if(!E)return;
   const c=(f.querySelector("#ecod_c").value||"").replace(/\D/g,"");if(c.length!==6){E.erro="Digite os 6 números do código.";E.ok=null;render();return;}
   const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Confirmando…";
   const d=await ecodChamar({acao:"validar",codigo:c});
-  if(d.erro){E.erro=d.erro;E.ok=null;render();return;}
+  if(d.erro){E.erro=/incorreto/i.test(d.erro)?"Código incorreto. Confira se você digitou o código que chegou no seu E-MAIL, e não o do aplicativo Authenticator.":d.erro;E.ok=null;render();return;}
   S.emailCod=null;if(S.profile)S.profile.email_validado_em=new Date().toISOString();render();aviso("E-mail confirmado.");},true);
 /* ===== FAR · Formulário de Atendimento à Reclamação ===== */
 const FAR_CULTIVARES=["Brachiaria híbrida cv. Sabiá","Brachiaria híbrida cv. Cayana","Brachiaria Híbrida cv. Mulato II","Panicum híbrido Carcará","Cynodon dactylon","Brachiaria brizantha cv. Marandu","Brachiaria brizantha cv. Xaraés","Brachiaria brizantha cv. BRS Piatã","Brachiaria decumbens cv. Basilisk","Brachiaria humidícula cv. Llanero","Brachiaria Ruziziensis","Panicum maximum cv. Mombaça","Panicum maximum cv. Massai","Azevém Ribeye","Azevém Bar HQ","Azevém Bar Maximus","Azevém Barjumbo","BARMIX Agri Barenbrug","BARMIX ILP","BARMIX Renova","BARMIX Palhada+","BARMIX Equilibra"];
@@ -13504,6 +13513,7 @@ const notifFeito=()=>S.pushEst==="ativo"||(!!S.temSub&&S.pushEst!=="ios-instalar
 /* Lembrete insistente: instalar o portal no celular. Volta a cada entrada e 10 minutos depois de "Lembrar depois", até o portal ser aberto pelo ícone no celular. */
 let CEL_SNOOZE=0;
 function celModal(){if(S.demo||!S.user||!S.profile||S.profile.precisa_trocar_senha||S.verComo||S.appConf===undefined||S.celOk)return false;
+  if(S.emailCod||document.getElementById("f-ecod")||document.getElementById("f-mfa")){const x=document.getElementById("cel-modal");if(x)x.remove();return false;}
   if(ehApp()&&plataforma()!=="computador"){S.celOk=true;appUsoSync(true);return false;}
   if(document.getElementById("cel-modal"))return true;if(Date.now()<CEL_SNOOZE)return false;
   if(Date.now()-(S._celChk||0)>60000){S._celChk=Date.now();sb.from("app_uso").select("cel_instalado").eq("user_id",S.user.id).maybeSingle().then(r=>{if(r&&r.data&&r.data.cel_instalado){S.celOk=true;const x=document.getElementById("cel-modal");if(x)x.remove();}render();},()=>render());return false;}
