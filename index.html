@@ -425,6 +425,13 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .par-t td:nth-child(2){white-space:normal;min-width:180px}
 .par-m{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.par-m .metric{min-width:0;padding:10px}@media(max-width:520px){.par-m{grid-template-columns:minmax(0,1fr)!important}}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.nps-lst{display:grid;background:#fff;border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden}
+.nps-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--linha,#dde3ea)}
+.nps-r:first-child{border-top:0}
+.nps-l{display:grid;gap:2px;min-width:0}.nps-l strong{font-size:14px;overflow-wrap:anywhere}
+.nps-v{display:grid;justify-items:center;min-width:64px;padding:4px 10px;border-radius:8px;background:#eef2f6}
+.nps-v span{font-size:10px;letter-spacing:.06em;color:#5b6b7b}.nps-v strong{font-size:18px;line-height:1.1}
+.nps-v.bom{background:#e3f4ea}.nps-v.bom strong{color:#1e7a46}.nps-v.med{background:#fff6d6}.nps-v.med strong{color:#8a6a00}.nps-v.ruim{background:#fdeaea}.nps-v.ruim strong{color:#b03a2e}
 @media (max-width:760px){.int-2{grid-template-columns:minmax(0,1fr)}}
 .aud-notas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .aud-nota{background:var(--branco);border-radius:10px;padding:12px 14px;display:grid;gap:4px;box-shadow:inset 4px 0 0 var(--linha)}
@@ -1720,7 +1727,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124085902";
+const APP_VER="20261124085928";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12648,7 +12655,7 @@ function gtNps(){if(!ehAdmin())return `<div class="vazio">Só administradores.</
   const G=calc(R);const por=k=>{const o={};R.forEach(x=>{const v=x[k]||"—";(o[v]=o[v]||[]).push(x);});return Object.entries(o).map(([v,L])=>({v,...calc(L)})).sort((a,b)=>b.n-a.n);};
   const mes={};R.forEach(x=>{const m=String(x.em).slice(0,7);(mes[m]=mes[m]||[]).push(x);});
   const tag=n=>n>=9?["Promotor","seg-ok"]:n>=7?["Neutro","seg-par"]:["Detrator","seg-pen"];
-  const tb=(t,L)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="tab"><table class="sim-t fin-t"><thead><tr><th></th><th class="val">Respostas</th><th class="val">NPS</th><th class="val">Nota média</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.v)}</td><td class="val">${x.n}</td><td class="val"><strong>${x.nps}</strong></td><td class="val">${x.med.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td></tr>`).join("")}</tbody></table></div></div>`;
+  const tb=(t,L)=>`<div style="min-width:0"><h3 class="pgd-h">${t}</h3><div class="nps-lst">${L.map(x=>{const c=x.nps>=50?"bom":x.nps>=0?"med":"ruim";return `<div class="nps-r"><div class="nps-l"><strong>${esc(x.v)}</strong><span class="meta">${x.n} ${x.n===1?"resposta":"respostas"} · nota média ${x.med.toLocaleString("pt-BR",{maximumFractionDigits:1})}</span></div><div class="nps-v ${c}"><span>NPS</span><strong>${x.nps}</strong></div></div>`;}).join("")||`<div class="nps-r"><span class="meta">Sem respostas.</span></div>`}</div></div>`;
   return `<section class="bloco"><h2 class="sec">NPS plataforma · pesquisa do portal</h2><p class="sub" style="margin:0 0 10px">A pesquisa aparece no início do portal para quem tem acesso há mais de 7 dias e não respondeu nos últimos 90 dias; qualquer pessoa também responde pelo rodapé, em "Avaliar o portal". NPS = % de promotores (9 e 10) menos % de detratores (0 a 6).</p>
    <div class="metrics"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>NPS</span><strong>${G.nps==null?"—":G.nps}</strong><span class="meta">${G.n} respostas</span></div><div class="metric"><span>Promotores</span><strong>${G.p}</strong><span class="meta">${G.n?Math.round(G.p/G.n*100):0}%</span></div><div class="metric"><span>Neutros</span><strong>${G.ne}</strong><span class="meta">${G.n?Math.round(G.ne/G.n*100):0}%</span></div><div class="metric"><span>Detratores</span><strong>${G.d}</strong><span class="meta">${G.n?Math.round(G.d/G.n*100):0}%</span></div></div>
    ${(()=>{const A=R.filter(x=>x.ac_nota!=null);if(!A.length)return `<h3 class="pgd-h" style="margin-top:14px">Academia de Híbridos</h3><p class="meta">Ainda sem notas da Academia. A pergunta entrou na pesquisa em 17/11/2026.</p>`;
