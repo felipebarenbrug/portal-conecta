@@ -2856,7 +2856,7 @@ const loTag=st=>{const c=LO_ST_COR[st]||LO_ST_COR.Novo;return `<span class="selo
 async function loLista(mais){
   const F=S.loF||(S.loF={uf:"",perfil:"",sit:"",st:"Em aberto",q:"",crm:"livre"});if(F.crm===undefined)F.crm="livre";const off=mais?(S.loRows||[]).length:0;
   const D=loDatas(F.dt);
-  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off,p_meus:F.meus==="1",p_desde:D[0],p_ate:D[1],p_crm:F.crm||null,p_tipo:F.tipo||null});
+  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off,p_meus:F.meus==="1",p_desde:D[0],p_ate:D[1],p_crm:F.crm||null,p_tipo:F.tipo||null});
   if(error){S.loErro="Não foi possível carregar a prospecção.";return;}
   S.loRows=(mais?(S.loRows||[]):[]).concat(data||[]);S.loTotal=data&&data.length?+data[0].total:(mais?S.loTotal:0);
 }
@@ -2943,7 +2943,7 @@ function vLeadsOut(){
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
       ${l.cargo||l.empresa?`<span class="meta">${l.cargo?"<strong>Cargo:</strong> "+esc(l.cargo):""}${l.cargo&&l.empresa?" · ":""}${l.empresa?"<strong>Empresa:</strong> "+esc(l.empresa):""}</span>`:""}
       ${loInteresse(l)}
-      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}</span>
+      ${l.crm_cruzado_em&&!l.crm_aberta&&!l.crm_venda?`<span class="meta"><strong>No CRM:</strong> sem negociação aberta e sem venda${l.motivo?" · última perda: "+esc(l.motivo):""}</span>`:l.motivo?`<span class="meta"><strong>Última perda no CRM:</strong> ${esc(l.motivo)}</span>`:""}
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${l.meu?"você":esc(l.atendido_por)} em ${dia(l.atendido_em)}</span>`:""}
       ${l.obs&&!v?`<span class="meta"><strong>Última anotação:</strong> ${esc(l.obs)}</span>`:""}
       ${v?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${v.telefone===undefined?"carregando…":tel(v.telefone)} · <strong>E-mail:</strong> ${v.email?esc(v.email):v.telefone===undefined?"":"não informado"}</span>
@@ -2955,7 +2955,7 @@ function vLeadsOut(){
        :`<div><button class="btn sec" data-a="lo-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">${l.tem_tel?"Ver contato e atender":"Ver e-mail e atender"}</button></div>`}</div>`;};
   return cab+(ehMaster()?loAdmin():"")+`
   <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome, cidade, empresa ou cargo" value="${esc(F.q||"")}">
-    ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
+    ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}
     <select id="lo_st" data-lof="st">${["Em aberto",...LO_ST,"Todos"].map(o=>`<option ${F.st===o?"selected":""} value="${esc(o)}">${o==="Em aberto"?"Em aberto (novos e prospectando)":o==="Todos"?"Todas as etiquetas":o}</option>`).join("")}</select>
     <select id="lo_dt" data-lof="dt">${LO_DT.map(([k,t])=>`<option value="${k}" ${(F.dt||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_crm" data-lof="crm" aria-label="Cruzamento com o CRM">${[["livre","Livres no CRM: sem negociação aberta e sem venda"],["nunca","Nunca compraram no Funil de Vendas Barenbrug (sem negociação aberta)"],["aberta","Com negociação aberta no CRM"],["venda_bb","Já compraram no Funil de Vendas Barenbrug"],["venda","Já compraram em qualquer funil"],["","Todos, com ou sem CRM"]].map(([k,t])=>`<option value="${k}" ${(F.crm||"")===k?"selected":""}>${t}</option>`).join("")}</select>
@@ -2988,13 +2988,13 @@ async function loEnriquecer(arq,prog,tipo){
   const nk=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
   const H=Object.keys(L[0]);const col=(...pats)=>H.find(h=>pats.some(p=>p.test(nk(h))));
   const cE=col(/^e ?mail$/,/^email/),cCargo=col(/^cargo$/,/job title/,/^cargo /),cEmp=col(/^empresa$/,/^company/,/nome da empresa/),
-    cCult=col(/qual o cultivar/,/^cultivar/,/far cultivar/,/interesse.*cultivar/),cArea=col(/tamanho da area.*deseja usar/,/formar quantos hect/,/area de reforma/,/hectares.*plantar/),
-    cQtd=col(/quantidade kg de interesse/,/sacos de 10kg/,/^quantidade kg/,/far quantidade/),cPerf=col(/^perfil/,/perfil profissional/),
-    cConvs=H.filter(h=>/conversao|conversoes|identificador|evento/.test(nk(h))&&!/data/.test(nk(h))),cData=col(/data da ultima conversao/,/ultima conversao.*data/,/data.*conversao/);
+    cCult=col(/qual o cultivar/,/^cultivar/,/far cultivar/,/interesse.*cultivar/),cArea=col(/area a plantar/,/tamanho da area.*deseja usar/,/formar quantos hect/,/area de reforma/,/hectares.*plantar/),
+    cQtd=col(/quantidade de semente/,/quantidade kg de interesse/,/sacos de 10kg/,/^quantidade kg/,/far quantidade/),cPerf=col(/^perfil/,/perfil profissional/),
+    cInt=col(/^interesse$/),cConvs=H.filter(h=>/conversao|conversoes|identificador|evento/.test(nk(h))&&!/data|origem|total/.test(nk(h))),cData=col(/data da ultima conversao/,/ultima conversao.*data/,/data.*conversao/);
   if(!cE)throw new Error("Não achei a coluna de e-mail.");
   const v=x=>x==null?null:String(x).trim()||null;const iso=x=>{if(!x)return null;if(x instanceof Date)return x.toISOString().slice(0,19);const m=String(x).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);if(m)return `${m[3]}-${m[2]}-${m[1]}T${m[4]||"00"}:${m[5]||"00"}:00`;return /^\d{4}-\d{2}-\d{2}/.test(String(x))?String(x).slice(0,19):null;};
   const M=L.map(r=>{const conv=cConvs.map(h=>v(r[h])).filter(Boolean).join(" | ");const c=nk(conv),perf=nk(cPerf?r[cPerf]:"");
-    const interesse=tipo||(/canal de distribuicao/.test(c)?"revenda":(/representante comercial|conecta rcs barenbrug/.test(c)||(/atendimento ?comercial/.test(c)&&/represent/.test(perf)))?"rc":null);
+    const iv=cInt?nk(r[cInt]):"";const interesse=tipo||(/^rc$|represent/.test(iv)?"rc":/revenda|canal/.test(iv)?"revenda":null)||(/canal de distribuicao/.test(c)?"revenda":(/representante comercial|conecta rcs barenbrug/.test(c)||(/atendimento ?comercial/.test(c)&&/represent/.test(perf)))?"rc":null);
     const ult=cConvs.map(h=>v(r[h])).filter(Boolean).pop()||null;
     return {email:v(r[cE]),cargo:cCargo?v(r[cCargo]):null,empresa:cEmp?v(r[cEmp]):null,cultivar:cCult?v(r[cCult]):null,area_sem:cArea?v(r[cArea]):null,qtd_sem:cQtd?v(r[cQtd]):null,conv_evento:ult?ult.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
   let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_enriquecer",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Completando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
