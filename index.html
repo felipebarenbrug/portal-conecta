@@ -1537,7 +1537,7 @@ const SECOES=[
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null}
 ];
 const SECOES_ACESSO=[["academia","Academia de Híbridos"],["calculadora","Academia › Calculadora de rentabilidade"],["meu-crm","Meu CRM"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["inteligencia","Inteligência"],["acoes-mkt","Ações de Marketing"],["brindes","Ações de Marketing › Brindes de Marketing"],["vitrines","Ações de Marketing › Áreas demonstrativas"],["enxoval","Enxoval de Marketing"],["mercado","Notícias de Mercado"],["financeiro","Marketing + Financeiro"],["duvidas","Tira-Dúvidas"],["mural","Mural"]];
-const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"]];
+const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"],["Customer Service","Customer Service"],["Marketing","Marketing"],["Financeiro","Financeiro"],["Exportação","Exportação"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
  {id:"posts",n:"Posts para Redes Sociais",d:"As artes prontas para publicar ficam no Google Drive, organizadas por tema e sempre atualizadas pelo Marketing. Abra a pasta do tema e baixe a peça que precisar.",sub:["Institucional","Híbridos","Campanhas de Vendas","Sabiá","Cayana","Carcará","Yellow Jacket"],link:""},
@@ -1754,7 +1754,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124123205";
+const APP_VER="20261124123251";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4219,7 +4219,7 @@ async function imagemReduzida(file,max){
   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);return await new Promise(ok=>cv.toBlob(ok,"image/jpeg",.85));
 }
 const btExcluir=(tipo,id,rot)=>S.delConf===tipo+":"+id?`<span class="meta" style="color:#c0392b">Excluir de vez?</span> <button class="link" style="color:#c0392b" data-a="del-sim" data-v="${tipo}:${id}">Sim, excluir</button> <button class="link" data-a="del-nao">Cancelar</button>`:`<button class="link" data-a="del-pedir" data-v="${tipo}:${id}">${rot}</button>`;
-const postVisivel=p=>ehAdmin()||temPerfil("Comercial Barenbrug")||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.includes(S.perfil);
+const postVisivel=p=>ehAdmin()||temPerfil("Comercial Barenbrug")||!p.publico||!p.publico.length||p.publico.includes("todos")||p.publico.some(x=>temPerfil(x));
 const dirDe=id=>(S.dir&&id&&S.dir[id])||null;
 const perfilTxt=(id,alt)=>{const d=dirDe(id);const t=(d&&d.perfil)||alt||"";return t?` <span class="meta">· ${esc(t)}</span>`:"";};
 /* ===== Mensagens entre usuários ===== */
@@ -4326,14 +4326,15 @@ function marcarFeedVisto(){
   if(S.feedVistoT||!S.user)return;const N=novidades();if(S.feedNovoDesde==null)S.feedNovoDesde=N.vv;if(!N.total&&S.profile.feed_visto_em)return;
   S.feedVistoT=setTimeout(async()=>{S.feedVistoT=null;if(S.secao||S.pag!=="hub")return;const agora=new Date().toISOString();try{await sb.from("profiles").update({feed_visto_em:agora}).eq("id",S.user.id);S.profile.feed_visto_em=agora;const e=document.querySelector(".sino b");if(e)e.remove();}catch(e){}},6000);
 }
-function formPost(){return `<form class="form-card" id="f-post">
-      <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…"></textarea></div>
-      <div><label for="p_img">Foto (opcional)</label><input id="p_img" type="file" accept="image/*"><span class="meta">A imagem é reduzida automaticamente antes de subir.</span></div>
-      <div><label for="p_anexo">Vídeo do YouTube ou link (opcional)</label><input id="p_anexo" type="url" placeholder="https://www.youtube.com/watch?v=… ou outro link"><span class="meta">Link do YouTube aparece como vídeo dentro do comunicado. Outros links viram um botão.</span></div>
-      <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${k==="todos"?"checked":""}> ${l}</label>`).join("")}</div></div>
-      <div><label class="check"><input type="checkbox" id="p_fix"> Fixar no topo</label></div>
+function formPost(E){const pub=E?(E.publico&&E.publico.length?E.publico:["todos"]):["todos"];return `<form class="form-card" id="f-post" data-ed="${E?E.id:""}">
+      ${E?`<h3 style="margin:0">Editando o comunicado</h3>`:""}
+      <div><label for="p_texto">Mensagem *</label><textarea id="p_texto" rows="3" required placeholder="Escreva o comunicado…">${E?esc(E.texto||""):""}</textarea></div>
+      <div><label for="p_img">${E&&E.imagem_url?"Trocar a foto (opcional)":"Foto (opcional)"}</label><input id="p_img" type="file" accept="image/*">${E&&E.imagem_url?`<label class="check"><input type="checkbox" id="p_semimg"> Tirar a foto atual</label>`:""}<span class="meta">A imagem é reduzida automaticamente antes de subir.</span></div>
+      <div><label for="p_anexo">Vídeo do YouTube ou link (opcional)</label><input id="p_anexo" type="url" placeholder="https://www.youtube.com/watch?v=… ou outro link" value="${E?esc(E.anexo_url||""):""}"><span class="meta">Link do YouTube aparece como vídeo dentro do comunicado. Outros links viram um botão.</span></div>
+      <div><label>Para quem *</label><div class="checks">${PUBLICOS.map(([k,l])=>`<label class="check"><input type="checkbox" class="p_pub" value="${k}" ${pub.includes(k)?"checked":""}> ${l}</label>`).join("")}</div></div>
+      <div><label class="check"><input type="checkbox" id="p_fix" ${E&&E.fixado?"checked":""}> Fixar no topo</label></div>
       ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
-      <div class="acoes"><button class="btn" type="submit">Publicar</button></div>
+      <div class="acoes"><button class="btn" type="submit">${E?"Salvar alterações":"Publicar"}</button>${E?`<button type="button" class="link" data-a="post-editar" data-v="">cancelar</button>`:""}</div>
     </form>`;}
 function vFeed(){
   if(S.posts==null||S.duvidas==null||!S.dir)return `<div class="carregando">Carregando as novidades…</div>`;
@@ -4412,7 +4413,7 @@ function cartaoPost(p){
       <p style="margin:8px 0;white-space:pre-wrap">${esc(p.texto||"")}</p>
       ${p.imagem_url?`<img src="${esc(urlOk(p.imagem_url))}" alt="" loading="lazy" style="width:100%;max-height:520px;object-fit:contain;border-radius:8px;background:var(--azul-claro)">`:""}
       ${ytDe(p.anexo_url)?`<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytDe(p.anexo_url)}?rel=0" title="Vídeo do comunicado" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:(p.anexo_url?`<p style="margin:0"><a class="link" href="${esc(urlOk(p.anexo_url))}" target="_blank" rel="noopener">Abrir o link</a></p>`:"")}
-      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>
+      <div class="filtros" style="margin-top:6px;align-items:center">${reacts}${admin?` <button class="link" data-a="post-editar" data-v="${p.id}">editar</button> · <button class="link" data-a="post-fixar" data-p="${p.id}" data-v="${p.fixado?0:1}">${p.fixado?"desafixar":"fixar"}</button> · ${btExcluir("p",p.id,"excluir")}`:""}</div>${admin&&S.postEd===p.id?formPost(p):""}
       ${quemHTML}
       ${comentariosPost(p)}
     </section>`;
@@ -13500,6 +13501,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="post-com-del"){const r=await sb.from("post_comentarios").delete().eq("id",v).select("id");if(r.error||!(r.data||[]).length){aviso("Não foi possível excluir o comentário.");return;}await carregarPosts();render();aviso("Comentário excluído.");return;}
   if(a==="duv-publicar"){if(!moderaDuv())return;b.disabled=true;const {error}=await sb.rpc("duvida_publicar",{p_id:+v,p_pub:b.dataset.on==="1"});if(error){aviso("Não foi possível atualizar a pergunta.");render();return;}await carregarDuvidas();render();aviso(b.dataset.on==="1"?"Pergunta exibida para todos.":"Pergunta tirada da visão de todos.");return;}
   if(a==="merc-ir"){S.secao="mercado";S.pag=v;render();window.scrollTo(0,0);return;}
+  if(a==="post-editar"){S.postEd=v?+v||v:null;S._erro=null;render();return;}
   if(a==="post-fixar"){await sb.from("posts").update({fixado:v==="1"}).eq("id",b.dataset.p);S.posts=null;render();return;}
   if(a==="del-pedir"){S.delConf=v;render();return;}
   if(a==="del-nao"){S.delConf=null;render();return;}
@@ -13984,7 +13986,7 @@ document.addEventListener("submit",async ev=>{
     const texto=f.querySelector("#p_texto").value.trim();
     const anexo=f.querySelector("#p_anexo").value.trim();
     const publico=[...f.querySelectorAll(".p_pub:checked")].map(c=>c.value);
-    const fixado=f.querySelector("#p_fix").checked;
+    const fixado=f.querySelector("#p_fix").checked;const edId=f.dataset.ed;
     if(!texto){S._erro="Escreva a mensagem.";render();return;}
     if(!publico.length){S._erro="Escolha ao menos um público.";render();return;}
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Publicando…";
@@ -13994,6 +13996,9 @@ document.addEventListener("submit",async ev=>{
       try{const blob=await imagemReduzida(arq.files[0],1400);const caminho="post-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+".jpg";const up=await sb.storage.from("mural").upload(caminho,blob,{contentType:"image/jpeg"});if(up.error)throw up.error;imagem_url=sb.storage.from("mural").getPublicUrl(caminho).data.publicUrl;}
       catch(e){S._erro="Não foi possível enviar a foto. Tente outra imagem.";render();return;}
     }
+    if(edId){const up={texto,anexo_url:anexo||null,publico,fixado};if(imagem_url)up.imagem_url=imagem_url;else if(f.querySelector("#p_semimg")&&f.querySelector("#p_semimg").checked)up.imagem_url=null;
+      const {data:vol,error:eu}=await sb.from("posts").update(up).eq("id",edId).select("id").maybeSingle();if(eu||!vol){btn.disabled=false;btn.textContent="Salvar alterações";S._erro="Não foi possível salvar a alteração.";render();return;}
+      S._erro=null;S.postEd=null;S.posts=null;render();if(!S.secao)pedirFeed();aviso("Comunicado atualizado.");return;}
     const {error}=await sb.from("posts").insert({autor_nome:S.profile.nome||"Barenbrug",texto,anexo_url:anexo||null,imagem_url,publico,fixado,tipo:"comunicado"});
     if(error){S._erro="Não foi possível publicar. Verifique se você é administrador.";render();return;}
     S._erro=null;S.postNovo=false;S.posts=null;render();if(!S.secao)pedirFeed();aviso("Comunicado publicado.");return;
