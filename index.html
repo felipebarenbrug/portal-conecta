@@ -1832,7 +1832,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124170417";
+const APP_VER="20261124170508";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6801,8 +6801,19 @@ function vRCPerfis(){if(S.prcL===undefined){S.prcL=null;carregarPerfisRC();}if(!
   const q=normGeo(S.prcQ||"");const L=S.prcL.filter(x=>!q||normGeo([x.nome,x.email,x.cidade,x.comercial_resp,(x.cad&&x.cad.ficha||{}).razao].join(" ")).includes(q));
   return `<div><h1 class="titulo">Perfis dos RCs</h1><p class="sub">Os dados de cada RC com acesso ao portal: contato, ficha cadastral, documentos e contrato. Só leitura: perfil e acessos ficam com o administrador.</p></div>
   <section class="bloco"><input type="search" id="prc-q" placeholder="Buscar por nome, empresa, cidade ou responsável" value="${esc(S.prcQ||"")}" aria-label="Buscar RC" style="width:100%;max-width:520px">
+   ${prcResumoPir()}
    <p class="meta" style="margin:8px 0">${L.length} de ${S.prcL.length} RCs</p>
-   <div class="lista">${L.map(x=>`<button class="linha rcc-it" data-a="prc-ver" data-v="${x.id}"><div style="min-width:0;text-align:left"><strong>${esc(x.nome||x.email)}</strong><span class="meta">${esc([(x.cad&&x.cad.ficha||{}).razao,[x.cidade,x.uf].filter(Boolean).join("/"),x.comercial_resp?"responsável: "+x.comercial_resp:""].filter(Boolean).join(" · "))}</span></div>${x.cad?stTag(x.cad.status,RCCAD_COR[x.cad.status]||"azul"):stTag("Sem cadastro","amarelo")}</button>`).join("")||`<div class="vazio">Nenhum RC encontrado.</div>`}</div></section>`;}
+   <div class="lista">${L.map(x=>`<button class="linha rcc-it" data-a="prc-ver" data-v="${x.id}"><div style="min-width:0;text-align:left"><strong>${esc(x.nome||x.email)}</strong>${prcPirTag(x)}<span class="meta">${esc([(x.cad&&x.cad.ficha||{}).razao,[x.cidade,x.uf].filter(Boolean).join("/"),x.comercial_resp?"responsável: "+x.comercial_resp:""].filter(Boolean).join(" · "))}</span></div>${x.cad?stTag(x.cad.status,RCCAD_COR[x.cad.status]||"azul"):stTag("Sem cadastro","amarelo")}</button>`).join("")||`<div class="vazio">Nenhum RC encontrado.</div>`}</div></section>`;}
+function prcPirCarregar(){if(S.prcPirAll!==undefined)return;S.prcPirAll=null;sb.from("rc_perfil").select("*").then(r=>{const M={};(r.data||[]).forEach(z=>{M[z.user_id]=z;});S.prcPirAll=M;render();},()=>{S.prcPirAll={};render();});}
+function prcPirDe(x){prcPirCarregar();const r=S.prcPirAll&&S.prcPirAll[x.id];return r?{r,s:pirScore(r.respostas,r.avaliacao,x.formacao)}:null;}
+function prcPirTag(x){const z=prcPirDe(x);if(!z)return S.prcPirAll?` <span class="meta">· scorecard: ainda não respondeu</span>`:"";const s=z.s;return ` <span class="meta">· scorecard ${s.pct!=null?"<strong>"+s.pct+"</strong>/100":""}</span> ${s.faixa?stTag(s.faixa[0],s.faixa[1]):""}${s.alertas.length?` <span class="meta" style="color:#c0392b">· ${s.alertas.length} alerta${s.alertas.length>1?"s":""}</span>`:""}`;}
+function prcResumoPir(){prcPirCarregar();if(!S.prcPirAll)return "";const Z=(S.prcL||[]).map(x=>prcPirDe(x)).filter(Boolean);const n=(S.prcL||[]).length;
+  const med=Z.filter(z=>z.s.pct!=null);const m=med.length?Math.round(med.reduce((t,z)=>t+z.s.pct,0)/med.length):null;
+  const f=k=>Z.filter(z=>z.s.faixa&&z.s.faixa[0]===k).length;
+  return `<div class="metrics" style="margin:10px 0"><div class="metric"><span>Responderam o scorecard</span><strong>${Z.length} de ${n}</strong><span class="meta">no primeiro acesso ao portal</span></div>
+   <div class="metric"><span>Aderência média</span><strong>${m==null?"—":m+"/100"}</strong><span class="meta">80+ ideal · 65 a 79 bom · 50 a 64 acompanhar · abaixo de 50 risco</span></div>
+   <div class="metric"><span>Com alerta</span><strong>${Z.filter(z=>z.s.alertas.length).length}</strong><span class="meta">critérios eliminatórios</span></div>
+   <div class="metric"><span>Comportamental avaliado</span><strong>${Z.filter(z=>z.s.comp).length}</strong><span class="meta">pelo responsável comercial</span></div></div>`;}
 function prcScore(x){const M=S.prcPir||(S.prcPir={});
   if(M[x.id]===undefined){M[x.id]=null;sb.from("rc_perfil").select("*").eq("user_id",x.id).maybeSingle().then(r=>{M[x.id]=r.data||false;render();},()=>{M[x.id]=false;render();});}
   const r=M[x.id];const cab=`<h2 class="sec">Perfil do representante (scorecard)${inf("Respostas que o RC deu no primeiro acesso ao portal, com a nota de cada critério pelos pesos do scorecard (100 pontos). O bloco comportamental é avaliado pelo responsável comercial, não pelo RC. 80 ou mais é perfil ideal; de 65 a 79, bom com plano de desenvolvimento; de 50 a 64, acompanhar de perto; abaixo de 50, risco.")}</h2>`;
