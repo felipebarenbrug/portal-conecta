@@ -1742,7 +1742,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124103811";
+const APP_VER="20261124103957";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2942,7 +2942,7 @@ function vLeadsOut(){
     return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.interesse==="rc"||l.possivel_rep?`<span class="selo" style="background:#1E1E1E;color:#fff">Quer ser RC</span> `:l.interesse==="revenda"?`<span class="selo" style="background:#1E1E1E;color:#FFDB00">Quer ser revenda</span> `:""}${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
       ${l.crm_aberta||l.crm_venda?`<span class="lo-crm">${l.crm_aberta?`Negociação aberta no CRM com ${esc(l.crm_aberta)}`:""}${l.crm_aberta&&l.crm_venda?" · ":""}${l.crm_venda?(l.crm_venda_bb?`Já comprou no Funil de Vendas Barenbrug (venda de ${esc(l.crm_venda_bb)})`:`Comprou em outro funil do CRM (${esc(l.crm_venda)})`):""}. Combine com o responsável antes de ligar.</span>`:""}
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
-      ${l.cargo||l.empresa?`<span class="meta">${l.cargo?"<strong>Cargo:</strong> "+esc(l.cargo):""}${l.cargo&&l.empresa?" · ":""}${l.empresa?"<strong>Empresa:</strong> "+esc(l.empresa):""}</span>`:""}
+      <span class="meta"><strong>Empresa:</strong> ${l.empresa?esc(l.empresa):"não informada"} · <strong>Cargo:</strong> ${l.cargo?esc(l.cargo):"não informado"}</span>
       ${loInteresse(l)}
       ${l.crm_cruzado_em&&!l.crm_aberta&&!l.crm_venda?`<span class="meta"><strong>No CRM:</strong> sem negociação aberta e sem venda${l.motivo?" · última perda: "+esc(l.motivo):""}</span>`:l.motivo?`<span class="meta"><strong>Última perda no CRM:</strong> ${esc(l.motivo)}</span>`:""}
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${l.meu?"você":esc(l.atendido_por)} em ${dia(l.atendido_em)}</span>`:""}
