@@ -980,6 +980,8 @@ main.largo{max-width:1120px}
 .pj-mk{position:relative;justify-self:start;z-index:3;border:0;padding:0;cursor:pointer;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--azul);color:#fff;font-size:11px;font-weight:800;text-decoration:none;transform:translateX(-10px);box-shadow:0 0 0 2px var(--branco)}
 .pj-mk:hover,.pj-mk:focus-visible{background:var(--azul-escuro,#005a7a);outline:none}
 
+.mk-card[draggable="true"]{cursor:grab}.mk-card.arrastando{opacity:.45}.mk-col.mk-alvo{outline:3px dashed var(--azul);outline-offset:-3px;background:#EAF7FD}
+.mk-card.mk-tarefa{border-left:4px solid var(--azul)}.mk-frente{border:1px solid var(--linha);border-radius:8px;padding:8px 12px;display:grid;gap:4px}.mk-frente legend{font-weight:800;padding:0 4px}
 .pj-mlist{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 16px}
 .pj-mlist li{display:grid;grid-template-columns:22px 48px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;padding:4px 6px;border-radius:6px}
 .pj-mlist li.alvo,.pj-mlist li:target{background:#FFF6BF}.pj-mlist li.pj-passou{opacity:.55}
@@ -1718,7 +1720,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124064932";
+const APP_VER="20261124083429";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4578,6 +4580,17 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
     const {data,error}=await sb.from("profiles").update({comercial_resp:novo}).eq("id",id).select("id,comercial_resp").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_resp||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const x=(S.equipe||[]).find(q=>q.id===id);if(x)x.comercial_resp=novo;aviso("Vínculo gravado.");}render();return;}});
 document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.dataset&&d.dataset.locfg!==undefined)S.loCfgAberto=d.open;},true);
+/* arrastar cartão entre colunas do quadro de Ações de Marketing (computador) */
+document.addEventListener("dragstart",ev=>{const c=ev.target.closest&&ev.target.closest("[data-mkdrag]");if(!c)return;S.mkArr=+c.dataset.mkdrag;try{ev.dataTransfer.setData("text/plain",c.dataset.mkdrag);ev.dataTransfer.effectAllowed="move";}catch(e){}c.classList.add("arrastando");});
+document.addEventListener("dragend",ev=>{document.querySelectorAll(".arrastando,.mk-alvo").forEach(x=>x.classList.remove("arrastando","mk-alvo"));});
+document.addEventListener("dragover",ev=>{const col=ev.target.closest&&ev.target.closest("[data-mkdrop]");if(!col||!S.mkArr)return;ev.preventDefault();document.querySelectorAll(".mk-alvo").forEach(x=>x!==col&&x.classList.remove("mk-alvo"));col.classList.add("mk-alvo");});
+document.addEventListener("drop",async ev=>{const col=ev.target.closest&&ev.target.closest("[data-mkdrop]");if(!col||!S.mkArr)return;ev.preventDefault();const id=S.mkArr;S.mkArr=null;col.classList.remove("mk-alvo");
+  const para=col.dataset.mkdrop;const x=(S.mk||[]).find(y=>y.id===id);if(!x||x.status===para||!ehMkt())return;
+  if(x.status==="Em análise"||x.status==="Solicitada"){aviso("Esta ação ainda está em análise. Abra o cartão para aprovar com o valor antes de mudar a etapa.");S.mkVolta=S.pag;S.mkSel=id;S.mkPn="aprovar";S.pag="acoes-card";render();carregarMkCard(id);return;}
+  if(para==="Em análise"){aviso("Para voltar à análise, abra o cartão.");return;}
+  const antes=x.status;x.status=para;render();
+  const {data,error}=await sb.from("mkt_acoes").update({status:para}).eq("id",id).select().maybeSingle();
+  if(error||!data){x.status=antes;render();aviso("Não foi possível mudar a etapa.");return;}S.mk=S.mk.map(y=>y.id===data.id?data:y);render();});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.tipodef)return;const o=document.getElementById(t.dataset.tipodef);if(o)o.textContent=acaoTipoDef(t.value);});
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!/^rcp-(q|dono|seg)$/.test(t.id||"")||!S.rcpF)return;S.rcpF[t.id.slice(4)]=t.value;S.rcpF.n=60;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="rcp-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.id||!/^gt-(q|perfil|acesso)$/.test(t.id))return;const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});F[t.id.slice(3)]=t.value;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="gt-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
@@ -6944,7 +6957,20 @@ const ACAO_TIPOS=[
  ["Material e brindes","material de ponto de venda, brindes, uniformes","Itens físicos com a marca: impressos, brindes, uniformes, sinalização."],
  ["Incentivo e premiação","prêmio por saco vendido, viagem, campanha de vendas","Recompensa por resultado para quem vende: vendedores da revenda, gerentes ou o Inside Sales."],
  ["Verba de programa","verba reservada, ainda sem ação definida","Valor reservado para um programa ou região antes de virar ação. Quando a ação for definida, o cartão muda para o tipo dela."]];
-const acaoTipoDef=t=>{const x=ACAO_TIPOS.find(y=>y[0]===t);return x?x[2]:"";};
+/* tarefas do dia a dia do Marketing: entram no quadro, mas não no calendário de ações nem no mapa da safra */
+const TAREFA_TIPOS=[
+ ["Plano de postagem","calendário de redes sociais do mês","Planejar e programar as postagens das redes sociais: temas, datas, legendas e aprovação."],
+ ["Peça de comunicação","arte, folder, banner, apresentação, e-mail","Criar ou adaptar uma peça: arte para rede social, impresso, apresentação, e-mail marketing ou material de ponto de venda."],
+ ["Vídeo e fotografia","gravação, edição, sessão de fotos","Produzir conteúdo audiovisual: roteiro, gravação, edição, fotos de campo ou de produto."],
+ ["Conteúdo técnico e editorial","texto de blog, boletim, curso da Academia, roteiro","Escrever ou revisar conteúdo: textos, boletins, cursos e guias técnicos."],
+ ["Mídia paga e campanhas","anúncio, impulsionamento, campanha digital","Montar, subir ou otimizar anúncios e campanhas pagas. Normalmente consome a verba de Publicidade e Propaganda."],
+ ["Organização de evento","logística, inscrição, material do evento","Preparar a participação ou a organização de um evento: logística, materiais, inscrição e contatos."],
+ ["Planejamento e relatórios","plano, orçamento, relatório, análise","Planejar, orçar e medir: plano de ação, orçamento, relatório de resultado, análise de dados."],
+ ["Sistemas e portal","portal, CRM, automação","Manter as ferramentas do Marketing: portal, CRM, automações e acessos."]];
+const TAREFA_NOMES=TAREFA_TIPOS.map(x=>x[0]);
+const ehTarefa=a=>(a&&a.frente)==="tarefa";
+const acaoTipoDef=t=>{const x=ACAO_TIPOS.find(y=>y[0]===t)||TAREFA_TIPOS.find(y=>y[0]===t);return x?x[2]:"";};
+const tarefaTiposInf=()=>inf(TAREFA_TIPOS.map(x=>x[0]+": "+x[2]).join(" · "));
 const acaoTiposInf=()=>inf(ACAO_TIPOS.map(x=>x[0]+": "+x[2]).join(" · "));
 const MK_TIPOS=ACAO_TIPOS.map(x=>x[0]);
 function acaoTipoNorm(t){const x=String(t||"").trim();if(MK_TIPOS.includes(x))return x;const n=x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
@@ -6995,7 +7021,7 @@ function calMarcos(){const M=[["2026-09-30","Apuração do IGDB · 1º trimestre
   const L=M.map(([d,t,x])=>({k:"m"+d,src:"marco",ini:d,fim:d,prec:"dia",tit:t,desc:x,nat:"Marco do programa",prog:"Marco do programa",cor:"azul",verba:"IGDB"}));
   L.push({k:"mbf",src:"marco",ini:"2027-07-01",fim:"2027-08-31",prec:"mes",tit:"Bônus de Performance · apuração e liberação",desc:"Julho e agosto de 2027: apuração da meta de híbridos (100% ou mais libera 100%; de 90% a 99,99% libera 70%) e liberação para as ações de BF aprovadas, dentro do teto de R$ 300 mil com o IGDB.",nat:"Marco do programa",prog:"Marco do programa",cor:"azul",verba:"Bônus de Performance"});
   return L;}
-function calEvMk(){return (S.mk||[]).filter(a=>!a.agrupador).map(a=>({k:"k"+a.id,src:"mk",id:a.id,tit:a.titulo,desc:a.descricao,ini:a.inicio||null,fim:a.fim||a.inicio||null,prec:a.inicio?"dia":null,
+function calEvMk(){return (S.mk||[]).filter(a=>!a.agrupador&&!ehTarefa(a)).map(a=>({k:"k"+a.id,src:"mk",id:a.id,tit:a.titulo,desc:a.descricao,ini:a.inicio||null,fim:a.fim||a.inicio||null,prec:a.inicio?"dia":null,
   nat:calNat(a.tipo),prog:a.programa||"Institucional",status:a.status,cor:(typeof MK_FIN_COR!=="undefined"&&MK_FIN_COR[mkFin(a)])||"cinza",canal:((S.canais||[]).find(c=>c.id===a.canal_id)||{}).nome||"",a}));}
 /* grade do mes: ate 7 dias nos dias; periodos longos e datas so por mes na faixa abaixo */
 function calGrade(m,E,acaoMes,clsDe){const [y,mo]=m.split("-").map(Number),dias=new Date(y,mo,0).getDate(),prim=new Date(y,mo-1,1).getDay(),h=new Date(Date.now()-3*36e5).toISOString().slice(0,10);
@@ -10915,8 +10941,8 @@ async function carregarMkCard(id){
 }
 function mkCardHTML(a){
   const n=(a.anexos||[]).length+(a.links||[]).length,capa=a.capa_path?mkUrl(a.capa_path):"";
-  return `<button class="mk-card" data-a="mk-abrir" data-v="${a.id}">${capa?`<span class="mk-capa"><img src="${esc(capa)}" alt="" loading="lazy"></span>`:""}
-    <span class="mk-tipo">${esc(a.tipo||"Ação")}</span><strong>${esc(a.titulo)}</strong>
+  return `<button class="mk-card${ehTarefa(a)?" mk-tarefa":""}" data-a="mk-abrir" data-v="${a.id}" ${ehMkt()?`draggable="true" data-mkdrag="${a.id}"`:""}>${capa?`<span class="mk-capa"><img src="${esc(capa)}" alt="" loading="lazy"></span>`:""}
+    <span class="mk-tipo">${ehTarefa(a)?"Tarefa · ":""}${esc(a.tipo||"Ação")}</span><strong>${esc(a.titulo)}</strong>
     ${a.inicio||a.local?`<span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</span>`:""}
     <span class="mk-val">${fmtK0(mkCusto(a))}${Number(a.valor_real)>0?' <span class="meta">realizado</span>':' <span class="meta">previsto</span>'}</span>
     <span class="bd-tags">${stTag(mkFin(a),MK_FIN_COR[mkFin(a)])}${!mkDaSafra(a)?stTag("Safra "+mkSafraA(a),"cinza"):""}${a.status==="Em análise"&&a.decidido_nome?stTag("em análise por "+String(a.decidido_nome).split(" ")[0],"azul"):""}${mkAtrasada(a)?stTag("Atrasada","vermelho"):""}${(()=>{const c=mkChk(a);return c.n?stTag(`${c.f}/${c.n} tarefas${c.atr.length?" · "+c.atr.length+" atrasadas":""}`,c.atr.length?"vermelho":c.f===c.n?"verde":"cinza"):"";})()}</span>
@@ -11198,35 +11224,40 @@ function vAcoesQuadro(){
   const meses=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>String(a.inicio||"").slice(0,7)).filter(Boolean))].sort();
   const mesNome=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
   const okData=a=>{if(!fd)return true;if(fd==="sem")return !a.inicio;if(fd==="passou")return !!a.inicio&&String(a.fim||a.inicio)<mkHoje();if(fd==="vem")return !!a.inicio&&String(a.fim||a.inicio)>=mkHoje();const i=String(a.inicio||"").slice(0,7),f=String(a.fim||a.inicio||"").slice(0,7);return !!i&&i<=fd&&f>=fd;};
-  const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&(!frc||(frc==="sem"?!a.rc_envolvido:finNorm(a.rc_envolvido||"")===finNorm(frc)))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const fF=S.mkFrente||"";const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&(!fF||(fF==="tarefa"?ehTarefa(a):!ehTarefa(a)))&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&(!frc||(frc==="sem"?!a.rc_envolvido:finNorm(a.rc_envolvido||"")===finNorm(frc)))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
   const verCanc=!!S.mkCanc;const cols=MK_COLS.filter(s=>s!=="Cancelada"||verCanc);
   const tot=L.filter(mkConta).reduce((t,a)=>t+mkCusto(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
   <div class="mk-barra">
     <input type="search" id="mk_busca" placeholder="Buscar ação, local ou pessoa" value="${esc(S.mkBusca||"")}" aria-label="Buscar">
-    <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...MK_TIPOS].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
+    <div class="filtros" style="margin:0">${[["","Tudo"],["acao","Ações"],["tarefa","Tarefas do Marketing"]].map(([k,t])=>`<button class="chip" data-a="mk-frente-f" data-v="${k}" aria-pressed="${(S.mkFrente||"")===k}">${t}</button>`).join("")}${inf("Ações acontecem com o canal ou com o produtor e entram no calendário de ações. Tarefas do Marketing são o trabalho do dia a dia do time: plano de postagem, peça, vídeo, campanha, relatório. Arraste um cartão para outra coluna para mudar a etapa (no computador). No celular, abra o cartão e use os botões de etapa.")}</div>
+    <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...(S.mkFrente==="tarefa"?TAREFA_NOMES:S.mkFrente==="acao"?MK_TIPOS:[...MK_TIPOS,...TAREFA_NOMES])].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
     <select id="mk_resp_f" aria-label="Responsável"><option value="">Todos os responsáveis</option><option value="sem" ${fr==="sem"?"selected":""}>Sem responsável</option>${resps.map(n=>`<option ${fr===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
     ${(()=>{const R=[...new Set(S.mk.map(a=>a.rc_envolvido).filter(Boolean))].sort((a,b)=>a.localeCompare(b));return R.length?`<select id="mk_rc_f" aria-label="RC envolvido"><option value="">Todos os RCs</option><option value="sem" ${frc==="sem"?"selected":""}>Sem RC</option>${R.map(n=>`<option ${frc===n?"selected":""}>${esc(n)}${(()=>{const k=S.mk.filter(a=>a.rc_envolvido===n&&a.status!=="Solicitada"&&a.status!=="Recusada"&&!a.agrupador).length;return k?" ("+k+")":"";})()}</option>`).join("")}</select>`:"";})()}
     <select id="mk_mes_f" aria-label="Data da ação"><option value="">Qualquer data</option><option value="vem" ${fd==="vem"?"selected":""}>Daqui para a frente</option><option value="passou" ${fd==="passou"?"selected":""}>Já passaram</option>${meses.map(m=>`<option value="${m}" ${fd===m?"selected":""}>${mesNome(m)}</option>`).join("")}<option value="sem" ${fd==="sem"?"selected":""}>Sem data</option></select>
     <select id="mk_sit_f" aria-label="Situação">${MK_SIT_F.map(([k,t])=>`<option value="${k}" ${(S.mkSitF||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     ${fr||fd||frc||S.mkSitF||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
     <label class="check"><input type="checkbox" data-a="mk-canc" ${verCanc?"checked":""}> Mostrar canceladas</label>
-    ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}
+    ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button><button class="btn sec" data-a="mk-nova" data-v="tarefa">+ Nova tarefa</button>`:""}
   </div>
   ${g?`<p class="meta" style="margin:0">${L.filter(mkConta).length} ações · ${fmtK0(tot)} no total (realizado quando houver, senão previsto)</p>`:""}
   ${g&&frc&&frc!=="sem"?(()=>{const X=S.mk.filter(a=>!a.agrupador&&finNorm(a.rc_envolvido||"")===finNorm(frc)&&a.status!=="Recusada"&&a.status!=="Cancelada");const ped=X.reduce((t,a)=>t+(+a.verba_pedida||0),0);const an=X.filter(a=>a.status==="Em análise"||a.status==="Solicitada");const ap=X.filter(a=>!an.includes(a));const sAp=ap.reduce((t,a)=>t+mkCusto(a),0);
     return `<section class="bloco" style="margin:8px 0;box-shadow:inset 4px 0 0 var(--amarelo)"><h2 class="sec" style="margin:0 0 6px">${esc(frc)}: soma das ações com este RC envolvido</h2><div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="metric"><span>Pedido pelo RC</span><strong>${fmtK0(ped)}</strong><span class="meta">${X.length} ${X.length===1?"ação":"ações"}</span></div><div class="metric"><span>Aprovado</span><strong>${fmtK0(sAp)}</strong><span class="meta">${ap.length} ${ap.length===1?"ação aprovada":"ações aprovadas"}</span></div><div class="metric"><span>Ainda em análise</span><strong>${an.length}</strong><span class="meta">${an.length?"somam "+fmtK0(an.reduce((t,a)=>t+(+a.verba_pedida||0),0))+" pedidos":"nada pendente"}</span></div></div><p class="meta" style="margin:6px 0 0">Aprovado é o valor previsto (ou realizado) de cada cartão que já saiu de Em análise. Canceladas e recusadas ficam fora da conta.</p></section>`;})():""}
   <div class="mk-qw"><div class="mk-quadro">${cols.filter(st=>st!=="Concluída").map(st=>{const xs=L.filter(a=>a.status===st);const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
-    return `<section class="mk-col" aria-label="${esc(st)}"><header><strong>${esc(st)}</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.map(mkCardHTML).join("")||`<div class="vazio" style="padding:12px">Nada aqui.</div>`}</section>`;}).join("")}</div>
+    return `<section class="mk-col" aria-label="${esc(st)}" data-mkdrop="${esc(st)}"><header><strong>${esc(st)}</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.map(mkCardHTML).join("")||`<div class="vazio" style="padding:12px">Nada aqui.</div>`}</section>`;}).join("")}</div>
   ${(()=>{const xs=L.filter(a=>a.status==="Concluída").sort((a,b)=>String(b.fim||b.inicio||"").localeCompare(String(a.fim||a.inicio||"")));const soma=xs.reduce((t,a)=>t+mkCusto(a),0);
-    return `<section class="mk-col mk-conc" aria-label="Concluída"><header><strong>Concluída</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.length?`<ul class="mk-cl">${xs.map(a=>`<li><button data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong><span class="meta">${esc([a.inicio?mkData(a.fim||a.inicio):"",a.responsavel_nome?String(a.responsavel_nome).split(" ")[0]:""].filter(Boolean).join(" · "))}${g?" · "+fmtK0(mkCusto(a)):""}</span></button></li>`).join("")}</ul>`:`<div class="vazio" style="padding:12px">Nada concluído ainda.</div>`}</section>`;})()}</div>`;
+    return `<section class="mk-col mk-conc" aria-label="Concluída" data-mkdrop="Concluída"><header><strong>Concluída</strong><span class="meta">${xs.length}${g?" · "+fmtK0(soma):""}</span></header>${xs.length?`<ul class="mk-cl">${xs.map(a=>`<li><button data-a="mk-abrir" data-v="${a.id}"><strong>${esc(a.titulo)}</strong><span class="meta">${esc([a.inicio?mkData(a.fim||a.inicio):"",a.responsavel_nome?String(a.responsavel_nome).split(" ")[0]:""].filter(Boolean).join(" · "))}${g?" · "+fmtK0(mkCusto(a)):""}</span></button></li>`).join("")}</ul>`:`<div class="vazio" style="padding:12px">Nada concluído ainda.</div>`}</section>`;})()}</div>`;
 }
 function mkFormHTML(a){
   const P=S.mkPessoas||[],env=new Set(a.envolvidos||[]);
   return `<form class="form-card" id="f-mk-acao" data-id="${a.id||""}">
-    <h2 class="sec">${a.id?"Editar ação":"Nova ação"}</h2>
+    <h2 class="sec">${a.id?(ehTarefa(a)?"Editar tarefa":"Editar ação"):(ehTarefa(a)?"Nova tarefa do Marketing":"Nova ação")}</h2>
+    <fieldset class="mk-frente"><legend>O que é este cartão?${inf("Ação: acontece com o canal ou com o produtor (dia de campo, feira, ação em loja, incentivo) e entra no calendário de ações e no mapa da safra. Tarefa do Marketing: trabalho do dia a dia do time (plano de postagem, peça, vídeo, campanha, relatório). Fica no quadro, com responsável, prazo e checklist, mas não entra no calendário de ações. Os dois podem ter custo: aí o valor sai da verba escolhida no cartão. Sem custo, marque a situação financeira como Sem custo.")}</legend>
+      <label class="check"><input type="radio" name="mk_frente" value="acao" data-a="mk-frente" ${ehTarefa(a)?"":"checked"}> Ação com o canal ou com o produtor</label>
+      <label class="check"><input type="radio" name="mk_frente" value="tarefa" data-a="mk-frente" ${ehTarefa(a)?"checked":""}> Tarefa do dia a dia do Marketing</label></fieldset>
     <div><label for="mk_tit">Título *</label><input id="mk_tit" required maxlength="160" value="${esc(a.titulo||"")}"></div>
-    <div class="dupla"><div><label for="mk_tp">Tipo${acaoTiposInf()}</label><select id="mk_tp" data-tipodef="mk_tp_def">${MK_TIPOS.map(t=>`<option ${t===acaoTipoNorm(a.tipo||"Feira e evento do setor")?"selected":""}>${t}</option>`).join("")}</select><span class="meta" id="mk_tp_def">${esc(acaoTipoDef(acaoTipoNorm(a.tipo||"Feira e evento do setor")))}</span></div>
+    <div class="dupla">${(()=>{const T=ehTarefa(a);const L=T?TAREFA_NOMES:MK_TIPOS;const sel=T?(TAREFA_NOMES.includes(a.tipo)?a.tipo:TAREFA_NOMES[0]):acaoTipoNorm(a.tipo||"Feira e evento do setor");
+      return `<div><label for="mk_tp">Tipo${T?tarefaTiposInf():acaoTiposInf()}</label><select id="mk_tp" data-tipodef="mk_tp_def">${L.map(t=>`<option ${t===sel?"selected":""}>${t}</option>`).join("")}</select><span class="meta" id="mk_tp_def">${esc(acaoTipoDef(sel))}</span></div>`;})()}
       <div><label for="mk_st">Status</label><select id="mk_st">${MK_COLS.map(t=>`<option ${t===(a.status||"A fazer")?"selected":""}>${t}</option>`).join("")}</select></div></div>
     <div><label for="mk_prog">Programa${inf("Para o Mapa da safra: separa as ações institucionais, as do Conecta Revendas, do Conecta RC, das cooperativas e revendas, do Inside Sales e da Exportação.")}</label><select id="mk_prog">${CAL_PROG.map(t=>`<option ${t===(a.programa||"Institucional")?"selected":""}>${t}</option>`).join("")}</select></div>
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim">Data de fim</label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
@@ -11285,7 +11316,7 @@ function vAcoesSolicNova(){
     <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
 }
-function vAcoesNova(){return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>${mkFormHTML({})}`;}
+function vAcoesNova(){return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>${mkFormHTML(S.mkNovaTarefa?{frente:"tarefa",fin:"Sem custo",programa:"Institucional"}:{})}`;}
 function vAcoesCard(){
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);
   if(!a)return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button><div class="vazio">Ação não encontrada.</div>`;
@@ -12051,7 +12082,7 @@ const mkNum=v=>{const t=String(v==null?"":v).trim();if(!t)return 0;const n=parse
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="mk-abrir"){if(S.pag!=="acoes-card")S.mkVolta=S.pag;S.mkPn=null;S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
-  if(a==="mk-nova"){if(!ehMkt())return;S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
+  if(a==="mk-nova"){if(!ehMkt())return;S.mkNovaTarefa=v==="tarefa";S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
   if(a==="mk-canc"){S.mkCanc=b.checked;render();return;}
   if(a==="mk-editar"){S.mkEdit=true;S.mkPn=null;render();return;}
   if(a==="mk-pn"){S.mkPn=v||null;S.mkDel=false;render();const e=document.getElementById(S.mkPn==="aprovar"||S.mkPn==="analise"?"md_val":"md_obs");if(e)e.focus();return;}
@@ -12128,7 +12159,8 @@ document.addEventListener("submit",async ev=>{
   const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
-    const d={titulo:val("mk_tit"),tipo:val("mk_tp"),programa:(document.getElementById("mk_prog")?val("mk_prog"):undefined),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
+    const fr=(f.querySelector('input[name="mk_frente"]:checked')||{}).value==="tarefa"?"tarefa":"acao";
+    const d={frente:fr,titulo:val("mk_tit"),tipo:val("mk_tp"),programa:(document.getElementById("mk_prog")?val("mk_prog"):undefined),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
       fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,rc_envolvido:val("mk_rc")||null,rc_user:val("mk_rcu")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
     if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.fin==="Paga"&&!d.pago_em)d.pago_em=mkHoje();if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
     if(btn)btn.disabled=true;const id=f.dataset.id?+f.dataset.id:null;
@@ -13301,6 +13333,9 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="rcp-f"){const F=S.rcpF;const [k,x]=v.split("|");if(k==="hib")F.hib=!F.hib;else F[k]=x;F.n=60;render();return;}
   if(a==="is-tob"){S.isSemTob=v==="sem";isAplicaTobias();render();return;}
   if(a==="crm-mul"){S.crmMul=v==="1";render();return;}
+  if(a==="mk-frente-f"){S.mkFrente=v||"";render();return;}
+  if(a==="mk-frente"){const T=v==="tarefa"||(b&&b.value==="tarefa");const sl=document.getElementById("mk_tp");if(sl){const L=T?TAREFA_NOMES:MK_TIPOS;sl.innerHTML=L.map(t=>`<option>${t}</option>`).join("");const o=document.getElementById("mk_tp_def");if(o)o.textContent=acaoTipoDef(L[0]);}
+    const h=document.querySelector("#f-mk-acao h2.sec");if(h&&!document.getElementById("f-mk-acao").dataset.id)h.textContent=T?"Nova tarefa do Marketing":"Nova ação";return;}
   if(a==="mrc-vis"){S.mrcVis=v;render();return;}
   if(a==="rcp-mais"){S.rcpF.n+=60;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
