@@ -1822,7 +1822,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124161108";
+const APP_VER="20261124163116";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7811,7 +7811,7 @@ const ACAO_TIPOS=[
  ["Feira e evento do setor","feira, exposição, congresso, circuito técnico, leilão, cota de evento","Presença, estande ou cota em evento organizado por outra empresa ou entidade. Inclui o que antes era chamado de patrocínio: a Barenbrug paga para estar no evento de terceiros."],
  ["Relacionamento","jantar de negócios, confraternização, visita à fábrica, cortesia de produto","Ação para criar, manter ou recuperar a relação com clientes e com a equipe do canal: evento de relacionamento ou cortesia de produto, por exemplo semente cedida para reparar uma experiência ruim do cliente."],
  ["Palestra e treinamento","palestra técnica, workshop, treinamento da equipe do canal","Conteúdo técnico apresentado a produtores ou ao time de vendas do canal, em sala ou em evento."],
- ["Assistência técnica","visita técnica, acompanhamento de área, A.T. Barenbrug na região","Atendimento técnico a produtores: visita, acompanhamento de área ou A.T. (assistente técnico) Barenbrug contratado para atender a região da revenda."],
+ ["Assistente Técnico (AT)","visita técnica, acompanhamento de área, A.T. Barenbrug na região","Atendimento técnico a produtores: visita, acompanhamento de área ou A.T. (assistente técnico) Barenbrug contratado para atender a região da revenda."],
  ["Ação em loja e revenda","ponto de venda, fachada, dia de negócio","Ação dentro da loja ou na marca da revenda para movimentar a venda no balcão."],
  ["Mídia e conteúdo","campanha digital, webinar, live, rádio","Divulgação paga ou conteúdo para levar a marca e as cultivares ao produtor."],
  ["Material e brindes","material de ponto de venda, brindes, uniformes","Itens físicos com a marca: impressos, brindes, uniformes, sinalização."],
@@ -7836,7 +7836,7 @@ const MK_TIPOS=ACAO_TIPOS.map(x=>x[0]);
 function acaoTipoNorm(t){const x=String(t||"").trim();if(MK_TIPOS.includes(x))return x;const n=x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   if(/demonstr|experiment/.test(n))return "Campo demonstrativo";if(/dia de campo|manha de campo|tarde de campo|giro de campo/.test(n))return "Dia de campo";
   if(/patroc|leilao|feira|expo|congresso|circuito/.test(n))return "Feira e evento do setor";if(/jantar|confratern|aniversario|tour na fabrica|relacionamento|cortesia/.test(n)||n==="evento"||n==="evento de relacionamento")return "Relacionamento";
-  if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";if(/visita|tour|\bat\b|a\.t\.|assistente|assistencia tecnica|tecnico de campo/.test(n))return "Assistência técnica";
+  if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";if(/visita|tour|\bat\b|a\.t\.|assistente|assistencia tecnica|tecnico de campo/.test(n))return "Assistente Técnico (AT)";
   if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";if(/incentivo|premia|rebate|viagem|campanha de venda/.test(n))return "Incentivo e premiação";if(/bonifica/.test(n))return "Relacionamento";
   if(/digital|webinar|live|midia|conteudo|radio/.test(n))return "Mídia e conteúdo";if(/material|brinde|pos|uniforme/.test(n))return "Material e brindes";if(/verba/.test(n))return "Verba de programa";
   if(/evento|encontro/.test(n))return "Feira e evento do setor";return "Relacionamento";}
