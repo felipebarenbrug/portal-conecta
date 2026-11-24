@@ -4921,6 +4921,13 @@ function vRecompra(){
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px"><div class="metric"><span>Clientes</span><strong>${L.length}</strong></div><div class="metric"><span>Híbridos comprados em 25/26</span><strong>${t(sKh)}</strong></div><div class="metric"><span>Convencionais em 25/26</span><strong>${t(sKc)}</strong></div><div class="metric"><span>Valor em 25/26</span><strong>${fmtK0(sRs)}</strong></div></div>
   ${L.length?`<section class="bloco"><div class="lista">${L.slice(0,F.n).map(linha).join("")}</div>${L.length>F.n?`<button class="btn sec" style="width:100%;margin-top:10px" data-a="rcp-mais">Mostrar mais ${Math.min(60,L.length-F.n)} de ${L.length-F.n}</button>`:""}</section>`:`<section class="bloco"><div class="vazio">${todos.length?"Nenhum cliente neste filtro.":"Nenhum cliente da safra passada sem negociação na sua carteira."}</div></section>`}`;
 }
+/* Mulato II do painel: vendido e em aberto pelos quilos por cultivar do painel; ponderado pelas negociações em aberto do mapa, com a chance de cada uma */
+async function carregarCrmMul(){try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("dono,resp,nome,rs,cults").eq("st","A").order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.crmMulA=t.filter(x=>+((x.cults||{})["Mulato II"])>0);}catch(e){S.crmMulA=[];}render();}
+function crmMulato(r,alvo){const Q=r&&r.qtd;if(!Q||!S.crmMul)return null;if(S.crmMulA===undefined){S.crmMulA=null;carregarCrmMul();}
+  const v=+((Q.vcult||{})["Mulato II"])||0,a=+((Q.acult||{})["Mulato II"])||0;let p=0;
+  const meu=x=>/^IS: /.test(alvo)?(x.dono==="Inside Sales"&&x.resp===alvo.slice(4)):alvo==="Inside Sales"?(x.dono==="Inside Sales"&&x.resp!=="Felipe"):x.dono===alvo;
+  (S.crmMulA||[]).filter(meu).forEach(x=>{const k=+x.cults["Mulato II"]||0;const ab=(r.abertas||[]).find(y=>String(y[0])===String(x.nome||"").slice(0,70)&&Math.round(+y[1]||0)===Math.round(+x.rs||0));p+=k*(CRM_PESO[ab?ab[4]:1]||.05);});
+  return {v,a,p};}
 function vMeuCRM(){
   const m=S.crmVista==="mapa";
   return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button>${veRecompra()?`<button class="chip" data-a="crm-vista" data-v="recompra" aria-pressed="${S.crmVista==="recompra"}">Recompra</button>`:""}</div>`+(S.crmVista==="recompra"&&veRecompra()?vRecompra():m?vMapaGeo("crm"):vMeuCRMPainel());
@@ -4961,13 +4968,14 @@ function vMeuCRMPainel(X){
   const neg=(x,extra)=>`<div class="neg"><div class="l1"><span>${esc(x.n)}</span><span>${fmtK(x.rs)}</span></div><span class="meta">${esc(x.stg||"")}${x.dt?" · faturamento "+esc(x.dt):" · sem data de faturamento"} · ${estr(x.rt)}</span>${extra?`<span class="meta" style="color:#c0392b">${esc(extra)}</span>`:""}${crmLnk(x.id)}</div>`;
   return `<div><h1 class="titulo">${X?esc(X.titulo):adm?esc(alvo)+(alvo==="Inside Sales"?" · time":""):"Meu CRM"}</h1><p class="sub">${!X&&alvo==="Inside Sales"?"Soma do time: "+IS_TIME.map(x=>x[0]).join(", ")+". ":""}Safra 26/27 no funil de vendas do CRM. Atualizado em ${fmtDataHora(r.atualizado_em)}.</p></div>
   ${X?X.topo:""}${seletor}
+  ${Q?`<div class="filtros" style="margin:0 0 8px"><button class="chip" data-a="crm-mul" data-v="0" aria-pressed="${!S.crmMul}">Híbridos: Sabiá, Cayana e Carcará</button><button class="chip" data-a="crm-mul" data-v="1" aria-pressed="${!!S.crmMul}">Híbridos + Mulato II</button>${inf("Sabiá, Cayana e Carcará é a regra do tier do Conecta RC e do Conecta Revendas (salvo revenda com ressalva). Com o Mulato II é a visão da meta geral de híbridos da Barenbrug. O botão só muda a divisão entre híbridos e convencionais; o total não muda. Pausadas seguem sem o Mulato II.")}</div>`:""}
   ${adm?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="crm-atualizar">Atualizar do CRM agora</button><span class="meta" id="crm_prog">${esc(S.crmProg||"")}</span></div>`:""}
   <div class="metrics">
-    ${(()=>{const N=x=>Number(x)||0;const temRs=Q&&("rsvh" in Q);const sp=(rh,th,rc,tc)=>Q?`<span class="crm-sp"><span><b>Híbridos</b>${temRs?fmtK(rh)+" · ":""}${ton(th)}</span><span><b>Convencionais</b>${temRs?fmtK(rc)+" · ":""}${ton(tc)}</span></span>`:"";
-      const ph=Q?N(Q.pondh):0,pc=Q?N(Q.pondc):0;const projRs=N(r.vendido_rs)+N(r.ponderado_rs);
-      return `<div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?sp(Q.rsvh,Q.vh,Q.rsvc,Q.vc):""}</div>
-    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações${Q?` · ${ton(Q.ah+Q.ac)}`:""}</span>${Q?sp(Q.rsah,Q.ah,Q.rsac,Q.ac):""}</div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção da safra${inf("Projeção = o que já foi vendido na safra + o ponderado do funil. Ponderado = cada negociação em aberto vezes a chance de fechar pelas estrelas.")}</span><strong>${fmtK(projRs)}</strong><span class="meta">vendido + ponderado${Q?` · ${ton(Q.vh+Q.vc+ph+pc)}`:""}</span>${Q?sp(N(Q.rsvh)+N(Q.rsph),Q.vh+ph,N(Q.rsvc)+N(Q.rspc),Q.vc+pc):""}<span class="meta">ponderado do funil: ${fmtK(r.ponderado_rs)}${Q?` · ${ton(ph+pc)}`:""}</span></div>
+    ${(()=>{const N=x=>Number(x)||0;const M=crmMulato(r,alvo);const mu=!!(S.crmMul&&M);const temRs=Q&&("rsvh" in Q)&&!mu;const hb=mu?"Híbridos + Mulato II":"Híbridos";const sp=(rh,th,rc,tc,m)=>Q?`<span class="crm-sp"><span><b>${hb}</b>${temRs?fmtK(rh)+" · ":""}${ton(th+(mu?m:0))}</span><span><b>Convencionais</b>${temRs?fmtK(rc)+" · ":""}${ton(tc-(mu?m:0))}</span></span>`:"";
+      const ph=Q?N(Q.pondh):0,pc=Q?N(Q.pondc):0;const projRs=N(r.vendido_rs)+N(r.ponderado_rs);const mv=M?M.v:0,ma=M?M.a:0,mp=M?M.p:0;
+      return `<div class="metric"><span>Já vendido na safra</span><strong>${fmtK(r.vendido_rs)}</strong><span class="meta">${fmtN(r.vendido_n)} pedidos${Q?` · ${ton(Q.vh+Q.vc)}`:""}</span>${Q?sp(Q.rsvh,Q.vh,Q.rsvc,Q.vc,mv):""}</div>
+    <div class="metric"><span>Em aberto</span><strong>${fmtK(r.aberto_rs)}</strong><span class="meta">${fmtN(r.aberto_n)} negociações${Q?` · ${ton(Q.ah+Q.ac)}`:""}</span>${Q?sp(Q.rsah,Q.ah,Q.rsac,Q.ac,ma):""}</div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Projeção da safra${inf("Projeção = o que já foi vendido na safra + o ponderado do funil. Ponderado = cada negociação em aberto vezes a chance de fechar pelas estrelas.")}</span><strong>${fmtK(projRs)}</strong><span class="meta">vendido + ponderado${Q?` · ${ton(Q.vh+Q.vc+ph+pc)}`:""}</span>${Q?sp(N(Q.rsvh)+N(Q.rsph),Q.vh+ph,N(Q.rsvc)+N(Q.rspc),Q.vc+pc,mv+mp):""}<span class="meta">ponderado do funil: ${fmtK(r.ponderado_rs)}${Q?` · ${ton(ph+pc)}`:""}</span></div>
     <div class="metric"><span>Pausadas</span><strong>${fmtN(r.pausadas_n)}</strong>${Q&&N(Q.pkg)?`<span class="meta">${ton(Q.pkg)} · híbridos ${ton(Q.pkgh)}</span>`:""}</div>`;})()}
   </div>
   ${Q&&!("rsvh" in Q)?`<p class="meta" style="margin:4px 0 0">A divisão em reais entre híbridos e convencionais aparece depois da próxima atualização do CRM.</p>`:""}
@@ -13141,6 +13149,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="mrc-sel"){S.mrcSel=v;render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
   if(a==="rcp-f"){const F=S.rcpF;const [k,x]=v.split("|");if(k==="hib")F.hib=!F.hib;else F[k]=x;F.n=60;render();return;}
+  if(a==="crm-mul"){S.crmMul=v==="1";render();return;}
   if(a==="mrc-vis"){S.mrcVis=v;render();return;}
   if(a==="rcp-mais"){S.rcpF.n+=60;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
