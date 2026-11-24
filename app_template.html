@@ -710,6 +710,19 @@ main.largo{max-width:1120px}
 .rcc-marca{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:4px}.rcc-marca input[type=text],.rcc-marca input:not([type]){flex:1 1 200px}
 .rcc-it{all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:10px 4px;border-bottom:1px solid var(--linha)}.rcc-it:hover{background:var(--papel)}.rcc-it:focus-visible{box-shadow:0 0 0 2px var(--azul)}
 .rcc-ro{display:grid;gap:12px}
+.usr-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0}
+.usr-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px 16px}
+.form-card.full{max-width:none}.form-card.full>div>select{max-width:560px}
+.fv{display:grid;gap:12px}
+.fv-sec{background:var(--branco);border-radius:8px;padding:14px 16px;display:grid;gap:10px;align-content:start}
+.fv-sec h3{margin:0;font-size:15px;color:var(--azul-esc,#0b5d86)}
+.fv-dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px 18px;margin:0}
+.fv-dl>div{min-width:0;display:grid;gap:2px}
+.fv-dl dt{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#5b6b7b}
+.fv-dl dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.fv-dl dd.vz{font-weight:400;color:#8a97a3}
+.fv-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.fv-2{grid-template-columns:minmax(0,1fr)}.fv-sec{padding:12px}}
 #cel-modal{position:fixed;inset:0;z-index:9999;background:rgba(30,30,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .cel-box{background:#fff;color:#1E1E1E;border-radius:14px;padding:22px;display:grid;gap:8px;border-top:6px solid var(--amarelo);max-width:560px;width:100%;max-height:calc(100vh - 32px);overflow:auto}.cel-ol{margin:6px 0 0;padding-left:20px;display:grid;gap:4px;overflow-wrap:anywhere}.cel-2>div{min-width:0}
 .cel-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-top:6px}
@@ -5920,6 +5933,15 @@ async function carregarRcCads(){if(S.rcCadsBusy)return;S.rcCadsBusy=true;
     let P=[];if(ids.length){const r=await sb.from("profiles").select("id,nome,email,comercial_resp,cidade,uf").in("id",ids);P=r.data||[];}
     let R=[];if(rcCadGestor()||ehAdmin()||temPerfil("Comercial Barenbrug")){const r=await sb.from("profiles").select("id,nome,comercial_resp,perfil,perfis,ativo").or("perfil.eq.RC,perfis.cs.{RC}").eq("ativo",true).order("nome");R=(r.data||[]).filter(p=>!ids.includes(p.id));}
     S.rcCads={L,P:Object.fromEntries(P.map(p=>[p.id,p])),livres:R};}catch(e){S.rcCads={L:[],P:{},livres:[]};}S.rcCadsBusy=false;render();}
+function rcCadFichaVer(c,bn,verBanco){const f=c.ficha||{};const v=x=>{const t=String(x==null?"":x).trim();return t?`<dd>${esc(t)}</dd>`:`<dd class="vz">não informado</dd>`;};
+  const dl=L=>`<dl class="fv-dl">${L.map(([t,x])=>`<div><dt>${esc(t)}</dt>${v(x)}</div>`).join("")}</dl>`;const sec=(t,h)=>`<section class="fv-sec"><h3>${esc(t)}</h3>${h}</section>`;
+  const blocos=RCCAD_F.map(([g,L])=>sec(g,dl(L.map(([k,t])=>[t.replace(/ \(sigla\)/,""),f[k]]))));
+  const soc=(f.socios||[]).length?(f.socios||[]).map(x=>dl([["Nome",x.nome],["CPF",x.cpf],["Participação",x.pct?x.pct+"%":""]])).join(""):`<p class="meta" style="margin:0">Nenhum sócio informado.</p>`;
+  const lista=(L,t)=>(L||[]).length?(L||[]).map(x=>dl([[t,x.empresa],["Telefone",x.tel],["Contato",x.contato]])).join(""):`<p class="meta" style="margin:0">Nenhuma.</p>`;
+  return `<div class="fv"><div class="fv-2">${blocos.join("")}</div>
+    <div class="fv-2">${sec("Sócios",soc)}${sec("Área de atuação",dl([["Estados",(f.area_ufs||[]).join(", ")],["Cidade-base",f.area_base],["Raio",f.area_raio],["Regiões principais",f.area]]))}</div>
+    ${verBanco?sec("Dados bancários para a comissão",bn===null?`<span class="meta">Carregando…</span>`:dl(RCCAD_BANCO.map(([k,t])=>[t,(bn||{})[k]]))):""}
+    <div class="fv-2">${sec("Referências comerciais",lista(f.refs,"Empresa"))}${sec("Outras representadas",lista(f.outras,"Empresa"))}</div></div>`;}
 function vRCCadastros(){
   if(!veRcCadastros())return vRCApresentacao();
   if(!S.rcCads){carregarRcCads();return `<div class="carregando">Carregando os cadastros…</div>`;}
@@ -5947,7 +5969,8 @@ function vRCCadastroDet(){
   <section class="bloco mk-pn">${acoes}</section>
   ${rcCadDocsHTML(c,g?"gestor":"ver")}
   ${bnTxt?`<p class="meta">${bnTxt}</p>`:""}
-  <div class="rcc-ro">${rcCadFormHTML(o,false).replace(/<section class="bloco rcc-b"><h2 class="sec">Dados bancários[\s\S]*?<\/section>/,g?"$&":"")}</div>`;}
+  <section class="bloco"><h2 class="sec">Contato no portal</h2><dl class="fv-dl"><div><dt>Nome</dt><dd>${esc(p.nome||"—")}</dd></div><div><dt>E-mail de acesso</dt><dd>${esc(p.email||"—")}</dd></div><div><dt>Cidade</dt><dd>${esc([p.cidade,p.uf].filter(Boolean).join("/")||"—")}</dd></div><div><dt>Responsável comercial</dt><dd>${esc(p.comercial_resp||"—")}</dd></div></dl></section>
+  <section class="bloco"><h2 class="sec">Ficha cadastral</h2>${rcCadFichaVer(c,g?(S.rcCadBanco||{})[c.user_id]:undefined,g)}</section>`;}
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rcc)return;(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
@@ -8406,10 +8429,19 @@ function vUsuarioAdmin(){
   const pelPerfil=admF?SECOES_ACESSO.map(x=>x[0]):[...(afTem("Comercial Barenbrug")?["inteligencia","acoes-mkt","brindes"]:[]),...(afTem("Marketing")?["acoes-mkt","brindes"]:[]),...(afTem("Financeiro")?["financeiro"]:[])];
   const secAbas=[...new Set([...ac,...pelPerfil])].filter(id=>ABAS_REG[id]&&ABAS_REG[id].length);
   return `<button class="voltar" data-a="pag" data-v="${S.gtVolta||"gestao-pessoas"}">‹ ${esc((GT_ABAS.find(x=>x[0]===(S.gtVolta||"gestao-pessoas"))||["","Pessoas"])[1])}</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Veja a evolução, edite os dados, altere o perfil e defina a quais seções a pessoa tem acesso.</p>${ehMaster()&&!ehEu?`<div class="acoes" style="margin:8px 0 0"><button class="btn sec" data-a="ver-como" data-v="${esc(u.id)}">Ver o portal como ${esc((S.adminForm.nome||"esta pessoa").split(" ")[0])}</button><span class="meta">Abre o portal com o perfil e as seções desta pessoa. Salve as alterações antes.</span></div>`:""}</div>
-  ${evolucaoHTML(u.id)}
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Os dados e documentos ficam separados dos acessos: cada aba tem o próprio botão de salvar.</p>${ehMaster()&&!ehEu?`<div class="acoes" style="margin:8px 0 0"><button class="btn sec" data-a="ver-como" data-v="${esc(u.id)}">Ver o portal como ${esc((S.adminForm.nome||"esta pessoa").split(" ")[0])}</button><span class="meta">Abre o portal com o perfil e as seções desta pessoa. Salve as alterações antes.</span></div>`:""}</div>
+  ${(()=>{const T=[["dados","Dados e documentos"],["acessos","Acessos"],["evolucao","Evolução nos cursos"],["seguranca","Senha e segurança"]];const t=S.usrTab||"dados";return `<div class="usr-tabs" role="tablist" aria-label="Partes do perfil">${T.map(([k,n])=>`<button class="chip" role="tab" data-a="usr-tab" data-v="${k}" aria-selected="${t===k}" aria-pressed="${t===k}">${n}</button>`).join("")}</div>`;})()}
+  ${(S.usrTab||"dados")==="dados"?`
+  <form class="form-card full" id="f-usuario" novalidate><h2 class="sec" style="margin:0">Dados da pessoa</h2><div class="usr-campos">
+    ${camposPerfil(S.adminForm.perfil)}
+    </div>
+    ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
+    <div class="acoes"><button class="btn" type="submit">Salvar alterações</button></div>
+  </form>
   ${(afTem("RC")||afTem("Assessor de Vendas Digital")||afTem("Inside Sales"))?(S.rcContr?(contratoCard(contratoDe(S.adminForm.rc_crm||S.adminForm.nome,u.email),"Contrato 26/27 (mapeamento)")||`<div class="nota-admin">Nenhum contrato 26/27 mapeado para este usuário. O vínculo é pelo nome no CRM ou pelo e-mail do contrato.</div>`):(carregarContratos(),"")):""}
-  <form class="form-card" id="f-usuario" novalidate>
+  ${usrCadastroRC(u)}`:""}
+  ${S.usrTab==="acessos"?`
+  <form class="form-card full" id="f-usuario" novalidate><h2 class="sec" style="margin:0">Perfil, nível e seções liberadas</h2><p class="meta" style="margin:0">O que a pessoa pode ver e fazer no portal. Os dados cadastrais ficam na aba Dados e documentos.</p>
     <div><label for="f_perfil">${"nivel" in u?"Perfil principal *":"Perfil de acesso *"}</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.filter(p=>!("nivel" in u)||p!=="Administrador"||S.adminForm.perfil===p).map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>${"nivel" in u?`<span class="meta">O que a pessoa faz. Define o cadastro e como ela aparece no portal.</span>`:""}</div>
     ${"nivel" in u?`<div><label>Outros perfis</label><span class="meta">Marque se a pessoa também atua em outra frente. Ela passa a ver o que cada perfil marcado vê.</span><div class="checks">${PERFIS.filter(p=>p!=="Administrador"&&p!==S.adminForm.perfil).map(p=>`<label class="check"><input type="checkbox" data-perfis="${esc(p)}" ${(S.adminForm.perfis||[]).includes(p)?"checked":""}> ${esc(p)}</label>`).join("")}</div></div>
     <div><label for="f_nivel">Nível de acesso *</label><select id="f_nivel" data-fk="nivel">${["Padrão","Gestor","Administrador"].map(n=>`<option value="${n}" ${(S.adminForm.nivel||"Padrão")===n?"selected":""}>${NIVEL_NOME[n]}</option>`).join("")}</select><span class="meta">Gestor de acessos: entra no Painel de gerenciamento, vê todas as pessoas e cadastra pessoas novas, mas não altera perfil, nível nem seções de quem já está cadastrado, não exclui e não vê as áreas do marketing.</span><span class="meta">Administrador vê tudo, gerencia usuários, aprova ações e altera premissas. Padrão vê só o que os perfis e as áreas liberadas permitem.</span></div>`:""}
@@ -8425,10 +8457,13 @@ function vUsuarioAdmin(){
     ${(afTem("Gestor de Revenda")||afTem("Vendedor de Revenda"))?`<div><label for="f_canal">Revenda (Conecta Revendas)</label><select id="f_canal"><option value="">— não vincular —</option>${(S.canais&&S.canais.length?S.canais:(S.canaisLista||[])).map(k=>`<option value="${k.id}" ${S.adminForm.canal_id===k.id?"selected":""}>${esc(k.nome)}</option>`).join("")}</select><span class="meta">O gestor vê os números, o PGD e o cadastro só desta revenda. O vendedor vê a meta em kg e as ações aprovadas.</span></div>`:""}
     ${(afTem("RC")||afTem("Assessor de Vendas Digital"))?`<div><label for="f_cresp">Responsável comercial (recebe as negociações deste RC)</label><select id="f_cresp"><option value="">— não vincular —</option>${[...new Set([...(S.crmDonos||[]),...COMERCIAIS_EXTRA,S.adminForm.comercial_resp].filter(Boolean))].map(d=>`<option value="${esc(d)}" ${S.adminForm.comercial_resp===d?"selected":""}>${esc(d)}</option>`).join("")}</select></div>`:""}
     ${(afTem("RC")||afTem("Assessor de Vendas Digital"))?`<div><label for="f_rccrm">Vínculo no ranking (nome no CRM)</label><select id="f_rccrm"><option value="">— não vincular —</option>${RC_RANKING.map(x=>`<option value="${esc(x.crm)}" ${S.adminForm.rc_crm===x.crm?"selected":""}>${esc(x.nome)}</option>`).join("")}</select><span class="meta">Liga este acesso ao representante no CRM para mostrar o volume e a posição dele no ranking.</span></div>`:""}
-    ${camposPerfil(S.adminForm.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Salvar alterações</button></div>
-  </form>
+  </form>`:""}
+  ${S.usrTab==="evolucao"?`
+  ${evolucaoHTML(u.id)}
+  `:""}
+  ${S.usrTab==="seguranca"?`
   <section class="bloco"><h2 class="sec">Senha</h2>
   ${ehEu?`<div class="nota-admin">Para trocar a sua própria senha, use "Meu perfil".</div>`
     :`<div class="nota-admin">Gera uma senha provisória nova, encerra as sessões abertas da pessoa e obriga a criar uma senha própria no próximo acesso. Use quando alguém esquecer a senha.<div class="acoes" style="margin-top:8px"><button class="btn" data-a="reset-senha">Redefinir senha</button></div></div>${S.senhaReset&&S.senhaReset.id===u.id&&!S.senhaReset.viaSolic?caixaCred(S.senhaReset):""}`}
@@ -8446,9 +8481,18 @@ function vUsuarioAdmin(){
   :S.confirmExcluir
     ?`<div class="perigo-box"><strong>Tem certeza?</strong> Isso apaga o acesso de ${esc(S.adminForm.nome||u.email)} e todo o progresso dele. Não dá para desfazer.<div class="acoes"><button class="btn perigo" data-a="excluir-confirma">Sim, excluir</button><button class="btn sec" data-a="excluir-cancela">Cancelar</button></div></div>`
     :`<div class="perigo-box">Remove o acesso da pessoa e o progresso dela, de forma permanente.<div><button class="btn perigo" data-a="excluir">Excluir acesso</button></div></div>`}
-  </section>`;
+  </section>`:""}`;
 }
-async function abrirUsuario(id){
+function usrCadastroRC(u){if(!(rcCadGestor()||ehAdmin()))return "";const M=S.usrCad||(S.usrCad={});
+  if(M[u.id]===undefined){M[u.id]=null;Promise.all([sb.from("rc_cadastro").select("*").eq("user_id",u.id).maybeSingle(),rcCadGestor()?sb.from("rc_cadastro_banco").select("*").eq("user_id",u.id).maybeSingle():Promise.resolve({data:null})]).then(([c,b])=>{M[u.id]={c:c.data||false,b:b.data||{}};render();}).catch(()=>{M[u.id]={c:false,b:{}};render();});}
+  const X=M[u.id];if(X===null)return `<section class="bloco"><h2 class="sec">Cadastro de RC</h2><div class="carregando">Carregando a ficha…</div></section>`;if(!X.c)return "";const c=X.c;
+  return `<section class="bloco"><h2 class="sec">Cadastro de RC${inf("A ficha cadastral, os documentos e o contrato que o RC enviou pelo portal. Ficam guardados no perfil para consulta a qualquer momento.")}</h2>
+    <div class="mk-link" style="align-items:center;gap:10px;margin:0 0 8px">${stTag(c.status,RCCAD_COR[c.status]||"azul")}<span class="meta">${c.enviado_em?"enviado em "+fmtDataHora(c.enviado_em):"ainda não enviado"}${c.conferido_por?" · conferido por "+esc(c.conferido_por):""}${c.assinado_em?" · contrato assinado em "+esc(String(c.assinado_em).split("-").reverse().join("/")):""}</span>${c.contrato_path?`<button class="btn sec" data-a="rcc-abrir" data-v="${esc(c.contrato_path)}">Abrir contrato assinado</button>`:""}<button class="link" data-a="usr-cad-ir" data-v="${esc(u.id)}">Abrir no fluxo de cadastro</button></div>
+    ${rcCadFichaVer(c,X.b,rcCadGestor())}</section>${rcCadDocsHTML(c,"ver")}`;}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='usr-tab'],[data-a='usr-cad-ir']");if(!b)return;ev.preventDefault();ev.stopPropagation();
+  if(b.dataset.a==="usr-tab"){S.usrTab=b.dataset.v;S._erro=null;render();return;}
+  S.secao="conecta-rc";S.pag="rc-cadastros";S.rcCadSel=b.dataset.v;S.rcCads=null;render();window.scrollTo(0,0);},true);
+async function abrirUsuario(id){S.usrTab="dados";
   S.adminUser=null;S.adminForm=null;S.confirmExcluir=false;S._erro=null;S.senhaReset=null;S.pag="usuario";render();
   const {data:prof}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();
   if(!prof){S._erro="Não foi possível abrir este usuário.";S.pag="gestao-home";render();return;}
@@ -12878,7 +12922,7 @@ function renderApp(){
   if(!S.verComo)talvezTour(S.secao);
   if(S.secao==="gestao"){
     if(!gerePessoas()){S.secao=null;S.pag="hub";app.innerHTML=cabecalho()+`<main class="largo">${vHub()}</main>`;pedirFeed();return;}
-    if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main>${vUsuarioAdmin()}</main>`;return;}
+    if(S.pag==="usuario"){app.innerHTML=cabecalho()+subnavGestao()+`<main class="largo">${vUsuarioAdmin()}</main>`;return;}
     app.innerHTML=cabecalho()+subnavGestao()+`<main>${vAcomp()}</main>`;
     if(!S.equipe){carregarEquipe().then(render);}
     return;
@@ -12892,7 +12936,7 @@ function renderApp(){
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
-    app.innerHTML=cabecalho()+subnavRC()+`<main>${cnAviso("conecta_rc")}${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main${S.pag==="rc-cadastros"?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
@@ -13703,8 +13747,8 @@ document.addEventListener("submit",async ev=>{
     const ehOutro=S.adminUser&&S.user&&S.adminUser.id!==S.user.id;
     if(schema.some(c=>c.req&&(!ehOutro||c.k==="nome")&&!((S.adminForm[c.k]||"").trim()))){S._erro=ehOutro?"Informe pelo menos o nome.":"Preencha todos os campos obrigatórios (*).";render();window.scrollTo(0,0);return;}
     const dados={perfil};schema.forEach(c=>{if(c.t!=="email_fixo")dados[c.k]=valCampo(c,S.adminForm[c.k]);});
-    if("nivel" in S.adminUser){dados.perfis=[perfil,...(S.adminForm.perfis||[]).filter(x=>x!==perfil&&x!=="Administrador")];const nv=f.querySelector("#f_nivel");dados.nivel=nv?nv.value:"Padrão";}
-    dados.acessos=[...new Set([...f.querySelectorAll("[data-acesso]:checked:not(:disabled)")].map(c=>c.getAttribute("data-acesso")).concat([...f.querySelectorAll("[data-acesso]:disabled")].map(c=>c.getAttribute("data-acesso")).filter(id=>(S.adminForm.acessos||[]).includes(id))))];
+    if("nivel" in S.adminUser){dados.perfis=[perfil,...(S.adminForm.perfis||[]).filter(x=>x!==perfil&&x!=="Administrador")];const nv=f.querySelector("#f_nivel");dados.nivel=nv?nv.value:(S.adminForm.nivel||S.adminUser.nivel||"Padrão");}
+    if(f.querySelector("[data-acesso]"))dados.acessos=[...new Set([...f.querySelectorAll("[data-acesso]:checked:not(:disabled)")].map(c=>c.getAttribute("data-acesso")).concat([...f.querySelectorAll("[data-acesso]:disabled")].map(c=>c.getAttribute("data-acesso")).filter(id=>(S.adminForm.acessos||[]).includes(id))))];
     dados.cursos_obrig=cursosObrigDe(S.adminForm);dados.exige_curso=dados.cursos_obrig.includes("hibridos");
     const elIsv=f.querySelector("#f_isv");if(elIsv)dados.is_vendedora=elIsv.value||null;
     const elCd=f.querySelector("#f_crmdono");if(elCd)dados.crm_dono=elCd.value||null;
@@ -13716,7 +13760,7 @@ document.addEventListener("submit",async ev=>{
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {data:volta,error}=await sb.from("profiles").update(dados).eq("id",S.adminUser.id).select("perfil,acessos,abas_ocultas").maybeSingle();
     if(error||!volta){S._erro="Não foi possível salvar. Tente de novo.";render();return;}
-    if(volta.perfil!==dados.perfil||JSON.stringify(volta.acessos||[])!==JSON.stringify(dados.acessos||[])||(dados.abas_ocultas&&JSON.stringify(volta.abas_ocultas||[])!==JSON.stringify(dados.abas_ocultas))){S._erro="Os acessos NÃO foram gravados: esta aba não está com permissão de administrador. Recarregue a página, entre como administrador e tente de novo.";render();window.scrollTo(0,0);return;}
+    if(volta.perfil!==dados.perfil||(dados.acessos&&JSON.stringify(volta.acessos||[])!==JSON.stringify(dados.acessos||[]))||(dados.abas_ocultas&&JSON.stringify(volta.abas_ocultas||[])!==JSON.stringify(dados.abas_ocultas))){S._erro="Os acessos NÃO foram gravados: esta aba não está com permissão de administrador. Recarregue a página, entre como administrador e tente de novo.";render();window.scrollTo(0,0);return;}
     const elRc=f.querySelector("#f_rccrm");
     if((afTem("RC")||afTem("Assessor de Vendas Digital"))&&elRc){const rc=elRc.value||null;const {error:e2}=await sb.from("profiles").update({rc_crm:rc}).eq("id",S.adminUser.id);if(!e2)dados.rc_crm=rc;}
     Object.assign(S.adminUser,dados);S.equipe=null;S._erro=null;render();aviso("Dados atualizados.");
