@@ -1711,7 +1711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123205622";
+const APP_VER="20261123210321";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4558,6 +4558,7 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
     const {data,error}=await sb.from("profiles").update({comercial_resp:novo}).eq("id",id).select("id,comercial_resp").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_resp||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const x=(S.equipe||[]).find(q=>q.id===id);if(x)x.comercial_resp=novo;aviso("Vínculo gravado.");}render();return;}});
 document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.dataset&&d.dataset.locfg!==undefined)S.loCfgAberto=d.open;},true);
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!/^rcp-(q|dono|seg)$/.test(t.id||"")||!S.rcpF)return;S.rcpF[t.id.slice(4)]=t.value;S.rcpF.n=60;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="rcp-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.id||!/^gt-(q|perfil|acesso)$/.test(t.id))return;const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});F[t.id.slice(3)]=t.value;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="gt-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
 document.addEventListener("click",async ev=>{
@@ -4895,9 +4896,34 @@ async function atualizarLeads(prog){
 }
 async function carregarCRM(){
   if(temPerfil("Comercial Barenbrug")||ehAdmin()){await carregarRCNeg();}try{const {data}=await sb.from("crm_painel").select("*").order("dono");S.crm=data||[];const it=S.crm.find(x=>x.dono==="Inside Sales"),f=S.crm.find(x=>x.dono==="IS: Felipe");if(it&&f&&!((it.qtd||{}).sem_fora_meta)){for(const k of Object.keys(f)){if(["dono","equipe","atualizado_em"].includes(k))continue;const v=f[k];if(v!=null&&v!==""&&!isNaN(+v)&&typeof v!=="object"&&it[k]!=null&&!isNaN(+it[k]))it[k]=+it[k]-(+v);else if(v&&typeof v==="object"&&!Array.isArray(v)&&it[k]&&typeof it[k]==="object")isSubtrai(it[k],v);}}}catch(e){S.crm=[];}}
+/* ===== Fila de recompra: comprou na safra 25/26 e ainda não tem negociação na 26/27 ===== */
+const veRecompra=()=>!S.demo&&!temPerfil("RC")&&!temPerfil("Franqueado Nutron");
+const rcLimpo=v=>String(v||"").replace(/^[\d.\s-]+/,"").trim().toLowerCase().replace(/(^|\s)\S/g,x=>x.toUpperCase());
+async function carregarRecompra(){try{const {data,error}=await sb.rpc("recompra_fila");S.recompra=error?[]:(data||[]).map(r=>{const cs=[...new Set(String(r.cults||"").split(" | ").map(cultivarDe).filter(Boolean))];return {...r,cs,rep:rcLimpo(r.rep),kh:+r.kg_h||0,kc:+r.kg_c||0};});}catch(e){S.recompra=[];}render();}
+function vRecompra(){
+  if(S.recompra===undefined){S.recompra=null;carregarRecompra();}
+  if(!S.recompra)return `<div class="carregando">Montando a fila de recompra…</div>`;
+  const F=S.rcpF||(S.rcpF={v:"ligar",dono:"",seg:"",hib:false,q:"",n:60});
+  const todos=S.recompra;const donos=[...new Set(todos.map(r=>r.dono))].sort();
+  const q=normGeo(F.q||"");
+  const L=todos.filter(r=>(F.v==="todas"||(F.v==="ligar"?!r.perdida:!!r.perdida))&&(!F.dono||r.dono===F.dono)&&(!F.seg||r.seg===F.seg)&&(!F.hib||r.kh>0)&&(!q||normGeo([r.cliente,r.cidade,r.uf,r.rep].join(" ")).includes(q)));
+  const t=x=>(x/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t";
+  const sKh=L.reduce((a,r)=>a+r.kh,0),sKc=L.reduce((a,r)=>a+r.kc,0),sRs=L.reduce((a,r)=>a+(+r.rs||0),0);
+  const nL=todos.filter(r=>!r.perdida).length,nP=todos.length-nL;
+  const linha=r=>`<div class="neg"><div class="l1"><strong>${esc(r.cliente||"(sem nome)")}</strong><span>${r.kh?`<strong>${fmtKg(r.kh)}</strong> híbridos`:""}${r.kh&&r.kc?" · ":""}${r.kc?fmtKg(r.kc)+" conv.":""}</span></div>
+    <span class="meta">${esc([[r.cidade,r.uf].filter(Boolean).join("/"),r.seg==="B2B"?"canal":"produtor",r.rep?"vendeu: "+r.rep:"",donos.length>1?r.dono:""].filter(Boolean).join(" · "))}</span>
+    <span class="meta">Último faturamento em ${r.ult_fat?esc(r.ult_fat.split("-").reverse().join("/")):"—"} · ${r.pedidos} ${r.pedidos===1?"pedido":"pedidos"} · ${fmtK0(r.rs)}${r.cs.length?" · "+esc(r.cs.join(", ")):""}</span>
+    ${r.perdida?`<span class="meta"><strong>${esc(r.perdida)}</strong></span>`:""}${crmLnk(r.did)}</div>`;
+  return `<div><h1 class="titulo">Fila de recompra${inf("Clientes que compraram na safra 25/26 e ainda não têm negociação aberta nem ganha na 26/27, em nenhum dono do CRM. Ordem: maior volume comprado primeiro. Negociações pausadas não contam como negociação ativa. O link abre a negociação de 25/26 no CRM, onde estão o contato e o histórico.")}</h1>
+  <p class="sub">Quem comprou na safra passada e ainda não voltou a negociar nesta. Cliente que já comprou é o caminho mais curto até a meta.</p></div>
+  <div class="filtros"><button class="chip" data-a="rcp-f" data-v="v|ligar" aria-pressed="${F.v==="ligar"}">Para contatar (${nL})</button><button class="chip" data-a="rcp-f" data-v="v|perd" aria-pressed="${F.v==="perd"}">Perdidas nesta safra (${nP})</button><button class="chip" data-a="rcp-f" data-v="v|todas" aria-pressed="${F.v==="todas"}">Todas</button><button class="chip" data-a="rcp-f" data-v="hib|" aria-pressed="${F.hib}">Só quem comprou híbridos</button></div>
+  <div class="gt-filtros" style="margin:8px 0">${donos.length>1?`<select id="rcp-dono" aria-label="Dono"><option value="">Todos os donos</option>${donos.map(d=>`<option ${F.dono===d?"selected":""}>${esc(d)}</option>`).join("")}</select>`:""}<select id="rcp-seg" aria-label="Tipo de cliente"><option value="">Canal e produtor</option><option value="B2B" ${F.seg==="B2B"?"selected":""}>Só canal (B2B)</option><option value="B2C" ${F.seg==="B2C"?"selected":""}>Só produtor (B2C)</option></select><input type="search" id="rcp-q" placeholder="Buscar cliente, cidade ou quem vendeu" value="${esc(F.q||"")}" aria-label="Buscar"></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px"><div class="metric"><span>Clientes</span><strong>${L.length}</strong></div><div class="metric"><span>Híbridos comprados em 25/26</span><strong>${t(sKh)}</strong></div><div class="metric"><span>Convencionais em 25/26</span><strong>${t(sKc)}</strong></div><div class="metric"><span>Valor em 25/26</span><strong>${fmtK0(sRs)}</strong></div></div>
+  ${L.length?`<section class="bloco"><div class="lista">${L.slice(0,F.n).map(linha).join("")}</div>${L.length>F.n?`<button class="btn sec" style="width:100%;margin-top:10px" data-a="rcp-mais">Mostrar mais ${Math.min(60,L.length-F.n)} de ${L.length-F.n}</button>`:""}</section>`:`<section class="bloco"><div class="vazio">${todos.length?"Nenhum cliente neste filtro.":"Nenhum cliente da safra passada sem negociação na sua carteira."}</div></section>`}`;
+}
 function vMeuCRM(){
   const m=S.crmVista==="mapa";
-  return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button></div>`+(m?vMapaGeo("crm"):vMeuCRMPainel());
+  return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button>${veRecompra()?`<button class="chip" data-a="crm-vista" data-v="recompra" aria-pressed="${S.crmVista==="recompra"}">Recompra</button>`:""}</div>`+(S.crmVista==="recompra"&&veRecompra()?vRecompra():m?vMapaGeo("crm"):vMeuCRMPainel());
 }
 async function carregarCrmOrig(alvo){(S.crmOrig=S.crmOrig||{})[alvo]=null;let q=sb.from("crm_mapa").select("rep,st,kg_h,kg_c,rs,fat,cults").eq("st","V").gte("fat","2026-07-01").lte("fat","2027-06-30");
   if(/^IS: /.test(alvo))q=q.eq("dono","Inside Sales").eq("resp",alvo.slice(4));else q=q.eq("dono",alvo);
@@ -13102,6 +13128,8 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="solic-senha"){const x=(S.solic||[]).find(q=>String(q.id)===String(v));if(!x)return;const u=(S.equipe||[]).find(p=>(p.email||"").toLowerCase()===(x.email||"").toLowerCase());if(!u)return;b.disabled=true;b.textContent="Gerando…";const ok=await redefinirSenha(u,x.telefone);if(ok){S.senhaReset.viaSolic=true;await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",v);S.solic=(S.solic||[]).filter(q=>String(q.id)!==String(v));}render();return;}
   if(a==="mrc-sel"){S.mrcSel=v;render();return;}
   if(a==="crm-sel"){S.crmSel=v;render();return;}
+  if(a==="rcp-f"){const F=S.rcpF;const [k,x]=v.split("|");if(k==="hib")F.hib=!F.hib;else F[k]=x;F.n=60;render();return;}
+  if(a==="rcp-mais"){S.rcpF.n+=60;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
   if(a==="im-modo"){S.imModo=v;S.mapaPin=null;render();return;}
   if(a==="cobb-canal"){const F=S.cobB||(S.cobB={st:"Ambos",raio:"100",dono:null,grp:"Todos"});F.canal=v||null;if(v)F.dono=null;render();if(v)setTimeout(()=>{const d=document.querySelector(".cob-det-canal");if(d)d.scrollIntoView({behavior:"smooth",block:"nearest"});},50);return;}
