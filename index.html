@@ -1754,7 +1754,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124123251";
+const APP_VER="20261124123434";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2020,11 +2020,13 @@ function progItens(){
   I.push({g:"Cadastro",t:"Foto de perfil",ok:!!P.foto_url,ir:"perfil",d:"Aparece nas mensagens, perguntas e comunicados."});
   schemaDoPerfil(S.perfil).filter(c=>(c.req||c.reqNovo)&&c.t!=="email_fixo").forEach(c=>I.push({g:"Cadastro",t:c.l,ok:cheio(P[c.k]),ir:"perfil"}));
   const nomeEt=id=>(ETAPAS.find(e=>e.id===id)||{}).n||id;
-  HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os três híbridos liberam o certificado."}));
-  ETAPAS_ATIVAS.filter(id=>!HIB_CORE.includes(id)).forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia"}));
-  const com=temPerfil("Comercial Barenbrug");
-  if(com||temPerfil("RC")||temPerfil("Assessor de Vendas Digital"))I.push({g:"Programas",t:"Curso e prova do Conecta RC",ok:S.feitas.includes("conecta_rc"),ir:"conecta-rc|rc-curso"});
-  if(com||ehRevenda())I.push({g:"Programas",t:"Curso e prova do Conecta Revendas",ok:S.feitas.includes("conecta_rv"),ir:"conecta-revendas|rv-curso"});
+  /* só entra no perfil o curso que vale para a pessoa: o que o administrador marcou como obrigatório e os do perfil dela */
+  const OB=cursosObrigDe(P),hibOb=OB.includes("hibridos"),com=temPerfil("Comercial Barenbrug");
+  if(hibOb){HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os três híbridos liberam o certificado."}));
+    ETAPAS_ATIVAS.filter(id=>!HIB_CORE.includes(id)).forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia"}));}
+  if(OB.includes("conecta_rc")||com||temPerfil("RC")||temPerfil("Assessor de Vendas Digital"))I.push({g:"Programas",t:"Curso e prova do Conecta RC",ok:S.feitas.includes("conecta_rc"),ir:"conecta-rc|rc-curso",obrig:OB.includes("conecta_rc")});
+  if(OB.includes("conecta_rv")||com||ehRevenda())I.push({g:"Programas",t:"Curso e prova do Conecta Revendas",ok:S.feitas.includes("conecta_rv"),ir:"conecta-revendas|rv-curso",obrig:OB.includes("conecta_rv")});
+  if(OB.includes("playbook_is"))I.push({g:"Programas",t:"Leitura e prova do Playbook do Inside Sales",ok:S.feitas.includes("playbook_is")||S.feitas.includes("playbook"),ir:"inside-sales|is-playbook",obrig:true});
   return I;
 }
 function progResumo(){const I=progItens(),ok=I.filter(x=>x.ok).length;return {I,ok,n:I.length,pct:I.length?Math.round(ok/I.length*100):100};}
@@ -2035,7 +2037,7 @@ function vProgPerfil(){
   const item=x=>`<div class="linha" style="align-items:center"><div style="display:flex;gap:10px;align-items:flex-start;min-width:0"><span aria-hidden="true" style="flex-shrink:0;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:13px;font-weight:800;${x.ok?"background:#2E8B57;color:#fff":"border:2px solid #b9c4cc;color:transparent"}">✓</span><div style="min-width:0"><strong style="${x.ok?"font-weight:600":""}">${esc(x.t)}</strong>${x.obrig&&!x.ok?` ${stTag("obrigatório","amarelo")}`:""}<span class="meta">${x.ok?"Completo":"Falta"}${x.d&&!x.ok?" · "+esc(x.d):""}</span></div></div>${x.ok?"":x.ir==="perfil"?`<button class="btn sec" data-a="prog-ir" data-v="perfil-campo">Preencher</button>`:`<button class="btn sec" data-a="prog-ir" data-v="${esc(x.ir)}">Fazer</button>`}</div>`;
   return `<section class="bloco" id="prog-perfil"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Seu perfil está ${R.pct}% completo</h2><span class="meta">${R.ok} de ${R.n} itens</span></div>
     <div style="margin:8px 0 6px">${progBarra(R.pct,"Perfil completo")}</div>
-    <p class="meta" style="margin:0 0 10px">${R.pct>=100?"Tudo em dia. Obrigado!":`Próximo passo: <strong>${esc(prox.t)}</strong>. O que conta para o seu perfil (${esc(S.perfil)}): dados do cadastro, cursos da Academia${R.I.some(x=>x.g==="Programas")?" e os cursos dos programas":""}.`}</p>
+    <p class="meta" style="margin:0 0 10px">${R.pct>=100?"Tudo em dia. Obrigado!":`Próximo passo: <strong>${esc(prox.t)}</strong>. O que conta para o seu perfil (${esc(S.perfil)}): dados do cadastro${R.I.some(x=>x.g==="Cursos da Academia")?", cursos da Academia":""}${R.I.some(x=>x.g==="Programas")?" e os cursos dos programas":""}.`}</p>
     ${grupos.map(g=>{const L=R.I.filter(x=>x.g===g),o=L.filter(x=>x.ok).length;return `<details class="lote" ${o<L.length?"open":""}><summary>${esc(g)} · ${o} de ${L.length}</summary><div class="lista" style="margin-top:6px">${L.map(item).join("")}</div></details>`;}).join("")}</section>`;
 }
 function vPerfil(){
