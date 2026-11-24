@@ -1747,7 +1747,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124110546";
+const APP_VER="20261124111131";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4298,7 +4298,7 @@ async function carregarFeed(){
   await Promise.all([carregarPosts(),carregarDuvidas(),carregarMsgs(),
     (async()=>{if(S.demo)return;try{const {data}=await sb.rpc("sou_embaixador");S.souEmb=!!data;}catch(e){S.souEmb=false;}})(),
     (async()=>{if(S.demo||!ehAdmin())return;try{const {data}=await sb.from("acoes_pgd").select("id,canal_id,tipo,categoria,cidade,valor_igdb,verba,criado_em,canais(nome)").eq("status","Em Análise").order("criado_em");S.pgdHome=data||[];}catch(e){}})(),
-    (async()=>{if(S.demo||!ehMkt())return;try{const {data}=await sb.from("mkt_acoes").select("id,titulo,solicitante_nome,criado_em,verba_pedida,inicio").eq("status","Solicitada").order("criado_em");S.mkSolHome=data||[];}catch(e){}})(),
+    (async()=>{if(S.demo||!ehMkt())return;try{const {data}=await sb.from("mkt_acoes").select("id,titulo,solicitante_nome,criado_em,verba_pedida,inicio").eq("status","Solicitada").not("agrupador","is",true).order("criado_em");S.mkSolHome=data||[];}catch(e){}})(),
     (async()=>{if(S.demo||!gerePessoas())return;try{const {data}=await sb.from("solicitacoes_acesso").select("*").eq("status","Pendente").order("criado_em",{ascending:true});S.solic=data||[];}catch(e){}})(),(async()=>{try{const {data}=await sb.rpc("diretorio");S.dir=Object.fromEntries((data||[]).map(x=>[x.id,x]));}catch(e){S.dir=S.dir||{};}if(!S.dir)S.dir={};})()]);
   if(S.posts==null)S.posts=[];if(S.duvidas==null){S.duvidas=[];S.duvResp=[];}
 }
@@ -5493,7 +5493,7 @@ function vPendenciasHome(){
       <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${x.tipo==="senha"?"Nova senha":"Acesso"} · ${esc(x.nome&&x.nome!=="(redefinição de senha)"?x.nome:x.email||"")}</strong><span class="meta">${esc(x.email||"")}${x.telefone?" · "+esc(x.telefone):""} · ${fmtDataHora(x.criado_em)}</span></div></div>`).join("")}</div></details>`);}
   if(ehMkt()&&(S.mkSolHome||[]).length){const L=S.mkSolHome;
     out.push(`<details class="bloco cx pend-home" data-pk="95084" ${pendAberto("95084")?"open":""}><summary class="pend-top"><strong>Solicitações de ação de marketing (${L.length})</strong><span class="pend-acts"><button class="btn" data-a="mk-ir-solic">Analisar</button></span></summary>
-      <div class="lista">${L.slice(0,5).map(x=>`<div class="linha"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div></div>`).join("")}</div></details>`);}
+      <div class="lista">${L.slice(0,5).map(x=>`<button class="linha" data-a="mk-sol-abrir" data-v="${x.id}" style="text-align:left;width:100%"><div><strong>${esc(x.titulo)}</strong><span class="meta">${esc(x.solicitante_nome||"")} · ${fmtDataHora(x.criado_em)}${x.inicio?" · evento em "+mkData(x.inicio):""} · ${fmtK0(x.verba_pedida)} pedidos</span></div><span class="meta">Abrir</span></button>`).join("")}</div></details>`);}
   if(ehAdmin()&&(S.pgdHome||[]).length){const L=S.pgdHome,por={};L.forEach(x=>{const k=x.canal_id;(por[k]=por[k]||{nome:(x.canais&&x.canais.nome)||"Canal",n:0,v:0,ult:x.criado_em}).n++;por[k].v+=Number(x.valor_igdb)||0;if(x.criado_em>por[k].ult)por[k].ult=x.criado_em;});
     out.push(`<details class="bloco cx pend-home" data-pk="35441" ${pendAberto("35441")?"open":""}><summary class="pend-top"><strong>Ações de PGD aguardando validação (${L.length})</strong><span class="pend-acts"></span></summary>
       <p class="meta" style="margin:0">Lançadas pelas revendas no Conecta Revendas. Abra o canal para aprovar, pedir ajuste ou recusar cada ação.</p>
@@ -8835,7 +8835,11 @@ async function carregarB2C(){if(S.b2cBusy)return;S.b2cBusy=true;try{const {data}
 function vIntB2C(){
   if(S.b2c===undefined){carregarB2C();return `<div class="carregando">Carregando…</div>`;}
   const D=S.b2c;if(!D)return `<div class="vazio">Sem dados.</div>`;
-  const SF=Object.keys(D.safras);const sf=S.b2cSf&&D.safras[S.b2cSf]?S.b2cSf:"25/26";const X=D.safras[sf];
+  const SF=Object.keys(D.safras);const sf=S.b2cSf&&D.safras[S.b2cSf]?S.b2cSf:"25/26";
+  /* safra em andamento: calculada ao vivo do CRM (mesma base do Meu CRM), em vez do número digitado */
+  if(sf==="26/27*"&&S.b2cLive===undefined){S.b2cLive=null;sb.rpc("b2c_safra_atual").then(r=>{S.b2cLive=r.error?false:r.data;render();},()=>{S.b2cLive=false;render();});}
+  const vivo=sf==="26/27*"&&S.b2cLive&&!S.b2cEd;if(sf==="26/27*"&&S.b2cLive===null)return `<div class="carregando">Calculando a safra 26/27 a partir do CRM…</div>`;
+  const X=vivo?S.b2cLive:D.safras[sf];
   const nf=v=>Math.round(v).toLocaleString("pt-BR"),pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
   const nome=n=>n==="INSIDE SALES"?"Inside Sales":n.split(" ").map(w=>w.length>2?w[0]+w.slice(1).toLowerCase():w.toLowerCase()).join(" ");
   const is=X.resp.find(r=>r[0]==="INSIDE SALES")||["INSIDE SALES",0,0,0];const max=Math.max(...X.resp.map(r=>r[1]));
@@ -8848,7 +8852,7 @@ function vIntB2C(){
     <input type="hidden" id="b2c_nlin" value="${X.resp.length+2}"><div class="acoes" style="margin-top:12px"><button class="btn" type="submit">Salvar</button><button class="link" type="button" data-a="b2c-ed">Cancelar</button></div></form>`;}
   return `${ehAdmin()?`<div class="acoes" style="justify-content:flex-end;margin:0"><button class="btn sec" data-a="b2c-ed">Editar dados desta safra</button></div>`:""}<div><h1 class="titulo">B2C de híbridos por responsável comercial</h1><p class="sub">Quanto da venda direta ao produtor de Sabiá, Cayana e Carcará fica com cada responsável comercial, e qual o peso do Inside Sales.</p></div>
   <div class="filtros" role="group" aria-label="Safra">${SF.map(s=>`<button class="chip" data-a="b2c-sf" data-v="${esc(s)}" aria-pressed="${s===sf}">${esc(s.replace("*"," parcial"))}</button>`).join("")}</div>
-  ${sf==="26/27*"?`<div class="aviso-est" style="margin-top:10px"><strong>Safra em andamento</strong>Os dados desta safra vão até ${X.ate?new Date(X.ate+"T12:00").toLocaleDateString("pt-BR"):"—"}. Para acompanhar a safra 26/27 no dia a dia, use o painel do Inside Sales.</div>`:""}
+  ${sf==="26/27*"?`<div class="aviso-est" style="margin-top:10px"><strong>Safra em andamento</strong>${vivo?`Calculado agora a partir do CRM da RD Station (vendas ganhas no Funil de Vendas, segmento B2C, só Sabiá, Cayana e Carcará), a mesma base do Meu CRM. São estimativas: os números oficiais estão no ERP e no BI de Pedidos.`:`Os dados desta safra vão até ${X.ate?new Date(X.ate+"T12:00").toLocaleDateString("pt-BR"):"—"}.`}</div>`:""}
   <div class="dir-grid" style="margin-top:12px">
     <div class="dir-card"><span class="meta">Inside Sales · volume B2C</span><strong style="display:block;font-size:28px;color:var(--azul)">${pc(is[1],X.kg)}</strong><span class="meta">${nf(is[1])} de ${nf(X.kg)} kg</span></div>
     <div class="dir-card"><span class="meta">Inside Sales · faturamento B2C</span><strong style="display:block;font-size:28px;color:var(--azul)">${pc(is[2],X.rs)}</strong><span class="meta">R$ ${nf(is[2])} de R$ ${nf(X.rs)}</span></div>
@@ -12266,6 +12270,7 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-del-n"){S.mkDel=false;render();return;}
   if(a==="mk-excluir"){if(!ehMkt())return;const {error}=await sb.from("mkt_acoes").delete().eq("id",S.mkSel);if(error){aviso("Não foi possível excluir.");return;}S.mk=(S.mk||[]).filter(x=>x.id!==S.mkSel);S.pag="acoes-quadro";render();aviso("Ação excluída.");return;}
   if(a==="mk-mes"){S.mkMes=v;render();return;}
+  if(a==="mk-sol-abrir"){S.secao="acoes-mkt";S.mkSel=+v;S.pag="acoes-card";S.mk=null;carregarMkt();if(typeof carregarMkCard==="function")carregarMkCard(+v);render();window.scrollTo(0,0);return;}
   if(a==="mk-ir-solic"){S.secao="acoes-mkt";S.pag="acoes-solic";S.mk=null;carregarMkt();render();window.scrollTo(0,0);return;}
   if(a==="mk-sol-canc"){const {data,error}=await sb.rpc("mkt_cancelar_solicitacao",{p_id:+v});if(error||!data){aviso("Não foi possível cancelar.");return;}S.mk=null;await carregarMkt();aviso("Solicitação cancelada.");return;}
   if(a==="mk-brindes"){const x=(S.mk||[]).find(y=>y.id===+v);S.bdAcaoPre=+v;S.bdAcaoPreT=x?x.titulo:"";S.secao="brindes";S.pag="brindes-catalogo";S.bd=null;carregarBrindes();render();window.scrollTo(0,0);return;}
