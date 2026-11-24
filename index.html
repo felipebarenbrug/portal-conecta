@@ -431,6 +431,10 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .par-m{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.par-m .metric{min-width:0;padding:10px}@media(max-width:520px){.par-m{grid-template-columns:minmax(0,1fr)!important}}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .lo-int{display:block;background:#1E1E1E;color:#fff;border-radius:6px;padding:6px 10px;font-size:13px}.lo-int strong{color:#FFDB00}.lo-como summary{cursor:pointer}
+.bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:12px}
+.bp-card{background:var(--branco,#fff);border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto}
+.bp-card.ativa{outline:3px solid var(--amarelo,#FFDB00)}.bp-img{padding:0;border:0;background:#000;cursor:pointer;display:block}.bp-img img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.bp-txt{display:grid;gap:2px;padding:10px 12px 4px}.bp-acs{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 12px 12px}
 .nps-lst{display:grid;background:#fff;border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden}
 .nps-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--linha,#dde3ea)}
 .nps-r:first-child{border-top:0}
@@ -1459,13 +1463,15 @@ const MATERIAIS=[
  {c:"Geral", tipo:"Apostila", n:"E-book — Quem planta capim quer colher arroba", url:"materiais/ebook-colher-arroba.pdf"},
 ];
 // Vídeos da base — g: grupo (Conteúdo técnico, Caso de sucesso, Bate-papo)
+/* Bate-Papo Barenbrug: entrevistas do YouTube da Barenbrug, com o episódio em podcast no Spreaker */
+const BATEPAPO_SHOW="https://www.spreaker.com/podcast/bate-papo-barenbrug-tendencias-do-agronegocio--4537727";
+const BATEPAPO=[{"n": "Thiago Bernardino de Carvalho", "q": "Professor e pesquisador do Cepea", "d": "2022-04-29", "yt": "E25Rsf0hv1E", "sp": "49596846"},{"n": "Janaina Martuscello", "q": "Professora e idealizadora do canal Forragicultura e Pastagens", "d": "2022-03-23", "yt": "T2LE7-VygBg", "sp": "49166307"},{"n": "Vanessa Sabioni", "q": "CEO do Agromulher", "d": "2022-03-08", "yt": "ltG7xnVGkEY", "sp": "48994328"},{"n": "Alexandre Berndt", "q": "Pesquisador e chefe-geral da Embrapa Pecuária Sudeste", "d": "2022-02-24", "yt": "HRJV_HidR30", "sp": "48862573"},{"n": "Flávia Fontes", "q": "CEO da Integral Comunicação", "d": "2021-12-01", "yt": "2I4XzE265QY", "sp": "47725887"},{"n": "Eduardo Bastos", "q": "Diretor de Sustentabilidade da Bayer Crop Science", "d": "2021-10-07", "yt": "pq9JZmrKrvk", "sp": "46871440"},{"n": "André Guillaumon", "q": "CEO da BrasilAgro", "d": "2021-08-11", "yt": "KbX_XJ30-wA", "sp": "46052044"},{"n": "Sérgio de Zen", "q": "Diretor de Política Agrícola e Informações da Conab", "d": "2021-06-17", "yt": "o9ADuE3c5e4", "sp": "45341270"},{"n": "Ruy Shiozawa", "q": "CEO do Great Place to Work Brasil", "d": "2021-05-24", "yt": "bCZCkdqFdPg", "sp": "45005190"},{"n": "Carlos Balbi", "q": "Diretor-geral da Nuseed do Brasil", "d": "2021-03-29", "yt": "GBgf9jJkFSE", "sp": "44098775"},{"n": "Eduardo Valias", "q": "Médico veterinário e consultor de mercado", "d": "2021-02-01", "yt": "xUgpn6CBJPU", "sp": "43227256"},{"n": "Daniel Pagotto", "q": "CEO da Tratto Consultoria", "d": "2021-02-01", "yt": "EfBDP0Ggo08", "sp": "43226911"},{"n": "Otávio Celidonio", "q": "Diretor executivo da AgriHub", "d": "2020-12-03", "yt": "mvPWpvucmq8", "sp": "42302526"},{"n": "Moacyr Bernardino Dias-Filho", "q": "Pesquisador da Embrapa Amazônia Oriental", "d": "2020-11-19", "yt": "dcMzQZ47TYI", "sp": "42061579"},{"n": "Mario Garcia", "q": "Diretor na Exagro", "d": "2020-11-12", "yt": "CNbgDirigj0", "sp": "41943515"},{"n": "Fernando Viana", "q": "Produtor rural e influenciador (Viana na Lida)", "d": "2020-11-05", "yt": "UELWc87EHK4", "sp": "41809667"},{"n": "Renato Seraphim", "q": "CEO da Agro100 e Agro Ferrari", "d": "2020-11-03", "yt": "uDBNl3eAT4Y", "sp": "41780207"},{"n": "Celso Mello", "q": "Diretor-geral da Cargill Nutrição Animal (Nutron)", "d": "2020-09-24", "yt": "HdwgHX_wsFI", "sp": "41105604"},{"n": "Alcides Torres", "q": "Diretor-presidente da Scot Consultoria", "d": "2020-09-04", "yt": "37AXkXZ3EU8", "sp": "40707213"},{"n": "Aurélio Pavinato", "q": "CEO da SLC Agrícola", "d": "2020-08-17", "yt": "Qa3meDgBeqA", "sp": "40372062"},{"n": "Cleiton Luiz Custódio", "q": "CEO da AgroSB", "d": "2020-08-17", "yt": "PQ3rYEAMvls", "sp": "40372053"},{"n": "Rudi den Hartog", "q": "Diretor-presidente da CRV Lagoa", "d": "2020-08-17", "yt": "cWGrlF8UfP8", "sp": "40371968"}];
 const VIDEOS_BASE=[
  {c:"Geral",g:"Conteúdo técnico",t:"A importância dos híbridos para a formação da forrageira",yt:"kgSpuBh0Bp4"},
  {c:"Geral",g:"Conteúdo técnico",t:`Aspectos técnicos e resultados com novos cultivares de ${sci("Brachiaria")}`,yt:"KpuiMq3Fwvo"},
  {c:"Geral",g:"Conteúdo técnico",t:"Tem novidade no prato do boi",yt:"zzIyuOBnHbo"},
  {c:"Sabiá",g:"Conteúdo técnico",t:"Braquiária híbrida: boa opção para regiões com estresse hídrico",yt:"z0XVSyLlNdM"},
  {c:"Cayana",g:"Conteúdo técnico",t:"Conheça as características da cultivar Cayana",yt:"BXbKSyvG-cI"},
- {c:"Geral",g:"Bate-papo",t:"Bate-papo Barenbrug com a pesquisadora Janaina Martuscello",yt:"T2LE7-VygBg"},
  {c:"Geral",g:"Caso de sucesso",t:"Rancho da Serra — Oriximiná (PA)",yt:"FModic6847Y"},
  {c:"Geral",g:"Caso de sucesso",t:"Fazenda Beira Rio — Patos de Minas (MG)",yt:"8bhKiFKYlMk"},
  {c:"Geral",g:"Caso de sucesso",t:"Fazenda Santa Eugênia — Jaguari (RS)",yt:"ogkBUHO7bLQ"},
@@ -1747,7 +1753,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124111525";
+const APP_VER="20261124122218";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8104,7 +8110,8 @@ function vBase(){
   const mats=MATERIAIS.filter(x=>(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||x.tipo===S.fTipo)&&txtPlano(x.n).includes(b));
   const vidsG=VIDEOS_BASE.filter(x=>x.g!=="Caso de sucesso"&&(S.fCult==="Todos"||x.c===S.fCult)&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
   const casos=VIDEOS_BASE.filter(x=>x.g==="Caso de sucesso"&&(S.fCult==="Todos"||S.fCult==="Geral")&&(S.fTipo==="Todos"||S.fTipo==="Vídeo")&&txtPlano(x.t).includes(b));
-  const vatual=S.baseVideo?VIDEOS_BASE.find(x=>x.yt===S.baseVideo):null;
+  const bp=BATEPAPO.filter(x=>(S.fCult==="Todos"||S.fCult==="Geral")&&(S.fTipo==="Todos"||S.fTipo==="Vídeo"||S.fTipo==="Podcast")&&txtPlano(x.n+" "+x.q+" bate-papo").includes(b));
+  const vatual=S.baseVideo?(VIDEOS_BASE.find(x=>x.yt===S.baseVideo)||(()=>{const e=BATEPAPO.find(x=>x.yt===S.baseVideo);return e?{yt:e.yt,t:"Bate-Papo Barenbrug com "+e.n}:null;})()):null;
   const chips=(a,sel,act)=>a.map(x=>`<button class="chip" data-a="${act}" data-v="${x}" aria-pressed="${sel===x}">${x}</button>`).join("");
   const mostraMat=S.fTipo==="Todos"||["Apostila","Podcast"].includes(S.fTipo);
   const mostraVid=S.fTipo==="Todos"||S.fTipo==="Vídeo";
@@ -8119,6 +8126,8 @@ function vBase(){
   <div class="filtros">${chips(["Todos","Vídeo","Apostila","Podcast"],S.fTipo,"ftipo")}</div>
   ${vatual?`<section class="bloco"><div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vatual.yt}?rel=0" title="${esc(vatual.t)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div></section>`:""}
   ${mostraVid&&casos.length?`<section class="bloco"><h2 class="sec">Casos de sucesso</h2><p class="sub" style="margin:0 0 10px">Os ${casos.length} vídeos de produtores contando o resultado dos híbridos Barenbrug estão na aba Casos de sucesso, aqui na Academia, com mapa e filtro por estado e região.</p><button class="btn" data-a="pag" data-v="casos">Abrir Casos de sucesso</button></section>`:""}
+  ${bp.length?`<section class="bloco" id="bate-papo"><h2 class="sec">Bate-Papo Barenbrug${inf("Entrevistas da Barenbrug com líderes do agronegócio sobre mercado, tecnologia, gestão e o futuro da pecuária. Cada episódio tem o vídeo no YouTube da Barenbrug e a versão em podcast.")}</h2><p class="sub" style="margin:0 0 10px">${BATEPAPO.length} entrevistas com líderes do agronegócio, em vídeo e em podcast. <a class="link" href="${BATEPAPO_SHOW}" target="_blank" rel="noopener">Ouvir todos no podcast ↗</a></p>
+    <div class="bp-grid">${(S.bpTodos||b?bp:bp.slice(0,6)).map(x=>`<div class="bp-card${x.yt===S.baseVideo?" ativa":""}"><button class="bp-img" data-a="bvideo" data-v="${x.yt}" aria-label="Assistir à entrevista com ${esc(x.n)}"><img src="https://img.youtube.com/vi/${x.yt}/mqdefault.jpg" alt="" loading="lazy"></button><div class="bp-txt"><strong>${esc(x.n)}</strong><span class="meta">${esc(x.q)}</span><span class="meta">${x.d.split("-").reverse().join("/")}</span></div><div class="bp-acs"><button class="btn sec" data-a="bvideo" data-v="${x.yt}">${x.yt===S.baseVideo?"Assistindo":"Assistir"}</button><a class="link" href="https://www.spreaker.com/episode/${x.sp}" target="_blank" rel="noopener">Ouvir o podcast ↗</a></div></div>`).join("")}</div>${!S.bpTodos&&!b&&bp.length>6?`<div class="acoes" style="margin:10px 0 0"><button class="btn sec" data-a="bp-todos">Ver as ${bp.length} entrevistas</button></div>`:""}</section>`:""}
   ${mostraVid?`<section class="bloco"><h2 class="sec">Vídeos</h2>${vidHTML}</section>`:""}
   ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
@@ -13433,6 +13442,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="abrir"){S.etapa=+v;S.video=0;irPag("etapa");}
   if(a==="video"){S.video=+v;render();}
   if(a==="mat")aviso("No lançamento, este botão abre o material.");
+  if(a==="bp-todos"){S.bpTodos=true;render();return;}
   if(a==="bvideo"){S.baseVideo=S.baseVideo===v?null:v;render();if(S.baseVideo)window.scrollTo(0,0);}
   if(a==="precos"){const ac=Array.isArray(S.profile.acessos)?S.profile.acessos:[];if(ehAdmin()||ac.includes("tabela-precos")){S.secao="tabela-precos";S.pag="precos";render();window.scrollTo(0,0);}else aviso("As condições comerciais são liberadas pelo administrador. Peça o acesso a quem cuida do seu cadastro.");return;}
   if(a==="pos-quiz")irPag(qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"cert":"trilha");
