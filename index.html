@@ -1711,7 +1711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123213940";
+const APP_VER="20261123214448";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4931,6 +4931,51 @@ const REGUA_HTML=()=>`<details class="bloco" style="margin-top:10px"><summary><s
   <p class="sub" style="margin:8px 0">Cada negociação em aberto tem uma qualificação de 1 a 5 estrelas no CRM. O ponderado multiplica os quilos e o valor da negociação pela chance de venda da estrela. Vendida conta 100%; perdida e pausada ficam fora.</p>
   <div class="tab"><table class="sim-t"><thead><tr><th>Qualificação no CRM</th><th class="val">Chance de venda</th><th>Exemplo: 1.000 kg em aberto</th></tr></thead><tbody>${[[5,"Muito Quente"],[4,"Quente"],[3,"Neutro"],[2,"Frio"],[1,"Muito Frio"]].map(([e,n])=>`<tr><td>${"★".repeat(e)}${"☆".repeat(5-e)} ${n}</td><td class="val"><strong>${Math.round(CRM_PESO[e]*100)}%</strong></td><td>entram ${Math.round(1000*CRM_PESO[e]).toLocaleString("pt-BR")} kg no ponderado</td></tr>`).join("")}</tbody></table></div>
   <p class="meta" style="margin:8px 0 0">A mesma régua vale no Meu CRM, no painel do Inside Sales e no Mapa Comercial. Atenção: 1 estrela é o valor padrão do CRM quando ninguém classifica, então negociação sem qualificação real entra com 5%. A taxa de conversão abaixo não usa a régua: é o que de fato virou venda.</p></details>`;
+/* ===== Prospecção: origem das negociações do Funil de Vendas Barenbrug criadas na safra (tabela crm_origem, rotina crm-origem) =====
+   Forecast = campanha Forecast (carga de começo de safra). Pedido direto = lançado já ganho (fechado em até 24 h da criação), não conta como prospecção.
+   Nova = criada pelo vendedor fora do Forecast. Índice de Prospecção = novas por mês do responsável ÷ média do time. */
+async function carregarCrmOrigem(){try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_origem").select("dono,resp,criado,fechado,st,origem,kg_h,kg_c,rs,org,atualizado_em").order("did").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.crmOrigem=t;}catch(e){S.crmOrigem=[];}render();}
+function prospeccaoHTML(){
+  if(S.crmOrigem===undefined){S.crmOrigem=null;carregarCrmOrigem();}
+  if(!S.crmOrigem)return `<div class="carregando">Lendo a origem das negociações…</div>`;
+  const O=S.crmOrigem;if(!O.length)return `<section class="bloco"><h2 class="sec">Prospecção por responsável</h2><div class="vazio">A leitura da origem das negociações roda três vezes por dia e ainda não terminou. Volte mais tarde.</div></section>`;
+  const N=x=>Number(x)||0;const ton=k=>(N(k)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";const pc=x=>x==null?"—":Math.round(x*100)+"%";
+  const hoje=new Date(Date.now()-3*3600e3);const ini=new Date(2026,6,1);const meses=Math.max(1,(hoje-ini)/(30.44*864e5));
+  const G={};O.forEach(x=>{const k=x.dono==="Inside Sales"?"IS · "+(x.resp==="Felipe"?"Tobias (Leite e Tobias)":x.resp||"time"):x.dono;const g=G[k]||(G[k]={d:k,tot:0,nova:{n:0,g:0,p:0,a:0,kg:0,kgA:0},fc:{n:0,g:0,p:0,a:0,kg:0},dir:{n:0,kg:0},org:new Set()});g.tot++;
+    const o=x.origem==="forecast"?g.fc:x.origem==="direto"?g.dir:g.nova;o.n++;if(x.st==="G")o.kg+=N(x.kg_h);
+    if(o.g!=null){if(x.st==="G")o.g++;else if(x.st==="P")o.p++;else{o.a++;if(o.kgA!=null)o.kgA+=N(x.kg_h);}}});
+  const L=Object.values(G).map(g=>({...g,nm:g.nova.n/meses,txN:g.nova.g+g.nova.p?g.nova.g/(g.nova.g+g.nova.p):null,txF:g.fc.g+g.fc.p?g.fc.g/(g.fc.g+g.fc.p):null,pNova:(g.nova.n+g.fc.n)?g.nova.n/(g.nova.n+g.fc.n):0}));
+  /* o índice compara cada um com o próprio grupo: campo com campo, Inside Sales com Inside Sales (supervisão e carteira do Tobias ficam fora da média) */
+  const grp=x=>/^IS · /.test(x.d)?"is":"campo";const naMedia=x=>!/^IS · (Mayane|Tobias)/.test(x.d);const MD={};
+  ["campo","is"].forEach(gk=>{const B=L.filter(x=>grp(x)===gk&&naMedia(x));const g=B.reduce((t,x)=>t+x.nova.g,0),p=B.reduce((t,x)=>t+x.nova.p,0);MD[gk]={m:B.length?B.reduce((t,x)=>t+x.nm,0)/B.length:0,tx:g+p?g/(g+p):0};});
+  const media=MD.campo.m,txMed=MD.campo.tx;
+  L.forEach(x=>{const md=MD[grp(x)];x.ip=md.m?x.nm/md.m:0;const muito=x.ip>=1,conv=(x.txN||0)>=md.tx&&x.nova.g>0;x.perfil=!naMedia(x)?["Fora da comparação","cinza"]:muito&&conv?["Caçador","azul"]:muito?["Semeador","amarelo"]:x.fc.n>=x.nova.n?["Colhedor da carteira","cinza"]:conv?["Converte pouco volume","cinza"]:["Em alerta","vermelho"];});
+  L.sort((a,b)=>(grp(a)===grp(b)?0:grp(a)==="campo"?-1:1)||b.ip-a.ip);const em=O.reduce((t,x)=>x.atualizado_em>t?x.atualizado_em:t,"");
+  const nomeD=d=>d;
+  return `<section class="bloco"><h2 class="sec">Prospecção por responsável${inf("Só o Funil de Vendas Barenbrug, negociações criadas desde 1º de junho de 2026 (safra 26/27). Cada negociação recebe uma origem: Forecast (veio da campanha Forecast, a carga de começo de safra), Pedido direto (lançada já ganha, fechada em até 24 horas da criação: é registro de pedido, não prospecção) ou Nova (criada pelo vendedor fora do Forecast). Bonificações ficam fora.")}</h2>
+    <p class="sub" style="margin:0 0 8px">Quem abre negociação nova e converte, e quem trabalha só a carteira do Forecast. ${meses.toLocaleString("pt-BR",{maximumFractionDigits:1})} meses de safra até hoje.</p>
+    <div class="tab"><table class="sim-t"><thead><tr><th>Responsável</th>
+      <th class="val">Novas criadas${inf("Negociações de origem Nova criadas na safra pelo responsável.")}</th>
+      <th class="val">Novas por mês${inf("Novas criadas ÷ meses de safra decorridos desde 1º de julho.")}</th>
+      <th class="val">Índice de Prospecção${inf("Novas por mês do responsável ÷ média de novas por mês do grupo dele (campo com campo, Inside Sales com Inside Sales). 1,0 = na média; 2,0 = o dobro; 0,5 = metade. Supervisão e carteira do Tobias aparecem, mas ficam fora da média do Inside Sales.")}</th>
+      <th class="val">% novas no funil${inf("Novas ÷ (Novas + Forecast). Mostra quanto do trabalho de cada um é negociação aberta por ele.")}</th>
+      <th class="val">Conversão das novas${inf("Novas ganhas ÷ (novas ganhas + novas perdidas). As em aberto não entram.")}</th>
+      <th class="val">Conversão do Forecast${inf("Mesma conta para as negociações da campanha Forecast.")}</th>
+      <th class="val">Híbridos vendidos de novas${inf("Quilos de Sabiá, Cayana e Carcará nas novas ganhas.")}</th>
+      <th class="val">Pedidos diretos${inf("Lançados já ganhos. Contam como venda, não como prospecção.")}</th>
+      <th>Perfil${inf("Caçador: índice de prospecção ≥ 1 e conversão das novas na média do grupo ou acima. Semeador: prospecta muito e converte abaixo da média. Colhedor da carteira: tem mais Forecast que negociação nova. Em alerta: prospecta pouco e converte pouco.")}</th></tr></thead>
+    <tbody>${L.map(x=>`<tr><td><strong>${esc(nomeD(x.d))}</strong><br><span class="meta">${x.tot} negociações · ${x.fc.n} Forecast</span></td><td class="val">${x.nova.n}<br><span class="meta">${x.nova.a} em aberto</span></td><td class="val">${x.nm.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td><td class="val"><strong>${x.ip.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})}</strong></td><td class="val">${pc(x.pNova)}</td><td class="val">${pc(x.txN)}<br><span class="meta">${x.nova.g} de ${x.nova.g+x.nova.p}</span></td><td class="val">${pc(x.txF)}<br><span class="meta">${x.fc.g} de ${x.fc.g+x.fc.p}</span></td><td class="val">${ton(x.nova.kg)}</td><td class="val">${x.dir.n}</td><td>${stTag(x.perfil[0],x.perfil[1])}</td></tr>`).join("")}</tbody></table></div>
+    <p class="meta" style="margin:6px 0 0">Média do campo: ${media.toLocaleString("pt-BR",{maximumFractionDigits:1})} novas por mês, conversão das novas ${pc(txMed)} · média do Inside Sales: ${MD.is.m.toLocaleString("pt-BR",{maximumFractionDigits:1})} novas por mês, conversão ${pc(MD.is.tx)}. Leitura do CRM ${em?"em "+fmtDataHora(em):""}. No Inside Sales, cada pessoa aparece em uma linha (IS ·). Atenção: as negociações novas do Inside Sales nascem em boa parte dos leads do Marketing (MQL), então medem atendimento rápido do lead, e não só prospecção ativa como no campo.</p>
+    <details style="margin-top:8px"><summary><strong>Como chegamos a esses números</strong></summary>
+      <ol style="margin:8px 0 0;padding-left:20px;display:grid;gap:4px;font-size:14px">
+        <li>A pergunta foi: quem só trabalha as negociações do começo de safra (Forecast) e quem entra com negociação nova e converte.</li>
+        <li>Base: só o Funil de Vendas Barenbrug. Negociações criadas desde 1º de junho de 2026, que inclui a carga do Forecast de agosto.</li>
+        <li>Forecast é identificado pela campanha Forecast no CRM, a mesma usada no painel do Inside Sales.</li>
+        <li>Pedido lançado já ganho, em até 24 horas da criação, foi separado: é registro de venda, não prospecção (já tínhamos visto vendas digitadas direto como Pedido Finalizado).</li>
+        <li>Índice de Prospecção compara cada um com a média do time, para não depender do tamanho da carteira. Conversão das novas mostra se a prospecção vira venda.</li>
+        <li>Limites: negociação recriada para um cliente que já estava no Forecast conta como nova; a conversão conta negociações, não quilos; quem tem poucas negociações fechadas pode ter taxa instável.</li>
+      </ol></details></section>`;
+}
 async function carregarCrmPerdas(){try{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_perdas").select("dono,kg_h,kg_c,rs,fechado").gte("fechado","2026-07-01").order("did").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}S.crmPerdas=t;}catch(e){S.crmPerdas=[];}render();}
 async function carregarCrmTodosX(){const [m,e]=await Promise.all([sb.from("metas_safra").select("*").eq("safra","26/27").maybeSingle(),(async()=>{let t=[],de=0;for(;;){const {data,error}=await sb.from("crm_mapa").select("st,kg_h,kg_c,cults").eq("exp",true).order("id").range(de,de+999);if(error||!data)break;t=t.concat(data);if(data.length<1000)break;de+=1000;}return t;})()]).catch(()=>[{},[]]);
   S.crmTodosX={meta:(m&&m.data)||null,exp:e||[]};render();}
@@ -4965,6 +5010,7 @@ function vCRMTodos(rows,seletor){
       <p class="sub" style="margin:0 0 8px">Duas projeções lado a lado: uma pelo que cada responsável de fato fecha (taxa de conversão) e outra pela qualificação que ele dá às negociações (estrelas). Quando a chance média das estrelas fica muito acima da taxa de conversão, o funil está otimista; muito abaixo, as estrelas estão sem preencher.</p>
       <div class="tab"><table class="sim-t"><thead><tr><th>Responsável</th><th class="val">Em aberto</th><th class="val">Ganhas</th><th class="val">Perdidas</th><th class="val">Taxa de conversão</th><th class="val">Chance média nas estrelas</th><th class="val">Projeção pela conversão</th><th class="val">Projeção ponderada</th></tr></thead><tbody>${lin.map(x=>row(x)).join("")}${row({...S2,tx:txT,txP:S2.a?(S2.pPd-S2.v)/S2.a:0},true)}</tbody></table></div>
       <p class="meta" style="margin:6px 0 0">Projeções em ${mu?"híbridos + Mulato II":"híbridos (Sabiá, Cayana e Carcará)"}. Contagem de negociações, não de quilos, na taxa de conversão.</p></section>`;})()}
+  ${prospeccaoHTML()}
   ${REGUA_HTML()}
   <section class="bloco"><h2 class="sec">Por vendedor</h2><div class="tab"><table class="sim-t"><thead><tr><th>Vendedor</th><th class="val">${mu?"Híbridos + Mulato II":"Híbridos"} vendidos</th><th class="val">Ponderado</th><th class="val">Projeção</th></tr></thead><tbody>${L.map(r=>{const Q=r.qtd;const M=mu?crmMulato(r,r.dono):null;const v=N(Q.vh)+(M?M.v:0),p=N(Q.pondh)+(M?M.p:0);return {d:r.dono,v,p};}).sort((a,b)=>(b.v+b.p)-(a.v+a.p)).map(x=>`<tr><td><button class="link" data-a="crm-sel" data-v="${esc(x.d)}">${esc(x.d==="Inside Sales"?"Inside Sales · time":x.d)}</button></td><td class="val">${ton(x.v)}</td><td class="val">${ton(x.p)}</td><td class="val"><strong>${ton(x.v+x.p)}</strong></td></tr>`).join("")}</tbody></table></div></section>`;
 }
