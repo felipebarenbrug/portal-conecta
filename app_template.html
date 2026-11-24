@@ -2824,7 +2824,7 @@ function subnavAcademia(){
     ["Ferramentas de campo",[["suporte","Capacidade de suporte"],veCalcRent()&&["calc","Calculadora de rentabilidade"]]],
     ["Seu progresso",S.rankOff?[]:[["ranking","Ranking"]]]];
   if(LANG()==="es")G.forEach(g=>{g[1]=g[1].filter(x=>x&&!ES_SO_BR.includes(x[0]));});
-  const prev=ehAdmin()?`<div class="w" style="display:flex;justify-content:flex-end;padding-top:6px"><button class="link" data-a="lang-prev">${S.langPrev?"Voltar ao português":"Ver como Exportação (espanhol)"}</button></div>`:"";
+  const prev=ehAdmin()?`<div class="w" style="display:flex;justify-content:flex-end;padding-top:6px"><button class="link" data-a="lang-prev" title="${S.langPrev?"Voltar ao português":"Ver como Exportação (espanhol)"}" aria-label="${S.langPrev?"Voltar ao português":"Ver como Exportação (espanhol)"}" style="padding:4px;line-height:0">${S.langPrev?`<svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true" style="display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)"><rect width="30" height="20" fill="#009C3B"/><path d="M15 2.5 27 10 15 17.5 3 10Z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.2" fill="#002776"/></svg>`:`<svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true" style="display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)"><rect width="30" height="20" fill="#AA151B"/><rect y="5" width="30" height="10" fill="#F1BF00"/></svg>`}</button></div>`:"";
   return navGrupos(G.filter(g=>g[1].length),"Academia de Híbridos",k=>S.pag===k||(k==="trilha"&&S.pag==="etapa"))+prev;
 }
 function subnavEnxoval(){
