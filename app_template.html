@@ -45,12 +45,12 @@ img{max-width:100%}
 .topo-ic b{position:absolute;top:-3px;right:-5px;background:var(--vermelho);color:#fff;font-size:11px;line-height:1;padding:3px 5px;border-radius:999px;font-weight:700}
 .logo-b{background:none;border:0;padding:0;cursor:pointer;line-height:0;flex:0 0 auto}
 /* Manual da marca: logo sempre sobre amarelo Barenbrug, com respiro >= 1x a altura do logotipo em todos os lados */
-.logo{height:20px;width:auto;display:block;margin:20px 20px 20px 6px}
+.logo{height:52px;width:auto;display:block;margin:4px 14px 4px 0}
 .quem{font-size:13px;text-align:right;min-width:0;line-height:1.35;margin-right:4px;overflow:hidden}
 .quem .q1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .quem .q2{display:block;white-space:nowrap}
 @media (max-width:560px){.quem .qp{display:none}.quem{font-size:12.5px}.topo-ic{width:36px;height:36px}.topo-acoes{gap:6px}}
-@media (max-width:370px){.topo .logo{height:13px;margin:18px 4px 18px 0}.topo-in{gap:8px}}
+@media (max-width:370px){.topo .logo{height:36px;margin:6px 2px 6px 0}.topo-in{gap:8px}}
 
 .quem button{background:none;border:0;padding:0;color:var(--preto);text-decoration:underline;cursor:pointer;font-size:13px}
 
@@ -101,7 +101,7 @@ h2.sec{color:var(--azul);font-size:21px;font-weight:800}
 .acesso{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;background:var(--branco)}
 .acesso-marca{background:var(--amarelo);padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
 .acesso-marca h1{font-size:clamp(30px,5vw,42px);font-weight:800;color:var(--preto)}
-.acesso-marca .logo{height:24px;margin:0;align-self:flex-start}
+.acesso-marca .logo{height:62px;margin:0;align-self:flex-start}
 .acesso-form{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px}
 .acesso-form.rolavel{justify-content:flex-start}
 .acesso-form h2{color:var(--azul);font-weight:800;font-size:24px}
@@ -263,8 +263,8 @@ table.frete td.val{text-align:right;font-weight:700;white-space:nowrap}
 
 @media (max-width:640px){
   .acesso{grid-template-columns:1fr;min-height:0}
-  .logo{height:16px;margin:16px 8px 16px 2px}
-  .acesso-marca .logo{height:20px;margin:0}
+  .logo{height:42px;margin:5px 6px 5px 0}
+  .acesso-marca .logo{height:52px;margin:0}
   .nav button{padding:9px 8px;font-size:14px}
   .secao-nome{display:none}
 }
@@ -4545,7 +4545,7 @@ const NG_CRED_DOCS=[
   ["Empresa (PJ), cliente novo, a prazo",["RG e CPF ou CNH e comprovante de endereço dos sócios","Comprovante de endereço da empresa e e-mail","Imposto de Renda do último ano dos sócios","Balanço patrimonial e DRE do último ano","Declaração de faturamento do último ano, assinada pelo contador","Imposto de Renda da empresa (IRPJ) do último ano","Contrato social e última alteração","Parecer comercial no modelo da Barenbrug"]],
   ["À vista ou cartão (documentação mínima)",["Documento com foto","Comprovante de endereço igual ao do pedido","Pedido assinado pelo cliente"]],
   ["Cliente que já compra (renovação anual)",["Imposto de Renda do último ano","Balanço, DRE e declaração de faturamento (PJ)","Comprovante de endereço","Parecer comercial no modelo da Barenbrug"]]];
-const NG_COLS=[["aguardando","Aguardando o responsável"],["ajustar","Para ajustar"],["barenbrug","Na Barenbrug"],["credito","Análise de crédito"],["finalizado","Pedido finalizado"],["encerradas","Encerradas"]];
+const NG_COLS=[["aguardando","Aguardando o responsável"],["ajustar","Para ajustar"],["barenbrug","Na Barenbrug"],["credito","Análise de crédito"],["finalizado","Vendido"],["encerradas","Encerradas"]];
 const ngNum=v=>{if(typeof v==="number")return v;const t=String(v??"").replace(/[^\d,.-]/g,"");if(!t)return 0;return parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;};
 const ngBRL=x=>"R$ "+(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const ngDt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
@@ -4568,7 +4568,7 @@ function ngColuna(x){if(x.status==="Cancelada"||x.crm_sit==="P")return "encerrad
   if(x.credito_status&&!["aprovado"].includes(x.credito_status))return "credito";return "barenbrug";}
 function ngSit(x){const c=ngColuna(x);
   if(c==="aguardando")return x.desconto_status==="pendente"?"Aguardando o responsável (com pedido de desconto)":"Aguardando o responsável";
-  if(c==="ajustar")return "Devolvida para ajuste";if(c==="encerradas")return x.status==="Cancelada"?"Cancelada":"Encerrada pelo comercial";if(c==="finalizado")return "Pedido finalizado";
+  if(c==="ajustar")return "Devolvida para ajuste";if(c==="encerradas")return x.status==="Cancelada"?"Cancelada":"Encerrada pelo comercial";if(c==="finalizado")return "Vendido";
   if(c==="credito")return {docs_pedidos:"Crédito: documentos pedidos",docs_enviados:"Crédito: documentos enviados",em_analise:"Crédito em análise",pendencia:"Crédito: pendência",reprovado:"Crédito não aprovado"}[x.credito_status]||"Análise de crédito";
   return "Na Barenbrug"+(x.crm_etapa?" · "+x.crm_etapa:"");}
 async function ngCarregar(forcar){const G=S.ng||(S.ng={});if(G.busy)return;G.busy=true;
@@ -4680,7 +4680,7 @@ function ngCartao(x,ver){const it=Array.isArray(x.itens)?x.itens:[];const col=ng
     ${acaoRC?`<span class="ng-card-alerta">Precisa de você</span>`:""}${x.desconto_status==="pendente"&&ver?`<span class="ng-card-alerta">Desconto para decidir</span>`:""}</button>`;}
 function ngKanban(L,ver){if(!L.length)return `<div class="vazio">Nenhuma negociação por aqui ainda.</div>`;
   const G={};L.forEach(x=>{(G[ngColuna(x)]||(G[ngColuna(x)]=[])).push(x);});
-  return `<div class="ng-kan">${NG_COLS.filter(([k])=>G[k]||!["encerradas","finalizado","ajustar"].includes(k)).map(([k,t])=>`<section class="ng-col ng-col-${k}" aria-label="${t}"><h3>${t} <span>${(G[k]||[]).length}</span></h3>${(G[k]||[]).map(x=>ngCartao(x,ver)).join("")||`<p class="meta" style="margin:4px 0">Nada aqui.</p>`}</section>`).join("")}</div>`;}
+  return `<div class="ng-kan">${NG_COLS.filter(([k])=>G[k]||!["encerradas","ajustar"].includes(k)).map(([k,t])=>`<section class="ng-col ng-col-${k}" aria-label="${t}"><h3>${t} <span>${(G[k]||[]).length}</span></h3>${(G[k]||[]).map(x=>ngCartao(x,ver)).join("")||`<p class="meta" style="margin:4px 0">Nada aqui.</p>`}</section>`).join("")}</div>`;}
 function vNegs(modo){const G=S.ng||(S.ng={});
   if(G.lista===undefined){if(!G.busy)ngCarregar().then(render);return `<div class="carregando">Carregando as negociações…</div>`;}
   if(G.aberta)return vNgDetalhe(G.lista.find(x=>x.id===G.aberta));
@@ -4707,7 +4707,7 @@ function ngMapaHTML(){const B=(cls,n,t,quem,itens,av)=>`<div class="ng-mp ${cls}
   ${B("crm","3","Registro no CRM","Automático ao aprovar, completado pelo responsável",["Cria a negociação no Funil de Vendas Barenbrug, etapa Qualificação","Só nome, responsável como dono e RC no campo Representante (empresa vinculada se já existir)","Todos os dados vão numa anotação: cliente, produtos, condições, contato","O responsável preenche os campos, os produtos, o contato e cadastra a empresa nova"],"representante")}
   ${B("rc","4","Proposta ao cliente","Representante",["PDF liberado só depois da aprovação","Cabeçalho com a razão social do RC","Válida por 15 dias a partir da emissão","Sujeita a análise de crédito pela forma de pagamento"],"")}
   ${B("fin","5","Análise de crédito (se pedida)","Responsável ou Financeiro",["Pedido dos documentos pela lista da Política de Crédito","RC anexa; só RC, responsável e Financeiro abrem os arquivos","Financeiro: em análise, aprovado, pendência ou não aprovado"],"representante, responsável e Financeiro")}
-  ${B("crm","6","Acompanhamento até o pedido","CRM, espelhado no portal",["Etapa atualizada a cada 10 minutos ou pelo botão","Avança até Pedido finalizado, ou encerrada","Histórico e mensagens ficam na negociação"],"representante, a cada mudança de etapa")}
+  ${B("crm","6","Acompanhamento até o pedido","CRM, espelhado no portal",["Etapa atualizada a cada 10 minutos ou pelo botão","Termina em Vendido quando o CRM marca a negociação como vendida, ou encerrada","Histórico e mensagens ficam na negociação"],"representante, a cada mudança de etapa")}
   </div></div></details>`;}
 /* ---------- detalhe com fluxo, ações e histórico ---------- */
 function ngFluxo(x){const col=ngColuna(x);const reg=x.status==="No CRM";const cred=!!x.credito_status;
@@ -4715,7 +4715,7 @@ function ngFluxo(x){const col=ngColuna(x);const reg=x.status==="No CRM";const cr
     ["Aprovação do responsável",reg,x.desconto_status==="pendente"?"desconto em análise":x.desconto_status==="recusado"?"desconto não aprovado: vale a tabela":x.desconto_status==="aprovado"?"desconto aprovado":x.status==="Devolvido"?"devolvida para ajuste":reg?"aprovada":"aguardando"],
     ["Registrada na Barenbrug",reg,reg?(x.crm_etapa||"Qualificação"):""],
     ["Análise de crédito",x.credito_status==="aprovado",cred?{docs_pedidos:"documentos pedidos",docs_enviados:"documentos enviados",em_analise:"em análise",aprovado:"aprovado",reprovado:"não aprovado",pendencia:"pendência"}[x.credito_status]:"se for pedida"],
-    ["Pedido finalizado",x.crm_sit==="V",""]];
+    ["Vendido",x.crm_sit==="V",x.crm_sit==="V"?"marcada como vendida no CRM":"quando o CRM marcar como vendida"]];
   const atual=P.findIndex(p=>!p[1]);
   return `<ol class="ng-fluxo">${P.map((p,i)=>`<li class="${p[1]?"feito":i===atual&&col!=="encerradas"?"atual":""}${i===3&&!cred?" opc":""}"><span class="ng-f-b">${p[1]?"✓":i+1}</span><span><strong>${p[0]}</strong>${p[2]?`<em>${esc(p[2])}</em>`:""}</span></li>`).join("")}</ol>
     ${col==="encerradas"?`<div class="nota-admin">${x.status==="Cancelada"?"Negociação cancelada.":"Negociação encerrada pelo comercial."}</div>`:""}`;}
@@ -4783,7 +4783,7 @@ function ngPropDoc(x){const it=Array.isArray(x.itens)?x.itens:[];const rc=x.rc_i
   const totP=linhas.reduce((s,l)=>s+l.sub,0),fr=x.frete_valor!=null?+x.frete_valor:null;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta ${x.id} · ${esc(x.cliente_nome)}</title><style>
 @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#1e1e1e;font-size:11.5px;margin:0 auto;max-width:820px;padding:0 16px 24px;line-height:1.45}
-.fx{height:6px;background:#FFDB00;margin:0 -16px 18px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.top img{height:46px}.emp{text-align:right;font-size:11px;color:#444}.emp strong{color:#1e1e1e;font-size:12px}
+.fx{height:6px;background:#FFDB00;margin:0 -16px 18px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.top img{height:72px;width:auto}.emp{text-align:right;font-size:11px;color:#444}.emp strong{color:#1e1e1e;font-size:12px}
 .rc{margin:14px 0 4px;padding:10px 12px;background:#f3f7f9;border-left:4px solid #00A8E2;border-radius:4px}.rc strong{font-size:13px}
 h1{font-size:24px;margin:16px 0 4px}.cli{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.cli div{border:1px solid #d5e1e7;border-radius:6px;padding:8px 10px}.r{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#5a6b74;margin:0 0 3px}
 h3{font-size:12px;margin:10px 0 2px}p{margin:0 0 2px}ul{margin:2px 0 4px 18px;padding:0}li{margin:1px 0}.it{font-style:italic;color:#444}
@@ -5018,7 +5018,7 @@ function propDoc(x){
   const pend=x.desconto_status==="pendente";
   const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta P-${x.id} · ${esc(x.cliente_nome)}</title>
 <style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;font-size:12px;margin:0 auto;max-width:820px;padding:24px 16px}@media print{body{padding:0;max-width:none}}
-.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ffdb00;padding-bottom:12px}.top img{height:38px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ffdb00;padding-bottom:12px}.top img{height:64px;width:auto}
 h1{font-size:20px;margin:14px 0 2px}.cx{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.cx div{border:1px solid #ddd;border-radius:6px;padding:10px}
 .r{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{padding:7px 8px;border-bottom:1px solid #e5e5e5;text-align:left}th{background:#f4f4f4;font-size:11px}td.v,th.v{text-align:right;white-space:nowrap}
 .tot td{font-weight:bold;font-size:14px;border-top:2px solid #1a1a1a}.cond{margin-top:16px;font-size:10.5px;color:#333}.cond li{margin:3px 0}.rod{margin-top:18px;font-size:10px;color:#666;border-top:1px solid #ddd;padding-top:8px}.bt{position:fixed;bottom:16px;right:16px;padding:10px 16px;font-size:14px;background:#00527a;color:#fff;border:0;border-radius:6px;cursor:pointer}@media print{.bt{display:none}}</style></head><body>
