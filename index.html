@@ -1840,7 +1840,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124174137";
+const APP_VER="20261124200834";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3362,6 +3362,55 @@ function vAcoesDigital(){
   <section class="bloco"><h2 class="sec">Onde o dinheiro está indo · por estado</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th class="val">Gasto</th><th style="min-width:140px">% do gasto</th><th class="val">Pessoas alcançadas</th><th class="val">Impressões</th><th class="val">Cliques</th><th class="val">Custo por mil pessoas</th></tr></thead>
     <tbody>${RG.map(x=>{const p=totR?(Number(x.gasto)||0)/totR*100:0;return `<tr><td>${esc(x.uf)} · ${esc(x.regiao||"")}</td><td class="val">${isR(x.gasto)}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:var(--azul-claro);height:8px;border-radius:4px"><div style="width:${p.toFixed(1)}%;background:var(--azul);height:8px;border-radius:4px"></div></div><span class="meta" style="min-width:42px;text-align:right">${p.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</span></div></td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.impressoes)}</td><td class="val">${isN(x.cliques)}</td><td class="val">${x.alcance?mdR2((Number(x.gasto)||0)/x.alcance*1000):"—"}</td></tr>`;}).join("")}</tbody></table></div>
     <p class="meta" style="margin:6px 0 0">Período de ${mdData((RG[0]||{}).periodo_ini)} a ${mdData((RG[0]||{}).periodo_fim)}. O Meta não separa leads por estado; para leads e vendas por estado, use o painel do Inside Sales.</p></section>`;
+}
+
+/* ===== Inteligência: alcance e eficiência da comunicação (Meta) ===== */
+async function carregarMidiaPainel(){if(S.mp!==undefined)return;S.mp=null;try{const {data}=await sb.from("midia_painel").select("*").order("feito_em",{ascending:false}).limit(1);S.mp=(data&&data[0])||false;}catch(e){S.mp=false;}render();}
+const mpPct=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
+const MP_UFN={AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MT:"Mato Grosso",MS:"Mato Grosso do Sul",MG:"Minas Gerais",PA:"Pará",PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins"};
+function mpBarra(v,mx,cor){const p=mx?Math.max(2,v/mx*100):0;return `<div style="flex:1;min-width:60px;background:var(--azul-claro,#e6f6fc);border-radius:4px;height:10px;overflow:hidden"><div style="width:${p}%;height:100%;background:${cor||"var(--azul)"}"></div></div>`;}
+function vIntAlcance(){
+  if(!ehMkt())return `<div class="vazio">Área do Marketing.</div>`;
+  if(S.mp===undefined){carregarMidiaPainel();return `<div class="carregando">Carregando…</div>`;}
+  if(S.mp===null)return `<div class="carregando">Carregando…</div>`;
+  if(!S.mp)return `<div class="vazio">Os dados da Meta ainda não foram carregados.</div>`;
+  const P=S.mp,D=P.dados||{},T=D.tot||{},M=D.meses||[],U=D.uf||[],I=D.idade||[],PO=(D.posicoes||[]).slice().sort((a,b)=>b.alcance-a.alcance),C=D.campanhas||[],PE=(D.pecas||[]).slice().sort((a,b)=>b.alcance-a.alcance);
+  const m=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const mxU=Math.max(1,...U.map(x=>x.alcance)),mxKg=Math.max(1,...U.map(x=>x.crm_kg_h||0));
+  const totI=I.reduce((t,x)=>t+x.M+x.F+x.N,0),totM=I.reduce((t,x)=>t+x.M,0),totF=I.reduce((t,x)=>t+x.F,0);
+  const funil=[["Assistiram 3 segundos ou mais",T.v3s],["Chegaram a 25% do vídeo",T.p25],["Chegaram à metade",T.p50],["Chegaram a 75%",T.p75],["Viram até o fim",T.p100]],mxF=Math.max(1,T.v3s||0);
+  const OBJ={OUTCOME_LEADS:"Leads",OUTCOME_AWARENESS:"Reconhecimento",OUTCOME_ENGAGEMENT:"Engajamento",LINK_CLICKS:"Cliques"};
+  return `<div><h1 class="titulo">Alcance e eficiência</h1><p class="sub">Quantas pessoas a comunicação da Barenbrug alcançou no Meta (Instagram e Facebook) na safra ${esc(mkSafra)}, onde, com quais vídeos e a que custo, ao lado das negociações do CRM em cada estado.</p></div>
+  <div class="cod-faixa cod-email" role="status" style="margin:0 0 14px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><strong style="font-size:18px">Atualizado em ${fmtDataHora(P.feito_em)}</strong><span>Dados de ${mdData(P.periodo_ini)} a ${mdData(P.periodo_fim)}, da conta de anúncios da Barenbrug no Meta. A atualização ainda é manual: peça ao Marketing para atualizar.</span></div></div>
+  <section class="bloco"><h2 class="sec">A safra em números</h2><div class="metrics">
+    ${m("Pessoas alcançadas",mdK(T.alcance),"pessoas únicas · cada uma viu "+(T.freq||0).toLocaleString("pt-BR",{maximumFractionDigits:1})+" vezes em média")}
+    ${m("Vezes que os anúncios apareceram",mdK(T.imp),"custo por mil "+mdR2(T.cpm))}
+    ${m("Visualizações de vídeo",mdK(T.v3s),"3 segundos ou mais · "+mdK(T.thru)+" assistiram 15 segundos ou o vídeo todo")}
+    ${m("Interações",mdK(T.engaj),"curtidas, comentários, compartilhamentos, salvamentos e cliques")}
+    ${m("Cliques",mdK(T.cliques),"para a página, o perfil ou o WhatsApp")}
+    ${m("Leads",isN(T.leads),"cadastros pelo Meta · custo médio "+mdR2(T.leads?T.gasto/T.leads:0))}
+    ${m("Novos seguidores no Instagram",isN(T.seguidores),"vindos dos anúncios")}
+    ${m("Investimento",isR(T.gasto),"custo por mil pessoas alcançadas "+mdR2(T.alcance?T.gasto/T.alcance*1000:0))}
+  </div></section>
+  <section class="bloco"><h2 class="sec">Quanto as pessoas assistiram</h2><p class="meta" style="margin:-4px 0 10px">Todos os vídeos da safra somados: de quem parou para ver até quem assistiu até o fim.</p>
+   <div style="display:grid;gap:8px">${funil.map(([t,v])=>`<div style="display:grid;grid-template-columns:minmax(150px,220px) 1fr auto;gap:10px;align-items:center"><span>${t}</span>${mpBarra(v,mxF)}<strong style="min-width:80px;text-align:right">${mdK(v)} <span class="meta">${mpPct(v,mxF)}</span></strong></div>`).join("")}</div></section>
+  <section class="bloco"><h2 class="sec">Mês a mês</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Mês</th><th class="val">Pessoas alcançadas</th><th class="val">Aparições</th><th class="val">Vídeos vistos</th><th class="val">Vídeo até o fim</th><th class="val">Interações</th><th class="val">Cliques</th><th class="val">Leads</th><th class="val">Investimento</th></tr></thead>
+   <tbody>${M.map(x=>`<tr><td>${mdMesTxt(x.mes)}${x.mes===(P.periodo_fim||"").slice(0,7)?" (parcial)":""}</td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.imp)}</td><td class="val">${mdK(x.v3s)}</td><td class="val">${mdK(x.p100)}</td><td class="val">${mdK(x.engaj)}</td><td class="val">${mdK(x.cliques)}</td><td class="val">${isN(x.leads)}</td><td class="val">${isR(x.gasto)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Onde a comunicação chegou · por estado</h2><p class="meta" style="margin:-4px 0 10px">Pessoas alcançadas pelo Meta em cada estado, ao lado do que o CRM mostra no mesmo estado na safra.</p>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Estado</th><th style="min-width:160px">Pessoas alcançadas</th><th class="val">Vídeos vistos</th><th class="val">Cliques</th><th class="val">Investimento</th><th class="val">Custo por mil pessoas</th><th class="val">Negociações vendidas</th><th class="val">Em aberto</th><th style="min-width:140px">Híbridos vendidos</th></tr></thead>
+   <tbody>${U.map(x=>`<tr><td><strong>${esc(x.uf)}</strong> <span class="meta">${esc(MP_UFN[x.uf]||"")}</span></td><td><div style="display:flex;align-items:center;gap:8px">${mpBarra(x.alcance,mxU)}<span>${mdK(x.alcance)}</span></div></td><td class="val">${mdK(x.v3s)}</td><td class="val">${mdK(x.cliques)}</td><td class="val">${isR(x.gasto)}</td><td class="val">${mdR2(x.alcance?x.gasto/x.alcance*1000:0)}</td><td class="val">${isN(x.crm_vend)}</td><td class="val">${isN(x.crm_abertas)}</td><td><div style="display:flex;align-items:center;gap:8px">${mpBarra(x.crm_kg_h||0,mxKg,"var(--amarelo-esc,#E0B400)")}<span>${x.crm_kg_h?(x.crm_kg_h/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t":"—"}</span></div></td></tr>`).join("")}</tbody></table></div>
+   <p class="meta" style="margin:6px 0 0">Híbridos vendidos e negociações vêm do CRM da safra 26/27, sem exportação. Volume alto com pouca mídia costuma ser venda a revendas (como RS e RR); muita mídia com pouco volume mostra onde a demanda ainda precisa virar venda. O Meta não separa leads nem cidades por estado nos anúncios.</p></section>
+  <section class="bloco"><h2 class="sec">Quem foi alcançado</h2><div class="metrics">${m("Homens",mpPct(totM,totI),mdK(totM)+" pessoas")}${m("Mulheres",mpPct(totF,totI),mdK(totF)+" pessoas")}${m("Sem informação",mpPct(totI-totM-totF,totI),"o Meta não informou o gênero")}</div>
+   <div class="tab" style="margin-top:10px"><table class="sim-t fin-t"><thead><tr><th>Idade</th><th style="min-width:160px">Pessoas alcançadas</th><th class="val">Homens</th><th class="val">Mulheres</th><th class="val">Leads</th><th class="val">Custo por lead</th></tr></thead>
+   <tbody>${I.map(x=>{const t=x.M+x.F+x.N;return `<tr><td>${esc(x.faixa)} anos</td><td><div style="display:flex;align-items:center;gap:8px">${mpBarra(t,Math.max(...I.map(y=>y.M+y.F+y.N)))}<span>${mdK(t)}</span></div></td><td class="val">${mdK(x.M)}</td><td class="val">${mdK(x.F)}</td><td class="val">${isN(x.leads)}</td><td class="val">${x.leads?mdR2(x.gasto/x.leads):"—"}</td></tr>`;}).join("")}</tbody></table></div>
+   <p class="meta" style="margin:6px 0 0">Por faixa de idade, a soma das pessoas pode passar do total: o Meta conta a pessoa em cada recorte.</p></section>
+  <section class="bloco"><h2 class="sec">Onde as pessoas viram</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Lugar</th><th style="min-width:160px">Pessoas alcançadas</th><th class="val">Aparições</th><th class="val">Vídeos vistos</th><th class="val">Leads</th><th class="val">Investimento</th></tr></thead>
+   <tbody>${PO.map(x=>`<tr><td>${esc(x.nome)}</td><td><div style="display:flex;align-items:center;gap:8px">${mpBarra(x.alcance,PO[0].alcance)}<span>${mdK(x.alcance)}</span></div></td><td class="val">${mdK(x.imp)}</td><td class="val">${mdK(x.v3s)}</td><td class="val">${isN(x.leads)}</td><td class="val">${isR(x.gasto)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Vídeos que mais renderam</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Peça</th><th class="val">Pessoas alcançadas</th><th class="val">Assistiram 15 s ou tudo</th><th class="val">Até o fim</th><th class="val">Interações</th><th class="val">Custo por mil pessoas</th></tr></thead>
+   <tbody>${PE.map(x=>`<tr><td style="min-width:220px">${esc(x.nome)}<br><span class="meta">campanha de ${esc(x.camp)}</span></td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.thru)}</td><td class="val">${mdK(x.p100)}</td><td class="val">${mdK(x.engaj)}</td><td class="val">${mdR2(x.alcance?x.gasto/x.alcance*1000:0)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><h2 class="sec">Por objetivo de campanha</h2><div class="tab"><table class="sim-t fin-t"><thead><tr><th>Campanha</th><th>Objetivo</th><th class="val">Pessoas alcançadas</th><th class="val">Vídeos vistos</th><th class="val">Cliques</th><th class="val">Leads</th><th class="val">Custo por lead</th><th class="val">Investimento</th></tr></thead>
+   <tbody>${C.map(x=>`<tr><td style="min-width:220px">${esc(x.nome)}</td><td>${esc(OBJ[x.obj]||x.obj||"")}</td><td class="val">${mdK(x.alcance)}</td><td class="val">${mdK(x.v3s)}</td><td class="val">${mdK(x.cliques)}</td><td class="val">${isN(x.leads)}</td><td class="val">${x.leads&&x.obj==="OUTCOME_LEADS"?mdR2(x.gasto/x.leads):"—"}</td><td class="val">${isR(x.gasto)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="bloco"><details class="ps-met"><summary><strong>Como ler estes números</strong></summary><ul class="cond">${(D.notas||[]).map(t=>`<li>${esc(t)}</li>`).join("")}<li>Investimento, verba e projeção da safra ficam em Campanhas digitais.</li></ul></details></section>`;
 }
 
 /* ===== Inside Sales: custo de aquisição (mídia x funil) ===== */
@@ -9734,11 +9783,12 @@ const INT_GRUPOS=[["Comece aqui",[["int-insumos","Insumos para o marketing"],["i
   ["Onde atuar",[["int-pot","Potencial de mercado"],["int-hh","Histórico de híbridos"],["int-mapa","Mapas B2B e B2C"],["int-perfil","Perfil dos canais"]]],
   ["Quando atuar",[["int-saz","Calendário de plantio"],["int-eventos","Eventos e janela de compra"]]],
   ["Como competir",[["int-canais","Preços dos canais"],["int-concorrentes","Preços dos concorrentes"],["int-hibridos","Concorrentes em híbridos"],["int-vendas","Preço e frete"]]],
-  ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"],["int-digital","Campanhas digitais"]]],
+  ["Como comunicar",[["int-diretriz","Como comunicar"],["int-marca","Marca, mídia e IAs"],["int-digital","Campanhas digitais"],["int-alcance","Alcance e eficiência"]]],
   ["Quem vende",[["int-rc","RCs e Inside Sales"],["int-seg","B2C e B2B"],["int-modelos","Modelos de representação"]]]];
 const INT_ABAS=INT_GRUPOS.flatMap(g=>g[1]);
 /* para cada aba: a pergunta de marketing que ela responde e a decisão que ela apoia */
 const INT_PROP={"int-insumos-ed":["O que o Marketing viu e os dados ainda não mostram.","registrar um insumo de campo, reunião ou conversa com revenda e transformá-lo em ação."],"int-ader":["As ações de marketing e de IGDB dos canais seguem o que a inteligência aponta?","Ver o que está aderente, o que está fora do mapa e onde falta executar um plano."],
+  "int-alcance":["Quantas pessoas a comunicação alcançou, onde e com quais vídeos?","Mostrar a eficiência da estratégia e decidir onde reforçar mídia, conteúdo e criativos."],
   "int-digital":["Como a mídia paga está rendendo e se o gasto cabe na verba digital da safra?","Ajustar verba, regiões e criativos das campanhas no Meta Ads e prestar contas do investimento digital."],
   "int-b2b":["Para quem e por quem o híbrido é vendido no B2B, e quanto disso é exclusivo Barenbrug?","Priorizar canais Yellow e Blue, regiões e responsáveis no plano de crescimento de híbridos, e ler o Mulato II à parte."],
   "int-b2c":["Quem vende o híbrido direto ao produtor, e qual o peso do Inside Sales nessa venda?","Dividir carteira e esforço entre Inside Sales e time de campo, e decidir onde o Inside Sales pode crescer em Cayana e Carcará."],
@@ -10890,7 +10940,7 @@ function vIntRaci(){
   ${(D.aberto||[]).length?`<section class="bloco"><h2 class="sec">Em aberto: o que ainda precisamos fechar</h2><div class="lista">${D.aberto.map((t,i)=>`<div class="linha"><div><strong>${i+1}. ${esc(t.split(":")[0])}</strong><span class="meta">${esc(t.split(":").slice(1).join(":").trim())}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function subnavInt(){
-  return navGrupos(INT_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="int-digital"||ehMkt())]),"Inteligência",k=>S.pag===k);
+  return navGrupos(INT_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>(k!=="int-digital"&&k!=="int-alcance")||ehMkt())]),"Inteligência",k=>S.pag===k);
 }
 const intData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"—";
 const INT_CULTS=["Sabiá","Cayana","Carcará","Mulato II","Cynodon","Outro"];
@@ -14047,6 +14097,7 @@ function renderApp(){
       if(S.pag==="int-contas"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntContas()}</main>`;return;}
       if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
+      if(S.pag==="int-alcance"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntAlcance()}</main>`;return;}}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
