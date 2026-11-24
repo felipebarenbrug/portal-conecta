@@ -1712,7 +1712,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123222422";
+const APP_VER="20261124064501";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6930,24 +6930,24 @@ const ACAO_TIPOS=[
  ["Dia de campo","manhã ou tarde de campo, giro de fazenda","Encontro com produtores no campo para mostrar a pastagem e o manejo, organizado pela Barenbrug, pela revenda ou pelo RC."],
  ["Campo demonstrativo","área demonstrativa, semente para teste","Implantação ou manutenção de uma área com a cultivar para mostrar resultado ao longo do tempo, inclusive a semente cedida para o teste."],
  ["Feira e evento do setor","feira, exposição, congresso, circuito técnico, leilão, cota de evento","Presença, estande ou cota em evento organizado por outra empresa ou entidade. Inclui o que antes era chamado de patrocínio: a Barenbrug paga para estar no evento de terceiros."],
- ["Evento de relacionamento","jantar de negócios, aniversário de loja, confraternização, tour na fábrica","Evento organizado pela Barenbrug, pela revenda ou pelo RC para clientes ou para a equipe do canal, com foco em relacionamento."],
+ ["Relacionamento","jantar de negócios, confraternização, visita à fábrica, cortesia de produto","Ação para criar, manter ou recuperar a relação com clientes e com a equipe do canal: evento de relacionamento ou cortesia de produto, por exemplo semente cedida para reparar uma experiência ruim do cliente."],
  ["Palestra e treinamento","palestra técnica, workshop, treinamento da equipe do canal","Conteúdo técnico apresentado a produtores ou ao time de vendas do canal, em sala ou em evento."],
- ["Visita técnica","assistência técnica, tour técnico, técnico de campo (AT)","Atendimento técnico a produtores: visita, acompanhamento de área ou apoio para a revenda ter um técnico de campo na região."],
+ ["Assistência técnica","visita técnica, acompanhamento de área, A.T. Barenbrug na região","Atendimento técnico a produtores: visita, acompanhamento de área ou A.T. (assistente técnico) Barenbrug contratado para atender a região da revenda."],
  ["Ação em loja e revenda","ponto de venda, fachada, dia de negócio","Ação dentro da loja ou na marca da revenda para movimentar a venda no balcão."],
  ["Mídia e conteúdo","campanha digital, webinar, live, rádio","Divulgação paga ou conteúdo para levar a marca e as cultivares ao produtor."],
  ["Material e brindes","material de ponto de venda, brindes, uniformes","Itens físicos com a marca: impressos, brindes, uniformes, sinalização."],
- ["Incentivo e premiação","prêmio por saco vendido, viagem, campanha de vendas, bonificação ao cliente","Recompensa para quem vende ou compra: vendedores da revenda, Inside Sales ou cliente que recebe produto bonificado."],
+ ["Incentivo e premiação","prêmio por saco vendido, viagem, campanha de vendas","Recompensa por resultado para quem vende: vendedores da revenda, gerentes ou o Inside Sales."],
  ["Verba de programa","verba reservada, ainda sem ação definida","Valor reservado para um programa ou região antes de virar ação. Quando a ação for definida, o cartão muda para o tipo dela."]];
 const acaoTipoDef=t=>{const x=ACAO_TIPOS.find(y=>y[0]===t);return x?x[2]:"";};
 const acaoTiposInf=()=>inf(ACAO_TIPOS.map(x=>x[0]+": "+x[2]).join(" · "));
 const MK_TIPOS=ACAO_TIPOS.map(x=>x[0]);
 function acaoTipoNorm(t){const x=String(t||"").trim();if(MK_TIPOS.includes(x))return x;const n=x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   if(/demonstr|experiment/.test(n))return "Campo demonstrativo";if(/dia de campo|manha de campo|tarde de campo|giro de campo/.test(n))return "Dia de campo";
-  if(/patroc|leilao|feira|expo|congresso|circuito/.test(n))return "Feira e evento do setor";if(/jantar|confratern|aniversario|tour na fabrica|relacionamento/.test(n)||n==="evento")return "Evento de relacionamento";
-  if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";if(/visita|tour|\bat\b|assistente|tecnico de campo/.test(n))return "Visita técnica";
-  if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";if(/incentivo|premia|rebate|viagem|bonifica|campanha de venda/.test(n))return "Incentivo e premiação";
+  if(/patroc|leilao|feira|expo|congresso|circuito/.test(n))return "Feira e evento do setor";if(/jantar|confratern|aniversario|tour na fabrica|relacionamento|cortesia/.test(n)||n==="evento"||n==="evento de relacionamento")return "Relacionamento";
+  if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";if(/visita|tour|\bat\b|a\.t\.|assistente|assistencia tecnica|tecnico de campo/.test(n))return "Assistência técnica";
+  if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";if(/incentivo|premia|rebate|viagem|campanha de venda/.test(n))return "Incentivo e premiação";if(/bonifica/.test(n))return "Relacionamento";
   if(/digital|webinar|live|midia|conteudo|radio/.test(n))return "Mídia e conteúdo";if(/material|brinde|pos|uniforme/.test(n))return "Material e brindes";if(/verba/.test(n))return "Verba de programa";
-  if(/evento|encontro/.test(n))return "Feira e evento do setor";return "Evento de relacionamento";}
+  if(/evento|encontro/.test(n))return "Feira e evento do setor";return "Relacionamento";}
 /* ===== Calendarios de acoes: canal (micro), Conecta Revendas (gerencial) e mapa da safra do marketing (macro) ===== */
 const CAL_SAFRA_INI="2026-07-01",CAL_SAFRA_FIM="2027-06-30";
 const CAL_PROG=["Conecta Revendas","Conecta RC","Cooperativas e revendas","Institucional","Inside Sales","Exportação"];
@@ -7585,7 +7585,7 @@ addEventListener("input",ev=>{const t=ev.target;const b=t&&t.closest&&t.closest(
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
 function vNovaAcao(modo,ed){
   const bp=modo==="bp";const a=ed||{};const v=x=>esc(x==null?"":String(x));
-  const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Evento de relacionamento","Material e brindes"].includes(x[0])):ACAO_TIPOS.filter(x=>x[0]!=="Verba de programa");
+  const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Relacionamento","Material e brindes"].includes(x[0])):ACAO_TIPOS.filter(x=>x[0]!=="Verba de programa");
   const aprov=ed&&ed.status==="Aprovado"&&!ehAdmin();
   return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"${ed?` data-id="${esc(ed.id)}" style="box-shadow:inset 0 0 0 2px var(--azul)"`:""}><h3 class="sec">${ed?(bp?"Editar campanha":"Editar ação"):bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
     ${aprov?`<div class="is-alerta" style="margin:0"><strong>Esta ação já foi aprovada.</strong> Se você salvar uma alteração, ela volta para análise e precisa ser aprovada de novo pelo Marketing.</div>`:""}
