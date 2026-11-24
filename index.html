@@ -1821,7 +1821,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124151734";
+const APP_VER="20261124152356";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -1936,6 +1936,7 @@ async function carregarUsuario(u){
     S.mfa={...mf,u};render();return;}
   S.mfa=null;
   S.user=u;sb=sbReal;S.demo=false;
+  try{const {data}=await sbReal.rpc("email_codigo_pendente");S.emailCod=data===true?{}:null;}catch(e){S.emailCod=null;}
   let prof=null,profErr=null;
   for(let t=0;t<4;t++){
     if(t){await new Promise(r=>setTimeout(r,600*t));try{await sb.auth.refreshSession();}catch(e){}}
@@ -4921,6 +4922,30 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/
     await ngAcao(id,"docs_enviados",g("#ngd_obs"),{arquivos:out},"Documentos enviados. O responsável e o Financeiro foram avisados.");return;}
 },true);
 
+/* ===== confirmação do e-mail por código (uma vez por pessoa) ===== */
+function vEmailCod(){const E=S.emailCod||{};
+  return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug"><div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Confirmação do seu e-mail.</p></div></div>
+    <form class="acesso-form" id="f-ecod" novalidate><h2>Confirme seu e-mail</h2>
+      <p>${E.para?`Enviamos um código de 6 números para <strong>${esc(E.para)}</strong>. Ele vale por 10 minutos. Olhe também a caixa de spam.`:E.busy?"Enviando o código para o seu e-mail…":"Vamos enviar um código de 6 números para o e-mail do seu acesso."}</p>
+      <p class="meta" style="margin:0">É uma vez só: confirma que o e-mail é seu e garante que você recebe o link quando esquecer a senha.</p>
+      <div><label for="ecod_c">Código</label><input id="ecod_c" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="font-size:22px;letter-spacing:6px;text-align:center"></div>
+      ${E.erro?`<div class="erro" role="alert">${esc(E.erro)}</div>`:""}${E.ok?`<div class="nota-admin" role="status">${esc(E.ok)}</div>`:""}
+      <button class="btn" type="submit">Confirmar</button>
+      <p class="dica"><button type="button" class="link" data-a="ecod-reenviar" ${E.busy?"disabled":""}>Enviar outro código</button> · <button type="button" class="link" data-a="sair">Sair</button></p>
+    </form></div>`;}
+async function ecodChamar(body){try{const r=await sbReal.functions.invoke("email-codigo",{body});if(r.error){let m="";try{m=(await r.error.context.json()).error||"";}catch(e){}return {erro:m||"Não foi possível agora. Tente de novo."};}return r.data||{};}catch(e){return {erro:"Não foi possível agora. Tente de novo."};}}
+async function ecodEnviar(){const E=S.emailCod;if(!E||E.busy)return;E.busy=true;E.erro=null;E.ok=null;render();
+  const d=await ecodChamar({acao:"enviar"});E.busy=false;E.enviado=true;
+  if(d.ja){S.emailCod=null;render();return;}
+  if(d.erro){E.erro=d.erro;if(/não configurado/i.test(d.erro)){S.emailCod=null;}}else{E.para=d.para;E.ok="Código enviado.";}
+  render();}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='ecod-reenviar']");if(!b)return;ev.preventDefault();ev.stopPropagation();if(S.emailCod){S.emailCod.enviado=true;ecodEnviar();}},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-ecod")return;ev.preventDefault();ev.stopImmediatePropagation();const E=S.emailCod;if(!E)return;
+  const c=(f.querySelector("#ecod_c").value||"").replace(/\D/g,"");if(c.length!==6){E.erro="Digite os 6 números do código.";E.ok=null;render();return;}
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Confirmando…";
+  const d=await ecodChamar({acao:"validar",codigo:c});
+  if(d.erro){E.erro=d.erro;E.ok=null;render();return;}
+  S.emailCod=null;if(S.profile)S.profile.email_validado_em=new Date().toISOString();render();aviso("E-mail confirmado.");},true);
 /* ===== FAR · Formulário de Atendimento à Reclamação ===== */
 const FAR_CULTIVARES=["Brachiaria híbrida cv. Sabiá","Brachiaria híbrida cv. Cayana","Brachiaria Híbrida cv. Mulato II","Panicum híbrido Carcará","Cynodon dactylon","Brachiaria brizantha cv. Marandu","Brachiaria brizantha cv. Xaraés","Brachiaria brizantha cv. BRS Piatã","Brachiaria decumbens cv. Basilisk","Brachiaria humidícula cv. Llanero","Brachiaria Ruziziensis","Panicum maximum cv. Mombaça","Panicum maximum cv. Massai","Azevém Ribeye","Azevém Bar HQ","Azevém Bar Maximus","Azevém Barjumbo","BARMIX Agri Barenbrug","BARMIX ILP","BARMIX Renova","BARMIX Palhada+","BARMIX Equilibra"];
 const FAR_MOTIVOS=["Má germinação","Não houve germinação","Emergência tardia ou falha de estande","Desenvolvimento fraco depois da emergência","Mistura com outras espécies ou plantas daninhas","Embalagem danificada ou peso divergente","Outro"];
@@ -13754,6 +13779,7 @@ function renderApp(){
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(S.pag==="privacidade"){app.innerHTML=(S.user&&S.profile?cabecalho():"")+`<main>${vPrivacidade()}</main>`;return;}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
+  if(S.emailCod&&!S.verComo&&!S.demo){app.innerHTML=vEmailCod();if(!S.emailCod.enviado&&!S.emailCod.busy){S.emailCod.enviado=true;setTimeout(ecodEnviar,0);}const c=document.getElementById("ecod_c");if(c&&!c.value)c.focus();return;}
   if(S.profile&&(S.profile.precisa_trocar_senha||RECUP)&&!S.verComo){app.innerHTML=vTrocaSenha(S._erro,RECUP&&!S.profile.precisa_trocar_senha);S._erro=null;return;}
   if(S.pag!=="usuario")S.formAlvo="form";
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
