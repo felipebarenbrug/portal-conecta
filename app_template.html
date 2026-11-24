@@ -12021,7 +12021,7 @@ async function carregarBrindes(){
       const [bu,bx,em]=await Promise.all([sb.from("brinde_budget").select("*").eq("id",BD_SAFRA).maybeSingle(),sb.from("brinde_baixas").select("*").order("em",{ascending:false}),sb.from("brinde_emprestimos").select("*").order("saiu_em",{ascending:false})]);
       S.bdBudget=bu.data||{id:BD_SAFRA,valor:0};S.bdBaixas=bx.data||[];S.bdEmp=em.data||[];}
     else{const {data}=await sb.rpc("brindes_catalogo");S.bd=(Array.isArray(data)?data:[]).map(x=>({...x,qtd_total:x.qtd,qtd_visivel:x.qtd,visivel:true}));}}catch(e){S.bd=[];}
-  try{const {data}=await sb.from("brinde_reqs").select("*").order("criado_em",{ascending:false}).limit(1000);S.bdReqs=data||[];}catch(e){S.bdReqs=[];}
+  try{let q=sb.from("brinde_reqs").select("*").order("criado_em",{ascending:false}).limit(1000);if(!ehMkt()&&S.profile&&S.profile.id)q=q.eq("criado_por",S.profile.id);const {data}=await q;S.bdReqs=data||[];}catch(e){S.bdReqs=[];}
   if(!S.mk&&veAcoesMkt()){try{const {data}=await sb.from("mkt_acoes").select("id,titulo,status").neq("status","Cancelada").order("id",{ascending:false});S.bdAcoes=data||[];}catch(e){S.bdAcoes=[];}}
   S.bdBusy=false;render();
 }
@@ -12078,7 +12078,7 @@ function vBdReqs(){
   const sts=["Todas","Pendente","Aprovada","Entregue","Recusada","Cancelada","Histórico"];
   const L=S.bdReqs.filter(r=>(fs==="Todas"||r.status===fs)&&(!busca||finNorm([r.criado_nome,r.motivo,r.destino,r.destinatario,r.retirado_por,(r.itens||[]).map(i=>i.nome).join(" ")].join(" ")).includes(busca)));
   const cont=s=>S.bdReqs.filter(r=>r.status===s).length;
-  return `<div><h1 class="titulo">${g?"Requisições de brindes":"Minhas requisições"}</h1><p class="sub">${g?"Aprove para dar baixa no estoque e registre quem retirou e para quem foi. O histórico da planilha está em Histórico.":"Acompanhe o status de cada pedido. Enquanto estiver pendente, você pode cancelar."}</p></div>
+  return `<div><h1 class="titulo">${g?"Requisições de brindes":"Minhas requisições"}</h1><p class="sub">${g?"Aprove para dar baixa no estoque e registre quem retirou e para quem foi. O histórico da planilha está em Histórico.":"Acompanhe o status de cada pedido. Enquanto estiver pendente, você pode cancelar."}</p>${g?"":`<div class="acoes" style="margin:8px 0 0"><button class="btn" data-a="pag" data-v="brindes-catalogo">Fazer uma requisição</button><span class="meta">Escolha os itens e as quantidades no Catálogo e clique em Fazer requisição.</span></div>`}</div>
   <div class="filtros" role="group" aria-label="Status">${sts.filter(s=>g||s!=="Histórico").map(s=>`<button class="chip" data-a="bd-reqf" data-v="${s}" aria-pressed="${s===fs}">${s}${s!=="Todas"&&cont(s)?" · "+cont(s):""}</button>`).join("")}</div>
   <input type="search" id="bd_reqb" placeholder="Buscar por pessoa, destino, motivo ou item" value="${esc(S.bdReqB||"")}" aria-label="Buscar requisições" style="max-width:520px">
   <div class="lista bd-reqs">${L.slice(0,300).map(r=>{const ab=S.bdReqSel===r.id;
