@@ -3618,7 +3618,7 @@ function vISFuncoes(){const A=TM_ASV;
   <p class="meta" style="margin:10px 0 0">Resumo do contrato modelo de vendedor autônomo da safra 26/27. Percentuais de comissão e valor da ajuda de custo ficam só no contrato. Em caso de dúvida, vale o texto assinado.</p></section>`;}
 
 const IS_GRUPOS=[
-  ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"],["is-imp","Impulso semanal"]]],
+  ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
   ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
@@ -3662,7 +3662,7 @@ function navGrupos(G,nome,cur){
   return `${topo}<nav class="nav ng" aria-label="${esc(nome)}">${g1}</nav>${fim}${sub}</div>`;
 }
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"],["is-imp","Impulso semanal"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
   return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",fora_meta:"À parte, fora da meta",outros:"Fila de qualificação",time:"Time"};
@@ -3987,7 +3987,7 @@ function vISPlaybook(){
     ${card("Mulato II e outras cultivares",["Quem pede Mulato II converte metade da média: apresente o híbrido Barenbrug que resolve a mesma dor","Cynodon e Cayana estão entre os que mais convertem"])}
     ${card("Escreva para ser lido no campo",["Mensagens curtas, uma ideia por mensagem, nunca textão","Áudio curto ajuda quem está no trator","Sempre termine com uma pergunta ou um próximo passo"])}
     ${card("Depois da venda",["Ligue na semeadura, na germinação e no primeiro pastejo","Peça foto e depoimento: vira caso de sucesso","Cliente bem acompanhado recompra e indica"])}
-    ${card("Toda semana",["Revise pausadas e datas vencidas","Leia o Impulso semanal e a objeção da semana","Atualize estrelas e datas antes da reunião do time"])}
+    ${card("Toda semana",["Revise pausadas e datas vencidas","Revise a objeção da semana com o time","Atualize estrelas e datas antes da reunião do time"])}
     ${card("Dúvida técnica",["Não improvise dado técnico","Leve a dúvida ao Tira-Dúvidas e volte ao produtor no prazo combinado"])}</div>`)}
   ${S.demo?"":vProvaExtra("playbook_is").replace("sobre as regras do programa","sobre o Playbook").replace("Assista aos vídeos antes.","Leia o Playbook antes.")}
   <p class="meta">Fonte do estudo de velocidade: <a class="link" href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener">The Short Life of Online Sales Leads, Harvard Business Review, 2011</a>.</p>`;
@@ -11529,10 +11529,12 @@ function mkPainelHTML(a){
   pri+=bt("Editar","mk-editar","","sec");
   const volta=st==="A fazer"?bt("Voltar para Em análise","mk-pn","analise","sec"):st==="Em andamento"?bt("Voltar para A fazer","mk-mover","A fazer","sec"):st==="Concluída"?bt("Voltar para A fazer","mk-mover","A fazer","sec"):"";
   const mais=`<details class="mk-mais"${S.mkDel?" open":""}><summary>Mais opções</summary><div class="acoes" style="margin:8px 0 0">${volta}${st==="Cancelada"?"":bt("Cancelar ação","mk-mover","Cancelada","sec")}${S.mkDel?`<button class="btn perigo" data-a="mk-excluir">Confirmar exclusão</button><button class="link" data-a="mk-del-n">não excluir</button>`:`<button class="link perigo" data-a="mk-del">Excluir de vez</button>`}</div></details>`;
-  const vIni=Number(a.valor_prev)>0?a.valor_prev:(a.verba_pedida||"");const vTxt=vIni?esc(String(vIni).replace(".",",")):"";
+  const cuD=mkCusto(a),semL=mkSem(a),semKg=semL.reduce((t,x)=>t+(Number(x.kg)||0),0);
+  const vIni=Number(a.valor_prev)>0?a.valor_prev:(a.verba_pedida||(cuD>0?cuD:(semL.length?0:"")));const vTxt=vIni!==""&&vIni!=null?esc(String(Math.round(Number(vIni)*100)/100).replace(".",",")):"";
   const conf=!pn?"":`<form id="f-mk-pn" class="mk-pn-f" data-s="${esc(pn)}">
-    ${pn==="aprovar"||pn==="analise"?`<div class="dupla"><div><label for="md_val">${pn==="aprovar"?"Verba aprovada (R$)":"Valor a reservar (R$)"}</label><input id="md_val" inputmode="decimal" value="${vTxt}">${a.verba_pedida?`<span class="meta">Pedido: ${fmtK0(a.verba_pedida)}</span>`:""}</div><div><label for="md_obs">Mensagem${a.solicitante||a.solicitante_nome?" para quem pediu":""} (opcional)</label><input id="md_obs" maxlength="500" placeholder="Condições, próximos passos"></div></div>
-      ${pn==="aprovar"?`<details><summary class="meta" style="cursor:pointer">Incluir bonificação em sementes</summary><div class="mk-custo-l" style="margin-top:6px"><div><label for="md_sc">Cultivar</label><select id="md_sc"><option value="">Sem bonificação</option>${MK_SEM_CULT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sf">Para quê</label><select id="md_sf">${MK_SEM_FIN.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sk">Quantidade (kg)</label><input id="md_sk" inputmode="numeric" placeholder="Ex.: 50"></div></div></details>`:""}`
+    ${pn==="aprovar"||pn==="analise"?`<div class="dupla"><div><label for="md_val">${pn==="aprovar"?"Verba aprovada (R$)":"Valor a reservar (R$)"}</label><input id="md_val" inputmode="decimal" value="${vTxt}">${a.verba_pedida?`<span class="meta">Pedido: ${fmtK0(a.verba_pedida)}</span>`:cuD>0?`<span class="meta">Já vem do custo lançado na ação: ${fmtK0(cuD)} em dinheiro</span>`:semL.length?`<span class="meta">Sem verba em dinheiro: a ação é paga em produto</span>`:""}</div><div><label for="md_obs">Mensagem${a.solicitante||a.solicitante_nome?" para quem pediu":""} (opcional)</label><input id="md_obs" maxlength="500" placeholder="Condições, próximos passos"></div></div>
+      ${pn==="aprovar"&&semL.length?`<div class="nota-admin" style="margin:0"><strong>Bonificação já lançada:</strong> ${semL.map(x=>`${esc(x.cult)} ${isNum(x.kg)} kg`).join(" · ")} · total ${isNum(semKg)} kg, ${fmtK0(mkSemTotal(a))}. Ela entra na aprovação como está; para mudar, use Bonificação de produto no card.</div>`:""}
+      ${pn==="aprovar"&&!semL.length?`<details><summary class="meta" style="cursor:pointer">Incluir bonificação em sementes</summary><div class="mk-custo-l" style="margin-top:6px"><div><label for="md_sc">Cultivar</label><select id="md_sc"><option value="">Sem bonificação</option>${MK_SEM_CULT.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sf">Para quê</label><select id="md_sf">${MK_SEM_FIN.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="md_sk">Quantidade (kg)</label><input id="md_sk" inputmode="numeric" placeholder="Ex.: 50"></div></div></details>`:""}`
     :`<div><label for="md_obs">${pn==="pausar"?"Do que ela depende para seguir":"Motivo da recusa"} (opcional)</label><input id="md_obs" maxlength="500" placeholder="${pn==="pausar"?"Ex.: aguardando confirmação da data":"Ex.: fora do foco da safra"}"></div>`}
     <div class="acoes" style="margin:0"><button class="btn${pn==="recusar"?" perigo":""}" type="submit">${{aprovar:"Confirmar aprovação",analise:"Confirmar: Em análise",pausar:"Confirmar pausa",recusar:"Confirmar recusa"}[pn]}</button><button class="btn sec" type="button" data-a="mk-pn" data-v="">Cancelar</button></div>
     <p class="meta" style="margin:0">${{aprovar:"A ação vai para A fazer e a verba fica aprovada.",analise:"A ação fica na etapa Em análise, com o valor reservado (provisionado).",pausar:"A ação sai da fila de decisão e o valor continua reservado na verba.",recusar:"A ação sai do quadro e da verba. Quem pediu vê o motivo."}[pn]}</p></form>`;
@@ -13071,6 +13073,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="inside-sales"){
+    if(S.pag==="is-imp")S.pag="is-painel";
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-quadro";return render();}
     if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
