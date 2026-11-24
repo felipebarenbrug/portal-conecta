@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.cepea.org.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://challenges.cloudflare.com https://czebmkqbapltmjuhywkd.supabase.co wss://czebmkqbapltmjuhywkd.supabase.co https://servicodados.ibge.gov.br https://www.cepea.org.br; frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://maps.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.cepea.org.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://challenges.cloudflare.com https://czebmkqbapltmjuhywkd.supabase.co wss://czebmkqbapltmjuhywkd.supabase.co https://servicodados.ibge.gov.br https://viacep.com.br https://www.cepea.org.br; frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://maps.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
@@ -295,6 +295,51 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mesbar .trilho{height:16px;background:var(--linha,#eee);border-radius:8px;overflow:hidden;position:relative}
 .mesbar .trilho i{display:block;height:100%;background:var(--azul-escuro)}
 .mesbar .trilho b{position:absolute;left:0;top:0;height:100%;background:var(--amarelo,#ffdb00);opacity:.95}
+/* Negociações do Conecta RC */
+.ng-seg{display:flex;flex-wrap:wrap;gap:8px}.ng-seg .chip[aria-pressed="true"]{background:var(--azul-escuro);color:#fff;box-shadow:none}
+.ng-q .chip{flex:1 1 auto;text-align:center}
+.lbl{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+.ng-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:560px){.ng-g2{grid-template-columns:1fr}}
+.ng-g2>div,.ng-form>div{min-width:0}
+.ng-fixo{font-size:14px;background:var(--papel);border:1px dashed var(--linha);border-radius:6px;padding:8px 10px;color:var(--apagado)}
+.ng-wiz-t{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px}
+.ng-passos{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.ng-passos button{all:unset;cursor:pointer;display:grid;justify-items:center;gap:4px;width:100%;text-align:center}
+.ng-passos button[disabled]{cursor:default}
+.ng-passos span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--branco);box-shadow:inset 0 0 0 2px var(--linha);font-weight:700;font-size:14px;color:var(--apagado)}
+.ng-passos em{font-style:normal;font-size:12px;line-height:1.2;color:var(--apagado)}
+.ng-passos li.feito span{background:var(--azul);color:#fff;box-shadow:none}.ng-passos li.atual span{background:var(--amarelo);color:var(--preto);box-shadow:none}.ng-passos li.atual em{color:var(--preto);font-weight:700}
+@media(max-width:560px){.ng-passos em{display:none}.ng-passos li.atual em{display:block}}
+.ng-nav{display:flex;justify-content:space-between;gap:10px;padding:12px 0 4px;border-top:1px solid var(--linha);margin-top:4px}
+.ng-det{border:1px solid var(--linha);border-radius:8px;padding:8px 12px;background:var(--branco)}.ng-det>summary{cursor:pointer;font-weight:700;padding:4px 0}.ng-det[open]>summary{margin-bottom:8px}
+.ng-det .form-card{box-shadow:none;padding:0;border:0}
+.ng-item{border:1px solid var(--linha);border-radius:8px;padding:10px 12px;display:grid;gap:8px;background:var(--branco)}
+.ng-item-t{display:flex;justify-content:space-between;align-items:center}.ng-sub{text-align:right;font-size:14px}
+.ng-tot{display:flex;justify-content:space-between;align-items:center;background:var(--azul-claro);border-radius:8px;padding:12px 14px;font-size:16px}.ng-tot strong{font-size:18px}
+.ng-rev{display:grid;border:1px solid var(--linha);border-radius:8px;overflow:hidden;background:var(--branco)}
+.ng-rv{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-bottom:1px solid var(--linha);font-size:14px}.ng-rv:last-child{border-bottom:0}.ng-rv span{color:var(--apagado);min-width:0}.ng-rv strong{text-align:right;min-width:0;overflow-wrap:anywhere}
+.ng-kan{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.ng-col{background:var(--papel);border-radius:10px;padding:8px;display:grid;gap:8px;align-content:start;scroll-snap-align:start;min-width:0}
+.ng-col h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--apagado);display:flex;justify-content:space-between;padding:2px 4px}
+.ng-col h3 span{background:var(--branco);border-radius:999px;padding:0 8px;color:var(--preto)}
+.ng-lista{display:grid;gap:8px}
+.ng-card{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:3px;background:var(--branco);border-radius:8px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06),inset 0 0 0 1px var(--linha);min-width:0}
+.ng-card:hover,.ng-card:focus-visible{box-shadow:inset 0 0 0 2px var(--azul)}
+.ng-card-acao{box-shadow:inset 0 0 0 2px var(--amarelo)}
+.ng-card-t{font-weight:700;overflow-wrap:anywhere}.ng-card .meta{overflow-wrap:anywhere}
+.ng-card-r{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.ng-card-alerta{font-size:12px;font-weight:700;color:#8a6d00}
+.ng-sit{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--azul-claro);color:var(--azul-escuro)}
+.ng-sit.ng-aguardando{background:#fff7bf;color:#6b5500}.ng-sit.ng-ajustar{background:#fde3e4;color:var(--vermelho)}.ng-sit.ng-credito{background:#efe7fb;color:#4b2a86}.ng-sit.ng-finalizado{background:#dff3e4;color:#1d6b35}.ng-sit.ng-encerradas{background:#eceff1;color:var(--apagado)}
+.ng-fluxo{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ng-fluxo li{display:grid;justify-items:center;text-align:center;gap:4px;position:relative;font-size:13px}
+.ng-fluxo li span:last-child{display:grid;gap:2px}.ng-fluxo em{font-style:normal;color:var(--apagado);font-size:12px}
+.ng-f-b{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--branco);box-shadow:inset 0 0 0 2px var(--linha);font-weight:700;color:var(--apagado)}
+.ng-fluxo li.feito .ng-f-b{background:var(--azul);color:#fff;box-shadow:none}.ng-fluxo li.atual .ng-f-b{background:var(--amarelo);color:var(--preto);box-shadow:none}.ng-fluxo li.opc:not(.feito):not(.atual){opacity:.6}
+@media(max-width:640px){.ng-fluxo{grid-template-columns:1fr;gap:0}.ng-fluxo li{grid-template-columns:30px 1fr;justify-items:start;text-align:left;align-items:center;gap:10px;padding:4px 0}}
+.ng-hist{list-style:none;margin:0;padding:0;display:grid;gap:8px}.ng-hist li{display:grid;gap:2px;border-left:3px solid var(--linha);padding:2px 0 2px 10px}.ng-hist li.ng-ev-comentario{border-color:var(--azul)}
+.ng-docs{margin:0 0 6px 18px;padding:0}.ng-docs li{margin:2px 0}
+.ng-fs{border:1px solid var(--linha);border-radius:8px;padding:8px 10px;margin:0;display:grid;gap:4px}.ng-fs legend{font-weight:700;font-size:14px;padding:0 4px}
 .neg{display:grid;gap:2px;padding:12px 14px;border-bottom:1px solid var(--linha)}
 .neg .l1{display:flex;justify-content:space-between;gap:10px;font-weight:700}
 .neg .l1 span:last-child{white-space:nowrap}
@@ -1755,7 +1800,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124131450";
+const APP_VER="20261124135224";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3635,7 +3680,7 @@ const IS_GRUPOS=[
   ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
-  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
+  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-rcneg","Negociações dos RCs"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
   ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"],["is-desafio","Desafio 10 t"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
@@ -3676,7 +3721,7 @@ function navGrupos(G,nome,cur){
   return `${topo}<nav class="nav ng" aria-label="${esc(nome)}">${g1}</nav>${fim}${sub}</div>`;
 }
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-rcneg","Negociações dos RCs"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
   return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",fora_meta:"À parte, fora da meta",outros:"Fila de qualificação",time:"Time"};
@@ -4479,6 +4524,370 @@ function cartaoNeg(x,gestor){
     ${gestor&&x.crm_deal_id?crmLnk(x.crm_deal_id):""}
     ${gestor&&x.status!=="No CRM"?`<button class="link" data-a="neg-crm" data-v="${x.id}">Lançar no CRM agora</button><button class="link" data-a="neg-status" data-v="${x.id}" data-st="No CRM">Já lancei à mão</button>`:""}${gestor&&x.status==="Enviado"?`<button class="link" data-a="neg-status" data-v="${x.id}" data-st="Devolvido">Devolver ao RC</button>`:""}</div></div>`;
 }
+/* ===== Negociações do Conecta RC: envio pelo RC, aprovação do responsável, registro na Barenbrug, crédito e proposta ===== */
+const NG_QUALI=[[5,"Muito quente"],[4,"Quente"],[3,"Neutro"],[2,"Frio"],[1,"Muito frio"]];
+const NG_FORMAS=["Representante ao produtor","Para Canal (Sell In)"];
+const NG_TIPO_DOC="10 - Pedido de Venda/Revenda/Exportação_101/102/401/107/120/114";
+const NG_PAG_PADRAO=["A VISTA","CARTAOAVIS","7 DIAS","30 DIAS","30 / 60","30 60 90","60 DIAS","90 DIAS","120 DIAS","150 DIAS","4 PARCELAS","5 PARCELAS","ENT+1 PARC","ENT+ 2PARC","ENT+ 3PARC","ENT+ 4PARC","ENT+ 5PARC","ENT+ 6PARC","30/03/2027","30/04/2027","30/05/2027","30/06/2027","CAMP_TEMP"];
+const NG_CATS=["VENDA DIRETA","DISTRIBUIDOR BLUE","DISTRIBUIDOR YELLOW"];
+const NG_FRETE_MODOS=["CIF","FOB","A combinar"];
+/* documentos da Política de Crédito, por tipo de cliente */
+const NG_CRED_DOCS=[
+  ["Produtor (PF), cliente novo, a prazo",["CNH, ou RG e CPF","Comprovante de endereço e e-mail","Declaração de Imposto de Renda do último ano","Comprovante de endereço da propriedade rural","Parecer comercial no modelo da Barenbrug"]],
+  ["Empresa (PJ), cliente novo, a prazo",["RG e CPF ou CNH e comprovante de endereço dos sócios","Comprovante de endereço da empresa e e-mail","Imposto de Renda do último ano dos sócios","Balanço patrimonial e DRE do último ano","Declaração de faturamento do último ano, assinada pelo contador","Imposto de Renda da empresa (IRPJ) do último ano","Contrato social e última alteração","Parecer comercial no modelo da Barenbrug"]],
+  ["À vista ou cartão (documentação mínima)",["Documento com foto","Comprovante de endereço igual ao do pedido","Pedido assinado pelo cliente"]],
+  ["Cliente que já compra (renovação anual)",["Imposto de Renda do último ano","Balanço, DRE e declaração de faturamento (PJ)","Comprovante de endereço","Parecer comercial no modelo da Barenbrug"]]];
+const NG_COLS=[["aguardando","Aguardando o responsável"],["ajustar","Para ajustar"],["barenbrug","Na Barenbrug"],["credito","Análise de crédito"],["finalizado","Pedido finalizado"],["encerradas","Encerradas"]];
+const ngNum=v=>{if(typeof v==="number")return v;const t=String(v??"").replace(/[^\d,.-]/g,"");if(!t)return 0;return parseFloat(t.includes(",")?t.replace(/\./g,"").replace(",","."):t)||0;};
+const ngBRL=x=>"R$ "+(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ngDt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+const ngHoje=()=>new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+function ngCpfOk(t){const d=docLimpo(t);if(d.length!==11||/^(\d)\1{10}$/.test(d))return false;let s=0;for(let i=0;i<9;i++)s+=+d[i]*(10-i);let r=s*10%11;if(r===10)r=0;if(r!==+d[9])return false;s=0;for(let i=0;i<10;i++)s+=+d[i]*(11-i);r=s*10%11;if(r===10)r=0;return r===+d[10];}
+function ngCnpjOk(t){const d=docLimpo(t);if(d.length!==14||/^(\d)\1{13}$/.test(d))return false;const w1=[5,4,3,2,9,8,7,6,5,4,3,2],w2=[6,...w1];let s=0;for(let i=0;i<12;i++)s+=+d[i]*w1[i];let r=s%11;r=r<2?0:11-r;if(r!==+d[12])return false;s=0;for(let i=0;i<13;i++)s+=+d[i]*w2[i];r=s%11;r=r<2?0:11-r;return r===+d[13];}
+const ngDocOk=t=>{const d=docLimpo(t);return d.length===11?ngCpfOk(d):d.length===14?ngCnpjOk(d):false;};
+const ngMascDoc=(v,pj)=>{const d=docLimpo(v).slice(0,pj?14:11);return pj?d.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2"):d.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");};
+const ngMascCep=v=>{const d=docLimpo(v).slice(0,8);return d.length>5?d.slice(0,5)+"-"+d.slice(5):d;};
+const ngMascFone=v=>{const d=docLimpo(v).slice(0,11);if(d.length<=2)return d;if(d.length<=6)return "("+d.slice(0,2)+") "+d.slice(2);if(d.length<=10)return "("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);return "("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7);};
+/* preço de tabela por código do produto e mês do faturamento (mesma regra do servidor) */
+function ngTab(cod,data){if(!cod||!PRECOS_MESES.length)return null;const ab=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];const d=data?new Date(data+"T12:00:00"):new Date(Date.now()-3*3600e3);
+  const [m0,a0]=String(PRECOS_MESES[0]).split("/");let i=(d.getFullYear()-(2000+(+a0)))*12+d.getMonth()-ab.indexOf(m0);i=Math.max(0,Math.min(PRECOS_MESES.length-1,i));
+  const r=(PRECOS||[]).find(p=>String(p.cod||"").split("/").map(s=>s.trim()).includes(String(cod)));if(!r||!r.v||!/\d/.test(String(r.v[i]||"")))return null;return {preco:ngNum(r.v[i]),mes:PRECOS_MESES[i]};}
+const ngEfetivo=(x,i)=>(x.desconto_status!=="aprovado"&&i.tab!=null&&Number(i.preco)<Number(i.tab))?Number(i.tab):Number(i.preco);
+const ngPodeEnviar=()=>!S.demo&&(ehAdmin()||temPerfil("RC")||temPerfil("Franqueado Nutron")||temPerfil("Assessor de Vendas Digital")||temPerfil("Comercial Barenbrug"));
+const ngGestor=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||!!(S.profile&&S.profile.gerente_is));
+const ngSouFin=()=>!S.demo&&temPerfil("Financeiro");
+function ngColuna(x){if(x.status==="Cancelada"||x.crm_sit==="P")return "encerradas";if(x.crm_sit==="V")return "finalizado";if(x.status==="Devolvido")return "ajustar";if(x.status!=="No CRM")return "aguardando";
+  if(x.credito_status&&!["aprovado"].includes(x.credito_status))return "credito";return "barenbrug";}
+function ngSit(x){const c=ngColuna(x);
+  if(c==="aguardando")return x.desconto_status==="pendente"?"Aguardando o responsável (com pedido de desconto)":"Aguardando o responsável";
+  if(c==="ajustar")return "Devolvida para ajuste";if(c==="encerradas")return x.status==="Cancelada"?"Cancelada":"Encerrada pelo comercial";if(c==="finalizado")return "Pedido finalizado";
+  if(c==="credito")return {docs_pedidos:"Crédito: documentos pedidos",docs_enviados:"Crédito: documentos enviados",em_analise:"Crédito em análise",pendencia:"Crédito: pendência",reprovado:"Crédito não aprovado"}[x.credito_status]||"Análise de crédito";
+  return "Na Barenbrug"+(x.crm_etapa?" · "+x.crm_etapa:"");}
+async function ngCarregar(forcar){const G=S.ng||(S.ng={});if(G.busy)return;G.busy=true;
+  try{await carregarPrecos();
+    if(!G.cat||forcar){try{await sb.functions.invoke("rc-negocio",{body:{acao:"opcoes"}});}catch(e){}
+      const [p,c]=await Promise.all([sb.from("crm_produtos").select("id,cod,nome,com,saco,ordem").eq("ativo",true).eq("rc",true).order("ordem").order("com"),sb.from("crm_cache").select("id,dados")]);
+      G.prods=p.data||[];G.cat={};(c.data||[]).forEach(r=>{G.cat[r.id]=r.dados;});}
+    const {data}=await sb.from("rc_negociacoes").select("*").order("atualizado_em",{ascending:false}).limit(400);G.lista=data||[];
+    if(!G.syncEm||Date.now()-G.syncEm>10*60e3||forcar){G.syncEm=Date.now();sb.functions.invoke("rc-negocio",{body:{acao:"sync",forcar:!!forcar}}).then(async r=>{if(r&&r.data&&r.data.mudaram){const {data:d2}=await sb.from("rc_negociacoes").select("*").order("atualizado_em",{ascending:false}).limit(400);G.lista=d2||G.lista;render();}}).catch(()=>{});}
+  }catch(e){G.lista=G.lista||[];}
+  G.busy=false;}
+async function ngEventos(id){const G=S.ng;const {data}=await sb.from("rc_neg_eventos").select("*").eq("neg_id",id).order("em");(G.evs||(G.evs={}))[id]=data||[];}
+/* rascunho fica no aparelho até enviar */
+const ngRascKey=()=>"pc_ng_rasc_"+(S.user&&S.user.id);
+function ngRascSalvar(){try{const E=S.ng&&S.ng.ed;if(E&&!E.id)localStorage.setItem(ngRascKey(),JSON.stringify(E));}catch(e){}}
+function ngRascLer(){try{const t=localStorage.getItem(ngRascKey());return t?JSON.parse(t):null;}catch(e){return null;}}
+function ngRascApagar(){try{localStorage.removeItem(ngRascKey());}catch(e){}}
+function ngNovo(){const p=S.profile||{};return {passo:1,tipo_pessoa:"PJ",cliente_doc:"",cliente_nome:"",cliente_uf:"",cliente_cidade:"",cliente_extra:{pais:"Brasil"},nome_neg:"",qualificacao:null,previsao_fech:"",data_faturamento:"",forma:NG_FORMAS[0],cond_pagamento:"",anotacao:"",cliente_novo_rc:"",contato:{},itens:[{pid:"",kg:"",preco:""}],desconto_motivo:""};}
+function ngDeNeg(x){const ex=x.cliente_extra||{};return {id:x.id,passo:1,tipo_pessoa:docLimpo(x.cliente_doc).length===11?"PF":"PJ",cliente_doc:docFmt(x.cliente_doc),cliente_nome:x.cliente_nome||"",cliente_uf:x.cliente_uf||"",cliente_cidade:x.cliente_cidade||"",cliente_extra:Object.assign({pais:"Brasil"},ex),
+  nome_neg:x.nome_neg||"",qualificacao:x.qualificacao,previsao_fech:x.previsao_fech||"",data_faturamento:x.data_faturamento||"",forma:x.forma||NG_FORMAS[0],cond_pagamento:x.cond_pagamento||"",anotacao:x.anotacao||"",cliente_novo_rc:ex.novo_rc||"",contato:Object.assign({},x.contato||{}),
+  itens:(x.itens||[]).map(i=>({pid:i.pid,kg:i.kg,preco:i.pedido!=null?i.pedido:i.preco})),desconto_motivo:x.desconto_motivo||""};}
+function ngSet(path,val){const E=S.ng.ed;const k=path.split(".");let o=E;for(let i=0;i<k.length-1;i++){const kk=/^\d+$/.test(k[i])?+k[i]:k[i];if(o[kk]==null)o[kk]={};o=o[kk];}o[/^\d+$/.test(k[k.length-1])?+k[k.length-1]:k[k.length-1]]=val;ngRascSalvar();}
+function ngProd(pid){return ((S.ng&&S.ng.prods)||[]).find(p=>p.id===pid);}
+function ngCalc(E){const its=(E.itens||[]).map(i=>{const P=ngProd(i.pid);const t=P?ngTab(P.cod,E.data_faturamento):null;const kg=ngNum(i.kg);const pr=ngNum(i.preco)||(t?t.preco:0);
+  return {P,kg,tab:t?t.preco:null,mes:t?t.mes:null,preco:pr,abaixo:!!(t&&pr>0&&pr<t.preco),saco:P?P.saco:10,ok:!!P&&kg>0&&pr>0&&kg%(P?P.saco:10)===0,total:Math.round(kg*pr*100)/100};});
+  return {its,total:its.reduce((s,i)=>s+i.total,0),kg:its.reduce((s,i)=>s+i.kg,0),abaixo:its.some(i=>i.abaixo)};}
+/* ---------- formulário em passos ---------- */
+const NG_PASSOS=["Cliente","Negociação","Produtos","Contato","Revisar e enviar"];
+function ngInput(path,rot,val,o={}){const id="ng_"+path.replace(/\./g,"_");return `<div${o.cls?` class="${o.cls}"`:""}><label for="${id}">${rot}${o.req?" *":""}</label>${o.sel?`<select id="${id}" data-ng="${path}"${o.rr?' data-ngr="1"':""}>${o.sel}</select>`:o.ta?`<textarea id="${id}" data-ng="${path}" rows="${o.ta}" maxlength="${o.max||1000}"${o.ph?` placeholder="${esc(o.ph)}"`:""}>${esc(val||"")}</textarea>`:`<input id="${id}" data-ng="${path}" value="${esc(val==null?"":String(val))}"${o.type?` type="${o.type}"`:""}${o.im?` inputmode="${o.im}"`:""}${o.max?` maxlength="${o.max}"`:""}${o.ph?` placeholder="${esc(o.ph)}"`:""}${o.masc?` data-ngm="${o.masc}"`:""}${o.rr?' data-ngr="1"':""}${o.min?` min="${o.min}"`:""}${o.step?` step="${o.step}"`:""}>`}${o.dica||o.did?`<span class="meta"${o.did?` id="${o.did}"`:""}>${o.dica||""}</span>`:""}</div>`;}
+function ngChkHTML(){const c=S.ng.chk;if(!c)return "";if(!c.valido)return `<div class="erro" role="alert">CPF ou CNPJ inválido. Confira os números.</div>`;
+  const L=[];if(c.crm)L.push(`Este cliente já está cadastrado na Barenbrug${c.nome?` (${esc(c.nome)})`:""}. Os dados da empresa que já estão lá serão usados.`);
+  if(c.ja_comprou)L.push("Ele já comprou da Barenbrug antes.");
+  if(c.abertas_minhas)L.push(`Você já tem ${c.abertas_minhas===1?"uma negociação aberta":c.abertas_minhas+" negociações abertas"} com este cliente.`);
+  if(c.abertas_outros)L.push(`Atenção: este cliente já tem negociação em aberto com outro representante ou vendedor da Barenbrug${c.quem?` (${esc(c.quem)})`:""}. Você pode enviar, mas o seu responsável comercial vai conferir de quem é o atendimento.`);
+  if(!L.length)L.push("Cliente novo para a Barenbrug: preencha o cadastro da empresa abaixo.");
+  return `<div class="${c.abertas_outros?"aviso-est":"nota-admin"}" role="status">${L.map(t=>`<p style="margin:0 0 4px">${t}</p>`).join("")}</div>`;}
+function ngPasso1(E){const ex=E.cliente_extra||{};const pj=E.tipo_pessoa!=="PF";const novo=!(S.ng.chk&&S.ng.chk.crm);const cid=S.cidadesCache[E.cliente_uf];
+  const cidSel=Array.isArray(cid)?ngInput("cliente_cidade","Cidade",E.cliente_cidade,{req:1,sel:`<option value="">Escolha</option>${cid.map(c=>`<option ${c===E.cliente_cidade?"selected":""}>${esc(c)}</option>`).join("")}`}):ngInput("cliente_cidade","Cidade",E.cliente_cidade,{req:1,max:60,dica:E.cliente_uf?(cid==="__LOADING__"?"Carregando as cidades…":""):"Escolha a UF primeiro"});
+  return `<div class="ng-seg" role="radiogroup" aria-label="Tipo de pessoa"><button type="button" class="chip" data-a="ng-tp" data-v="PJ" aria-pressed="${pj}">Pessoa Jurídica</button><button type="button" class="chip" data-a="ng-tp" data-v="PF" aria-pressed="${!pj}">Pessoa Física</button></div>
+    ${ngInput("cliente_doc",pj?"CNPJ":"CPF",E.cliente_doc,{req:1,im:"numeric",masc:pj?"cnpj":"cpf",max:18,ph:pj?"00.000.000/0000-00":"000.000.000-00",dica:"O portal confere os números e avisa se o cliente já existe na Barenbrug."})}
+    <div id="ng-chk">${ngChkHTML()}</div>
+    ${ngInput("cliente_nome","Nome da empresa ou fazenda",E.cliente_nome,{req:1,max:120})}
+    <div class="ng-g2">${ngInput("cliente_uf","UF",E.cliente_uf,{req:1,rr:1,sel:`<option value="">UF</option>${UFS.map(u=>`<option ${u===E.cliente_uf?"selected":""}>${u}</option>`).join("")}`})}${cidSel}</div>
+    <details class="ng-det" ${novo?"open":""}><summary>${novo?"Cadastro da empresa (cliente novo)":"Cadastro da empresa (opcional: o cliente já está na Barenbrug)"}</summary>
+      <div class="ng-g2">${pj?ngInput("cliente_extra.razao","Razão social",ex.razao,{req:novo,max:150}):""}${ngInput("cliente_extra.fantasia","Nome fantasia",ex.fantasia,{max:120})}</div>
+      <div class="ng-g2">${ngInput("cliente_extra.categoria","Categoria",ex.categoria,{sel:`<option value="">Escolha</option>${((S.ng.cat&&S.ng.cat.categoria)||NG_CATS).map(c=>`<option ${c===ex.categoria?"selected":""}>${esc(c)}</option>`).join("")}`})}${ngInput("cliente_extra.ie","Inscrição estadual",ex.ie,{max:30,ph:"ou ISENTO"})}</div>
+      <div class="ng-g2">${ngInput("cliente_extra.cep","CEP",ex.cep,{req:novo,im:"numeric",masc:"cep",max:9,ph:"00000-000",dica:"Com o CEP, o endereço é preenchido sozinho."})}${ngInput("cliente_extra.pais","País",ex.pais||"Brasil",{max:40})}</div>
+      ${ngInput("cliente_extra.endereco","Logradouro / endereço",ex.endereco,{req:novo,max:150})}
+      <div class="ng-g2">${ngInput("cliente_extra.numero","Número",ex.numero,{req:novo,max:12})}${ngInput("cliente_extra.bairro","Bairro",ex.bairro,{req:novo,max:80})}</div>
+      ${ngInput("cliente_extra.complemento","Complemento",ex.complemento,{max:80})}
+    </details>`;}
+function ngPasso2(E){const pag=(S.ng.cat&&S.ng.cat.pagamento)||NG_PAG_PADRAO;const sug=[E.cliente_nome,"",E.cliente_uf].filter(Boolean);
+  return `${ngInput("nome_neg","Nome da negociação",E.nome_neg,{req:1,max:160,ph:"Ex.: FAZENDA SANTA RITA - SABIÁ - MT",dica:"Use o padrão CLIENTE - CULTIVAR - UF."})}
+    <div><span class="lbl">Qualificação *</span><div class="ng-seg ng-q" role="radiogroup" aria-label="Qualificação">${NG_QUALI.map(([v,t])=>`<button type="button" class="chip" data-a="ng-q" data-v="${v}" aria-pressed="${+E.qualificacao===v}">${t}</button>`).join("")}</div></div>
+    <div class="ng-g2">${ngInput("previsao_fech","Previsão de fechamento",E.previsao_fech,{req:1,type:"date",min:ngHoje()})}${ngInput("data_faturamento","Data da entrega / faturamento",E.data_faturamento,{req:1,type:"date",min:ngHoje(),rr:1,dica:"Define a tabela de preço usada."})}</div>
+    <div><span class="lbl">Forma da negociação *</span><div class="ng-seg" role="radiogroup" aria-label="Forma da negociação">${NG_FORMAS.map(f=>`<button type="button" class="chip" data-a="ng-forma" data-v="${esc(f)}" aria-pressed="${E.forma===f}">${esc(f)}</button>`).join("")}</div></div>
+    ${ngInput("cond_pagamento","Condição de pagamento",E.cond_pagamento,{req:1,sel:`<option value="">Escolha</option>${pag.map(c=>`<option ${c===E.cond_pagamento?"selected":""}>${esc(c)}</option>`).join("")}`,dica:"A prazo pode depender de análise de crédito do cliente."})}
+    <div><span class="lbl">O cliente é novo?</span><div class="ng-seg" role="radiogroup" aria-label="O cliente é novo">${["Sim","Não"].map(v=>`<button type="button" class="chip" data-a="ng-novo" data-v="${v}" aria-pressed="${E.cliente_novo_rc===v}">${v}</button>`).join("")}</div>${S.ng.chk&&S.ng.chk.valido?`<span class="meta">Pelo CPF/CNPJ: ${S.ng.chk.crm?"já cadastrado na Barenbrug":"ainda não cadastrado"}.</span>`:""}</div>
+    <div><span class="lbl">Tipo de documento</span><div class="ng-fixo">${esc(NG_TIPO_DOC)}</div></div>
+    ${ngInput("anotacao","Observação do pedido",E.anotacao,{ta:3,max:1500,ph:"Entrega, contexto da venda, combinados com o cliente."})}
+    <p class="meta" style="margin:0">O frete é calculado pelo time comercial depois que o seu responsável validar a negociação.</p>`;}
+function ngDicaKg(c){const P=c.P;if(!P||!(c.kg>0))return "";return c.kg%P.saco!==0?`<span style="color:var(--vermelho)">Precisa ser múltiplo de ${P.saco} kg (${Math.ceil(c.kg/P.saco)} sacos = ${Math.ceil(c.kg/P.saco)*P.saco} kg).</span>`:`${isNum(c.kg/P.saco)} sacos de ${P.saco} kg`;}
+function ngDicaPr(c){if(!c.P)return "";if(c.tab!=null)return `Tabela de ${esc(c.mes)}: ${ngBRL(c.tab)}/kg${c.abaixo?` · <strong style="color:var(--vermelho)">abaixo da tabela: vira pedido de desconto</strong>`:""}`;return PRECOS_MESES.length?"Sem preço na tabela: o responsável confere.":"O preço de tabela é conferido no envio.";}
+function ngPasso3(E){const C=ngCalc(E);const prods=S.ng.prods||[];const temTab=!!PRECOS_MESES.length;
+  const linha=(it,i)=>{const c=C.its[i];const P=c.P;return `<div class="ng-item"><div class="ng-item-t"><strong>Produto ${i+1}</strong>${E.itens.length>1?`<button type="button" class="link" data-a="ng-rm" data-v="${i}">Remover</button>`:""}</div>
+    ${ngInput("itens."+i+".pid","Produto",it.pid,{req:1,rr:1,sel:`<option value="">Escolha o produto</option>${prods.map(p=>`<option value="${p.id}" ${p.id===it.pid?"selected":""}>${esc(p.com||p.nome)} · ${esc(p.nome)}</option>`).join("")}`})}
+    ${P?`<span class="meta">${esc(P.nome)} · sacaria de ${P.saco} kg</span>`:""}
+    <div class="ng-g2">${ngInput("itens."+i+".kg","Quantidade (kg)",it.kg,{req:1,im:"numeric",ph:P?"Múltiplo de "+P.saco:"Ex.: 500",did:"ng-dkg-"+i,dica:ngDicaKg(c)})}
+      ${ngInput("itens."+i+".preco","Preço por kg (R$)",it.preco!==""&&it.preco!=null?it.preco:(c.tab!=null?String(c.tab).replace(".",","):""),{req:1,im:"decimal",did:"ng-dpr-"+i,dica:ngDicaPr(c)})}</div>
+    <div class="ng-sub">Subtotal: <strong data-ngtot="${i}">${ngBRL(c.total)}</strong></div></div>`;};
+  return `${!E.data_faturamento?`<div class="nota-admin">Volte ao passo Negociação e informe a data de entrega/faturamento: é ela que define a tabela de preço.</div>`:""}
+    ${E.itens.map(linha).join("")}
+    <div><button type="button" class="btn sec" data-a="ng-add">Adicionar produto</button></div>
+    <div class="ng-tot"><span>Valor total do pedido</span><strong id="ng-total">${ngBRL(C.total)}</strong></div>
+    <div id="ng-desc" ${C.abaixo?"":"hidden"}>${ngInput("desconto_motivo","Justificativa do pedido de desconto",E.desconto_motivo,{req:1,ta:3,max:800,ph:"Ex.: cliente tem cotação de R$ 41/kg; volume de 2 t; fidelização na região",dica:`O pedido vai para ${esc((S.profile||{}).comercial_resp||"o seu responsável comercial")}. Se não for aprovado, vale o preço de tabela.`})}</div>`;}
+function ngPasso4(E){const c=E.contato||{};return `${ngInput("contato.nome","Nome do contato da negociação",c.nome,{req:1,max:100})}
+  <div class="ng-g2">${ngInput("contato.celular","Celular",c.celular,{type:"tel",im:"tel",masc:"fone",max:16,ph:"(00) 00000-0000"})}${ngInput("contato.fixo","Telefone fixo",c.fixo,{type:"tel",im:"tel",masc:"fone",max:16,ph:"(00) 0000-0000"})}</div>
+  ${ngInput("contato.email","E-mail",c.email,{type:"email",max:120})}<p class="meta" style="margin:0">Informe pelo menos um telefone.</p>`;}
+function ngPasso5(E){const C=ngCalc(E);const ex=E.cliente_extra||{};const q=NG_QUALI.find(z=>z[0]===+E.qualificacao);
+  const L=(r,v)=>v?`<div class="ng-rv"><span>${r}</span><strong>${esc(v)}</strong></div>`:"";
+  return `<div class="ng-rev">${L("Cliente",E.cliente_nome)}${L(E.tipo_pessoa==="PF"?"CPF":"CNPJ",E.cliente_doc)}${L("Cidade/UF",[E.cliente_cidade,E.cliente_uf].filter(Boolean).join("/"))}${L("Negociação",E.nome_neg)}${L("Qualificação",q&&q[1])}${L("Previsão de fechamento",ngDt(E.previsao_fech))}${L("Entrega/faturamento",ngDt(E.data_faturamento))}${L("Forma",E.forma)}${L("Pagamento",E.cond_pagamento)}${L("Contato",[E.contato.nome,E.contato.celular||E.contato.fixo].filter(Boolean).join(" · "))}</div>
+  <div class="ng-rev">${C.its.map(i=>`<div class="ng-rv"><span>${esc(i.P?(i.P.com||i.P.nome):"Produto")} · ${isNum(i.kg)} kg</span><strong>${ngBRL(i.preco)}/kg${i.abaixo?" (desconto)":""}</strong></div>`).join("")}<div class="ng-rv"><span>Total</span><strong>${ngBRL(C.total)}</strong></div></div>
+  ${C.abaixo?`<div class="aviso-est">Com pedido de desconto: o seu responsável comercial decide. Se não aprovar, vale o preço de tabela.</div>`:""}
+  <div><label for="ng_anexos">Anexos (opcional)</label><input id="ng_anexos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"><span class="meta">Até 8 arquivos de 15 MB. Só você e o seu responsável comercial abrem.</span></div>
+  <p class="meta">Ao enviar, a negociação vai para ${esc((S.profile||{}).comercial_resp||"o seu responsável comercial")}, que confere preço, frete e cadastro e registra na Barenbrug. A proposta para o cliente fica disponível depois dessa aprovação.</p>`;}
+function ngValida(E,p){const C=ngCalc(E);const ex=E.cliente_extra||{};const novo=!(S.ng.chk&&S.ng.chk.crm);
+  if(p===1){if(!ngDocOk(E.cliente_doc))return "Informe um "+(E.tipo_pessoa==="PF"?"CPF":"CNPJ")+" válido.";if(!E.cliente_nome.trim())return "Informe o nome da empresa ou fazenda.";if(!E.cliente_uf||!String(E.cliente_cidade||"").trim())return "Informe a UF e a cidade.";
+    if(novo){if(E.tipo_pessoa!=="PF"&&!String(ex.razao||"").trim())return "Cliente novo: informe a razão social.";if(docLimpo(ex.cep).length!==8)return "Cliente novo: informe o CEP com 8 números.";if(!String(ex.endereco||"").trim()||!String(ex.numero||"").trim()||!String(ex.bairro||"").trim())return "Cliente novo: informe endereço, número e bairro.";}}
+  if(p===2){if(!E.nome_neg.trim())return "Dê um nome à negociação.";if(!E.qualificacao)return "Escolha a qualificação.";if(!E.previsao_fech)return "Informe a previsão de fechamento.";if(!E.data_faturamento)return "Informe a data de entrega/faturamento.";if(!E.cond_pagamento)return "Escolha a condição de pagamento.";}
+  if(p===3){if(!C.its.length)return "Inclua um produto.";for(const i of C.its){if(!i.P)return "Escolha o produto de cada linha.";if(!(i.kg>0))return "Informe a quantidade de "+(i.P.com||i.P.nome)+".";if(i.kg%i.P.saco)return (i.P.com||i.P.nome)+" é vendido em sacaria de "+i.P.saco+" kg.";if(!(i.preco>0))return "Informe o preço de "+(i.P.com||i.P.nome)+".";}
+    if(C.abaixo&&!String(E.desconto_motivo||"").trim())return "Explique o motivo do pedido de desconto.";}
+  if(p===4){const c=E.contato||{};if(!String(c.nome||"").trim())return "Informe o nome do contato.";if(docLimpo(c.celular).length<10&&docLimpo(c.fixo).length<10)return "Informe um telefone com DDD.";if(c.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email))return "Confira o e-mail.";}
+  return "";}
+function vNgForm(){const E=S.ng.ed;const p=E.passo||1;const f=[ngPasso1,ngPasso2,ngPasso3,ngPasso4,ngPasso5][p-1](E);
+  return `<section class="bloco ng-wiz"><div class="ng-wiz-t"><h2 class="sec" style="margin:0">${E.id?"Ajustar e reenviar":"Nova negociação"}</h2><button type="button" class="link" data-a="ng-fechar">Fechar</button></div>
+    <ol class="ng-passos" aria-label="Passos">${NG_PASSOS.map((t,i)=>`<li class="${i+1<p?"feito":i+1===p?"atual":""}"><button type="button" data-a="ng-ir" data-v="${i+1}" ${i+1>p?"disabled":""} aria-current="${i+1===p?"step":"false"}"><span>${i+1}</span><em>${t}</em></button></li>`).join("")}</ol>
+    ${E.id&&E.devolvido_obs?`<div class="aviso-est"><strong>O que ajustar:</strong> ${esc(E.devolvido_obs)}</div>`:""}
+    <form class="form-card ng-form" id="f-ng" novalidate>${f}
+      ${S.ng.erro?`<div class="erro" role="alert">${esc(S.ng.erro)}</div>`:""}
+      <div class="ng-nav">${p>1?`<button type="button" class="btn sec" data-a="ng-volta">Voltar</button>`:"<span></span>"}${p<5?`<button type="button" class="btn" data-a="ng-avanca">Continuar</button>`:`<button type="submit" class="btn">${E.id?"Reenviar ao responsável":"Enviar ao responsável comercial"}</button>`}</div>
+    </form></section>`;}
+/* ---------- lista em mini-kanban ---------- */
+function ngCartao(x,ver){const it=Array.isArray(x.itens)?x.itens:[];const col=ngColuna(x);const tot=it.reduce((s,i)=>s+ngEfetivo(x,i)*(+i.kg||0),0);
+  const acaoRC=x.autor===S.user.id&&(col==="ajustar"||["docs_pedidos","pendencia"].includes(x.credito_status));
+  return `<button type="button" class="ng-card${acaoRC?" ng-card-acao":""}" data-a="ng-abrir" data-v="${x.id}"><span class="ng-card-t">${esc(x.nome_neg||x.cliente_nome)}</span>
+    <span class="meta">${ver?esc(x.rc_nome||"")+" · ":""}${esc(x.cliente_nome)}${x.cliente_uf?" · "+esc(x.cliente_cidade||"")+"/"+esc(x.cliente_uf):""}</span>
+    <span class="meta">${it.map(i=>esc(i.cultivar||i.nome)+" "+isNum(i.kg)+" kg").join(" · ")}</span>
+    <span class="ng-card-r"><strong>${ngBRL(tot)}</strong><span class="ng-sit ng-${col}">${esc(ngSit(x))}</span></span>
+    ${acaoRC?`<span class="ng-card-alerta">Precisa de você</span>`:""}${x.desconto_status==="pendente"&&ver?`<span class="ng-card-alerta">Desconto para decidir</span>`:""}</button>`;}
+function ngKanban(L,ver){if(!L.length)return `<div class="vazio">Nenhuma negociação por aqui ainda.</div>`;
+  const G={};L.forEach(x=>{(G[ngColuna(x)]||(G[ngColuna(x)]=[])).push(x);});
+  return `<div class="ng-kan">${NG_COLS.filter(([k])=>G[k]||!["encerradas","finalizado","ajustar"].includes(k)).map(([k,t])=>`<section class="ng-col ng-col-${k}" aria-label="${t}"><h3>${t} <span>${(G[k]||[]).length}</span></h3>${(G[k]||[]).map(x=>ngCartao(x,ver)).join("")||`<p class="meta" style="margin:4px 0">Nada aqui.</p>`}</section>`).join("")}</div>`;}
+function vNegs(modo){const G=S.ng||(S.ng={});
+  if(G.lista===undefined){if(!G.busy)ngCarregar().then(render);return `<div class="carregando">Carregando as negociações…</div>`;}
+  if(G.aberta)return vNgDetalhe(G.lista.find(x=>x.id===G.aberta));
+  const me=S.user.id;const minhas=G.lista.filter(x=>x.autor===me);const dosRCs=G.lista.filter(x=>x.autor!==me);
+  if(modo==="fin"){const F=G.lista.filter(x=>x.credito_status);const ab=F.filter(x=>!["aprovado","reprovado"].includes(x.credito_status));
+    return `<div><h1 class="titulo">Análise de crédito</h1><p class="sub">Negociações dos representantes em que o responsável comercial ou o Financeiro pediu análise de crédito. Os documentos ficam visíveis só para o RC, o responsável comercial dele e o Financeiro.</p></div>
+      <section class="bloco"><h2 class="sec">Em aberto (${ab.length})</h2>${ab.length?`<div class="ng-lista">${ab.map(x=>ngCartao(x,true)).join("")}</div>`:`<div class="vazio">Nenhuma análise em aberto.</div>`}</section>
+      ${F.length>ab.length?`<section class="bloco"><h2 class="sec">Concluídas</h2><div class="ng-lista">${F.filter(x=>!ab.includes(x)).slice(0,60).map(x=>ngCartao(x,true)).join("")}</div></section>`:""}`;}
+  const gest=ngGestor();const aba=G.aba||(gest&&dosRCs.length?"rcs":"minhas");
+  const decidir=dosRCs.filter(x=>x.status==="Enviado");
+  return `${S.leadNeg?`<div class="aviso-est" role="note"><strong>Negociação do lead ${esc(S.leadNeg.nome||"do LeadsBaren")}</strong><p>Ao enviar, a negociação vai para o seu responsável comercial e o lead fica como "${S.leadNeg.st==="Vendido"?"Vendido":"Em negociação"}". <button type="button" class="link" data-a="lead-neg-cancela">Voltar para o lead</button></p></div>`:""}<div><h1 class="titulo">Negociações</h1><p class="sub">${gest?"Negociações enviadas pelos representantes: confira preço, desconto e frete e registre na Barenbrug. O RC acompanha cada etapa por aqui.":"Envie suas negociações para o seu responsável comercial e acompanhe cada etapa: aprovação, registro na Barenbrug, crédito e pedido. A proposta para o cliente sai depois da aprovação."}</p></div>
+    ${G.ed?vNgForm():ngPodeEnviar()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="ng-nova">Nova negociação</button>${ngRascLer()?`<button class="btn sec" data-a="ng-rasc">Continuar o rascunho</button>`:""}</div>`:""}
+    ${G.ed?"":`${gest&&dosRCs.length?`<div class="ng-seg" role="tablist" style="margin:0 0 10px"><button class="chip" role="tab" data-a="ng-aba" data-v="rcs" aria-pressed="${aba==="rcs"}">Dos RCs (${dosRCs.length})</button><button class="chip" role="tab" data-a="ng-aba" data-v="minhas" aria-pressed="${aba==="minhas"}">Minhas (${minhas.length})</button></div>`:""}
+    ${aba==="rcs"&&gest?`${decidir.length?`<section class="bloco"><h2 class="sec">Para você decidir (${decidir.length})</h2><div class="ng-lista">${decidir.map(x=>ngCartao(x,true)).join("")}</div></section>`:""}<section class="bloco"><h2 class="sec">Todas as negociações dos RCs</h2>${ngKanban(dosRCs,true)}</section>`
+      :`<section class="bloco"><h2 class="sec">Minhas negociações</h2>${ngKanban(minhas,false)}</section>`}
+    <p class="meta"><button type="button" class="link" data-a="ng-sync">Atualizar as etapas agora</button></p>`}`;}
+/* ---------- detalhe com fluxo, ações e histórico ---------- */
+function ngFluxo(x){const col=ngColuna(x);const reg=x.status==="No CRM";const cred=!!x.credito_status;
+  const P=[["Enviada",true,ngDt(x.criado_em)],
+    ["Aprovação do responsável",reg,x.desconto_status==="pendente"?"desconto em análise":x.desconto_status==="recusado"?"desconto não aprovado: vale a tabela":x.desconto_status==="aprovado"?"desconto aprovado":x.status==="Devolvido"?"devolvida para ajuste":reg?"aprovada":"aguardando"],
+    ["Registrada na Barenbrug",reg,reg?(x.crm_etapa||"Qualificação"):""],
+    ["Análise de crédito",x.credito_status==="aprovado",cred?{docs_pedidos:"documentos pedidos",docs_enviados:"documentos enviados",em_analise:"em análise",aprovado:"aprovado",reprovado:"não aprovado",pendencia:"pendência"}[x.credito_status]:"se for pedida"],
+    ["Pedido finalizado",x.crm_sit==="V",""]];
+  const atual=P.findIndex(p=>!p[1]);
+  return `<ol class="ng-fluxo">${P.map((p,i)=>`<li class="${p[1]?"feito":i===atual&&col!=="encerradas"?"atual":""}${i===3&&!cred?" opc":""}"><span class="ng-f-b">${p[1]?"✓":i+1}</span><span><strong>${p[0]}</strong>${p[2]?`<em>${esc(p[2])}</em>`:""}</span></li>`).join("")}</ol>
+    ${col==="encerradas"?`<div class="nota-admin">${x.status==="Cancelada"?"Negociação cancelada.":"Negociação encerrada pelo comercial."}</div>`:""}`;}
+function ngDocsCredHTML(x,podeAnexar){const ped=Array.isArray(x.credito_docs)?x.credito_docs:[];const arq=Array.isArray(x.credito_arquivos)?x.credito_arquivos:[];
+  return `<section class="bloco"><h2 class="sec">Análise de crédito</h2>
+    ${ped.length?`<p class="sub" style="margin:0 0 6px">Documentos pedidos:</p><ul class="ng-docs">${ped.map(d=>`<li>${esc(d)}</li>`).join("")}</ul>`:""}
+    ${x.credito_obs?`<p class="meta">Observação: ${esc(x.credito_obs)}</p>`:""}
+    ${arq.length?`<p class="sub" style="margin:8px 0 4px">Arquivos enviados:</p><ul class="ng-docs">${arq.map(a=>`<li><button type="button" class="link" data-a="ng-doc" data-v="${esc(a.path)}">${esc(a.nome)}</button> <span class="meta">${esc(ngDt(a.em))}</span></li>`).join("")}</ul>`:""}
+    ${podeAnexar?`<form class="form-card" id="f-ng-docs" data-id="${x.id}" style="margin-top:8px"><label for="ngd_arq">Anexar documentos</label><input id="ngd_arq" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" required><span class="meta">Só você, o seu responsável comercial e o Financeiro abrem estes arquivos. Até 10 arquivos de 15 MB.</span><label for="ngd_obs">Observação (opcional)</label><input id="ngd_obs" maxlength="300"><div class="acoes"><button class="btn" type="submit">Enviar documentos</button></div></form>`:""}
+    <p class="meta" style="margin-top:6px">Dúvidas sobre crédito: veja Crédito do pedido no Conecta RC.</p></section>`;}
+function ngPedirCredHTML(x){return `<details class="ng-det"><summary>Pedir análise de crédito</summary><form class="form-card" id="f-ng-cred" data-id="${x.id}">
+  ${NG_CRED_DOCS.map(([g,L],gi)=>`<fieldset class="ng-fs"><legend>${esc(g)}</legend>${L.map((d,di)=>`<label class="check"><input type="checkbox" name="ngc" value="${esc(d)}"> ${esc(d)}</label>`).join("")}</fieldset>`).join("")}
+  <label for="ngc_outros">Outros documentos (um por linha)</label><textarea id="ngc_outros" rows="2" maxlength="500"></textarea>
+  <label for="ngc_obs">Observação para o RC</label><input id="ngc_obs" maxlength="300">
+  <div class="acoes"><button class="btn" type="submit">Pedir os documentos</button></div></form></details>`;}
+function ngEvHTML(x){const L=(S.ng.evs||{})[x.id];if(L===undefined){ngEventos(x.id).then(render);return `<div class="carregando">Carregando o histórico…</div>`;}
+  return `<ol class="ng-hist">${L.slice().reverse().map(e=>`<li class="ng-ev-${esc(e.tipo)}"><span class="meta">${esc(fmtDataHora(e.em))}${e.autor_nome?" · "+esc(e.autor_nome):""}</span><span>${esc(e.texto||"")}</span></li>`).join("")||`<li class="meta">Sem registros.</li>`}</ol>`;}
+function vNgDetalhe(x){if(!x){S.ng.aberta=null;return vNegs();}
+  const me=S.user.id;const souRC=x.autor===me;const gest=ngGestor()&&!souRC||ehAdmin();const fin=ngSouFin();const it=Array.isArray(x.itens)?x.itens:[];
+  const ex=x.cliente_extra||{},ct=x.contato||{};const tot=it.reduce((s,i)=>s+ngEfetivo(x,i)*(+i.kg||0),0);
+  const L=(r,v)=>v?`<div class="ng-rv"><span>${r}</span><strong>${esc(v)}</strong></div>`:"";
+  const q=NG_QUALI.find(z=>z[0]===+x.qualificacao);const ce=x.cliente_existe||{};
+  const podeProp=x.status==="No CRM"&&x.crm_sit!=="P"&&(souRC||gest);
+  return `<button class="voltar" data-a="ng-voltar">‹ Negociações</button>
+  <div><span class="rot">Negociação ${x.id}</span><h1 class="titulo">${esc(x.nome_neg||x.cliente_nome)}</h1><p class="sub">${esc(ngSit(x))}${x.status==="No CRM"&&x.crm_etapa?"":""}</p></div>
+  <section class="bloco">${ngFluxo(x)}</section>
+  ${souRC&&x.status==="Devolvido"?`<div class="aviso-est"><strong>Devolvida para ajuste:</strong> ${esc(x.devolvido_obs||"")}<div class="acoes" style="margin:8px 0 0"><button class="btn" data-a="ng-ajustar" data-v="${x.id}">Ajustar e reenviar</button><button class="btn sec" data-a="ng-cancelar" data-v="${x.id}">Cancelar a negociação</button></div></div>`:""}
+  ${podeProp?`<section class="bloco"><h2 class="sec">Proposta para o cliente</h2><p class="sub" style="margin:0 0 8px">Aprovada pelo responsável comercial. ${x.proposta_em?"Emitida em "+ngDt(x.proposta_em)+", válida até "+ngDt(new Date(new Date(x.proposta_em).getTime()+15*864e5).toISOString())+".":"Válida por 15 dias a partir da emissão."}</p><div class="acoes" style="margin:0"><button class="btn" data-a="ng-prop" data-v="${x.id}">Baixar proposta em PDF</button><button class="btn sec" data-a="ng-prop-ver" data-v="${x.id}">Ver a proposta</button></div></section>`:souRC&&["aguardando","ajustar"].includes(ngColuna(x))?`<p class="meta">A proposta em PDF para o cliente fica disponível depois que o responsável comercial aprovar a negociação.</p>`:""}
+  ${gest&&x.status!=="No CRM"&&x.status!=="Cancelada"?ngAcoesGestor(x):""}
+  ${gest&&x.status==="No CRM"&&x.crm_deal_id&&ehAdmin()||gest&&x.status==="No CRM"&&x.crm_deal_id?`<p class="meta">${crmLnk(x.crm_deal_id)}${x.crm_pv?" · PV "+esc(x.crm_pv):""}</p>`:""}
+  ${x.crm_erro&&gest?`<div class="nota-admin">${esc(x.crm_erro)}</div>`:""}
+  <section class="bloco"><h2 class="sec">Produtos</h2><div class="ng-rev">${it.map(i=>{const ef=ngEfetivo(x,i);return `<div class="ng-rv"><span>${esc(i.cultivar||i.nome)} · ${isNum(i.kg)} kg<br><em class="meta">${esc(i.nome||"")}</em></span><strong>${ngBRL(ef)}/kg${i.tab!=null?`<br><em class="meta">tabela ${ngBRL(i.tab)}${Number(i.preco)<Number(i.tab)?" · pedido "+ngBRL(i.preco):""}</em>`:""}</strong></div>`;}).join("")}
+    ${x.frete_valor!=null||x.frete?`<div class="ng-rv"><span>Frete${x.frete?" · "+esc(x.frete):""}</span><strong>${x.frete_valor!=null?ngBRL(x.frete_valor):"a definir"}</strong></div>`:""}
+    <div class="ng-rv"><span>Valor total do pedido</span><strong>${ngBRL(tot+(+x.frete_valor||0))}</strong></div></div>
+    ${x.desconto_status?`<p class="meta">Desconto: ${esc({pendente:"aguardando o responsável",aprovado:"aprovado",recusado:"não aprovado, vale a tabela"}[x.desconto_status]||x.desconto_status)}${x.desconto_motivo?" · motivo: "+esc(x.desconto_motivo):""}${x.desconto_obs?" · "+esc(x.desconto_obs):""}</p>`:""}</section>
+  <section class="bloco"><h2 class="sec">Dados</h2><div class="ng-rev">${L("Representante",gest?x.rc_nome:"")}${L("Responsável comercial",x.comercial)}${L("Cliente",x.cliente_nome)}${L("CPF/CNPJ",docFmt(x.cliente_doc))}${L("Cidade/UF",[x.cliente_cidade,x.cliente_uf].filter(Boolean).join("/"))}${L("Razão social",ex.razao)}${L("Categoria",ex.categoria)}${L("Endereço",[ex.endereco,ex.numero,ex.complemento,ex.bairro,ex.cep].filter(Boolean).join(", "))}${L("Qualificação",q&&q[1])}${L("Previsão de fechamento",ngDt(x.previsao_fech))}${L("Entrega/faturamento",ngDt(x.data_faturamento))}${L("Forma",x.forma)}${L("Pagamento",x.cond_pagamento)}${L("Tipo de documento",x.tipo_doc)}${L("Contato",[ct.nome,ct.celular,ct.fixo,ct.email].filter(Boolean).join(" · "))}${L("Observação",x.anotacao)}</div>
+    ${gest&&(ce.abertas_outros||ce.crm)?`<p class="meta">No envio: ${ce.crm?"cliente já cadastrado":"cliente novo"}${ce.ja_comprou?", já comprou":""}${ce.abertas_outros?`, com ${ce.abertas_outros} negociação(ões) em aberto de outro vendedor${ce.quem?" ("+esc(ce.quem)+")":""}`:""}.</p>`:""}
+    ${Array.isArray(x.anexos)&&x.anexos.length?`<p class="meta">Anexos: ${x.anexos.map(a=>`<button class="link" data-a="neg-anexo" data-v="${esc(a.path)}">${esc(a.nome)}</button>`).join(" · ")}</p>`:""}</section>
+  ${x.credito_status?ngDocsCredHTML(x,(souRC||gest)&&["docs_pedidos","pendencia","docs_enviados"].includes(x.credito_status)):""}
+  ${(gest||fin)&&x.status==="No CRM"&&!["em_analise"].includes(x.credito_status||"")&&x.crm_sit!=="V"&&x.crm_sit!=="P"&&(!x.credito_status||x.credito_status==="pendencia")?ngPedirCredHTML(x):""}
+  ${(fin||ehAdmin())&&x.credito_status?ngAcoesFin(x):""}
+  ${gest&&x.status==="No CRM"?`<details class="ng-det"><summary>Informar ou alterar o frete</summary><form class="form-card" id="f-ng-frete" data-id="${x.id}"><div class="ng-g2"><div><label for="ngf_m">Modalidade</label><select id="ngf_m">${NG_FRETE_MODOS.map(m=>`<option ${m===x.frete?"selected":""}>${m}</option>`).join("")}</select></div><div><label for="ngf_v">Valor estimado (R$)</label><input id="ngf_v" inputmode="decimal" value="${x.frete_valor!=null?String(x.frete_valor).replace(".",","):""}"></div></div><div class="acoes"><button class="btn" type="submit">Salvar frete</button></div></form></details>`:""}
+  <section class="bloco"><h2 class="sec">Histórico e mensagens</h2>
+    ${x.status!=="Cancelada"?`<form class="form-card" id="f-ng-msg" data-id="${x.id}" style="margin-bottom:10px"><label for="ngm_t">Mensagem para ${souRC?"o seu responsável comercial":"o representante"}</label><textarea id="ngm_t" rows="2" maxlength="800" required></textarea><div class="acoes" style="margin:0"><button class="btn sec" type="submit">Enviar mensagem</button></div></form>`:""}
+    ${ngEvHTML(x)}</section>`;}
+function ngAcoesGestor(x){const pend=x.desconto_status==="pendente";
+  return `<section class="bloco ng-gest"><h2 class="sec">Sua decisão</h2>
+    ${pend?`<div class="aviso-est"><strong>Pedido de desconto.</strong> ${esc(x.desconto_motivo||"")}<br>${(x.itens||[]).filter(i=>i.tab!=null&&+i.preco<+i.tab).map(i=>`${esc(i.cultivar)}: pedido ${ngBRL(i.preco)}/kg, tabela ${ngBRL(i.tab)}/kg`).join("<br>")}</div>
+      <form class="form-card" id="f-ng-desc" data-id="${x.id}"><label for="ngd_obs2">Comentário para o RC (opcional)</label><input id="ngd_obs2" maxlength="300"><div class="acoes"><button class="btn" type="submit" name="ok" value="aprovar_desconto">Aprovar desconto</button><button class="btn sec" type="submit" name="ok" value="recusar_desconto">Não aprovar (vale a tabela)</button></div></form>`:""}
+    ${x.status==="Enviado"?`<form class="form-card" id="f-ng-lancar" data-id="${x.id}">
+      <p class="sub" style="margin:0">Ao aprovar, a negociação é criada no CRM no Funil de Vendas Barenbrug, etapa Qualificação, com você como responsável, o RC no campo Representante e os produtos, o contato e a empresa. O RC passa a poder emitir a proposta.</p>
+      <div class="ng-g2"><div><label for="ngl_m">Modalidade de frete</label><select id="ngl_m">${NG_FRETE_MODOS.map(m=>`<option>${m}</option>`).join("")}</select></div><div><label for="ngl_v">Valor estimado do frete (R$)</label><input id="ngl_v" inputmode="decimal" placeholder="Opcional"></div></div>
+      <div class="acoes"><button class="btn" type="submit" ${pend?"disabled title=\"Decida o desconto primeiro\"":""}>Aprovar e registrar na Barenbrug</button></div>
+      ${pend?`<span class="meta">Decida o pedido de desconto antes de aprovar.</span>`:""}</form>
+      <details class="ng-det"><summary>Devolver ao RC para ajuste</summary><form class="form-card" id="f-ng-devolver" data-id="${x.id}"><label for="ngv_obs">O que precisa ajustar *</label><textarea id="ngv_obs" rows="2" maxlength="600" required></textarea><div class="acoes"><button class="btn sec" type="submit">Devolver</button></div></form></details>
+      <details class="ng-det"><summary>Já registrei no CRM à mão</summary><form class="form-card" id="f-ng-manual" data-id="${x.id}"><label for="ngman_l">Link da negociação no CRM (opcional)</label><input id="ngman_l" maxlength="200" placeholder="https://crm.rdstation.com/app/deals/…"><div class="acoes"><button class="btn sec" type="submit">Marcar como registrada</button></div></form></details>`:x.status==="Devolvido"?`<p class="meta">Devolvida ao RC para ajuste: ${esc(x.devolvido_obs||"")}</p>`:x.status==="Lançando"?`<p class="meta">Registrando na Barenbrug…</p>`:""}
+  </section>`;}
+function ngAcoesFin(x){const ab=!["aprovado","reprovado"].includes(x.credito_status);if(!ab)return "";
+  return `<section class="bloco"><h2 class="sec">Parecer do Financeiro</h2><form class="form-card" id="f-ng-fin" data-id="${x.id}"><label for="ngfin_obs">Observação (obrigatória para pendência ou não aprovação)</label><textarea id="ngfin_obs" rows="2" maxlength="600"></textarea>
+    <div class="acoes" style="flex-wrap:wrap">${x.credito_status!=="em_analise"?`<button class="btn sec" type="submit" name="ok" value="credito_analise">Iniciar análise</button>`:""}<button class="btn" type="submit" name="ok" value="credito_aprovado">Crédito aprovado</button><button class="btn sec" type="submit" name="ok" value="credito_pendencia">Pedir pendência</button><button class="btn sec" type="submit" name="ok" value="credito_reprovado">Não aprovado</button></div></form></section>`;}
+/* ---------- proposta em PDF (só depois da aprovação) ---------- */
+function ngPropDoc(x){const it=Array.isArray(x.itens)?x.itens:[];const rc=x.rc_info||{};const ex=x.cliente_extra||{},ct=x.contato||{};
+  const em=x.proposta_em?new Date(x.proposta_em):new Date();const val=new Date(em.getTime()+15*864e5);const d=t=>t.toLocaleDateString("pt-BR");
+  const linhas=it.map(i=>{const ef=ngEfetivo(x,i),kg=+i.kg||0,desc=i.tab!=null&&ef<+i.tab?(+i.tab-ef)*kg:0;return {i,ef,kg,desc,sub:ef*kg};});
+  const totP=linhas.reduce((s,l)=>s+l.sub,0),fr=x.frete_valor!=null?+x.frete_valor:null;
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta ${x.id} · ${esc(x.cliente_nome)}</title><style>
+@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#1e1e1e;font-size:11.5px;margin:0 auto;max-width:820px;padding:0 16px 24px;line-height:1.45}
+.fx{height:6px;background:#FFDB00;margin:0 -16px 18px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.top img{height:46px}.emp{text-align:right;font-size:11px;color:#444}.emp strong{color:#1e1e1e;font-size:12px}
+.rc{margin:14px 0 4px;padding:10px 12px;background:#f3f7f9;border-left:4px solid #00A8E2;border-radius:4px}.rc strong{font-size:13px}
+h1{font-size:24px;margin:16px 0 4px}.cli{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.cli div{border:1px solid #d5e1e7;border-radius:6px;padding:8px 10px}.r{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#5a6b74;margin:0 0 3px}
+h3{font-size:12px;margin:10px 0 2px}p{margin:0 0 2px}ul{margin:2px 0 4px 18px;padding:0}li{margin:1px 0}.it{font-style:italic;color:#444}
+table{width:100%;border-collapse:collapse;margin-top:14px}th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#5a6b74;text-align:left;padding:8px;border-bottom:2px solid #d5e1e7}td{padding:9px 8px;border-bottom:1px solid #e5edf1;vertical-align:top}td.v,th.v{text-align:right;white-space:nowrap}td small{color:#5a6b74}
+.tot{display:flex;justify-content:space-between;align-items:center;background:#f1f3f5;border-radius:8px;padding:14px 16px;margin-top:12px;font-size:15px}.tot strong{font-size:16px}
+.fim{margin-top:12px;font-size:11px;color:#333}.fx2{height:6px;background:linear-gradient(90deg,#FFDB00 50%,#fff7bf 50%);margin:18px -16px 0}
+.bt{position:fixed;bottom:16px;right:16px;padding:10px 16px;font-size:14px;background:#00557A;color:#fff;border:0;border-radius:6px;cursor:pointer}@media print{.bt{display:none}body{padding:0}}</style></head><body>
+<button class="bt" onclick="window.print()">Salvar em PDF</button>
+<div class="fx"></div>
+<div class="top"><img src="${LOGO}" alt="Barenbrug"><div class="emp"><strong>Barenbrug do Brasil</strong><br>15.574.816/0001-04<br>(17) 3321-5999</div></div>
+<div class="rc"><span class="r">Representante comercial Barenbrug</span><br><strong>${esc(rc.razao||x.rc_nome||"")}</strong>${rc.cnpj?" · CNPJ "+esc(docFmt(rc.cnpj)):""}<br>${esc([rc.nome,rc.telefone,rc.email].filter(Boolean).join(" · "))}<br><span style="font-size:10.5px;color:#5a6b74">Esta proposta é apresentada por representante comercial autorizado da Barenbrug do Brasil.</span></div>
+<h1>Proposta comercial</h1><p style="color:#5a6b74">Nº ${x.id} · Emitida em ${d(em)} · Válida até ${d(val)}</p>
+<div class="cli"><div><p class="r">Cliente</p><strong>${esc(ex.razao||x.cliente_nome)}</strong><br>${esc(docFmt(x.cliente_doc))}<br>${esc([x.cliente_cidade,x.cliente_uf].filter(Boolean).join("/"))}</div><div><p class="r">Contato</p><strong>${esc(ct.nome||"")}</strong><br>${esc([ct.celular,ct.fixo].filter(Boolean).join(" · "))}${ct.email?"<br>"+esc(ct.email):""}</div></div>
+<p>Seguem as condições e a proposta comercial detalhada para sua avaliação:</p>
+<h3>1) Validade da proposta</h3><p>Esta proposta comercial é válida por <strong>15 (quinze) dias corridos</strong> a partir da data de envio.</p>
+<h3>2) Frete</h3><p>Modalidade de frete: ${esc(x.frete||"a combinar")}</p><p>Valor estimado do frete: ${fr!=null?ngBRL(fr):"a definir"}</p><p class="it">O valor do frete poderá sofrer alterações conforme condições logísticas no momento do faturamento.</p>
+<h3>3) Condição de pagamento e crédito</h3><p>Condição de pagamento: <strong>${esc(x.cond_pagamento||"")}</strong>. Entrega/faturamento previsto: ${esc(ngDt(x.data_faturamento))}.</p><p>A efetivação do pedido está sujeita à <strong>análise e aprovação de crédito</strong>, conforme a forma de pagamento e os critérios internos da Barenbrug.</p>
+<h3>4) Disponibilidade e preços</h3><p>Os preços e condições apresentados:</p><ul><li>Estão sujeitos à disponibilidade de estoque no momento do faturamento;</li><li>Podem ser alterados sem aviso prévio conforme condições de mercado e política comercial vigente.</li></ul>
+<h3>5) Formalização do pedido</h3><p>O pedido será considerado válido somente após:</p><ul><li>Aceite formal da proposta;</li><li>Assinatura digital do documento;</li><li>Definição de volumes, condições e cronograma de entrega.</li></ul>
+<h3>6) Reserva e fornecimento de produto</h3><p>O envio desta proposta não caracteriza reserva de produto. A disponibilidade e a priorização de atendimento estarão condicionadas ao planejamento comercial e à confirmação do pedido.</p>
+<h3>7) Venda futura</h3><p>Esta proposta não configura compromisso de fornecimento para entrega futura sem o devido faturamento, conforme diretrizes comerciais da empresa.</p>
+<h3>8) Cancelamento de pedidos</h3><p>Pedidos formalizados poderão estar sujeitos a condições comerciais específicas em caso de cancelamento, conforme política vigente.</p>
+<h3>9) Condições finais</h3><p>As condições finais de fornecimento estarão vinculadas à:</p><ul><li>Aprovação de crédito;</li><li>Disponibilidade de produto;</li><li>Políticas comerciais vigentes no momento do faturamento.</li></ul>
+<table><thead><tr><th>Produto</th><th class="v">Qtd.</th><th class="v">Desconto</th><th class="v">Preço</th><th class="v">Subtotal</th></tr></thead><tbody>
+${linhas.map(l=>`<tr><td><strong>${esc(l.i.cultivar||l.i.nome)}</strong><br><small>${esc(l.i.nome||"")}</small></td><td class="v">${isNum(l.kg)} kg${l.i.saco?`<br><small>${isNum(l.kg/l.i.saco)} sacos de ${l.i.saco} kg</small>`:""}</td><td class="v">${l.desc>0?ngBRL(l.desc):"—"}</td><td class="v">${ngBRL(l.ef)}<br><small>por kg</small></td><td class="v"><strong>${ngBRL(l.sub)}</strong></td></tr>`).join("")}
+${fr!=null?`<tr><td><strong>Frete estimado</strong><br><small>${esc(x.frete||"")}</small></td><td></td><td></td><td></td><td class="v"><strong>${ngBRL(fr)}</strong></td></tr>`:""}
+</tbody></table>
+<div class="tot"><span>Valor total do pedido</span><strong>${ngBRL(totP+(fr||0))}</strong></div>
+<div class="fim"><p>Em caso de dúvidas, nossa equipe está à disposição para esclarecimentos.</p><p>Após a aprovação e assinatura desta proposta, daremos sequência imediata ao processo de faturamento e entrega, conforme condições acordadas.</p><p>Reforçamos que esta proposta possui validade de 15 dias.</p></div>
+<div class="fx2"></div></body></html>`;}
+async function ngPropBaixar(x,ver){
+  if(!x.proposta_em){const {error}=await sb.rpc("neg_acao",{p_id:x.id,p_acao:"proposta_emitida"});if(error){aviso(error.message||"Não foi possível emitir a proposta.");return;}x.proposta_em=new Date().toISOString();if(S.ng.evs)delete S.ng.evs[x.id];}
+  const html=ngPropDoc(x);
+  if(ver){const w=window.open("","_blank");if(!w){aviso("Libere a abertura de janelas para ver a proposta.");return;}w.document.open();w.document.write(html);w.document.close();render();return;}
+  try{await propLib();}catch(e){aviso("Não foi possível gerar o PDF agora. Use Ver a proposta e salve pelo navegador.");return;}
+  const css=(html.match(/<style>([\s\S]*?)<\/style>/)||[])[1]||"";const corpo=(html.match(/<body>([\s\S]*?)<\/body>/)||[])[1]||"";
+  const doc=`<div class="ppdf"><style>${propEscopo(css)}.ppdf{display:block;max-width:none;padding:0 0 12px;margin:0;background:#fff;width:186mm}.ppdf .bt{display:none}.ppdf .fx,.ppdf .fx2{margin-left:0;margin-right:0}</style>${corpo.replace('<button class="bt" onclick="window.print()">Salvar em PDF</button>','')}</div>`;
+  const nome=("Proposta "+x.id+" "+String(x.cliente_nome||"")).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9 _-]+/g,"").trim().slice(0,80)+".pdf";
+  try{await window.html2pdf().set({margin:[10,12,12,12],filename:nome,image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".tot"]}}).from(doc,"string").save();}
+  catch(e){aviso("Não foi possível gerar o PDF. Use Ver a proposta e salve pelo navegador.");}
+  render();}
+function ngNovoAbrir(){const G=S.ng||(S.ng={});G.ed=ngNovo();G.chk=null;G.chkDoc=null;G.erro=null;G.aberta=null;
+  if(S.leadNeg){const ln=S.leadNeg;G.ed.cliente_nome=ln.nome||"";G.ed.cliente_uf=ufDe(ln.uf)||"";G.ed.cliente_cidade=ln.cidade||"";G.ed.contato={nome:ln.nome||"",celular:ln.telefone?ngMascFone(ln.telefone):"",email:ln.email||""};if(G.ed.cliente_uf)carregarCidades(G.ed.cliente_uf).then(()=>render());}}
+/* ---------- eventos ---------- */
+async function ngChecarDoc(){const E=S.ng&&S.ng.ed;if(!E)return;const d=docLimpo(E.cliente_doc);const box=()=>{const b=document.getElementById("ng-chk");if(b)b.innerHTML=ngChkHTML();};
+  if(!(d.length===11||d.length===14)){S.ng.chk=null;S.ng.chkDoc=null;box();return;}
+  if(!ngDocOk(d)){S.ng.chk={valido:false};S.ng.chkDoc=d;box();return;}
+  if(S.ng.chkDoc===d)return;S.ng.chkDoc=d;
+  const {data}=await sb.rpc("neg_checar_doc",{p_doc:d,p_ignorar:E.id||null});const era=!!(S.ng.chk&&S.ng.chk.crm);S.ng.chk=data||null;
+  if(!!(data&&data.crm)!==era){const w=window.scrollY;render();window.scrollTo(0,w);}else box();
+  if(data&&data.crm&&data.nome&&!E.cliente_nome){E.cliente_nome=data.nome;const i=document.getElementById("ng_cliente_nome");if(i)i.value=data.nome;}}
+async function ngCep(){const E=S.ng&&S.ng.ed;if(!E)return;const ex=E.cliente_extra||(E.cliente_extra={});const c=docLimpo(ex.cep);if(c.length!==8||S.ng.cepFeito===c)return;S.ng.cepFeito=c;
+  try{const r=await fetch("https://viacep.com.br/ws/"+c+"/json/");const j=await r.json();if(!j||j.erro)return;
+    if(!ex.endereco)ex.endereco=j.logradouro||"";if(!ex.bairro)ex.bairro=j.bairro||"";if(!ex.complemento&&j.complemento)ex.complemento=j.complemento;
+    if(j.uf&&!E.cliente_uf){E.cliente_uf=j.uf;}if(j.localidade&&!E.cliente_cidade)E.cliente_cidade=j.localidade;ngRascSalvar();
+    if(E.cliente_uf){await carregarCidades(E.cliente_uf);}const w=window.scrollY;render();window.scrollTo(0,w);}catch(e){}}
+function ngTotais(){const E=S.ng&&S.ng.ed;if(!E||E.passo!==3)return;const C=ngCalc(E);C.its.forEach((c,i)=>{const t=document.querySelector(`[data-ngtot="${i}"]`);if(t)t.textContent=ngBRL(c.total);const k=document.getElementById("ng-dkg-"+i);if(k)k.innerHTML=ngDicaKg(c);const p=document.getElementById("ng-dpr-"+i);if(p)p.innerHTML=ngDicaPr(c);});
+  const t=document.getElementById("ng-total");if(t)t.textContent=ngBRL(C.total);const d=document.getElementById("ng-desc");if(d)d.hidden=!C.abaixo;}
+let _ngT=null;
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.ng||!S.ng||!S.ng.ed)return;
+  const m=t.dataset.ngm;if(m){const pos=t.value.length;t.value=m==="cep"?ngMascCep(t.value):m==="fone"?ngMascFone(t.value):ngMascDoc(t.value,m==="cnpj");}
+  ngSet(t.dataset.ng,t.value);
+  if(t.dataset.ng==="cliente_doc"){clearTimeout(_ngT);_ngT=setTimeout(ngChecarDoc,350);}
+  if(t.dataset.ng==="cliente_extra.cep")ngCep();
+  if(/^itens\./.test(t.dataset.ng))ngTotais();});
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.ng||!S.ng||!S.ng.ed)return;ngSet(t.dataset.ng,t.value);
+  if(t.dataset.ng==="cliente_uf"){S.ng.ed.cliente_cidade="";carregarCidades(t.value).then(()=>{const w=window.scrollY;render();window.scrollTo(0,w);});}
+  if(t.dataset.ngr){const w=window.scrollY;render();window.scrollTo(0,w);}});
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='ng-']");if(!b)return;const a=b.dataset.a,v=b.dataset.v;const G=S.ng||(S.ng={});ev.preventDefault();ev.stopPropagation();
+  const E=G.ed;const re=()=>{const w=window.scrollY;render();window.scrollTo(0,w);};const topo=()=>{render();const f=document.querySelector(".ng-wiz");if(f)f.scrollIntoView({block:"start"});};
+  if(a==="ng-nova"){ngNovoAbrir();topo();return;}
+  if(a==="ng-rasc"){G.ed=ngRascLer()||ngNovo();G.chk=null;G.chkDoc=null;G.erro=null;if(G.ed.cliente_uf)carregarCidades(G.ed.cliente_uf).then(re);topo();setTimeout(ngChecarDoc,0);return;}
+  if(a==="ng-fechar"){G.ed=null;G.erro=null;re();return;}
+  if(a==="ng-tp"&&E){E.tipo_pessoa=v;E.cliente_doc="";G.chk=null;G.chkDoc=null;ngRascSalvar();re();return;}
+  if(a==="ng-q"&&E){E.qualificacao=+v;ngRascSalvar();re();return;}
+  if(a==="ng-forma"&&E){E.forma=v;ngRascSalvar();re();return;}
+  if(a==="ng-novo"&&E){E.cliente_novo_rc=v;(E.cliente_extra||(E.cliente_extra={})).novo_rc=v;ngRascSalvar();re();return;}
+  if(a==="ng-add"&&E){E.itens.push({pid:"",kg:"",preco:""});ngRascSalvar();re();return;}
+  if(a==="ng-rm"&&E){E.itens.splice(+v,1);ngRascSalvar();re();return;}
+  if(a==="ng-ir"&&E){E.passo=+v;G.erro=null;topo();return;}
+  if(a==="ng-volta"&&E){E.passo=Math.max(1,(E.passo||1)-1);G.erro=null;topo();return;}
+  if(a==="ng-avanca"&&E){const e=ngValida(E,E.passo||1);G.erro=e||null;if(!e){E.passo=(E.passo||1)+1;if(E.passo===3&&!E.nome_neg&&E.cliente_nome){}}ngRascSalvar();topo();return;}
+  if(a==="ng-aba"){G.aba=v;re();return;}
+  if(a==="ng-abrir"){G.aberta=+v;G.ed=null;render();window.scrollTo(0,0);if(G.evs)delete G.evs[+v];return;}
+  if(a==="ng-voltar"){G.aberta=null;render();window.scrollTo(0,0);return;}
+  if(a==="ng-sync"){b.disabled=true;b.textContent="Atualizando…";G.syncEm=0;await ngCarregar(true);render();aviso("Etapas atualizadas.");return;}
+  const x=(G.lista||[]).find(n=>n.id===+v);
+  if(a==="ng-ajustar"&&x){G.ed=Object.assign(ngDeNeg(x),{devolvido_obs:x.devolvido_obs});G.aberta=null;G.chk=null;G.chkDoc=null;G.erro=null;if(G.ed.cliente_uf)carregarCidades(G.ed.cliente_uf).then(re);topo();setTimeout(ngChecarDoc,0);return;}
+  if(a==="ng-cancelar"&&x){if(b.dataset.conf!=="1"){b.dataset.conf="1";b.textContent="Confirmar o cancelamento";return;}const {error}=await sb.rpc("neg_acao",{p_id:x.id,p_acao:"cancelar"});if(error){aviso(error.message);return;}await ngCarregar();render();aviso("Negociação cancelada.");return;}
+  if((a==="ng-prop"||a==="ng-prop-ver")&&x){b.disabled=true;const t=b.textContent;b.textContent="Gerando…";await ngPropBaixar(x,a==="ng-prop-ver");b.disabled=false;b.textContent=t;return;}
+  if(a==="ng-doc"){const {data,error}=await sb.storage.from("neg-credito").createSignedUrl(v,300);if(error||!data){aviso("Não foi possível abrir o arquivo.");return;}window.open(data.signedUrl,"_blank","noopener");return;}
+},true);
+async function ngAcao(id,acao,obs,dados,msg){const {error}=await sb.rpc("neg_acao",{p_id:id,p_acao:acao,p_obs:obs||null,p_dados:dados||null});if(error){aviso(error.message||"Não foi possível gravar.");return false;}
+  if(S.ng.evs)delete S.ng.evs[id];await ngCarregar();render();if(msg)aviso(msg);return true;}
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/^f-ng/.test(f.id))return;ev.preventDefault();ev.stopImmediatePropagation();const G=S.ng;const id=+f.dataset.id;const btn=ev.submitter||f.querySelector("button[type=submit]");const g=s=>((f.querySelector(s)||{}).value||"").trim();
+  if(f.id==="f-ng"){const E=G.ed;for(let p=1;p<=4;p++){const e=ngValida(E,p);if(e){G.erro=e;E.passo=p;render();return;}}
+    const arqs=[...((f.querySelector("#ng_anexos")||{}).files||[])];if(arqs.length>8||arqs.some(a=>a.size>15*1024*1024)){G.erro="Envie até 8 anexos de até 15 MB.";render();return;}
+    btn.disabled=true;btn.textContent="Enviando…";const anexos=[];const lote=Date.now();
+    for(let i=0;i<arqs.length;i++){const a=arqs[i];const seg=a.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"_");const path=`${S.user.id}/${lote}_${i}_${seg}`;const up=await sb.storage.from("negociacoes").upload(path,a,{contentType:a.type||undefined});if(up.error){G.erro="Não foi possível enviar o anexo "+a.name+".";btn.disabled=false;render();return;}anexos.push({nome:a.name,path});}
+    const C=ngCalc(E);const ex=Object.assign({},E.cliente_extra||{});if(E.cliente_novo_rc)ex.novo_rc=E.cliente_novo_rc;
+    const P={nome_neg:E.nome_neg.trim(),qualificacao:+E.qualificacao,previsao_fech:E.previsao_fech,data_faturamento:E.data_faturamento,forma:E.forma,cond_pagamento:E.cond_pagamento,anotacao:E.anotacao,contato:E.contato,cliente_doc:docLimpo(E.cliente_doc),cliente_nome:E.cliente_nome.trim(),cliente_uf:E.cliente_uf,cliente_cidade:String(E.cliente_cidade||"").trim(),cliente_extra:ex,
+      itens:C.its.map(i=>({pid:i.P.id,kg:i.kg,preco:i.preco})),desconto_motivo:C.abaixo?E.desconto_motivo:null};if(anexos.length)P.anexos=anexos;
+    const {data:nid,error}=await sb.rpc("neg_enviar",{p:P,p_id:E.id||null});
+    if(error){G.erro=error.message||"Não foi possível enviar.";btn.disabled=false;render();return;}
+    const era=!!E.id;G.ed=null;G.erro=null;if(!era)ngRascApagar();
+    if(S.leadNeg){const ln=S.leadNeg;const r=await sb.rpc("rc_lead_finalizar",{p_id:ln.id,p_status:ln.st,p_motivo:null,p_obs:null,p_neg:String(nid)});S.leadNeg=null;S.fila=null;if(r.error)aviso("Negociação enviada, mas o lead não foi encerrado. Abra o LeadsBaren e tente de novo.");}
+    await ngCarregar();G.aberta=nid;render();window.scrollTo(0,0);aviso(era?"Negociação reenviada ao seu responsável comercial.":"Negociação enviada ao seu responsável comercial. Você acompanha as etapas por aqui.");return;}
+  if(f.id==="f-ng-lancar"){btn.disabled=true;btn.textContent="Registrando na Barenbrug…";let ok=false,msg="";
+    try{const r=await sb.functions.invoke("rc-negocio",{body:{acao:"lancar",id,frete_modo:g("#ngl_m"),frete_valor:g("#ngl_v")||null}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(e){}}if(ok&&r.data.avisos&&r.data.avisos.length)msg=r.data.avisos.join(" · ");}catch(e){}
+    if(G.evs)delete G.evs[id];await ngCarregar();render();aviso(ok?"Negociação registrada na Barenbrug, na etapa Qualificação."+(msg?" Atenção: "+msg:""):"Não foi possível registrar"+(msg?": "+msg:"")+".");return;}
+  if(f.id==="f-ng-desc"){await ngAcao(id,btn.value,g("#ngd_obs2"),null,btn.value==="aprovar_desconto"?"Desconto aprovado. O RC foi avisado.":"Desconto não aprovado: vale a tabela. O RC foi avisado.");return;}
+  if(f.id==="f-ng-devolver"){await ngAcao(id,"devolver",g("#ngv_obs"),null,"Devolvida ao RC para ajuste.");return;}
+  if(f.id==="f-ng-manual"){await ngAcao(id,"marcar_lancada",null,{deal:g("#ngman_l")},"Marcada como registrada na Barenbrug.");return;}
+  if(f.id==="f-ng-frete"){await ngAcao(id,"frete",g("#ngf_m"),{valor:g("#ngf_v")?ngNum(g("#ngf_v")):null},"Frete salvo. O RC foi avisado.");return;}
+  if(f.id==="f-ng-msg"){const t=g("#ngm_t");if(!t)return;await ngAcao(id,"comentar",t,null,"Mensagem enviada.");return;}
+  if(f.id==="f-ng-cred"){const docs=[...f.querySelectorAll("input[name=ngc]:checked")].map(i=>i.value).concat(g("#ngc_outros").split("\n").map(s=>s.trim()).filter(Boolean));if(!docs.length){aviso("Marque os documentos que o RC precisa enviar.");return;}
+    await ngAcao(id,"pedir_credito",g("#ngc_obs"),{docs},"Documentos pedidos. O RC e o Financeiro foram avisados.");return;}
+  if(f.id==="f-ng-fin"){const ac=btn.value;await ngAcao(id,ac,g("#ngfin_obs"),null,"Parecer registrado. O RC e o responsável foram avisados.");return;}
+  if(f.id==="f-ng-docs"){const arqs=[...(f.querySelector("#ngd_arq").files||[])];if(!arqs.length)return;if(arqs.length>10||arqs.some(a=>a.size>15*1024*1024)){aviso("Até 10 arquivos de 15 MB.");return;}
+    btn.disabled=true;const out=[];const lote=Date.now();
+    for(let i=0;i<arqs.length;i++){btn.textContent=`Enviando ${i+1} de ${arqs.length}…`;const a=arqs[i];const seg=a.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"_");const path=`${id}/${lote}_${i}_${seg}`;const up=await sb.storage.from("neg-credito").upload(path,a,{contentType:a.type||undefined});if(up.error){aviso("Não foi possível enviar "+a.name+".");btn.disabled=false;btn.textContent="Enviar documentos";return;}out.push({nome:a.name,path,em:new Date().toISOString()});}
+    await ngAcao(id,"docs_enviados",g("#ngd_obs"),{arquivos:out},"Documentos enviados. O responsável e o Financeiro foram avisados.");return;}
+},true);
+
 /* ===== Propostas do RC ===== */
 const PROP_CULTS=["Sabiá","Cayana","Carcará","Cynodon"];
 const propBRL=x=>"R$ "+(Number(x)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -5237,7 +5646,7 @@ function vMeuCRMPainel(X){
       return G.map(([k,t])=>{const L=RJ.filter(x=>repTipo(x.rc==="(sem representante)"?"":x.rc)===k);return L.length?`<h3 class="pgd-h" style="margin:12px 0 6px">${t} (${L.length})</h3><div class="lista">${L.map(card).join("")}</div>`:"";}).join("");})()}
     ${r.rcs.some(x=>x.rc==="(sem representante)"&&x.an)?`<p class="dica" style="margin-top:8px">"(sem representante)" reúne as vendas diretas da Barenbrug ao cliente ou ao canal, sem RC.</p>`:""}
   </section>`:""}
-  ${X?"":(()=>{const q=(S.rcNeg||[]).filter(x=>adm?(x.comercial===alvo||(!x.comercial&&alvo===(rows[0]&&rows[0].dono))):true);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} aguardando)</h2><p class="sub" style="margin:0 0 6px">Revise, lance no CRM e marque aqui para o RC ver o andamento.</p><div class="lista">${q.slice(0,30).map(x=>cartaoNeg(x,true)).join("")}</div></section>`:"";})()}
+  ${X?"":(()=>{const L=(S.ng&&S.ng.lista)||null;if(!L){if(!(S.ng&&S.ng.busy)){ngCarregar().then(render);}return "";}const q=L.filter(x=>x.autor!==S.user.id);const pend=q.filter(x=>x.status==="Enviado");return q.length?`<section class="bloco"><h2 class="sec">Negociações enviadas pelos RCs (${pend.length} para você decidir)</h2><p class="sub" style="margin:0 0 8px">Aprove o desconto, informe o frete e registre na Barenbrug pela página Negociações do Conecta RC. O RC acompanha cada etapa.</p><div class="acoes" style="margin:0"><button class="btn" data-a="secao" data-v="conecta-rc" data-ngpag="1">Abrir Negociações</button></div></section>`:"";})()}
   <section class="bloco"><h2 class="sec">Principais negociações em aberto</h2>
     ${top.length?`<div class="lista">${top.map(x=>neg(x)).join("")}</div>`:`<div class="vazio">Nenhuma negociação em aberto.</div>`}
   </section>
@@ -5872,7 +6281,7 @@ function jrProntidao(){
 /* funcoes de cada um na operacao do dia a dia e regras do RC (CRM e kit de marketing) */
 function jrOperacao(){const c=(k,L)=>`<div class="dir-card">${jrPap(k)}<ul class="cond" style="margin:8px 0 0">${L.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;
   return `<section class="bloco"><h2 class="sec">Na operação do dia a dia</h2><p class="sub" style="margin:0 0 8px">Depois de liberado para vender, o que é de cada um.</p><div class="dir-grid">
-   ${c("rc",["Prospectar e visitar produtores e canais na sua área de atuação","Registrar cada negociação no Portal Conecta (Enviar negociação) e montar as propostas por lá","Reunir os documentos do cliente para o crédito e seguir a política comercial","Usar o kit de marketing no campo e pedir ações e brindes especiais pelo portal","Emitir a nota da comissão só depois da validação do responsável comercial","Manter o CORE e o contrato em dia e concluir os cursos do portal"])}
+   ${c("rc",["Prospectar e visitar produtores e canais na sua área de atuação","Registrar cada negociação no Portal Conecta (Negociações) e emitir a proposta por lá depois da aprovação","Reunir os documentos do cliente para o crédito e seguir a política comercial","Usar o kit de marketing no campo e pedir ações e brindes especiais pelo portal","Emitir a nota da comissão só depois da validação do responsável comercial","Manter o CORE e o contrato em dia e concluir os cursos do portal"])}
    ${c("com",["Fazer alinhamentos periódicos com o RC: negociações, agenda e metas","Atualizar as negociações do RC no CRM Barenbrug, com base no portal e nas reuniões","Apoiar preço, condição e aprovação dos pedidos","Validar a comissão do mês antes de o RC emitir a nota","Acompanhar resultado e prontidão em Meus RCs e na Jornada"])}
    ${c("cs",["Cadastro do RC, conferência e arquivo dos documentos","Envio do contrato pela Clicksign e renovação anual, até 30 de agosto","Cópia em todo envio de ficha e documentos do RC"])}
    ${c("mkt",["Atração de novos RCs: campanhas, redes sociais e anúncios","Onboarding pelo Portal Conecta, com os cursos obrigatórios","Kit RC e análise dos brindes especiais","Análise e encaminhamento das ações de marketing pedidas no portal","Leads, campanhas regionais e acompanhamento de vendas e engajamento do RC pelo portal e pelo CRM"])}</div>
@@ -5916,7 +6325,7 @@ const RCFAQ=[
   ["Se outro RC vender para um cliente que eu estava visitando, quem recebe?","Recebe quem formalizou e concluiu a venda. Se você entender que a venda veio de um trabalho que você já conduzia, cabe a você provar: abra uma contestação em até 30 dias depois do demonstrativo mensal, com as evidências da negociação, para avaliação do Responsável Comercial."]]],
  ["Negociações e o meu Responsável Comercial",[
   ["Qual é o papel do meu Responsável Comercial?","É a pessoa da Barenbrug que conduziu a sua contratação e é o seu parceiro no campo. Fale com ele para tirar dúvidas sobre contrato, preços e regras; formalizar negociações e registrar clientes; pedir aprovação para vender fora do seu estado; solicitar condições especiais; e acompanhar faturamento, entrega e suporte pós-venda."],
-  ["Como registro uma negociação para garantir que ela é minha?","Informe toda negociação e o cliente assim que começarem, pelo Portal Conecta, em Enviar negociação. O seu Responsável Comercial registra no sistema da Barenbrug depois das reuniões periódicas com você. Esse registro é a prova oficial de que a negociação é sua e protege a sua comissão."],
+  ["Como registro uma negociação para garantir que ela é minha?","Informe toda negociação e o cliente assim que começarem, pelo Portal Conecta, em Negociações. O seu Responsável Comercial registra no sistema da Barenbrug depois das reuniões periódicas com você. Esse registro é a prova oficial de que a negociação é sua e protege a sua comissão."],
   ["Posso dar desconto ou prazo diferente por conta própria?","Não. Qualquer condição fora da tabela comercial oficial (desconto extra, prazo maior, bonificação) só vale com autorização prévia, por escrito, de quem tem alçada na Barenbrug. Acordo verbal ou informal não vale."]]],
  ["Conduta, produtos e pagamentos dos clientes",[
   ["O que a exclusividade de produtos cobre?","Só as forrageiras híbridas. Você representa com exclusividade os híbridos da Barenbrug (Sabiá, Cayana, Carcará e Cynodon) e não pode vender, intermediar ou representar forrageiras híbridas de outras marcas enquanto o contrato valer. Sementes convencionais de outras marcas são permitidas, desde que sem concorrência desleal ou desvio de foco."],
@@ -6108,7 +6517,7 @@ function subnavRC(){
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
-    ["Vender",[["rc-pedido","Enviar negociação"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"]]],
+    ["Vender",[["rc-pedido","Negociações"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
@@ -6696,7 +7105,7 @@ function vRCApresentacao(){
   <section class="bloco"><h2 class="sec">Convencionais (alíquotas fixas)</h2>
     <div class="tab"><table class="frete"><thead><tr><th>Tipo de semente</th><th class="val">Ao produtor</th><th class="val">Ao canal</th></tr></thead><tbody>${conv}</tbody></table></div></section>
   <section class="bloco"><h2 class="sec">Como você trabalha no dia a dia</h2><div class="dir-grid">
-    <div class="dir-card"><strong>Negociações no Portal Conecta</strong><p>Você registra cada negociação no portal, em Enviar negociação, e monta as propostas por lá. O seu responsável comercial registra no sistema da Barenbrug com base no que você envia e nos alinhamentos periódicos entre vocês.</p></div>
+    <div class="dir-card"><strong>Negociações no Portal Conecta</strong><p>Você registra cada negociação no portal, em Negociações, acompanha cada etapa e emite a proposta por lá depois da aprovação. O seu responsável comercial registra no sistema da Barenbrug com base no que você envia e nos alinhamentos periódicos entre vocês.</p></div>
     <div class="dir-card"><strong>Kit RC de marketing</strong><p>Para o trabalho no campo, você recebe o kit básico: 15 bonés amarelos e 50 folders de forrageiras híbridas.</p></div>
     <div class="dir-card"><strong>Brinde especial e ações de marketing</strong><p>Cliente com volume acima de 1 tonelada de híbrido: peça ao Marketing um brinde especial, que é analisado caso a caso. Ações de marketing e qualquer encaminhamento são pedidos pelo portal, em Ações de Marketing.</p></div></div></section>
   <section class="bloco"><h2 class="sec">Perguntas frequentes</h2><div class="faq">${faq}</div></section>
@@ -10687,7 +11096,7 @@ const INT_HIB_NOTA=" Híbridos aqui: Sabiá, Cayana, Carcará, Mulato II e Barmi
 
 /* ---------- Marketing + Financeiro ---------- */
 const ehFin=()=>ehAdmin()||temPerfil("Financeiro")||temAcessoExtra("financeiro");
-const FIN_ABAS=[["fin-resumo","Resumo"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-resp","Verba por responsável"],["fin-invest","Investimento do Marketing"],["fin-premissas","Premissas"]];
+const FIN_ABAS=[["fin-resumo","Resumo"],["fin-credito","Análise de crédito"],["fin-mensal","Mês a mês"],["fin-comissoes","Comissões"],["fin-conecta","Conecta Revendas"],["fin-resp","Verba por responsável"],["fin-invest","Investimento do Marketing"],["fin-premissas","Premissas"]];
 function subnavFin(){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="Marketing + Financeiro">${semOcultas(FIN_ABAS).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
@@ -12701,7 +13110,7 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
 /* avisos enviados pelo portal (notificação): ficam registrados e aparecem em pop-up ao abrir até a pessoa marcar como lido */
-const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança"};
+const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança","financeiro":"Análise de crédito"};
 function comDestino(u){try{const v=new URL(u||"/",location.origin).searchParams.get("abrir");return v&&COM_DEST[v]?v:null;}catch(_){return null;}}
 let _comBusy=false,_comFila=[],_comUlt=0;
 async function comPendentesMostrar(forcar){try{if(!S.user||!S.profile||S.demo||S.verComo||S.profile.precisa_trocar_senha)return;if(document.getElementById("notif-pop")||_comBusy)return;if(!forcar&&Date.now()-_comUlt<20000)return;_comBusy=true;_comUlt=Date.now();
@@ -12723,7 +13132,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function avisosRecebidosHTML(){const L=S.comHist;if(L===undefined){setTimeout(()=>comPendentesMostrar(true),0);return "";}if(!L.length)return "";
   return `<div class="cx" id="avisos"><strong>Avisos recebidos</strong><span class="meta">Os avisos que o Portal Conecta enviou para você nos últimos 30 dias.</span><div style="display:grid;gap:10px;margin-top:6px">${L.map(c=>{const d=comDestino(c.url);return `<div style="border-left:4px solid ${c.lido?"var(--cinza-cl,#ddd)":"var(--amarelo,#FFDB00)"};padding:4px 0 4px 12px;display:grid;gap:4px"><strong>${esc(c.titulo||"Aviso")}</strong>${c.corpo?`<span style="white-space:pre-line">${esc(c.corpo)}</span>`:""}<span class="meta">${esc(c.enviado_em?new Date(c.enviado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"")}${c.lido?"":" · não lido"}</span>${d?`<button type="button" class="btn sec" style="width:fit-content;padding:6px 12px" data-a="com-pop-ir" data-v="${c.id}" data-d="${d}">Abrir ${esc(COM_DEST[d])}</button>`:""}</div>`;}).join("")}</div></div>`;}
 let _notifVisto=false;
-function pushAbrirPendente(){if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
+function pushAbrirPendente(){if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 /* Customer Service copia e cola livremente: usa os dados da ficha para montar e assinar o contrato */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin()&&!temPerfil("Customer Service"));
@@ -12810,7 +13219,7 @@ async function carregarNpsRes(){if(S.npsResBusy)return;S.npsResBusy=true;try{con
 /* ===== Gestão: app instalado, notificações e comunicados ===== */
 const PERFIS_TODOS=["Administrador","Comercial Barenbrug","Customer Service","Gestor de Revenda","Vendedor de Revenda","Exportação","RC","Franqueado Nutron","Assessor de Vendas Digital","Inside Sales","Marketing","Financeiro"];
 const COM_DESTINOS=[["/","Início do portal"],["/?abrir=academia","Academia de Híbridos"],["/?abrir=mensagens","Mensagens"],["/?abrir=duvidas","Tira-Dúvidas"],["/?abrir=leads","Cotações (leads)"],["/?abrir=conecta-revendas","Conecta Revendas"],["/?abrir=conecta-rc","Conecta RC"],["/?abrir=enxoval","Enxoval de Marketing"],["/?abrir=inside-sales","Inside Sales"]];
-async function carregarGtApp(){if(S.gtAppBusy)return;S.gtAppBusy=true;try{const [a,b,c]=await Promise.all([sb.rpc("app_uso_resumo"),sb.from("push_comunicados").select("*").order("criado_em",{ascending:false}).limit(50),sb.from("profiles").select("id,nome,perfil").eq("ativo",true).order("nome")]);S.gtApp=a.data||{ativos:0,lista:[]};S.gtCom=b.data||[];S.gtPessoas=c.data||[];}catch(e){S.gtApp={ativos:0,lista:[]};S.gtCom=[];S.gtPessoas=[];}S.gtAppBusy=false;render();}
+async function carregarGtApp(){if(S.gtAppBusy)return;S.gtAppBusy=true;try{const [a,b,c]=await Promise.all([sb.rpc("app_uso_resumo"),sb.from("push_comunicados").select("*").is("origem",null).order("criado_em",{ascending:false}).limit(50),sb.from("profiles").select("id,nome,perfil").eq("ativo",true).order("nome")]);S.gtApp=a.data||{ativos:0,lista:[]};S.gtCom=b.data||[];S.gtPessoas=c.data||[];}catch(e){S.gtApp={ativos:0,lista:[]};S.gtCom=[];S.gtPessoas=[];}S.gtAppBusy=false;render();}
 function gtApp(){if(!ehAdmin())return `<div class="vazio">Só administradores.</div>`;if(S.gtApp===undefined){carregarGtApp();return `<div class="carregando">Carregando…</div>`;}
   const L=S.gtApp.lista||[],n=L.length||1;const inst=L.filter(x=>x.instalado).length,notif=L.filter(x=>x.aparelhos>0).length,ambos=L.filter(x=>x.instalado&&x.aparelhos>0).length,nunca=L.filter(x=>!x.visto).length;
   const por={};L.forEach(x=>{const k=x.perfil||"—";const o=por[k]||(por[k]={n:0,i:0,a:0});o.n++;if(x.instalado)o.i++;if(x.aparelhos>0)o.a++;});
@@ -12911,7 +13320,7 @@ function vEmDev(k){const D=EM_DEV[k];if(!D)return "";
 const GUIA_PERFIL={
  "RC":{t:"RC de campo",serve:"O portal é o seu apoio de campo: treinar os híbridos, montar a proposta, enviar a negociação e acompanhar o seu resultado no Conecta RC.",
   rotina:["Antes da visita: veja as Condições Comerciais e use a Calculadora de rentabilidade com os números da fazenda.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso da região do cliente.","Depois da visita: envie a negociação no Conecta RC e confira nas Condições Comerciais o que o pedido precisa para o crédito.","Toda semana: Ranking de vendas e LeadsBaren do seu estado."],
-  comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"],["conecta-rc","rc-pedido","Enviar negociação"]],
+  comece:[["conecta-rc","rc-curso","Curso de integração do Conecta RC"],["academia","trilha","Cursos da Academia"],["conecta-rc","rc-pedido","Negociações"]],
   secs:["academia","conecta-rc","tabela-precos","enxoval","leads","mural","duvidas","mercado"]},
  "Franqueado Nutron":{t:"Franqueado Nutron",serve:"O portal reúne o treinamento dos híbridos, as condições comerciais e os materiais com a marca para você vender Barenbrug na sua franquia.",
   rotina:["Antes da visita: Condições Comerciais e Calculadora de rentabilidade.","Na conversa: Onde posicionar, Objeções do produtor e Casos de sucesso.","Para divulgar: Enxoval de Marketing, com artes e folders prontos."],
@@ -13019,7 +13428,7 @@ function render(){window.__appIgual=false;renderApp();if(window.__appIgual){wind
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Enviar negociação"],["rc-faq","Perguntas frequentes"],["rc-proposta","Montar proposta"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -13040,7 +13449,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
- "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Formulário para o RC enviar uma negociação.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
+ "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "brindes-lojinha":"Em desenvolvimento: o pedido de brindes e materiais da marca pelo portal, para o time comercial e os parceiros.","rv-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.","rv-at":"Em desenvolvimento: gestão das ações de assistência técnica com as revendas.","rc-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
@@ -13089,12 +13498,9 @@ function renderApp(){
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
     if(soCSRC()){if(!["rc-cadastros","rc-perfis","rc-perfil","rc-guia","rc-meus","rc-ranking","rc-mapa","rc-cobertura","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
     if((S.pag==="rc-perfis"||S.pag==="rc-perfil")&&!vePerfisRC())S.pag="rc-apresentacao";
-    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
-    if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
-    if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
-      put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
-    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
@@ -13141,6 +13547,7 @@ function renderApp(){
     if(S.pag==="is-imp")S.pag="is-painel";
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-quadro";return render();}
+    if(S.pag==="is-rcneg"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vNegs()}</main>`;return;}
     if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
     if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
@@ -13221,6 +13628,7 @@ function renderApp(){
     S.secao=null;S.pag="hub";
   }
   if(S.secao==="financeiro"){
+    if(ehFin()&&S.pag==="fin-credito"){app.innerHTML=cabecalho()+subnavFin()+`<main class="largo">${vNegs("fin")}</main>`;return;}
     if(ehFin()){app.innerHTML=cabecalho()+subnavFin()+`<main class="largo">${vFin()}</main>`;if(!S.fin)carregarFin().then(render);return;}
     S.secao=null;S.pag="hub";
   }
@@ -13273,8 +13681,8 @@ document.addEventListener("click",async ev=>{
   if(a==="fila-cancela"){S.filaFim=null;render();return;}
   if(a==="fila-neg"){const at=S.fila&&S.fila.atual;if(!at)return;const ct=(S.leadVistos||{})[at.id]||{};
     S.leadNeg={id:at.id,st:v,nome:at.nome||"",cidade:at.cidade||"",uf:at.uf||"",telefone:ct.telefone||"",email:ct.email||""};
-    S.secao="conecta-rc";S.pag="rc-pedido";S.negItens=1;S._erroNeg=null;render();window.scrollTo(0,0);return;}
-  if(a==="lead-neg-cancela"){S.leadNeg=null;S.secao="leads";S.pag="leads-inbound";S.fila=null;render();return;}
+    S.secao="conecta-rc";S.pag="rc-pedido";S.negItens=1;S._erroNeg=null;S.ng=S.ng||{};ngNovoAbrir();render();window.scrollTo(0,0);return;}
+  if(a==="lead-neg-cancela"){S.leadNeg=null;if(S.ng)S.ng.ed=null;S.secao="leads";S.pag="leads-inbound";S.fila=null;render();return;}
   if(a==="rank-f"){S.rankF=v;render();return;}
   if(a==="fin-recarregar"){S.fin=null;render();return;}
   if(a==="pgd-del-pede"){S.pgdDel=v;render();return;}
@@ -13306,7 +13714,7 @@ document.addEventListener("click",async ev=>{
   if(a==="inicio"){S.secao=null;S.pag="hub";S.res=null;S._erro=null;S.novoAcesso=null;S._erroCriar=null;S.form=null;S.formAlvo="form";render();window.scrollTo(0,0);}
   if(a==="guia-ver"){S.guiaVer=v;render();return;}
 if(a==="guia-ir"){if(v!=="gestao"&&!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área.");return;}const pg=b.dataset.p;if(pg){S.secao=v;S.pag=pg;render();window.scrollTo(0,0);return;}const t=document.createElement("button");t.dataset.a="secao";t.dataset.v=v;t.hidden=true;document.body.appendChild(t);t.click();t.remove();return;}
-if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área: "+cursosPend().map(c=>c[1]).join(", ")+".");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
+if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios para liberar esta área: "+cursosPend().map(c=>c[1]).join(", ")+".");return;}S.secao=v;S.pag=v==="gestao"?"gestao-home":v==="conecta-rc"?"rc-apresentacao":v==="conecta-revendas"?(veBarenbrugRV()?"rv-painel":ehRevenda()?"rv-meucanal":"rv-apresentacao"):v==="enxoval"?"enxoval":v==="leads"?"leads-inbound":v==="inside-sales"?"is-painel":v==="meu-crm"?"meu-crm":v==="duvidas"?"duvidas":v==="mural"?"mural":v==="mercado"?"mercado-noticias":v==="tabela-precos"?"precos":"trilha";if(b.dataset.ngpag&&v==="conecta-rc"){S.pag="rc-pedido";if(S.ng)S.ng.aberta=null;}S.res=null;S.novoAcesso=null;S._erroCriar=null;render();window.scrollTo(0,0);}
   if(a==="rc-abrir"){S.rcEtapa=+v;irPag("rc-etapa");}
   if(a==="quiz-extra"){S.quizExtra=v;S.res=null;S.pv=null;render();return;}
   if(a==="prova-ini"){pvIniciar(v);return;}
