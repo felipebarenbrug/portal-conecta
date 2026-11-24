@@ -4951,7 +4951,7 @@ function prospeccaoHTML(){
     x.perfil=muito&&conv?["Prospecta e converte","azul"]:muito?["Prospecta bastante","amarelo"]:conv?["Converte o que abre","verde"]:["Foco na carteira","cinza"];});
   L.sort((a,b)=>b.ip-a.ip);const em=O.reduce((t,x)=>x.atualizado_em>t?x.atualizado_em:t,"");
   const nomeD=d=>d;
-  return `<section class="bloco"><h2 class="sec">Prospecção por responsável${inf("Só o Funil de Vendas Barenbrug, negociações criadas desde 1º de junho de 2026 (safra 26/27). Cada negociação recebe uma origem: Forecast (veio da campanha Forecast, a carga de começo de safra), Pedido direto (lançada já ganha, fechada em até 24 horas da criação: é registro de pedido, não prospecção) ou Nova (criada pelo vendedor fora do Forecast). Bonificações ficam fora.")}</h2>
+  return `<section class="bloco"><h2 class="sec">Prospecção por responsável${inf("Só o Funil de Vendas Barenbrug, negociações criadas desde 1º de junho de 2026 (safra 26/27). Cada negociação recebe uma origem: Forecast (veio da campanha Forecast, a carga de começo de safra), Pedido direto (lançada já ganha, fechada em até 24 horas da criação: é registro de pedido, não prospecção) ou Nova (criada pelo vendedor fora do Forecast). Bonificações ficam fora: negociação com Tipo de documento de bonificação, com “bonif” no nome ou na lista de bonificações do CRM. Quilos contam só itens com preço maior que zero.")}</h2>
     <p class="sub" style="margin:0 0 8px">Quem abre negociação nova e converte, e quem trabalha só a carteira do Forecast. ${meses.toLocaleString("pt-BR",{maximumFractionDigits:1})} meses de safra até hoje.</p>
     <div class="tab"><table class="sim-t"><thead><tr><th>Responsável</th>
       <th class="val">Novas criadas${inf("Negociações de origem Nova criadas na safra pelo responsável.")}</th>
@@ -4970,6 +4970,7 @@ function prospeccaoHTML(){
         <li>A pergunta foi: quem só trabalha as negociações do começo de safra (Forecast) e quem entra com negociação nova e converte.</li>
         <li>Base: só o Funil de Vendas Barenbrug. Negociações criadas desde 1º de junho de 2026, que inclui a carga do Forecast de agosto.</li>
         <li>Forecast é identificado pela campanha Forecast no CRM, a mesma usada no painel do Inside Sales.</li>
+        <li>Bonificações saem da conta inteira (não são venda nem prospecção): Tipo de documento de bonificação, “bonif” no nome ou presença na lista de bonificações. Itens sem preço também não somam quilos.</li>
         <li>Pedido lançado já ganho, em até 24 horas da criação, foi separado: é registro de venda, não prospecção (já tínhamos visto vendas digitadas direto como Pedido Finalizado).</li>
         <li>Índice de Prospecção compara cada um com a média dos responsáveis do campo; o Inside Sales aparece como um time, com o Tobias, mas fica fora da média para não distorcê-la, para não depender do tamanho da carteira. Conversão das novas mostra se a prospecção vira venda.</li>
         <li>Os perfis descrevem o jeito de trabalhar, não o resultado: quem vende muito pela carteira do Forecast aparece como "Foco na carteira" ou "Converte o que abre", sem juízo de valor.</li>
