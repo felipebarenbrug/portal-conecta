@@ -2988,6 +2988,7 @@ async function loImportar(arq,prog){
   let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_importar",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Importando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
   return n;
 }
+const UF_NOME_SIGLA={"acre":"AC","alagoas":"AL","amapa":"AP","amazonas":"AM","bahia":"BA","ceara":"CE","distrito federal":"DF","espirito santo":"ES","goias":"GO","maranhao":"MA","mato grosso":"MT","mato grosso do sul":"MS","minas gerais":"MG","para":"PA","paraiba":"PB","parana":"PR","pernambuco":"PE","piaui":"PI","rio de janeiro":"RJ","rio grande do norte":"RN","rio grande do sul":"RS","rondonia":"RO","roraima":"RR","santa catarina":"SC","sao paulo":"SP","sergipe":"SE","tocantins":"TO"};
 async function loEnriquecer(arq,prog,tipo){
   await loLib();const wb=XLSX.read(await arq.arrayBuffer(),{type:"array",cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];
   const L=XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});if(!L.length)throw new Error("A planilha está vazia.");
@@ -2995,6 +2996,7 @@ async function loEnriquecer(arq,prog,tipo){
   const H=Object.keys(L[0]);
   /* colunas em ordem de prioridade: a primeira com valor em cada linha vale */
   const cols=(...pats)=>{const o=[];pats.forEach(p=>H.forEach(h=>{if(p.test(nk(h))&&!o.includes(h))o.push(h);}));return o;};const col=(...p)=>cols(...p)[0];
+  const cNome=cols(/^nome$/,/^name$/,/^nombre$/),cTel=cols(/^celular$/,/^telefone$/,/^telefone principal$/,/^telefone 2$/),cCid=cols(/^cidade$/,/^city$/,/^ciudad$/),cUf=cols(/^estado$/,/^uf$/);
   const cE=col(/^e ?mail$/,/^email/),cCargo=cols(/^cargo$/,/job title/),cEmp=cols(/^empresa$/,/^company/,/nome da empresa/),
     cCult=cols(/^cultivar$/,/qual e o cultivar que voce tem maior interesse/,/qual o cultivar voce tem maior interesse/,/far cultivar/),
     cArea=cols(/area a plantar/,/tamanho da area ha que deseja usar/,/formar quantos hect/,/area de reforma/),
@@ -3011,7 +3013,8 @@ async function loEnriquecer(arq,prog,tipo){
     const cu=pv(r,cCult),ar=pv(r,cArea),qt=pv(r,cQtd);
     const area=ar?(/^\d+([.,]\d+)?$/.test(ar.x)?ar.x+" ha":ar.x):null,qtd=qt?(/^\d+([.,]\d+)?$/.test(qt.x)?qt.x+" kg":qt.x):null;
     const pref=evs.find(x=>/atendimento|repres|canal|cultivar|hibrido|sabia|cayana|carcara/i.test(x))||evs[0]||null;
-    return {email:v(r[cE]),cargo:(pv(r,cCargo)||{}).x||null,empresa:(pv(r,cEmp)||{}).x||null,cultivar:cu?cu.x.replace(/^cultivar\s+/i,""):null,area_sem:area,qtd_sem:qtd,conv_evento:pref?pref.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
+    const uf=(pv(r,cUf)||{}).x||null;
+    return {email:v(r[cE]),nome:(pv(r,cNome)||{}).x||null,telefone:(pv(r,cTel)||{}).x||null,cidade:(pv(r,cCid)||{}).x||null,uf:uf?(UF_NOME_SIGLA[nk(uf)]||(Object.values(UF_NOME_SIGLA).includes(uf.trim().toUpperCase())?uf.trim().toUpperCase():null)):null,cargo:(pv(r,cCargo)||{}).x||null,empresa:(pv(r,cEmp)||{}).x||null,cultivar:cu?cu.x.replace(/^cultivar\s+/i,""):null,area_sem:area,qtd_sem:qtd,conv_evento:pref?pref.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
   let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_enriquecer",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Completando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
   return {n,cols:[cCargo.length&&"cargo",cEmp.length&&"empresa",cCult.length&&"cultivar",cArea.length&&"área",cQtd.length&&"quantidade",cConvs.length&&"conversões",cData&&"data"].filter(Boolean),rc:M.filter(x=>x.interesse==="rc").length,rv:M.filter(x=>x.interesse==="revenda").length,cu:M.filter(x=>x.cultivar).length};}
 function vLeads(){
