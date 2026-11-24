@@ -2927,7 +2927,7 @@ function loInteresse(l){
   if(l.interesse==="revenda")return `<span class="lo-int"><strong>Quer ser revenda Barenbrug.</strong> Cadastro na página de canal de distribuição${l.conv_data?" em "+new Date(l.conv_data).toLocaleDateString("pt-BR"):""}. Passe para o comercial avaliar a parceria.</span>`;
   const it=[l.cultivar?"<strong>Cultivar:</strong> "+esc(l.cultivar):"",l.area_sem||l.ha_usar?"<strong>Área a plantar:</strong> "+esc(l.area_sem||l.ha_usar)+(/ha|hect/i.test(l.area_sem||l.ha_usar)?"":" ha"):"",l.qtd_sem?"<strong>Semente:</strong> "+esc(l.qtd_sem):"",l.ha_faixa?"<strong>Propriedade:</strong> "+esc(l.ha_faixa):""].filter(Boolean);
   const dt=l.conv_data||l.ult_conversao;const orig=LO_ORIG(l.origem);
-  const quando=dt?`<strong>Converteu em:</strong> ${new Date(dt).toLocaleDateString("pt-BR")}${l.conv_evento?" ("+esc(l.conv_evento)+")":""}`:"";
+  const quando=dt?`<strong>Converteu em:</strong> ${new Date(dt).toLocaleDateString("pt-BR")}${l.conv_evento?" ("+esc(String(l.conv_evento).replace(/[-_]+/g," "))+")":""}`:"";
   return `<span class="meta">${it.length?it.join(" · "):`<em>Sem detalhe do interesse:</em> este contato veio por outra fonte (material para baixar, conteúdo ou rede social) que não perguntava cultivar, área nem quantidade.`}</span>${quando||orig?`<span class="meta">${quando}${quando&&orig?" · ":""}${orig?"<strong>Como chegou:</strong> "+esc(orig):""}</span>`:""}`;}
 function vLeadsOut(){
   if(!S.loOk){carregarLeadOut();return `<div class="carregando">Carregando a prospecção…</div>`;}
@@ -2943,7 +2943,7 @@ function vLeadsOut(){
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
       ${l.cargo||l.empresa?`<span class="meta">${l.cargo?"<strong>Cargo:</strong> "+esc(l.cargo):""}${l.cargo&&l.empresa?" · ":""}${l.empresa?"<strong>Empresa:</strong> "+esc(l.empresa):""}</span>`:""}
       ${loInteresse(l)}
-      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}</span>${l.ult_conversao?`<span class="meta"><strong>Último cadastro na base:</strong> ${dia(l.ult_conversao)}</span>`:""}
+      <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}</span>
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${l.meu?"você":esc(l.atendido_por)} em ${dia(l.atendido_em)}</span>`:""}
       ${l.obs&&!v?`<span class="meta"><strong>Última anotação:</strong> ${esc(l.obs)}</span>`:""}
       ${v?`<span class="meta"><strong>Telefone / WhatsApp:</strong> ${v.telefone===undefined?"carregando…":tel(v.telefone)} · <strong>E-mail:</strong> ${v.email?esc(v.email):v.telefone===undefined?"":"não informado"}</span>
@@ -2960,11 +2960,11 @@ function vLeadsOut(){
     <select id="lo_dt" data-lof="dt">${LO_DT.map(([k,t])=>`<option value="${k}" ${(F.dt||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_crm" data-lof="crm" aria-label="Cruzamento com o CRM">${[["livre","Livres no CRM: sem negociação aberta e sem venda"],["aberta","Com negociação aberta no CRM"],["venda","Já compraram (venda no CRM)"],["","Todos, com ou sem CRM"]].map(([k,t])=>`<option value="${k}" ${(F.crm||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_tipo" data-lof="tipo" aria-label="Tipo de contato">${[["","Todos os tipos de contato"],["produto","Interesse em produto (produtor, gestor, técnico, consultor)"],["rc","Quer ser representante comercial (RC)"],["revenda","Quer ser revenda"]].map(([k,t])=>`<option value="${k}" ${(F.tipo||"")===k?"selected":""}>${t}</option>`).join("")}</select>
-    <select id="lo_meus" data-lof="meus"><option value="">Leads de todos</option><option value="1" ${F.meus==="1"?"selected":""}>Só os que eu atendi</option></select></div>
-    <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} leads neste filtro`}${(()=>{const c=(rows.find(x=>x.crm_cruzado_em)||{}).crm_cruzado_em;return c?` · cruzado com o CRM em ${fmtDataHora(c)}`:" · ainda não cruzado com o CRM";})()}</p>
-    <div class="lista">${rows.map(card).join("")||`<div class="vazio">Nenhum lead neste filtro.</div>`}</div>
+    <select id="lo_meus" data-lof="meus"><option value="">Contatos de todos</option><option value="1" ${F.meus==="1"?"selected":""}>Só os que eu atendi</option></select></div>
+    <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} contatos neste filtro`}${(()=>{const c=(rows.find(x=>x.crm_cruzado_em)||{}).crm_cruzado_em;return c?` · cruzado com o CRM em ${fmtDataHora(c)}`:" · ainda não cruzado com o CRM";})()}</p>
+    <div class="lista">${rows.map(card).join("")||`<div class="vazio">Nenhum contato neste filtro.</div>`}</div>
     ${rows.length<(S.loTotal||0)?`<div class="acoes" style="margin-top:10px"><button class="btn sec" data-a="lo-mais">Carregar mais 100</button></div>`:""}
-    <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados só para a prospecção comercial da Barenbrug.</p></section>`;
+    <p class="dica">Ao abrir um contato, a consulta fica registrada com o seu nome e a data. Use os dados só para a prospecção comercial da Barenbrug.</p></section>`;
 }
 async function loCarregaNotas(id){try{const {data}=await sb.rpc("lead_out_notas_de",{p_id:+id});(S.loNotas||(S.loNotas={}))[id]=data||[];}catch(e){(S.loNotas||(S.loNotas={}))[id]=[];}render();}
 function loLib(){if(window.XLSX)return Promise.resolve();if(S._xl)return S._xl;S._xl=new Promise((ok,er)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>ok();sc.onerror=()=>{S._xl=null;er();};document.head.append(sc);});return S._xl;}
@@ -3050,7 +3050,7 @@ function vLeads(){
     ${ufs.length>1?`<p class="meta" style="margin:10px 0 4px">Estado</p><div class="filtros">${chips("uf",["Todos",...ufs],F.uf)}</div>`:""}</details>
   <section class="bloco"><p class="sub" style="margin:0">${rows.length} de ${total} leads.</p>
     ${rows.length?`<div class="lista">${rows.slice(0,150).map(card).join("")}</div>${rows.length>150?`<p class="dica">Mostrando os 150 mais recentes. Use os filtros para ver os demais.</p>`:""}`:`<div class="vazio">Nenhum lead para este filtro${total?"":" por enquanto"}.</div>`}
-    <p class="dica">Ao abrir o contato de um lead, a consulta fica registrada com o seu nome e a data. Use os dados apenas para o atendimento comercial deste pedido.</p></section>`}`;
+    <p class="dica">Ao abrir um contato, a consulta fica registrada com o seu nome e a data. Use os dados apenas para o atendimento comercial deste pedido.</p></section>`}`;
 }
 /* ===== Painel de performance do Inside Sales (dados de is_painel, calculados na rotina do servidor) ===== */
 const veTimeIS=()=>ehAdmin()||S.isTime===true;
