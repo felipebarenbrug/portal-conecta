@@ -3354,7 +3354,9 @@ function vISHist(){
   const kgIS=N(RL.kgh),rsIS=N(RL.rs);
   const SH=S.isShare||{};const kgB2C=N(SH.b2c_tot),kgB2CIS=N(SH.b2c_is);const share=S.isShare&&kgB2C?kgB2CIS/kgB2C:null;
   const atu=Tp&&Tp.atualizado_em?new Date(Tp.atualizado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-  const atual={s:"26/27",rs:rsIS,clientes:(ltv.s26||{}).clientes||null,kg_h:kgIS,share,atual:true,nota:`Safra em andamento: ${N(RL.n)} vendas ganhas no CRM, pela data de faturamento${atu?" · atualizado em "+atu:""}`};
+  if(S.isSemTob&&S.tobCli===undefined){S.tobCli=null;sb.from("crm_mapa").select("org,nome").eq("dono","Inside Sales").eq("resp","Felipe").eq("st","V").then(({data})=>{S.tobCli=new Set((data||[]).map(x=>x.org||x.nome)).size;render();});}
+  const cli26=(ltv.s26||{}).clientes?Math.max(0,N((ltv.s26||{}).clientes)-(S.isSemTob?N(S.tobCli):0)):null;
+  const atual={s:"26/27",rs:rsIS,clientes:cli26,kg_h:kgIS,share,atual:true,nota:`Safra em andamento: ${N(RL.n)} vendas ganhas no CRM, pela data de faturamento${atu?" · atualizado em "+atu:""}`};
   const L=[...(H.safras||[]),atual];const mx=Math.max(1,...L.map(x=>N(x.rs)));
   const cres=(a,b)=>N(a)&&N(b)?(N(b)/N(a)-1):null;
   const bars=L.map((x,i)=>{const h=Math.max(4,N(x.rs)/mx*180);const g=i?cres(L[i-1].rs,x.rs):null;return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0;flex:1"><span class="meta" style="font-weight:700;color:var(--azul-escuro,#00557f)">${fmtK0(x.rs)}</span>${g!=null?`<span class="meta">${g>=0?"+":""}${pctTxt(g)}${x.atual?" parcial":""}</span>`:`<span class="meta">&nbsp;</span>`}<div style="width:100%;max-width:90px;height:${h}px;border-radius:8px 8px 0 0;background:${x.atual?"repeating-linear-gradient(45deg,#00A8E1,#00A8E1 8px,#33bbe8 8px,#33bbe8 16px)":"#00557f"}"></div><strong>${esc(x.s)}</strong><span class="meta">${x.atual?"até hoje":"&nbsp;"}</span></div>`;}).join("");
