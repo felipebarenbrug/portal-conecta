@@ -1832,7 +1832,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124165803";
+const APP_VER="20261124170417";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6820,7 +6820,7 @@ function vRCPerfil(){const x=(S.prcL||[]).find(y=>y.id===S.prcSel);if(!x){S.pag=
   <section class="bloco"><h2 class="sec">Contato e dados pessoais</h2>${dl([["E-mail de acesso",x.email],["Celular",x.telefone],["Data de nascimento",(()=>{const d=String(x.nascimento||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return "";const [a,m,dd]=d.split("-").map(Number);const h=new Date();let id=h.getFullYear()-a;if(h.getMonth()+1<m||(h.getMonth()+1===m&&h.getDate()<dd))id--;return `${String(dd).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a} (${id} anos)`;})()],["Cidade",[x.cidade,x.uf].filter(Boolean).join("/")],["Responsável comercial",x.comercial_resp],["Formação",x.formacao],["Nome no CRM",x.rc_crm]])}</section>
   ${ct?contratoCard(ct,"Contrato 26/27 (mapeamento)"):""}
   ${prcScore(x)}
-  ${usrCadastroRC(x)||`<div class="nota-admin">Este RC ainda não tem cadastro aberto. Peça a ficha em Cadastro de novos RCs.</div>`}`;}
+  ${usrCadastroRC(x)||`<div class="nota-admin">Este RC ainda não tem cadastro aberto. Peça a ficha em Cadastro RCs.</div>`}`;}
 document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="prc-q"){S.prcQ=ev.target.value;const p=ev.target.selectionStart;render();const e=document.getElementById("prc-q");if(e){e.focus();try{e.setSelectionRange(p,p);}catch(_){}}}});
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='prc-ver']");if(!b)return;ev.preventDefault();ev.stopPropagation();S.prcSel=b.dataset.v;S.pag="rc-perfil";render();window.scrollTo(0,0);},true);
 function rcCadFichaVer(c,bn,verBanco){const f=c.ficha||{};const v=x=>{const t=String(x==null?"":x).trim();return t?`<dd>${esc(t)}</dd>`:`<dd class="vz">não informado</dd>`;};
@@ -6837,7 +6837,7 @@ function vRCCadastros(){
   if(!S.rcCads){carregarRcCads();return `<div class="carregando">Carregando os cadastros…</div>`;}
   if(S.rcCadSel)return vRCCadastroDet();
   const {L,P,livres}=S.rcCads;const g=rcCadGestor();
-  return `<div><h1 class="titulo">Cadastro de novos RCs</h1><p class="sub">O RC envia a Ficha Cadastral e os documentos pelo portal, o Customer Service confere, o contrato sai pela Clicksign e, assinado, fica no cadastro do RC e libera o acesso completo.</p></div>
+  return `<div><h1 class="titulo">Cadastro RCs</h1><p class="sub">O RC envia a Ficha Cadastral e os documentos pelo portal, o Customer Service confere, o contrato sai pela Clicksign e, assinado, fica no cadastro do RC e libera o acesso completo.</p></div>
   <section class="bloco rcc-b"><h2 class="sec">Pedir a ficha a um RC novo</h2><p class="meta" style="margin:0">Crie o acesso do RC com o perfil RC e escolha o nome aqui. Ele recebe o aviso e, ao entrar, vê só o cadastro até o contrato ser assinado.</p>
     ${livres.length?`<div class="mk-link" style="margin-top:6px"><select id="rcc_novo" aria-label="RC"><option value="">Escolha o RC</option>${livres.map(p=>`<option value="${p.id}">${esc(p.nome||"")}${p.comercial_resp?" · "+esc(p.comercial_resp):""}</option>`).join("")}</select><button class="btn" data-a="rcc-abrir-cad">Pedir ficha e documentos</button></div>`:`<div class="vazio">Todos os RCs ativos já têm cadastro aberto, ou nenhum RC novo foi criado ainda.</div>`}</section>
   <section class="bloco rcc-b"><h2 class="sec">Cadastros</h2>${L.length?`<div class="lista">${L.map(c=>{const p=P[c.user_id]||{};return `<button class="linha rcc-it" data-a="rcc-ver" data-v="${c.user_id}"><div style="min-width:0;text-align:left"><strong>${esc((c.ficha||{}).razao||p.nome||"RC")}</strong><span class="meta">${esc(p.nome||"")}${p.comercial_resp?" · responsável: "+esc(p.comercial_resp):""} · atualizado ${fmtDataHora(c.atualizado_em)}</span></div>${stTag(c.status,RCCAD_COR[c.status])}</button>`;}).join("")}</div>`:`<div class="vazio">Nenhum cadastro aberto ainda.</div>`}</section>
@@ -6850,7 +6850,7 @@ function vRCCadastroDet(){
   const acoes=!g?"":c.status==="Enviado"||c.status==="Pendências"?`<label for="rcc_obs">Recado geral para o RC (opcional)</label><input id="rcc_obs" maxlength="500" value="${esc(c.obs||"")}"><div class="acoes" style="margin:6px 0 0"><button class="btn" data-a="rcc-conf" data-v="conferido">Tudo certo: marcar como conferido</button><button class="btn sec perigo-t" data-a="rcc-conf" data-v="pendencias">Devolver com pendências</button></div><p class="meta" style="margin:4px 0 0">Marque cada documento como ok ou pendente. O que ficar pendente volta para o RC com o seu recado.</p>`
     :c.status==="Conferido"||c.status==="Contrato enviado"?`<div class="acoes" style="margin:0"><button class="btn sec" data-a="rcc-gerar">Gerar contrato preenchido (.docx)</button>${c.status==="Conferido"?`<button class="btn" data-a="rcc-ct" data-v="enviado">Contrato enviado pela Clicksign</button>`:`<button class="btn sec" data-a="rcc-ct" data-v="voltar">Voltar etapa: o contrato ainda não foi enviado</button>`}</div>
       ${c.status==="Contrato enviado"?`<div class="mk-link" style="margin-top:8px;align-items:end"><div><label for="rcc_dt">Data da assinatura</label><input id="rcc_dt" type="date" value="${hoje}"></div><label class="btn pgd-up">Anexar contrato assinado e liberar o acesso<input type="file" data-rccontr="${c.user_id}" accept=".pdf"></label></div>`:`<p class="meta" style="margin:4px 0 0">Gere o contrato, confira e envie pela Clicksign. Depois marque como enviado; quando voltar assinado, anexe o PDF aqui.</p>`}`
-    :c.status==="Assinado"?`<div class="acoes" style="margin:0"><button class="btn" data-a="rcc-abrir" data-v="${esc(c.contrato_path||"")}">Abrir contrato assinado</button></div>`:(()=>{const F=rcCadFaltam(o,c.docs);const docOk=!RCCAD_OBRIG.some(k=>{const d=(c.docs||{})[k];return !d||!d.path;});
+    :c.status==="Assinado"?`<div class="acoes" style="margin:0;flex-wrap:wrap;gap:8px"><button class="btn" data-a="rcc-abrir" data-v="${esc(c.contrato_path||"")}">Abrir contrato assinado</button><label class="btn sec pgd-up">Trocar o arquivo do contrato<input type="file" data-rccontr="${c.user_id}" data-rctroca="1" accept=".pdf"></label><span class="meta" style="width:100%">Use se anexou o arquivo errado. A data da assinatura e o acesso do RC continuam como estão.</span></div>`:(()=>{const F=rcCadFaltam(o,c.docs);const docOk=!RCCAD_OBRIG.some(k=>{const d=(c.docs||{})[k];return !d||!d.path;});
       return `<p class="meta" style="margin:0">${F.length?`O RC ainda não enviou para conferência. Falta: ${F.map(esc).join(" · ")}.`:"O RC preencheu tudo, mas ainda não clicou em enviar para conferência."}</p>${docOk?`<div class="acoes" style="margin:8px 0 0"><button class="btn" data-a="rcc-conf" data-v="receber">Receber para conferência</button></div><p class="meta" style="margin:4px 0 0">Use quando os documentos já chegaram e o que faltar dá para conferir nos próprios documentos. O RC recebe o aviso e a ficha fica travada.</p>`:""}`;})();
   const bnTxt=g?(S.rcCadBanco&&S.rcCadBanco[c.user_id]===null?"Carregando…":""):"Dados bancários visíveis só para o Customer Service e o Financeiro.";
   return `<button class="voltar" data-a="rcc-ver" data-v="">‹ Cadastros</button>
@@ -6870,7 +6870,7 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
   if(t.dataset.rcmodelo){const f=t.files&&t.files[0];if(!f||!rcCadGestor())return;if(!/\.docx$/i.test(f.name)){aviso("Envie o modelo em .docx.");return;}const up=await sb.storage.from("rc-cadastro").upload("modelo/contrato.docx",f,{contentType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",upsert:true});aviso(up.error?"Não foi possível enviar o modelo.":"Modelo do contrato atualizado.");return;}
   if(t.dataset.rccontr){const f=t.files&&t.files[0];if(!f||!rcCadGestor())return;const uid=t.dataset.rccontr;const dt=(document.getElementById("rcc_dt")||{}).value||null;const path=`${uid}/contrato-${Date.now().toString(36)}.pdf`;aviso("Enviando o contrato…");
     const up=await sb.storage.from("rc-cadastro").upload(path,f,{contentType:"application/pdf",upsert:false});if(up.error){aviso("Não foi possível enviar o contrato.");return;}
-    const {error}=await sb.rpc("rc_cad_contrato",{p_user:uid,p_acao:"assinado",p_path:path,p_nome:f.name,p_data:dt});if(error){aviso("Não foi possível registrar: "+(error.message||"erro"));return;}S.rcCads=null;render();aviso("Contrato registrado. O acesso completo do RC foi liberado.");return;}
+    const tr=t.dataset.rctroca==="1";const {error}=await sb.rpc("rc_cad_contrato",{p_user:uid,p_acao:tr?"trocar":"assinado",p_path:path,p_nome:f.name,p_data:tr?null:dt});if(error){aviso("Não foi possível registrar: "+(error.message||"erro"));return;}S.rcCads=null;render();aviso(tr?"Arquivo do contrato trocado.":"Contrato registrado. O acesso completo do RC foi liberado.");return;}
 },true);
 async function rcCadSalvar(enviar){const o=S.rcCadForm||{};const ficha=rcCadFichaDe(o);const banco={};RCCAD_BANCO.forEach(([k])=>banco[k]=String(o["b_"+k]||"").trim());
   if(enviar){const F=rcCadFaltam(o,S.rcCadMeu.docs);if(F.length){aviso("Falta: "+F.slice(0,4).join(", ")+(F.length>4?"…":""));return;}}
@@ -6879,10 +6879,10 @@ async function rcCadSalvar(enviar){const o=S.rcCadForm||{};const ficha=rcCadFich
 
 const soCSRC=()=>!S.demo&&temPerfil("Customer Service")&&!ehAdmin()&&!temPerfil("Comercial Barenbrug")&&!temPerfil("RC")&&!temPerfil("Franqueado Nutron");
 function subnavRC(){
-  if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cadastros","Cadastro de novos RCs"],["rc-perfis","Perfis dos RCs"],["rc-guia","Jornada do novo RC"],["rc-meus","RCs por comercial"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"],["rc-cobertura","Cobertura dos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k||(k==="rc-perfis"&&S.pag==="rc-perfil"));
+  if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cadastros","Cadastro RCs"],["rc-perfis","Perfis dos RCs"],["rc-guia","Jornada do novo RC"],["rc-meus","RCs por comercial"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"],["rc-cobertura","Cobertura dos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k||(k==="rc-perfis"&&S.pag==="rc-perfil"));
   const g=[];const ger=[];
   if(veGuiaRC())ger.push(["rc-guia","Jornada do novo RC"]);
-  if(veRcCadastros())ger.push(["rc-cadastros","Cadastro de novos RCs"]);
+  if(veRcCadastros())ger.push(["rc-cadastros","Cadastro RCs"]);
   if(vePerfisRC())ger.push(["rc-perfis","Perfis dos RCs"]);
   if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
