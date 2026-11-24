@@ -296,6 +296,13 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mesbar .trilho i{display:block;height:100%;background:var(--azul-escuro)}
 .mesbar .trilho b{position:absolute;left:0;top:0;height:100%;background:var(--amarelo,#ffdb00);opacity:.95}
 /* Negociações do Conecta RC */
+#f-ng,form[id^="f-ng-"]{max-width:none}
+.ng-mapa{display:grid;gap:10px;margin-top:8px}.ng-mapa-l{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.ng-mp{background:var(--branco);border:1px solid var(--linha);border-top:4px solid var(--azul);border-radius:8px;padding:10px 12px;display:grid;gap:4px;align-content:start;position:relative}
+.ng-mp h4{margin:0;font-size:15px}.ng-mp .quem{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--azul-escuro)}
+.ng-mp ul{margin:2px 0 0 16px;padding:0;font-size:13px}.ng-mp li{margin:2px 0}.ng-mp .av{font-size:12px;color:var(--apagado)}
+.ng-mp.rc{border-top-color:var(--amarelo)}.ng-mp.fin{border-top-color:#6b4bb0}.ng-mp.crm{border-top-color:#1d6b35}
+.ng-mapa-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--apagado)}.ng-mapa-leg i{display:inline-block;width:12px;height:4px;margin-right:5px;vertical-align:middle;background:var(--azul)}
 .ng-seg{display:flex;flex-wrap:wrap;gap:8px}.ng-seg .chip[aria-pressed="true"]{background:var(--azul-escuro);color:#fff;box-shadow:none}
 .ng-q .chip{flex:1 1 auto;text-align:center}
 .lbl{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
@@ -1800,7 +1807,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124135224";
+const APP_VER="20261124140041";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4553,7 +4560,7 @@ function ngTab(cod,data){if(!cod||!PRECOS_MESES.length)return null;const ab=["ja
   const [m0,a0]=String(PRECOS_MESES[0]).split("/");let i=(d.getFullYear()-(2000+(+a0)))*12+d.getMonth()-ab.indexOf(m0);i=Math.max(0,Math.min(PRECOS_MESES.length-1,i));
   const r=(PRECOS||[]).find(p=>String(p.cod||"").split("/").map(s=>s.trim()).includes(String(cod)));if(!r||!r.v||!/\d/.test(String(r.v[i]||"")))return null;return {preco:ngNum(r.v[i]),mes:PRECOS_MESES[i]};}
 const ngEfetivo=(x,i)=>(x.desconto_status!=="aprovado"&&i.tab!=null&&Number(i.preco)<Number(i.tab))?Number(i.tab):Number(i.preco);
-const ngPodeEnviar=()=>!S.demo&&(ehAdmin()||temPerfil("RC")||temPerfil("Franqueado Nutron")||temPerfil("Assessor de Vendas Digital")||temPerfil("Comercial Barenbrug"));
+const ngPodeEnviar=()=>!S.demo&&(ehAdmin()||((temPerfil("RC")||temPerfil("Franqueado Nutron")||temPerfil("Comercial Barenbrug"))&&!temPerfil("Inside Sales")&&!temPerfil("Assessor de Vendas Digital")));
 const ngGestor=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||!!(S.profile&&S.profile.gerente_is));
 const ngSouFin=()=>!S.demo&&temPerfil("Financeiro");
 function ngColuna(x){if(x.status==="Cancelada"||x.crm_sit==="P")return "encerradas";if(x.crm_sit==="V")return "finalizado";if(x.status==="Devolvido")return "ajustar";if(x.status!=="No CRM")return "aguardando";
@@ -4684,11 +4691,23 @@ function vNegs(modo){const G=S.ng||(S.ng={});
   const gest=ngGestor();const aba=G.aba||(gest&&dosRCs.length?"rcs":"minhas");
   const decidir=dosRCs.filter(x=>x.status==="Enviado");
   return `${S.leadNeg?`<div class="aviso-est" role="note"><strong>Negociação do lead ${esc(S.leadNeg.nome||"do LeadsBaren")}</strong><p>Ao enviar, a negociação vai para o seu responsável comercial e o lead fica como "${S.leadNeg.st==="Vendido"?"Vendido":"Em negociação"}". <button type="button" class="link" data-a="lead-neg-cancela">Voltar para o lead</button></p></div>`:""}<div><h1 class="titulo">Negociações</h1><p class="sub">${gest?"Negociações enviadas pelos representantes: confira preço, desconto e frete e registre na Barenbrug. O RC acompanha cada etapa por aqui.":"Envie suas negociações para o seu responsável comercial e acompanhe cada etapa: aprovação, registro na Barenbrug, crédito e pedido. A proposta para o cliente sai depois da aprovação."}</p></div>
-    ${G.ed?vNgForm():ngPodeEnviar()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="ng-nova">Nova negociação</button>${ngRascLer()?`<button class="btn sec" data-a="ng-rasc">Continuar o rascunho</button>`:""}</div>`:""}
+    ${gest&&!G.ed?ngMapaHTML():""}${G.ed?vNgForm():ngPodeEnviar()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="ng-nova">Nova negociação</button>${ngRascLer()?`<button class="btn sec" data-a="ng-rasc">Continuar o rascunho</button>`:""}</div>`:""}
     ${G.ed?"":`${gest&&dosRCs.length?`<div class="ng-seg" role="tablist" style="margin:0 0 10px"><button class="chip" role="tab" data-a="ng-aba" data-v="rcs" aria-pressed="${aba==="rcs"}">Dos RCs (${dosRCs.length})</button><button class="chip" role="tab" data-a="ng-aba" data-v="minhas" aria-pressed="${aba==="minhas"}">Minhas (${minhas.length})</button></div>`:""}
     ${aba==="rcs"&&gest?`${decidir.length?`<section class="bloco"><h2 class="sec">Para você decidir (${decidir.length})</h2><div class="ng-lista">${decidir.map(x=>ngCartao(x,true)).join("")}</div></section>`:""}<section class="bloco"><h2 class="sec">Todas as negociações dos RCs</h2>${ngKanban(dosRCs,true)}</section>`
       :`<section class="bloco"><h2 class="sec">Minhas negociações</h2>${ngKanban(minhas,false)}</section>`}
     <p class="meta"><button type="button" class="link" data-a="ng-sync">Atualizar as etapas agora</button></p>`}`;}
+/* mapa do fluxo: só administradores e comercial (o RC não vê) */
+function ngMapaHTML(){const B=(cls,n,t,quem,itens,av)=>`<div class="ng-mp ${cls}"><span class="quem">${n} · ${quem}</span><h4>${t}</h4><ul>${itens.map(i=>`<li>${i}</li>`).join("")}</ul>${av?`<span class="av">Aviso: ${av}</span>`:""}</div>`;
+  return `<details class="ng-det" style="margin:0 0 12px"><summary>Mapa do fluxo da negociação (o que acontece em cada etapa)</summary>
+  <div class="ng-mapa"><div class="ng-mapa-leg"><span><i style="background:var(--amarelo)"></i>Representante</span><span><i></i>Responsável comercial</span><span><i style="background:#1d6b35"></i>CRM (automático)</span><span><i style="background:#6b4bb0"></i>Financeiro</span></div>
+  <div class="ng-mapa-l">
+  ${B("rc","1","Envio","Representante",["Formulário em 5 passos: cliente, negociação, produtos, contato e revisão","CPF/CNPJ validado; aviso se o cliente já existe, já comprou ou tem negociação aberta com outro vendedor","Preço travado pela tabela do mês de faturamento; abaixo dela vira pedido de desconto com justificativa","Quantidade em múltiplos da sacaria"],"responsável comercial")}
+  ${B("","2","Aprovação","Responsável comercial",["Aprova ou não o desconto (se não aprovar, vale a tabela)","Pode devolver para ajuste, com o motivo","Informa modalidade e valor do frete","Vê quem mais atende o cliente, quando há conflito"],"representante")}
+  ${B("crm","3","Registro no CRM","Automático, ao aprovar",["Funil de Vendas Barenbrug, etapa Qualificação","Responsável comercial como dono; RC no campo Representante","Produtos, contato, empresa nova e campos personalizados","Anotação com todos os dados da negociação"],"representante")}
+  ${B("rc","4","Proposta ao cliente","Representante",["PDF liberado só depois da aprovação","Cabeçalho com a razão social do RC","Válida por 15 dias a partir da emissão","Sujeita a análise de crédito pela forma de pagamento"],"")}
+  ${B("fin","5","Análise de crédito (se pedida)","Responsável ou Financeiro",["Pedido dos documentos pela lista da Política de Crédito","RC anexa; só RC, responsável e Financeiro abrem os arquivos","Financeiro: em análise, aprovado, pendência ou não aprovado"],"representante, responsável e Financeiro")}
+  ${B("crm","6","Acompanhamento até o pedido","CRM, espelhado no portal",["Etapa atualizada a cada 10 minutos ou pelo botão","Avança até Pedido finalizado, ou encerrada","Histórico e mensagens ficam na negociação"],"representante, a cada mudança de etapa")}
+  </div></div></details>`;}
 /* ---------- detalhe com fluxo, ações e histórico ---------- */
 function ngFluxo(x){const col=ngColuna(x);const reg=x.status==="No CRM";const cred=!!x.credito_status;
   const P=[["Enviada",true,ngDt(x.criado_em)],
