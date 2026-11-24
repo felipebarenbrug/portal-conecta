@@ -5713,12 +5713,12 @@ function vPrecos(){
   `;
 }
 /* ---------- Conecta RC ---------- */
-const vePainelRC=()=>ehAdmin()||temPerfil("RC")||temPerfil("Assessor de Vendas Digital")||temPerfil("Comercial Barenbrug");
+const vePainelRC=()=>ehAdmin()||temPerfil("RC")||temPerfil("Assessor de Vendas Digital")||temPerfil("Comercial Barenbrug")||temPerfil("Customer Service");
 let RC_DEALS_CACHE=null;
 async function carregarRCMapa(){try{const {data}=await sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt");const g={};(data||[]).forEach(r=>{const k=r.rep||"—";const arr=(g[k]=g[k]||[]);let d=arr.find(x=>x._cli===r.cli&&x.dt===r.dt);if(!d){d={_cli:r.cli,cli:r.cli,it:[],fma:r.forma,dt:r.dt};arr.push(d);}d.it.push([r.cultivar,r.kg]);});RC_DEALS_CACHE=g;}catch(e){RC_DEALS_CACHE={};}}
 /* ===== Crédito do pedido: resumo da Política de Crédito para o RC (a política completa fica com o Financeiro) ===== */
 /* ===== Conecta RC · Jornada do novo RC: atração, entrevista com scorecard, contrato, onboarding no portal, liberação e acompanhamento ===== */
-const veGuiaRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
+const veGuiaRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Customer Service"));
 const JR_PAP={mkt:["Marketing","#FFDB00","#1E1E1E"],com:["Responsável comercial","#00A8E2","#fff"],cs:["Customer Service","#34B233","#fff"],rc:["RC","#1E1E1E","#fff"]};
 const JR_ET=[
  {n:"Atração",d:["mkt","com"],b:["Marketing: campanhas nas redes sociais, anúncios e página de interesse","Comercial: prospecção ativa de representantes na região","Mirar no perfil ideal (veja Perfil ideal e scorecard)"],raci:{mkt:"R · A",com:"R",cs:"",rc:""}},
@@ -5933,6 +5933,25 @@ async function carregarRcCads(){if(S.rcCadsBusy)return;S.rcCadsBusy=true;
     let P=[];if(ids.length){const r=await sb.from("profiles").select("id,nome,email,comercial_resp,cidade,uf").in("id",ids);P=r.data||[];}
     let R=[];if(rcCadGestor()||ehAdmin()||temPerfil("Comercial Barenbrug")){const r=await sb.from("profiles").select("id,nome,comercial_resp,perfil,perfis,ativo").or("perfil.eq.RC,perfis.cs.{RC}").eq("ativo",true).order("nome");R=(r.data||[]).filter(p=>!ids.includes(p.id));}
     S.rcCads={L,P:Object.fromEntries(P.map(p=>[p.id,p])),livres:R};}catch(e){S.rcCads={L:[],P:{},livres:[]};}S.rcCadsBusy=false;render();}
+const vePerfisRC=()=>!S.demo&&(ehAdmin()||temPerfil("Customer Service"));
+async function carregarPerfisRC(){if(S.prcBusy)return;S.prcBusy=true;try{const [p,c]=await Promise.all([sb.from("profiles").select("id,nome,email,telefone,cidade,uf,perfil,perfis,ativo,comercial_resp,ultimo_acesso,formacao,rc_crm").or("perfil.eq.RC,perfis.cs.{RC}").order("nome"),sb.from("rc_cadastro").select("user_id,status,ficha")]);
+  const cad={};(c.data||[]).forEach(x=>cad[x.user_id]=x);S.prcL=(p.data||[]).map(x=>({...x,cad:cad[x.id]||null}));}catch(e){S.prcL=[];}S.prcBusy=false;render();}
+function vRCPerfis(){if(S.prcL===undefined){S.prcL=null;carregarPerfisRC();}if(!S.prcL)return `<div class="carregando">Carregando os RCs…</div>`;
+  const q=normGeo(S.prcQ||"");const L=S.prcL.filter(x=>!q||normGeo([x.nome,x.email,x.cidade,x.comercial_resp,(x.cad&&x.cad.ficha||{}).razao].join(" ")).includes(q));
+  return `<div><h1 class="titulo">Perfis dos RCs</h1><p class="sub">Os dados de cada RC com acesso ao portal: contato, ficha cadastral, documentos e contrato. Só leitura: perfil e acessos ficam com o administrador.</p></div>
+  <section class="bloco"><input type="search" id="prc-q" placeholder="Buscar por nome, empresa, cidade ou responsável" value="${esc(S.prcQ||"")}" aria-label="Buscar RC" style="width:100%;max-width:520px">
+   <p class="meta" style="margin:8px 0">${L.length} de ${S.prcL.length} RCs</p>
+   <div class="lista">${L.map(x=>`<button class="linha rcc-it" data-a="prc-ver" data-v="${x.id}"><div style="min-width:0;text-align:left"><strong>${esc(x.nome||x.email)}</strong><span class="meta">${esc([(x.cad&&x.cad.ficha||{}).razao,[x.cidade,x.uf].filter(Boolean).join("/"),x.comercial_resp?"responsável: "+x.comercial_resp:""].filter(Boolean).join(" · "))}</span></div>${x.cad?stTag(x.cad.status,RCCAD_COR[x.cad.status]||"azul"):stTag("Sem cadastro","amarelo")}</button>`).join("")||`<div class="vazio">Nenhum RC encontrado.</div>`}</div></section>`;}
+function vRCPerfil(){const x=(S.prcL||[]).find(y=>y.id===S.prcSel);if(!x){S.pag="rc-perfis";return vRCPerfis();}
+  const dl=L=>`<dl class="fv-dl">${L.map(([t,v])=>`<div><dt>${esc(t)}</dt>${String(v||"").trim()?`<dd>${esc(v)}</dd>`:`<dd class="vz">não informado</dd>`}</div>`).join("")}</dl>`;
+  if(S.rcContr===undefined)carregarContratos();const ct=S.rcContr?contratoDe(x.rc_crm||x.nome,x.email):null;
+  return `<button class="voltar" data-a="pag" data-v="rc-perfis">‹ Perfis dos RCs</button>
+  <div><span class="rot">Perfil do RC</span><h1 class="titulo">${esc(x.nome||x.email)}</h1><p class="sub">${x.ativo===false?"Acesso desativado · ":""}último acesso ${x.ultimo_acesso?fmtDataHora(x.ultimo_acesso):"nunca entrou"}</p></div>
+  <section class="bloco"><h2 class="sec">Contato e dados pessoais</h2>${dl([["E-mail de acesso",x.email],["Celular",x.telefone],["Cidade",[x.cidade,x.uf].filter(Boolean).join("/")],["Responsável comercial",x.comercial_resp],["Formação",x.formacao],["Nome no CRM",x.rc_crm]])}</section>
+  ${ct?contratoCard(ct,"Contrato 26/27 (mapeamento)"):""}
+  ${usrCadastroRC(x)||`<div class="nota-admin">Este RC ainda não tem cadastro aberto. Peça a ficha em Cadastro de novos RCs.</div>`}`;}
+document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="prc-q"){S.prcQ=ev.target.value;const p=ev.target.selectionStart;render();const e=document.getElementById("prc-q");if(e){e.focus();try{e.setSelectionRange(p,p);}catch(_){}}}});
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='prc-ver']");if(!b)return;ev.preventDefault();ev.stopPropagation();S.prcSel=b.dataset.v;S.pag="rc-perfil";render();window.scrollTo(0,0);},true);
 function rcCadFichaVer(c,bn,verBanco){const f=c.ficha||{};const v=x=>{const t=String(x==null?"":x).trim();return t?`<dd>${esc(t)}</dd>`:`<dd class="vz">não informado</dd>`;};
   const dl=L=>`<dl class="fv-dl">${L.map(([t,x])=>`<div><dt>${esc(t)}</dt>${v(x)}</div>`).join("")}</dl>`;const sec=(t,h)=>`<section class="fv-sec"><h3>${esc(t)}</h3>${h}</section>`;
   const blocos=RCCAD_F.map(([g,L])=>sec(g,dl(L.map(([k,t])=>[t.replace(/ \(sigla\)/,""),f[k]]))));
@@ -5989,10 +6008,11 @@ async function rcCadSalvar(enviar){const o=S.rcCadForm||{};const ficha=rcCadFich
 
 const soCSRC=()=>!S.demo&&temPerfil("Customer Service")&&!ehAdmin()&&!temPerfil("Comercial Barenbrug")&&!temPerfil("RC")&&!temPerfil("Franqueado Nutron");
 function subnavRC(){
-  if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cadastros","Cadastro de novos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k);
+  if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cadastros","Cadastro de novos RCs"],["rc-perfis","Perfis dos RCs"],["rc-guia","Jornada do novo RC"],["rc-meus","RCs por comercial"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"],["rc-cobertura","Cobertura dos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k||(k==="rc-perfis"&&S.pag==="rc-perfil"));
   const g=[];const ger=[];
   if(veGuiaRC())ger.push(["rc-guia","Jornada do novo RC"]);
   if(veRcCadastros())ger.push(["rc-cadastros","Cadastro de novos RCs"]);
+  if(vePerfisRC())ger.push(["rc-perfis","Perfis dos RCs"]);
   if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
@@ -6003,7 +6023,7 @@ function subnavRC(){
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
 }
 /* ===== Meus RCs: carteira de RCs do responsável comercial (pelo contrato), com ou sem acesso ao portal ===== */
-const veMeusRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
+const veMeusRC=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Customer Service"));
 const rcNorm=t=>finNorm(String(t||"")).replace(/[^a-z0-9 ]/g," ").replace(/\b(ltda|eireli|me|epp|s a|sa)\b/g," ").replace(/\s+/g," ").trim();
 async function carregarMeusRC(){if(S.mrcBusy)return;S.mrcBusy=true;
   try{const [c,pd,m]=await Promise.all([sb.from("rc_contratos").select("codigo_erp,nome,crm_nomes,modelo,status,cidade,uf,regional,comercial_nome,assinado_em,core_venc"),sb.from("rc_pedidos").select("rep,cli,cultivar,kg,forma,dt"),sb.from("crm_mapa").select("st,rep,nome,cidade,uf,kg_h,kg_c,rs,fat,dono,resp,cults").neq("rep","")]);
@@ -6014,7 +6034,7 @@ function mrcNomes(c){const L=new Set((c.crm_nomes||[]).filter(Boolean));const al
   [...(S.mrc.neg||[]).map(x=>x.rep),...(S.mrc.ped||[]).map(x=>x.rep),...RC_RANKING.map(x=>x.crm)].forEach(r=>{if(r&&rcNorm(r)===alvo)L.add(r);});return [...L];}
 function vRCMeus(){
   if(!S.mrc){carregarMeusRC();return `<div class="carregando">Carregando os seus RCs…</div>`;}
-  const adm=ehAdmin();const eu=(S.profile&&S.profile.crm_dono)||"";
+  const adm=ehAdmin()||soCSRC();const eu=(S.profile&&S.profile.crm_dono)||"";
   const coms=[...new Set(S.mrc.ct.map(c=>c.comercial_nome||"Sem responsável"))].sort((a,b)=>a.localeCompare(b));
   const meus=[eu,...(temPerfil("Inside Sales")?["Inside Sales"]:[])].filter(Boolean); /* a supervisão do Inside Sales acompanha também os RCs atribuídos ao time */
   const sel=adm?(S.mrcSel&&coms.includes(S.mrcSel)?S.mrcSel:(coms.includes(eu)?eu:coms[0]||"")):(S.mrcSel&&meus.includes(S.mrcSel)?S.mrcSel:meus[0]||"");
@@ -12934,13 +12954,14 @@ function renderApp(){
     if((S.pag==="rc-ranking"||S.pag==="rc-mapa")&&!vePainelRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-meus"&&!veMeusRC())S.pag="rc-apresentacao";
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
-    if(soCSRC()){if(!["rc-cadastros","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
-    const corpo={"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    if(soCSRC()){if(!["rc-cadastros","rc-perfis","rc-perfil","rc-guia","rc-meus","rc-ranking","rc-mapa","rc-cobertura","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
+    if((S.pag==="rc-perfis"||S.pag==="rc-perfil")&&!vePerfisRC())S.pag="rc-apresentacao";
+    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vRCPedido,"rc-proposta":vRCProposta,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     if(S.pag==="rc-pedido"&&S.rcNeg===undefined){carregarRCNeg().then(render);}
     if(S.pag==="rc-pedido"&&S.leadNeg&&!S.leadNeg.pre){setTimeout(()=>{const ln=S.leadNeg;if(!ln||ln.pre)return;const put=(id,v)=>{const e=document.getElementById(id);if(e&&v&&!e.value)e.value=v;};
       put("ng_nome",ln.nome);put("ng_cid",ln.cidade);put("ng_uf",ln.uf);put("nx_telefone",ln.telefone);put("nx_email",ln.email);put("nx_contato",ln.nome);ln.pre=true;},0);}
-    app.innerHTML=cabecalho()+subnavRC()+`<main${S.pag==="rc-cadastros"?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
