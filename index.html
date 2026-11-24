@@ -1711,7 +1711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123190610";
+const APP_VER="20261123205622";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2014,7 +2014,7 @@ function cabecalho(){return (S.verComo?`<div class="vc-bar" role="status"><span>
 function vcFiltra(tb,b){const p=S.profile||{};const pf=[p.perfil,...(p.perfis||[])].filter(Boolean);const adm=p.nivel==="Administrador"||pf.includes("Administrador");const ve=adm||pf.includes("Comercial Barenbrug");const intel=Array.isArray(p.acessos)&&p.acessos.includes("inteligencia");
   const q=v=>'"'+String(v).replace(/\\/g,"\\\\").replace(/"/g,'\\"')+'"';const NADA="__ver_como_sem_acesso__";
   if(tb==="crm_mapa"){if(adm||intel)return b;const o=[];if(p.crm_dono)o.push("dono.eq."+q(p.crm_dono));if(p.rc_crm)o.push("rep.eq."+q(p.rc_crm));return o.length?b.or(o.join(",")):b.eq("dono",NADA);}
-  if(tb==="mkt_acoes"){if(adm||pf.includes("Marketing"))return b;const id=p.id||NADA;return /^[0-9a-f-]{36}$/.test(id)?b.or(`envolvidos.cs.{${id}},responsavel.eq.${id},solicitante.eq.${id}`):b.eq("titulo",NADA);}
+  if(tb==="mkt_acoes"){if(adm||pf.includes("Marketing"))return b;const id=p.id||NADA;return /^[0-9a-f-]{36}$/.test(id)?b.or(`envolvidos.cs.{${id}},responsavel.eq.${id},solicitante.eq.${id},rc_user.eq.${id}`):b.eq("titulo",NADA);}
   if(tb==="crm_painel"){if(adm)return b;return b.eq("dono",p.crm_dono||NADA);}
   if(tb==="rc_pedidos"){if(ve)return b;return b.eq("rep",p.rc_crm||NADA);}
   if(tb==="rc_contratos"||tb==="crm_chaves"){if(ve||intel||pf.includes("Financeiro"))return b;return b.eq(tb==="crm_chaves"?"chave":"nome",NADA);}
@@ -5202,6 +5202,7 @@ function vHub(){
   return `${banner}${npsCard()}<div class="home">
     <aside class="home-lado">
       <div class="cx"><div class="autor">${avatar(S.user.id,S.profile.nome,52)}<div><strong style="font-size:18px">Olá, ${esc(primeiroNome())}</strong><span class="meta">${esc(S.perfil)}</span><button class="link" data-a="perfil" style="font-size:13px">${S.profile.foto_url?"Meu perfil":"Colocar minha foto"}</button></div></div>${S.demo?"":(()=>{const R=progResumo();return R.pct>=100?"":`<button class="link" data-a="perfil" style="display:grid;gap:4px;width:100%;text-align:left;margin-top:10px"><span class="meta">Perfil ${R.pct}% completo · ${R.n-R.ok} ${R.n-R.ok===1?"item falta":"itens faltam"}</span>${progBarra(R.pct,"Perfil completo")}</button>`;})()}</div>
+      ${homeAtalhos()}
       <div class="cx"><h2>Suas áreas</h2><div class="areas">${areas}</div></div>
       ${onlineHTML()}
       <div class="cx mkt-cx"><h2>Plataforma de marketing</h2><p>O Portal Conecta é uma iniciativa do Marketing Barenbrug para apoiar revendas, RCs e o time comercial com treinamento, programas de relacionamento, materiais e ferramentas de venda.</p>
@@ -5210,6 +5211,16 @@ function vHub(){
     <div class="home-feed">${vPendenciasHome()}${vFeed()}</div>
     ${veMercadoHome()?`<aside class="home-dir">${vMercadoHome()}</aside>`:""}
   </div>`;
+}
+/* atalhos da home para RC, franqueado e revenda: pedir ao Marketing e falar com o responsável comercial */
+const ehExternoHome=()=>!S.demo&&!ehAdmin()&&!temPerfil("Marketing")&&!temPerfil("Comercial Barenbrug")&&!temPerfil("Inside Sales")&&!temPerfil("Assessor de Vendas Digital")&&(temPerfil("RC")||temPerfil("Franqueado Nutron")||!!(S.profile&&S.profile.canal_id));
+function homeAtalhos(){
+  if(!ehExternoHome())return "";
+  if(S.meuResp===undefined){S.meuResp=null;sb.rpc("meu_responsavel").then(({data})=>{S.meuResp=(Array.isArray(data)&&data[0])||false;if(S.pag==="hub")render();}).catch(()=>{S.meuResp=false;});}
+  const r=S.meuResp;const rv=!temPerfil("RC")&&!temPerfil("Franqueado Nutron")&&!!S.profile.canal_id;
+  const pedir=rv||mkPodeSolic()?`<button class="btn" style="width:100%" data-a="home-pedir-mkt">Pedir ao Marketing</button>`:"";
+  const falar=r&&r.pode?`<button class="btn sec" style="width:100%" data-a="msg-com" data-v="${esc(r.id)}">Falar com meu responsável comercial</button><span class="meta">${esc(r.nome)}</span>`:r===null?`<span class="meta">Buscando seu responsável comercial…</span>`:`<span class="meta">Seu responsável comercial ainda não foi definido. Fale com o Marketing pelo quadro abaixo.</span>`;
+  return `<div class="cx home-atalhos"><h2>Precisa de algo?</h2><div style="display:grid;gap:8px">${pedir}${falar}</div></div>`;
 }
 const veMercadoHome=()=>!S.demo&&(ehAdmin()||(Array.isArray(S.profile.acessos)&&S.profile.acessos.includes("mercado")));
 function vMercadoHome(){
@@ -11037,7 +11048,8 @@ function mkFormHTML(a){
     ${mkLinhas(a).length?`<p class="meta" style="margin:0">O previsto e o realizado são a soma dos custos lançados no cartão da ação.</p>`:""}<div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
       <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
     <div class="dupla"><div><label for="mk_resp">Responsável comercial</label><select id="mk_resp"><option value="">—</option>${(()=>{const ehC=p=>p.perfil==="Comercial Barenbrug"||(Array.isArray(p.perfis)&&p.perfis.includes("Comercial Barenbrug"));const o=p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)}${ehC(p)?"":" · "+esc(p.perfil||"")}</option>`;const C=P.filter(ehC),O=P.filter(p=>!ehC(p));return `<optgroup label="Comercial Barenbrug">${C.map(o).join("")}</optgroup>${O.length?`<optgroup label="Outros (Marketing, Inside Sales)">${O.map(o).join("")}</optgroup>`:""}`;})()}</select><span class="meta">O comercial Barenbrug que responde pela ação.</span></div>
-      <div><label for="mk_rc">RC envolvido</label><input id="mk_rc" list="mk_rc_l" maxlength="120" value="${esc(a.rc_envolvido||"")}" placeholder="O RC que pediu ou participa"><datalist id="mk_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist><span class="meta">Para saber depois quantas ações cada RC teve.</span></div></div>
+      <div><label for="mk_rc">RC envolvido</label><input id="mk_rc" list="mk_rc_l" maxlength="120" value="${esc(a.rc_envolvido||"")}" placeholder="O RC que pediu ou participa"><datalist id="mk_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist><span class="meta">Para saber depois quantas ações cada RC teve.</span></div>
+      <div><label for="mk_rcu">RC que acompanha no portal</label><select id="mk_rcu"><option value="">Nenhum</option>${(S.mkPessoas||[]).filter(p=>p.perfil==="RC"||p.perfil==="Franqueado Nutron").sort((x,y)=>String(x.nome).localeCompare(String(y.nome))).map(p=>`<option value="${esc(p.id)}" ${a.rc_user===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select><span class="meta">Esse RC passa a ver o cartão da ação, sem poder editar.</span></div></div>
     <div><label>Pessoas envolvidas</label><span class="meta">Quem for marcado vê esta ação no quadro, pode comentar e anexar arquivos. O acesso à seção é liberado automaticamente.</span>
       <input type="search" id="mk_penv" placeholder="Filtrar pessoas" aria-label="Filtrar pessoas" style="margin:6px 0">
       <div class="checks mk-pessoas">${P.map(p=>`<label class="check" data-nome="${esc(finNorm(p.nome+" "+(p.perfil||"")))}"><input type="checkbox" data-mkenv="${esc(p.id)}" ${env.has(p.id)?"checked":""}> ${esc(p.nome)} <span class="meta">${esc(p.perfil||"")}</span></label>`).join("")}</div></div>
@@ -11928,7 +11940,7 @@ document.addEventListener("submit",async ev=>{
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
     const d={titulo:val("mk_tit"),tipo:val("mk_tp"),programa:(document.getElementById("mk_prog")?val("mk_prog"):undefined),status:val("mk_st"),inicio:val("mk_ini")||null,fim:val("mk_fim")||null,local:val("mk_loc")||null,descricao:val("mk_desc")||null,valor_prev:vp,valor_real:vr,
-      fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,rc_envolvido:val("mk_rc")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
+      fin:val("mk_fin")||"Provisionada",pago_em:val("mk_pg")||null,responsavel:val("mk_resp")||null,rc_envolvido:val("mk_rc")||null,rc_user:val("mk_rcu")||null,envolvidos:[...f.querySelectorAll("[data-mkenv]:checked")].map(x=>x.dataset.mkenv),safra:mkSafra};
     if(!d.titulo){aviso("Dê um título à ação.");return;}if(d.fin==="Paga"&&!d.pago_em)d.pago_em=mkHoje();if(d.inicio&&d.fim&&d.fim<d.inicio){aviso("A data de fim é antes do início.");return;}
     if(btn)btn.disabled=true;const id=f.dataset.id?+f.dataset.id:null;
     const orig=id?(S.mk||[]).find(x=>x.id===id):null;if(orig&&(orig.status==="Solicitada"||orig.status==="Em análise")){d.status=orig.status;d.valor_prev=orig.valor_prev;d.fin=orig.fin;}
@@ -12862,6 +12874,7 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="veracao"){S.acaoSel=S.acaoSel===v?null:v;render();}
   if(a==="editacao"){S.editAcao=v==="fechar"||S.editAcao===v?null:v;S.novaAcao=false;render();if(S.editAcao){const f=document.getElementById("f-novaacao");if(f)f.scrollIntoView({behavior:"smooth",block:"start"});}return;}
   if(a==="editarcanal"){S.editCanal=!S.editCanal;S.novaAcao=false;render();}
+  if(a==="home-pedir-mkt"){const rv=!temPerfil("RC")&&!temPerfil("Franqueado Nutron")&&!!(S.profile&&S.profile.canal_id);if(rv){S.secao="conecta-revendas";S.pag="rv-meucanal";S.novaAcao=true;S.editCanal=false;}else{S.secao="acoes-mkt";S.pag="acoes-solic-nova";if(!S.mk)carregarMkt();}render();window.scrollTo(0,0);return;}
   if(a==="novaacao"){S.novaAcao=v==="fechar"?false:v==="bp"?(S.novaAcao==="bp"?false:"bp"):(S.novaAcao===true?false:true);S.editCanal=false;render();}
   if(a==="fecharacao"){S.acaoSel=null;render();}
   if(a==="delacao"){await sb.from("acoes_pgd").delete().eq("id",v);S.canais=null;S.acaoSel=null;render();aviso("Ação excluída.");}
