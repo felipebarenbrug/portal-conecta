@@ -7700,6 +7700,10 @@ async function carregarReemb(){if(S.rbBusy)return;S.rbBusy=true;
   try{const {data}=await sb.from("rv_reembolsos").select("*").order("criado_em",{ascending:false});S.rb=data||[];}catch(e){S.rb=[];}
   try{const {data}=await sb.from("rv_dados_bancarios").select("*");S.rbBanco={};(data||[]).forEach(b=>{S.rbBanco[b.canal_id]=b;});}catch(e){S.rbBanco={};}
   S.rbBusy=false;render();}
+/* proximo pagamento trimestral do IGDB: o que foi pago pela revenda no trimestre corrente e pago pela Barenbrug ate 30 dias apos o fim dele */
+function igdbProxPag(d){d=d||new Date();const T=[["2026-07-01","2026-09-30","outubro de 2026","30/10/2026","julho a setembro"],["2026-10-01","2026-12-31","janeiro de 2027","30/01/2027","outubro a dezembro"],["2027-01-01","2027-03-31","abril de 2027","30/04/2027","janeiro a março"],["2027-04-01","2027-06-30","julho de 2027","30/07/2027","abril a junho"]];
+  const hj=d.toISOString().slice(0,10);const t=T.find(x=>hj<=x[1])||T[3];return {mes:t[2],ate:t[3],per:t[4]};}
+function igdbPagNota(){const p=igdbProxPag();return `<div class="rv-pagnota" style="margin-top:10px;padding:10px 12px;border-left:4px solid var(--amarelo,#FFDB00);background:var(--branco);border-radius:6px;font-size:14px;line-height:1.45"><strong>Quando o IGDB liberado é pago:</strong> o IGDB não é resgatado na hora. Ele é pago por trimestre, depois da apuração e da comprovação das ações de PGD aprovadas. O que for pago à Barenbrug de ${p.per} entra no próximo pagamento, em <strong>${p.mes}</strong> (até ${p.ate}).</div>`;}
 /* saldo: IGDB ja liberado (sobre o que a revenda pagou, numeros validados), limitado as acoes de PGD aprovadas e ao teto; menos o que ja foi aprovado ou esta em analise */
 function rbSaldo(c){const m=metricasCanal(c);const L=(S.rb||[]).filter(r=>r.canal_id===c.id);
   const disp=m.pub?Math.min(RV_TETO,m.pub.igdbPago||0):0,acoes=m.aprovIG||0,lim=Math.min(disp,acoes);
@@ -7761,10 +7765,10 @@ function vRVReembolso(cx,prev){
   const tela=`<div><span class="rot">Conecta Revendas · ${esc(c.tier||"")}</span><h1 class="titulo">Reembolso do saldo Conecta</h1><p class="sub">Peça aqui o reembolso das ações de geração de demanda aprovadas. Envie a nota fiscal, a Barenbrug analisa, informa quanto foi aprovado e a data prevista de pagamento, e você acompanha cada etapa por aqui e por notificação.</p></div>
   <ol class="rb-fluxo"><li><strong>Ação aprovada</strong><span>PGD aprovado e realizado</span></li><li><strong>Nota fiscal</strong><span>Você emite e envia aqui</span></li><li><strong>Análise</strong><span>A Barenbrug confere a nota e o saldo</span></li><li><strong>Aprovação</strong><span>Valor liberado e data de pagamento</span></li><li><strong>Pagamento</strong><span>Depósito na conta da revenda</span></li></ol>
   ${sd.validado?`<div class="metrics">
-    <div class="metric"><span>IGDB liberado${inf("IGDB sobre o que a revenda já pagou à Barenbrug, nos números validados pela Barenbrug. Limitado ao teto do programa.")}</span><strong>${rbRs(sd.disp)}</strong><span class="meta">sobre as notas já pagas</span></div>
+    <div class="metric"><span>IGDB liberado${inf("IGDB sobre o que a revenda já pagou à Barenbrug, nos números validados pela Barenbrug. Limitado ao teto do programa.")}</span><strong>${rbRs(sd.disp)}</strong><span class="meta">sobre as notas já pagas · pago em ${igdbProxPag().mes}</span></div>
     <div class="metric"><span>Ações de PGD aprovadas</span><strong>${rbRs(sd.acoes)}</strong><span class="meta">o reembolso vai até o menor dos dois</span></div>
     <div class="metric"><span>Já aprovado</span><strong>${rbRs(sd.usado)}</strong><span class="meta">pago ${rbRs(sd.pago)}${sd.reserv?` · em análise ${rbRs(sd.reserv)}`:""}</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Saldo para pedir agora</span><strong>${rbRs(sd.saldo)}</strong><span class="meta">o Bônus de Performance entra no fechamento da safra</span></div></div>`
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Saldo para pedir</span><strong>${rbRs(sd.saldo)}</strong><span class="meta">o pedido pode ser enviado já; o pagamento sai em ${igdbProxPag().mes}. O Bônus de Performance entra no fechamento da safra</span></div></div>${igdbPagNota()}`
   :`<section class="bloco"><p class="sub" style="margin:0">O saldo para reembolso aparece depois que a Barenbrug valida os números de compras e pagamentos da sua revenda. Você já pode cadastrar os dados bancários.</p></section>`}
   <section class="bloco"><h2 class="sec">Dados bancários para o pagamento</h2>${b&&!S.rbBancoEd?`<div class="neg">${rbBancoHTML(b)}<span class="meta">Atualizado em ${esc(fmtDataHora(b.atualizado_em))}</span><div class="rb-acoes"><button class="link" data-a="rb-banco-ed">Alterar dados bancários</button></div></div>`:rbFormBanco(c,b)}</section>
   <section class="bloco"><h2 class="sec">${ed?`Corrigir o pedido da NF ${esc(ed.nf_numero)}`:"Novo pedido de reembolso"}</h2>
@@ -8636,7 +8640,7 @@ function vCanalCRM(c,m){
     <div class="metric"><span>Faturado na safra</span><strong>${fmtK0(m.pub.fatRs)}</strong><span class="meta">R$ líquido das notas emitidas</span></div>
     <div class="metric"><span>Já pago pela revenda</span><strong>${fmtK0(m.pub.pagRs)}</strong><span class="meta">${m.pub.fatRs?pctTxt(m.pub.pagRs/m.pub.fatRs)+" do faturado":""}</span></div>
     <div class="metric"><span>Notas em aberto</span><strong>${fmtK0(m.pub.aberto)}</strong><span class="meta">${m.pub.vencido?"vencido "+fmtK0(m.pub.vencido):"nada vencido"} · valor com impostos</span></div>
-    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. É o valor que pode ser usado agora nas ações de PGD aprovadas.")}</span><strong>${fmtK0(m.pub.igdbPago)}</strong><span class="meta">sobre o valor pago</span></div></div>`:""}
+    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. Vale para as ações de PGD aprovadas e é pago no próximo pagamento trimestral, depois da comprovação.")}</span><strong>${fmtK0(m.pub.igdbPago)}</strong><span class="meta">pago em ${igdbProxPag().mes}</span></div></div>${igdbPagNota()}`:""}
   <div class="metrics" style="margin-top:10px">
     <div class="metric"><span>IGDB previsto${inf("Calculado sobre os pedidos realizados. Não é garantido: o IGDB só vira direito quando o pedido é faturado e a revenda paga a nota, e só é reembolsado pelas ações de PGD aprovadas e comprovadas.")}</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">híbridos ${pctTxt(m.g.ih)} · convencionais ${pctTxt(m.g.ic)} · sobre o já faturado: ${fmtK0(m.igdbFat||0)}</span></div>
     <div class="metric"><span>IGDB aprovado</span><strong>${fmtK0(m.igdbAprov)}</strong><span class="meta">PGD aprovado ${fmtK0(m.aprovIG)}${m.aprovIG>m.igdb?", acima do IGDB previsto":""}</span></div>
@@ -8668,12 +8672,12 @@ function vCanalValidado(c,m){
     <div style="display:grid;gap:10px">${B.q1(1)}${B.q3(2)}${B.q4(3)}${B.q5(4)}</div></section>
   <section class="bloco"><h2 class="sec">IGDB e Bônus para o PGD</h2>
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
-    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. É o que pode ser reembolsado agora pelas ações de PGD aprovadas e comprovadas.")}</span><strong>${fmtK0(lib)}</strong><span class="meta">sobre o valor pago</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px #2E8B57"><span>IGDB já liberado${inf("IGDB sobre o que a revenda já pagou. É o que pode ser reembolsado pelas ações de PGD aprovadas e comprovadas, no próximo pagamento trimestral.")}</span><strong>${fmtK0(lib)}</strong><span class="meta">pago em ${igdbProxPag().mes}</span></div>
     <div class="metric"><span>IGDB potencial${inf("Se todos os pedidos realizados forem faturados e pagos.")}</span><strong>${fmtK0(m.igdb)}</strong><span class="meta">faturado e encarteirado</span></div>
     <div class="metric"><span>Ações de IGDB aprovadas</span><strong>${fmtK0(apr)}</strong><span class="meta">${m.nAprov||0} ${(m.nAprov||0)===1?"aprovada":"aprovadas"} · em análise ${fmtK0(ana)}</span></div>
     <div class="metric" style="${m.saldo<0?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>Saldo de IGDB para novas ações${inf("IGDB potencial menos as ações já aprovadas.")}</span><strong>${fmtK0(m.saldo)}</strong><span class="meta">${apr>lib?`aprovado acima do liberado: o reembolso de ${fmtK0(apr-lib)} depende dos pagamentos`:"dentro do IGDB já liberado"}</span></div>
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Bônus de Performance previsto${inf("Pelo cenário potencial. Só é pago com 90% ou mais da meta de híbridos no fechamento da safra.")}</span><strong>${fmtK0((s.total||{}).bf||0)}</strong><span class="meta">${(s.total||{}).fator===1?"meta batida com os pedidos realizados":(s.total||{}).fator?"entre 90% e 99,99% da meta":"abaixo de 90% da meta"}</span></div>
-  </div>
+  </div>${lib?igdbPagNota():""}
   <div class="precos-nota">O IGDB e o Bônus só viram direito depois que o pedido é faturado e a revenda paga a nota; pedido cancelado ou não pago sai da conta. O IGDB é reembolsado pelas ações de PGD aprovadas e comprovadas. ${statusBonus(m)}.</div></section>
 `;}
 function vRVCanal(){
