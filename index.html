@@ -1747,7 +1747,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124110345";
+const APP_VER="20261124110509";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6008,6 +6008,15 @@ function vRCPerfis(){if(S.prcL===undefined){S.prcL=null;carregarPerfisRC();}if(!
   <section class="bloco"><input type="search" id="prc-q" placeholder="Buscar por nome, empresa, cidade ou responsável" value="${esc(S.prcQ||"")}" aria-label="Buscar RC" style="width:100%;max-width:520px">
    <p class="meta" style="margin:8px 0">${L.length} de ${S.prcL.length} RCs</p>
    <div class="lista">${L.map(x=>`<button class="linha rcc-it" data-a="prc-ver" data-v="${x.id}"><div style="min-width:0;text-align:left"><strong>${esc(x.nome||x.email)}</strong><span class="meta">${esc([(x.cad&&x.cad.ficha||{}).razao,[x.cidade,x.uf].filter(Boolean).join("/"),x.comercial_resp?"responsável: "+x.comercial_resp:""].filter(Boolean).join(" · "))}</span></div>${x.cad?stTag(x.cad.status,RCCAD_COR[x.cad.status]||"azul"):stTag("Sem cadastro","amarelo")}</button>`).join("")||`<div class="vazio">Nenhum RC encontrado.</div>`}</div></section>`;}
+function prcScore(x){const M=S.prcPir||(S.prcPir={});
+  if(M[x.id]===undefined){M[x.id]=null;sb.from("rc_perfil").select("*").eq("user_id",x.id).maybeSingle().then(r=>{M[x.id]=r.data||false;render();},()=>{M[x.id]=false;render();});}
+  const r=M[x.id];const cab=`<h2 class="sec">Perfil do representante (scorecard)${inf("Respostas que o RC deu no primeiro acesso ao portal, com a nota de cada critério pelos pesos do scorecard (100 pontos). O bloco comportamental é avaliado pelo responsável comercial, não pelo RC. 80 ou mais é perfil ideal; de 65 a 79, bom com plano de desenvolvimento; de 50 a 64, acompanhar de perto; abaixo de 50, risco.")}</h2>`;
+  if(r===null)return `<section class="bloco">${cab}<div class="carregando">Carregando as respostas…</div></section>`;
+  if(!r)return `<section class="bloco">${cab}<div class="vazio">O RC ainda não respondeu o perfil. O formulário aparece no próximo acesso dele ao portal.</div></section>`;
+  const sc=pirScore(r.respostas,r.avaliacao,x.formacao);
+  return `<section class="bloco">${cab}<div class="mk-link" style="align-items:center;gap:10px">${sc.pct!=null?`<strong style="font-size:26px">${sc.pct}</strong><span class="meta">de 100</span>`:""}${sc.faixa?stTag(sc.faixa[0],sc.faixa[1]):""}<span class="meta">respondeu em ${esc(fmtDataHora(r.enviado_em))}${sc.comp?" · comportamental avaliado":" · falta a avaliação comportamental do responsável comercial"}</span></div>
+    ${sc.alertas.length?`<div class="nota-admin" style="border-left-color:#c0392b"><strong>Atenção:</strong> ${esc(sc.alertas.join(" · "))}</div>`:""}
+    ${pirDetalhe(x,r)}</section>`;}
 function vRCPerfil(){const x=(S.prcL||[]).find(y=>y.id===S.prcSel);if(!x){S.pag="rc-perfis";return vRCPerfis();}
   const dl=L=>`<dl class="fv-dl">${L.map(([t,v])=>`<div><dt>${esc(t)}</dt>${String(v||"").trim()?`<dd>${esc(v)}</dd>`:`<dd class="vz">não informado</dd>`}</div>`).join("")}</dl>`;
   if(S.rcContr===undefined)carregarContratos();const ct=S.rcContr?contratoDe(x.rc_crm||x.nome,x.email):null;
@@ -6015,6 +6024,7 @@ function vRCPerfil(){const x=(S.prcL||[]).find(y=>y.id===S.prcSel);if(!x){S.pag=
   <div><span class="rot">Perfil do RC</span><h1 class="titulo">${esc(x.nome||x.email)}</h1><p class="sub">${x.ativo===false?"Acesso desativado · ":""}último acesso ${x.ultimo_acesso?fmtDataHora(x.ultimo_acesso):"nunca entrou"}</p></div>
   <section class="bloco"><h2 class="sec">Contato e dados pessoais</h2>${dl([["E-mail de acesso",x.email],["Celular",x.telefone],["Cidade",[x.cidade,x.uf].filter(Boolean).join("/")],["Responsável comercial",x.comercial_resp],["Formação",x.formacao],["Nome no CRM",x.rc_crm]])}</section>
   ${ct?contratoCard(ct,"Contrato 26/27 (mapeamento)"):""}
+  ${prcScore(x)}
   ${usrCadastroRC(x)||`<div class="nota-admin">Este RC ainda não tem cadastro aberto. Peça a ficha em Cadastro de novos RCs.</div>`}`;}
 document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="prc-q"){S.prcQ=ev.target.value;const p=ev.target.selectionStart;render();const e=document.getElementById("prc-q");if(e){e.focus();try{e.setSelectionRange(p,p);}catch(_){}}}});
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='prc-ver']");if(!b)return;ev.preventDefault();ev.stopPropagation();S.prcSel=b.dataset.v;S.pag="rc-perfil";render();window.scrollTo(0,0);},true);
@@ -8380,13 +8390,13 @@ function pirDetalhe(x,r){const R=r.respostas||{},A=r.avaliacao||{};
     <tr><td>Formação em ciências agrárias<br><span class="meta">Técnico · peso 5 · do cadastro</span></td><td>${esc(x.formacao||"—")}</td><td class="val">${pirFormNota(x.formacao)??"—"}</td></tr></tbody></table></div>
     ${ehAdmin()?`<div class="nota-admin" style="margin-top:10px"><strong>Avaliação do responsável comercial.</strong> Os campos abaixo são preenchidos pelo responsável comercial da Barenbrug, depois da conversa com o RC, e não pelo RC. O RC não vê esta avaliação.</div><form class="form-grid pir-av" data-id="${x.id}" style="margin-top:8px">${PIR_CTX.map(k=>{const q=PIR_Q.find(z=>z.k===k);return `<div><label>${esc(q.c)} <span class="meta">contexto</span></label><select name="ctx_${k}"><option value="">—</option>${q.o.map((o,i)=>`<option value="${i}" ${R[k]===i?"selected":""}>${esc(o[0])}</option>`).join("")}</select></div>`;}).join("")}${PIR_AV.map(a=>`<div><label>${esc(a.c)} <span class="meta">peso ${a.p}</span></label><select name="${a.k}"><option value="">—</option>${[[1,"1 · inexistente"],[2,"2 · muito abaixo"],[3,"3 · parcial"],[4,"4 · adequado"],[5,"5 · excelente"]].map(([v,t])=>`<option value="${v}" ${+A[a.k]===v?"selected":""}>${t}</option>`).join("")}</select></div>`).join("")}
       <div style="grid-column:1/-1"><label>Observações da Barenbrug</label><textarea name="obs" rows="2">${esc(A.obs||"")}</textarea></div>
-      <div class="rb-acoes"><button class="btn" type="button" data-a="pir-av" data-v="${x.id}">Salvar avaliação e perfil da carteira</button>${r.avaliado_em?`<span class="meta">Avaliado em ${esc(fmtDataHora(r.avaliado_em))}</span>`:""}</div></form>`:""}</div>`;}
+      <div class="rb-acoes"><button class="btn" type="button" data-a="pir-av" data-v="${x.id}">Salvar avaliação e perfil da carteira</button>${r.avaliado_em?`<span class="meta">Avaliado em ${esc(fmtDataHora(r.avaliado_em))}</span>`:""}</div></form>`:`<div class="tab" style="margin-top:8px"><table class="sim-t"><thead><tr><th>Avaliação do responsável comercial</th><th class="val">Nota</th></tr></thead><tbody>${PIR_AV.map(a=>`<tr><td>${esc(a.c)}<br><span class="meta">Comportamental · peso ${a.p}</span></td><td class="val">${A[a.k]!=null?esc(String(A[a.k])):"—"}</td></tr>`).join("")}</tbody></table></div>${A.obs?`<p class="meta" style="margin:6px 0 0"><strong>Observações da Barenbrug:</strong> ${esc(A.obs)}</p>`:""}`}</div>`;}
 document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='pir-']");if(!b)return;ev.preventDefault();const a=b.dataset.a,v=b.dataset.v;
   if(a==="pir-ab"){S.pirAb=S.pirAb===v?null:v;render();return;}
   if(a==="pir-av"&&ehAdmin()){const f=b.closest("form");const av={};PIR_AV.forEach(x=>{const s=f.querySelector(`[name=${x.k}]`).value;if(s)av[x.k]=+s;});const o=f.querySelector("[name=obs]").value.trim();if(o)av.obs=o;
     const cur=((S.pirL||[]).find(r=>r.user_id===v)||{}).respostas||{};const rs={...cur};PIR_CTX.forEach(k=>{const e=f.querySelector(`[name=ctx_${k}]`);if(!e)return;if(e.value==="")delete rs[k];else rs[k]=+e.value;});
     b.disabled=true;const {data,error}=await sb.from("rc_perfil").update({avaliacao:av,respostas:rs}).eq("user_id",v).select().maybeSingle();b.disabled=false;
-    if(error||!data){aviso("Não foi possível salvar a avaliação.");return;}const i=(S.pirL||[]).findIndex(r=>r.user_id===v);if(i>=0)S.pirL[i]=data;render();aviso("Avaliação salva.");}});
+    if(error||!data){aviso("Não foi possível salvar a avaliação.");return;}const i=(S.pirL||[]).findIndex(r=>r.user_id===v);if(i>=0)S.pirL[i]=data;if(S.prcPir)S.prcPir[v]=data;render();aviso("Avaliação salva.");}});
 
 function gtCad(){
   return `  ${vSolic()}
