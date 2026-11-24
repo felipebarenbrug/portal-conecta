@@ -296,7 +296,18 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .mesbar .trilho i{display:block;height:100%;background:var(--azul-escuro)}
 .mesbar .trilho b{position:absolute;left:0;top:0;height:100%;background:var(--amarelo,#ffdb00);opacity:.95}
 /* Negociações do Conecta RC */
-#f-ng,form[id^="f-ng-"]{max-width:none}
+#f-ng,form[id^="f-ng-"],#f-far,form[id^="f-far-"]{max-width:none}
+/* FAR */
+.far-kan{grid-auto-columns:minmax(220px,1fr)}
+.far-passos{grid-template-columns:repeat(4,1fr)}
+.far-fluxo,.far-como{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.far-fluxo{grid-template-columns:repeat(9,1fr)}
+.far-fluxo li{display:grid;justify-items:center;text-align:center;gap:4px;font-size:12.5px}
+.far-fluxo li span:last-child,.far-como li span:last-child{display:grid;gap:2px}.far-fluxo em,.far-como em{font-style:normal;color:var(--apagado);font-size:12px}
+.far-fluxo li.feito .ng-f-b{background:var(--azul);color:#fff;box-shadow:none}.far-fluxo li.atual .ng-f-b{background:var(--amarelo);color:var(--preto);box-shadow:none}
+.far-como{margin:8px 0}.far-como li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;font-size:14px}
+@media(max-width:900px){.far-fluxo{grid-template-columns:1fr;gap:0}.far-fluxo li{grid-template-columns:30px 1fr;justify-items:start;text-align:left;align-items:center;gap:10px;padding:4px 0}}
+
 .ng-mapa{display:grid;gap:10px;margin-top:8px}.ng-mapa-l{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .ng-mp{background:var(--branco);border:1px solid var(--linha);border-top:4px solid var(--azul);border-radius:8px;padding:10px 12px;display:grid;gap:4px;align-content:start;position:relative}
 .ng-mp h4{margin:0;font-size:15px}.ng-mp .quem{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--azul-escuro)}
@@ -1807,7 +1818,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124141534";
+const APP_VER="20261124143352";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3687,7 +3698,7 @@ const IS_GRUPOS=[
   ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
-  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-rcneg","Negociações dos RCs"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
+  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-rcneg","Negociações dos RCs"],["is-far","FAR · Reclamações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
   ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"],["is-desafio","Desafio 10 t"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
@@ -3728,7 +3739,7 @@ function navGrupos(G,nome,cur){
   return `${topo}<nav class="nav ng" aria-label="${esc(nome)}">${g1}</nav>${fim}${sub}</div>`;
 }
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-rcneg","Negociações dos RCs"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-rcneg","Negociações dos RCs"],["is-far","FAR · Reclamações"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
   return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",fora_meta:"À parte, fora da meta",outros:"Fila de qualificação",time:"Time"};
@@ -4906,6 +4917,211 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/
     btn.disabled=true;const out=[];const lote=Date.now();
     for(let i=0;i<arqs.length;i++){btn.textContent=`Enviando ${i+1} de ${arqs.length}…`;const a=arqs[i];const seg=a.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"_");const path=`${id}/${lote}_${i}_${seg}`;const up=await sb.storage.from("neg-credito").upload(path,a,{contentType:a.type||undefined});if(up.error){aviso("Não foi possível enviar "+a.name+".");btn.disabled=false;btn.textContent="Enviar documentos";return;}out.push({nome:a.name,path,em:new Date().toISOString()});}
     await ngAcao(id,"docs_enviados",g("#ngd_obs"),{arquivos:out},"Documentos enviados. O responsável e o Financeiro foram avisados.");return;}
+},true);
+
+/* ===== FAR · Formulário de Atendimento à Reclamação ===== */
+const FAR_CULTIVARES=["Brachiaria híbrida cv. Sabiá","Brachiaria híbrida cv. Cayana","Brachiaria Híbrida cv. Mulato II","Panicum híbrido Carcará","Cynodon dactylon","Brachiaria brizantha cv. Marandu","Brachiaria brizantha cv. Xaraés","Brachiaria brizantha cv. BRS Piatã","Brachiaria decumbens cv. Basilisk","Brachiaria humidícula cv. Llanero","Brachiaria Ruziziensis","Panicum maximum cv. Mombaça","Panicum maximum cv. Massai","Azevém Ribeye","Azevém Bar HQ","Azevém Bar Maximus","Azevém Barjumbo","BARMIX Agri Barenbrug","BARMIX ILP","BARMIX Renova","BARMIX Palhada+","BARMIX Equilibra"];
+const FAR_MOTIVOS=["Má germinação","Não houve germinação","Emergência tardia ou falha de estande","Desenvolvimento fraco depois da emergência","Mistura com outras espécies ou plantas daninhas","Embalagem danificada ou peso divergente","Outro"];
+const FAR_PEDIDOS=["Análise de solo","Fotos da área plantada","Fotos da embalagem e da etiqueta do lote","Nota fiscal de compra","Contra-amostra (500 g por lote)","Como foi o plantio (taxa de semeadura, profundidade, máquina)","Chuva ou irrigação desde o plantio","Outro documento"];
+const FAR_ETAPAS=[["env","Enviado","Recebido pelo portal e registrado na Barenbrug automaticamente."],
+  ["68a5cd6ac21632001b286bb6","Abertura do FAR","O responsável comercial confere os dados e aciona o Controle de Qualidade."],
+  ["68a5cd6ac21632001b286bb7","Pré-análise","O Controle de Qualidade avalia o lote e os documentos enviados."],
+  ["68a5cd6ac21632001b286bb8","Visita técnica","Visita à área do reclamante, quando necessária."],
+  ["68a5cd6ac21632001b286bb9","Relatório da visita","Registro do que foi visto em campo."],
+  ["68a5cd6ac21632001b286bba","Análise do FAR","Análise completa do caso com todas as informações."],
+  ["pp","Parecer prévio","Primeiro parecer sobre a reclamação."],
+  ["68a75d839a0a8e002339f42f","Parecer final","Parecer definitivo da Barenbrug."],
+  ["68a75d87772b630017f63b70","Parecer disponibilizado","Resposta entregue ao reclamante."]];
+const FAR_PP=["68a75d6ac8519e00178b000f","68a75d742f7a37001dfbb700"];
+const farPodeAbrir=()=>!S.demo&&(ehAdmin()||["RC","Franqueado Nutron","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"].some(temPerfil));
+const farGestor=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||!!(S.profile&&S.profile.gerente_is));
+const farViaIS=()=>!ehAdmin()&&(temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"))&&!temPerfil("RC");
+function farColuna(x){if(x.crm_sit==="P")return "enc";if(x.crm_sit==="V")return "68a75d87772b630017f63b70";if(!x.crm_deal_id)return "env";
+  if(FAR_PP.includes(x.crm_etapa_id))return "pp";if(FAR_ETAPAS.some(e=>e[0]===x.crm_etapa_id))return x.crm_etapa_id;
+  const e=FAR_ETAPAS.find(e=>finNorm(e[1])===finNorm(x.crm_etapa||""));return e?e[0]:"68a5cd6ac21632001b286bb6";}
+const farEtapaNome=k=>k==="enc"?"Encerrado":(FAR_ETAPAS.find(e=>e[0]===k)||[,""])[1];
+function farSit(x){const c=farColuna(x);if(c==="env")return x.status==="Erro"?"Aguardando o registro na Barenbrug":x.status==="Lançando"?"Registrando na Barenbrug":"Enviado";
+  if(c==="enc")return "Encerrado";if(c==="68a75d87772b630017f63b70")return "Parecer disponibilizado";return farEtapaNome(c);}
+const farCor=x=>{const c=farColuna(x);return c==="env"?"aguardando":c==="enc"?"encerradas":c==="68a75d87772b630017f63b70"?"finalizado":x.pend_status==="solicitado"?"ajustar":"barenbrug";};
+async function farCarregar(forcar){const G=S.far||(S.far={});if(G.busy)return;G.busy=true;
+  try{const {data}=await sb.from("far_reclamacoes").select("*").order("atualizado_em",{ascending:false}).limit(400);G.lista=data||[];
+    if(!G.syncEm||Date.now()-G.syncEm>10*60e3||forcar){G.syncEm=Date.now();sb.functions.invoke("far-crm",{body:{acao:"sync",forcar:!!forcar}}).then(async r=>{if(r&&r.data&&r.data.mudaram){const {data:d2}=await sb.from("far_reclamacoes").select("*").order("atualizado_em",{ascending:false}).limit(400);G.lista=d2||G.lista;render();}}).catch(()=>{});}
+  }catch(e){G.lista=G.lista||[];}
+  G.busy=false;}
+async function farEventos(id){const {data}=await sb.from("far_eventos").select("*").eq("far_id",id).order("em");(S.far.evs||(S.far.evs={}))[id]=data||[];}
+function farNovo(){const p=S.profile||{};return {passo:1,eu_sou:"Produtor Rural",reclamante:{},fazenda:"",uf:"",cidade:"",cliente_tipo:"Cliente no Brasil",cultivar:"",quantidade_kg:"",data_compra:"",nf:"",lotes:"",
+  representante:temPerfil("RC")?(p.rc_crm||p.nome||""):"",canal_nome:"",canal_cidade_uf:"",motivo:"",motivo_outro:"",observacoes:"",data_reclamacao:ngHoje(),data_semeadura:"",amostra:"",validade_ok:false};}
+function farSet(path,val){const E=S.far.ed;const k=path.split(".");let o=E;for(let i=0;i<k.length-1;i++){if(o[k[i]]==null)o[k[i]]={};o=o[k[i]];}o[k[k.length-1]]=val;}
+function farGet(path){return path.split(".").reduce((o,k)=>o==null?o:o[k],S.far.ed);}
+function farIn(path,rot,o={}){const id="far_"+path.replace(/\./g,"_");const v=farGet(path);
+  return `<div${o.cls?` class="${o.cls}"`:""}><label for="${id}">${rot}${o.req?" *":""}</label>${o.sel?`<select id="${id}" data-far="${path}"${o.rr?' data-farr="1"':""}>${o.sel}</select>`:o.ta?`<textarea id="${id}" data-far="${path}" rows="${o.ta}" maxlength="${o.max||1500}"${o.ph?` placeholder="${esc(o.ph)}"`:""}>${esc(v||"")}</textarea>`:`<input id="${id}" data-far="${path}" value="${esc(v==null?"":String(v))}"${o.type?` type="${o.type}"`:""}${o.im?` inputmode="${o.im}"`:""} maxlength="${o.max||160}"${o.ph?` placeholder="${esc(o.ph)}"`:""}${o.masc?` data-farm="${o.masc}"`:""}${o.rr?' data-farr="1"':""}${o.maxd?` max="${o.maxd}"`:""}>`}${o.dica?`<span class="meta">${o.dica}</span>`:""}</div>`;}
+const farOpts=(L,v,ph)=>`<option value="">${ph||"Selecione"}</option>`+L.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
+function farSeg(path,L){const v=farGet(path);return `<div class="ng-seg" role="radiogroup">${L.map(x=>`<button type="button" class="chip" role="radio" data-a="far-seg" data-p="${path}" data-v="${esc(x)}" aria-pressed="${v===x}" aria-checked="${v===x}">${esc(x)}</button>`).join("")}</div>`;}
+const farDias=E=>E.data_semeadura&&E.data_reclamacao?Math.round((new Date(E.data_reclamacao+"T12:00:00")-new Date(E.data_semeadura+"T12:00:00"))/864e5):null;
+const FAR_PASSOS=["Reclamante","Compra","Reclamação","Arquivos e envio"];
+function farPasso1(E){const cid=S.cidadesCache[E.uf];const cidSel=Array.isArray(cid)?farIn("cidade","Cidade",{req:1,sel:farOpts(cid,E.cidade,"Cidade")}):farIn("cidade","Cidade",{req:1,ph:E.uf?"Carregando as cidades…":"Escolha a UF"});
+  return `<div class="ng-form" style="display:grid;gap:12px">
+    <div><span class="lbl">O reclamante é *</span>${farSeg("eu_sou",["Produtor Rural","Canal de Distribuição"])}</div>
+    ${E.eu_sou==="Canal de Distribuição"?farIn("canal_nome","Nome do canal de distribuição",{req:1}):""}
+    ${farIn("reclamante.nome","Nome do reclamante",{req:1,max:120})}
+    <div class="ng-g2">${farIn("reclamante.celular","Celular do reclamante",{req:1,im:"tel",masc:"fone",max:16})}${farIn("reclamante.email","E-mail do reclamante",{type:"email",max:120})}</div>
+    ${farIn("fazenda","Fazenda",{req:1,max:120})}
+    <div class="ng-g2">${farIn("uf","UF",{req:1,rr:1,sel:farOpts(UFS,E.uf,"UF")})}${cidSel}</div>
+    <div><span class="lbl">Tipo de cliente *</span>${farSeg("cliente_tipo",["Cliente no Brasil","Cliente Internacional"])}</div></div>`;}
+function farPasso2(E){return `<div class="ng-form" style="display:grid;gap:12px">
+    ${farIn("cultivar","Cultivar da reclamação",{req:1,sel:farOpts(FAR_CULTIVARES,E.cultivar)})}
+    <div class="ng-g2">${farIn("quantidade_kg","Quantidade comprada (kg)",{req:1,im:"decimal",max:12})}${farIn("data_compra","Data da compra",{req:1,type:"date",maxd:ngHoje()})}</div>
+    <div class="ng-g2">${farIn("nf","Número da nota fiscal de compra",{req:1,max:80,dica:"Se forem várias, separe por vírgula."})}${farIn("lotes","Número do lote ou dos lotes",{req:1,max:120,dica:"Está na etiqueta da embalagem."})}</div>
+    ${farIn("representante","Representante ou distribuidor que fez a venda ao cliente",{req:1,max:120})}
+    ${farIn("canal_cidade_uf","Cidade e UF do canal de distribuição ou do representante",{req:1,max:120,ph:"Ex.: Rolândia/PR"})}</div>`;}
+function farPasso3(E){const d=farDias(E);const outro=E.motivo==="Outro";
+  return `<div class="ng-form" style="display:grid;gap:12px">
+    ${farIn("motivo","Motivo da reclamação",{req:1,rr:1,sel:farOpts(FAR_MOTIVOS,E.motivo)})}
+    ${outro?farIn("motivo_outro","Descreva o motivo",{req:1,max:160}):""}
+    <div class="ng-g2">${farIn("data_semeadura","Data da semeadura",{req:1,type:"date",rr:1,maxd:ngHoje()})}${farIn("data_reclamacao","Data da reclamação",{req:1,type:"date",rr:1,maxd:ngHoje()})}</div>
+    ${d!=null&&d>30?`<div class="aviso-est" role="alert"><strong>Fora do prazo.</strong> O prazo para abrir reclamação é de até 30 dias depois da semeadura, e já se passaram ${d} dias. Você ainda pode enviar: o responsável comercial e o Controle de Qualidade decidem se o FAR segue.</div>`:d!=null&&d>=0?`<p class="meta">${d} ${d===1?"dia":"dias"} depois da semeadura (prazo: até 30 dias).</p>`:""}
+    ${farIn("observacoes","Observações: o que o reclamante viu no campo",{req:1,ta:4,ph:"Ex.: germinou em torno de 5%, área de 20 ha, plantio a lanço, choveu 3 dias depois…"})}
+    <div><span class="lbl">Há contra-amostra guardada? (500 g por lote, tirada do meio das embalagens) *</span>${farSeg("amostra",["Sim","Não"])}<span class="meta">A amostra deve ficar com o reclamante por pelo menos 30 dias depois do plantio, em local fresco, arejado e seco. Sem ela, a análise usa só as contra-amostras da Barenbrug.</span></div>
+    <label class="check"><input type="checkbox" data-far-chk="validade_ok" ${E.validade_ok?"checked":""}> Confirmo que o lote está dentro do prazo de validade *</label></div>`;}
+function farPasso4(E){const G=S.far;const nf=G.arqNF||[],ou=G.arqOut||[];const L=(r,v)=>v?`<div class="ng-rv"><span>${r}</span><strong>${esc(v)}</strong></div>`:"";
+  return `<div class="ng-form" style="display:grid;gap:12px">
+    <div><label for="far_nf_arq">Nota fiscal de compra *</label><input id="far_nf_arq" type="file" data-farq="nf" multiple accept=".pdf,.jpg,.jpeg,.png">${nf.length?`<span class="meta">${nf.map(a=>esc(a.name)).join(", ")}</span>`:`<span class="meta">Obrigatória. PDF ou foto legível.</span>`}</div>
+    <div><label for="far_out_arq">Fotos e outros arquivos (opcional)</label><input id="far_out_arq" type="file" data-farq="out" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx,.mp4,.mov">${ou.length?`<span class="meta">${ou.map(a=>esc(a.name)).join(", ")}</span>`:`<span class="meta">Fotos da área, da embalagem e da etiqueta do lote ajudam a análise. Análise de solo e outros documentos podem ir depois, se o responsável pedir.</span>`}</div>
+    <h3 class="sec" style="margin:4px 0 0">Revise antes de enviar</h3>
+    <div class="ng-rev">${L("Reclamante",[E.reclamante.nome,E.eu_sou].filter(Boolean).join(" · "))}${L("Canal",E.canal_nome)}${L("Contato",[E.reclamante.celular,E.reclamante.email].filter(Boolean).join(" · "))}${L("Fazenda",[E.fazenda,[E.cidade,E.uf].filter(Boolean).join("/")].filter(Boolean).join(" · "))}${L("Cultivar",E.cultivar)}${L("Quantidade",E.quantidade_kg?E.quantidade_kg+" kg":"")}${L("Compra",[ngDt(E.data_compra),"NF "+E.nf].join(" · "))}${L("Lote(s)",E.lotes)}${L("Venda feita por",[E.representante,E.canal_cidade_uf].filter(Boolean).join(" · "))}${L("Motivo",E.motivo==="Outro"?E.motivo_outro:E.motivo)}${L("Semeadura e reclamação",ngDt(E.data_semeadura)+" · "+ngDt(E.data_reclamacao))}${L("Contra-amostra",E.amostra)}${L("Observações",E.observacoes)}</div>
+    <p class="meta">Ao enviar, o FAR é registrado na Barenbrug em nome do seu responsável comercial, que dá sequência com o Controle de Qualidade. Você acompanha cada etapa por aqui.</p></div>`;}
+function farValida(E,p){const t=s=>String(s||"").trim();
+  if(p===1){if(E.eu_sou==="Canal de Distribuição"&&!t(E.canal_nome))return "Informe o nome do canal de distribuição.";if(!t(E.reclamante.nome))return "Informe o nome do reclamante.";if(docLimpo(E.reclamante.celular).length<10)return "Informe o celular do reclamante com DDD.";
+    if(t(E.reclamante.email)&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t(E.reclamante.email)))return "Confira o e-mail do reclamante.";if(!t(E.fazenda))return "Informe a fazenda.";if(!E.uf||!t(E.cidade))return "Informe a UF e a cidade.";}
+  if(p===2){if(!E.cultivar)return "Escolha a cultivar.";if(!(ngNum(E.quantidade_kg)>0))return "Informe a quantidade em kg.";if(!E.data_compra)return "Informe a data da compra.";if(!t(E.nf))return "Informe o número da nota fiscal.";if(!t(E.lotes))return "Informe o número do lote.";if(!t(E.representante))return "Informe quem fez a venda.";if(!t(E.canal_cidade_uf))return "Informe a cidade e a UF do canal ou do representante.";}
+  if(p===3){if(!E.motivo||(E.motivo==="Outro"&&!t(E.motivo_outro)))return "Informe o motivo da reclamação.";if(!E.data_semeadura)return "Informe a data da semeadura.";if(!E.data_reclamacao)return "Informe a data da reclamação.";
+    if(E.data_compra&&E.data_semeadura<E.data_compra)return "A semeadura está antes da data da compra. Confira as datas.";if(E.data_reclamacao<E.data_semeadura)return "A reclamação está antes da semeadura. Confira as datas.";
+    if(!t(E.observacoes))return "Conte o que o reclamante viu no campo.";if(!E.amostra)return "Diga se há contra-amostra guardada.";if(!E.validade_ok)return "Confirme que o lote está dentro da validade.";}
+  if(p===4){if(!(S.far.arqNF||[]).length)return "Anexe a nota fiscal de compra.";const all=[...(S.far.arqNF||[]),...(S.far.arqOut||[])];if(all.length>15||all.some(a=>a.size>15*1024*1024))return "Envie até 15 arquivos de até 15 MB cada.";}
+  return null;}
+const FAR_REGRAS=`<details class="ng-det" style="margin:0 0 12px"><summary>Regras para abrir o FAR</summary><ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5">
+  <li><strong>Prazo:</strong> até 30 dias depois da semeadura.</li>
+  <li><strong>Contra-amostra:</strong> de preferência, 500 g por lote, tirada do meio de cada embalagem comprada. Sem ela, a análise usa só as contra-amostras guardadas pela Barenbrug.</li>
+  <li>A amostra fica com o reclamante por pelo menos 30 dias depois do plantio, em local fresco, arejado e seco.</li>
+  <li><strong>Nota fiscal de compra:</strong> obrigatória.</li>
+  <li><strong>Não é atendida reclamação de lote com a validade vencida.</strong></li></ul></details>`;
+function vFarForm(){const E=S.far.ed;const p=E.passo||1;const f=[farPasso1,farPasso2,farPasso3,farPasso4][p-1](E);
+  return `<section class="bloco ng-wiz far-wiz"><div class="ng-wiz-t"><h2 class="sec" style="margin:0">Novo FAR</h2><button type="button" class="link" data-a="far-fechar">Fechar</button></div>
+    <ol class="ng-passos far-passos" aria-label="Passos">${FAR_PASSOS.map((t,i)=>`<li class="${i+1<p?"feito":i+1===p?"atual":""}"><button type="button" data-a="far-ir" data-v="${i+1}" ${i+1>p?"disabled":""} aria-current="${i+1===p?"step":"false"}"><span>${i+1}</span><em>${t}</em></button></li>`).join("")}</ol>
+    ${p===1?FAR_REGRAS:""}
+    <form class="form-card" id="f-far" novalidate>${f}
+      ${S.far.erro?`<div class="erro" role="alert">${esc(S.far.erro)}</div>`:""}
+      <div class="ng-nav">${p>1?`<button type="button" class="btn sec" data-a="far-volta">Voltar</button>`:"<span></span>"}${p<4?`<button type="button" class="btn" data-a="far-avanca">Continuar</button>`:`<button type="submit" class="btn">Enviar o FAR</button>`}</div>
+    </form></section>`;}
+function farCartao(x,ver){const c=farColuna(x);const pend=x.pend_status==="solicitado";const souA=x.autor===S.user.id;const rc=x.reclamante||{};
+  return `<button type="button" class="ng-card${pend&&souA||ver&&(c==="env"&&x.status==="Erro"||x.pend_status==="enviado")?" ng-card-acao":""}" data-a="far-abrir" data-v="${x.id}"><span class="ng-card-t">FAR ${x.id} · ${esc(rc.nome||"")}</span>
+    <span class="meta">${ver?esc(x.autor_nome||"")+" · ":""}${esc(x.cultivar||"")} · ${isNum(x.quantidade_kg)} kg</span>
+    <span class="meta">${esc(x.motivo||"")}${x.cidade?" · "+esc(x.cidade)+"/"+esc(x.uf||""):""}</span>
+    <span class="ng-card-r"><span class="meta">${esc(ngDt(x.criado_em))}</span><span class="ng-sit ng-${farCor(x)}">${esc(farSit(x))}</span></span>
+    ${pend&&souA?`<span class="ng-card-alerta">O responsável pediu informações</span>`:""}${ver&&x.pend_status==="enviado"?`<span class="ng-card-alerta">Informações recebidas para conferir</span>`:""}${ver&&x.status==="Erro"?`<span class="ng-card-alerta">Registro pendente</span>`:""}</button>`;}
+function farKanban(L,ver){if(!L.length)return `<div class="vazio">Nenhum FAR por aqui ainda.</div>`;const G={};L.forEach(x=>{(G[farColuna(x)]||(G[farColuna(x)]=[])).push(x);});
+  const cols=[...FAR_ETAPAS.map(e=>[e[0],e[1]]),["enc","Encerrado"]].filter(([k])=>k!=="enc"||G[k]);
+  return `<div class="ng-kan far-kan">${cols.map(([k,t])=>`<section class="ng-col" aria-label="${t}"><h3>${t} <span>${(G[k]||[]).length}</span></h3>${(G[k]||[]).map(x=>farCartao(x,ver)).join("")||`<p class="meta" style="margin:4px 0">Nada aqui.</p>`}</section>`).join("")}</div>`;}
+function farComoHTML(){return `<details class="ng-det" style="margin:0 0 12px"><summary>Como o FAR anda (o que acontece em cada etapa)</summary><ol class="far-como">${FAR_ETAPAS.map((e,i)=>`<li><span class="ng-f-b">${i+1}</span><span><strong>${e[1]}</strong><em>${e[2]}</em></span></li>`).join("")}</ol>
+  <p class="meta">${farGestor()?"As etapas espelham o Funil FAR do CRM e são atualizadas a cada 10 minutos ou pelo botão. Pedidos de informação, arquivos e mensagens daqui entram como anotação na negociação do CRM.":"As etapas são atualizadas pela Barenbrug. Você recebe um aviso a cada mudança e quando o responsável pedir alguma informação."}</p></details>`;}
+function vFar(){const G=S.far||(S.far={});
+  if(G.lista===undefined){if(!G.busy)farCarregar().then(render);return `<div class="carregando">Carregando os FARs…</div>`;}
+  if(G.aberta)return vFarDetalhe(G.lista.find(x=>x.id===G.aberta));
+  const me=S.user.id;const meus=G.lista.filter(x=>x.autor===me);const outros=G.lista.filter(x=>x.autor!==me);const gest=farGestor()||outros.length>0;
+  const aba=G.aba||(gest&&outros.length?"outros":"meus");const atencao=outros.filter(x=>x.status==="Erro"||x.pend_status==="enviado"||(!x.crm_deal_id&&x.status==="Aberto"));
+  return `<div><h1 class="titulo">FAR · Reclamações</h1><p class="sub">Formulário de Atendimento à Reclamação. ${gest?"Os FARs abertos pelos representantes e pelo time entram no Funil FAR em seu nome: peça as informações que faltarem e acompanhe as etapas com o Controle de Qualidade.":"Abra a reclamação do seu cliente aqui: ela vai para o seu responsável comercial, que dá sequência com o Controle de Qualidade. Você acompanha cada etapa e envia o que for pedido."}</p></div>
+    ${farComoHTML()}
+    ${G.ed?vFarForm():farPodeAbrir()?`<div class="acoes" style="margin:0 0 12px"><button class="btn" data-a="far-novo">Abrir novo FAR</button></div>${FAR_REGRAS}`:""}
+    ${G.ed?"":`${gest&&outros.length?`<div class="ng-seg" role="tablist" style="margin:0 0 10px"><button class="chip" role="tab" data-a="far-aba" data-v="outros" aria-pressed="${aba==="outros"}">Para acompanhar (${outros.length})</button><button class="chip" role="tab" data-a="far-aba" data-v="meus" aria-pressed="${aba==="meus"}">Abertos por mim (${meus.length})</button></div>`:""}
+    ${aba==="outros"&&outros.length?`${atencao.length?`<section class="bloco"><h2 class="sec">Pedem a sua atenção (${atencao.length})</h2><div class="ng-lista">${atencao.map(x=>farCartao(x,true)).join("")}</div></section>`:""}<section class="bloco"><h2 class="sec">Todos os FARs</h2>${farKanban(outros,true)}</section>`
+      :`<section class="bloco"><h2 class="sec">Meus FARs</h2>${farKanban(meus,false)}</section>`}
+    <p class="meta"><button type="button" class="link" data-a="far-sync">Atualizar as etapas agora</button></p>`}`;}
+function farFluxo(x){const c=farColuna(x);const idx=c==="enc"?-1:FAR_ETAPAS.findIndex(e=>e[0]===c);const fim=x.crm_sit==="V";
+  return `<ol class="far-fluxo">${FAR_ETAPAS.map((e,i)=>{const feito=fim||i<idx;const atual=!fim&&i===idx;return `<li class="${feito?"feito":atual?"atual":""}"><span class="ng-f-b">${feito?"✓":i+1}</span><span><strong>${e[1]}</strong>${atual?`<em>${esc(e[2])}</em>`:""}</span></li>`;}).join("")}</ol>
+    ${c==="enc"?`<div class="nota-admin">FAR encerrado pela Barenbrug${x.crm_etapa?" na etapa "+esc(x.crm_etapa):""}.</div>`:""}`;}
+function farEvHTML(x){const L=(S.far.evs||{})[x.id];if(L===undefined){farEventos(x.id).then(render);return `<div class="carregando">Carregando o histórico…</div>`;}
+  return `<ol class="ng-hist">${L.slice().reverse().map(e=>`<li class="ng-ev-${esc(e.tipo)}"><span class="meta">${esc(fmtDataHora(e.em))}${e.autor_nome?" · "+esc(e.autor_nome):""}</span><span>${esc(e.texto||"")}</span></li>`).join("")||`<li class="meta">Sem registros.</li>`}</ol>`;}
+function farUpHTML(x,rot,dica,prim){return `<form class="form-card" id="f-far-arq" data-id="${x.id}"><label for="fara_arq">${rot}</label><input id="fara_arq" type="file" multiple required accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx,.mp4,.mov"><span class="meta">${dica} Até 10 arquivos de 15 MB.</span><label for="fara_obs">Observação (opcional)</label><input id="fara_obs" maxlength="300"><div class="acoes" style="margin:0"><button class="btn${prim?"":" sec"}" type="submit">Enviar arquivos</button></div></form>`;}
+function vFarDetalhe(x){if(!x){S.far.aberta=null;return vFar();}
+  const souA=x.autor===S.user.id;const gest=!souA||ehAdmin();const rc=x.reclamante||{};const L=(r,v)=>v?`<div class="ng-rv"><span>${r}</span><strong>${esc(v)}</strong></div>`:"";
+  const ab=x.crm_sit!=="V"&&x.crm_sit!=="P";const pd=x.pendencia||{};const dias=x.data_semeadura&&x.data_reclamacao?Math.round((new Date(x.data_reclamacao)-new Date(x.data_semeadura))/864e5):null;
+  const arqs=Array.isArray(x.anexos)?x.anexos:[];
+  return `<button class="voltar" data-a="far-voltar">‹ FAR · Reclamações</button>
+  <div><span class="rot">FAR ${x.id}</span><h1 class="titulo">${esc(rc.nome||"")}</h1><p class="sub">${esc(farSit(x))} · ${esc(x.cultivar||"")} · ${esc(x.motivo||"")}</p></div>
+  <section class="bloco">${farFluxo(x)}</section>
+  ${x.pend_status==="solicitado"?`<section class="bloco"><div class="aviso-est" role="note"><strong>${souA?"O seu responsável comercial pediu:":"Informações pedidas ao "+esc(x.autor_nome||"autor")+":"}</strong><ul class="ng-docs" style="margin-top:4px">${(pd.itens||[]).map(i=>`<li>${esc(i)}</li>`).join("")}</ul>${pd.obs?`<p class="meta">${esc(pd.obs)}</p>`:""}<p class="meta">Pedido por ${esc(pd.por||"")} em ${esc(ngDt(pd.em))}.</p></div>
+    ${souA?farUpHTML(x,"Enviar o que foi pedido","Fotos, análise de solo, laudos ou documentos.",true):""}</section>`:""}
+  ${gest&&!souA||ehAdmin()?farAcoesGestor(x):""}
+  <section class="bloco"><h2 class="sec">Dados do FAR</h2><div class="ng-rev">
+    ${L("Aberto por",x.autor_nome)}${L("Responsável comercial",x.comercial)}${L("O reclamante é",x.eu_sou)}${L("Canal de distribuição",x.canal_nome)}${L("Contato",[rc.celular,rc.email].filter(Boolean).join(" · "))}${L("Fazenda",x.fazenda)}${L("Cidade/UF",[x.cidade,x.uf].filter(Boolean).join("/"))}${L("Tipo de cliente",x.cliente_tipo)}
+    ${L("Cultivar",x.cultivar)}${L("Quantidade",isNum(x.quantidade_kg)+" kg")}${L("Data da compra",ngDt(x.data_compra))}${L("Nota fiscal",x.nf)}${L("Lote(s)",x.lotes)}${L("Venda feita por",[x.representante,x.canal_cidade_uf].filter(Boolean).join(" · "))}
+    ${L("Motivo",x.motivo)}${L("Semeadura",ngDt(x.data_semeadura))}${L("Reclamação",ngDt(x.data_reclamacao)+(dias!=null?" · "+dias+" dias depois da semeadura"+(dias>30?" (fora do prazo)":""):""))}${L("Contra-amostra guardada",x.amostra)}${L("Observações",x.observacoes)}</div></section>
+  <section class="bloco"><h2 class="sec">Arquivos (${arqs.length})</h2>${arqs.length?`<ul class="ng-docs">${arqs.map(a=>`<li><button type="button" class="link" data-a="far-doc" data-v="${esc(a.path)}">${esc(a.nome)}</button> <span class="meta">${a.tipo==="nf"?"nota fiscal · ":""}${esc(a.por||"")} · ${esc(ngDt(a.em))}</span></li>`).join("")}</ul>`:`<p class="meta">Nenhum arquivo.</p>`}
+    ${ab&&!(souA&&x.pend_status==="solicitado")?`<details class="ng-det" style="margin-top:8px"><summary>Enviar mais arquivos</summary>${farUpHTML(x,"Arquivos","Só quem abriu o FAR, o responsável comercial e os administradores abrem estes arquivos.")}</details>`:""}</section>
+  <section class="bloco"><h2 class="sec">Histórico e mensagens</h2>
+    ${ab?`<form class="form-card" id="f-far-msg" data-id="${x.id}" style="margin-bottom:10px"><label for="farm_t">Mensagem para ${souA?"o seu responsável comercial":esc(x.autor_nome||"quem abriu o FAR")}</label><textarea id="farm_t" rows="2" maxlength="800" required></textarea><div class="acoes" style="margin:0"><button class="btn sec" type="submit">Enviar mensagem</button></div></form>`:""}
+    ${farEvHTML(x)}</section>`;}
+function farAcoesGestor(x){const ab=x.crm_sit!=="V"&&x.crm_sit!=="P";if(!ab&&x.crm_deal_id)return x.crm_deal_id?`<p class="meta">${crmLnk(x.crm_deal_id)}</p>`:"";
+  const naoReg=!x.crm_deal_id;
+  return `<section class="bloco ng-gest"><h2 class="sec">Responsável comercial</h2>
+    ${naoReg?`<div class="aviso-est">${x.status==="Lançando"?"Registrando no Funil FAR…":"Este FAR ainda não entrou no Funil FAR do CRM"+(x.crm_erro?": "+esc(x.crm_erro):"")+"."}</div>
+      <div class="acoes"><button class="btn" data-a="far-lancar" data-v="${x.id}" ${x.status==="Lançando"?"disabled":""}>Registrar no Funil FAR</button></div>
+      <details class="ng-det"><summary>Já registrei no CRM à mão</summary><form class="form-card" id="f-far-manual" data-id="${x.id}"><label for="farman_l">Link da negociação no CRM</label><input id="farman_l" maxlength="200" placeholder="https://crm.rdstation.com/app/deals/…"><div class="acoes"><button class="btn sec" type="submit">Marcar como registrado</button></div></form></details>`
+      :`<p class="meta" style="margin:0 0 8px">${crmLnk(x.crm_deal_id)} · etapa ${esc(x.crm_etapa||"Abertura do FAR")}. Mova a etapa no CRM: o portal acompanha e avisa quem abriu.${x.crm_erro?" "+esc(x.crm_erro)+".":""}</p>`}
+    ${x.pend_status==="enviado"?`<div class="acoes"><button class="btn" data-a="far-pendok" data-v="${x.id}">Recebi as informações pedidas</button></div>`:""}
+    <details class="ng-det"><summary>${x.pend_status==="solicitado"?"Pedir outras informações":"Pedir informações a quem abriu o FAR"}</summary><form class="form-card" id="f-far-pedir" data-id="${x.id}">
+      <fieldset class="ng-fs"><legend>O que precisa ser enviado</legend>${FAR_PEDIDOS.map(d=>`<label class="check"><input type="checkbox" name="farp" value="${esc(d)}"> ${esc(d)}</label>`).join("")}</fieldset>
+      <label for="farp_obs">Observação</label><input id="farp_obs" maxlength="300" placeholder="Ex.: análise de solo da área reclamada, feita nos últimos 12 meses">
+      <div class="acoes"><button class="btn" type="submit">Pedir</button></div></form></details>
+  </section>`;}
+async function farAcao(id,acao,obs,dados,msg,nota){const {error}=await sb.rpc("far_acao",{p_id:id,p_acao:acao,p_obs:obs||null,p_dados:dados||null});if(error){aviso(error.message||"Não foi possível gravar.");return false;}
+  if(nota)sb.functions.invoke("far-crm",{body:{acao:"nota",id,tipo:nota}}).catch(()=>{});
+  if(S.far.evs)delete S.far.evs[id];await farCarregar();render();if(msg)aviso(msg);return true;}
+async function farLancar(id){let ok=false,msg="";try{const r=await sb.functions.invoke("far-crm",{body:{acao:"lancar",id}});ok=!!(r.data&&r.data.ok);if(r.error){try{msg=(await r.error.context.json()).error||"";}catch(e){}}}catch(e){}return {ok,msg};}
+async function farSubir(arqs,tipo,lote,off){const out=[];for(let i=0;i<arqs.length;i++){const a=arqs[i];const seg=a.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9._-]+/g,"_");const path=`${S.user.id}/${lote}_${off+i}_${seg}`;
+  const up=await sb.storage.from("far").upload(path,a,{contentType:a.type||undefined});if(up.error)throw new Error("Não foi possível enviar o arquivo "+a.name+".");out.push({nome:a.name,path,tipo});}return out;}
+function farAbrirNovo(){const G=S.far||(S.far={});G.ed=farNovo();G.erro=null;G.aberta=null;G.arqNF=[];G.arqOut=[];}
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.far||!S.far||!S.far.ed)return;if(t.dataset.farm==="fone")t.value=ngMascFone(t.value);farSet(t.dataset.far,t.value);});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!S.far||!S.far.ed)return;const re=()=>{const w=window.scrollY;render();window.scrollTo(0,w);};
+  if(t.dataset.farq){S.far[t.dataset.farq==="nf"?"arqNF":"arqOut"]=[...(t.files||[])];re();return;}
+  if(t.dataset.farChk){farSet(t.dataset.farChk,!!t.checked);return;}
+  if(!t.dataset.far)return;farSet(t.dataset.far,t.value);
+  if(t.dataset.far==="uf"){S.far.ed.cidade="";carregarCidades(t.value).then(re);re();return;}
+  if(t.dataset.farr)re();});
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='far-']");if(!b)return;const a=b.dataset.a,v=b.dataset.v;const G=S.far||(S.far={});ev.preventDefault();ev.stopPropagation();
+  const E=G.ed;const re=()=>{const w=window.scrollY;render();window.scrollTo(0,w);};const topo=()=>{render();const f=document.querySelector(".far-wiz");if(f)f.scrollIntoView({block:"start"});};
+  if(a==="far-novo"){farAbrirNovo();topo();return;}
+  if(a==="far-fechar"){G.ed=null;G.erro=null;re();return;}
+  if(a==="far-seg"&&E){farSet(b.dataset.p,v);re();return;}
+  if(a==="far-ir"&&E){E.passo=+v;G.erro=null;topo();return;}
+  if(a==="far-volta"&&E){E.passo=Math.max(1,(E.passo||1)-1);G.erro=null;topo();return;}
+  if(a==="far-avanca"&&E){const e=farValida(E,E.passo||1);G.erro=e||null;if(!e)E.passo=(E.passo||1)+1;topo();return;}
+  if(a==="far-aba"){G.aba=v;re();return;}
+  if(a==="far-abrir"){G.aberta=+v;G.ed=null;if(G.evs)delete G.evs[+v];render();window.scrollTo(0,0);return;}
+  if(a==="far-voltar"){G.aberta=null;render();window.scrollTo(0,0);return;}
+  if(a==="far-sync"){b.disabled=true;b.textContent="Atualizando…";G.syncEm=0;await farCarregar(true);render();aviso("Etapas atualizadas.");return;}
+  if(a==="far-doc"){const {data,error}=await sb.storage.from("far").createSignedUrl(v,300);if(error||!data){aviso("Não foi possível abrir o arquivo.");return;}window.open(data.signedUrl,"_blank","noopener");return;}
+  if(a==="far-lancar"){b.disabled=true;b.textContent="Registrando…";const r=await farLancar(+v);if(G.evs)delete G.evs[+v];await farCarregar();render();aviso(r.ok?"FAR registrado no Funil FAR, etapa Abertura do FAR.":"Não foi possível registrar"+(r.msg?": "+r.msg:"")+".");return;}
+  if(a==="far-pendok"){await farAcao(+v,"pend_ok",null,null,"Informações marcadas como recebidas.","pend_ok");return;}
+},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/^f-far/.test(f.id))return;ev.preventDefault();ev.stopImmediatePropagation();const G=S.far;const id=+f.dataset.id;const btn=ev.submitter||f.querySelector("button[type=submit]");const g=s=>((f.querySelector(s)||{}).value||"").trim();
+  if(f.id==="f-far"){const E=G.ed;for(let p=1;p<=4;p++){const e=farValida(E,p);if(e){G.erro=e;E.passo=p;render();return;}}
+    btn.disabled=true;btn.textContent="Enviando os arquivos…";let anexos=[];const lote=Date.now();
+    try{anexos=[...await farSubir(G.arqNF,"nf",lote,0),...await farSubir(G.arqOut,"foto",lote,G.arqNF.length)];}catch(e){G.erro=e.message;btn.disabled=false;render();return;}
+    btn.textContent="Enviando o FAR…";
+    const P={eu_sou:E.eu_sou,reclamante:{nome:E.reclamante.nome,celular:E.reclamante.celular,email:E.reclamante.email||null},fazenda:E.fazenda,uf:E.uf,cidade:E.cidade,cliente_tipo:E.cliente_tipo,cultivar:E.cultivar,quantidade_kg:ngNum(E.quantidade_kg),data_compra:E.data_compra,nf:E.nf,lotes:E.lotes,
+      representante:E.representante,canal_nome:E.eu_sou==="Canal de Distribuição"?E.canal_nome:null,canal_cidade_uf:E.canal_cidade_uf,motivo:E.motivo==="Outro"?E.motivo_outro:E.motivo,observacoes:E.observacoes,data_reclamacao:E.data_reclamacao,data_semeadura:E.data_semeadura,amostra:E.amostra,validade_ok:!!E.validade_ok,anexos};
+    const {data:nid,error}=await sb.rpc("far_enviar",{p:P});
+    if(error){G.erro=error.message||"Não foi possível enviar.";btn.disabled=false;btn.textContent="Enviar o FAR";render();return;}
+    btn.textContent="Registrando na Barenbrug…";const r=await farLancar(nid);
+    G.ed=null;G.erro=null;G.arqNF=[];G.arqOut=[];await farCarregar();G.aberta=nid;render();window.scrollTo(0,0);
+    aviso(r.ok?"FAR enviado e registrado na Barenbrug. Você acompanha as etapas por aqui.":"FAR enviado ao seu responsável comercial. O registro na Barenbrug será concluído por ele.");return;}
+  if(f.id==="f-far-msg"){const t=g("#farm_t");if(!t)return;btn.disabled=true;await farAcao(id,"comentar",t,null,"Mensagem enviada.","comentario");return;}
+  if(f.id==="f-far-pedir"){const itens=[...f.querySelectorAll("input[name=farp]:checked")].map(i=>i.value);if(!itens.length){aviso("Marque o que precisa ser enviado.");return;}btn.disabled=true;await farAcao(id,"pedir",g("#farp_obs"),{itens},"Pedido enviado. Quem abriu o FAR foi avisado.","pedido");return;}
+  if(f.id==="f-far-manual"){btn.disabled=true;await farAcao(id,"marcar_registrado",null,{deal:g("#farman_l")},"FAR marcado como registrado.");return;}
+  if(f.id==="f-far-arq"){const arqs=[...(f.querySelector("#fara_arq").files||[])];if(!arqs.length)return;if(arqs.length>10||arqs.some(a=>a.size>15*1024*1024)){aviso("Até 10 arquivos de 15 MB.");return;}
+    btn.disabled=true;btn.textContent="Enviando…";let out=[];try{out=await farSubir(arqs,"outro",Date.now(),0);}catch(e){aviso(e.message);btn.disabled=false;btn.textContent="Enviar arquivos";return;}
+    await farAcao(id,"anexar",g("#fara_obs"),{arquivos:out},"Arquivos enviados. "+((G.lista||[]).find(x=>x.id===id)?.autor===S.user.id?"O responsável comercial foi avisado.":"Quem abriu o FAR foi avisado."),"anexos");return;}
 },true);
 
 /* ===== Propostas do RC ===== */
@@ -6538,6 +6754,7 @@ function subnavRC(){
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Negociações"],["rc-calc","Calculadora"]]],
+    ["Pós-venda",[["rc-far","FAR · Reclamações"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
@@ -13170,7 +13387,7 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
 /* avisos enviados pelo portal (notificação): ficam registrados e aparecem em pop-up ao abrir até a pessoa marcar como lido */
-const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança","financeiro":"Análise de crédito"};
+const COM_DEST={"mensagens":"Mensagens","duvidas":"Dúvidas","leads":"Leads","academia":"Academia de Híbridos","conecta-revendas":"Conecta Revendas","conecta-rc":"Conecta RC","enxoval":"Enxoval","inside-sales":"Inside Sales","acoes-mkt":"Ações de Marketing","seguranca":"Segurança","financeiro":"Análise de crédito","far":"FAR · Reclamações"};
 function comDestino(u){try{const v=new URL(u||"/",location.origin).searchParams.get("abrir");return v&&COM_DEST[v]?v:null;}catch(_){return null;}}
 let _comBusy=false,_comFila=[],_comUlt=0;
 async function comPendentesMostrar(forcar){try{if(!S.user||!S.profile||S.demo||S.verComo||S.profile.precisa_trocar_senha)return;if(document.getElementById("notif-pop")||_comBusy)return;if(!forcar&&Date.now()-_comUlt<20000)return;_comBusy=true;_comUlt=Date.now();
@@ -13192,7 +13409,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function avisosRecebidosHTML(){const L=S.comHist;if(L===undefined){setTimeout(()=>comPendentesMostrar(true),0);return "";}if(!L.length)return "";
   return `<div class="cx" id="avisos"><strong>Avisos recebidos</strong><span class="meta">Os avisos que o Portal Conecta enviou para você nos últimos 30 dias.</span><div style="display:grid;gap:10px;margin-top:6px">${L.map(c=>{const d=comDestino(c.url);return `<div style="border-left:4px solid ${c.lido?"var(--cinza-cl,#ddd)":"var(--amarelo,#FFDB00)"};padding:4px 0 4px 12px;display:grid;gap:4px"><strong>${esc(c.titulo||"Aviso")}</strong>${c.corpo?`<span style="white-space:pre-line">${esc(c.corpo)}</span>`:""}<span class="meta">${esc(c.enviado_em?new Date(c.enviado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"")}${c.lido?"":" · não lido"}</span>${d?`<button type="button" class="btn sec" style="width:fit-content;padding:6px 12px" data-a="com-pop-ir" data-v="${c.id}" data-d="${d}">Abrir ${esc(COM_DEST[d])}</button>`:""}</div>`;}).join("")}</div></div>`;}
 let _notifVisto=false;
-function pushAbrirPendente(){if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
+function pushAbrirPendente(){if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="far"){PUSH_ABRIR=null;const viaIS=farViaIS();setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=viaIS?"inside-sales":"conecta-rc";bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();S.pag=viaIS?"is-far":"rc-far";if(S.far){S.far.lista=undefined;S.far.aberta=null;}render();},0);return;}if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 /* Customer Service copia e cola livremente: usa os dados da ficha para montar e assinar o contrato */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin()&&!temPerfil("Customer Service"));
@@ -13488,7 +13705,7 @@ function render(){window.__appIgual=false;renderApp();if(window.__appIgual){wind
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-far","FAR · Reclamações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -13509,7 +13726,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
- "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
+ "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-far":"FAR: abrir e acompanhar reclamações de clientes até o parecer.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "brindes-lojinha":"Em desenvolvimento: o pedido de brindes e materiais da marca pelo portal, para o time comercial e os parceiros.","rv-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.","rv-at":"Em desenvolvimento: gestão das ações de assistência técnica com as revendas.","rc-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
@@ -13558,9 +13775,9 @@ function renderApp(){
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
     if(soCSRC()){if(!["rc-cadastros","rc-perfis","rc-perfil","rc-guia","rc-meus","rc-ranking","rc-mapa","rc-cobertura","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
     if((S.pag==="rc-perfis"||S.pag==="rc-perfil")&&!vePerfisRC())S.pag="rc-apresentacao";
-    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-far":vFar,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
-    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta","rc-far"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
@@ -13608,6 +13825,7 @@ function renderApp(){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-quadro";return render();}
     if(S.pag==="is-rcneg"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vNegs()}</main>`;return;}
+    if(S.pag==="is-far"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vFar()}</main>`;return;}
     if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
     if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
