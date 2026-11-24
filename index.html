@@ -1741,7 +1741,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124102052";
+const APP_VER="20261124102731";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2939,7 +2939,7 @@ function vLeadsOut(){
   const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link permite-copia" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
   const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";const N=(S.loNotas||{})[l.id];
     return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.interesse==="rc"||l.possivel_rep?`<span class="selo" style="background:#1E1E1E;color:#fff">Quer ser RC</span> `:l.interesse==="revenda"?`<span class="selo" style="background:#1E1E1E;color:#FFDB00">Quer ser revenda</span> `:""}${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
-      ${l.crm_aberta||l.crm_venda?`<span class="lo-crm">${l.crm_aberta?`Negociação aberta no CRM com ${esc(l.crm_aberta)}`:""}${l.crm_aberta&&l.crm_venda?" · ":""}${l.crm_venda?`Já comprou (venda de ${esc(l.crm_venda)})`:""}. Combine com o responsável antes de ligar.</span>`:""}
+      ${l.crm_aberta||l.crm_venda?`<span class="lo-crm">${l.crm_aberta?`Negociação aberta no CRM com ${esc(l.crm_aberta)}`:""}${l.crm_aberta&&l.crm_venda?" · ":""}${l.crm_venda?(l.crm_venda_bb?`Já comprou no Funil de Vendas Barenbrug (venda de ${esc(l.crm_venda_bb)})`:`Comprou em outro funil do CRM (${esc(l.crm_venda)})`):""}. Combine com o responsável antes de ligar.</span>`:""}
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
       ${l.cargo||l.empresa?`<span class="meta">${l.cargo?"<strong>Cargo:</strong> "+esc(l.cargo):""}${l.cargo&&l.empresa?" · ":""}${l.empresa?"<strong>Empresa:</strong> "+esc(l.empresa):""}</span>`:""}
       ${loInteresse(l)}
@@ -2958,7 +2958,7 @@ function vLeadsOut(){
     ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
     <select id="lo_st" data-lof="st">${["Em aberto",...LO_ST,"Todos"].map(o=>`<option ${F.st===o?"selected":""} value="${esc(o)}">${o==="Em aberto"?"Em aberto (novos e prospectando)":o==="Todos"?"Todas as etiquetas":o}</option>`).join("")}</select>
     <select id="lo_dt" data-lof="dt">${LO_DT.map(([k,t])=>`<option value="${k}" ${(F.dt||"")===k?"selected":""}>${t}</option>`).join("")}</select>
-    <select id="lo_crm" data-lof="crm" aria-label="Cruzamento com o CRM">${[["livre","Livres no CRM: sem negociação aberta e sem venda"],["aberta","Com negociação aberta no CRM"],["venda","Já compraram (venda no CRM)"],["","Todos, com ou sem CRM"]].map(([k,t])=>`<option value="${k}" ${(F.crm||"")===k?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="lo_crm" data-lof="crm" aria-label="Cruzamento com o CRM">${[["livre","Livres no CRM: sem negociação aberta e sem venda"],["nunca","Nunca compraram no Funil de Vendas Barenbrug (sem negociação aberta)"],["aberta","Com negociação aberta no CRM"],["venda_bb","Já compraram no Funil de Vendas Barenbrug"],["venda","Já compraram em qualquer funil"],["","Todos, com ou sem CRM"]].map(([k,t])=>`<option value="${k}" ${(F.crm||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_tipo" data-lof="tipo" aria-label="Tipo de contato">${[["","Todos os tipos de contato"],["produto","Interesse em produto (produtor, gestor, técnico, consultor)"],["rc","Quer ser representante comercial (RC)"],["revenda","Quer ser revenda"]].map(([k,t])=>`<option value="${k}" ${(F.tipo||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_meus" data-lof="meus"><option value="">Contatos de todos</option><option value="1" ${F.meus==="1"?"selected":""}>Só os que eu atendi</option></select></div>
     <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} contatos neste filtro`}${(()=>{const c=(rows.find(x=>x.crm_cruzado_em)||{}).crm_cruzado_em;return c?` · cruzado com o CRM em ${fmtDataHora(c)}`:" · ainda não cruzado com o CRM";})()}</p>
