@@ -425,6 +425,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .par-t td:nth-child(2){white-space:normal;min-width:180px}
 .par-m{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.par-m .metric{min-width:0;padding:10px}@media(max-width:520px){.par-m{grid-template-columns:minmax(0,1fr)!important}}
 .int-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.lo-int{display:block;background:#1E1E1E;color:#fff;border-radius:6px;padding:6px 10px;font-size:13px}.lo-int strong{color:#FFDB00}.lo-como summary{cursor:pointer}
 .nps-lst{display:grid;background:#fff;border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden}
 .nps-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--linha,#dde3ea)}
 .nps-r:first-child{border-top:0}
@@ -1505,7 +1506,7 @@ const SECOES=[
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Customer Service","Administrador"]},
   {id:"conecta-revendas",nome:"Conecta Revendas",desc:"Programa de incentivo às revendas parceiras: apresentação do programa 26/27, categorias, IGDB, bônus e curso.",ativo:true,perfis:null},
   {id:"tabela-precos",nome:"Condições Comerciais",desc:"Preços ao produtor da safra 26/27 por cultivar, tratamento e mês de pagamento, com o frete por estado.",ativo:true,perfis:null},
-  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram à Barenbrug (inbound) e a base de prospecção do Marketing (outbound).",ativo:true,perfis:null},
+  {id:"leads",nome:"LeadsBaren",desc:"Leads de produtores do seu estado para prospectar: cotações que chegaram à Barenbrug e a base de prospecção do Marketing.",ativo:true,perfis:null},
   {id:"inside-sales",nome:"Inside Sales",desc:"Seu painel de performance: negociações no funil, faturamento do mês e dos próximos, pausadas, atrasadas e o funil MQL → SQL → venda.",ativo:true,perfis:null},
   {id:"inteligencia",nome:"Inteligência",desc:"Visão de mercado para o marketing e o comercial: preços praticados pelas revendas do Conecta e pelos concorrentes, a partir do cliente oculto.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"acoes-mkt",nome:"Ações de Marketing",desc:"Quadro das ações de marketing institucionais: cartões com valores, arquivos, links e comentários; verba e saldo da safra.",ativo:true,perfis:["Administrador","Marketing","Comercial Barenbrug"]},
@@ -1740,7 +1741,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124094754";
+const APP_VER="20261124102011";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2824,7 +2825,7 @@ function vEnxoval(){
   ${carregando||ENXOVAL.map(bloco).join("")}`;
 }
 function subnavLeads(){
-  const abas=[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]];
+  const abas=[["leads-inbound","Cotações"],["leads-outbound","Prospecção"]];
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <nav class="nav" aria-label="LeadsBaren">${semOcultas(abas).map(([k,t])=>`<button data-a="pag" data-v="${k}" ${S.pag===k?'aria-current="page"':""}>${t}</button>`).join("")}</nav>
     <span class="secao-nome">LeadsBaren</span></div></div>`;
@@ -2855,7 +2856,7 @@ const loTag=st=>{const c=LO_ST_COR[st]||LO_ST_COR.Novo;return `<span class="selo
 async function loLista(mais){
   const F=S.loF||(S.loF={uf:"",perfil:"",sit:"",st:"Em aberto",q:"",crm:"livre"});if(F.crm===undefined)F.crm="livre";const off=mais?(S.loRows||[]).length:0;
   const D=loDatas(F.dt);
-  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off,p_meus:F.meus==="1",p_desde:D[0],p_ate:D[1],p_crm:F.crm||null});
+  const {data,error}=await sb.rpc("lead_out_lista",{p_uf:F.uf||null,p_perfil:F.perfil||null,p_sit:F.sit||null,p_st:F.st==="Todos"?null:F.st,p_q:(F.q||"").trim()||null,p_lim:100,p_off:off,p_meus:F.meus==="1",p_desde:D[0],p_ate:D[1],p_crm:F.crm||null,p_tipo:F.tipo||null});
   if(error){S.loErro="Não foi possível carregar a prospecção.";return;}
   S.loRows=(mais?(S.loRows||[]):[]).concat(data||[]);S.loTotal=data&&data.length?+data[0].total:(mais?S.loTotal:0);
 }
@@ -2894,6 +2895,8 @@ function loAdmin(){
     <div style="display:grid;gap:14px;margin-top:10px">
     <details class="nota-admin lo-imp"><summary><strong>Importar ou atualizar a base</strong>${st.importado?` <span class="meta">· última importação ${fmtDataHora(st.importado)}</span>`:""}</summary><p style="margin:8px 0 0">Escolha a planilha da base de leads (.xlsx, aba "Leads limpos", ou .csv com as mesmas colunas). Leads com o mesmo e-mail são atualizados, sem duplicar; o andamento já registrado pelo time é mantido.</p>
       <div class="acoes" style="margin-top:8px"><input type="file" id="lo_arq" accept=".xlsx,.xls,.csv"><button class="btn" data-a="lo-importar">Importar</button><span class="meta" id="lo_prog"></span></div></details>
+    <details class="nota-admin lo-imp"><summary><strong>Completar com a exportação do RD Marketing</strong>${st.enriquecido?` <span class="meta">· última ${fmtDataHora(st.enriquecido)}</span>`:""}</summary><p style="margin:8px 0 0">Exporte os contatos do RD Marketing (.csv ou .xlsx) com e-mail, cargo, empresa, cultivar de interesse, área, quantidade de semente e as conversões. O portal acha cada contato pelo e-mail e só completa o que estiver vazio ou mais novo; o andamento do time é mantido. Quem converteu em <span class="permite-copia">canal-de-distribuicao</span> vira "Quer ser revenda"; quem converteu em <span class="permite-copia">representante_comercial</span>, <span class="permite-copia">conecta-rcs-barenbrug</span> ou no atendimento comercial com o perfil representante vira "Quer ser RC".</p>
+      <div class="acoes" style="margin-top:8px"><input type="file" id="lo_arq2" accept=".xlsx,.xls,.csv"><button class="btn" data-a="lo-enriquecer">Completar a base</button><span class="meta" id="lo_prog2"></span></div></details>
     <div class="nota-admin"><strong>Cruzar com o CRM.</strong> Lê todas as negociações do CRM, de todos os responsáveis e funis, e marca os leads que têm negociação aberta ou já compraram, pelo e-mail ou pelo telefone. Os leads marcados saem do filtro padrão "Livres no CRM".
       <div class="acoes" style="margin-top:8px"><button class="btn sec" data-a="lo-cruzar">Cruzar com o CRM agora</button><span class="meta" id="lo_cprog"></span></div></div>
     <div><h3 class="pgd-h">Quem vê a prospecção</h3><p class="meta" style="margin:0 0 10px">Cada linha resume o que a pessoa vê. Toque em Editar para mudar estados, perfis e situação no CRM. Telefone e e-mail só aparecem quando a pessoa clica em "Ver contato", e o clique fica registrado.</p>
@@ -2902,19 +2905,44 @@ function loAdmin(){
     ${linhas.length>4?`<div class="lo-busca"><label class="sr" for="lo_q">Buscar entre quem já vê</label><input id="lo_q" type="search" autocomplete="off" placeholder="Buscar entre as ${linhas.length} pessoas liberadas (nome, perfil ou UF)" value="${esc(S.loQ||"")}"></div>`:""}
     <div class="lo-lista">${vis.map(linha).join("")||(linhas.length?`<div class="vazio">Ninguém com esse nome entre as pessoas liberadas.</div>`:`<div class="vazio">Ninguém liberado ainda.</div>`)}</div></div></div></details>`;
 }
+function loComo(){const ab=S.loComoAb!==false;
+  return `<details class="nota-admin lo-como" ${ab?"open":""} data-locomo><summary><strong>De onde vem esta base e como prospectar</strong></summary>
+  <div style="display:grid;gap:10px;margin-top:8px">
+  <p style="margin:0">Esta é a base de contatos que procuraram a Barenbrug pela nossa estratégia digital desde 2021. Em algum momento, cada pessoa quis saber mais sobre os nossos híbridos: pediu um material, se cadastrou para receber conteúdo ou pediu atendimento comercial no site ou nas redes sociais. Para isso, ela deixou os dados num formulário, como o de atendimento comercial: <span class="permite-copia">materiais.barenbrug.com.br/atendimentocomercial</span>. No cadastro, ela autorizou receber contato e ligação comercial da Barenbrug.</p>
+  <p style="margin:0"><strong>É prospecção ativa.</strong> Muitas vezes a pessoa não está em momento de compra, ou nem se lembra do cadastro. Algumas também já podem ter recebido um contato da Barenbrug em outro momento. Por isso, a conversa começa explicando de onde veio o contato.</p>
+  <div><strong>Como prospectar</strong><ol style="margin:4px 0 0;padding-left:20px;display:grid;gap:3px">
+    <li>Comece por quem pediu atendimento e por quem se cadastrou mais recentemente.</li>
+    <li>Antes de ligar, leia o que a pessoa informou: perfil, cargo, empresa, cultivar de interesse, área e quantidade. Se houver negociação no CRM, combine com o responsável antes.</li>
+    <li>Abra a conversa assim: "Olá, aqui é [seu nome], da Barenbrug. Você se cadastrou no site da Barenbrug para saber mais sobre os nossos híbridos de pastagem e autorizou o nosso contato. Posso falar dois minutos?"</li>
+    <li>Pergunte antes de oferecer: como está o pasto hoje, qual área quer formar ou reformar e quando planeja plantar.</li>
+    <li>Se não for o momento, combine quando retornar, anote e marque a etiqueta. Se a pessoa não quiser mais contato, respeite, anote e marque "Sem sucesso".</li>
+    <li>Registre tudo aqui: a próxima pessoa que abrir o contato vê o que já foi conversado.</li></ol></div>
+  <p class="meta" style="margin:0">Quem pediu para ser representante comercial ou revenda Barenbrug aparece separado no filtro "Tipo de contato". Esse contato é para o comercial avaliar a parceria, não uma venda de semente.</p></div></details>`;}
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.dataset&&d.dataset.locomo!==undefined)S.loComoAb=d.open;},true);
+const LO_ORIG=t=>{let x=String(t||"").trim();if(!x||/^desconhecido$/i.test(x))return "";x=x.replace(/\+/g," ");
+  const M=[[/paid/i,"pago"],[/onsite-pushnotification/i,"notificação no site"],[/Link da Bio do RD Station/i,"link da bio"],[/\bFacebook Ads\b/i,"anúncio no Facebook"],[/\bgoogle\b/i,"Google"],[/\binstagram\b/i,"Instagram"],[/\bfacebook\b/i,"Facebook"],[/^Display\b/i,"Anúncio"],[/^Social\b/i,"Redes sociais"],[/^Busca Paga\b/i,"Anúncio em busca ou rede"],[/^Busca Orgânica\b/i,"Busca no"],[/^Referência\b/i,"Link em outro site"],[/^Outros\b/i,"Outros"],[/^Tráfego Direto$/i,"Acesso direto ao site"],[/^E-?mail\b/i,"E-mail"]];
+  M.forEach(([r,v])=>x=x.replace(r,v));return x.replace(/ \| /g," · ");};
+function loInteresse(l){
+  if(l.interesse==="rc"||l.possivel_rep)return `<span class="lo-int"><strong>Quer ser representante comercial (RC) da Barenbrug.</strong> ${l.interesse==="rc"?"Cadastro na página do Conecta RC ou no atendimento comercial com o perfil representante":"Marcado como possível representante pelo que informou no cadastro"}${l.conv_data?" em "+new Date(l.conv_data).toLocaleDateString("pt-BR"):""}. Passe para o comercial avaliar a parceria.</span>`;
+  if(l.interesse==="revenda")return `<span class="lo-int"><strong>Quer ser revenda Barenbrug.</strong> Cadastro na página de canal de distribuição${l.conv_data?" em "+new Date(l.conv_data).toLocaleDateString("pt-BR"):""}. Passe para o comercial avaliar a parceria.</span>`;
+  const it=[l.cultivar?"<strong>Cultivar:</strong> "+esc(l.cultivar):"",l.area_sem||l.ha_usar?"<strong>Área a plantar:</strong> "+esc(l.area_sem||l.ha_usar)+(/ha|hect/i.test(l.area_sem||l.ha_usar)?"":" ha"):"",l.qtd_sem?"<strong>Semente:</strong> "+esc(l.qtd_sem):"",l.ha_faixa?"<strong>Propriedade:</strong> "+esc(l.ha_faixa):""].filter(Boolean);
+  const dt=l.conv_data||l.ult_conversao;const orig=LO_ORIG(l.origem);
+  const quando=dt?`<strong>Converteu em:</strong> ${new Date(dt).toLocaleDateString("pt-BR")}${l.conv_evento?" ("+esc(l.conv_evento)+")":""}`:"";
+  return `<span class="meta">${it.length?it.join(" · "):`<em>Sem detalhe do interesse:</em> este contato veio por outra fonte (material para baixar, conteúdo ou rede social) que não perguntava cultivar, área nem quantidade.`}</span>${quando||orig?`<span class="meta">${quando}${quando&&orig?" · ":""}${orig?"<strong>Como chegou:</strong> "+esc(orig):""}</span>`:""}`;}
 function vLeadsOut(){
   if(!S.loOk){carregarLeadOut();return `<div class="carregando">Carregando a prospecção…</div>`;}
   const F=S.loF,R=S.loRes||{},rows=S.loRows||[];const adm=ehAdmin();
-  const cab=`<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Contatos da base do RD Marketing liberados para você prospectar${R.total?`: ${Number(R.total).toLocaleString("pt-BR")} leads`:""}. Ligue primeiro para quem pediu atendimento.</p></div>`;
+  const cab=`<div><h1 class="titulo">LeadsBaren · Prospecção</h1><p class="sub">Contatos que procuraram a Barenbrug pela estratégia digital, liberados para você prospectar${R.total?`: ${Number(R.total).toLocaleString("pt-BR")} contatos`:""}. Ligue primeiro para quem pediu atendimento.</p></div>${loComo()}`;
   if(!adm&&!R.total)return cab+`<section class="bloco"><div class="vazio">A prospecção ainda não foi liberada para você. O Marketing libera por estado e perfil de lead.</div></section>`;
   const sel=(id,ops,v,todos)=>`<select id="${id}" data-lof="${id.slice(3)}"><option value="">${todos}</option>${ops.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   const dia=t=>t?new Date(t).toLocaleDateString("pt-BR"):"";
   const tel=t=>{const d=String(t||"").replace(/\D/g,"");return d?`<a class="link permite-copia" href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" rel="noopener">${esc(t)}</a>`:"não informado";};
   const card=l=>{const v=(S.loVistos||{})[l.id];const st=l.status||"Novo";const N=(S.loNotas||{})[l.id];
-    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
+    return `<div class="neg"><div class="l1"><span>${esc(l.nome||"Contato")}</span><span>${l.interesse==="rc"||l.possivel_rep?`<span class="selo" style="background:#1E1E1E;color:#fff">Quer ser RC</span> `:l.interesse==="revenda"?`<span class="selo" style="background:#1E1E1E;color:#FFDB00">Quer ser revenda</span> `:""}${l.pediu?`<span class="selo" style="background:#e6f6fc;color:var(--azul-escuro)">Pediu atendimento</span> `:""}${loTag(st)}</span></div>
       ${l.crm_aberta||l.crm_venda?`<span class="lo-crm">${l.crm_aberta?`Negociação aberta no CRM com ${esc(l.crm_aberta)}`:""}${l.crm_aberta&&l.crm_venda?" · ":""}${l.crm_venda?`Já comprou (venda de ${esc(l.crm_venda)})`:""}. Combine com o responsável antes de ligar.</span>`:""}
       <span class="meta">${esc(l.cidade||"cidade não informada")}${l.uf?" · "+esc(l.uf):""} · ${esc(l.perfil||"sem perfil")}${l.area?" · "+esc(l.area):""}</span>
-      ${l.ha_faixa||l.ha_usar?`<span class="meta">${l.ha_faixa?"<strong>Propriedade:</strong> "+esc(l.ha_faixa):""}${l.ha_faixa&&l.ha_usar?" · ":""}${l.ha_usar?"<strong>Quer formar:</strong> "+esc(l.ha_usar):""}</span>`:""}
+      ${l.cargo||l.empresa?`<span class="meta">${l.cargo?"<strong>Cargo:</strong> "+esc(l.cargo):""}${l.cargo&&l.empresa?" · ":""}${l.empresa?"<strong>Empresa:</strong> "+esc(l.empresa):""}</span>`:""}
+      ${loInteresse(l)}
       <span class="meta"><strong>Situação no CRM:</strong> ${esc(l.status_crm||"—")}${l.motivo?" · "+esc(l.motivo):""}</span>${l.ult_conversao?`<span class="meta"><strong>Último cadastro na base:</strong> ${dia(l.ult_conversao)}</span>`:""}
       ${l.atendido_por?`<span class="meta" style="color:var(--azul-escuro)"><strong>${esc(st)}</strong> por ${l.meu?"você":esc(l.atendido_por)} em ${dia(l.atendido_em)}</span>`:""}
       ${l.obs&&!v?`<span class="meta"><strong>Última anotação:</strong> ${esc(l.obs)}</span>`:""}
@@ -2926,11 +2954,12 @@ function vLeadsOut(){
         ${N===undefined?"":N.length?`<div class="lo-notas">${N.map(n=>`<div><span class="meta">${new Date(n.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})} · ${esc(n.nome||"")}${n.status?" · "+loTag(n.status):""}</span>${n.texto?`<div>${esc(n.texto)}</div>`:""}</div>`).join("")}</div>`:""}</div>`
        :`<div><button class="btn sec" data-a="lo-ver" data-v="${l.id}" style="padding:8px 14px;margin-top:6px">${l.tem_tel?"Ver contato e atender":"Ver e-mail e atender"}</button></div>`}</div>`;};
   return cab+(ehMaster()?loAdmin():"")+`
-  <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome ou cidade" value="${esc(F.q||"")}">
+  <section class="bloco"><div class="gt-filtros"><input type="search" id="lo_q" data-lof="q" placeholder="Buscar por nome, cidade, empresa ou cargo" value="${esc(F.q||"")}">
     ${sel("lo_uf",(R.ufs||[]).slice().sort(),F.uf,"Todos os estados")}${sel("lo_perfil",(R.perfis||[]).slice().sort(),F.perfil,"Todos os perfis")}${sel("lo_sit",LO_SITS,F.sit,"Qualquer situação no CRM")}
     <select id="lo_st" data-lof="st">${["Em aberto",...LO_ST,"Todos"].map(o=>`<option ${F.st===o?"selected":""} value="${esc(o)}">${o==="Em aberto"?"Em aberto (novos e prospectando)":o==="Todos"?"Todas as etiquetas":o}</option>`).join("")}</select>
     <select id="lo_dt" data-lof="dt">${LO_DT.map(([k,t])=>`<option value="${k}" ${(F.dt||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_crm" data-lof="crm" aria-label="Cruzamento com o CRM">${[["livre","Livres no CRM: sem negociação aberta e sem venda"],["aberta","Com negociação aberta no CRM"],["venda","Já compraram (venda no CRM)"],["","Todos, com ou sem CRM"]].map(([k,t])=>`<option value="${k}" ${(F.crm||"")===k?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="lo_tipo" data-lof="tipo" aria-label="Tipo de contato">${[["","Todos os tipos de contato"],["produto","Interesse em produto (produtor, gestor, técnico, consultor)"],["rc","Quer ser representante comercial (RC)"],["revenda","Quer ser revenda"]].map(([k,t])=>`<option value="${k}" ${(F.tipo||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     <select id="lo_meus" data-lof="meus"><option value="">Leads de todos</option><option value="1" ${F.meus==="1"?"selected":""}>Só os que eu atendi</option></select></div>
     <p class="meta" style="margin:8px 0">${S.loErro?esc(S.loErro):`${Number(S.loTotal||0).toLocaleString("pt-BR")} leads neste filtro`}${(()=>{const c=(rows.find(x=>x.crm_cruzado_em)||{}).crm_cruzado_em;return c?` · cruzado com o CRM em ${fmtDataHora(c)}`:" · ainda não cruzado com o CRM";})()}</p>
     <div class="lista">${rows.map(card).join("")||`<div class="vazio">Nenhum lead neste filtro.</div>`}</div>
@@ -2953,6 +2982,23 @@ async function loImportar(arq,prog){
   let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_importar",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Importando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
   return n;
 }
+async function loEnriquecer(arq,prog){
+  await loLib();const wb=XLSX.read(await arq.arrayBuffer(),{type:"array",cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];
+  const L=XLSX.utils.sheet_to_json(ws,{defval:null,raw:false});if(!L.length)throw new Error("A planilha está vazia.");
+  const nk=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+  const H=Object.keys(L[0]);const col=(...pats)=>H.find(h=>pats.some(p=>p.test(nk(h))));
+  const cE=col(/^e ?mail$/,/^email/),cCargo=col(/^cargo$/,/job title/,/^cargo /),cEmp=col(/^empresa$/,/^company/,/nome da empresa/),
+    cCult=col(/qual o cultivar/,/^cultivar/,/far cultivar/,/interesse.*cultivar/),cArea=col(/tamanho da area.*deseja usar/,/formar quantos hect/,/area de reforma/,/hectares.*plantar/),
+    cQtd=col(/quantidade kg de interesse/,/sacos de 10kg/,/^quantidade kg/,/far quantidade/),cPerf=col(/^perfil/,/perfil profissional/),
+    cConvs=H.filter(h=>/conversao|conversoes|identificador|evento/.test(nk(h))&&!/data/.test(nk(h))),cData=col(/data da ultima conversao/,/ultima conversao.*data/,/data.*conversao/);
+  if(!cE)throw new Error("Não achei a coluna de e-mail.");
+  const v=x=>x==null?null:String(x).trim()||null;const iso=x=>{if(!x)return null;if(x instanceof Date)return x.toISOString().slice(0,19);const m=String(x).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);if(m)return `${m[3]}-${m[2]}-${m[1]}T${m[4]||"00"}:${m[5]||"00"}:00`;return /^\d{4}-\d{2}-\d{2}/.test(String(x))?String(x).slice(0,19):null;};
+  const M=L.map(r=>{const conv=cConvs.map(h=>v(r[h])).filter(Boolean).join(" | ");const c=nk(conv),perf=nk(cPerf?r[cPerf]:"");
+    const interesse=/canal de distribuicao/.test(c)?"revenda":(/representante comercial|conecta rcs barenbrug/.test(c)||(/atendimento ?comercial/.test(c)&&/represent/.test(perf)))?"rc":null;
+    const ult=cConvs.map(h=>v(r[h])).filter(Boolean).pop()||null;
+    return {email:v(r[cE]),cargo:cCargo?v(r[cCargo]):null,empresa:cEmp?v(r[cEmp]):null,cultivar:cCult?v(r[cCult]):null,area_sem:cArea?v(r[cArea]):null,qtd_sem:cQtd?v(r[cQtd]):null,conv_evento:ult?ult.slice(0,160):null,conv_data:cData?iso(r[cData]):null,interesse};}).filter(x=>x.email);
+  let n=0;for(let i=0;i<M.length;i+=1000){const {data,error}=await sb.rpc("adm_lead_out_enriquecer",{p:M.slice(i,i+1000)});if(error)throw new Error("Parou na linha "+(i+1)+": "+error.message);n+=data||0;if(prog)prog.textContent=`Completando… ${Math.min(i+1000,M.length).toLocaleString("pt-BR")} de ${M.length.toLocaleString("pt-BR")}`;}
+  return {n,cols:[cCargo&&"cargo",cEmp&&"empresa",cCult&&"cultivar",cArea&&"área",cQtd&&"quantidade",cConvs.length&&"conversões",cData&&"data"].filter(Boolean)};}
 function vLeads(){
   const inbound=S.pag!=="leads-outbound";
   if(!inbound)return vLeadsOut();
@@ -4027,7 +4073,7 @@ function vISFluxo(){
     ${seta()}
     <div class="fx-dec">O lead é de região de canal Yellow Master?</div>
     <div class="fx-ramos">
-      <div class="fx-ramo"><span class="fx-tag sim">Sim</span>${no("can","Canal Yellow Master","Vai para o funil do canal","<p>A assessora não atende. O lead é enviado ao funil de vendas do canal Yellow Master, agora pelo Portal Conecta, na aba Cotações (inbound)<span class=\"fx-novo\">novo</span>.</p>")}</div>
+      <div class="fx-ramo"><span class="fx-tag sim">Sim</span>${no("can","Canal Yellow Master","Vai para o funil do canal","<p>A assessora não atende. O lead é enviado ao funil de vendas do canal Yellow Master, agora pelo Portal Conecta, na aba Cotações<span class=\"fx-novo\">novo</span>.</p>")}</div>
       <div class="fx-ramo"><span class="fx-tag nao">Não</span>${no("is","Inside Sales · 5","Assessora qualifica",ul(["Tenta contato e conversa com o lead","Passa todas as informações técnicas","Pergunta se ele já está em contato com alguém (canal ou RC)","Passa preço pela política comercial e a tabela de preços"]))}</div>
     </div>
     ${seta()}
@@ -13405,6 +13451,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
     try{while(cur&&vz<200){vz++;if(pg)pg.textContent=`Lendo o CRM: ${lidas.toLocaleString("pt-BR")} negociações…`;const r=await sb.functions.invoke("crm-cruzar",{body:cur});if(r.error||!r.data||r.data.error)throw new Error((r.data&&r.data.error)||"Não foi possível ler o CRM.");lidas+=r.data.lidas||0;cur=r.data.proxima;res=r.data.resultado;}
       aviso(`CRM cruzado: ${lidas.toLocaleString("pt-BR")} negociações lidas. ${res?`${Number(res.aberta).toLocaleString("pt-BR")} leads com negociação aberta e ${Number(res.venda).toLocaleString("pt-BR")} que já compraram.`:""}`);S.loOk=false;S.loCfgAberto=true;}catch(e){aviso(String(e.message||e));}
     b.disabled=false;render();return;}
+  if(a==="lo-enriquecer"){if(!ehMaster())return;const inp=document.getElementById("lo_arq2"),pg=document.getElementById("lo_prog2");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a exportação do RD Marketing.");return;}b.disabled=true;try{const r=await loEnriquecer(arq,pg);S.loOk=false;S.loCfgAberto=true;aviso(r.n.toLocaleString("pt-BR")+" contatos completados"+(r.cols.length?" ("+r.cols.join(", ")+")":"")+".");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
   if(a==="lo-importar"){if(!ehMaster())return;const inp=document.getElementById("lo_arq"),pg=document.getElementById("lo_prog");const arq=inp&&inp.files&&inp.files[0];if(!arq){aviso("Escolha a planilha.");return;}b.disabled=true;try{const n=await loImportar(arq,pg);try{await sb.rpc("lo_aplicar_crm");}catch(e){}S.loOk=false;S.loCfgAberto=true;aviso(n.toLocaleString("pt-BR")+" leads importados ou atualizados.");}catch(e){aviso(String(e.message||e));}b.disabled=false;render();return;}
   if(a==="lo-mais"){b.disabled=true;await loLista(true);render();return;}
   if(a==="lo-ver"){S.loVistos=S.loVistos||{};S.loVistos[v]={};render();try{const {data,error}=await sb.rpc("lead_out_contato",{p_id:+v});if(error)throw error;S.loVistos[v]=data||{telefone:null,email:null};const r=(S.loRows||[]).find(x=>String(x.id)===String(v));if(r&&(!r.status||r.status==="Novo")){r.status="Prospectando";r.atendido_por=S.profile.nome||"";r.meu=true;r.atendido_em=new Date().toISOString();}}catch(e){delete S.loVistos[v];aviso("Não foi possível abrir o contato.");}render();loCarregaNotas(v);return;}
