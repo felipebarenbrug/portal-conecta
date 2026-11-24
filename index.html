@@ -1840,7 +1840,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124173953";
+const APP_VER="20261124174137";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12951,6 +12951,7 @@ function vBdCatalogo(){
   const L=S.bd.filter(b=>(fc==="Todas"||b.categoria===fc)&&(fl==="Todos"||b.local===fl)&&fOk(b)&&(!busca||finNorm(b.nome+" "+(b.codigo||"")).includes(busca)));
   const C=bdCarr(),itens=Object.entries(C).filter(([,q])=>q>0),tot=itens.reduce((t,[id,q])=>{const b=S.bd.find(x=>String(x.id)===String(id));return t+(b?q*(Number(b.valor_unit)||0):0);},0);
   return `<div><h1 class="titulo">Brindes de Marketing</h1><p class="sub">${g?"Todo o estoque de brindes e materiais. Defina quanto cada item mostra ao time comercial e se ele aparece. Itens de uso interno nunca aparecem para o comercial.":"Brindes e materiais liberados pelo Marketing. Escolha as quantidades e faça a requisição: o Marketing aprova e separa."}</p></div>
+  <div class="cod-faixa cod-email" role="note" style="margin:0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg><div><strong style="font-size:18px">Inventário em atualização</strong><span>O Marketing está fazendo o balanço e a conferência do estoque de brindes. As quantidades vão ser atualizadas em breve, e cada item vai ganhar foto.</span></div></div>
   ${S.bdAcaoPre?`<div class="nota-admin">Pedido de brindes para a ação <strong>${esc(S.bdAcaoPreT||"#"+S.bdAcaoPre)}</strong>. A requisição fica vinculada a ela. <button class="link" data-a="bd-acao-limpar">não vincular</button></div>`:""}
   <div class="bd-como"><strong>Como pedir brindes</strong><ol><li>Em cada item, escolha a quantidade com <b>+</b> e <b>−</b> (ou digite).</li><li>Clique em <b>Fazer requisição</b>, na barra que aparece no pé da tela.</li><li>Conte o motivo, o destino e quem retira, e envie. ${g?"Você aprova em Requisições.":"O Marketing aprova e você acompanha em Minhas requisições."}</li></ol></div>
   <div class="mk-barra">
