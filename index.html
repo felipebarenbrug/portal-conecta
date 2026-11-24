@@ -435,6 +435,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .bp-card{background:var(--branco,#fff);border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto}
 .bp-card.ativa{outline:3px solid var(--amarelo,#FFDB00)}.bp-img{padding:0;border:0;background:#000;cursor:pointer;display:block}.bp-img img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .bp-txt{display:grid;gap:2px;padding:10px 12px 4px}.bp-acs{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 12px 12px}
+.notif-pop{position:fixed;inset:0;z-index:10000;background:rgba(30,30,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}.notif-pop .prot-box{background:#fff;border-radius:14px;max-width:460px;width:100%;padding:22px;display:grid;gap:10px;border-top:6px solid var(--amarelo,#FFDB00);box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .nps-lst{display:grid;background:#fff;border:1px solid var(--linha,#dde3ea);border-radius:10px;overflow:hidden}
 .nps-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--linha,#dde3ea)}
 .nps-r:first-child{border-top:0}
@@ -1753,7 +1754,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124122218";
+const APP_VER="20261124123046";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12694,7 +12695,16 @@ function pushPerfilHTML(){if(S.pushEst===undefined)pushChecar();const e=S.pushEs
   return `<section class="bloco"><h2 class="sec">Notificações</h2><p class="sub" style="margin:0 0 8px">${txt}</p>${e==="ios-instalar"?pushPassosIOS():""}
    <div class="mk-link" style="margin-top:8px">${e==="pode"?`<button type="button" class="btn" data-a="push-on">Ativar notificações</button>`:""}${e==="ativo"?`<button type="button" class="btn sec" data-a="push-teste">Enviar um teste</button><button type="button" class="link" data-a="push-off">Desligar neste aparelho</button>`:""}</div></section>`;}
 let PUSH_ABRIR=null;try{const q=new URLSearchParams(location.search);PUSH_ABRIR=q.get("abrir");if(PUSH_ABRIR||q.get("origem")){history.replaceState(null,"",location.pathname);}}catch(_){}
-function pushAbrirPendente(){if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
+/* ao abrir o portal pela notificação, mostra o texto que chegou */
+async function notifUltimaMostrar(){try{if(!("caches" in window)||!S.user)return;const c=await caches.open("pc-notif");const r=await c.match("/__ultima-notificacao");if(!r)return;const d=await r.json();await c.delete("/__ultima-notificacao");
+  if(!d||!(d.t||d.b)||Date.now()-(d.em||0)>10*60*1000)return;if(document.getElementById("notif-pop"))return;
+  const m=document.createElement("div");m.id="notif-pop";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-labelledby","notif-pop-t");m.className="notif-pop";
+  m.innerHTML=`<div class="prot-box"><span class="rot">Notificação recebida</span><strong id="notif-pop-t" style="font-size:19px;color:var(--preto)">${esc(d.t||"Portal Conecta")}</strong>${d.b?`<p style="margin:0;white-space:pre-line">${esc(d.b)}</p>`:""}<div class="acoes" style="margin:0"><button type="button" class="btn" data-a="notif-pop-ok">Entendi</button></div></div>`;
+  document.body.appendChild(m);m.querySelector("button").focus();}catch(_){}}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='notif-pop-ok']");if(b||(ev.target&&ev.target.id==="notif-pop")){const m=document.getElementById("notif-pop");if(m)m.remove();}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(notifUltimaMostrar,400);});
+let _notifVisto=false;
+function pushAbrirPendente(){if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(notifUltimaMostrar,600);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 /* Customer Service copia e cola livremente: usa os dados da ficha para montar e assinar o contrato */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin()&&!temPerfil("Customer Service"));
