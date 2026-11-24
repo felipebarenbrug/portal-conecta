@@ -1285,7 +1285,10 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 const SB_URL="https://czebmkqbapltmjuhywkd.supabase.co";
 const SB_KEY="__KEY__";
 const LOGO="__LOGO__";
+/* link de "Esqueci minha senha" vindo por e-mail: ao entrar, a pessoa escolhe a nova senha */
+let RECUP=(()=>{try{return /type=recovery/.test(location.hash)||/type=recovery/.test(location.search);}catch(e){return false;}})();
 let sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true,autoRefreshToken:true}});
+try{sb.auth.onAuthStateChange(ev=>{if(ev==="PASSWORD_RECOVERY"){RECUP=true;if(typeof render==="function")setTimeout(render,0);}});}catch(e){}
 const sbReal = sb;
 
 const sci=s=>`<span class="sci">${s}</span>`;
@@ -1990,10 +1993,9 @@ function vLogin(erro){
   const voltar=`<p class="dica"><button type="button" class="link" data-a="acesso-modo" data-v="login">‹ Voltar para o login</button></p>`;
   let form;
   if(m==="ok")form=`<div class="acesso-form"><h2>Pedido enviado</h2><p>${esc(S.acessoMsg||"")}</p>${voltar}</div>`;
-  else if(m==="esqueci")form=`<form class="acesso-form" id="f-esqueci"><h2>Esqueci minha senha</h2><p>Informe o e-mail do seu acesso. A equipe Barenbrug gera uma senha provisória e envia para você.</p>
+  else if(m==="esqueci")form=`<form class="acesso-form" id="f-esqueci"><h2>Esqueci minha senha</h2><p>Informe o e-mail do seu acesso. Você recebe nele um link para escolher uma senha nova. O link vale por 1 hora.</p>
       <div><label for="eq_email">E-mail do seu acesso</label><input id="eq_email" type="email" required autocomplete="email"></div>
-      <div><label for="eq_tel">WhatsApp para receber a senha</label><input id="eq_tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000"></div>
-      ${err}<button class="btn" type="submit">Pedir nova senha</button>${voltar}</form>`;
+      ${err}<button class="btn" type="submit">Enviar o link</button>${voltar}</form>`;
   else if(m==="solicitar")form=`<form class="acesso-form" id="f-solicitar"><h2>Solicitar acesso</h2><p>Preencha seus dados. A equipe Barenbrug analisa e envia o seu acesso.</p>
       <div><label for="sq_nome">Nome completo</label><input id="sq_nome" required autocomplete="name"></div>
       <div><label for="sq_email">E-mail</label><input id="sq_email" type="email" required autocomplete="email"></div>
@@ -2034,10 +2036,10 @@ async function redefinirSenha(u,telefone){
   const dg=t=>String(t||"").replace(/\D/g,"").slice(-11);const alerta=telefone&&dg(telefone)!==dg(u.telefone)?"Atenção: o telefone informado no pedido é diferente do telefone cadastrado desta pessoa. A senha vai somente para o telefone cadastrado. Confirme a identidade antes de enviar.":"";
   S.senhaReset={k:"reset",id:u.id,nome:u.nome,email:u.email,telefone:u.telefone,senha:data,reset:true,alerta};return true;
 }
-function vTrocaSenha(erro){
+function vTrocaSenha(erro,recup){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
-    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Primeiro acesso: defina sua senha.</p></div></div>
-    <form class="acesso-form" id="f-senha"><h2>Crie sua senha</h2><p>Por segurança, troque a senha que você recebeu por uma só sua.</p>
+    <div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">${recup?"Redefinição de senha.":"Primeiro acesso: defina sua senha."}</p></div></div>
+    <form class="acesso-form" id="f-senha"><h2>${recup?"Escolha a nova senha":"Crie sua senha"}</h2><p>${recup?"Você abriu o link do e-mail de redefinição. Escolha uma senha nova para o seu acesso.":"Por segurança, troque a senha que você recebeu por uma só sua."}</p>
       <div><label for="s1">Nova senha</label><span class="senha-campo"><input id="s1" type="password" required minlength="8" autocomplete="new-password">${olhoSenha("s1")}</span></div>
       <div><label for="s2">Repita a nova senha</label><span class="senha-campo"><input id="s2" type="password" required minlength="8" autocomplete="new-password">${olhoSenha("s2")}</span></div>
       <ul class="senha-reg" id="senha-reg" aria-live="polite">${SENHA_REGRAS.map(([k,t])=>`<li data-r="${k}">${t}</li>`).join("")}</ul>
@@ -13752,7 +13754,7 @@ function renderApp(){
   if(S.user&&abasOcultas().includes(chaveAba(S.pag))){const v=semOcultas(ABAS_REG[S.secao]||[]);S.pag=v.length?v[0][0]:S.pag;if(!v.length){S.secao=null;S.pag="hub";}}
   if(S.pag==="privacidade"){app.innerHTML=(S.user&&S.profile?cabecalho():"")+`<main>${vPrivacidade()}</main>`;return;}
   if(!S.user){app.innerHTML=vLogin(S._erro);S._erro=null;return;}
-  if(S.profile&&S.profile.precisa_trocar_senha&&!S.verComo){app.innerHTML=vTrocaSenha(S._erro);S._erro=null;return;}
+  if(S.profile&&(S.profile.precisa_trocar_senha||RECUP)&&!S.verComo){app.innerHTML=vTrocaSenha(S._erro,RECUP&&!S.profile.precisa_trocar_senha);S._erro=null;return;}
   if(S.pag!=="usuario")S.formAlvo="form";
   const precisaForm=(!cadastroCompleto())||S.pag==="perfil";
   if(precisaForm&&!S.form){S.form={...S.profile};preloadCidades(S.perfil);}
@@ -14487,6 +14489,12 @@ document.addEventListener("submit",async ev=>{
     if(error){S._erro=/invalid login/i.test(error.message)?"E-mail ou senha incorretos. A senha diferencia letras maiúsculas e minúsculas: toque no olho ao lado do campo para conferir o que foi digitado. Na senha provisória, digite também o Bb- do começo.":/captcha/i.test(error.message)?"A verificação de segurança não foi concluída. Confira a conexão, recarregue a página e tente de novo.":"Não foi possível entrar. Tente de novo.";render();return;}
     const {data:{session}}=await sb.auth.getSession();iniciarSessao();await carregarUsuario(session.user);iniciarWatchdog();render();
   }
+  if(f.id==="f-esqueci"){const em=(f.querySelector("#eq_email").value||"").trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){S._erro="Confira o e-mail.";render();return;}
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Enviando…";
+    const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
+    if(error&&/rate|limit|seconds/i.test(error.message||"")){S._erro="Já enviamos um link há pouco. Espere alguns minutos e tente de novo.";render();return;}
+    S.acessoMsg="Se este e-mail tiver acesso ao portal, você recebe em instantes um link para escolher a nova senha. Olhe também a caixa de spam. Não chegou? Fale com a equipe Barenbrug.";
+    S.acessoModo="ok";S._erro=null;render();return;}
   if(f.id==="f-esqueci"||f.id==="f-solicitar"){
     const senha=f.id==="f-esqueci";const q=id=>(f.querySelector(id)?f.querySelector(id).value.trim():"");
     const r=senha?{tipo:"senha",nome:"(redefinição de senha)",email:q("#eq_email").toLowerCase(),telefone:q("#eq_tel"),status:"Pendente"}
@@ -14572,7 +14580,8 @@ document.addEventListener("submit",async ev=>{
     const {error}=await sb.auth.updateUser({password:s1});
     if(error){S._erro="Não foi possível salvar a senha. Tente de novo.";render();return;}
     await sb.from("profiles").update({precisa_trocar_senha:false}).eq("id",S.user.id);
-    S.profile.precisa_trocar_senha=false;render();
+    const eraRecup=RECUP;RECUP=false;try{history.replaceState(null,"",location.pathname);}catch(e){}
+    S.profile.precisa_trocar_senha=false;render();if(eraRecup)aviso("Senha nova salva.");
   }
   if(f.id==="f-cadastro"){
     const schema=schemaDoPerfil(S.perfil);
