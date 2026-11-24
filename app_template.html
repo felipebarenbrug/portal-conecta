@@ -1599,11 +1599,12 @@ const SECOES=[
   {id:"financeiro",nome:"Marketing + Financeiro",desc:"Estimativa de comissões do Conecta RC e do Inside Sales, custo do Conecta Revendas por canal e a provisão mês a mês frente aos pools.",ativo:true,perfis:["Administrador","Financeiro"]},
   {id:"guia",nome:"Guia do Portal",desc:"O que cada área do portal faz e para que serve, na visão do seu perfil.",ativo:true,perfis:null},
   {id:"analise-solo",nome:"Análise de Solo",desc:"Em desenvolvimento: a solicitação da análise de solo dos seus clientes pelo portal, como serviço expandido da Barenbrug.",ativo:true,emdev:true,perfis:["Administrador","Comercial Barenbrug"]},
+  {id:"far",nome:"FAR · Reclamações",desc:"Formulário de Atendimento à Reclamação: abra a reclamação de um cliente, envie nota fiscal e fotos e acompanhe cada etapa até o parecer da Barenbrug.",ativo:true,perfis:null},
   {id:"calculadora",nome:"Calculadora de rentabilidade",desc:"Mostre ao produtor, com os números da fazenda dele, quanto um híbrido rende a mais por hectare e em quanto tempo a diferença da semente se paga.",ativo:true,perfis:null},
   {id:"duvidas",nome:"Tira-Dúvidas",desc:"Pergunte sobre os híbridos, o manejo e os programas. O time técnico-comercial da Barenbrug responde e valida, e as respostas ficam disponíveis para todos.",ativo:true,perfis:null},
   {id:"mural",nome:"Mural",desc:"O feed do Conecta: comunicados da Barenbrug, novidades e novos integrantes. Reaja e acompanhe o que acontece.",ativo:true,perfis:null}
 ];
-const SECOES_ACESSO=[["academia","Academia de Híbridos"],["calculadora","Academia › Calculadora de rentabilidade"],["meu-crm","Meu CRM"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["inteligencia","Inteligência"],["acoes-mkt","Ações de Marketing"],["brindes","Ações de Marketing › Brindes de Marketing"],["vitrines","Ações de Marketing › Áreas demonstrativas"],["enxoval","Enxoval de Marketing"],["mercado","Notícias de Mercado"],["financeiro","Marketing + Financeiro"],["duvidas","Tira-Dúvidas"],["mural","Mural"]];
+const SECOES_ACESSO=[["academia","Academia de Híbridos"],["calculadora","Academia › Calculadora de rentabilidade"],["meu-crm","Meu CRM"],["conecta-rc","Conecta RC"],["conecta-revendas","Conecta Revendas"],["tabela-precos","Condições Comerciais"],["leads","LeadsBaren"],["inside-sales","Inside Sales"],["inteligencia","Inteligência"],["acoes-mkt","Ações de Marketing"],["brindes","Ações de Marketing › Brindes de Marketing"],["vitrines","Ações de Marketing › Áreas demonstrativas"],["enxoval","Enxoval de Marketing"],["mercado","Notícias de Mercado"],["financeiro","Marketing + Financeiro"],["far","FAR · Reclamações"],["duvidas","Tira-Dúvidas"],["mural","Mural"]];
 const PUBLICOS=[["todos","Todos"],["RC","RCs de campo"],["Assessor de Vendas Digital","RC digital"],["Inside Sales","Inside Sales"],["Comercial Barenbrug","Comercial"],["Gestor de Revenda","Gestores de revenda"],["Vendedor de Revenda","Vendedores de revenda"],["Franqueado Nutron","Franqueados"],["Customer Service","Customer Service"],["Marketing","Marketing"],["Financeiro","Financeiro"],["Exportação","Exportação"]];
 const ENXOVAL=[
  {id:"branding",n:"Branding",d:"Logos, versões da marca, paleta e tipografia oficiais da Barenbrug.",link:""},
@@ -3731,7 +3732,7 @@ const IS_GRUPOS=[
   ["Comece aqui",[["is-fluxo","Como a negociação acontece"],["is-func","Funções das assessoras"],["is-playbook","Playbook"]]],
   ["1 · Atrair",[["is-cac","Retorno da mídia"]]],
   ["2 · Para quem",[["is-icp","ICP e personas"]]],
-  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-rcneg","Negociações dos RCs"],["is-far","FAR · Reclamações"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
+  ["3 · Qualificar e negociar",[["is-neg","Negociações"],["is-rcneg","Negociações dos RCs"],["is-obj","Objeções"],["is-csat","Satisfação do atendimento"]]],
   ["4 · Vender",[["is-time","Time"],["is-vend","Por vendedora"],["is-painel","Painel individual"],["is-desafio","Desafio 10 t"]]],
   ["5 · Onde e quando",[["is-reg","Regiões"],["is-hist","Evolução"]]],
   ["6 · Reter e reativar",[["is-rfv","RFV"]]],
@@ -3772,7 +3773,7 @@ function navGrupos(G,nome,cur){
   return `${topo}<nav class="nav ng" aria-label="${esc(nome)}">${g1}</nav>${fim}${sub}</div>`;
 }
 function subnavIS(){
-  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-rcneg","Negociações dos RCs"],["is-far","FAR · Reclamações"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
+  const grupos=veTimeIS()?IS_GRUPOS.map(([g,ab])=>[g,ab.filter(([k])=>k!=="is-ger"||ehFin())]):[["",[["is-painel","Meu painel"],["is-rcneg","Negociações dos RCs"],["is-desafio","Desafio 10 t"],["is-fluxo","Como a negociação acontece"],["is-playbook","Playbook"],["is-formacao","Formação do time"]]]];
   return navGrupos(grupos,"Inside Sales",k=>S.pag===k);
 }
 const IS_PAPEL={vendedora:"Vendedora",rampagem:"Rampagem",supervisao:"Supervisão e carteira",carteira_rc:"Carteira com RC",fora_cobranca:"Fora da cobrança",fora_meta:"À parte, fora da meta",outros:"Fila de qualificação",time:"Time"};
@@ -4991,9 +4992,8 @@ const FAR_ETAPAS=[["env","Enviado","Recebido pelo portal e registrado na Barenbr
   ["68a75d839a0a8e002339f42f","Parecer final","Parecer definitivo da Barenbrug."],
   ["68a75d87772b630017f63b70","Parecer disponibilizado","Resposta entregue ao reclamante."]];
 const FAR_PP=["68a75d6ac8519e00178b000f","68a75d742f7a37001dfbb700"];
-const farPodeAbrir=()=>!S.demo&&(ehAdmin()||["RC","Franqueado Nutron","Comercial Barenbrug","Inside Sales","Assessor de Vendas Digital"].some(temPerfil));
+const farPodeAbrir=()=>!S.demo&&(ehAdmin()||temAcessoExtra("far"));
 const farGestor=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Inside Sales")||!!(S.profile&&S.profile.gerente_is));
-const farViaIS=()=>!ehAdmin()&&(temPerfil("Inside Sales")||temPerfil("Assessor de Vendas Digital"))&&!temPerfil("RC");
 function farColuna(x){if(x.crm_sit==="P")return "enc";if(x.crm_sit==="V")return "68a75d87772b630017f63b70";if(!x.crm_deal_id)return "env";
   if(FAR_PP.includes(x.crm_etapa_id))return "pp";if(FAR_ETAPAS.some(e=>e[0]===x.crm_etapa_id))return x.crm_etapa_id;
   const e=FAR_ETAPAS.find(e=>finNorm(e[1])===finNorm(x.crm_etapa||""));return e?e[0]:"68a5cd6ac21632001b286bb6";}
@@ -6812,7 +6812,6 @@ function subnavRC(){
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Negociações"],["rc-calc","Calculadora"]]],
-    ["Pós-venda",[["rc-far","FAR · Reclamações"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
     ["Sua opinião",cnVeAba("conecta_rc")?[["rc-nps","Avaliar o programa"]]:[]]];
   return navGrupos(G,"Conecta RC",k=>S.pag===k||(k==="rc-curso"&&S.pag==="rc-etapa"));
@@ -13477,7 +13476,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function avisosRecebidosHTML(){const L=S.comHist;if(L===undefined){setTimeout(()=>comPendentesMostrar(true),0);return "";}if(!L.length)return "";
   return `<div class="cx" id="avisos"><strong>Avisos recebidos</strong><span class="meta">Os avisos que o Portal Conecta enviou para você nos últimos 30 dias.</span><div style="display:grid;gap:10px;margin-top:6px">${L.map(c=>{const d=comDestino(c.url);return `<div style="border-left:4px solid ${c.lido?"var(--cinza-cl,#ddd)":"var(--amarelo,#FFDB00)"};padding:4px 0 4px 12px;display:grid;gap:4px"><strong>${esc(c.titulo||"Aviso")}</strong>${c.corpo?`<span style="white-space:pre-line">${esc(c.corpo)}</span>`:""}<span class="meta">${esc(c.enviado_em?new Date(c.enviado_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"")}${c.lido?"":" · não lido"}</span>${d?`<button type="button" class="btn sec" style="width:fit-content;padding:6px 12px" data-a="com-pop-ir" data-v="${c.id}" data-d="${d}">Abrir ${esc(COM_DEST[d])}</button>`:""}</div>`;}).join("")}</div></div>`;}
 let _notifVisto=false;
-function pushAbrirPendente(){if(PUSH_ABRIR==="ajuda"){render();return;}if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="far"){PUSH_ABRIR=null;const viaIS=farViaIS();setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=viaIS?"inside-sales":"conecta-rc";bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();S.pag=viaIS?"is-far":"rc-far";if(S.far){S.far.lista=undefined;S.far.aberta=null;}render();},0);return;}if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
+function pushAbrirPendente(){if(PUSH_ABRIR==="ajuda"){render();return;}if(!_notifVisto&&S.user&&S.profile){_notifVisto=true;setTimeout(()=>comPendentesMostrar(true),700);}if(!PUSH_ABRIR||!S.user||!S.profile||S.profile.precisa_trocar_senha)return;if(PUSH_ABRIR==="far"){PUSH_ABRIR=null;setTimeout(()=>{if(!(ehAdmin()||temAcessoExtra("far")))return;S.secao="far";S.pag="far";if(S.far){S.far.lista=undefined;S.far.aberta=null;}render();window.scrollTo(0,0);},0);return;}if(PUSH_ABRIR==="seguranca"){PUSH_ABRIR=null;if(ehAdmin()){S.secao=null;S.pag="seguranca";S.segSt=undefined;render();setTimeout(()=>{const e=document.getElementById("seg-eventos");if(e)e.scrollIntoView();},900);}return;}const v=(["mensagens","duvidas","leads","academia","conecta-revendas","conecta-rc","enxoval","inside-sales","acoes-mkt","financeiro"].includes(PUSH_ABRIR))?PUSH_ABRIR:null;PUSH_ABRIR=null;if(!v)return;setTimeout(()=>{const bt=document.createElement("button");bt.dataset.a="secao";bt.dataset.v=v;bt.hidden=true;document.body.appendChild(bt);bt.click();bt.remove();if(v==="conecta-rc"&&ngPodeEnviar()||v==="conecta-rc"&&ngGestor()){S.pag="rc-pedido";if(S.ng){S.ng.lista=undefined;S.ng.aberta=null;}render();}if(v==="financeiro"&&ngSouFin()){S.pag="fin-credito";if(S.ng)S.ng.lista=undefined;render();}},0);}
 /* ===== Proteção do conteúdo: cópia, print e marca d'água ===== */
 /* Customer Service copia e cola livremente: usa os dados da ficha para montar e assinar o contrato */
 const protAtiva=()=>!!(S.user&&S.profile&&!S.demo&&!ehAdmin()&&!temPerfil("Customer Service"));
@@ -13773,7 +13772,7 @@ function render(){window.__appIgual=false;renderApp();if(window.__appIgual){wind
 const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
-  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-far","FAR · Reclamações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
+  "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
   "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
@@ -13794,7 +13793,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
   window.addEventListener("scroll",fecha,true);window.addEventListener("resize",fecha);})();
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
- "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-far":"FAR: abrir e acompanhar reclamações de clientes até o parecer.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
+ "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
  "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "brindes-lojinha":"Em desenvolvimento: o pedido de brindes e materiais da marca pelo portal, para o time comercial e os parceiros.","rv-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.","rv-at":"Em desenvolvimento: gestão das ações de assistência técnica com as revendas.","rc-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
@@ -13846,9 +13845,9 @@ function renderApp(){
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
     if(soCSRC()){if(!["rc-cadastros","rc-perfis","rc-perfil","rc-guia","rc-meus","rc-ranking","rc-mapa","rc-cobertura","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
     if((S.pag==="rc-perfis"||S.pag==="rc-perfil")&&!vePerfisRC())S.pag="rc-apresentacao";
-    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-far":vFar,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
-    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta","rc-far"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
+    app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
     if(S.pag==="rc-mapa")pedirMapa();
     return;
@@ -13896,7 +13895,6 @@ function renderApp(){
     if(["is-time","is-vend","is-neg","is-obj","is-icp","is-rfv","is-cac","is-reg","is-gd","is-hist"].includes(S.pag)&&S.isp!=null&&!veTimeIS())S.pag="is-painel";
     if(S.pag==="is-gd"){S.secao="acoes-mkt";S.pag="acoes-quadro";return render();}
     if(S.pag==="is-rcneg"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vNegs()}</main>`;return;}
-    if(S.pag==="is-far"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${vFar()}</main>`;return;}
     if(S.pag==="is-desafio"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISDesafio()}</main>`;return;}
     if(S.pag==="is-perfil-time"){if(!veTimeIS()&&S.isp!=null)S.pag="is-painel";else{app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISPerfilTime()}</main>`;return;}}
     if(S.pag==="is-formacao"){app.innerHTML=cabecalho()+subnavIS()+`<main class="largo">${isPropHTML(S.pag)}${vISFormacao()}</main>`;return;}
@@ -13918,6 +13916,7 @@ function renderApp(){
     return;
   }
   if(S.secao==="calculadora"){S.secao="academia";S.pag="calc";return render();}
+  if(S.secao==="far"){if(!(ehAdmin()||temAcessoExtra("far"))){S.secao=null;S.pag="hub";}else{app.innerHTML=cabecalho()+subnavSimples("FAR · Reclamações")+`<main class="largo">${vFar()}</main>`;return;}}
   if(S.secao==="tabela-precos"){app.innerHTML=cabecalho()+subnavSimples("Condições Comerciais")+`<main>${vPrecos()}</main>`;return;}
   if(S.secao==="meu-crm"){
     app.innerHTML=cabecalho()+subnavSimples("Meu CRM")+`<main class="largo"><div class="crm-aviso" role="note"><strong>Estes números vêm do CRM da RD Station e são estimativas.</strong> Podem ter diferenças e não substituem o ERP nem o BI dos relatórios de Pedidos, que são os dados oficiais. Antes de usar um número para decidir ou repassar, confira no ERP ou no BI.</div>${vMeuCRM()}</main>`;
