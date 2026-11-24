@@ -8222,6 +8222,7 @@ async function carregarCanais(){
   const grp=arr=>{const m={};(arr||[]).forEach(x=>{(m[x.canal_id]=m[x.canal_id]||[]).push(x);});return m;};
   try{
     try{const {data:pb}=await sb.from("rv_publicado").select("*");S.rvPub={};(pb||[]).forEach(x=>{S.rvPub[x.canal_id]=rvvScFix(x);});}catch(e){S.rvPub={};}
+    try{const {data:pv}=await sb.from("rv_pos_val").select("*");S.rvPos={};(pv||[]).forEach(x=>{S.rvPos[x.canal_id]=x;});}catch(e){S.rvPos={};}
     try{const {data:ru}=await sb.from("canal_reunioes").select("*").order("data",{ascending:false});S.canalReun=grp(ru);}catch(e){S.canalReun={};}
     const [co,fi,es,pr]=await Promise.all([
       sb.from("canal_contatos").select("*"),
@@ -8280,7 +8281,8 @@ function metricasCanal(c,o){o=o||{};
   const mulOn=!!c.mulato_hibrido&&(!!c.mulato_validado||veBarenbrugRV())&&!o.sem;const MU=rvMul(c);
   const pub=pub0&&pub0.dados&&pub0.dados.v&&mulOn?{...pub0,dados:{...pub0.dados,v:{...pub0.dados.v,tot_kg_h:pub0.dados.v.tot_kg_h+MU.kg,tot_kg_c:pub0.dados.v.tot_kg_c-MU.kg,tot_rs_h:pub0.dados.v.tot_rs_h+MU.rs,tot_rs_c:pub0.dados.v.tot_rs_c-MU.rs,fat_kg_h:pub0.dados.v.fat_kg_h+MU.fk,fat_rs_h:pub0.dados.v.fat_rs_h+MU.fr,fat_rs_c:pub0.dados.v.fat_rs_c-MU.fr,ord_kg_h:(pub0.dados.v.ord_kg_h||0)+(MU.kg-MU.fk),pag_rs_h:(pub0.dados.v.pag_rs_h||0)+MU.pr,pag_rs_c:(pub0.dados.v.pag_rs_c||0)-MU.pr}}}:pub0;
   const rA=mulOn&&!MU.pub?{...r0,kg_hib:(+r0.kg_hib||0)+MU.kg,kg_conv:(+r0.kg_conv||0)-MU.kg,rs_hib:(+r0.rs_hib||0)+MU.rs,rs_conv:(+r0.rs_conv||0)-MU.rs,fat_kg_hib:(+r0.fat_kg_hib||0)+MU.fk,fat_rs_hib:(+r0.fat_rs_hib||0)+MU.fr,fat_rs_conv:(+r0.fat_rs_conv||0)-MU.fr,aberto_kg_hib:(+r0.aberto_kg_hib||0)+MU.ak,aberto_kg_conv:(+r0.aberto_kg_conv||0)-MU.ak,aberto_rs_hib:(+r0.aberto_rs_hib||0)+MU.ar,aberto_rs_conv:(+r0.aberto_rs_conv||0)-MU.ar,abertas:Array.isArray(r0.abertas)?r0.abertas.map(x=>({...x,kg_h:(+x.kg_h||0)+(+x.kg_mul||0),kg_c:(+x.kg_c||0)-(+x.kg_mul||0)})):r0.abertas}:r0;
-  const r=pub&&pub.dados&&pub.dados.v?(()=>{const v=pub.dados.v;return {...rA,kg_hib:v.tot_kg_h,kg_conv:v.tot_kg_c,rs_hib:v.tot_rs_h,rs_conv:v.tot_rs_c,fat_kg_hib:v.fat_kg_h,fat_rs_hib:v.fat_rs_h,fat_rs_conv:v.fat_rs_c};})():rA;
+  const PV=pub&&pub.dados&&pub.dados.v?((S.rvPos||{})[c.id]||null):null,pvN=k=>PV?(+PV[k]||0):0;
+  const r=pub&&pub.dados&&pub.dados.v?(()=>{const v=pub.dados.v;return {...rA,kg_hib:v.tot_kg_h+pvN("kg_h"),kg_conv:v.tot_kg_c+pvN("kg_c"),rs_hib:v.tot_rs_h+pvN("rs_h"),rs_conv:v.tot_rs_c+pvN("rs_c"),fat_kg_hib:v.fat_kg_h,fat_rs_hib:v.fat_rs_h,fat_rs_conv:v.fat_rs_c};})():rA;
   const N=k=>Number(r[k])||0;const meta=Number(c.meta_kg)||0;
   const ating=meta?N("kg_hib")/meta:null;
   const fator=ating==null?0:ating>=1?1:ating>=.9?.7:0;
@@ -8301,7 +8303,7 @@ function metricasCanal(c,o){o=o||{};
   const igdbAprov=Math.min(RV_TETO,igdb,aprovIGr),aPagar=Math.min(RV_TETO,igdbAprov+bonus),mIgdbAprov=Math.min(RV_TETO,mIgdb,aprovIGr),mAPagar=Math.min(RV_TETO,mIgdbAprov+mBonus);
   const pv=pub&&pub.dados&&pub.dados.v;const pubInfo=pv?{em:pub.validado_em,por:pub.validado_nome,sit:pub.situacao_em,pagRs:(pv.pag_rs_h||0)+(pv.pag_rs_c||0),fatRs:(pv.fat_rs_h||0)+(pv.fat_rs_c||0),ordKgH:pv.ord_kg_h||0,igdbPago:(pv.pag_rs_h||0)*g.ih+(pv.pag_rs_c||0)*g.ic,aberto:(pub.dados.fin||{}).aberto||0,vencido:(pub.dados.fin||{}).vencido||0}:null;
   const K0=rvCap(igdb,bonus),KM=rvCap(mIgdb,mBonus);
-  const RET={mulOn,mul:MU,pub:pubInfo,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
+  const RET={mulOn,mul:MU,pub:pubInfo,posVal:PV&&PV.n?PV:null,igdbAprov,aPagar,mIgdbAprov,mAPagar,pxH,semPreco:!pxH&&meta>0,mIgdb,mBonus,mTotal,mTeto:mIgdb+mBonus>RV_TETO,g,r,meta,ating,fator,igdbH,igdbC,igdb,igdbFat,bonusCheio,bonus,bruto,total,teto:bruto>RV_TETO,piso:N("kg_hib")>=RV_PISO_KG,
     kgH:N("kg_hib"),kgC:N("kg_conv"),rsH:N("rs_hib"),rsC:N("rs_conv"),fatKgH:N("fat_kg_hib"),abertoN:N("aberto_n"),abertoRs:N("aberto_rs"),pedidos:N("pedidos_n"),
     abKgH:N("aberto_kg_hib"),abKgC:N("aberto_kg_conv"),abRsH:N("aberto_rs_hib"),abRsC:N("aberto_rs_conv"),abertas:Array.isArray(r.abertas)?r.abertas:[],
     ...(()=>{const kH=N("kg_hib")+N("aberto_kg_hib"),rH=N("rs_hib")+N("aberto_rs_hib"),rC=N("rs_conv")+N("aberto_rs_conv");const pAt=meta?kH/meta:null;const pF=pAt==null?0:pAt>=1?1:pAt>=.9?.7:0;const pIgdb=rH*g.ih+rC*g.ic,pBonus=rH*g.b*pF;const apIG=ac.filter(a=>(a.status||"Em Análise")==="Aprovado"&&!ehBPa(a)).reduce((t,a)=>t+(Number(a.valor_igdb)||0),0);const pIgdbAprov=Math.min(RV_TETO,pIgdb,apIG);
@@ -8635,7 +8637,7 @@ function vCanalCRM(c,m){
     <div class="metric"><span>Convencionais em pedidos realizados</span><strong>${fmtKg(m.kgC)}</strong><span class="meta">${fmtK0(m.rsC)}</span></div>
   </div>
   ${barraMeta(m)}
-  ${m.pub?`<div class="rvv-pub on" style="margin-top:10px"><div style="min-width:0"><strong>Números validados pelo Marketing</strong><span class="meta">Pedidos do BI e pagamentos do Financeiro de ${esc(String(m.pub.sit||"").split("-").reverse().join("/"))}, validados em ${fmtDataHora(m.pub.em)}. Híbridos = faturados + pedidos realizados (${fmtKg(Math.round(m.pub.ordKgH))} ainda a faturar).</span></div></div>
+  ${m.pub?`<div class="rvv-pub on" style="margin-top:10px"><div style="min-width:0"><strong>Números validados pelo Marketing</strong><span class="meta">Pedidos do BI e pagamentos do Financeiro de ${esc(String(m.pub.sit||"").split("-").reverse().join("/"))}, validados em ${fmtDataHora(m.pub.em)}. Híbridos = faturados + pedidos realizados (${fmtKg(Math.round(m.pub.ordKgH))} ainda a faturar).${m.posVal?` Inclui também ${m.posVal.kg_h?fmtKg(Math.round(m.posVal.kg_h))+" de híbridos":""}${m.posVal.kg_h&&m.posVal.kg_c?" e ":""}${m.posVal.kg_c?fmtKg(Math.round(m.posVal.kg_c))+" de convencionais":""} vendidos depois dessa posição (${m.posVal.n} ${m.posVal.n===1?"pedido":"pedidos"}), que contam como pedido realizado e entram no faturado e no IGDB liberado quando o Financeiro confirmar na próxima validação.`:""}</span></div></div>
   <div class="metrics" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
     <div class="metric"><span>Faturado na safra</span><strong>${fmtK0(m.pub.fatRs)}</strong><span class="meta">R$ líquido das notas emitidas</span></div>
     <div class="metric"><span>Já pago pela revenda</span><strong>${fmtK0(m.pub.pagRs)}</strong><span class="meta">${m.pub.fatRs?pctTxt(m.pub.pagRs/m.pub.fatRs)+" do faturado":""}</span></div>
