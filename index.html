@@ -1711,7 +1711,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261123220243";
+const APP_VER="20261123222358";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -4571,6 +4571,7 @@ document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.datase
     const {data,error}=await sb.from("profiles").update({comercial_resp:novo}).eq("id",id).select("id,comercial_resp").maybeSingle();t.disabled=false;
     if(error||!data||(data.comercial_resp||null)!==novo){aviso("Esta alteração NÃO foi gravada. Tente de novo.");}else{const x=(S.equipe||[]).find(q=>q.id===id);if(x)x.comercial_resp=novo;aviso("Vínculo gravado.");}render();return;}});
 document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.dataset&&d.dataset.locfg!==undefined)S.loCfgAberto=d.open;},true);
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.tipodef)return;const o=document.getElementById(t.dataset.tipodef);if(o)o.textContent=acaoTipoDef(t.value);});
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!/^rcp-(q|dono|seg)$/.test(t.id||"")||!S.rcpF)return;S.rcpF[t.id.slice(4)]=t.value;S.rcpF.n=60;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="rcp-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.id||!/^gt-(q|perfil|acesso)$/.test(t.id))return;const F=S.gtF||(S.gtF={q:"",perfil:"",acesso:""});F[t.id.slice(3)]=t.value;const pos=t.selectionStart;render();const n=document.getElementById(t.id);if(n){n.focus();if(t.id==="gt-q"&&pos!=null)try{n.setSelectionRange(pos,pos);}catch(e){}}});
 document.addEventListener("change",ev=>{if(ev.target.closest&&ev.target.closest("#f-prop"))propAtualizaTotais();});
@@ -6923,14 +6924,29 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||(f.id!=="
 });
 
 /* tipos de acao unicos para Acoes de Marketing e PGD do Conecta Revendas (o calendario e o mapa da safra usam a mesma lista) */
-const ACAO_TIPOS=[["Dia de campo","manhã de campo, tarde de campo"],["Evento","encontro de produtores, aniversário de loja, confraternização"],["Feira","exposição, feira agropecuária"],["Patrocínio","cota de evento, leilão"],["Palestra e treinamento","palestra técnica, workshop, treinamento da equipe do canal"],["Visita técnica","tour técnico, assistente técnico"],["Campo demonstrativo","área demonstrativa, bonificação de semente para teste"],["Ação em loja e revenda","PDV, fachada, dia de negócio"],["Mídia e conteúdo","campanha digital, webinar, live, rádio"],["Material e brindes","material POS/PDV, brindes"],["Incentivo e premiação","incentivo por saco vendido, viagem, prêmio, rebate, campanha de vendas"],["Outro",""]];
+/* tipos padronizados das ações (Marketing e PGD das revendas), sem "Outro" e sem "Patrocínio" (23/11/2026): [nome, exemplos, o que entra] */
+const ACAO_TIPOS=[
+ ["Dia de campo","manhã ou tarde de campo, giro de fazenda","Encontro com produtores no campo para mostrar a pastagem e o manejo, organizado pela Barenbrug, pela revenda ou pelo RC."],
+ ["Campo demonstrativo","área demonstrativa, semente para teste","Implantação ou manutenção de uma área com a cultivar para mostrar resultado ao longo do tempo, inclusive a semente cedida para o teste."],
+ ["Feira e evento do setor","feira, exposição, congresso, circuito técnico, leilão, cota de evento","Presença, estande ou cota em evento organizado por outra empresa ou entidade. Inclui o que antes era chamado de patrocínio: a Barenbrug paga para estar no evento de terceiros."],
+ ["Evento de relacionamento","jantar de negócios, aniversário de loja, confraternização, tour na fábrica","Evento organizado pela Barenbrug, pela revenda ou pelo RC para clientes ou para a equipe do canal, com foco em relacionamento."],
+ ["Palestra e treinamento","palestra técnica, workshop, treinamento da equipe do canal","Conteúdo técnico apresentado a produtores ou ao time de vendas do canal, em sala ou em evento."],
+ ["Visita técnica","assistência técnica, tour técnico, técnico de campo (AT)","Atendimento técnico a produtores: visita, acompanhamento de área ou apoio para a revenda ter um técnico de campo na região."],
+ ["Ação em loja e revenda","ponto de venda, fachada, dia de negócio","Ação dentro da loja ou na marca da revenda para movimentar a venda no balcão."],
+ ["Mídia e conteúdo","campanha digital, webinar, live, rádio","Divulgação paga ou conteúdo para levar a marca e as cultivares ao produtor."],
+ ["Material e brindes","material de ponto de venda, brindes, uniformes","Itens físicos com a marca: impressos, brindes, uniformes, sinalização."],
+ ["Incentivo e premiação","prêmio por saco vendido, viagem, campanha de vendas, bonificação ao cliente","Recompensa para quem vende ou compra: vendedores da revenda, Inside Sales ou cliente que recebe produto bonificado."],
+ ["Verba de programa","verba reservada, ainda sem ação definida","Valor reservado para um programa ou região antes de virar ação. Quando a ação for definida, o cartão muda para o tipo dela."]];
+const acaoTipoDef=t=>{const x=ACAO_TIPOS.find(y=>y[0]===t);return x?x[2]:"";};
+const acaoTiposInf=()=>inf(ACAO_TIPOS.map(x=>x[0]+": "+x[2]).join(" · "));
 const MK_TIPOS=ACAO_TIPOS.map(x=>x[0]);
 function acaoTipoNorm(t){const x=String(t||"").trim();if(MK_TIPOS.includes(x))return x;const n=x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  if(/demonstr|experiment/.test(n))return "Campo demonstrativo";if(/dia de campo|manha de campo|tarde de campo/.test(n))return "Dia de campo";if(/patroc|leilao/.test(n))return "Patrocínio";
-  if(/feira|expo/.test(n))return "Feira";if(/evento|encontro|confratern/.test(n))return "Evento";if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";
-  if(/visita|tour|\bat\b|assistente/.test(n))return "Visita técnica";if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";
-  if(/incentivo|premia|rebate|viagem|bonifica|campanha de venda/.test(n))return "Incentivo e premiação";if(/digital|webinar|live|midia|conteudo|radio/.test(n))return "Mídia e conteúdo";
-  if(/material|brinde|pos/.test(n))return "Material e brindes";return "Outro";}
+  if(/demonstr|experiment/.test(n))return "Campo demonstrativo";if(/dia de campo|manha de campo|tarde de campo|giro de campo/.test(n))return "Dia de campo";
+  if(/patroc|leilao|feira|expo|congresso|circuito/.test(n))return "Feira e evento do setor";if(/jantar|confratern|aniversario|tour na fabrica|relacionamento/.test(n)||n==="evento")return "Evento de relacionamento";
+  if(/palestra|treinamento|workshop/.test(n))return "Palestra e treinamento";if(/visita|tour|\bat\b|assistente|tecnico de campo/.test(n))return "Visita técnica";
+  if(/loja|revenda|pdv|fachada|dia de neg/.test(n)&&!/material/.test(n))return "Ação em loja e revenda";if(/incentivo|premia|rebate|viagem|bonifica|campanha de venda/.test(n))return "Incentivo e premiação";
+  if(/digital|webinar|live|midia|conteudo|radio/.test(n))return "Mídia e conteúdo";if(/material|brinde|pos|uniforme/.test(n))return "Material e brindes";if(/verba/.test(n))return "Verba de programa";
+  if(/evento|encontro/.test(n))return "Feira e evento do setor";return "Evento de relacionamento";}
 /* ===== Calendarios de acoes: canal (micro), Conecta Revendas (gerencial) e mapa da safra do marketing (macro) ===== */
 const CAL_SAFRA_INI="2026-07-01",CAL_SAFRA_FIM="2027-06-30";
 const CAL_PROG=["Conecta Revendas","Conecta RC","Cooperativas e revendas","Institucional","Inside Sales","Exportação"];
@@ -7568,11 +7584,11 @@ addEventListener("input",ev=>{const t=ev.target;const b=t&&t.closest&&t.closest(
 const PGD_CATS=["Geração de demanda","Ação de Reconhecimento da Marca","Ação de Ativação","Ação de Experimentação","Ação de Educação/Conhecimento","Ação de Experiência e Fidelização"];
 function vNovaAcao(modo,ed){
   const bp=modo==="bp";const a=ed||{};const v=x=>esc(x==null?"":String(x));
-  const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Evento","Outro"].includes(x[0])):ACAO_TIPOS;
+  const tipos=bp?ACAO_TIPOS.filter(x=>["Incentivo e premiação","Evento de relacionamento","Material e brindes"].includes(x[0])):ACAO_TIPOS.filter(x=>x[0]!=="Verba de programa");
   const aprov=ed&&ed.status==="Aprovado"&&!ehAdmin();
   return `<form class="form-card" id="f-novaacao" data-verba="${bp?"Bônus de Performance":"IGDB"}"${ed?` data-id="${esc(ed.id)}" style="box-shadow:inset 0 0 0 2px var(--azul)"`:""}><h3 class="sec">${ed?(bp?"Editar campanha":"Editar ação"):bp?"Nova campanha do Bônus de Performance":"Nova ação de IGDB"}</h3>
     ${aprov?`<div class="is-alerta" style="margin:0"><strong>Esta ação já foi aprovada.</strong> Se você salvar uma alteração, ela volta para análise e precisa ser aprovada de novo pelo Marketing.</div>`:""}
-    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}</label><select id="na_tipo">${tipos.map(([t,h])=>`<option value="${esc(t)}" ${a.tipo===t?"selected":""}>${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta">Os mesmos tipos das Ações de Marketing, para o calendário juntar tudo.</span></div>
+    <div><label for="na_tipo">${bp?"Tipo de campanha":"Tipo (Geração de demanda)"}${acaoTiposInf()}</label><select id="na_tipo" data-tipodef="na_tipo_def">${tipos.map(([t,h])=>`<option value="${esc(t)}" ${(a.tipo?acaoTipoNorm(a.tipo):tipos[0][0])===t?"selected":""}>${esc(t)}${h?" · "+esc(h):""}</option>`).join("")}</select><span class="meta" id="na_tipo_def">${esc(acaoTipoDef(a.tipo?acaoTipoNorm(a.tipo):tipos[0][0]))}</span></div>
     ${bp?"":`<div><label for="na_cat">Objetivo da ação</label><select id="na_cat">${PGD_CATS.map(t=>`<option ${a.categoria===t?"selected":""}>${t}</option>`).join("")}</select></div>`}
     <div class="dupla"><div><label for="na_cidade">${bp?"Quem participa":"Cidade *"}</label><input id="na_cidade" value="${v(a.cidade)}" ${bp?'placeholder="Ex: vendedores de todas as filiais"':'placeholder="Ex: Paragominas/PA"'}></div><div><label for="na_data">Quando *</label><input id="na_data" maxlength="80" value="${v(a.data_acao)}" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
     ${bp?`<div><label for="na_valor">Custo estimado (R$) *</label><input id="na_valor" inputmode="decimal" value="${a.valor_igdb?v(String(a.valor_igdb).replace(".",",")):""}" placeholder="0,00" style="max-width:220px"></div>`:pgdPagForm("na",ed||null,ehAdmin())}
@@ -11195,7 +11211,7 @@ function mkFormHTML(a){
   return `<form class="form-card" id="f-mk-acao" data-id="${a.id||""}">
     <h2 class="sec">${a.id?"Editar ação":"Nova ação"}</h2>
     <div><label for="mk_tit">Título *</label><input id="mk_tit" required maxlength="160" value="${esc(a.titulo||"")}"></div>
-    <div class="dupla"><div><label for="mk_tp">Tipo</label><select id="mk_tp">${MK_TIPOS.map(t=>`<option ${t===(a.tipo||"Evento")?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div class="dupla"><div><label for="mk_tp">Tipo${acaoTiposInf()}</label><select id="mk_tp" data-tipodef="mk_tp_def">${MK_TIPOS.map(t=>`<option ${t===acaoTipoNorm(a.tipo||"Feira e evento do setor")?"selected":""}>${t}</option>`).join("")}</select><span class="meta" id="mk_tp_def">${esc(acaoTipoDef(acaoTipoNorm(a.tipo||"Feira e evento do setor")))}</span></div>
       <div><label for="mk_st">Status</label><select id="mk_st">${MK_COLS.map(t=>`<option ${t===(a.status||"A fazer")?"selected":""}>${t}</option>`).join("")}</select></div></div>
     <div><label for="mk_prog">Programa${inf("Para o Mapa da safra: separa as ações institucionais, as do Conecta Revendas, do Conecta RC, das cooperativas e revendas, do Inside Sales e da Exportação.")}</label><select id="mk_prog">${CAL_PROG.map(t=>`<option ${t===(a.programa||"Institucional")?"selected":""}>${t}</option>`).join("")}</select></div>
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim">Data de fim</label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
@@ -11245,7 +11261,7 @@ function vAcoesSolicNova(){
   <form class="form-card" id="f-mk-solic"><h2 class="sec">Nova solicitação de ação de marketing</h2>
     <p class="meta">Conte o que você precisa. O Marketing analisa, conversa com você pelos comentários e aprova o valor. Depois de enviada, você acompanha tudo em Solicitações.</p>
     <div><label for="ms_tit">O que é a ação *</label><input id="ms_tit" required maxlength="160" placeholder="Ex.: Dia de campo Sabiá na Fazenda Boa Vista"></div>
-    <div class="dupla"><div><label for="ms_tp">Tipo</label><select id="ms_tp">${MK_TIPOS.map(t=>`<option>${t}</option>`).join("")}</select></div><div><label for="ms_loc">Local</label><input id="ms_loc" maxlength="160" placeholder="Cidade/UF, fazenda, revenda"></div></div>
+    <div class="dupla"><div><label for="ms_tp">Tipo${acaoTiposInf()}</label><select id="ms_tp" data-tipodef="ms_tp_def">${MK_TIPOS.map(t=>`<option>${t}</option>`).join("")}</select><span class="meta" id="ms_tp_def">${esc(acaoTipoDef(MK_TIPOS[0]))}</span></div><div><label for="ms_loc">Local</label><input id="ms_loc" maxlength="160" placeholder="Cidade/UF, fazenda, revenda"></div></div>
     <div class="dupla"><div><label for="ms_ini">Data</label><input id="ms_ini" type="date"></div><div><label for="ms_fim">Até (se for mais de um dia)</label><input id="ms_fim" type="date"></div></div>
     <div><label for="ms_desc">Objetivo e o que o Marketing deve apoiar *</label><textarea id="ms_desc" rows="4" required maxlength="4000" placeholder="Para que é a ação, o que você espera dela e o que precisa do Marketing: verba, material, divulgação, palestrante…"></textarea></div>
     <div class="dupla"><div><label for="ms_pub">Público esperado</label><input id="ms_pub" maxlength="300" placeholder="Ex.: 40 pecuaristas da região, clientes da revenda X"></div><div><label for="ms_val">Verba pedida (R$)</label><input id="ms_val" inputmode="decimal" placeholder="0,00"><span class="meta">Deixe em branco se não precisar de verba.</span></div></div>
