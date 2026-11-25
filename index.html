@@ -1852,7 +1852,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124223314";
+const APP_VER="20261124224145";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12082,6 +12082,8 @@ const bdValor=b=>(Number(b.qtd_total)||0)*(Number(b.valor_unit)||0);
 const bdDias=d=>d?Math.floor((Date.now()-new Date(d+"T12:00:00").getTime())/864e5):0;
 const BD_STATUS_COR={"Pendente":"amarelo","Aprovada":"azul","Entregue":"verde","Recusada":"vermelho","Cancelada":"cinza","Histórico":"cinza"};
 const mkCusto=a=>a.fin==="Sem custo"?0:(Number(a.valor_real)||0)>0?Number(a.valor_real):(Number(a.valor_prev)||0);
+/* investimento para o resultado do evento: o valor da ação mesmo quando ela não consome a verba da safra (Sem custo) */
+const mkInvest=a=>(Number(a.valor_real)||0)>0?Number(a.valor_real):(Number(a.valor_prev)||0);
 const MK_FIN=["Provisionada","Aprovada","Paga","Sem custo"];
 const MK_FIN_COR={"Provisionada":"amarelo","Aprovada":"azul","Paga":"verde","Sem custo":"cinza"};
 const MK_FIN_TXT={"Provisionada":"reservada na verba, ainda não aprovada","Aprovada":"aprovada, ainda não paga","Paga":"já debitada da verba","Sem custo":"não usa verba"};
@@ -12534,7 +12536,7 @@ function mkFormHTML(a){
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
     <div class="dupla"><div><label for="mk_fin">Situação financeira</label><select id="mk_fin">${MK_FIN.map(t=>`<option ${t===mkFin(a)?"selected":""}>${t}</option>`).join("")}</select><span class="meta">Provisionada: reservada · Aprovada: a pagar · Paga: já debitada da verba</span></div>
       <div><label for="mk_pg">Pago em</label><input id="mk_pg" type="date" value="${esc(a.pago_em||"")}"></div></div>
-    ${mkLinhas(a).length?`<p class="meta" style="margin:0">O previsto e o realizado são a soma dos custos lançados no cartão da ação.</p>`:""}<div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
+    ${mkLinhas(a).length?`<p class="meta" style="margin:0"><strong>Os valores abaixo ficam travados porque vêm dos custos lançados no cartão da ação.</strong> Para mudar, abra o cartão e edite o custo na lista de custos.</p>`:""}<div class="dupla"><div><label for="mk_vp">Valor previsto (R$)</label><input id="mk_vp" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_prev?esc(String(a.valor_prev).replace(".",",")):""}"></div>
       <div><label for="mk_vr">Valor realizado (R$)</label><input id="mk_vr" inputmode="decimal" ${mkLinhas(a).length?"readonly":""} value="${a.valor_real?esc(String(a.valor_real).replace(".",",")):""}"><span class="meta">Preencha quando a ação tiver custo fechado.</span></div></div>
     <div class="dupla"><div><label for="mk_resp">Responsável comercial</label><select id="mk_resp"><option value="">—</option>${(()=>{const ehC=p=>p.perfil==="Comercial Barenbrug"||(Array.isArray(p.perfis)&&p.perfis.includes("Comercial Barenbrug"));const o=p=>`<option value="${esc(p.id)}" ${a.responsavel===p.id?"selected":""}>${esc(p.nome)}${ehC(p)?"":" · "+esc(p.perfil||"")}</option>`;const C=P.filter(ehC),O=P.filter(p=>!ehC(p));return `<optgroup label="Comercial Barenbrug">${C.map(o).join("")}</optgroup>${O.length?`<optgroup label="Outros (Marketing, Inside Sales)">${O.map(o).join("")}</optgroup>`:""}`;})()}</select><span class="meta">O comercial Barenbrug que responde pela ação.</span></div>
       <div><label for="mk_rc">RC envolvido</label><input id="mk_rc" list="mk_rc_l" maxlength="120" value="${esc(a.rc_envolvido||"")}" placeholder="O RC que pediu ou participa"><datalist id="mk_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist><span class="meta">Para saber depois quantas ações cada RC teve.</span></div>
@@ -12657,7 +12659,7 @@ function vMkVendas(a){
   if(a.agrupador)return "";const g=ehMkt();
   if(!a.mede_vendas){return g?`<section class="bloco mk-vd"><label class="check"><input type="checkbox" data-a="mk-mede" data-v="1"> <span><strong>Mensurar o resultado em vendas</strong> (venda direta Barenbrug, sell-in)</span></label><p class="meta" style="margin:4px 0 0">Marque quando a ação usa verba institucional e você quer saber quanto ela gerou de venda. Ela passa a aparecer em Eventos e resultado, com o mesmo custo deste cartão. Ações feitas com RC, que não dá para medir, ficam desmarcadas.</p></section>`:"";}
   if(S.ev===undefined)carregarEventos();
-  const e=(S.ev||[]).find(x=>x.mkt_acao_id===a.id);const c=e?evCalc({...e,custo:mkCusto(a)}):null;const k=(e&&e.criterios)||{};
+  const e=(S.ev||[]).find(x=>x.mkt_acao_id===a.id);const c=e?evCalc({...e,custo:mkInvest(a)}):null;const k=(e&&e.criterios)||{};
   const dt=x=>x?String(x).slice(0,10).split("-").reverse().join("/"):"";
   return `<section class="bloco mk-vd"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><h2 class="sec" style="margin:0">Resultado em vendas</h2>${g?`<label class="check"><input type="checkbox" data-a="mk-mede" data-v="0" checked> <span>Mensurar o resultado em vendas</span></label>`:""}</div>
     ${!e?`<div class="carregando">Carregando o resultado…</div>`:`<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:8px 0">
@@ -12933,7 +12935,7 @@ function vAcoesEventos(){
   if(S.ev===undefined){carregarEventos();return `<div class="carregando">Carregando os eventos…</div>`;}
   const adm=ehAdmin()&&!S.demo,mk=ehMkt();if(mk&&!S.mk)carregarMkt();
   const AC=id=>(S.mk||[]).find(x=>x.id===id);
-  const E=(S.ev||[]).filter(e=>{if(!e.mkt_acao_id||!S.mk)return true;const a=AC(e.mkt_acao_id);return !a||a.mede_vendas;}).map(e=>{const a=e.mkt_acao_id&&AC(e.mkt_acao_id);return a?{...e,custo:mkCusto(a),_acao:a}:e;});
+  const E=(S.ev||[]).filter(e=>{if(!e.mkt_acao_id||!S.mk)return true;const a=AC(e.mkt_acao_id);return !a||a.mede_vendas;}).map(e=>{const a=e.mkt_acao_id&&AC(e.mkt_acao_id);return a?{...e,custo:mkInvest(a),_acao:a}:e;});
   const C=E.map(e=>[e,evCalc(e)]);const tot=C.reduce((t,[e,c])=>({custo:t.custo+c.custo,vend:t.vend+c.vend,aberto:t.aberto+c.aberto,n:t.n+c.n,gerado:t.gerado+c.gerado}),{custo:0,vend:0,aberto:0,n:0,gerado:0});
   const atu=E.map(e=>e.atualizado_em).filter(Boolean).sort().pop();
   const novo=S.evEd==="novo";
