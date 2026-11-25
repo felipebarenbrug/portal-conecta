@@ -301,6 +301,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .far-kan{grid-auto-columns:minmax(220px,1fr)}
 .far-passos{grid-template-columns:repeat(4,1fr)}
 .pp .cal-filtros{margin-bottom:6px}.pp-h{font-size:14px;margin:14px 0 6px;color:var(--azul-escuro)}
+.ev-vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.ev-vid{border:1.5px solid var(--linha);border-radius:12px;padding:10px 12px;display:grid;gap:8px;background:var(--branco)}.ev-vid-l{display:flex;gap:6px;flex-wrap:wrap}.ev-vid-l .btn{padding:6px 12px;font-size:14px}
 .fm{display:grid;grid-template-columns:1fr minmax(180px,220px) 1fr;gap:14px 22px;align-items:center;margin:10px 0 4px}
 .fm-col{display:grid;gap:12px}.fm-c{grid-column:2;grid-row:1 / span 1;align-self:center;text-align:center;background:var(--azul);color:#fff;border-radius:16px;padding:16px 14px;font-weight:800;font-size:16px;line-height:1.3;box-shadow:0 0 0 6px var(--azul-claro)}
 .fm-c small{display:block;font-weight:400;font-size:12px;opacity:.9;margin-top:4px}
@@ -1852,7 +1853,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124224822";
+const APP_VER="20261124225506";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12952,6 +12953,13 @@ function vAcoesEventos(){
     <div class="metric"><span>Se fechar o que está em negociação</span><strong>${fmtK0(liqP)}</strong><span class="meta">R$ ${r1(rzP)} vendidos por R$ 1 investido</span></div>
     ${rz>=2?(()=>{const d0=E.map(e=>e.data_ini).filter(Boolean).sort()[0];const dias=d0?Math.max(0,Math.round((Date.now()-new Date(d0+"T12:00"))/864e5)):null;
       return `<div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Referência de mercado${inf("Patrocínio de evento: o esperado é vender de 2 a 4 vezes o que se investe (Eventbrite, citado pela IMPACT). Eventos B2B medidos pela venda fechada: de 3 a 5 vezes em até 180 dias é considerado saudável, e abaixo de 2 vezes é baixo (Vendelux). A venda de um evento técnico fecha ao longo do ciclo comercial, então o retorno tende a crescer com o tempo.")}</span><strong>2 a 4 para 1</strong><span class="meta">os eventos estão em ${r1(rz)} para 1${dias!=null?` em ${dias<60?dias+" dias":Math.round(dias/30)+" meses"}`:""}, dentro do esperado para patrocínio de eventos${rz>=3?" e na faixa saudável de 3 a 5 para 1 em até 180 dias":""} · fontes: Eventbrite e Vendelux</span></div>`;})():""}</div>`;})():""}`:""}
+  ${E.length?(()=>{const nf0=v=>Math.round(+v||0).toLocaleString("pt-BR");const P=E.filter(e=>+e.publico>0&&+e.custo>0);if(!P.length)return "";const pes=P.reduce((t,e)=>t+(+e.publico),0),cus=P.reduce((t,e)=>t+(+e.custo),0);const r2=v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:10px">
+    <div class="metric"><span>Pessoas impactadas${inf("Público presente em cada evento, informado pela organização ou pelo Marketing. É gente da pecuária, presente por horas e ouvindo a Barenbrug, e não exibição de anúncio.")}</span><strong>${nf0(pes)}</strong><span class="meta">${P.map(e=>esc(e.nome)+": "+nf0(e.publico)).join(" · ")}</span></div>
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Custo por pessoa impactada</span><strong>${r2(cus/pes)}</strong><span class="meta">${P.map(e=>esc(e.nome)+" "+r2(e.custo/e.publico)).join(" · ")}</span></div>
+    <div class="metric"><span>Custo por mil pessoas (CPM do evento)${inf("CPM é o custo para impactar mil pessoas. No evento, cada uma das mil é um pecuarista presente, com tempo de conversa, palestra e visita ao estande.")}</span><strong>${fmtK0(cus/pes*1000)}</strong><span class="meta">mil pecuaristas presentes, não mil exibições de anúncio</span></div></div>`;})():""}
+  ${(()=>{if(S.evVid===undefined){S.evVid=null;sb.from("evento_videos").select("*").order("ordem").then(r=>{S.evVid=r.error?[]:(r.data||[]);render();},()=>{S.evVid=[];render();});}const V=S.evVid||[];if(!V.length)return "";const G={};V.forEach(v=>{(G[v.evento]||(G[v.evento]=[])).push(v);});
+    return `<section class="bloco"><h2 class="sec">A Barenbrug nos eventos · vídeos</h2><p class="meta" style="margin:0 0 8px">Registros da presença e da palestra da Barenbrug. Os vídeos abrem no Instagram.</p><div class="ev-vids">${Object.entries(G).map(([ev,L])=>`<div class="ev-vid"><strong>${esc(ev)}</strong><div class="ev-vid-l">${L.map((v,i)=>`<a class="btn sec" href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.legenda||("Vídeo "+(L.length>1?i+1:"")).trim())} ↗</a>`).join("")}</div></div>`).join("")}</div></section>`;})()}
   <div class="acoes" style="margin:4px 0 14px;align-items:center">${adm?`<button class="btn" data-a="ev-atualizar" ${S.evAtu?"disabled":""}>${S.evAtu?"Atualizando do CRM…":"Atualizar do CRM agora"}</button>`:""}<span class="meta">${atu?"Última leitura do CRM: "+new Date(atu).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Ainda sem leitura do CRM."}</span></div>
   ${mk?`<p class="meta" style="margin:0 0 12px">Para medir uma ação nova, abra o cartão dela no quadro e marque "Mensurar o resultado em vendas". O custo de cada evento vem do cartão da ação, então quadro e resultado mostram sempre o mesmo valor.</p>`:""}
   ${novo&&adm?evForm({}):""}
