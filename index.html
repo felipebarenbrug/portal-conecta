@@ -1852,7 +1852,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124221114";
+const APP_VER="20261124221651";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -3382,6 +3382,26 @@ async function carregarMidiaPainel(){if(S.mp!==undefined)return;S.mp=null;try{co
 const mpPct=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
 const MP_UFN={AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MT:"Mato Grosso",MS:"Mato Grosso do Sul",MG:"Minas Gerais",PA:"Pará",PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins"};
 function mpBarra(v,mx,cor){const p=mx?Math.max(2,v/mx*100):0;return `<div style="flex:1;min-width:60px;background:var(--azul-claro,#e6f6fc);border-radius:4px;height:10px;overflow:hidden"><div style="width:${p}%;height:100%;background:${cor||"var(--azul)"}"></div></div>`;}
+function vIntPersonaAlc(){const P=S.mp;if(!P||!ehMkt())return "";const D=P.dados||{},G=D.segmentacao;if(!G)return "";
+  const I=D.idade||[],U=D.uf||[];const nf=v=>Math.round(+v||0).toLocaleString("pt-BR"),pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":"—";
+  const al=x=>(+x.M||0)+(+x.F||0)+(+x.N||0);const tot=I.reduce((t,x)=>t+al(x),0);const mais=I.filter(x=>!/^(18|25)-/.test(x.faixa));const menos=I.filter(x=>/^(18|25)-/.test(x.faixa));
+  const sA=L=>L.reduce((t,x)=>t+al(x),0),sG=L=>L.reduce((t,x)=>t+(+x.gasto||0),0),sL=L=>L.reduce((t,x)=>t+(+x.leads||0),0);
+  const gT=sG(I),lT=sL(I);const cpl=L=>sL(L)?"R$ "+(sG(L)/sL(L)).toLocaleString("pt-BR",{maximumFractionDigits:2}):"—";
+  const M=I.reduce((t,x)=>t+(+x.M||0),0),F=I.reduce((t,x)=>t+(+x.F||0),0);
+  const ufA=U.reduce((t,x)=>t+(+x.alcance||0),0);const fx=G.faixas||[];const usadas=new Set(fx.flatMap(f=>f.ufs));
+  const fxA=fx.map(f=>[f.nome,f.ufs.length?U.filter(x=>f.ufs.includes(x.uf)).reduce((t,x)=>t+(+x.alcance||0),0):U.filter(x=>!usadas.has(x.uf)).reduce((t,x)=>t+(+x.alcance||0),0),f.ufs.join(", ")||"os outros estados",f.uso]);
+  const m=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const C=G.conjuntos||[],gC=C.reduce((t,x)=>t+(+x.g||0),0);
+  return `<section class="bloco" id="alc-persona"><h2 class="sec">Público e segmentação · estamos falando com a persona?</h2>
+   <p class="meta" style="margin:0 0 8px"><strong>Persona das campanhas:</strong> ${esc(G.persona||"")} Configuração dos conjuntos lida na Meta em ${new Date(G.consulta+"T12:00").toLocaleDateString("pt-BR")}.</p>
+   <div class="metrics">${m("Alcance com 35 anos ou mais",pc(sA(mais),tot),nf(sA(mais))+" pessoas")}${m("Leads com 35 anos ou mais",pc(sL(mais),lT),nf(sL(mais))+" de "+nf(lT)+" leads")}${m("Verba em menores de 35",pc(sG(menos),gT),nf(sL(menos))+" leads · custo por lead "+cpl(menos))}${m("Custo por lead 35+",cpl(mais),"contra "+cpl(menos)+" abaixo de 35")}${m("Homens no alcance",pc(M,M+F),"entre quem a Meta identifica o gênero")}</div>
+   <h3 class="pp-h">Onde a Meta entregou, pelas faixas de estados</h3>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Faixa</th><th>Estados</th><th>Uso</th><th class="val">Alcance</th><th class="val">% do alcance</th></tr></thead><tbody>${fxA.map(([n,a,u,uso])=>`<tr><td>${esc(n)}</td><td>${esc(u)}</td><td>${esc(uso)}</td><td class="val">${nf(a)}</td><td class="val">${pc(a,ufA)}</td></tr>`).join("")}</tbody></table></div>
+   <p class="meta">O alcance por estado soma mais que o total porque a mesma pessoa pode ser contada em mais de um estado. Os demais estados recebem principalmente os vídeos, o engajamento e os posts impulsionados, que rodam no Brasil todo.</p>
+   <h3 class="pp-h">Como os conjuntos estão segmentados</h3>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Campanha</th><th>Onde</th><th>Idade</th><th>Público</th><th class="val">Investido</th><th class="val">%</th></tr></thead><tbody>${C.map(x=>`<tr><td>${esc(x.c)}</td><td>${esc(x.p)}</td><td>${esc(x.i)}</td><td>${esc(x.s)}</td><td class="val">R$ ${nf(x.g)}</td><td class="val">${pc(x.g,gC)}</td></tr>`).join("")}</tbody></table></div>
+   <div class="int-2" style="margin-top:10px"><div><h3 class="pp-h">Leitura</h3><ul class="cond"><li>Sim na região e na idade de quem converte: ${pc(sL(mais),lT)} dos leads têm 35 anos ou mais, e o custo por lead deles é menor. Mas ${pc(sA(menos),tot)} do alcance e ${pc(sG(menos),gT)} da verba foram para menores de 35.</li>${(G.achados||[]).map(x=>`<li>${esc(x)}</li>`).join("")}<li>A Meta não informa profissão. Para saber se é pecuarista de verdade, a prova está no CRM: quantos leads da Meta viram MQL e venda.</li></ul></div>
+   <div><h3 class="pp-h">Próximos ajustes sugeridos</h3><ol class="ide-l">${(G.proximos||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div></div></section>`;}
 function vIntEmailAlc(){const P=S.mpEmail;if(!P||!ehMkt())return "";const D=P.dados||{},E=(D.emails||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)),B=D.bench||{};
   const nf=v=>Math.round(+v||0).toLocaleString("pt-BR"),pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%":"—";
   const sm=(L,k)=>L.reduce((t,x)=>t+(+x[k]||0),0);const ent=sm(E,"ent"),ab=sm(E,"ab"),cl=sm(E,"cl"),des=sm(E,"des");
@@ -14243,7 +14263,7 @@ function renderApp(){
       if(S.pag==="int-contas"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntContas()}</main>`;return;}
       if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
-      if(S.pag==="int-alcance"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntAlcance()}${S.mp?vIntEmailAlc():""}</main>`;return;}}
+      if(S.pag==="int-alcance"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntAlcance()}${S.mp?vIntPersonaAlc()+vIntEmailAlc():""}</main>`;return;}}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
