@@ -1882,7 +1882,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261125112211";
+const APP_VER="20261125112753";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2113,7 +2113,7 @@ function vLogin(erro){
 function msgAcesso(c){
   const pn=c.nome?", "+String(c.nome).trim().split(" ")[0]:"";
   return (c.reset?`Olá${pn}! Sua senha do Portal Conecta Barenbrug foi redefinida.`:`Olá${pn}! Seu acesso ao Portal Conecta Barenbrug está liberado.`)
-    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n(digite exatamente assim, com o Bb- do começo e as letras maiúsculas e minúsculas)\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
+    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n(digite exatamente assim, respeitando letras maiúsculas, minúsculas e símbolos)\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
 }
 function caixaCred(c){
   const msg=msgAcesso(c);S.copias=S.copias||{};S.copias[c.k]=msg;

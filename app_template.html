@@ -2113,7 +2113,7 @@ function vLogin(erro){
 function msgAcesso(c){
   const pn=c.nome?", "+String(c.nome).trim().split(" ")[0]:"";
   return (c.reset?`Olá${pn}! Sua senha do Portal Conecta Barenbrug foi redefinida.`:`Olá${pn}! Seu acesso ao Portal Conecta Barenbrug está liberado.`)
-    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n(digite exatamente assim, com o Bb- do começo e as letras maiúsculas e minúsculas)\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
+    +`\n\nEndereço: ${PORTAL_URL}\nE-mail: ${c.email}\nSenha provisória: ${c.senha}\n(digite exatamente assim, respeitando letras maiúsculas, minúsculas e símbolos)\n\nNo primeiro acesso o portal pede para você criar uma senha só sua. Funciona no celular e no computador.`;
 }
 function caixaCred(c){
   const msg=msgAcesso(c);S.copias=S.copias||{};S.copias[c.k]=msg;
