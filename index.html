@@ -1882,7 +1882,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261125111245";
+const APP_VER="20261125111809";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -9438,7 +9438,7 @@ function vAcomp(){
   const corpo=S.pag==="gestao-pir"?gtPir():S.pag==="gestao-engaja"?gtEngaja():S.pag==="gestao-app"?gtApp():S.pag==="gestao-nps"?gtNps():S.pag==="gestao-msg"?gtMsg():S.pag==="gestao-vinc"?gtVinc():S.pag==="gestao-cad"?gtCad():S.pag==="gestao-pessoas"?gtPessoas():S.pag==="gestao-times"?gtTimes():S.pag==="gestao-rank"?gtRanking():gtHome(R);
   return `<div><h1 class="titulo">${tit}</h1><p class="sub">${sub}</p></div>${corpo}`;
 }
-function vcPainel(){const q=finNorm(S.vcQ||""),pf=S.vcPf||"";const E=(S.equipe||[]).filter(x=>x.id!==(S.user&&S.user.id));
+function vcPainel(){const q=finNorm(S.vcQ||""),pf=S.vcPf||"";const E=(S.equipe||[]).filter(x=>x.id!==(S.user&&S.user.id)&&(souMasterAdm()||!x.master));
   const perfis=[...new Set(E.map(x=>x.perfil).filter(Boolean))].sort();
   const L=E.filter(x=>(!pf||x.perfil===pf||(Array.isArray(x.perfis)&&x.perfis.includes(pf)))&&(!q||finNorm((x.nome||"")+" "+(x.perfil||"")).includes(q))).slice(0,q||pf?40:8);
   return `<section class="bloco" id="vc_sec"><h2 class="sec">Ver o portal como outra pessoa</h2><p class="meta" style="margin:0 0 8px">Escolha a pessoa para ver as seções, abas e menus exatamente como ela vê. Para voltar, use o botão na faixa preta do topo.</p>
@@ -9722,7 +9722,7 @@ function vProvaExtra(id){const P=PROVAS_EXTRA[id],nota=S.notas[id],feita=S.feita
   if(feita&&!(S.res&&S.quizExtra===id))return `<section class="bloco"><h2 class="sec">${P.n}</h2><div class="vazio">Você foi aprovado${nota!=null?" com "+nota+" de "+P.quiz.length+" acertos":""}.</div></section>`;
   return `<section class="bloco"><h2 class="sec">${P.n}</h2><p class="sub" style="margin:0 0 10px">Aprovação com ${P.min} de ${P.quiz.length} acertos.</p>${vQuiz(P.quiz,id)}</section>`;}
 async function carregarEquipe(){
-  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,perfis,nivel,telefone,ultimo_acesso,canal_id,comercial_resp,gerente_is");
+  const {data:profs}=await sb.from("profiles").select("id,nome,email,perfil,perfis,nivel,master,telefone,ultimo_acesso,canal_id,comercial_resp,gerente_is");
   try{const {data:cl}=await sb.from("canais").select("id,nome,tier,comercial_id").order("nome");S.canaisLista=cl||[];}catch(e){S.canaisLista=[];}
   const {data:prog}=await sb.from("progresso").select("user_id,etapa,nota,concluido_em");
   const porUser={},quando={};(prog||[]).forEach(r=>{(porUser[r.user_id]=porUser[r.user_id]||{})[r.etapa]=r.nota;(quando[r.user_id]=quando[r.user_id]||{})[r.etapa]=r.concluido_em;});
@@ -9739,7 +9739,7 @@ async function carregarEquipe(){
     let soma=0; feitasAtivas.forEach(id=>soma+=(rs[id]/totalQ(id))*100);
     const conhecimento=feitasAtivas.length?Math.round(soma/feitasAtivas.length):null;
     const cult={};ETAPAS_ATIVAS.forEach(id=>{cult[id]=rs[id]!=null?Math.round(rs[id]/totalQ(id)*100):null;});
-    return {id:p.id,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,perfis:Array.isArray(p.perfis)&&p.perfis.length?p.perfis:[p.perfil],nivel:p.nivel||"Padrão",comercial_resp:p.comercial_resp||null,gerente_is:!!p.gerente_is,ultimo_acesso:p.ultimo_acesso,canal_id:p.canal_id||null,
+    return {id:p.id,master:!!p.master,nome:p.nome||p.email,email:p.email,telefone:p.telefone,perfil:p.perfil,perfis:Array.isArray(p.perfis)&&p.perfis.length?p.perfis:[p.perfil],nivel:p.nivel||"Padrão",comercial_resp:p.comercial_resp||null,gerente_is:!!p.gerente_is,ultimo_acesso:p.ultimo_acesso,canal_id:p.canal_id||null,
             feitas:feitasAtivas.length, conhecimento, cult, pontos:Object.values((S.pontosPorUser||{})[p.id]||{}).reduce((a,v)=>a+v,0)};
   }).sort((a,b)=> (b.feitas-a.feitas) || ((b.conhecimento||0)-(a.conhecimento||0)) || a.nome.localeCompare(b.nome));
 }
@@ -9777,7 +9777,7 @@ function vUsuarioAdmin(){
   const pelPerfil=admF?SECOES_ACESSO.map(x=>x[0]):[...(afTem("Comercial Barenbrug")?["inteligencia","acoes-mkt","brindes"]:[]),...(afTem("Marketing")?["acoes-mkt","brindes"]:[]),...(afTem("Financeiro")?["financeiro"]:[])];
   const podeAbas=!admF||(souMasterAdm()&&!S.adminUser.master&&S.adminUser.id!==S.user.id);const secAbas=podeAbas?[...new Set([...ac,...pelPerfil])].filter(id=>!(S.adminForm.secoes_ocultas||[]).includes(id)&&abasLista(id).length):[];
   return `<button class="voltar" data-a="pag" data-v="${S.gtVolta||"gestao-pessoas"}">‹ ${esc((GT_ABAS.find(x=>x[0]===(S.gtVolta||"gestao-pessoas"))||["","Pessoas"])[1])}</button>
-  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Os dados e documentos ficam separados dos acessos: cada aba tem o próprio botão de salvar.</p>${ehMaster()&&!ehEu?`<div class="acoes" style="margin:8px 0 0"><button class="btn sec" data-a="ver-como" data-v="${esc(u.id)}">Ver o portal como ${esc((S.adminForm.nome||"esta pessoa").split(" ")[0])}</button><span class="meta">Abre o portal com o perfil e as seções desta pessoa. Salve as alterações antes.</span></div>`:""}</div>
+  <div><h1 class="titulo">${esc(S.adminForm.nome||u.email)}</h1><p class="sub">${esc(u.email)} · perfil <strong>${esc(u.perfil)}</strong> · último acesso <strong>${fmtDataHora(u.ultimo_acesso)}</strong>. Os dados e documentos ficam separados dos acessos: cada aba tem o próprio botão de salvar.</p>${ehMaster()&&!ehEu&&(souMasterAdm()||!u.master)?`<div class="acoes" style="margin:8px 0 0"><button class="btn sec" data-a="ver-como" data-v="${esc(u.id)}">Ver o portal como ${esc((S.adminForm.nome||"esta pessoa").split(" ")[0])}</button><span class="meta">Abre o portal com o perfil e as seções desta pessoa. Salve as alterações antes.</span></div>`:""}</div>
   ${(()=>{const T=[["dados","Dados e documentos"],["acessos","Acessos"],["evolucao","Evolução nos cursos"],["seguranca","Senha e segurança"]];const t=S.usrTab||"dados";return `<div class="usr-tabs" role="tablist" aria-label="Partes do perfil">${T.map(([k,n])=>`<button class="chip" role="tab" data-a="usr-tab" data-v="${k}" aria-selected="${t===k}" aria-pressed="${t===k}">${n}</button>`).join("")}</div>`;})()}
   ${(S.usrTab||"dados")==="dados"?`
   <form class="form-card full" id="f-usuario" novalidate><h2 class="sec" style="margin:0">Dados da pessoa</h2><div class="usr-campos">
@@ -13737,7 +13737,7 @@ document.addEventListener("change",async ev=>{
       if(old&&/^brindes\//.test(old)){try{await sb.storage.from("mkt").remove([old]);}catch(e){}}S.bd=S.bd.map(x=>x.id===id?data:x);render();aviso("Foto atualizada.");}catch(e){aviso("Não foi possível enviar a foto.");}return;}
 });
 document.addEventListener("submit",async ev=>{
-  const f=ev.target;if(!f||!/^f-(mk|bd)-/.test(f.id))return;ev.preventDefault();
+  const f=ev.target;if(!f||!(/^f-(mk|bd)-/.test(f.id)||/^f-(pj|pjc|b2c|gc|is-custo|is-margem|rvm|vit)$/.test(f.id)))return;ev.preventDefault();
   const val=id=>{const e=f.querySelector("#"+id);return e?e.value.trim():"";};
   const btn=ev.submitter||f.querySelector("button[type=submit]");
   if(f.id==="f-mk-acao"){if(!ehMkt())return;const vp=mkNum(val("mk_vp")),vr=mkNum(val("mk_vr"));if(!(vp>=0)||!(vr>=0)){aviso("Confira os valores (use números como 1.500,00).");return;}
