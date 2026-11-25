@@ -2169,12 +2169,18 @@ function vProgPerfil(){
     <p class="meta" style="margin:0 0 10px">${R.pct>=100?"Tudo em dia. Obrigado!":`Próximo passo: <strong>${esc(prox.t)}</strong>. O que conta para o seu perfil (${esc(S.perfil)}): dados do cadastro${R.I.some(x=>x.g==="Cursos da Academia")?", cursos da Academia":""}${R.I.some(x=>x.g==="Programas")?" e os cursos dos programas":""}.`}</p>
     ${grupos.map(g=>{const L=R.I.filter(x=>x.g===g),o=L.filter(x=>x.ok).length;return `<details class="lote" ${o<L.length?"open":""}><summary>${esc(g)} · ${o} de ${L.length}</summary><div class="lista" style="margin-top:6px">${L.map(item).join("")}</div></details>`;}).join("")}</section>`;
 }
+/* Comercial Barenbrug: ver o portal como os RCs e as revendas ligados a ele (admin ve todos no painel de gestao) */
+function vcVincHTML(){if(S.vcVinc===undefined){S.vcVinc=null;sb.rpc("vc_vinculados").then(r=>{S.vcVinc=r.error?[]:(r.data||[]);render();},()=>{S.vcVinc=[];render();});}
+  const L=S.vcVinc;
+  return `<section class="cx" id="vc_vinc"><h2 class="sec">Ver o portal como os seus RCs e revendas</h2><p class="meta" style="margin:0 0 8px">Veja as seções, abas e menus como as pessoas ligadas a você enxergam: os RCs que têm você como responsável comercial e as pessoas das revendas que você atende. É só para olhar, nada é gravado. Para voltar, use o botão na faixa preta do topo.</p>
+   ${L===null?`<div class="carregando">Carregando…</div>`:L.length?`<div class="lista">${L.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"—")}</strong><span class="meta">${esc((Array.isArray(x.perfis)&&x.perfis.length?x.perfis:[x.perfil]).join(" + "))} · ${esc(x.vinculo||"")}${x.ultimo_acesso?"":" · nunca entrou"}</span></div><button class="btn sec" data-a="ver-como" data-v="${esc(x.id)}">Ver como</button></div>`).join("")}</div>`:`<div class="vazio">Ainda não há RCs ou pessoas de revenda ligadas a você no portal.</div>`}</section>`;}
 function vPerfil(){
   return `<button class="voltar" data-a="inicio">‹ Início</button><div><h1 class="titulo">Meu perfil</h1><p class="sub">Mantenha seus dados atualizados. Os campos com <strong>*</strong> são obrigatórios. Seu perfil de acesso é <strong>${esc(S.perfil)}</strong>.</p><p class="so-mob" style="margin:8px 0 0"><button type="button" class="btn sec" data-a="sair">Sair do portal</button></p></div>
   ${S.demo?"":vProgPerfil()}
   ${S.demo?"":pushPerfilHTML()}
   ${S.demo||S.verComo?"":avisosRecebidosHTML()}
   ${S.demo||S.verComo?"":notifPrefHTML()}
+  ${S.demo||S.verComo||ehMaster()||!temPerfil("Comercial Barenbrug")?"":vcVincHTML()}
   <div class="cx" id="prog-dados"><div class="autor">${avatar(S.user.id,S.profile.nome,72)}<div style="gap:6px"><strong>Sua foto</strong><span class="meta">Aparece ao lado do seu nome nas perguntas, respostas e comunicados.</span><label class="btn sec" for="foto_arq" style="width:fit-content;padding:8px 14px">${S.profile.foto_url?"Trocar foto":"Escolher foto"}</label><input id="foto_arq" type="file" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"></div></div></div>
   <form class="form-card" id="f-cadastro">${camposPerfil(S.perfil)}
     ${S._erro?`<div class="erro" role="alert">${esc(S._erro)}</div>`:""}
@@ -2209,7 +2215,7 @@ function vcSbSoLeitura(real){const bloq={data:null,error:{message:"Modo de visua
     if(k==="storage")return {from:b=>{const r=t.storage.from(b);return new Proxy(r,{get(o,m){return ["upload","remove","update","move","copy"].includes(m)?(()=>{aviso("Modo de visualização: nada é salvo.");return Promise.resolve(bloq);}):(typeof o[m]==="function"?o[m].bind(o):o[m]);}});}};
     if(k==="auth")return new Proxy(t.auth,{get(a,m){return ["updateUser","signOut","mfa","resetPasswordForEmail"].includes(m)?(m==="mfa"?a.mfa:(()=>{aviso("Modo de visualização: nada é alterado no login.");return Promise.resolve(bloq);})):(typeof a[m]==="function"?a[m].bind(a):a[m]);}});
     const v=t[k];return typeof v==="function"?v.bind(t):v;}});}
-async function verComoEntrar(id){const {data:t,error}=await sb.from("profiles").select("*").eq("id",id).maybeSingle();if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
+async function verComoEntrar(id){const r0=await sb.rpc("vc_perfil",{p_alvo:id});const t=Array.isArray(r0.data)?r0.data[0]:r0.data;const error=r0.error;if(error||!t){aviso("Não foi possível abrir a visão desta pessoa.");return;}
   S._real={profile:S.profile,perfil:S.perfil,perfis:S.perfis,nivel:S.nivel,secao:S.secao,pag:S.pag,adminUser:S.adminUser};
   S.profile={...t,precisa_trocar_senha:false};S.perfil=t.perfil||"RC";aplicaPerfis(t);S._sbVC=sb;sb=vcSbSoLeitura(sb);S.verComo={nome:(t.nome||t.email||"").trim(),perfil:S.perfil};
   ["crm","mapa","leadsCache","canais","mk","pj","evtPgd","fin","loOk","msgCont","crmOrig","isMapa","mrc","loRes","loRows","loVistos","rcCadMeu","rcCads","rcCadForm","rcCadBanco","bd","bdReqs"].forEach(k=>{S[k]=k==="mapa"||k==="pj"||k==="mk"||k==="evtPgd"||k==="crmOrig"||k==="isMapa"?undefined:null;});S.secao=null;S.pag="hub";render();window.scrollTo(0,0);}
