@@ -194,6 +194,10 @@ button.etapa-b:hover h3{text-decoration:underline}
 .chip[aria-pressed=true]{background:var(--azul-escuro);color:var(--branco);box-shadow:none}
 .vazio{padding:20px;background:var(--branco);color:var(--apagado);border-radius:6px}
 
+.cert-promo{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:center;background:var(--branco);border:2px solid var(--amarelo);border-radius:12px;padding:16px 18px;margin:0 0 14px}
+.cert-promo h2{margin:2px 0 6px;font-size:22px;color:var(--azul-escuro)}.cert-promo p{margin:0 0 10px;font-size:15px}.cert-promo-p{display:grid;gap:4px}.cert-promo-p .barra{height:10px;background:var(--papel);border-radius:6px;overflow:hidden}.cert-promo-p .barra i{display:block;height:100%;background:var(--amarelo)}.cert-promo-p span{font-size:13px;color:var(--apagado)}
+.cert-promo-m{position:relative;width:300px;height:212px;overflow:hidden;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.14)}.cert-promo-e{width:1123px;height:794px;transform:scale(.2672);transform-origin:0 0;pointer-events:none}.cert-promo-sel{position:absolute;top:8px;right:8px;background:var(--azul-escuro);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.05em}
+@media (max-width:700px){.cert-promo{grid-template-columns:1fr}.cert-promo-m{justify-self:center}}
 .ct-wrap{width:100%;overflow:hidden;position:relative;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.12)}.ct-esc{width:1123px;height:794px;transform-origin:0 0}
 .ct{width:1123px;height:794px;background:#fff;color:#1E1E1E;position:relative;display:grid;grid-template-columns:86px 1fr;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden}
 .ct-faixa{background:#FFDB00;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 46px;gap:4px}.ct-faixa{position:relative}.ct-v{position:absolute;left:59px;bottom:46px;transform:rotate(-90deg);transform-origin:0 100%;font-size:26px;line-height:32px;letter-spacing:.18em;font-weight:400;white-space:nowrap}.ct-v b{font-weight:900}
@@ -1867,7 +1871,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124231144";
+const APP_VER="20261124231450";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6485,6 +6489,10 @@ function vTrilha(){
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
   return `${heroAcademia()}
   <div><h2 class="sec">Cursos</h2><p class="sub">Os módulos liberam um de cada vez: termine os vídeos do módulo, faça a prova e, aprovado (70%, ou o mínimo indicado na prova), o próximo módulo é liberado. Cada prova aprovada vale pontos no ranking: 10 por acerto, mais 20 de bônus se passar na primeira tentativa.</p></div>
+  ${!cursoFeito()?(()=>{const faltam=HIB_CORE.filter(id=>!S.feitas.includes(id)).length,feitos=HIB_CORE.length-faltam;const msg=faltam===1?"Falta só 1 módulo para o seu certificado!":faltam<=2?`Falta pouco: só ${faltam} módulos para o seu certificado.`:`Conclua os ${HIB_CORE.length} módulos e receba o seu certificado.`;
+    return `<section class="cert-promo"><div class="cert-promo-t"><span class="rot">Certificado da Academia de Híbridos Barenbrug</span><h2>${msg}</h2><p>Ao concluir os cinco módulos, com aprovação nas provas, você recebe o certificado de <strong>Especialista em Pastagens Híbridas de Alta Produtividade</strong>, com o seu nome, para baixar em PDF e compartilhar no LinkedIn e nas redes.</p>
+      <div class="cert-promo-p"><div class="barra"><i style="width:${feitos/HIB_CORE.length*100}%"></i></div><span>${feitos} de ${HIB_CORE.length} módulos do certificado</span></div></div>
+      <div class="cert-promo-m" aria-hidden="true"><div class="cert-promo-e">${certHTML().replace('id="ct-doc"','')}</div><span class="cert-promo-sel">Prévia</span></div></section>`;})():""}
   ${cursoFeito()&&!fim?`<div class="aviso-est"><strong>Certificado liberado</strong>Você concluiu os cinco cursos da Academia. <button class="link" data-a="cert">Ver certificado</button></div>`:""}
   ${fim?`<section class="proximo"><div><span class="rot">Todos os cursos concluídos</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Seu próximo módulo · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
@@ -9132,7 +9140,7 @@ function vBase(){
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
 }
 const CERT_CURSOS=[["sabia","<i>Brachiaria</i> híbrida Sabiá"],["cayana","<i>Brachiaria</i> híbrida Cayana"],["carcara","<i>Megathyrsus maximus</i> Carcará"],["melhoramento","Melhoramento de forrageiras tropicais"],["qualcapim","Posicionamento técnico e comercial dos híbridos"]];
-function certDados(){const C=CERT_CURSOS.map(([id,n])=>{const e=ETAPAS.find(x=>x.id===id)||{};const tot=(e.quiz||[]).length;const ac=+((S.notas||{})[id])||0;return {id,n,pct:tot?Math.min(100,Math.round(ac/tot*100)):null,em:(S.concEm||{})[id]||null};});
+function certDados(){const C=CERT_CURSOS.map(([id,n])=>{const e=ETAPAS.find(x=>x.id===id)||{};const tot=(e.quiz||[]).length;const ac=+((S.notas||{})[id])||0;return {id,n,pct:tot&&(S.feitas||[]).includes(id)?Math.min(100,Math.round(ac/tot*100)):null,em:(S.concEm||{})[id]||null};});
   const ps=C.filter(c=>c.pct!=null);const media=ps.length?Math.round(ps.reduce((t,c)=>t+c.pct,0)/ps.length):null;
   const dts=C.map(c=>c.em).filter(Boolean).sort();const fim=dts.length?new Date(dts[dts.length-1]):new Date();
   const uid=String((S.user&&S.user.id)||"").replace(/-/g,"").toUpperCase();const cod="ACH-"+fim.getFullYear()+"-"+uid.slice(0,4)+"-"+uid.slice(-4);
