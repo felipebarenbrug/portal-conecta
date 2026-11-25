@@ -1533,8 +1533,9 @@ const PROVA=[["boas",1],["hibrido",1],["sabia",0],["sabia",1],["cayana",1],["car
 // Lançamento inicial: só Sabiá, Cayana e Carcará ativos. Os demais ficam ocultos
 // (definições preservadas) até ter material — basta incluir o id na lista abaixo.
 const ETAPAS_ATIVAS=["sabia","cayana","carcara","melhoramento","qualcapim"];
-// O certificado e o prazo de conclusão continuam valendo pelos três híbridos; os demais cursos somam pontos no ranking.
-const HIB_CORE=["sabia","cayana","carcara"];
+// Desde 25/11/2026 os cinco cursos (Sabiá, Cayana, Carcará, Melhoramento e Qual capim) são obrigatórios e liberam o certificado.
+const HIB_NOVOS_DESDE="2026-11-25";const HIB_ANTIGOS=["sabia","cayana","carcara"];
+const HIB_CORE=["sabia","cayana","carcara","melhoramento","qualcapim"];
 const MIN_PCT={qualcapim:.75};
 ETAPAS.forEach(e=>e.on=ETAPAS_ATIVAS.includes(e.id));
 const ETAPAS_ON=ETAPAS.filter(e=>e.on);
@@ -1798,13 +1799,13 @@ function iniciarWatchdog(){
 const PRAZO_CURSO_DIAS=90;
 const cursoFeito=()=>HIB_CORE.every(id=>S.feitas.includes(id));
 function diasDesdeAcesso(){const d=S.profile&&S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):NaN;return isNaN(d)?0:Math.floor((Date.now()-d)/86400000);}
-const CURSOS_OBRIG=[["hibridos","Academia de Híbridos","Trilha e provas de Sabiá, Cayana e Carcará","academia","trilha"],["conecta_rv","Conecta Revendas","Vídeos e prova do programa","conecta-revendas","rv-curso"],["conecta_rc","Conecta RC","Vídeos e prova do programa","conecta-rc","rc-curso"],["playbook_is","Playbook do Inside Sales","Leitura e prova do Playbook","inside-sales","is-playbook"]];
+const CURSOS_OBRIG=[["hibridos","Academia de Híbridos","Trilha e provas de Sabiá, Cayana, Carcará, Melhoramento de forrageiras e Qual capim encaixa melhor","academia","trilha"],["conecta_rv","Conecta Revendas","Vídeos e prova do programa","conecta-revendas","rv-curso"],["conecta_rc","Conecta RC","Vídeos e prova do programa","conecta-rc","rc-curso"],["playbook_is","Playbook do Inside Sales","Leitura e prova do Playbook","inside-sales","is-playbook"]];
 const CURSO_DESDE={playbook_is:"2026-11-18"};
 const cursosObrigDe=pf=>Array.isArray(pf&&pf.cursos_obrig)?pf.cursos_obrig:(pf&&pf.exige_curso===false?[]:["hibridos"]);
 const cursoOk=id=>id==="hibridos"?cursoFeito():S.feitas.includes(id);
 function cursosPend(){if(!S.profile||ehAdmin()||temPerfil("Financeiro"))return [];return CURSOS_OBRIG.filter(c=>cursosObrigDe(S.profile).includes(c[0])&&!cursoOk(c[0]));}
 function prazoCursoTxt(){const d=S.profile&&S.profile.acesso_desde?Date.parse(S.profile.acesso_desde):NaN;return isNaN(d)?"":new Date(d+PRAZO_CURSO_DIAS*86400000).toLocaleDateString("pt-BR");}
-function bloqueadoCurso(){return cursosPend().some(c=>{const d0=CURSO_DESDE[c[0]];if(!d0)return diasDesdeAcesso()>PRAZO_CURSO_DIAS;return Math.min(diasDesdeAcesso(),Math.floor((Date.now()-Date.parse(d0))/86400000))>PRAZO_CURSO_DIAS;});}
+function bloqueadoCurso(){return cursosPend().some(c=>{const d0=c[0]==="hibridos"&&HIB_ANTIGOS.every(id=>S.feitas.includes(id))?HIB_NOVOS_DESDE:CURSO_DESDE[c[0]];if(!d0)return diasDesdeAcesso()>PRAZO_CURSO_DIAS;return Math.min(diasDesdeAcesso(),Math.floor((Date.now()-Date.parse(d0))/86400000))>PRAZO_CURSO_DIAS;});}
 function secaoLiberada(v){if(!bloqueadoCurso())return true;if(v==="academia"||v==="mensagens")return true;return cursosPend().some(c=>c[3]===v);}
 const PAGS_CURSO={"conecta-rc":["rc-curso","rc-etapa"],"conecta-revendas":["rv-curso","rv-etapa"],"inside-sales":["is-playbook"]};
 function fmtDataHora(s){if(!s)return"nunca acessou";const d=new Date(s);if(isNaN(d))return"—";return d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
@@ -1815,11 +1816,11 @@ const TOURS={
     ["O que é este portal","Um só lugar para treinar os híbridos, achar materiais de apoio à venda e acompanhar os programas comerciais da Barenbrug."],
     ["Início","A página inicial reúne os comunicados da Barenbrug e as perguntas e respostas de todos. Faça a sua pergunta ali mesmo. O sino no topo mostra quantas novidades chegaram desde a sua última visita."],
     ["Suas áreas","Ao lado do início ficam as áreas a que você tem acesso, como Academia de Híbridos e Conecta RC. Clique em uma para entrar."],
-    ["Academia de Híbridos","Os cursos em vídeo, com prova, de Sabiá, Cayana, Carcará e de forrageiras tropicais. Concluindo os três híbridos, você ganha o certificado."],
+    ["Academia de Híbridos","Os cursos em vídeo, com prova, de Sabiá, Cayana, Carcará e de forrageiras tropicais. Concluindo os cinco cursos, você ganha o certificado."],
     ["Seu perfil e sessão","No topo, em 'Meu perfil', você completa seus dados e troca a senha. Por segurança, a sessão expira após um tempo sem uso — é só entrar de novo. Toque no '?' a qualquer momento para rever este tour."]
   ]},
   academia:{t:"Academia de Híbridos",p:[
-    ["Cursos","Os módulos liberam em sequência: assista aos vídeos, faça a prova e, aprovado, o próximo abre. Concluindo Sabiá, Cayana e Carcará, sai o certificado; cada prova aprovada soma pontos no ranking."],
+    ["Cursos","Os módulos liberam em sequência: assista aos vídeos, faça a prova e, aprovado, o próximo abre. Concluindo os cinco cursos (Sabiá, Cayana, Carcará, Melhoramento de forrageiras e Qual capim encaixa melhor), sai o certificado; cada prova aprovada soma pontos no ranking."],
     ["Base de conhecimento","Vídeos, apostilas, podcasts e os casos de sucesso reais de fazendas — material de apoio liberado desde o primeiro acesso."]
   ]},
   "conecta-rc":{t:"Conecta RC",p:[
@@ -1853,7 +1854,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124225506";
+const APP_VER="20261124230544";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2152,7 +2153,7 @@ function progItens(){
   const nomeEt=id=>(ETAPAS.find(e=>e.id===id)||{}).n||id;
   /* só entra no perfil o curso que vale para a pessoa: o que o administrador marcou como obrigatório e os do perfil dela */
   const OB=cursosObrigDe(P),hibOb=OB.includes("hibridos"),com=temPerfil("Comercial Barenbrug");
-  if(hibOb){HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os três híbridos liberam o certificado."}));
+  if(hibOb){HIB_CORE.forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia",obrig:true,d:"Obrigatório: os cinco cursos liberam o certificado."}));
     ETAPAS_ATIVAS.filter(id=>!HIB_CORE.includes(id)).forEach(id=>I.push({g:"Cursos da Academia",t:nomeEt(id),ok:S.feitas.includes(id),ir:"academia"}));}
   if(OB.includes("conecta_rc")||com||temPerfil("RC")||temPerfil("Assessor de Vendas Digital"))I.push({g:"Programas",t:"Curso e prova do Conecta RC",ok:S.feitas.includes("conecta_rc"),ir:"conecta-rc|rc-curso",obrig:OB.includes("conecta_rc")});
   if(OB.includes("conecta_rv")||com||ehRevenda())I.push({g:"Programas",t:"Curso e prova do Conecta Revendas",ok:S.feitas.includes("conecta_rv"),ir:"conecta-revendas|rv-curso",obrig:OB.includes("conecta_rv")});
@@ -6471,7 +6472,7 @@ function vTrilha(){
   const f=qtdFeitas(),tot=ORDEM.length,fim=f>=tot,at=ETAPAS_ON[indiceAtual()];
   return `${heroAcademia()}
   <div><h2 class="sec">Cursos</h2><p class="sub">Os módulos liberam um de cada vez: termine os vídeos do módulo, faça a prova e, aprovado (70%, ou o mínimo indicado na prova), o próximo módulo é liberado. Cada prova aprovada vale pontos no ranking: 10 por acerto, mais 20 de bônus se passar na primeira tentativa.</p></div>
-  ${cursoFeito()&&!fim?`<div class="aviso-est"><strong>Certificado liberado</strong>Você concluiu Sabiá, Cayana e Carcará. <button class="link" data-a="cert">Ver certificado</button> Os próximos módulos somam pontos no ranking.</div>`:""}
+  ${cursoFeito()&&!fim?`<div class="aviso-est"><strong>Certificado liberado</strong>Você concluiu os cinco cursos da Academia. <button class="link" data-a="cert">Ver certificado</button></div>`:""}
   ${fim?`<section class="proximo"><div><span class="rot">Todos os cursos concluídos</span><h2>Seu certificado está pronto</h2></div><button class="btn preto" data-a="cert">Ver certificado</button></section>`
   :`<section class="proximo"><div><span class="rot">Seu próximo módulo · ${f+1} de ${tot}</span><h2>${at.n}</h2><p>${at.d}</p></div><button class="btn preto" data-a="abrir" data-v="${indiceAtual()}">Continuar</button></section>`}
   <div class="resumo"><div class="barra"><i style="width:${f/tot*100}%"></i></div><span>${f} de ${tot} módulos concluídos</span></div>
@@ -9118,7 +9119,7 @@ function vBase(){
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
 }
 function vCert(){
-  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu os cursos de Sabiá, Cayana e Carcará${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
+  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu os cursos de Sabiá, Cayana, Carcará, Melhoramento de forrageiras tropicais e Qual capim encaixa melhor na sua fazenda${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
 }
 function vSolic(){
   const L=S.solic||[];if(!L.length)return "";
