@@ -194,6 +194,19 @@ button.etapa-b:hover h3{text-decoration:underline}
 .chip[aria-pressed=true]{background:var(--azul-escuro);color:var(--branco);box-shadow:none}
 .vazio{padding:20px;background:var(--branco);color:var(--apagado);border-radius:6px}
 
+.ct-wrap{width:100%;overflow:hidden;position:relative;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.12)}.ct-esc{width:1123px;height:794px;transform-origin:0 0}
+.ct{width:1123px;height:794px;background:#fff;color:#1E1E1E;position:relative;display:grid;grid-template-columns:86px 1fr;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden}
+.ct-faixa{background:#FFDB00;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 46px;gap:4px}.ct-faixa{position:relative}.ct-v{position:absolute;left:59px;bottom:46px;transform:rotate(-90deg);transform-origin:0 100%;font-size:26px;line-height:32px;letter-spacing:.18em;font-weight:400;white-space:nowrap}.ct-v b{font-weight:900}
+.ct-in{padding:44px 64px 40px 56px;display:grid;grid-template-rows:auto 1fr auto auto;gap:18px;border-top:10px solid #00A8E2;position:relative}
+.ct-in::after{content:"";position:absolute;inset:18px 18px 18px 18px;border:1.5px solid #E3EEF3;pointer-events:none}
+.ct-top{display:flex;justify-content:space-between;align-items:flex-start}.ct-logo{width:250px;height:auto;display:block}.ct-cod{text-align:right;display:grid;gap:2px}.ct-cod span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5A6B74}.ct-cod strong{font-size:14px;letter-spacing:.06em}
+.ct-meio{display:grid;gap:8px;align-content:center}.ct-rot{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#00A8E2;font-weight:800}
+.ct-cert{margin:6px 0 0;font-size:19px;color:#5A6B74}.ct-nome{margin:0;font-size:52px;line-height:1.08;font-weight:900;color:#1E1E1E;letter-spacing:-.01em;border-bottom:3px solid #FFDB00;padding-bottom:8px;max-width:860px}
+.ct-txt{margin:6px 0 0;font-size:17px;color:#3a4a52;max-width:820px}.ct-tit{margin:0;font-size:34px;line-height:1.1;font-weight:900;color:#00A8E2}.ct-tit span{color:#1E1E1E;font-weight:800;font-size:28px}.ct-txt2{margin:2px 0 0;font-size:15px;color:#5A6B74;max-width:820px}
+.ct-cursos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.ct-c{background:#F3F7F9;border-radius:8px;padding:9px 11px;display:grid;gap:3px;align-content:space-between;min-height:58px}.ct-c span{font-size:12px;line-height:1.3;color:#1E1E1E;font-weight:600}.ct-c b{font-size:15px;color:#00A8E2}
+.ct-pe{display:grid;grid-template-columns:auto auto 1fr 110px;gap:36px;align-items:end}.ct-pe>div{display:grid;gap:2px}.ct-pe span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5A6B74}.ct-pe strong{font-size:16px}
+.ct-ass{justify-self:end;text-align:center;min-width:240px}.ct-ass i{display:block;border-top:1.5px solid #1E1E1E;margin-bottom:6px}.ct-ass strong{font-size:15px}.ct-ass span{font-size:11px}
+.ct-selo{width:110px;height:110px;margin-bottom:-6px}.ct-selo img{width:100%;height:100%;display:block}
 .cert{background:var(--azul);color:var(--branco);padding:clamp(24px,6vw,48px);display:grid;gap:14px;border-radius:6px}
 .cert .rot{color:var(--amarelo)}
 .cert h2{font-size:clamp(26px,6vw,40px);font-weight:800;color:var(--branco)}
@@ -2020,8 +2033,8 @@ async function carregarUsuario(u){
       sb=await window.demoIniciar(sbReal,S);S.demo=true;window.demoVer(S,"Administrador");await window.demoCarregar(S);
     }catch(e){sb=sbReal;S.demo=false;S.demoFalhou=true;}
   }
-  const {data:prog}=await sb.from("progresso").select("etapa,nota").eq("user_id",u.id);
-  S.feitas=(prog||[]).map(r=>r.etapa);
+  const {data:prog}=await sb.from("progresso").select("etapa,nota,concluido_em").eq("user_id",u.id);
+  S.feitas=(prog||[]).map(r=>r.etapa);S.concEm={};(prog||[]).forEach(r=>{if(r.concluido_em)S.concEm[r.etapa]=r.concluido_em;});
   S.notas={};(prog||[]).forEach(r=>S.notas[r.etapa]=r.nota);
   try{
     const agora=new Date().toISOString();const patch={ultimo_acesso:agora};
@@ -9118,9 +9131,49 @@ function vBase(){
   ${mostraMat?`<section class="bloco"><h2 class="sec">Materiais</h2>
     <div class="lista" id="res-base">${mats.length?mats.map(matHTML).join(""):`<div class="vazio">Nenhum material encontrado.</div>`}</div></section>`:""}`;
 }
+const CERT_CURSOS=[["sabia","<i>Brachiaria</i> híbrida Sabiá"],["cayana","<i>Brachiaria</i> híbrida Cayana"],["carcara","<i>Megathyrsus maximus</i> Carcará"],["melhoramento","Melhoramento de forrageiras tropicais"],["qualcapim","Posicionamento técnico e comercial dos híbridos"]];
+function certDados(){const C=CERT_CURSOS.map(([id,n])=>{const e=ETAPAS.find(x=>x.id===id)||{};const tot=(e.quiz||[]).length;const ac=+((S.notas||{})[id])||0;return {id,n,pct:tot?Math.min(100,Math.round(ac/tot*100)):null,em:(S.concEm||{})[id]||null};});
+  const ps=C.filter(c=>c.pct!=null);const media=ps.length?Math.round(ps.reduce((t,c)=>t+c.pct,0)/ps.length):null;
+  const dts=C.map(c=>c.em).filter(Boolean).sort();const fim=dts.length?new Date(dts[dts.length-1]):new Date();
+  const uid=String((S.user&&S.user.id)||"").replace(/-/g,"").toUpperCase();const cod="ACH-"+fim.getFullYear()+"-"+uid.slice(0,4)+"-"+uid.slice(-4);
+  const nome=String((S.profile&&S.profile.nome)||(S.user&&S.user.email)||"").trim();
+  return {C,media,fim,cod,nome,dataTxt:fim.toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"})};}
+function certHTML(){const D=certDados();
+  return `<div class="ct" id="ct-doc"><div class="ct-faixa"><div class="ct-v">CULTIVE <b>CONFIANÇA</b></div></div>
+   <div class="ct-in"><div class="ct-top"><img src="${LOGO}" alt="Barenbrug" class="ct-logo"><div class="ct-cod"><span>Certificado nº</span><strong>${esc(D.cod)}</strong></div></div>
+    <div class="ct-meio"><span class="ct-rot">Certificado de conclusão · Academia de Híbridos Barenbrug</span>
+     <p class="ct-cert">A Barenbrug do Brasil certifica que</p>
+     <h1 class="ct-nome">${esc(D.nome)}</h1>
+     <p class="ct-txt">concluiu, com aprovação em todas as provas, a formação completa da Academia de Híbridos Barenbrug e está certificado(a) como</p>
+     <h2 class="ct-tit">Especialista em Pastagens Híbridas<br><span>de Alta Produtividade</span></h2>
+     <p class="ct-txt2">apto(a) a indicar a cultivar certa para cada sistema e a orientar o produtor no uso de pastagens híbridas que elevam a produtividade da pecuária.</p></div>
+    <div class="ct-cursos">${D.C.map(c=>`<div class="ct-c"><span>${c.n}</span>${c.pct!=null?`<b>${c.pct}%</b>`:""}</div>`).join("")}</div>
+    <div class="ct-pe"><div><span>Concluído em</span><strong>${esc(D.dataTxt)}</strong></div><div><span>Aproveitamento médio</span><strong>${D.media!=null?D.media+"%":"—"}</strong></div><div class="ct-ass"><i></i><strong>Barenbrug do Brasil</strong><span>Academia de Híbridos</span></div>
+     <div class="ct-selo" aria-hidden="true"><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 120 120" width="240" height="240"><defs><path id="ctsc" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs><circle cx="60" cy="60" r="57" fill="#FFDB00"/><circle cx="60" cy="60" r="50" fill="none" stroke="#1E1E1E" stroke-width="1.2"/><text font-size="9.5" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="#1E1E1E" letter-spacing="2.2"><textPath href="#ctsc" xlink:href="#ctsc">ACADEMIA DE HÍBRIDOS · BARENBRUG ·</textPath></text><text x="60" y="58" text-anchor="middle" font-size="22" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="#1E1E1E">${D.fim.getFullYear()}</text><text x="60" y="74" text-anchor="middle" font-size="8.5" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="#1E1E1E" letter-spacing="1.5">CERTIFICADO</text></svg>`)}"></div></div></div></div>`;}
 function vCert(){
-  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><section class="cert"><span class="rot">Certificado de conclusão</span><h2>Academia de <b>Híbridos</b> Barenbrug</h2><p>Certificamos que <strong>${esc(S.profile.nome||S.user.email)}</strong> concluiu os cursos de Sabiá, Cayana, Carcará, Melhoramento de forrageiras tropicais e Qual capim encaixa melhor na sua fazenda${S.notas.prova!=null?", com "+S.notas.prova+" acertos na prova final":""}.</p><p class="slogan">CULTIVE <b>CONFIANÇA</b></p></section>`;
-}
+  if(!cursoFeito()){const falta=CERT_CURSOS.filter(([id])=>!S.feitas.includes(id)).map(c=>c[1].replace(/<\/?i>/g,""));
+    return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><section class="bloco"><h1 class="titulo">Certificado da Academia de Híbridos</h1><p class="sub">O certificado de Especialista em Pastagens Híbridas de Alta Produtividade é liberado quando você conclui os cinco cursos, com aprovação nas provas.</p><div class="nota-admin"><strong>Falta concluir:</strong> ${falta.map(esc).join(", ")}.</div><button class="btn" data-a="pag" data-v="trilha" style="margin-top:10px">Ir para os cursos</button></section>`;}
+  const D=certDados();
+  return `<button class="voltar" data-a="pag" data-v="trilha">‹ Cursos</button><div><h1 class="titulo">Seu certificado</h1><p class="sub">Parabéns! Você é Especialista em Pastagens Híbridas de Alta Produtividade pela Academia de Híbridos Barenbrug. Baixe em PDF, salve a imagem para postar e adicione ao seu perfil do LinkedIn.</p></div>
+   <div class="ct-wrap" id="ct-wrap"><div class="ct-esc" id="ct-esc">${certHTML()}</div></div>
+   <div class="acoes" style="margin:14px 0;flex-wrap:wrap;gap:8px"><button class="btn" data-a="cert-pdf">Baixar em PDF</button><button class="btn sec" data-a="cert-png">Baixar imagem para as redes</button><a class="btn sec" href="${esc(certLinkedin(D))}" target="_blank" rel="noopener">Adicionar ao LinkedIn ↗</a><button class="btn sec" data-a="cert-txt">Copiar texto para o post</button></div>
+   <p class="meta">No LinkedIn, o certificado entra em Licenças e certificados, com a Barenbrug como emissora e o código ${esc(D.cod)}.</p>`;}
+function certLinkedin(D){const q=new URLSearchParams({startTask:"CERTIFICATION_NAME",name:"Especialista em Pastagens Híbridas de Alta Produtividade · Academia de Híbridos",organizationName:"Barenbrug",issueYear:String(D.fim.getFullYear()),issueMonth:String(D.fim.getMonth()+1),certId:D.cod});return "https://www.linkedin.com/profile/add?"+q.toString();}
+function certTexto(){const D=certDados();return `Concluí a formação completa da Academia de Híbridos Barenbrug e agora sou Especialista em Pastagens Híbridas de Alta Produtividade.\n\nForam cinco cursos com prova: Sabiá, Cayana, Carcará, melhoramento de forrageiras tropicais e posicionamento técnico dos híbridos${D.media!=null?", com aproveitamento médio de "+D.media+"%":""}.\n\nPasto bem formado é a base da pecuária que dá resultado. Cultive Confiança.\n\n#Barenbrug #PastagensHibridas #Pecuaria #CultiveConfianca`;}
+function certEscala(){const w=document.getElementById("ct-wrap"),e=document.getElementById("ct-esc");if(!w||!e)return;const k=Math.min(1,w.clientWidth/1123);e.style.transform=`scale(${k})`;w.style.height=(794*k)+"px";}
+window.addEventListener("resize",certEscala);
+new MutationObserver(()=>{if(document.getElementById("ct-esc"))certEscala();}).observe(document.documentElement,{childList:true,subtree:true});
+async function certCanvas(){await propLib();const src=document.getElementById("ct-doc");const box=document.createElement("div");box.style.cssText="position:fixed;left:0;top:0;width:1123px;height:794px;background:#fff;z-index:-1;pointer-events:none";box.appendChild(src.cloneNode(true));document.body.appendChild(box);
+  try{return await window.html2pdf().set({html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",width:1123,height:794,windowWidth:1123,windowHeight:794,scrollX:0,scrollY:0,x:0,y:0}}).from(box.firstChild).toCanvas().get("canvas");}finally{box.remove();}}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='cert-']");if(!b)return;ev.preventDefault();const a=b.dataset.a;const D=certDados();const arq=("Certificado Academia de Hibridos "+D.nome).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9 _-]+/g,"").trim();
+  if(a==="cert-txt"){const t=certTexto();try{await navigator.clipboard.writeText(t);aviso("Texto copiado. Cole no post junto com a imagem do certificado.");}catch(e){aviso("Não consegui copiar.");}return;}
+  const t0=b.textContent;b.disabled=true;b.textContent="Gerando…";
+  try{if(a==="cert-pdf"){await propLib();const src=document.getElementById("ct-doc");const box=document.createElement("div");box.style.cssText="position:fixed;left:0;top:0;width:1123px;height:794px;background:#fff;z-index:-1;pointer-events:none";box.appendChild(src.cloneNode(true));document.body.appendChild(box);
+      try{await window.html2pdf().set({margin:0,filename:arq+".pdf",image:{type:"jpeg",quality:.97},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",width:1123,height:794,windowWidth:1123,windowHeight:794,scrollX:0,scrollY:0,x:0,y:0},jsPDF:{unit:"px",format:[1123,794],orientation:"landscape",hotfixes:["px_scaling"]}}).from(box.firstChild).save();}finally{box.remove();}}
+    else if(a==="cert-png"){const c=await certCanvas();const url=c.toDataURL("image/png");const l=document.createElement("a");l.href=url;l.download=arq+".png";document.body.appendChild(l);l.click();l.remove();}}
+  catch(e){aviso("Não foi possível gerar o arquivo agora. Tente de novo.");}
+  b.disabled=false;b.textContent=t0;},true);
+
 function vSolic(){
   const L=S.solic||[];if(!L.length)return "";
   return `<section class="bloco"><h2 class="sec">Solicitações pendentes (${L.length})</h2><div class="lista">${L.map(x=>{
@@ -14588,7 +14641,7 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="bp-todos"){S.bpTodos=true;render();return;}
   if(a==="bvideo"){S.baseVideo=S.baseVideo===v?null:v;render();if(S.baseVideo)window.scrollTo(0,0);}
   if(a==="precos"){const ac=Array.isArray(S.profile.acessos)?S.profile.acessos:[];if(ehAdmin()||ac.includes("tabela-precos")){S.secao="tabela-precos";S.pag="precos";render();window.scrollTo(0,0);}else aviso("As condições comerciais são liberadas pelo administrador. Peça o acesso a quem cuida do seu cadastro.");return;}
-  if(a==="pos-quiz")irPag(qtdFeitas()>=ORDEM.length||(cursoFeito()&&ETAPAS_ON[S.etapa]&&ETAPAS_ON[S.etapa].id==="carcara")?"cert":"trilha");
+  if(a==="pos-quiz")irPag(cursoFeito()?"cert":"trilha");
   if(a==="cert")irPag("cert");
   if(a==="fcult"){S.fCult=v;render();}
   if(a==="ftipo"){S.fTipo=v;render();}
