@@ -2119,7 +2119,8 @@ function caixaCred(c){
   const msg=msgAcesso(c);S.copias=S.copias||{};S.copias[c.k]=msg;
   const tel=String(c.telefone||"").replace(/\D/g,"");
   const wa=tel.length>=10?`https://wa.me/${tel.length<=11?"55"+tel:tel}`:"";
-  return `<div class="nota-admin cred"><strong>${c.reset?"Senha redefinida.":"Acesso criado."}</strong> A senha provisória aparece só agora. Copie a mensagem e envie para a pessoa:
+  const em=c.novo?(c.emailEnviado?`<div class="nota-admin" role="status" style="background:#e6f4ea;border-color:#2E8B57;margin:6px 0"><strong>Convite enviado por e-mail para ${esc(c.email)}</strong>, com o login e a senha provisória. Pode levar alguns minutos para chegar e às vezes cai no spam. Mande também pelo WhatsApp para garantir.</div>`:`<div class="aviso-bloq" style="margin:6px 0">O e-mail de convite não foi enviado${c.emailErro?" ("+esc(c.emailErro)+")":""}. Envie a mensagem abaixo pelo WhatsApp ou pelo botão de e-mail.</div>`):"";
+  return `<div class="nota-admin cred"><strong>${c.reset?"Senha redefinida.":"Acesso criado."}</strong> A senha provisória aparece só agora. Copie a mensagem e envie para a pessoa:${em}
     <pre class="msg">${esc(msg)}</pre>
     <div class="acoes"><button class="btn" type="button" data-a="copiar" data-v="${esc(c.k)}">Copiar mensagem</button>${wa?`<a class="btn sec" href="${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>`:""}${c.email?`<a class="btn sec" href="mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(c.reset?"Sua nova senha do Portal Conecta Barenbrug":"Seu acesso ao Portal Conecta Barenbrug")}&body=${encodeURIComponent(msg)}">Enviar por e-mail</a>`:""}</div><span class="meta">Os dois botões abrem a mensagem pronta no seu WhatsApp ou no seu e-mail, com o destinatário preenchido. É só conferir e enviar.</span></div>`;
 }
@@ -9405,7 +9406,7 @@ function vCriarAcesso(){
     ${S._erroCriar?`<div class="erro" role="alert">${esc(S._erroCriar)}</div>`:""}
     <div class="acoes"><button class="btn" type="submit">Criar acesso</button>${p.solicId?`<button class="btn sec" type="button" data-a="prefill-limpar">Limpar</button>`:""}</div>
   </form>
-  ${r?caixaCred({k:"novo",nome:r.nome,email:r.email,senha:r.senha,telefone:r.telefone}):""}
+  ${r?caixaCred({k:"novo",nome:r.nome,email:r.email,senha:r.senha,telefone:r.telefone,emailEnviado:r.emailEnviado,emailErro:r.emailErro,novo:true}):""}
   <details class="lote" ${S.loteAberto?"open":""}><summary>Cadastrar várias pessoas de uma vez</summary>
   <form class="form-card" id="f-lote" style="margin-top:10px">
     <div><label for="l_txt">Uma pessoa por linha: Nome; e-mail; perfil</label><textarea id="l_txt" rows="6" placeholder="Maria Souza; maria@revenda.com.br; Vendedor de Revenda&#10;João Lima; joao@revenda.com.br"></textarea><span class="meta">Pode colar direto do Excel (colunas Nome, E-mail, Perfil). Sem perfil na linha, vale o perfil padrão abaixo. Até 50 por vez.</span></div>
@@ -9419,7 +9420,7 @@ function vCriarAcesso(){
   </form>
   ${lr?(()=>{const ok=lr.filter(x=>x.senha);S.copias=S.copias||{};S.copias.lote=ok.map(x=>msgAcesso(x)).join("\n\n— — —\n\n");ok.forEach((x,k)=>{S.copias["l"+k]=msgAcesso(x);});
     return `<div class="nota-admin cred"><strong>${ok.length} de ${lr.length} acessos criados.</strong> As senhas provisórias aparecem só agora — copie antes de sair desta tela.
-    <div class="lista" style="margin-top:8px">${lr.map(x=>{const k=ok.indexOf(x);return `<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.email)} · ${esc(x.perfil||"")}</span>${x.erro?`<span class="meta" style="color:#c0392b">${esc(x.erro)}</span>`:`<span class="meta">Senha provisória: <strong>${esc(x.senha)}</strong></span>`}</div>${x.senha?`<button class="btn sec" type="button" data-a="copiar" data-v="l${k}">Copiar</button>`:""}</div>`;}).join("")}</div>
+    <div class="lista" style="margin-top:8px">${lr.map(x=>{const k=ok.indexOf(x);return `<div class="linha"><div><strong>${esc(x.nome)}</strong><span class="meta">${esc(x.email)} · ${esc(x.perfil||"")}</span>${x.erro?`<span class="meta" style="color:#c0392b">${esc(x.erro)}</span>`:`<span class="meta">Senha provisória: <strong>${esc(x.senha)}</strong> · ${x.emailEnviado?"convite enviado por e-mail":"e-mail de convite não enviado"}</span>`}</div>${x.senha?`<button class="btn sec" type="button" data-a="copiar" data-v="l${k}">Copiar</button>`:""}</div>`;}).join("")}</div>
     ${ok.length?`<div class="acoes" style="margin-top:10px"><button class="btn" type="button" data-a="copiar" data-v="lote">Copiar todas as mensagens</button></div>`:""}</div>`;})():""}
   </details>
   </section>`;
@@ -15286,7 +15287,7 @@ document.addEventListener("submit",async ev=>{
       try{const {data,error}=await sb.functions.invoke("criar-usuario",{body:{nome:it.nome,email:it.email,perfil:it.perfil}});
         if(error){try{const bd=await error.context.json();it.erro=bd.error||"Não foi possível criar.";}catch(_){it.erro="Não foi possível criar.";}}
         else if(data&&data.error){it.erro=data.error;}
-        else{it.senha=data.senha;await sb.from("profiles").update({acessos,exige_curso:exige,cursos_obrig:cobL,abas_ocultas:abasOcL}).eq("email",it.email);if(canalLote&&revP(it.perfil))await sb.from("profiles").update({canal_id:canalLote}).eq("email",it.email);}
+        else{it.senha=data.senha;it.emailEnviado=!!data.email_enviado;await sb.from("profiles").update({acessos,exige_curso:exige,cursos_obrig:cobL,abas_ocultas:abasOcL}).eq("email",it.email);if(canalLote&&revP(it.perfil))await sb.from("profiles").update({canal_id:canalLote}).eq("email",it.email);}
       }catch(e){it.erro="Não foi possível criar.";}
     }
     S.loteRes=itens;S.equipe=null;render();return;
@@ -15377,7 +15378,7 @@ document.addEventListener("submit",async ev=>{
         S.canais=null;S.canaisLista=null;if(falhou)aviso(`Acesso criado, mas ${falhou} ${falhou===1?"vínculo não foi gravado":"vínculos não foram gravados"}. Confira na ficha da pessoa ou em Vínculos.`);}}
     if(S.prefill&&S.prefill.solicId){await sb.from("solicitacoes_acesso").update({status:"Atendida"}).eq("id",S.prefill.solicId);}
     if(rcCrm){await sb.from("profiles").update({rc_crm:rcCrm}).eq("email",email);}
-    S.novoAcesso={nome,email:data.email,senha:data.senha,telefone:S.prefill&&S.prefill.telefone};S.prefill=null;S._erroCriar=null;S.equipe=null;render();
+    S.novoAcesso={nome,email:data.email,senha:data.senha,telefone:S.prefill&&S.prefill.telefone,emailEnviado:!!data.email_enviado,emailErro:data.email_erro||null};S.prefill=null;S._erroCriar=null;S.equipe=null;render();
     return;
   }
   if(f.id==="f-contato"){const r={canal_id:S.canalSel,papel:f.querySelector("#ct_papel").value,nome:f.querySelector("#ct_nome").value.trim(),telefone:f.querySelector("#ct_tel").value.trim(),email:f.querySelector("#ct_email").value.trim()};if(!r.nome){aviso("Informe o nome.");return;}const {error}=await sb.from("canal_contatos").insert(r);if(error){aviso("Erro ao salvar.");return;}S.novoContato=false;S.canais=null;render();aviso("Contato adicionado.");return;}
