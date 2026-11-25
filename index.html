@@ -1882,7 +1882,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261125113151";
+const APP_VER="20261125113232";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -5220,7 +5220,7 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||!f.id||!/
 function vEmailCod(){const E=S.emailCod||{};
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug"><div><h1>Portal Conecta Barenbrug</h1><p style="margin-top:10px">Confirmação do seu e-mail.</p></div></div>
     <form class="acesso-form" id="f-ecod" novalidate><div class="cod-faixa cod-email" role="note"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><div><strong>Agora é o código do E-MAIL</strong><span>Não é o código do Google ou Microsoft Authenticator. Abra a sua caixa de e-mail e procure a mensagem do Portal Conecta.</span></div></div><h2>Confirme seu e-mail</h2>
-      <p>${E.para?`Enviamos um código de 6 números para <strong>${esc(E.para)}</strong>. Ele vale por 10 minutos.</p><div class="nota-admin" role="note" style="margin:0"><strong>O e-mail pode levar alguns minutos para chegar.</strong> Não saia desta página e não feche o portal enquanto espera. Olhe também a caixa de spam e a de lixo eletrônico. Se não chegar em 2 minutos, use o botão abaixo para pedir outro.</div><p style="display:none">`:E.busy?"Enviando o código para o seu e-mail…":"Vamos enviar um código de 6 números para o e-mail do seu acesso."}</p>
+      <p>${E.para?`Enviamos um código de 6 números para <strong>${esc(E.para)}</strong>. Ele vale por 10 minutos.</p><div class="nota-admin" role="note" style="margin:0"><strong>O e-mail pode levar alguns minutos para chegar.</strong> Não saia desta página e não feche o portal enquanto espera. <mark style="background:#FFDB00;color:#1e1e1e;font-weight:800;padding:1px 4px;border-radius:3px">Se não aparecer na caixa de entrada, procure na pasta de SPAM ou de lixo eletrônico.</mark> Se não chegar em 2 minutos, use o botão abaixo para pedir outro.</div><p style="display:none">`:E.busy?"Enviando o código para o seu e-mail…":"Vamos enviar um código de 6 números para o e-mail do seu acesso."}</p>
       <p class="meta" style="margin:0">É uma vez só: confirma que o e-mail é seu e garante que você recebe o link quando esquecer a senha.</p>
       <div><label for="ecod_c" style="font-size:17px;font-weight:800">Código que chegou no seu e-mail</label><input id="ecod_c" class="cod-email-in" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" style="font-size:26px;letter-spacing:8px;text-align:center"></div>
       ${E.erro?`<div class="erro" role="alert">${esc(E.erro)}</div>`:""}${E.ok?`<div class="nota-admin" role="status">${esc(E.ok)}</div>`:""}
