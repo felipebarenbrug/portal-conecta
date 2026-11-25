@@ -1882,7 +1882,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261125121044";
+const APP_VER="20261125121800";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -2119,7 +2119,7 @@ function caixaCred(c){
   const msg=msgAcesso(c);S.copias=S.copias||{};S.copias[c.k]=msg;
   const tel=String(c.telefone||"").replace(/\D/g,"");
   const wa=tel.length>=10?`https://wa.me/${tel.length<=11?"55"+tel:tel}`:"";
-  const em=c.novo?(c.emailEnviado?`<div class="nota-admin" role="status" style="background:#e6f4ea;border-color:#2E8B57;margin:6px 0"><strong>Convite enviado por e-mail para ${esc(c.email)}</strong>, com o login e a senha provisória. Pode levar alguns minutos para chegar e às vezes cai no spam. Mande também pelo WhatsApp para garantir.</div>`:`<div class="aviso-bloq" style="margin:6px 0">O e-mail de convite não foi enviado${c.emailErro?" ("+esc(c.emailErro)+")":""}. Envie a mensagem abaixo pelo WhatsApp ou pelo botão de e-mail.</div>`):"";
+  const em=c.novo?(c.emailEnviado?`<div class="nota-admin" role="status" style="background:#e6f4ea;border-color:#2E8B57;margin:6px 0"><strong>${c.reset?"Nova senha enviada":"Convite enviado"} por e-mail para ${esc(c.email)}</strong>, com o login e a senha provisória. Pode levar alguns minutos para chegar e às vezes cai no spam. Mande também pelo WhatsApp para garantir.</div>`:`<div class="aviso-bloq" style="margin:6px 0">O e-mail ${c.reset?"com a nova senha":"de convite"} não foi enviado${c.emailErro?" ("+esc(c.emailErro)+")":""}. Envie a mensagem abaixo pelo WhatsApp ou pelo botão de e-mail.</div>`):"";
   return `<div class="nota-admin cred"><strong>${c.reset?"Senha redefinida.":"Acesso criado."}</strong> A senha provisória aparece só agora. Copie a mensagem e envie para a pessoa:${em}
     <pre class="msg">${esc(msg)}</pre>
     <div class="acoes"><button class="btn" type="button" data-a="copiar" data-v="${esc(c.k)}">Copiar mensagem</button>${wa?`<a class="btn sec" href="${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>`:""}${c.email?`<a class="btn sec" href="mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(c.reset?"Sua nova senha do Portal Conecta Barenbrug":"Seu acesso ao Portal Conecta Barenbrug")}&body=${encodeURIComponent(msg)}">Enviar por e-mail</a>`:""}</div><span class="meta">Os dois botões abrem a mensagem pronta no seu WhatsApp ou no seu e-mail, com o destinatário preenchido. É só conferir e enviar.</span></div>`;
@@ -2128,7 +2128,9 @@ async function redefinirSenha(u,telefone){
   const {data,error}=await sb.rpc("admin_redefinir_senha",{alvo:u.id});
   if(error||!data){aviso("Não foi possível redefinir a senha.");return false;}
   const dg=t=>String(t||"").replace(/\D/g,"").slice(-11);const alerta=telefone&&dg(telefone)!==dg(u.telefone)?"Atenção: o telefone informado no pedido é diferente do telefone cadastrado desta pessoa. A senha vai somente para o telefone cadastrado. Confirme a identidade antes de enviar.":"";
-  S.senhaReset={k:"reset",id:u.id,nome:u.nome,email:u.email,telefone:u.telefone,senha:data,reset:true,alerta};return true;
+  S.senhaReset={k:"reset",id:u.id,nome:u.nome,email:u.email,telefone:u.telefone,senha:data,reset:true,alerta,novo:true,emailEnviado:false,emailErro:null};
+  try{const r=await sb.functions.invoke("email-acesso",{body:{alvo:u.id,senha:data}});if(r.error){let m="";try{m=(await r.error.context.json()).error||"";}catch(e){}S.senhaReset.emailErro=m||"falha ao enviar";}else if(r.data&&r.data.error)S.senhaReset.emailErro=r.data.error;else S.senhaReset.emailEnviado=true;}catch(e){S.senhaReset.emailErro="falha ao enviar";}
+  return true;
 }
 function vTrocaSenha(erro,recup){
   return `<div class="acesso"><div class="acesso-marca"><img class="logo" src="${LOGO}" alt="Barenbrug">
@@ -9381,12 +9383,30 @@ function cadAbasHTML(pre){return `<div class="cad-abas" data-cadabas="${pre}"><l
 function cadAbasSync(f){if(!f)return;const pre=f.id==="f-lote"?"l":"n";const box=f.querySelector("[data-cadabas]");if(!box)return;const ps=f.querySelector(pre==="l"?"#l_perfil":"#n_perfil");const on=new Set([...f.querySelectorAll("."+pre+"_acesso:checked")].map(c=>c.value).concat(cadSecPerfil(ps?ps.value:"")));let n=0;box.querySelectorAll("[data-cadsec]").forEach(d=>{const v=on.has(d.dataset.cadsec);d.hidden=!v;if(v)n++;});const vz=box.querySelector(".cad-vazio");if(vz)vz.hidden=n>0;}
 function cadAbasOcultas(f,pre){return [...f.querySelectorAll("[data-cadsec]:not([hidden]) ."+pre+"_aba")].filter(c=>!c.checked).map(c=>c.dataset.aba);}
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.closest)return;const f=t.closest("#f-criar,#f-lote");if(f&&(t.classList.contains("n_acesso")||t.classList.contains("l_acesso")||t.id==="n_perfil"||t.id==="l_perfil"))cadAbasSync(f);});
+function cadMapaHTML(){
+  const R=(n,t,itens)=>`<div class="fm-r"><h4><b>${n}</b>${t}</h4><ul>${itens.map(i=>`<li>${i}</li>`).join("")}</ul></div>`;
+  return `<details class="ng-det" style="margin:8px 0 12px"><summary>Mapa mental: o que acontece quando você clica em Gerar cadastro</summary>
+  <div class="fm">
+   <div class="fm-col fm-e">
+    ${R(1,"Quem pode cadastrar",["<strong>Administrador master:</strong> qualquer perfil, inclusive Administrador, e escolhe se ele será padrão ou master e o que ele vê.","<strong>Administrador padrão:</strong> qualquer perfil, menos Administrador.","<strong>Gestor de acessos:</strong> cadastra pessoas novas, mas não altera quem já está cadastrado.","Quem cadastra precisa estar com a verificação em duas etapas ativa."])}
+    ${R(2,"O portal confere antes de criar",["Nome, e-mail e perfil preenchidos.","Pelo menos uma seção de acesso marcada.","Gestor ou Vendedor de Revenda: a revenda do Conecta é obrigatória.","Se já existe um acesso com o mesmo e-mail, o cadastro é recusado."])}
+    ${R(3,"Na hora, automático",["O acesso é criado com o e-mail informado.","O portal gera uma senha provisória de 12 caracteres, com letras maiúsculas, minúsculas, números e símbolos.","O perfil é gravado e a pessoa fica marcada para trocar a senha no primeiro acesso.","O cadastro fica registrado no histórico, com quem cadastrou."])}
+   </div>
+   <div class="fm-c">Gerar cadastro<small>nome, e-mail, perfil e seções</small></div>
+   <div class="fm-col fm-d">
+    ${R(4,"Logo em seguida, o que você marcou",["Seções de acesso, abas escondidas e cursos obrigatórios.","RC, Assessor e Franqueado: o responsável comercial.","Revenda: o canal do Conecta Revendas.","Comercial Barenbrug: dono no CRM, revendas e RCs ligados a ele.","Administrador: tipo (padrão ou master) e o que ele vê."])}
+    ${R(5,"O convite chega à pessoa",["<strong>E-mail automático</strong> de portal@portalconectabarenbrug.com.br, com o login, a senha provisória e o passo a passo do primeiro acesso. Se a pessoa responder, a resposta vai para quem cadastrou.","<strong>Na sua tela:</strong> a mensagem pronta com Copiar, Enviar pelo WhatsApp e Enviar por e-mail. A senha provisória aparece só nesse momento.","O e-mail pode levar alguns minutos e às vezes cai no spam. Por isso vale mandar também pelo WhatsApp."])}
+    ${R(6,"O primeiro acesso da pessoa",["Entra com o e-mail e a senha provisória.","Cria uma senha só dela. A provisória deixa de valer.","Ativa a verificação em duas etapas com o Google ou o Microsoft Authenticator.","Confirma o e-mail com o código que o portal envia.",`Faz os cursos obrigatórios em até ${PRAZO_CURSO_DIAS} dias. Depois do prazo, as outras áreas ficam bloqueadas até concluir.`])}
+   </div>
+  </div>
+  <div class="fm-pe">Esqueceu a senha? Na ficha da pessoa, em Senha e segurança, use Redefinir senha: o portal gera uma senha provisória nova, encerra as sessões abertas e envia sozinho um e-mail com os dados, além da mensagem pronta para o WhatsApp. Só o administrador master exclui um acesso; para tirar alguém do portal sem apagar, desative o acesso.</div></details>`;}
 function vCriarAcesso(){
   const r=S.novoAcesso,p=S.prefill||{};
   const perfilSel=PERFIS.includes(p.perfil)?p.perfil:PERFIS[0];
   const lr=S.loteRes;
   return `<section class="bloco" id="bloco-criar"><h2 class="sec">Cadastrar pessoa</h2>
-  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória e a mensagem pronta para você enviar.</p>
+  <p class="sub" style="margin:0">Crie o acesso com nome, e-mail e perfil. O sistema gera uma senha provisória, envia o convite por e-mail e mostra a mensagem pronta para você mandar pelo WhatsApp.</p>
+  ${cadMapaHTML()}
   ${p.solicId?`<div class="nota-admin">Preenchido a partir da solicitação de <strong>${esc(p.nome||"")}</strong>. Confira o perfil e as seções antes de criar.</div>`:""}
   <form class="form-card" id="f-criar">
     <div><label for="n_nome">Nome completo *</label><input id="n_nome" required value="${esc(p.nome||"")}"></div>
