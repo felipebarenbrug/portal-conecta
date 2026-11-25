@@ -1035,6 +1035,7 @@ main.largo{max-width:1120px}
 .dre{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dre-l{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:6px 10px;border-radius:6px;background:var(--azul-claro)}.dre-l>span:first-child{font-weight:600}.dre-sub{background:none;border-top:1px solid rgba(0,0,0,.12)}.dre-sub>span:first-child{font-weight:800}.dre-cv{box-shadow:inset 4px 0 0 var(--azul-escuro)}.dre-oc{box-shadow:inset 4px 0 0 var(--amarelo)}
 .dre-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700}.dre-cv.dre-tag{background:var(--azul-escuro);color:#fff;box-shadow:none}.dre-oc.dre-tag{background:var(--amarelo);color:var(--preto);box-shadow:none}
 .on-n{display:inline-block;min-width:22px;padding:0 7px;border-radius:11px;background:#2E8B57;color:#fff;font-size:13px;line-height:22px;text-align:center;vertical-align:middle}.on-l{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}.on-l li{display:flex;gap:8px;align-items:flex-start}.on-l li>span:last-child{display:flex;flex-direction:column;min-width:0}.on-dot{width:9px;height:9px;border-radius:50%;background:#2E8B57;margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 3px rgba(46,139,87,.18)}
+.ide-res{font-size:15px;margin:0 0 10px}.ide-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px;margin:8px 0}.ide-c h4,.ide-h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--cinza,#666);margin:10px 0 4px}.ide-c p{margin:0}.ide-l{margin:0 0 6px;padding-left:20px}.ide-l li{margin:3px 0}
 .tm-proc{border:1px solid rgba(0,0,0,.12);border-radius:10px;background:var(--branco,#fff)}.tm-proc>summary{cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.tm-corpo{padding:0 14px 14px}.tm-filtros{display:grid;gap:8px;margin-bottom:6px}.tm-filtros input{max-width:420px}
 .ps-f{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.ps-fl{border:0;cursor:pointer;display:inline-block;min-width:20px;padding:0 6px;border-radius:9px;background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;font-weight:700;line-height:18px;text-align:center;text-decoration:none}.ps-nao{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,.07);box-shadow:inset 3px 0 0 #c0392b;font-size:14px}.ps-frase{margin:10px 0 0;font-style:italic;color:var(--azul-escuro)}.ps-fontes li{margin:4px 0}.ps-on{background:var(--amarelo);border-radius:4px}
 .ac-rev{margin:0 0 14px}
@@ -1840,7 +1841,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124203316";
+const APP_VER="20261124210347";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -12002,9 +12003,72 @@ function subnavAcoes(){
   const G=[["Operação",!am?[]:[["acoes-quadro","Quadro"],["acoes-solic",`Solicitações${nSol?" ("+nSol+")":""}`],["acoes-cal","Calendário"],(ehMkt()||ehAdmin())&&["acoes-mapa","Mapa da safra"],["acoes-eventos","Eventos e resultado"],evtVe()&&["acoes-evtmerc","Eventos do mercado"]]],
     ["Brindes de Marketing",veBrindes()?[["brindes-catalogo","Catálogo de brindes"],["brindes-reqs",g?`Requisições de brindes${pend?" ("+pend+")":""}`:"Minhas requisições"],...(g?[["brindes-emp",`Empréstimos${empA?" ("+empA+")":""}`],["brindes-painel","Painel de brindes"]]:[]),veEmBreve()&&["brindes-lojinha","Lojinha · em breve"]]:[]],
     ["Áreas demonstrativas",veVit()?[["vit-lista","Áreas"],["vit-mapa","Mapa das áreas"]]:[]],
+    ["Ideias",veIdeias()?[["acoes-ideias","Banco de ideias"]]:[]],
     ["Gestão e verba",am&&ehMkt()?[["acoes-gestao","Gestão"],["acoes-matriz","Matriz"],["acoes-painel","Verba e cenários"]]:[]]];
-  return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")||(k==="vit-lista"&&/^vit-(card|form)/.test(S.pag))||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo"));
+  return navGrupos(G,"Ações de Marketing",k=>S.pag===k||(k==="acoes-quadro"&&/^acoes-(card|nova)$/.test(S.pag))||(k==="acoes-solic"&&S.pag==="acoes-solic-nova")||(k==="vit-lista"&&/^vit-(card|form)/.test(S.pag))||(k==="acoes-ideias"&&S.pag==="acoes-ideia-form")||(k==="brindes-catalogo"&&/^brindes-(item|pedir)/.test(S.pag))||(k==="brindes-emp"&&S.pag==="brindes-emp-novo"));
 }
+/* ===== Banco de ideias de ações (mkt_ideias) ===== */
+const veIdeias=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug"));
+const IDE_VERBA=[["","Todas as verbas"],["IGDB","IGDB"],["Bônus","Bônus de Performance"],["Marketing","Verba do Marketing"]];
+const IDE_CAMPOS=[["resumo","O que é",2],["objetivo","Para que serve",2],["publico","Público",2],["formato","Formato",2],["como","Passo a passo (uma etapa por linha)",6],["precisa","O que precisa (um item por linha)",5],["custo","Custo",2],["verba","De onde sai a verba",2],["epoca","Melhor época",1],["medir","Como medir",2],["cuidados","Cuidados",2]];
+async function carregarIdeias(){if(S.ideBusy)return;S.ideBusy=true;try{const {data,error}=await sb.from("mkt_ideias").select("*").order("ordem").order("id");S.ide=error?[]:(data||[]);}catch(e){S.ide=[];}S.ideBusy=false;render();}
+function ideLinhas(t,ol){const L=String(t||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);if(!L.length)return "";return `<${ol?"ol":"ul"} class="ide-l">${L.map(x=>`<li>${esc(x)}</li>`).join("")}</${ol?"ol":"ul"}>`;}
+function ideCard(x){
+  const bl=(r,t)=>t?`<div class="ide-c"><h4>${r}</h4><p>${esc(t)}</p></div>`:"";
+  const txt=[x.titulo,x.tipo,x.resumo,x.publico,x.como,x.verba,x.epoca].join(" ").toLowerCase();
+  const c0=(x.custo||"").split(".")[0];
+  return `<details class="tm-proc ide-item" data-ide-txt="${esc(txt)}" ${S.ideAberta===x.id?"open":""}><summary><strong>${esc(x.titulo)}</strong><span class="meta">${esc([x.tipo,x.epoca,c0&&("Custo "+c0.toLowerCase()),x.origem==="Felipe"?"ideia do Felipe":x.origem==="Mercado"?"referência de mercado":""].filter(Boolean).join(" · "))}</span></summary><div class="tm-corpo">
+   ${x.resumo?`<p class="ide-res">${esc(x.resumo)}</p>`:""}
+   <div class="ide-g">${bl("Para que serve",x.objetivo)}${bl("Público",x.publico)}${bl("Formato",x.formato)}${bl("Melhor época",x.epoca)}</div>
+   ${x.como?`<h4 class="ide-h">Passo a passo</h4>${ideLinhas(x.como,true)}`:""}
+   ${x.precisa?`<h4 class="ide-h">O que precisa</h4>${ideLinhas(x.precisa)}`:""}
+   <div class="ide-g">${bl("Custo",x.custo)}${bl("De onde sai a verba",x.verba)}${bl("Como medir",x.medir)}${bl("Cuidados",x.cuidados)}</div>
+   ${ehMkt()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" data-a="ide-usar" data-v="${x.id}">Usar esta ideia</button><button class="btn sec" data-a="ide-editar" data-v="${x.id}">Editar</button></div>`:""}
+  </div></details>`;
+}
+function vAcoesIdeias(){
+  if(S.ide===undefined){carregarIdeias();return `<p class="meta">Carregando ideias…</p>`;}
+  const L=S.ide||[],tipos=[...new Set(L.map(x=>x.tipo).filter(Boolean))],T=S.ideTipo||"",V=S.ideVerba||"";
+  const vis=L.filter(x=>(!T||x.tipo===T)&&(!V||(x.verba||"").includes(V)));
+  return `<section class="bloco"><h2 class="sec">Banco de ideias</h2>
+   <p class="sub">Ideias de ações prontas para replicar: o que é, passo a passo, o que precisa, de onde sai a verba e como medir. Fica para consulta; quando decidir fazer, use a ideia para abrir o cartão no quadro já preenchido.</p>
+   ${ehMkt()?`<p style="margin:8px 0"><button class="btn sec" data-a="ide-nova">Nova ideia</button></p>`:""}
+   <div class="tm-filtros"><input type="search" id="ide-busca" placeholder="Buscar ideia (ex.: churrasco, balconista, IGDB)" value="${esc(S.ideBusca||"")}" aria-label="Buscar ideia">
+   <div class="filtros" role="group" aria-label="Tipo">${[["","Todos os tipos"],...tipos.map(t=>[t,t])].map(([k,t])=>`<button class="chip" data-a="ide-tipo" data-v="${esc(k)}" aria-pressed="${k===T}">${esc(t)}</button>`).join("")}</div>
+   <div class="filtros" role="group" aria-label="Verba">${IDE_VERBA.map(([k,t])=>`<button class="chip" data-a="ide-verba" data-v="${esc(k)}" aria-pressed="${k===V}">${esc(t)}</button>`).join("")}</div></div>
+   <p class="meta" id="ide-n">${vis.length} ${vis.length===1?"ideia":"ideias"}</p>
+   <div style="display:grid;gap:8px">${vis.map(ideCard).join("")||`<p class="meta">Nenhuma ideia com esse filtro.</p>`}</div></section>`;
+}
+function vIdeiaForm(){
+  if(!ehMkt()){S.pag="acoes-ideias";return vAcoesIdeias();}
+  const x=(S.ide||[]).find(i=>i.id===S.ideEd)||{};
+  return `<button class="voltar" data-a="pag" data-v="acoes-ideias">‹ Banco de ideias</button><form class="form-card" id="f-ideia" data-id="${x.id||""}"><h2 class="sec">${x.id?"Editar ideia":"Nova ideia"}</h2>
+   <label>Nome da ideia<input name="titulo" required maxlength="140" value="${esc(x.titulo||"")}"></label>
+   <label>Tipo de ação<select name="tipo">${ACAO_TIPOS.map(t=>`<option ${t[0]===(x.tipo||"")?"selected":""}>${esc(t[0])}</option>`).join("")}</select></label>
+   ${IDE_CAMPOS.map(([k,r,n])=>n>1?`<label>${r}<textarea name="${k}" rows="${n}">${esc(x[k]||"")}</textarea></label>`:`<label>${r}<input name="${k}" value="${esc(x[k]||"")}"></label>`).join("")}
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit">Salvar ideia</button>${x.id?`<button class="btn sec" type="button" data-a="ide-apagar" data-v="${x.id}">${S.ideApagar===x.id?"Confirmar: apagar":"Apagar ideia"}</button>`:""}</div></form>`;
+}
+function ideFiltrarDOM(){const q=(S.ideBusca||"").toLowerCase().trim();let n=0;document.querySelectorAll(".ide-item").forEach(d=>{const ok=!q||d.dataset.ideTxt.includes(q);d.hidden=!ok;if(ok)n++;});const e=document.getElementById("ide-n");if(e)e.textContent=n+(n===1?" ideia":" ideias");}
+document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="ide-busca"){S.ideBusca=ev.target.value;ideFiltrarDOM();}});
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='ide-']");if(!b)return;ev.preventDefault();ev.stopPropagation();const a=b.dataset.a,v=b.dataset.v;
+  if(a==="ide-tipo"){S.ideTipo=v;render();ideFiltrarDOM();return;}
+  if(a==="ide-verba"){S.ideVerba=v;render();ideFiltrarDOM();return;}
+  if(!ehMkt())return;
+  if(a==="ide-nova"){S.ideEd=null;S.ideApagar=null;S.pag="acoes-ideia-form";render();window.scrollTo(0,0);return;}
+  if(a==="ide-editar"){S.ideEd=+v;S.ideApagar=null;S.pag="acoes-ideia-form";render();window.scrollTo(0,0);return;}
+  if(a==="ide-usar"){const x=(S.ide||[]).find(i=>i.id===+v);if(!x)return;
+    const desc=[x.resumo,x.como?"Passo a passo:\n"+x.como:"",x.precisa?"O que precisa:\n"+x.precisa:"",x.verba?"Verba: "+x.verba:"",x.medir?"Como medir: "+x.medir:""].filter(Boolean).join("\n\n");
+    if(!S.mkPessoas&&!S.mk)carregarMkt();S.mkNovaTarefa=false;S.mkPre={titulo:x.titulo,tipo:x.tipo,descricao:desc};S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
+  if(a==="ide-apagar"){const id=+v;if(S.ideApagar!==id){S.ideApagar=id;render();setTimeout(()=>{if(S.ideApagar===id){S.ideApagar=null;render();}},8000);return;}
+    const {error}=await sb.from("mkt_ideias").delete().eq("id",id);if(error){aviso("Não consegui apagar a ideia.");return;}S.ideApagar=null;S.ide=(S.ide||[]).filter(i=>i.id!==id);S.pag="acoes-ideias";aviso("Ideia apagada.");render();return;}
+},true);
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-ideia")return;ev.preventDefault();ev.stopImmediatePropagation();if(!ehMkt())return;
+  const g=n=>((f.elements[n]||{}).value||"").trim();const d={titulo:g("titulo"),tipo:g("tipo")};IDE_CAMPOS.forEach(([k])=>d[k]=g(k)||null);
+  if(!d.titulo){aviso("Dê um nome para a ideia.");return;}d.atualizado_em=new Date().toISOString();d.atualizado_por=S.user.id;
+  const id=+f.dataset.id;const btn=f.querySelector("button[type=submit]");if(btn)btn.disabled=true;
+  const r=id?await sb.from("mkt_ideias").update(d).eq("id",id).select().single():await sb.from("mkt_ideias").insert({...d,origem:"Marketing",ordem:900}).select().single();
+  if(btn)btn.disabled=false;if(r.error){aviso("Não consegui salvar a ideia.");return;}
+  const L=S.ide||[];const i=L.findIndex(x=>x.id===r.data.id);if(i>=0)L[i]=r.data;else L.push(r.data);S.ide=L;S.ideAberta=r.data.id;S.pag="acoes-ideias";aviso("Ideia salva.");render();window.scrollTo(0,0);});
 async function carregarMkt(){
   if(S.mkBusy)return;S.mkBusy=true;
   try{const {data}=await sb.from("mkt_acoes").select("*").order("inicio",{ascending:true,nullsFirst:false}).order("id");S.mk=data||[];}catch(e){S.mk=[];}
@@ -12413,7 +12477,7 @@ function vAcoesSolicNova(){
     <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
 }
-function vAcoesNova(){return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>${mkFormHTML(S.mkNovaTarefa?{frente:"tarefa",fin:"Sem custo",programa:"Institucional"}:{})}`;}
+function vAcoesNova(){return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button>${S.mkPre&&!S.mkNovaTarefa?`<p class="nota-admin">Cartão preenchido a partir do Banco de ideias. Ajuste datas, local, responsável e valores antes de salvar.</p>`:""}${mkFormHTML(S.mkNovaTarefa?{frente:"tarefa",fin:"Sem custo",programa:"Institucional"}:(S.mkPre||{}))}`;}
 function vAcoesCard(){
   const a=(S.mk||[]).find(x=>x.id===S.mkSel);
   if(!a)return `<button class="voltar" data-a="pag" data-v="acoes-quadro">‹ Quadro</button><div class="vazio">Ação não encontrada.</div>`;
@@ -12741,6 +12805,8 @@ function vAcoesMkt(){
   if(S.pag==="acoes-matriz"&&ehMkt())return vAcoesMatriz();
   if(S.pag==="acoes-cal")return vAcoesCal();
   if(S.pag==="acoes-mapa")return (ehMkt()||ehAdmin())?vAcoesMapa():vAcoesCal();
+  if(S.pag==="acoes-ideias")return veIdeias()?vAcoesIdeias():vAcoesCal();
+  if(S.pag==="acoes-ideia-form")return vIdeiaForm();
   if(S.pag==="acoes-eventos")return vAcoesEventos();
   if(S.pag==="acoes-solic")return vAcoesSolic();
   if(S.pag==="acoes-solic-nova"&&mkPodeSolic())return vAcoesSolicNova();
@@ -13182,7 +13248,7 @@ const mkNum=v=>{const t=String(v==null?"":v).trim();if(!t)return 0;const n=parse
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
   if(a==="mk-abrir"){if(S.pag!=="acoes-card")S.mkVolta=S.pag;S.mkPn=null;S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
-  if(a==="mk-nova"){if(!ehMkt())return;S.mkNovaTarefa=v==="tarefa";S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
+  if(a==="mk-nova"){if(!ehMkt())return;S.mkPre=null;S.mkNovaTarefa=v==="tarefa";S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
   if(a==="mk-canc"){S.mkCanc=b.checked;render();return;}
   if(a==="mk-editar"){S.mkEdit=true;S.mkPn=null;render();return;}
   if(a==="mk-pn"){S.mkPn=v||null;S.mkDel=false;render();const e=document.getElementById(S.mkPn==="aprovar"||S.mkPn==="analise"?"md_val":"md_obs");if(e)e.focus();return;}
