@@ -2121,7 +2121,7 @@ function caixaCred(c){
   const wa=tel.length>=10?`https://wa.me/${tel.length<=11?"55"+tel:tel}`:"";
   return `<div class="nota-admin cred"><strong>${c.reset?"Senha redefinida.":"Acesso criado."}</strong> A senha provisória aparece só agora. Copie a mensagem e envie para a pessoa:
     <pre class="msg">${esc(msg)}</pre>
-    <div class="acoes"><button class="btn" type="button" data-a="copiar" data-v="${esc(c.k)}">Copiar mensagem</button>${wa?`<a class="btn sec" href="${wa}" target="_blank" rel="noopener">Abrir WhatsApp</a>`:""}</div></div>`;
+    <div class="acoes"><button class="btn" type="button" data-a="copiar" data-v="${esc(c.k)}">Copiar mensagem</button>${wa?`<a class="btn sec" href="${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>`:""}${c.email?`<a class="btn sec" href="mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(c.reset?"Sua nova senha do Portal Conecta Barenbrug":"Seu acesso ao Portal Conecta Barenbrug")}&body=${encodeURIComponent(msg)}">Enviar por e-mail</a>`:""}</div><span class="meta">Os dois botões abrem a mensagem pronta no seu WhatsApp ou no seu e-mail, com o destinatário preenchido. É só conferir e enviar.</span></div>`;
 }
 async function redefinirSenha(u,telefone){
   const {data,error}=await sb.rpc("admin_redefinir_senha",{alvo:u.id});
