@@ -4931,7 +4931,7 @@ function vNgDetalhe(x){if(!x){S.ng.aberta=null;return vNegs();}
   <div><span class="rot">Negociação ${x.id}</span><h1 class="titulo">${esc(x.nome_neg||x.cliente_nome)}</h1><p class="sub">${esc(ngSit(x))}${x.status==="No CRM"&&x.crm_etapa?"":""}</p></div>
   <section class="bloco">${ngFluxo(x)}</section>
   ${souRC&&x.status==="Devolvido"?`<div class="aviso-est"><strong>Devolvida para ajuste:</strong> ${esc(x.devolvido_obs||"")}<div class="acoes" style="margin:8px 0 0"><button class="btn" data-a="ng-ajustar" data-v="${x.id}">Ajustar e reenviar</button><button class="btn sec" data-a="ng-cancelar" data-v="${x.id}">Cancelar a negociação</button></div></div>`:""}
-  ${podeProp?`<section class="bloco"><h2 class="sec">Proposta para o cliente</h2><p class="sub" style="margin:0 0 8px">Aprovada pelo responsável comercial. ${x.proposta_em?"Emitida em "+ngDt(x.proposta_em)+", válida até "+ngDt(new Date(new Date(x.proposta_em).getTime()+15*864e5).toISOString())+".":"Válida por 15 dias a partir da emissão."}</p><div class="acoes" style="margin:0"><button class="btn" data-a="ng-prop" data-v="${x.id}">Baixar proposta em PDF</button><button class="btn sec" data-a="ng-prop-ver" data-v="${x.id}">Ver a proposta</button></div></section>`:souRC&&["aguardando","ajustar"].includes(ngColuna(x))?`<p class="meta">A proposta em PDF para o cliente fica disponível depois que o responsável comercial aprovar a negociação.</p>`:""}
+  ${podeProp?`<section class="bloco"><h2 class="sec">Proposta para o cliente</h2><p class="sub" style="margin:0 0 8px">Aprovada pelo responsável comercial. ${x.proposta_em?"Emitida em "+ngDt(x.proposta_em)+", válida até "+ngDt(new Date(new Date(x.proposta_em).getTime()+15*864e5).toISOString())+".":"Válida por 15 dias a partir da emissão."}</p><div class="acoes" style="margin:0"><button class="btn" data-a="ng-prop" data-v="${x.id}">Baixar proposta em PDF</button><button class="btn sec" data-a="ng-prop-wa" data-v="${x.id}">Enviar por WhatsApp</button><button class="btn sec" data-a="ng-prop-ver" data-v="${x.id}">Ver a proposta</button></div><p class="meta" style="margin:6px 0 0">No celular, Enviar por WhatsApp abre o WhatsApp com o PDF anexado. No computador, o PDF é baixado e o WhatsApp abre com a mensagem pronta para o contato; é só anexar o arquivo.</p></section>`:souRC&&["aguardando","ajustar"].includes(ngColuna(x))?`<p class="meta">A proposta em PDF para o cliente fica disponível depois que o responsável comercial aprovar a negociação.</p>`:""}
   ${gest&&x.status!=="No CRM"&&x.status!=="Cancelada"?ngAcoesGestor(x):""}
   ${gest&&x.status==="No CRM"&&x.crm_deal_id&&ehAdmin()||gest&&x.status==="No CRM"&&x.crm_deal_id?`<p class="meta">${crmLnk(x.crm_deal_id)}${x.crm_pv?" · PV "+esc(x.crm_pv):""}</p>`:""}
   ${x.crm_erro&&gest?`<div class="nota-admin">${esc(x.crm_erro)}</div>`:""}
@@ -5002,6 +5002,19 @@ ${fr!=null?`<tr><td><strong>Frete estimado</strong><br><small>${esc(x.frete||"")
 <div class="tot"><span>Valor total do pedido</span><strong>${ngBRL(totP+(fr||0))}</strong></div>
 <div class="fim"><p>Em caso de dúvidas, nossa equipe está à disposição para esclarecimentos.</p><p>Após a aprovação e assinatura desta proposta, daremos sequência imediata ao processo de faturamento e entrega, conforme condições acordadas.</p><p>Reforçamos que esta proposta possui validade de 15 dias.</p></div>
 <div class="fx2"></div></body></html>`;}
+async function ngPropWhats(x){
+  const html=ngPropDoc(x);try{await propLib();}catch(e){aviso("Não foi possível gerar o PDF agora.");return;}
+  const css=(html.match(/<style>([\s\S]*?)<\/style>/)||[])[1]||"";const corpo=(html.match(/<body>([\s\S]*?)<\/body>/)||[])[1]||"";
+  const doc=`<div class="ppdf"><style>${propEscopo(css)}.ppdf{display:block;max-width:none;padding:0 0 12px;margin:0;background:#fff;width:186mm}.ppdf .bt{display:none}.ppdf .fx,.ppdf .fx2{margin-left:0;margin-right:0}</style>${corpo.replace('<button class="bt" onclick="window.print()">Salvar em PDF</button>','')}</div>`;
+  const nome=("Proposta "+x.id+" "+String(x.cliente_nome||"")).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9 _-]+/g,"").trim().slice(0,80)+".pdf";
+  let blob;try{blob=await window.html2pdf().set({margin:[10,12,12,12],filename:nome,image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".tot"]}}).from(doc,"string").outputPdf("blob");}catch(e){aviso("Não foi possível gerar o PDF.");return;}
+  const c=x.contato||{};const pn=String(c.nome||x.cliente_nome||"").trim().split(" ")[0];
+  const msg=`Olá${pn?", "+pn:""}! Segue a proposta da Barenbrug${x.cliente_nome?" para "+x.cliente_nome:""}, válida por 15 dias. Qualquer dúvida, estou à disposição.`;
+  const file=new File([blob],nome,{type:"application/pdf"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:msg,title:nome});return;}catch(e){if(e&&e.name==="AbortError")return;}}
+  const u=URL.createObjectURL(blob);const l=document.createElement("a");l.href=u;l.download=nome;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  const tel=String(c.celular||"").replace(/\D/g,"");const w=window.open(`https://wa.me/${tel.length>=10?(tel.length<=11?"55"+tel:tel):""}?text=${encodeURIComponent(msg)}`,"_blank");
+  aviso(w?"PDF baixado. Anexe o arquivo na conversa do WhatsApp que abriu.":"PDF baixado. Libere a abertura de janelas para abrir o WhatsApp.");}
 async function ngPropBaixar(x,ver){
   if(!x.proposta_em){const {error}=await sb.rpc("neg_acao",{p_id:x.id,p_acao:"proposta_emitida"});if(error){aviso(error.message||"Não foi possível emitir a proposta.");return;}x.proposta_em=new Date().toISOString();if(S.ng.evs)delete S.ng.evs[x.id];}
   const html=ngPropDoc(x);
@@ -5061,6 +5074,7 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
   const x=(G.lista||[]).find(n=>n.id===+v);
   if(a==="ng-ajustar"&&x){G.ed=Object.assign(ngDeNeg(x),{devolvido_obs:x.devolvido_obs});G.aberta=null;G.chk=null;G.chkDoc=null;G.erro=null;if(G.ed.cliente_uf)carregarCidades(G.ed.cliente_uf).then(re);topo();setTimeout(ngChecarDoc,0);return;}
   if(a==="ng-cancelar"&&x){if(b.dataset.conf!=="1"){b.dataset.conf="1";b.textContent="Confirmar o cancelamento";return;}const {error}=await sb.rpc("neg_acao",{p_id:x.id,p_acao:"cancelar"});if(error){aviso(error.message);return;}await ngCarregar();render();aviso("Negociação cancelada.");return;}
+  if(a==="ng-prop-wa"&&x){b.disabled=true;const t=b.textContent;b.textContent="Preparando…";await ngPropWhats(x);b.disabled=false;b.textContent=t;return;}
   if((a==="ng-prop"||a==="ng-prop-ver")&&x){b.disabled=true;const t=b.textContent;b.textContent="Gerando…";await ngPropBaixar(x,a==="ng-prop-ver");b.disabled=false;b.textContent=t;return;}
   if(a==="ng-doc"){const {data,error}=await sb.storage.from("neg-credito").createSignedUrl(v,300);if(error||!data){aviso("Não foi possível abrir o arquivo.");return;}window.open(data.signedUrl,"_blank","noopener");return;}
 },true);
