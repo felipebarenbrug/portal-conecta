@@ -8540,6 +8540,9 @@ function vRVPainel(){
   </div>
   <div class="metrics" style="margin-top:10px">
     <div class="metric"><span>Sell-in de híbridos</span><strong>${fmtK0(T("rsH"))}</strong><span class="meta">${fmtKg(T("kgH"))} · meta somada ${fmtKg(T("meta"))}</span></div>
+    ${ehAdmin()?(()=>{if(S.hibTot===undefined){S.hibTot=null;sb.rpc("hib_totais_safra").then(r=>{S.hibTot=r.error?false:r.data;render();},()=>{S.hibTot=false;render();});}const H=S.hibTot;if(!H)return "";
+      const pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%":"—";const b2b=+H.b2b_rs||0,tot=b2b+(+H.b2c_rs||0),kb=+H.b2b_kg||0,kt=kb+(+H.b2c_kg||0);
+      return `<div class="metric" style="box-shadow:inset 0 0 0 2px var(--azul)"><span>Peso do Conecta nos híbridos${inf("Sell-in de híbridos dos canais do Conecta dividido pelo total de híbridos (Sabiá, Cayana e Carcará) vendido na safra 26/27 no CRM. B2B: revendas, cooperativas, distribuidores e key account. B2B + B2C soma a venda direta ao produtor. Exportação fica fora.")}</span><strong>${pc(T("rsH"),b2b)} do B2B</strong><span class="meta">${pc(T("rsH"),tot)} de todos os híbridos (B2B + B2C) · em toneladas: ${pc(T("kgH"),kb)} do B2B e ${pc(T("kgH"),kt)} do total</span></div>`;})():""}
     <div class="metric"><span>Sell-in de convencionais</span><strong>${fmtK0(T("rsC"))}</strong><span class="meta">${fmtKg(T("kgC"))}</span></div>
     <div class="metric"><span>IGDB sobre o faturado até hoje</span><strong>${fmtK0(T("igdbFat"))}</strong><span class="meta">o pagamento depende da liquidação das notas</span></div>
     <div class="metric" style="${T("nAnalise")?'box-shadow:inset 0 0 0 2px #c0392b':''}"><span>PGD aguardando análise</span><strong>${T("nAnalise")} ações</strong><span class="meta">${fmtK0(T("analise"))} em valor informado</span></div>
