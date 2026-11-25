@@ -3378,10 +3378,25 @@ function vAcoesDigital(){
 
 /* ===== Inteligência: alcance e eficiência da comunicação (Meta) ===== */
 document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-a='mp-recarregar']");if(!b)return;ev.preventDefault();S.mp=undefined;render();});
-async function carregarMidiaPainel(){if(S.mp!==undefined)return;S.mp=null;try{const {data}=await sb.from("midia_painel").select("*").order("feito_em",{ascending:false}).limit(1);S.mp=(data&&data[0])||false;}catch(e){S.mp=false;}render();}
+async function carregarMidiaPainel(){if(S.mp!==undefined)return;S.mp=null;try{const {data}=await sb.from("midia_painel").select("*").in("id",["safra-2627","email-2026"]);const L=data||[];S.mp=L.find(x=>x.id==="safra-2627")||false;S.mpEmail=L.find(x=>x.id==="email-2026")||false;}catch(e){S.mp=false;S.mpEmail=false;}render();}
 const mpPct=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"—";
 const MP_UFN={AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MT:"Mato Grosso",MS:"Mato Grosso do Sul",MG:"Minas Gerais",PA:"Pará",PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins"};
 function mpBarra(v,mx,cor){const p=mx?Math.max(2,v/mx*100):0;return `<div style="flex:1;min-width:60px;background:var(--azul-claro,#e6f6fc);border-radius:4px;height:10px;overflow:hidden"><div style="width:${p}%;height:100%;background:${cor||"var(--azul)"}"></div></div>`;}
+function vIntEmailAlc(){const P=S.mpEmail;if(!P||!ehMkt())return "";const D=P.dados||{},E=(D.emails||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)),B=D.bench||{};
+  const nf=v=>Math.round(+v||0).toLocaleString("pt-BR"),pc=(a,b)=>b?(a/b*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%":"—";
+  const sm=(L,k)=>L.reduce((t,x)=>t+(+x[k]||0),0);const ent=sm(E,"ent"),ab=sm(E,"ab"),cl=sm(E,"cl"),des=sm(E,"des");
+  const tipos=[...new Set(E.map(x=>x.t))];const mx=Math.max(1,...E.map(x=>x.ab/x.ent));
+  const m=(t,v,u)=>`<div class="metric"><span>${t}</span><strong>${v}</strong>${u?`<span class="meta">${u}</span>`:""}</div>`;
+  const dt=d=>d.split("-").reverse().slice(0,2).join("/");
+  return `<section class="bloco" id="alc-email"><h2 class="sec">E-mail marketing · Boletim do Pasto e campanhas</h2>
+   <p class="meta" style="margin:0 0 8px">${esc(D.regra||"")} Dados de ${P.periodo_ini?new Date(P.periodo_ini+"T12:00").toLocaleDateString("pt-BR"):"—"} a ${P.periodo_fim?new Date(P.periodo_fim+"T12:00").toLocaleDateString("pt-BR"):"—"} · atualizado em ${P.feito_em?new Date(P.feito_em).toLocaleDateString("pt-BR"):"—"}.</p>
+   <div class="metrics">${m("Envios",nf(E.length),tipos.map(t=>E.filter(x=>x.t===t).length+" "+t.toLowerCase()).join(" · "))}${m("E-mails entregues",nf(ent))}${m("Aberturas",nf(ab),"taxa média "+pc(ab,ent)+(B.ab?" · referência do agro "+B.ab.toLocaleString("pt-BR")+"%":""))}${m("Cliques",nf(cl),"taxa média "+pc(cl,ent)+(B.cl?" · referência "+B.cl.toLocaleString("pt-BR")+"%":""))}${m("Descadastros",nf(des),pc(des,ent)+(B.des?" · referência "+B.des.toLocaleString("pt-BR")+"%":""))}</div>
+   <div class="tab"><table class="sim-t fin-t"><thead><tr><th>Envio</th><th>Tipo</th><th class="val">Entregues</th><th class="val">Aberturas</th><th class="val">Abertura</th><th class="val">Cliques</th><th class="val">Clique</th><th class="val">CTOR</th><th class="val">Descadastro</th><th style="min-width:90px"></th></tr></thead><tbody>
+   ${E.map(x=>`<tr><td>${dt(x.d)} · ${esc(x.n)}${x.est?` <span class="meta">(estimado)</span>`:""}${x.obs?`<br><span class="meta">${esc(x.obs)}</span>`:""}</td><td>${esc(x.t)}</td><td class="val">${nf(x.ent)}</td><td class="val">${nf(x.ab)}</td><td class="val">${pc(x.ab,x.ent)}</td><td class="val">${nf(x.cl)}</td><td class="val">${pc(x.cl,x.ent)}</td><td class="val">${pc(x.cl,x.ab)}</td><td class="val">${pc(x.des,x.ent)}</td><td><span style="display:block;height:10px;border-radius:5px;background:var(--azul);width:${Math.max(2,(x.ab/x.ent)/mx*100)}%"></span></td></tr>`).join("")}
+   <tr><td><strong>Total</strong></td><td></td><td class="val"><strong>${nf(ent)}</strong></td><td class="val"><strong>${nf(ab)}</strong></td><td class="val">${pc(ab,ent)}</td><td class="val"><strong>${nf(cl)}</strong></td><td class="val">${pc(cl,ent)}</td><td class="val">${pc(cl,ab)}</td><td class="val">${pc(des,ent)}</td><td></td></tr></tbody></table></div>
+   <p class="meta">CTOR é cliques sobre aberturas. ${esc(B.fonte||"")}</p>
+   ${(D.notas||[]).length?`<ul class="cond">${D.notas.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}</section>
+   <section class="bloco"><h2 class="sec">Site da Barenbrug</h2><p class="meta" style="margin:0">Páginas vistas e visitas do site desde janeiro entram aqui assim que o Google Analytics do site for liberado para a leitura.</p></section>`;}
 function vIntAlcance(){
   if(!ehMkt())return `<div class="vazio">Área do Marketing.</div>`;
   if(S.mp===undefined){carregarMidiaPainel();return `<div class="carregando">Carregando…</div>`;}
@@ -14228,7 +14243,7 @@ function renderApp(){
       if(S.pag==="int-contas"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntContas()}</main>`;return;}
       if(S.pag==="int-nps"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntNps()}</main>`;return;}
       if(S.pag==="int-metodo"){app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${vIntMetodo()}</main>`;return;}
-      if(S.pag==="int-alcance"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntAlcance()}</main>`;return;}}
+      if(S.pag==="int-alcance"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vIntAlcance()}${S.mp?vIntEmailAlc():""}</main>`;return;}}
       if(S.pag==="int-digital"){if(!ehMkt()){S.pag="int-insumos";}else{app.innerHTML=cabecalho()+subnavInt()+`<main class="largo">${intPropHTML(S.pag)}${vAcoesDigital()}</main>`;if(!S.mk)carregarMkt();return;}}
       if(!INT_ABAS.some(x=>x[0]===S.pag))S.pag="int-insumos";
       const an=["int-vendas","int-rc","int-seg","int-perfil","int-saz"].includes(S.pag);
