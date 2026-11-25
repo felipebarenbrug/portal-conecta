@@ -300,6 +300,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 /* FAR */
 .far-kan{grid-auto-columns:minmax(220px,1fr)}
 .far-passos{grid-template-columns:repeat(4,1fr)}
+.pp .cal-filtros{margin-bottom:6px}.pp-h{font-size:14px;margin:14px 0 6px;color:var(--azul-escuro)}
 .fm{display:grid;grid-template-columns:1fr minmax(180px,220px) 1fr;gap:14px 22px;align-items:center;margin:10px 0 4px}
 .fm-col{display:grid;gap:12px}.fm-c{grid-column:2;grid-row:1 / span 1;align-self:center;text-align:center;background:var(--azul);color:#fff;border-radius:16px;padding:16px 14px;font-weight:800;font-size:16px;line-height:1.3;box-shadow:0 0 0 6px var(--azul-claro)}
 .fm-c small{display:block;font-weight:400;font-size:12px;opacity:.9;margin-top:4px}
@@ -1851,7 +1852,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261124213109";
+const APP_VER="20261124214918";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -8132,6 +8133,38 @@ function vRVCal(){
   <section class="bloco"><h2 class="sec">No mês · ${lista.length}</h2>${lista.length?`<div class="lista">${lista.map(e=>calLinha(e,!geral||ehAdmin())).join("")}</div>`:`<div class="vazio">Nada neste mês.</div>`}</section>
   ${sem.length?`<section class="bloco"><h2 class="sec">Sem data no plano · ${sem.length}</h2><div class="lista">${sem.map(e=>calLinha(e,!geral||ehAdmin())).join("")}</div></section>`:""}`;
 }
+/* planejamento por período: ações do quadro + PGD dos canais (IGDB e BF), agrupadas por situação */
+const PP_PER=[["s1-2027","1º semestre 2027","2027-01-01","2027-06-30"],["s2-2026","2º semestre 2026","2026-07-01","2026-12-31"],["safra","Safra 26/27","2026-07-01","2027-06-30"]];
+function ppBase(){const ligados=new Set((S.mk||[]).filter(a=>a.pgd_id).map(a=>String(a.pgd_id)));
+  const pgd=calEvPgd(Object.values(S.acoesCanal||{}).flat().filter(a=>!a.mkt_acao_id&&!ligados.has(String(a.id))&&a.status!=="Reprovado"));
+  return [...calEvMk().filter(e=>!["Cancelada","Recusada"].includes(e.status)),...pgd];}
+function ppGrupo(e){const st=e.status||"";if(e.src==="pgd")return st==="Aprovado"?"apr":"ana";
+  if(["A fazer","Em andamento","Concluída"].includes(st))return "apr";if(st==="Pausada")return "pau";return "ana";}
+const PP_G=[["apr","Aprovadas"],["ana","Em análise ou solicitadas"],["pau","Pausadas"]];
+function ppPeriodo(){const k=S.ppPer||"s1-2027";const P=PP_PER.find(x=>x[0]===k);if(P)return {k,nome:P[1],ini:P[2],fim:P[3]};
+  const [y,m]=k.split("-").map(Number);return {k,nome:(t=>t.charAt(0).toUpperCase()+t.slice(1))(new Date(y,m-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"})),ini:`${k}-01`,fim:calFimMes(y,m)};}
+function ppDados(){const P=ppPeriodo();const base=ppBase();const fv=S.ppVb||"Todas";
+  const okV=e=>fv==="Todas"||(fv==="Quadro"?e.src==="mk":e.src==="pgd"&&e.verba===fv);
+  const L=base.filter(e=>okV(e)&&e.ini&&e.ini<=P.fim&&e.fim>=P.ini).sort((a,b)=>String(a.ini).localeCompare(String(b.ini))||String(a.tit).localeCompare(String(b.tit)));
+  const sem=base.filter(e=>okV(e)&&!e.ini);return {P,L,sem};}
+function ppOrigem(e){return e.src==="pgd"?`PGD · ${e.verba}${e.canal?" · "+e.canal:""}`:`${e.prog||"Institucional"}${e.a&&e.a.local?" · "+e.a.local:""}`;}
+function ppTexto(){const {P,L,sem}=ppDados();const out=[`Ações planejadas · ${P.nome} (${L.length})`];
+  PP_G.forEach(([g,t])=>{const X=L.filter(e=>ppGrupo(e)===g);if(!X.length)return;out.push("",`${t} (${X.length})`);X.forEach(e=>out.push(`- ${calPerTxt(e)}: ${e.tit} (${ppOrigem(e)})`));});
+  if(sem.length)out.push("",`Sem data definida: ${sem.length}`);return out.join("\n");}
+function ppHTML(){const {P,L,sem}=ppDados();const k=P.k;const meses=[7,8,9,10,11,12,1,2,3,4,5,6].map(m=>[`${calAnoSafra(m)}-${String(m).padStart(2,"0")}`,CAL_MES[m-1]]);
+  const carregando=!S.canais;const nV=v=>L.filter(e=>e.src==="pgd"&&e.verba===v).length;
+  return `<section class="bloco pp"><h2 class="sec">Planejamento por período · ${esc(P.nome)} · ${L.length} ${L.length===1?"ação":"ações"}</h2>
+   <p class="meta" style="margin:0 0 8px">Junta as ações do quadro do Marketing e as ações do PGD dos canais (IGDB e Bônus de Performance). Entra tudo que acontece pelo menos em parte no período. Ações reprovadas ou canceladas ficam fora.${carregando?" Carregando as ações do PGD…":""}</p>
+   <div class="cal-filtros">${calChips("pp-per",PP_PER.map(x=>[x[0],x[1]]),k)}</div>
+   <div class="cal-filtros"><span class="meta">Mês:</span>${calChips("pp-per",meses,k)}</div>
+   <div class="cal-filtros">${calChips("pp-vb",[["Todas","Tudo"],["Quadro","Quadro do Marketing"],["IGDB","PGD com IGDB"],["Bônus de Performance","PGD com Bônus"]],S.ppVb||"Todas")}<button class="btn sec" data-a="pp-copiar">Copiar a lista</button></div>
+   <div class="metrics">${PP_G.map(([g,t])=>`<div class="metric"><span>${t}</span><strong>${L.filter(e=>ppGrupo(e)===g).length}</strong></div>`).join("")}<div class="metric"><span>Do PGD</span><strong>${nV("IGDB")+nV("Bônus de Performance")}</strong><span class="meta">${nV("IGDB")} IGDB · ${nV("Bônus de Performance")} Bônus</span></div></div>
+   ${L.length?PP_G.map(([g,t])=>{const X=L.filter(e=>ppGrupo(e)===g);return X.length?`<h3 class="pp-h">${t} · ${X.length}</h3><div class="lista">${X.map(e=>calLinha(e,ehAdmin())).join("")}</div>`:"";}).join(""):`<div class="vazio">Nenhuma ação nesse período.</div>`}
+   ${sem.length?`<p class="meta" style="margin-top:8px">${sem.length} ${sem.length===1?"ação está sem data e não entra":"ações estão sem data e não entram"} no filtro. ${sem.length===1?"Ela aparece":"Elas aparecem"} em "Sem data" no Mapa da safra; defina a data para entrarem aqui.</p>`:""}</section>`;}
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='pp-']");if(!b)return;ev.preventDefault();const a=b.dataset.a,v=b.dataset.v;
+  if(a==="pp-per"){S.ppPer=v;render();return;}if(a==="pp-vb"){S.ppVb=v;render();return;}
+  if(a==="pp-copiar"){const t=ppTexto();try{await navigator.clipboard.writeText(t);aviso("Lista copiada. É só colar no WhatsApp ou no e-mail.");}catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.append(ta);ta.select();try{document.execCommand("copy");aviso("Lista copiada.");}catch(_){aviso("Não consegui copiar.");}ta.remove();}return;}
+},true);
 /* 3. mapa da safra do marketing: acoes de marketing + PGD dos canais + marcos */
 function vAcoesMapa(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
@@ -12700,7 +12733,9 @@ function vAcoesCal(){
   const perHTML=per.length?`<section class="bloco mk-per"><h2 class="sec">Ao longo do mês, sem dia marcado · ${per.length}</h2><p class="meta">Ações com período longo ou só com o mês definido. Não aparecem nos dias para não encher o calendário.</p>
     ${Object.entries(grp).map(([k,xs])=>`<div class="mk-per-g">${k[0]!=="s"?`<strong class="meta">${esc(maeT(+k))}</strong>`:""}<div class="mk-per-l">${xs.map(a=>`<button class="mk-ev st-${MK_FIN_COR[mkFin(a)]}${mkAtrasada(a)?" atr":""}" data-a="mk-abrir" data-v="${a.id}" title="${esc(a.titulo)}">${esc(a.titulo)} · ${esc(mkPerTxt(a))}</button>`).join("")}</div></div>`).join("")}</section>`:"";
   const mv=k=>{const d=new Date(y,mo-1+k,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
+  if(!S.canais&&!S.ppCanBusy){S.ppCanBusy=1;carregarCanais().then(()=>{S.ppCanBusy=0;render();});}
   return `<div><h1 class="titulo">Calendário de ações</h1><p class="sub">As ações pela data. Eventos de até ${MK_CAL_MAX} dias aparecem nos dias; períodos longos ficam na faixa abaixo do calendário. A cor mostra a situação financeira: amarelo provisionada, azul aprovada, verde paga, cinza sem custo. Borda vermelha: atrasada.</p></div>
+  ${ppHTML()}
   <div class="mk-barra"><button class="btn sec" data-a="mk-mes" data-v="${mv(-1)}" aria-label="Mês anterior">‹</button><strong style="align-self:center;min-width:150px;text-align:center">${esc(nomeMes)}</strong><button class="btn sec" data-a="mk-mes" data-v="${mv(1)}" aria-label="Próximo mês">›</button><button class="link" data-a="mk-mes" data-v="${h.slice(0,7)}">hoje</button>
     <div class="filtros" style="margin:0">${["Todas",...MK_FIN,"Atrasadas"].map(t=>`<button class="chip" data-a="mk-calf" data-v="${t}" aria-pressed="${t===ff}">${t}</button>`).join("")}</div>${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button>`:""}</div>
   <div class="mk-cal"><div class="mk-sem">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(x=>`<span>${x}</span>`).join("")}</div><div class="mk-grade">${cel.join("")}</div></div>
