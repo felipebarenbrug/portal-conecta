@@ -1765,7 +1765,9 @@ const estadoEt=i=>{const a=indiceAtual();return i<a?"feita":i===a?"atual":"bloq"
 const ehAdmin=()=>S.perfil==="Administrador"||(!S.demo&&S.nivel==="Administrador");
 const ehMaster=()=>S.demo?S.perfil==="Administrador":S.nivel==="Administrador";
 const ehGestor=()=>!S.demo&&S.nivel==="Gestor";
-const gerePessoas=()=>ehAdmin()||ehGestor();
+const secOculta=id=>!S.demo&&!(S.profile&&S.profile.master)&&!!(S.profile&&Array.isArray(S.profile.secoes_ocultas)&&S.profile.secoes_ocultas.includes(id));
+const ADM_SECS=()=>[["gestao","Painel de gerenciamento (pessoas e acessos)"],...SECOES.filter(x=>!["guia","brindes","vitrines","calculadora","analise-solo"].includes(x.id)).map(x=>[x.id,x.nome])];
+const gerePessoas=()=>(ehAdmin()||ehGestor())&&!secOculta("gestao");
 const NIVEL_NOME={"Padrão":"Padrão","Gestor":"Gestor de acessos","Administrador":"Administrador"};
 const souMasterAdm=()=>!S.demo&&!!(S.profile&&S.profile.master);
 const alvoAdm=u=>!!u&&(u.perfil==="Administrador"||u.nivel==="Administrador"||u.nivel==="Gestor"||(Array.isArray(u.perfis)&&u.perfis.includes("Administrador")));
@@ -1892,7 +1894,7 @@ let _perfilChk=0;
 async function recarregarPermissoes(){
   if(!S.user||!S.profile||S.demo||Date.now()-_perfilChk<60000)return;_perfilChk=Date.now();
   try{const {data:d0}=await sb.from("profiles").select("*").eq("id",S.user.id).maybeSingle();if(!d0)return;
-    const data={};["perfil","perfis","nivel","acessos","abas_ocultas","exige_curso","cursos_obrig","rc_crm","crm_dono","is_vendedora","ufs_atendidas","canal_id","comercial_resp"].forEach(k=>{if(k in d0)data[k]=d0[k];});
+    const data={};["perfil","perfis","nivel","master","secoes_ocultas","acessos","abas_ocultas","exige_curso","cursos_obrig","rc_crm","crm_dono","is_vendedora","ufs_atendidas","canal_id","comercial_resp"].forEach(k=>{if(k in d0)data[k]=d0[k];});
     const antes=JSON.stringify(Object.keys(data).map(k=>S.profile[k]??null)),depois=JSON.stringify(Object.keys(data).map(k=>data[k]??null));
     if(antes!==depois&&!S.verComo){Object.assign(S.profile,data);if(data.perfil)S.perfil=data.perfil;aplicaPerfis(S.profile);S.crm=null;S.mapa=undefined;S.leadsCache=null;S.canais=null;if(S.pag!=="perfil"&&S.pag!=="usuario")render();}
   }catch(e){}
@@ -6491,7 +6493,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id)));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
 /* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -9388,7 +9390,7 @@ function vCriarAcesso(){
     <div><label for="n_nome">Nome completo *</label><input id="n_nome" required value="${esc(p.nome||"")}"></div>
     <div><label for="n_email">E-mail *</label><input id="n_email" type="email" required value="${esc(p.email||"")}"></div>
     <div><label for="n_perfil">Perfil *</label><select id="n_perfil" required>${PERFIS.filter(x=>souMasterAdm()||x!=="Administrador").map(x=>`<option value="${esc(x)}" ${x===perfilSel?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
-    ${souMasterAdm()?`<fieldset id="n_admtipo" class="adm-tipo" ${perfilSel==="Administrador"?"":"hidden"}><legend>Tipo de administrador *</legend><label class="check"><input type="radio" name="n_master" value="0" checked> Administrador padrão <span class="meta">vê tudo, cadastra e gerencia pessoas, mas não exclui nem dá o nível de administrador</span></label><label class="check"><input type="radio" name="n_master" value="1"> Administrador master <span class="meta">igual a você: também exclui pessoas e dá ou tira o nível de administrador</span></label></fieldset>`:""}
+    ${souMasterAdm()?`<fieldset id="n_admtipo" class="adm-tipo" ${perfilSel==="Administrador"?"":"hidden"}><legend>Tipo de administrador *</legend><label class="check"><input type="radio" name="n_master" value="0" checked> Administrador padrão <span class="meta">vê tudo, cadastra e gerencia pessoas, mas não exclui nem dá o nível de administrador</span></label><label class="check"><input type="radio" name="n_master" value="1"> Administrador master <span class="meta">igual a você: também exclui pessoas e dá ou tira o nível de administrador</span></label><p class="meta" style="margin:6px 0 0"><strong>O que este administrador vê</strong> (desmarque o que ele não deve ver; para o master, tudo fica liberado)</p><div class="checks">${ADM_SECS().map(([id,n])=>`<label class="check"><input type="checkbox" data-nsecadm="${id}" checked> ${esc(n)}</label>`).join("")}</div></fieldset>`:""}
     <div><label>Acesso às seções *</label><div class="checks">${SECOES_ACESSO.map(([id,nome])=>`<label class="check"><input type="checkbox" class="n_acesso" value="${id}" ${id==="academia"?"checked":""}> ${nome}${inf(secDesc(id))}</label>`).join("")}</div></div>
     ${cadAbasHTML("n")}
     <div><label for="n_canal">Revenda do Conecta <span class="meta">— obrigatório para Gestor de Revenda e Vendedor de Revenda</span></label><select id="n_canal"><option value="">— escolha a revenda —</option>${(S.canaisLista||[]).map(k=>`<option value="${esc(k.id)}">${esc(k.nome)}${k.tier?" · "+esc(k.tier):""}</option>`).join("")}</select><span class="meta">Só entram no portal pessoas de revendas que estão no programa Conecta. Se a revenda não está na lista, cadastre-a antes em Conecta Revendas.</span></div>
@@ -9791,6 +9793,7 @@ function vUsuarioAdmin(){
     <div><label for="f_perfil">${"nivel" in u?"Perfil principal *":"Perfil de acesso *"}</label><select id="f_perfil" data-fk="perfil" data-reperfil="1" required>${PERFIS.filter(p=>!("nivel" in u)||p!=="Administrador"||S.adminForm.perfil===p).map(p=>`<option value="${esc(p)}" ${S.adminForm.perfil===p?"selected":""}>${esc(p)}</option>`).join("")}</select>${"nivel" in u?`<span class="meta">O que a pessoa faz. Define o cadastro e como ela aparece no portal.</span>`:""}</div>
     ${"nivel" in u?`<div><label>Outros perfis</label><span class="meta">Marque se a pessoa também atua em outra frente. Ela passa a ver o que cada perfil marcado vê.</span><div class="checks">${PERFIS.filter(p=>p!=="Administrador"&&p!==S.adminForm.perfil).map(p=>`<label class="check"><input type="checkbox" data-perfis="${esc(p)}" ${(S.adminForm.perfis||[]).includes(p)?"checked":""}> ${esc(p)}</label>`).join("")}</div></div>
     <div><label for="f_nivel">Nível de acesso *</label>${(()=>{const M=souMasterAdm(),eAdm=(S.adminUser.nivel==="Administrador")||!!S.adminUser.master;const trava=!M&&eAdm;return `<select id="f_nivel" data-fk="nivel" ${trava?"disabled":""}>${["Padrão","Gestor","Administrador"].filter(n=>M||eAdm||n!=="Administrador").map(n=>`<option value="${n}" ${(S.adminForm.nivel||"Padrão")===n?"selected":""}>${NIVEL_NOME[n]}${n==="Administrador"&&S.adminUser.master?" master":""}</option>`).join("")}</select>${M&&(S.adminForm.nivel==="Administrador"||S.adminForm.perfil==="Administrador")&&S.adminUser.id!==S.user.id?`<label class="check" style="margin-top:6px"><input type="checkbox" data-master ${S.adminUser.master?"checked":""}> Administrador master: também exclui pessoas e dá ou tira o nível de administrador</label>`:""}${trava?`<span class="meta"><strong>Só o administrador master altera o nível, o perfil e a ativação de um administrador.</strong></span>`:!M?`<span class="meta">Só o administrador master dá o nível de administrador.</span>`:""}`;})()}<span class="meta">Gestor de acessos: entra no Painel de gerenciamento, vê todas as pessoas e cadastra pessoas novas, mas não altera perfil, nível nem seções de quem já está cadastrado, não exclui e não vê as áreas do marketing.</span><span class="meta">Administrador vê tudo, cadastra e gerencia usuários, aprova ações e altera premissas. O administrador master, além disso, exclui pessoas e dá ou tira o nível de administrador. Padrão vê só o que os perfis e as áreas liberadas permitem.</span></div>`:""}
+    ${admF&&souMasterAdm()&&!S.adminUser.master&&!ehEu?`<div><label>O que este administrador vê</label><span class="meta">Administrador vê tudo por padrão. Desmarque o que ele não deve ver. Só você, como master, altera. Cada marcação é gravada na hora.</span><div class="checks">${ADM_SECS().map(([id,n])=>`<label class="check"><input type="checkbox" data-secoc="${id}" ${(S.adminForm.secoes_ocultas||[]).includes(id)?"":"checked"}> ${esc(n)}</label>`).join("")}</div></div>`:""}
     <div><label>Acesso às seções</label><span class="meta">Marque para liberar uma seção extra para esta pessoa. As marcadas "pelo perfil" já vêm do perfil ou do nível de acesso.</span><div class="checks">${SECOES_ACESSO.map(([id,nome])=>{const pp=pelPerfil.includes(id);return `<label class="check"><input type="checkbox" data-acesso="${id}" ${ac.includes(id)||pp?"checked":""} ${pp?"disabled":""}> ${nome}${inf(secDesc(id))}${pp?' <span class="meta">pelo perfil</span>':""}</label>`;}).join("")}</div></div>
     ${secAbas.length?`<div><label>O que aparece dentro de cada seção</label><span class="meta">Desmarque as abas que esta pessoa não deve ver. Cada marcação é gravada na hora.</span>${secAbas.map(id=>`<p class="meta" style="margin:10px 0 4px"><strong>${esc((SECOES_ACESSO.find(x=>x[0]===id)||[id,id])[1])}</strong></p><div class="checks">${ABAS_REG[id].map(([k,t])=>{const key=k==="precos"?id+":precos":k;return `<label class="check"><input type="checkbox" data-aba="${key}" ${(S.adminForm.abas_ocultas||[]).includes(key)?"":"checked"}> ${t}${inf(ABA_DESC[k])}</label>`;}).join("")}</div>`).join("")}</div>`:""}
     ${afTem("Comercial Barenbrug")&&S.canais==null&&!S._canBusyU?(S._canBusyU=1,carregarCanais().then(()=>{S._canBusyU=0;render();}),""):""}${afTem("Comercial Barenbrug")?`<div><label>Revendas deste comercial (Conecta Revendas)</label><span class="meta">No Conecta Revendas ele vê só as revendas marcadas aqui. Cada marcação é gravada na hora. Uma revenda tem um comercial responsável por vez.</span><div class="checks">${(S.canais||[]).map(k=>{const meu=k.comercial_id===u.id;const outro=k.comercial_id&&!meu;return `<label class="check"><input type="checkbox" data-rev="${esc(k.id)}" ${meu?"checked":""}> ${esc(k.nome)}${outro?' <span class="meta">(hoje com outro comercial)</span>':""}</label>`;}).join("")||(S.canais&&!S.canais.length?'<span class="meta">Nenhuma revenda cadastrada.</span>':'<span class="meta">Carregando as revendas…</span>')}</div></div>`:""}
@@ -14446,6 +14449,7 @@ const chaveAba=k=>(k==="precos"?S.secao+":precos":k);
 const semOcultas=abas=>{const o=abasOcultas();return abas.filter(([k])=>!o.includes(chaveAba(k)));};
 function renderApp(){
   const app=document.getElementById("app");
+  if(S.secao&&S.secao!=="guia"&&secOculta(S.secao)){S.secao=null;S.pag="hub";}
   if(S.canais&&S.canaisAll)S.canais=canaisDaSecao();
   if(S.canalSel&&rvSoVinculo()&&S.canais&&!S.canais.some(k=>k.id===S.canalSel))S.canalSel=null;
   if(PUSH_ABRIR==="ajuda"){PUSH_ABRIR=null;S.ajudaDe={secao:S.secao,pag:S.pag};S.pag="ajuda-acesso";}
@@ -15054,15 +15058,16 @@ document.addEventListener("change",async ev=>{
     if(error||!volta||(volta.comercial_id||null)!==novo){aviso("Esta alteração NÃO foi gravada. Recarregue a página e tente de novo.");}else{const k=(S.canais||[]).find(x=>x.id===c.dataset.rev);if(k)k.comercial_id=novo;aviso(novo?"Revenda vinculada a este comercial.":"Revenda desvinculada.");}
     const y=window.scrollY;render();window.scrollTo(0,y);return;
   }
-  if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.dataset.cobrig||c.hasAttribute("data-exige")||c.hasAttribute("data-demo"))){
+  if(S.pag==="usuario"&&S.adminUser&&S.adminForm&&c.dataset&&c.closest&&c.closest("#f-usuario")&&(c.dataset.acesso||c.dataset.aba||c.dataset.secoc||c.dataset.cobrig||c.hasAttribute("data-exige")||c.hasAttribute("data-demo"))){
     if(!ehAdmin())return;if(!(await sessaoConfere())){render();return;}const up={};
     if(c.dataset.acesso){const z=new Set(S.adminForm.acessos||[]);c.checked?z.add(c.dataset.acesso):z.delete(c.dataset.acesso);up.acessos=[...z];}
     else if(c.dataset.aba){const z=new Set(S.adminForm.abas_ocultas||[]);c.checked?z.delete(c.dataset.aba):z.add(c.dataset.aba);up.abas_ocultas=[...z];}
+    else if(c.dataset.secoc){if(!souMasterAdm())return;const z=new Set(S.adminForm.secoes_ocultas||[]);c.checked?z.delete(c.dataset.secoc):z.add(c.dataset.secoc);up.secoes_ocultas=[...z];}
     else if(c.hasAttribute("data-demo"))up.demo=c.checked;
     else if(c.dataset.cobrig){const z=new Set(cursosObrigDe(S.adminForm));c.checked?z.add(c.dataset.cobrig):z.delete(c.dataset.cobrig);up.cursos_obrig=CURSOS_OBRIG.map(x=>x[0]).filter(x=>z.has(x));up.exige_curso=up.cursos_obrig.includes("hibridos");}
     else up.exige_curso=c.checked;
     Object.assign(S.adminForm,up);
-    const {data:volta,error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id).select("acessos,abas_ocultas,exige_curso,cursos_obrig,demo").maybeSingle();
+    const {data:volta,error}=await sb.from("profiles").update(up).eq("id",S.adminUser.id).select("acessos,abas_ocultas,secoes_ocultas,exige_curso,cursos_obrig,demo").maybeSingle();
     const k=Object.keys(up)[0];const igual=volta&&JSON.stringify(volta[k]??null)===JSON.stringify(up[k]??null);
     if(error||!igual){if(volta)Object.assign(S.adminForm,volta);aviso("Esta alteração NÃO foi gravada. Recarregue a página, entre como administrador e tente de novo.");}else{Object.assign(S.adminUser,up);S.equipe=null;aviso("Alteração gravada.");}
     const y=window.scrollY;render();window.scrollTo(0,y);return;
@@ -15357,7 +15362,7 @@ document.addEventListener("submit",async ev=>{
     if(error){try{const bd=await error.context.json();erro=bd.error||"Não foi possível criar o acesso.";}catch(_){erro="Não foi possível criar o acesso. Tente de novo.";}}
     else if(data&&data.error){erro=data.error;}
     if(erro){S._erroCriar=erro;S.novoAcesso=null;render();return;}
-    const admN=perfil==="Administrador"&&souMasterAdm()?{nivel:"Administrador",master:((f.querySelector("input[name=n_master]:checked")||{}).value==="1")}:{};
+    const admN=perfil==="Administrador"&&souMasterAdm()?(()=>{const mst=((f.querySelector("input[name=n_master]:checked")||{}).value==="1");return {nivel:"Administrador",master:mst,secoes_ocultas:mst?[]:[...f.querySelectorAll("[data-nsecadm]:not(:checked)")].map(x=>x.dataset.nsecadm)};})():{};
     await sb.from("profiles").update({acessos,exige_curso:exigeCurso,cursos_obrig:cobN,abas_ocultas:abasOc,...(respN?{comercial_resp:respN}:{}),...admN}).eq("email",email);
     if(canalId){const rc=await sb.from("profiles").update({canal_id:canalId}).eq("email",email).select("canal_id").maybeSingle();if(rc.error||!rc.data||rc.data.canal_id!==canalId)aviso("Acesso criado, mas a revenda não foi vinculada. Abra a pessoa e escolha a revenda.");}
     const elCdN=f.querySelector("#n_crmdono");if(perfil==="Comercial Barenbrug"&&elCdN&&elCdN.value){await sb.from("profiles").update({crm_dono:elCdN.value}).eq("email",email);}
