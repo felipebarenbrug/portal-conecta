@@ -319,6 +319,7 @@ details.lote summary{cursor:pointer;font-weight:700;color:var(--azul-escuro)}
 .far-passos{grid-template-columns:repeat(4,1fr)}
 .pp .cal-filtros{margin-bottom:6px}.pp-h{font-size:14px;margin:14px 0 6px;color:var(--azul-escuro)}
 .ev-vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.ev-vid{border:1.5px solid var(--linha);border-radius:12px;padding:10px 12px;display:grid;gap:8px;background:var(--branco)}.ev-vid-l{display:flex;gap:6px;flex-wrap:wrap}.ev-vid-l .btn{padding:6px 12px;font-size:14px}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}.pc-c{margin:0;background:var(--branco);border:1.5px solid var(--linha);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}.pc-img{background:#f3f4f6;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;max-width:100%}.pc-img img{width:100%;height:100%;object-fit:contain;display:block}.pc-c figcaption{padding:12px;display:grid;gap:6px}.pc-c figcaption input,.pc-c figcaption textarea{width:100%;box-sizing:border-box}.pc-bt{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.pc-leg{margin:0;font-size:13px;color:var(--cinza,#555);white-space:pre-line}.pc-del{display:grid;gap:6px;background:#fff4f4;border-radius:8px;padding:8px}
 .ym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.ym-c{display:grid;justify-items:center;text-align:center;gap:6px;background:var(--branco);border:1.5px solid var(--linha);border-radius:12px;padding:14px 10px}
 .ym-logo{width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--amarelo);padding:0;background:var(--papel);cursor:pointer;display:grid;place-items:center}.ym-logo img{width:100%;height:100%;object-fit:cover;display:block}.ym-logo span{font-weight:800;font-size:26px;color:var(--azul-escuro)}
 .ym-ig{font-size:14px;color:var(--azul-escuro);font-weight:600;text-decoration:none}.ym-ig:hover{text-decoration:underline}.ym-ed{display:grid;gap:6px;width:100%}.ym-ed input{width:100%}
@@ -8362,7 +8363,7 @@ function subnavRV(){
     add("Acompanhar",[["rv-painel","Painel do programa"],["rv-canais","Canais"],["rv-anos","Canais ano a ano"],veMetaRV()&&["rv-meta","Metas dos canais"],["rv-cal","Calendário"]]);
     add("Validar e pagar",[ehMaster()&&["rv-validacao","Validação"],ehAdmin()&&["rv-reembolsos","Reembolsos"]]);
   }else if(ehRevenda()){
-    add("Seu canal",[["rv-meucanal","Meu canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
+    add("Seu canal",[["rv-meucanal","Meu canal"],["rv-pecas","Peças do canal"],["rv-cal","Calendário"],temPerfil("Gestor de Revenda")&&!ehAdmin()&&["rv-reembolso","Reembolso"]]);
   }
   if(veEmBreve())add("Em desenvolvimento",[["rv-at","Assistência técnica"]]);
   if(cnVeAba("conecta_rv"))add("Sua opinião",[["rv-nps","Avaliar o programa"]]);
@@ -8718,6 +8719,42 @@ document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.targe
   if(a==="ym-editar"){S.ymEd=v;render();return;}if(a==="ym-fechar"){S.ymEd=null;render();return;}
   if(a==="ym-salvar"){const ig=(document.getElementById("ym_ig_"+v)||{}).value||"";if(await ymSalvar(v,null,ig,false)){S.ymEd=null;aviso("Salvo.");render();}return;}
   if(a==="ym-tirar"){if(await ymSalvar(v,null,null,true)){aviso("Logo retirado.");render();}return;}},true);
+/* Peças exclusivas do canal: artes com o logo da revenda, cada canal vê só as suas */
+async function pcCarregar(id){if(!id)return;S.pecas=S.pecas||{};if(S.pecas[id]&&S.pecas[id]!=="c")return;if(S.pecas[id]==="c")return;S.pecas[id]="c";const {data,error}=await sb.from("canal_pecas").select("id,titulo,formato,legenda,imagem,ordem,criado_em").eq("canal_id",id).order("ordem").order("criado_em");S.pecas[id]=error?[]:(data||[]);render();}
+function pcReduz(f){return new Promise((ok,er)=>{const r=new FileReader();r.onerror=er;r.onload=()=>{const im=new Image();im.onerror=er;im.onload=()=>{const k=Math.min(1,2160/Math.max(im.width,im.height));const w=Math.round(im.width*k),h=Math.round(im.height*k);const cv=document.createElement("canvas");cv.width=w;cv.height=h;const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);let q=.93,d=cv.toDataURL("image/jpeg",q);while(d.length>2800000&&q>.6){q-=.08;d=cv.toDataURL("image/jpeg",q);}ok({d,w,h});};im.src=r.result;};r.readAsDataURL(f);});}
+function pcFmt(w,h){if(!w||!h)return "Feed";const r=w/h;return (Math.abs(r-.8)<.02?"Feed 4:5":Math.abs(r-1)<.02?"Quadrado":Math.abs(r-.5625)<.02?"Story 9:16":Math.abs(r-1.91)<.05?"Paisagem":"Arte")+` · ${w} x ${h}`;}
+function pcNomeArq(c,p){const s=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").toLowerCase();return `barenbrug-${s(c&&c.nome)}-${s(p.titulo)||"peca"}.jpg`;}
+async function pcBlob(p){const r=await fetch(p.imagem);return await r.blob();}
+function pecasHTML(c){
+  if(!c)return "";const ed=ehMkt();const L=(S.pecas||{})[c.id];
+  if(L===undefined||L==="c"){if(L===undefined)setTimeout(()=>pcCarregar(c.id),0);return `<section class="bloco"><h2 class="sec">Peças exclusivas do canal</h2><div class="carregando">Carregando as peças…</div></section>`;}
+  return `<section class="bloco" id="pecas-canal"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec" style="margin:0">Peças exclusivas do canal (${L.length})</h2>${ed?`<label class="btn" style="cursor:pointer">Enviar peças<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-pcup="${c.id}" hidden></label>`:""}</div>
+  <p class="sub" style="margin:6px 0 12px">Artes da Barenbrug feitas para ${esc(c.nome)}, já com o logo da revenda. Só a sua revenda vê estas peças. Baixe e publique nas redes, no WhatsApp ou no material da loja. As peças gerais, sem logo de revenda, continuam no Enxoval de Marketing.</p>
+  ${L.length?`<div class="pc-grid">${L.map(p=>`<figure class="pc-c"><div class="pc-img"><img src="${p.imagem}" alt="${esc(p.titulo)}" loading="lazy"></div><figcaption>
+    ${ed&&S.pcEd===p.id?`<input id="pc_t_${p.id}" value="${esc(p.titulo)}" placeholder="Título"><textarea id="pc_l_${p.id}" rows="3" placeholder="Sugestão de legenda (opcional)">${esc(p.legenda||"")}</textarea><div class="pc-bt"><button class="btn" data-a="pc-salvar" data-v="${p.id}">Salvar</button><button class="btn sec" data-a="pc-fechar">Fechar</button></div>
+      ${S.pcDel===p.id?`<div class="pc-del"><span>Excluir esta peça? Não dá para desfazer.</span><button class="btn" data-a="pc-del-ok" data-v="${p.id}" data-c="${c.id}">Excluir</button><button class="btn sec" data-a="pc-del-nao">Cancelar</button></div>`:`<button class="link" data-a="pc-del" data-v="${p.id}">Excluir peça</button>`}`
+    :`<strong>${esc(p.titulo)}</strong><span class="meta">${esc(p.formato||"")}</span>${p.legenda?`<p class="pc-leg">${esc(p.legenda)}</p>`:""}
+    <div class="pc-bt"><button class="btn" data-a="pc-baixar" data-v="${p.id}" data-c="${c.id}">Baixar</button>${navigator.share?`<button class="btn sec" data-a="pc-share" data-v="${p.id}" data-c="${c.id}">Compartilhar</button>`:""}${p.legenda?`<button class="btn sec" data-a="pc-leg" data-v="${p.id}" data-c="${c.id}">Copiar legenda</button>`:""}${ed?`<button class="link" data-a="pc-editar" data-v="${p.id}">Editar</button>`:""}</div>`}
+  </figcaption></figure>`).join("")}</div>`:`<div class="vazio">${ed?"Nenhuma peça exclusiva ainda. Use Enviar peças para subir as artes com o logo deste canal.":"Ainda não há peças exclusivas para a sua revenda. Enquanto isso, use as artes do Enxoval de Marketing."}</div>`}
+  <div style="margin-top:10px"><button class="btn sec" data-a="secao" data-v="enxoval">Abrir o Enxoval de Marketing</button></div></section>`;}
+function vRVPecas(){const id=S.profile&&S.profile.canal_id;if(!id)return `<div><h1 class="titulo">Peças do canal</h1></div><section class="bloco"><p class="sub" style="margin:0">Seu acesso ainda não está vinculado a uma revenda. Peça à Barenbrug para fazer o vínculo.</p></section>`;
+  const c=(S.canais||[]).find(x=>x.id===id)||(S.meuCanalProg&&{id,nome:S.meuCanalProg.nome,tier:S.meuCanalProg.tier})||{id,nome:"sua revenda"};
+  return `<div><span class="rot">Conecta Revendas${c.tier?" · "+esc(c.tier):""}</span><h1 class="titulo">Peças do canal</h1><p class="sub">Artes exclusivas para ${esc(c.nome)}, com o logo da revenda, prontas para baixar.</p></div>${pecasHTML(c)}`;}
+document.addEventListener("change",async ev=>{const i=ev.target;if(!i||!i.dataset||!i.dataset.pcup||!i.files||!i.files.length)return;if(!ehMkt())return;const cid=i.dataset.pcup;const fs=[...i.files];i.value="";const L=Array.isArray((S.pecas||{})[cid])?S.pecas[cid]:[];let ord=L.reduce((m,p)=>Math.max(m,p.ordem||0),0);let ok=0;
+  for(let k=0;k<fs.length;k++){aviso(`Enviando ${k+1} de ${fs.length}…`);try{const r=await pcReduz(fs[k]);const tit=fs[k].name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").trim()||"Peça";const {error}=await sb.from("canal_pecas").insert({canal_id:cid,titulo:tit,formato:pcFmt(r.w,r.h),imagem:r.d,ordem:++ord});if(!error)ok++;}catch(e){}}
+  aviso(ok===fs.length?(ok===1?"Peça enviada.":ok+" peças enviadas."):`Enviei ${ok} de ${fs.length}. Confira as que faltaram.`);if(S.pecas)delete S.pecas[cid];render();});
+document.addEventListener("click",async ev=>{const b=ev.target.closest&&ev.target.closest("[data-a^='pc-']");if(!b)return;ev.preventDefault();ev.stopPropagation();const a=b.dataset.a,v=b.dataset.v,cid=b.dataset.c;
+  const ach=()=>{for(const k in (S.pecas||{})){const L=S.pecas[k];if(Array.isArray(L)){const p=L.find(x=>x.id===v);if(p)return p;}}return null;};
+  const canal=()=>(S.canais||[]).find(x=>x.id===cid)||(S.meuCanalProg&&{nome:S.meuCanalProg.nome})||{nome:"revenda"};
+  if(a==="pc-baixar"){const p=ach();if(!p)return;try{const bl=await pcBlob(p);const u=URL.createObjectURL(bl);const l=document.createElement("a");l.href=u;l.download=pcNomeArq(canal(),p);document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}catch(e){aviso("Não consegui baixar a peça.");}return;}
+  if(a==="pc-share"){const p=ach();if(!p)return;try{const bl=await pcBlob(p);const f=new File([bl],pcNomeArq(canal(),p),{type:"image/jpeg"});const d={files:[f],title:p.titulo};if(p.legenda)d.text=p.legenda;if(navigator.canShare&&!navigator.canShare(d)){aviso("Este aparelho não compartilha imagens. Use Baixar.");return;}await navigator.share(d);}catch(e){}return;}
+  if(a==="pc-leg"){const p=ach();if(!p||!p.legenda)return;try{await navigator.clipboard.writeText(p.legenda);aviso("Legenda copiada.");}catch(e){aviso("Não consegui copiar. Selecione o texto da legenda.");}return;}
+  if(!ehMkt())return;
+  if(a==="pc-editar"){S.pcEd=v;S.pcDel=null;render();return;}if(a==="pc-fechar"){S.pcEd=null;S.pcDel=null;render();return;}
+  if(a==="pc-del"){S.pcDel=v;render();return;}if(a==="pc-del-nao"){S.pcDel=null;render();return;}
+  if(a==="pc-salvar"){const p=ach();if(!p)return;const t=((document.getElementById("pc_t_"+v)||{}).value||"").trim()||p.titulo;const lg=((document.getElementById("pc_l_"+v)||{}).value||"").trim()||null;const {error}=await sb.from("canal_pecas").update({titulo:t,legenda:lg}).eq("id",v);if(error){aviso("Não consegui salvar.");return;}p.titulo=t;p.legenda=lg;S.pcEd=null;aviso("Salvo.");render();return;}
+  if(a==="pc-del-ok"){const {error}=await sb.from("canal_pecas").delete().eq("id",v);if(error){aviso("Não consegui excluir.");return;}for(const k in S.pecas){if(Array.isArray(S.pecas[k]))S.pecas[k]=S.pecas[k].filter(x=>x.id!==v);}S.pcDel=null;S.pcEd=null;aviso("Peça excluída.");render();return;}
+},true);
 function vRVCanais(){
   if(!S.canais) return `<div class="carregando">Carregando canais…</div>`;
   const vis=S.rvVis||"soma",cen=S.rvCen||"hoje",meta=cen==="meta";
@@ -8963,6 +9000,7 @@ function vRVCanal(){
   ${c.mulato_hibrido&&(c.mulato_validado||veBarenbrugRV())?rvMulatoHTML(c,m):""}
   ${m.pub?vCanalValidado(c,m):vCanalCRM(c,m)}
   ${vCanalAbertas(m)}
+  ${B?pecasHTML(c):`<section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px"><div><h2 class="sec" style="margin:0">Peças exclusivas do canal</h2><p class="sub" style="margin:4px 0 0">Artes da Barenbrug com o logo da sua revenda, prontas para baixar.</p></div><button class="btn" data-a="pag" data-v="rv-pecas">Ver as peças</button></div></section>`}
   <section class="bloco"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 class="sec">PGD · ações de IGDB (${acIG.length})</h2><div class="acoes">${adm?`<button class="btn sec" data-a="editarcanal">Editar dados do canal</button>`:""}${adm||!B?`<button class="btn" data-a="novaacao">${B?"+ Nova ação":"Propor ação"}</button>`:""}</div></div>
   ${!B?`<p class="sub" style="margin:0 0 8px">Proponha as ações de geração de demanda da sua revenda. A Barenbrug analisa cada uma; só as aprovadas usam o IGDB.</p>`:""}
   ${acIG.length?(()=>{const st=k=>acIG.filter(a=>(a.status||"Em Análise")===k);const t=L=>fmtK0(L.reduce((x,a)=>x+(Number(a.valor_igdb)||0),0));const A=st("Aprovado"),E=st("Em Análise"),R=st("Reprovado");
@@ -14235,7 +14273,7 @@ const COMERCIAIS_EXTRA=["Mayane Costa"];
 const ABAS_REG={"academia":[["trilha","Cursos"],["manejo","Guia de manejo"],["guias","Guias técnicos"],["yj","Yellow Jacket"],["posicionar","Onde posicionar"],["objecoes","Objeções do produtor"],["suporte","Capacidade de suporte"],["ranking","Ranking"],["faq","Perguntas e respostas"],["base","Base de conhecimento"],["apostilas","Apostilas de vendas"],["casos","Casos de sucesso"],["comunicar","Comunicação e encantamento"],["cert","Certificado"]],
   "inside-sales":IS_GRUPOS.flatMap(g=>g[1]).filter(([k])=>k!=="is-ger"),
   "conecta-rc":[["rc-apresentacao","Apresentação"],["rc-meus","Meus RCs"],["rc-curso","Curso de integração"],["rc-pedido","Negociações"],["rc-faq","Perguntas frequentes"],["rc-calc","Calculadora"],["rc-ranking","Ranking de vendas"],["rc-cobertura","Cobertura dos RCs"],["rc-mapa","Mapa de vendas"]],
-  "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
+  "conecta-revendas":[["rv-apresentacao","Apresentação"],["rv-curso","Curso"],["rv-faq","Perguntas frequentes"],["rv-meucanal","Meu canal"],["rv-pecas","Peças do canal"],["rv-cal","Calendário"],["rv-reembolso","Reembolso"]],
   "leads":[["leads-inbound","Cotações (inbound)"],["leads-outbound","Prospecção (outbound)"]],
   "mercado":[["mercado-noticias","Notícias"],["mercado-boi","Arroba do boi"],["mercado-clima","Clima"]],
   "inteligencia":INT_ABAS,"financeiro":FIN_ABAS,
@@ -14256,7 +14294,7 @@ const inf=t=>t?`<button type="button" class="inf" data-inf="${esc(t)}" aria-labe
 const ABA_DESC={
  trilha:"Cursos por cultivar com provas de certificação.",apostilas:"A apostila de vendas de cada híbrido em página, com o PDF para baixar.",comunicar:"Como falar do híbrido e o que enviar em cada momento, da primeira mensagem ao primeiro pastejo.",manejo:"Guia técnico de implantação e manejo dos híbridos.",ranking:"Ranking de quem concluiu os cursos e as provas.",faq:"Perguntas frequentes respondidas pelo time técnico.",base:"Materiais técnicos, estudos e vídeos por cultivar.",cert:"Certificado de conclusão do curso.",
  "rc-apresentacao":"Como funciona o programa de representação.","rc-curso":"Curso obrigatório de integração do RC.","rc-pedido":"Negociações: o RC envia, o responsável aprova e registra, crédito e proposta.","rc-credito":"O que o RC precisa saber para o pedido ser aprovado no crédito.","rc-faq":"Perguntas frequentes do RC sobre contrato, território e comissão.","rc-guia":"Passo a passo interno para cadastrar um novo RC.","rc-proposta":"Monta a proposta comercial para o produtor.","rc-calc":"Calcula a comissão do RC pelo tier.","rc-ranking":"Ranking de vendas de híbridos dos RCs.","rc-cobertura":"Mapa de sede e raio de atuação de cada RC.","rc-mapa":"Mapa das vendas do RC por cidade.",
- "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
+ "rv-meucanal":"Meta, compras, IGDB e PGD da revenda.","rv-pecas":"Artes exclusivas com o logo da revenda, para baixar.","rv-apresentacao":"Como funciona o Conecta Revendas.","rv-curso":"Curso do programa para a equipe da revenda.","rv-faq":"Dúvidas frequentes sobre regras, IGDB, bônus e reembolso.",
  "brindes-lojinha":"Em desenvolvimento: o pedido de brindes e materiais da marca pelo portal, para o time comercial e os parceiros.","rv-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.","rv-at":"Em desenvolvimento: gestão das ações de assistência técnica com as revendas.","rc-solo":"Em desenvolvimento: solicitar a análise de solo dos clientes pelo portal.",
  "leads-inbound":"Pedidos de cotação que chegaram pelo site e pelos anúncios.","leads-outbound":"Listas de prospecção ativa.",
  "mercado-noticias":"Manchetes do agro e da pecuária.","mercado-boi":"Cotação da arroba do boi (CEPEA).","mercado-clima":"Previsão do tempo de 7 dias por praça.",
@@ -14330,6 +14368,7 @@ function renderApp(){
     if(S.pag==="rv-reembolsos"){if(!(ehAdmin()&&veBarenbrugRV()))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolsos()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
     if(S.pag==="rv-meta"){if(!veMetaRV())S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVMeta()}</main>`;return;}}
     if(S.pag==="rv-reembolso"){if(!(ehRevenda()&&temPerfil("Gestor de Revenda")))S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVReembolso()}</main>`;if(!S.canais){carregarCanais().then(render);}return;}}
+    if(S.pag==="rv-pecas"){if(!ehRevenda())S.pag="rv-apresentacao";else{app.innerHTML=cabecalho()+subnavRV()+`<main>${vRVPecas()}</main>`;if(temPerfil("Gestor de Revenda")&&!S.canais){carregarCanais().then(render);}else if(!temPerfil("Gestor de Revenda")&&S.meuCanalProg===undefined){carregarMeuCanalVendedor().then(render);}return;}}
     if(S.pag==="rv-meucanal"){
       if(!ehRevenda()){S.pag="rv-apresentacao";}
       else{
