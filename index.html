@@ -1110,6 +1110,7 @@ main.largo{max-width:1120px}
 @media (max-width:500px){.nps-grid{grid-template-columns:1fr}}
 .pj-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}.pj-card{display:grid;gap:6px;text-align:left;cursor:pointer;font:inherit;color:inherit;margin:0;border:1px solid var(--linha)}.pj-card strong{font-size:18px}.pj-card .selo{justify-self:start}
 .pj-prog{display:block;height:6px;border-radius:3px;background:var(--papel);overflow:hidden}.pj-prog i{display:block;height:100%;background:var(--azul)}
+.pp{display:grid;gap:18px}.pp-hero{background:#FFDB00;color:#1E1E1E;border-radius:14px;padding:clamp(20px,4vw,36px)}.pp-hero .rot{font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:12px}.pp-hero h1{margin:8px 0 12px;font-size:clamp(24px,4vw,36px);line-height:1.15;text-wrap:balance}.pp-hero p{max-width:68ch;font-size:16px;line-height:1.55;margin:0 0 8px}.pp-assina{font-weight:800;margin-top:10px!important}.pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.pp-card{border:1px solid var(--linha,#d9dee1);border-radius:10px;padding:14px 16px;background:var(--fundo,#fff);min-width:0}.pp-card h3,.pp-p h3,.pp-wa h3{margin:6px 0 6px;font-size:16px}.pp-card p,.pp-p p,.pp-wa p{margin:0;line-height:1.5}.pp-n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:13px;background:#00A8E2;color:#fff;font-weight:800;font-size:13px}.pp-pil{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.pp-p{border-top:4px solid #00A8E2;padding:12px 14px;background:var(--fundo2,#f6f8f9);border-radius:0 0 10px 10px;min-width:0}.pp-l{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.5;max-width:80ch}.pp-conc{border-left:5px solid #FFDB00}.pp-wa{margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px 16px;border-radius:10px;background:var(--fundo2,#f6f8f9)}.pp-wa-f{grid-column:1/-1;margin:0;padding-top:10px;border-top:1px solid var(--linha,#d9dee1)}.pp-cam{margin:0;padding-left:22px;display:grid;gap:10px}.pp-cam p{margin:2px 0 0;line-height:1.5}.pp-t td:first-child{width:28%}@media(max-width:600px){.pp-wa{grid-template-columns:1fr}}
 .pj-escopo{border:2px solid var(--azul,#00A8E2)}.pj-vers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.pj-ver{border:1px solid var(--linha,#d9dee1);border-radius:10px;padding:14px 16px;background:var(--fundo2,#f6f8f9);min-width:0}.pj-ver.agora{background:#fff7bf;border-color:#FFDB00;color:#1E1E1E}.pj-vh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.pj-vh b{font-size:26px;line-height:1}.pj-vh span{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em}.pj-vr{margin:6px 0 0;font-size:14px}.pj-ver ul{margin:8px 0 0;padding-left:18px;display:grid;gap:3px}.pj-enq{margin-top:14px;padding:14px 16px;border-radius:10px;background:var(--fundo2,#f6f8f9);display:grid;gap:10px}.pj-enq fieldset{border:0;padding:0;margin:0;display:grid;gap:6px}.pj-enq legend{font-weight:800;font-size:17px;margin-bottom:6px}.pj-vo{display:flex!important;gap:10px;align-items:center;justify-content:flex-start;cursor:pointer;font-weight:600;padding:8px 12px;border:1px solid var(--linha,#d9dee1);border-radius:8px;background:var(--fundo,#fff);margin:0}.pj-vo input{width:auto!important;margin:0;flex:none;accent-color:#00A8E2}.pj-vo:has(input:checked){border-color:#00A8E2;box-shadow:0 0 0 1px #00A8E2}.pj-enq-f{display:grid;gap:8px}.pj-enq-meu p{margin:4px 0}.pj-enq-bar{display:flex;flex-wrap:wrap;gap:8px}.pj-enq-bar span{padding:4px 10px;border-radius:20px;background:var(--fundo,#fff);border:1px solid var(--linha,#d9dee1)}.pj-enq-l{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}.pj-enq-l p{margin:2px 0 0}
 .pj-topo{background:var(--amarelo);color:#1E1E1E;border-radius:10px;padding:22px 24px;margin:10px 0 16px;display:grid;gap:8px}.pj-topo .titulo{color:#1E1E1E;margin:0}.pj-topo p{max-width:70ch;margin:0}.pj-topo .meta{color:#3a3a3a}
 .pj-chaves{display:flex;flex-wrap:wrap;gap:8px}.pj-chaves span{background:#1E1E1E;color:#fff;border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}.pj-chaves b{color:#FFDB00}
@@ -1641,6 +1642,7 @@ async function carregarPrecos(){
   S.precosBusy=false;
 }
 const SECOES=[
+  {id:"proposito",nome:"Por que o Conecta existe",desc:"O propósito do portal: por que ele nasceu, o conceito Barenbrug que ele leva ao campo, o caminho que estamos seguindo e o que pedimos ao time.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
   {id:"conecta-rc",nome:"Conecta RC",desc:"Programa de representação comercial: apresentação, tiers de comissão, curso de integração, ranking e mapa de vendas.",ativo:true,perfis:["RC","Franqueado Nutron","Comercial Barenbrug","Customer Service","Administrador"]},
@@ -1885,7 +1887,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126093303";
+const APP_VER="20261126110518";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6365,6 +6367,75 @@ function crmExtraHTML(alvo){
   return out.join("");
 }
 
+/* Por que o Conecta existe: propósito do portal, para administradores e Comercial Barenbrug */
+const vePropos=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
+function vProposito(){
+  const ir=(id,t)=>`<button type="button" class="link" data-a="secao" data-v="${id}">${t}</button>`;
+  const pil=[["Treinamento e capacitação","A Academia de Híbridos forma quem vende: trilha por cultivar, base de conhecimento, guias técnicos, perguntas e respostas, casos de sucesso e provas de certificação. Conhecimento que antes estava em arquivos soltos e na cabeça de poucas pessoas."],
+    ["Mensagem única","Todo mundo que fala da Barenbrug conta a mesma história, com os mesmos argumentos e os mesmos números. Quem vende o híbrido na revenda e quem vende na indústria falam a mesma língua."],
+    ["Venda de valor até o campo","O híbrido não se vende pelo preço do saco, se vende pelo que ele entrega por hectare: mais lotação, mais arroba, retorno que se paga. O portal leva esse argumento até a ponta, com a calculadora de rentabilidade, as condições comerciais e os materiais."],
+    ["Onboarding","Quem chega, seja RC, revenda nova, vendedor de revenda ou alguém do time, entra pelo mesmo caminho: cadastro, cursos obrigatórios, programas e ferramentas. A integração deixa de depender de quem está disponível naquela semana."],
+    ["Registro e rastro","Pedido de ação, verba, brinde, reclamação, lead e negociação ficam registrados, com dono, data e histórico. O que é registrado pode ser acompanhado e medido, e vira resultado comprovado."]];
+  const pq=[["O conhecimento estava espalhado","PDFs, apresentações, grupos de WhatsApp e a experiência de algumas pessoas. Cada um achava uma versão diferente, quando achava."],
+    ["Cada um contava o híbrido de um jeito","Sem uma mensagem única, o valor do híbrido chegava ao produtor diluído, e a conversa voltava para o preço."],
+    ["A ponta não tinha formação estruturada","RCs e vendedores de revenda aprendiam no dia a dia, sem trilha, sem certificação e sem saber o que já sabiam."],
+    ["Pedido sem registro não vira resultado","O que era combinado pelo WhatsApp ou por telefone se perdia: não dava para saber o que foi pedido, o que foi aprovado e o que deu retorno."],
+    ["Os programas precisavam de casa","Conecta RC e Conecta Revendas são o relacionamento da Barenbrug com o canal. Sem um lugar só, o canal não enxergava meta, IGDB, bônus e regras com clareza."]];
+  const steak=[["Produtor","É o centro de tudo. Recebe a mesma mensagem de valor, venha ela de um RC, de uma revenda ou do nosso time, e um atendimento que sabe responder."],
+    ["Revendas do Conecta","Gestor e vendedor treinados, com o programa, a meta, o IGDB, o bônus, os leads do estado e as peças com o logo da revenda num só lugar. São quem propaga a mensagem da Barenbrug."],
+    ["RCs","Onboarding completo, condições comerciais, registro das negociações, ranking e materiais. Chegam ao produtor preparados e com o apoio do responsável comercial."],
+    ["Comercial Barenbrug","Enxerga a própria carteira e a dos seus RCs e revendas, cobra com dados, pede apoio ao Marketing com registro e conta com o time formado pela mesma base."],
+    ["Inside Sales","Mesma base técnica, os mesmos argumentos e os leads tratados com regra clara de quem atende o quê."],
+    ["Marketing","Planeja e mede: ações, verbas, campanhas, materiais e adoção do portal. Tudo o que é feito fica rastreável para mostrar retorno."]];
+  const comb=[["Use o sistema no seu dia a dia","Antes de mandar uma mensagem, abra o portal. Condições comerciais, materiais, cursos, programas e leads estão lá."],
+    ["Procure antes no portal","A resposta pode já estar na Academia, no Tira-Dúvidas, no Enxoval ou no Guia do Portal. Se não estiver, pergunte no Tira-Dúvidas: a resposta fica para todos."],
+    ["Solicite pelo portal","Ação de marketing, verba, brinde, apoio em evento e reclamação de cliente entram pelo portal. Assim cada pedido tem dono, prazo e histórico."],
+    ["Leve o seu time junto","Incentive os seus RCs e revendas a entrar, concluir os cursos e usar as ferramentas. O portal é tão forte quanto o uso que a ponta faz dele."],
+    ["Diga o que falta","Se algo não funcionar ou não fizer sentido no campo, conte. As melhorias ficam registradas em Gestão de Projetos e entram nas próximas versões."]];
+  const cam=[["Agora · V1","O lançamento para RCs e revendas: Conecta RC, Conecta Revendas, Condições Comerciais, Meu CRM, LeadsBaren, Academia de Híbridos, Ações de Marketing, Notícias de Mercado, Tira-Dúvidas e Enxoval de Marketing."],
+    ["Depois · V2","As ferramentas de campo da Academia de Híbridos, depois da revisão técnica."],
+    ["Na sequência · V3","FAR e os materiais de venda da Academia: onde posicionar cada cultivar, apostilas de vendas e objeções."],
+    ["Sempre","Adoção acompanhada por perfil, melhorias registradas a partir do uso real e novas áreas liberadas aos poucos, quando estiverem prontas."]];
+  return `<div class="pp">
+  <section class="pp-hero"><span class="rot">Propósito do Portal Conecta</span><h1>Uma só Barenbrug, uma só mensagem, do escritório ao campo.</h1>
+    <p>O Portal Conecta é o lugar onde a Barenbrug treina, informa e trabalha junto com quem leva os nossos híbridos ao produtor. Ele existe para transmitir o conceito Barenbrug a todos os envolvidos, do mesmo jeito, com o mesmo cuidado e com registro de tudo o que fazemos.</p>
+    <p class="pp-assina">Cultive Confiança.</p></section>
+
+  <section class="bloco"><h2 class="sec">Por que ele nasceu</h2><p class="sub" style="margin:0 0 12px">O portal foi construído pelo Marketing da Barenbrug a partir de agosto de 2026, dentro de casa, com o que já tínhamos. Ele responde a problemas que todos nós vivíamos.</p>
+    <div class="pp-grid">${pq.map(([t,d],i)=>`<div class="pp-card"><span class="pp-n">${i+1}</span><h3>${t}</h3><p>${d}</p></div>`).join("")}</div></section>
+
+  <section class="bloco"><h2 class="sec">O objetivo: o que o portal faz</h2>
+    <div class="pp-pil">${pil.map(([t,d])=>`<div class="pp-p"><h3>${t}</h3><p>${d}</p></div>`).join("")}</div></section>
+
+  <section class="bloco pp-conc"><h2 class="sec">O conceito Barenbrug que queremos levar</h2>
+    <ul class="pp-l">
+      <li><strong>O produtor no centro.</strong> Tudo o que fazemos é para o pecuarista produzir mais no mesmo pasto. A revenda e o RC são quem conversa com ele, por isso precisam estar preparados.</li>
+      <li><strong>Híbrido é investimento, não custo.</strong> A conversa é sobre o retorno por hectare: mais lotação, mais produção e uma diferença de semente que se paga.</li>
+      <li><strong>Genética e ciência por trás.</strong> A Barenbrug tem programa próprio de melhoramento e o maior banco privado de germoplasma de forrageiras tropicais do mundo. É isso que sustenta a confiança no que vendemos.</li>
+      <li><strong>Parceria de longo prazo.</strong> Os programas Conecta existem para que revenda e RC cresçam junto com a Barenbrug, com regra clara, meta e reconhecimento.</li>
+      <li><strong>Confiança se constrói com consistência.</strong> Mensagem única, atendimento que sabe responder e compromisso registrado. Cultive Confiança.</li>
+    </ul></section>
+
+  <section class="bloco"><h2 class="sec">O que o portal entrega a cada um</h2>
+    <div class="tab"><table class="sim-t pp-t"><thead><tr><th>Quem</th><th>O que o Conecta entrega</th></tr></thead><tbody>${steak.map(([q,t])=>`<tr><td><strong>${q}</strong></td><td style="white-space:normal">${t}</td></tr>`).join("")}</tbody></table></div></section>
+
+  <section class="bloco pp-pedido"><h2 class="sec">O nosso pedido ao time</h2>
+    <p class="sub" style="margin:0 0 12px">O portal só funciona se a gente usar. Contamos com você, que está mais perto do campo, para dar o exemplo.</p>
+    <div class="pp-grid">${comb.map(([t,d],i)=>`<div class="pp-card"><span class="pp-n">${i+1}</span><h3>${t}</h3><p>${d}</p></div>`).join("")}</div>
+    <div class="pp-wa"><div><h3>WhatsApp acelera</h3><p>Uma mensagem resolve rápido, e isso tem valor. Continue usando para conversar.</p></div><div><h3>O portal registra</h3><p>O pedido feito pelo portal tem dono, prazo, histórico e resultado. No WhatsApp, ele se perde no meio das conversas e ninguém consegue medir o que deu certo.</p></div><p class="pp-wa-f"><strong>O combinado:</strong> converse pelo WhatsApp, mas registre pelo portal. Se for pedido, solicitação ou decisão, ele precisa estar no Conecta.</p></div></section>
+
+  <section class="bloco"><h2 class="sec">O nosso caminho</h2><p class="sub" style="margin:0 0 12px">O portal cresce por etapas, a partir do uso real e da revisão técnica.</p>
+    <ol class="pp-cam">${cam.map(([t,d])=>`<li><strong>${t}</strong><p>${d}</p></li>`).join("")}</ol></section>
+
+  <section class="bloco"><h2 class="sec">Por onde começar</h2>
+    <ul class="pp-l">
+      <li>Veja o que cada área faz no ${ir("guia","Guia do Portal")}.</li>
+      <li>Faça a sua parte no lançamento em ${ir("projetos","Gestão de Projetos")}.</li>
+      <li>Tem uma dúvida técnica ou de programa? Pergunte no ${ir("duvidas","Tira-Dúvidas")}.</li>
+      <li>Precisa de apoio do Marketing? Solicite em ${ir("acoes-mkt","Ações de Marketing")}.</li>
+    </ul>
+    <p class="meta" style="margin:10px 0 0">Marketing Barenbrug · Felipe Piccoli e Thaís Mendonça</p></section>
+  </div>`;}
 function subnavSimples(nome){
   return `<div class="subnav"><div class="subnav-in"><button class="voltar-inicio" data-a="inicio">‹ Início</button>
     <span class="secao-nome">${esc(nome)}</span></div></div>`;
@@ -6500,7 +6571,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
 /* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -14613,6 +14684,7 @@ function renderApp(){
   }
   if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
+  if(S.secao==="proposito"){if(!vePropos()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Por que o Conecta existe")+`<main>${vProposito()}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
   if(S.secao==="duvidas"){
