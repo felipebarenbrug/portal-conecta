@@ -505,7 +505,7 @@ a.noticia:hover .nt-tit,a.noticia:focus-visible .nt-tit{text-decoration:underlin
 .rk-mini .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--apagado)}
 .rk-mini strong{font-size:17px;color:var(--azul-escuro)}
 @media (max-width:420px){.rk-l{grid-template-columns:36px minmax(0,1fr) auto}.rk-av{display:none}}
-.acao-capa{margin:-14px -14px 4px;aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px 8px 0 0;overflow:hidden}
+.pgd-baixa{margin:8px 0 2px;width:100%}.acao-capa{margin:-14px -14px 4px;aspect-ratio:16/9;background:var(--azul-claro);border-radius:8px 8px 0 0;overflow:hidden}
 .acao-capa img{width:100%;height:100%;object-fit:contain;display:block}
 .pgd-arq{display:grid;gap:10px;min-width:0}
 .pgd-capa-box{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:12px;align-items:start}
@@ -9090,12 +9090,13 @@ function vRVCanal(){
   const c=S.canais&&S.canais.find(x=>x.id===S.canalSel);
   if(!c) return `<div class="carregando">Carregando…</div>`;
   const m=metricasCanal(c);const ac=S.acoesCanal[c.id]||[];
-  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
+  const cardFn=a=>`<div class="acao-card ${a.id===S.acaoSel?"sel":""}">${a.foto_path?(()=>{const u=pgdUrl(a.foto_path);return `<div class="acao-capa">${u?`<a href="${esc(u)}" target="_blank" rel="noopener" title="Ver a arte em tamanho real"><img src="${esc(u)}" alt="Arte da campanha" loading="lazy"></a>`:""}</div>`;})():""}<div class="acao-top"><strong>${esc(a.tipo||"Ação")}</strong>${stBadge(a.status)}</div>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}</div>
     <div class="meta">${esc((a.descricao||"").slice(0,110))}</div>
     ${pgdPagTxt(a)?`<div class="meta pgd-pt">${pgdPagTxt(a)}</div>`:""}
     ${a.alteracao_obs&&(a.status||"Em Análise")==="Em Análise"?`<div class="meta" style="color:var(--azul-escuro,#00557f)"><strong>Alterada pela revenda:</strong> ${esc(a.alteracao_obs.slice(0,160))}</div>`:""}
     ${(()=>{const n=(Array.isArray(a.anexos)?a.anexos.length:0);return n?`<div class="meta">${n} ${n===1?"documento":"documentos"}</div>`:"";})()}
+    ${a.foto_path?`<button type="button" class="btn sec pgd-baixa" data-a="pgd-baixar" data-v="${esc(a.foto_path)}" data-n="${esc(((a.tipo||"arte")+" "+(a.categoria||"")).trim())}">Baixar a arte</button>`:""}
     <div class="acao-bot"><span class="val">${fmtR(a.valor_igdb)}</span>${!veBarenbrugRV()&&podePgdArq()?`<button class="link" data-a="editacao" data-v="${a.id}">${S.editAcao===a.id?"Fechar edição":"Editar"}</button>`:""}${ehAdmin()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Abrir"}</button>`:podePgdArq()?`<button class="link" data-a="veracao" data-v="${a.id}">${a.id===S.acaoSel?"Fechar":"Fotos e documentos"}</button>`:""}</div></div>`;
   const ehBP=a=>(a.verba||"IGDB")==="Bônus de Performance";const acIG=ac.filter(a=>!ehBP(a)),acBP=ac.filter(ehBP);
   const sel=S.acaoSel?ac.find(a=>a.id===S.acaoSel):null;
@@ -14739,6 +14740,8 @@ document.addEventListener("click",async ev=>{
   if(a==="lead-neg-cancela"){S.leadNeg=null;if(S.ng)S.ng.ed=null;S.secao="leads";S.pag="leads-inbound";S.fila=null;render();return;}
   if(a==="rank-f"){S.rankF=v;render();return;}
   if(a==="fin-recarregar"){S.fin=null;render();return;}
+  if(a==="pgd-baixar"){const nm=(b.dataset.n||"arte").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,"").toLowerCase()||"arte";const ext=(v.split(".").pop()||"jpg").toLowerCase().slice(0,5);
+    try{const {data,error}=await sb.storage.from("pgd").createSignedUrl(v,600,{download:nm+"."+ext});if(error||!data)throw error;const l=document.createElement("a");l.href=data.signedUrl;l.rel="noopener";document.body.appendChild(l);l.click();l.remove();}catch(e){aviso("Não foi possível baixar a arte agora.");}return;}
   if(a==="pgd-del-pede"){S.pgdDel=v;render();return;}
   if(a==="pgd-del-cancela"){S.pgdDel=null;render();return;}
   if(a==="pgd-del"){const el=b.closest("[data-acao]");const ac=el&&pgdAcao(el.dataset.acao);if(!ac)return;b.disabled=true;
