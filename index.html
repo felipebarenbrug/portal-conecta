@@ -1362,6 +1362,10 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .rot-obj{font-size:14px}
 .rot-p{border-left:4px solid var(--azul);padding:4px 0 4px 10px;margin:0 0 10px}.rot-p.al{border-left-color:#c0392b}
 .rot-av{background:var(--papel);border-radius:8px;padding:8px;margin:4px 0 8px;font-size:14px}
+.pr-g{border:1px solid var(--linha);border-radius:10px;padding:10px 12px;margin:0;min-width:0}.pr-g legend{font-weight:700;padding:0 4px}
+.pr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pr-full{grid-column:1/-1}.pr-grid textarea{width:100%;font:inherit}
+.pr-nota{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--linha)}.pr-nota select{width:auto;min-width:70px}
+@media(max-width:560px){.pr-grid{grid-template-columns:1fr}}
 .jr-dest{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--amarelo-claro);border:1px solid #e9d66b;border-radius:10px;padding:10px 12px;margin:10px 0}
 .jr-dest strong{font-size:15px}
 @media(max-width:900px){.kb{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -1683,6 +1687,7 @@ async function carregarPrecos(){
   S.precosBusy=false;
 }
 const SECOES=[
+  {id:"premio",nome:"Prêmio Cultive Confiança",desc:"Proposta do prêmio para o melhor caso de resultado com híbridos na safra 26/27: por que fazer, regulamento, critérios, dados e o cadastro dos casos.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"proposito",nome:"Por que o Conecta existe",desc:"O propósito do portal: por que ele nasceu, o conceito Barenbrug que ele leva ao campo, o caminho que estamos seguindo e o que pedimos ao time.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
@@ -1928,7 +1933,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126201250";
+const APP_VER="20261126204145";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6438,6 +6443,127 @@ function crmExtraHTML(alvo){
 }
 
 /* Por que o Conecta existe: propósito do portal, para administradores e Comercial Barenbrug */
+/* ===== Prêmio Cultive Confiança (proposta, safra 26/27): só administradores e Comercial Barenbrug ===== */
+const vePremio=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug")||temAcessoExtra("premio"));
+const PR_ST={rascunho:"Rascunho",inscrito:"Inscrito",validacao:"Em validação",validado:"Validado",finalista:"Finalista (top 10)",premiado:"Premiado",desclassificado:"Desclassificado"};
+const PR_CRIT=[
+ {k:"c1",p:35,t:"Resultado comprovado",d:"Ganho medido na área do caso: lotação (UA/ha), ganho de peso (kg/dia), arrobas por hectare por ano ou leite, comparado com o antes ou com uma área testemunha.",n5:"Ganho forte, medido com balança ou controle de lotação, com comparação clara.",n3:"Ganho claro, mas com comparação parcial ou período curto.",n1:"Sem medição: só percepção do produtor."},
+ {k:"c2",p:20,t:"Documentação",d:"Nota fiscal da semente, análise de solo, fotos datadas e com local nas três fases e registros de pesagem ou lotação.",n5:"Tudo enviado, legível e conferido na auditoria.",n3:"Documentos principais enviados, com lacunas pequenas.",n1:"Faltam documentos obrigatórios ou eles não batem."},
+ {k:"c3",p:15,t:"Manejo e uso da tecnologia",d:"Correção e adubação pelo solo, taxa de semeadura, formação e altura de manejo conforme a recomendação Barenbrug.",n5:"Seguiu a recomendação em todas as etapas, com registro.",n3:"Seguiu em parte.",n1:"Manejo sem critério ou contrário à recomendação."},
+ {k:"c4",p:10,t:"Escala e replicabilidade",d:"Tamanho da área e quanto o caso pode ser repetido por outros produtores da região.",n5:"Área relevante e fácil de repetir na região.",n3:"Área pequena ou condição particular.",n1:"Caso isolado, difícil de repetir."},
+ {k:"c5",p:10,t:"Atuação do canal ou do RC",d:"Acompanhamento técnico do inscrito: visitas, recomendação, dia de campo e pós-venda.",n5:"Acompanhou do plantio ao resultado, com registro.",n3:"Acompanhou em parte.",n1:"Só vendeu a semente."},
+ {k:"c6",p:10,t:"História e potencial de comunicação",d:"Clareza da história e disposição do produtor para depoimento, gravação e visita.",n5:"História forte e produtor disposto a gravar e receber visita.",n3:"Boa história, com restrições de exposição.",n1:"Produtor não autoriza divulgação."}];
+const PR_DOCS=[["nf","Nota fiscal de compra da semente (com o lote)",1],["solo","Análise de solo antes do plantio",1],["foto_antes","Fotos da área antes do plantio (com data e local)",1],["foto_form","Fotos da formação (com data e local)",1],["foto_res","Fotos do resultado (com data e local)",1],["pesagem","Registros de pesagem, lotação ou produção de leite",1],["autoriz","Termo de autorização do produtor (dados e imagem)",1],["laudo","Laudo ou relatório do técnico responsável",0],["video","Vídeo de depoimento do produtor",0],["outro","Outros documentos",0]];
+const PR_F=[
+ ["Inscrição",[["tipo","Quem inscreve","sel",1,["Revenda","RC"]],["insc_nome","Revenda ou RC (razão social)","txt",1],["insc_cnpj","CNPJ","txt",1],["insc_resp","Pessoa responsável pelo caso","txt",1],["insc_tel","Celular do responsável","txt",1],["insc_email","E-mail do responsável","txt",0],["comercial","Responsável comercial Barenbrug","txt",1]]],
+ ["Produtor e fazenda",[["prod_nome","Nome do produtor","txt",1],["prod_doc","CPF ou CNPJ do produtor (para conferir a nota fiscal)","txt",1],["prod_tel","Celular do produtor","txt",1],["prod_email","E-mail do produtor","txt",0],["fazenda","Nome da fazenda","txt",1],["municipio","Município","txt",1],["uf","UF","txt",1],["coord","Coordenadas da área (latitude, longitude)","txt",1,"Ex.: -15.890, -52.256"],["area_total","Área total da fazenda (ha)","num",1],["area_pasto","Área de pastagem (ha)","num",1],["sistema","Sistema de produção","sel",1,["Cria","Recria","Engorda","Ciclo completo","Leite","Integração lavoura-pecuária","Outro"]],["rebanho","Rebanho (cabeças)","num",1],["raca","Raça ou cruzamento principal","txt",0]]],
+ ["Área do caso",[["cultivar","Cultivar","sel",1,["Sabiá","Cayana","Carcará","Cynodon"]],["area_ha","Área plantada (ha)","num",1],["plantio","Data do plantio","data",1],["pastejo1","Data do primeiro pastejo","data",1],["uso_ant","O que havia antes na área","sel",1,["Pastagem degradada","Pastagem de outra forrageira","Lavoura","Área nova","Outro"]],["forr_ant","Forrageira anterior, se havia","txt",0],["taxa","Taxa de semeadura (kg/ha)","num",1],["lote","Lote da semente","txt",1],["nf_num","Número da nota fiscal da semente","txt",1],["nf_data","Data da nota fiscal","data",1],["nf_vend","Quem vendeu (revenda ou RC)","txt",1],["solo_v","V% da análise de solo","num",1],["solo_p","Fósforo da análise (mg/dm³)","num",1],["calcario","Calcário aplicado (t/ha)","num",0],["adubacao","Adubação de formação e de manutenção","area",1],["manejo","Manejo do pastejo","sel",1,["Rotacionado","Contínuo","Diferido","Misto"]],["alturas","Alturas de entrada e saída (cm)","txt",0],["irrigado","Área irrigada?","sel",1,["Não","Sim"]]]],
+ ["Resultados medidos",[["per_ini","Início do período avaliado","data",1],["per_fim","Fim do período avaliado","data",1],["testemunha","Comparação usada","sel",1,["Mesma área antes do plantio","Área testemunha ao lado","As duas","Sem comparação"]],["test_desc","Como é a comparação (área, forrageira, período)","area",0],["lot_a","Lotação antes (UA/ha)","num",0],["lot_d","Lotação depois (UA/ha)","num",0],["gmd_a","Ganho de peso antes (kg/cabeça/dia)","num",0],["gmd_d","Ganho de peso depois (kg/cabeça/dia)","num",0],["arr_a","Produção antes (@/ha/ano)","num",0],["arr_d","Produção depois (@/ha/ano)","num",0],["leite_a","Leite antes (L/ha/dia)","num",0],["leite_d","Leite depois (L/ha/dia)","num",0],["ms","Massa de forragem medida (kg MS/ha), se houver","num",0],["metodo","Como foi medido","sel",1,["Balança (pesagem dos animais)","Controle de lotação","Amostragem de massa","Controle leiteiro","Outro"]],["outros","Outros ganhos (seca, suplementação, custo, cigarrinha)","area",0]]],
+ ["História do caso",[["resumo","Resumo do caso, em até 1.000 caracteres","area",1],["depo","Depoimento do produtor, nas palavras dele","area",0],["tecnico","Quem acompanhou tecnicamente","txt",0]]]];
+const prObrig=()=>PR_F.flatMap(([,L])=>L.filter(f=>f[3]));
+const prDocsFalta=(c,D)=>PR_DOCS.filter(d=>d[2]&&!(D||[]).some(x=>x.tipo===d[0])).map(d=>d[1]);
+const prCamposFalta=d=>prObrig().filter(f=>!String((d||{})[f[0]]??"").trim()).map(f=>f[1]);
+function prMedia(c){const N=Object.values(c.notas||{}).filter(n=>n&&PR_CRIT.every(k=>n[k.k]!=null));if(!N.length)return null;
+  return Math.round(N.reduce((t,n)=>t+PR_CRIT.reduce((s,k)=>s+k.p*(+n[k.k])/5,0),0)/N.length*10)/10;}
+const prGanho=(a,d)=>{a=+a;d=+d;return a>0&&d>0?Math.round((d/a-1)*100):null;};
+async function carregarPremio(){if(S.prBusy)return;S.prBusy=true;try{const [c,d]=await Promise.all([sb.from("premio_casos").select("*").order("atualizado_em",{ascending:false}),sb.from("premio_docs").select("*").order("em")]);S.prC=c.data||[];S.prD=d.data||[];}catch(e){S.prC=[];S.prD=[];}S.prBusy=false;render();}
+function vPremio(){
+  if(!vePremio())return `<div class="vazio">Sem acesso.</div>`;
+  const T=S.prAba||"porque";
+  const abas=[["porque","Por que fazer"],["premio","O prêmio"],["regul","Regulamento"],["crit","Critérios"],["dados","Dados e documentos"],["casos","Casos inscritos"+(S.prC?` (${S.prC.length})`:"")]];
+  if(T==="casos"&&S.prC===undefined){S.prC=null;carregarPremio();}
+  const corpo={porque:prPorque,premio:prPremio,regul:prRegul,crit:prCrit,dados:prDados,casos:prCasos}[T]||prPorque;
+  return `<div><span class="rot">Proposta · safra 26/27 · uso interno</span><h1 class="titulo">Prêmio Cultive Confiança</h1><p class="sub">O prêmio para o melhor caso de resultado com híbridos Barenbrug na safra 26/27. Por enquanto só administradores e o Comercial Barenbrug veem esta área. Quando a proposta for aprovada, as revendas e os RCs passam a cadastrar os casos deles aqui.</p></div>
+  <div class="nota-admin" style="margin:0 0 10px"><strong>Proposta em revisão.</strong> Valores, datas e regras ainda não estão aprovados. Antes de divulgar, o regulamento passa pelo jurídico e pelo fiscal.</div>
+  <div class="filtros" role="group" aria-label="Partes do prêmio">${abas.map(([k,t])=>`<button class="chip" data-a="pr-aba" data-v="${k}" aria-pressed="${k===T}">${esc(t)}</button>`).join("")}</div>
+  ${corpo()}`;}
+const prCard=(t,p)=>`<div class="dir-card"><strong>${esc(t)}</strong><p>${p}</p></div>`;
+function prPorque(){return `<section class="bloco"><h2 class="sec">Por que fazer o prêmio</h2>
+  <p class="sub" style="margin:0 0 10px">O híbrido se vende com prova. Hoje a prova está espalhada em posts de revendas e em conversas de campo, sem número conferido. O prêmio organiza isso: troca reconhecimento e dinheiro por casos de sucesso com dados reais e documentação, e transforma esses casos num grande movimento de marca.</p>
+  <div class="dir-grid">
+   ${prCard("1. Casos de sucesso de verdade","Casos com nome, fazenda, área, cultivar, datas e resultado medido, com nota fiscal, análise de solo, fotos datadas e pesagem. É o material que o time comercial, as revendas e os RCs mais pedem para convencer o produtor que ainda só planta Marandu.")}
+   ${prCard("2. Uma base de dados de resultado","Cada inscrição vira dado: lotação, ganho de peso, arrobas e leite por hectare, por cultivar, sistema e região. Com o tempo, é a nossa base própria de resultado de campo, para a Academia de Híbridos, o argumento de valor, o Boletim do Pasto e o planejamento.")}
+   ${prCard("3. Relacionamento com o canal e o produtor","O prêmio dá um motivo para a revenda e o RC acompanharem o cliente do plantio ao resultado, e para a Barenbrug estar perto deles. Os dez finalistas vêm a Ribeirão Preto com o produtor: é relacionamento que nenhuma visita sozinha constrói.")}
+   ${prCard("4. Fazer barulho com uma mídia da pecuária","Em parceria com uma mídia forte da pecuária, o prêmio vira pauta: a abertura das inscrições, a série com os finalistas e a cobertura da premiação. Os casos ganham alcance nacional com a credibilidade de quem cobre o setor, e o Cultive Confiança passa a ter rosto e número.")}
+   ${prCard("5. Conteúdo para a safra inteira","Cada finalista rende vídeo, carrossel, matéria e dia de campo. São meses de conteúdo real para redes, e-mail e eventos, e casos regionais para as revendas usarem na região delas.")}
+   ${prCard("6. Mais venda com qualidade","Para concorrer, o caso precisa de manejo certo e acompanhamento técnico. O prêmio puxa o canal para o jeito certo de vender o híbrido, com análise de solo, formação e manejo, e não só a venda da semente.")}</div>
+  <h3 style="margin:16px 0 6px">Como a parceria com a mídia pode funcionar</h3>
+  <ul class="cond" style="margin:0"><li><strong>Lançamento:</strong> matéria e chamada para inscrições, com o regulamento no portal.</li><li><strong>Durante a safra:</strong> série com os casos em destaque, gravada nas fazendas.</li><li><strong>Premiação:</strong> cobertura do evento em Ribeirão Preto e entrevista com os vencedores.</li><li><strong>Depois:</strong> o caso vencedor vira conteúdo especial da mídia parceira e da Barenbrug.</li><li>A mídia parceira ainda está por escolher: o Marketing levanta opções de portal, revista e TV da pecuária, com proposta e custo de cada uma.</li></ul>
+  <h3 style="margin:16px 0 6px">O que precisa para sair do papel</h3>
+  <ul class="cond" style="margin:0"><li>Aprovação do valor dos prêmios (R$ 17.500 no total) e da verba de viagem dos finalistas, do orçamento do Marketing. O IGDB das revendas não entra: ele é só para geração de demanda.</li><li>Validação do regulamento pelo jurídico e pelo fiscal, incluindo a forma de pagar os prêmios em dinheiro e as regras de distribuição de prêmios.</li><li>Definição da banca: Marketing, time técnico e Comercial.</li><li>Escolha da mídia parceira e da data da premiação.</li></ul></section>`;}
+function prPremio(){return `<section class="bloco"><h2 class="sec">O prêmio</h2>
+  <div class="dir-grid">${prCard("1º lugar","R$ 10.000 e o troféu de Melhor Caso Cultive Confiança da Safra 26/27.")}${prCard("2º lugar","R$ 5.000.")}${prCard("3º lugar","R$ 2.500.")}${prCard("4º ao 10º lugar","Certificado de finalista e a viagem para a premiação.")}</div>
+  <p class="meta" style="margin:8px 0 0">Os dez finalistas são convidados para a cerimônia de premiação em Ribeirão Preto, com até duas pessoas por caso: o produtor e o responsável pelo caso na revenda ou o RC.</p>
+  <h3 style="margin:16px 0 6px">Cronograma sugerido</h3>
+  <div class="tab"><table class="sim-t"><thead><tr><th>Quando</th><th>O quê</th></tr></thead><tbody>
+   ${[["Dezembro de 2026","Aprovação da proposta, da verba e da mídia parceira"],["Janeiro de 2027","Regulamento validado pelo jurídico e pelo fiscal; lançamento com a mídia parceira"],["Fevereiro a abril de 2027","Inscrições pelo Portal Conecta"],["Maio de 2027","Validação dos documentos pelo Marketing"],["Junho de 2027","Auditoria de campo dos 20 melhores casos pelo time técnico"],["Julho de 2027","Banca julgadora, depois do fechamento da safra em 30 de junho, e anúncio dos 10 finalistas"],["Agosto de 2027","Premiação em Ribeirão Preto"]].map(r=>`<tr><td>${r[0]}</td><td style="white-space:normal">${r[1]}</td></tr>`).join("")}</tbody></table></div>
+  <p class="meta" style="margin:6px 0 0">Datas e valores são proposta e mudam se a revisão pedir.</p></section>`;}
+const PR_REG=[
+ ["1. Objetivo","Reconhecer e premiar os melhores casos de resultado com os híbridos Barenbrug na safra 26/27, comprovados com dados e documentos, e levar esses resultados ao mercado como prova do Cultive Confiança."],
+ ["2. Quem pode participar","Revendas ativas no Conecta Revendas e RCs com contrato ativo com a Barenbrug na safra 26/27. Cada inscrito pode inscrever até 3 casos, cada um de um produtor e de uma área. Colaboradores da Barenbrug não concorrem; o responsável comercial apoia a inscrição do seu canal ou RC."],
+ ["3. Casos aceitos","Área formada com Sabiá, Cayana, Carcará ou Cynodon, com semente Barenbrug comprada de revenda ou RC oficial, comprovada por nota fiscal com o lote. Área mínima de 5 hectares. Plantio entre 1º de setembro de 2025 e 31 de janeiro de 2027, com resultado medido na safra 26/27 (1º de julho de 2026 a 30 de junho de 2027), em pelo menos 90 dias de pastejo."],
+ ["4. Inscrição","Pelo Portal Conecta, de fevereiro a abril de 2027, com a ficha completa e os documentos obrigatórios. Inscrição sem algum documento obrigatório não segue para a avaliação."],
+ ["5. Documentos obrigatórios","Nota fiscal de compra da semente com o lote; análise de solo anterior ao plantio; fotos da área antes, na formação e no resultado, com data e local; registros de pesagem, de lotação ou de produção de leite do período avaliado; e o termo de autorização do produtor para o uso dos dados e da imagem. Laudo do técnico e vídeo de depoimento contam a favor, mas não são obrigatórios."],
+ ["6. Etapas da avaliação","(1) Validação dos documentos pelo Marketing. (2) Auditoria de campo dos 20 casos mais bem avaliados, pelo time técnico, com visita ou videochamada para conferir a área e os dados. (3) Banca julgadora formada por Marketing, time técnico e Comercial, que dá as notas pelos critérios e define os 10 finalistas e a colocação. Empate: vence a maior nota em Resultado comprovado e, depois, em Documentação."],
+ ["7. Critérios","Resultado comprovado (35 pontos), Documentação (20), Manejo e uso da tecnologia (15), Escala e replicabilidade (10), Atuação do canal ou do RC (10) e História e potencial de comunicação (10). Cada avaliador dá nota de 1 a 5 por critério; a nota do caso é a média dos avaliadores, de 0 a 100."],
+ ["8. Prêmios","1º lugar: R$ 10.000 e o troféu de Melhor Caso Cultive Confiança da Safra 26/27. 2º lugar: R$ 5.000. 3º lugar: R$ 2.500. 4º ao 10º: certificado de finalista. O valor é pago ao inscrito (revenda ou RC, pessoa jurídica), na forma definida pelo fiscal, com os tributos que a lei exigir."],
+ ["9. Premiação","Os 10 finalistas são convidados para a cerimônia em Ribeirão Preto, com até duas pessoas por caso: o produtor e o responsável pelo caso na revenda ou o RC. A Barenbrug custeia deslocamento, hospedagem e alimentação conforme a sua política de viagens."],
+ ["10. Dados e imagem","Os dados pessoais do produtor e da fazenda servem para a avaliação e a auditoria e são tratados conforme a LGPD. Com o termo de autorização, a Barenbrug e a mídia parceira podem divulgar o caso, a fazenda, as fotos e os resultados. Documentos fiscais e pessoais nunca são divulgados."],
+ ["11. Desclassificação","Documento falso ou alterado; semente sem origem comprovada; cultivar fora da lista; dado que não se confirma na auditoria; falta do termo do produtor; ou conduta contrária ao contrato do canal ou do RC."],
+ ["12. Disposições gerais","As decisões da banca são finais. A Barenbrug pode ajustar este regulamento com aviso prévio no portal. Casos omissos são decididos pela comissão do prêmio. Este regulamento só vale depois de validado pelo jurídico e pelo fiscal da Barenbrug."]];
+function prRegul(){return `<section class="bloco"><h2 class="sec">Regulamento · proposta</h2><p class="meta" style="margin:0 0 8px">Texto de trabalho, para revisar com o Comercial, o jurídico e o fiscal antes da divulgação.</p>
+  ${PR_REG.map(([t,p])=>`<details class="faq-item" open><summary>${esc(t)}</summary><p>${esc(p)}</p></details>`).join("")}</section>`;}
+function prCrit(){return `<section class="bloco"><h2 class="sec">Critérios de avaliação</h2><p class="sub" style="margin:0 0 8px">Cada avaliador da banca dá uma nota de 1 a 5 em cada critério. Pontos do critério = peso × nota ÷ 5. A nota do caso é a média dos avaliadores, de 0 a 100.</p>
+  <div class="tab"><table class="sim-t"><thead><tr><th>Critério</th><th class="val">Peso</th><th>O que vale nota 5, 3 e 1</th></tr></thead><tbody>${PR_CRIT.map(c=>`<tr><td style="white-space:normal;min-width:180px"><strong>${esc(c.t)}</strong><br><span class="meta">${esc(c.d)}</span></td><td class="val"><strong>${c.p}</strong></td><td style="white-space:normal;min-width:220px"><ul class="cond" style="margin:0"><li><strong>5:</strong> ${esc(c.n5)}</li><li><strong>3:</strong> ${esc(c.n3)}</li><li><strong>1:</strong> ${esc(c.n1)}</li></ul></td></tr>`).join("")}<tr><td><strong>Total</strong></td><td class="val"><strong>100</strong></td><td></td></tr></tbody></table></div></section>`;}
+function prDados(){return `<section class="bloco"><h2 class="sec">Dados e documentos do caso</h2><p class="sub" style="margin:0 0 8px">O que a revenda ou o RC preenche na ficha. Os itens com * são obrigatórios. Os números de antes e depois servem para calcular o ganho.</p>
+  ${PR_F.map(([g,L])=>`<h3 style="margin:14px 0 6px">${esc(g)}</h3><ul class="cond" style="margin:0">${L.map(f=>`<li>${esc(f[1])}${f[3]?" *":""}${f[2]==="sel"?` <span class="meta">(${esc(f[4].join(", "))})</span>`:""}</li>`).join("")}</ul>`).join("")}
+  <h3 style="margin:14px 0 6px">Documentos</h3><ul class="cond" style="margin:0">${PR_DOCS.map(d=>`<li>${esc(d[1])}${d[2]?" *":""}</li>`).join("")}</ul>
+  <p class="meta" style="margin:8px 0 0">Fotos: de preferência tiradas pelo celular com a localização ligada, para a data e o local ficarem na foto. Pesagem: planilha da balança ou relatório do sistema da fazenda, com datas.</p></section>`;}
+function prCasos(){
+  if(!S.prC)return `<div class="carregando">Carregando os casos…</div>`;
+  if(S.prEd!==undefined)return prForm(S.prEd?S.prC.find(c=>c.id===S.prEd):null);
+  const L=[...S.prC].sort((a,b)=>(prMedia(b)??-1)-(prMedia(a)??-1));
+  return `<section class="bloco"><div class="kb-top"><button class="btn" data-a="pr-novo">+ Cadastrar caso</button><span class="meta">${S.prC.length} ${S.prC.length===1?"caso":"casos"}. Ordenados pela nota da banca.</span></div>
+  ${L.length?`<div class="lista">${L.map((c,i)=>{const d=c.dados||{};const D=S.prD.filter(x=>x.caso_id===c.id);const fd=prDocsFalta(c,D).length,fc=prCamposFalta(d).length;const m=prMedia(c);
+    return `<button class="linha" data-a="pr-ed" data-v="${c.id}"><div style="min-width:0;text-align:left"><strong>${esc(d.prod_nome||"Produtor não informado")}${d.fazenda?" · "+esc(d.fazenda):""}</strong><span class="meta">${esc([d.cultivar,d.area_ha?d.area_ha+" ha":"",[d.municipio,d.uf].filter(Boolean).join("/"),d.insc_nome].filter(Boolean).join(" · "))}</span><span class="meta">${fc||fd?`Faltam ${fc?fc+" dados":""}${fc&&fd?" e ":""}${fd?fd+" documentos":""}`:"Ficha e documentos completos"}${m!=null?" · nota da banca "+m:""}</span></div>${stTag(PR_ST[c.status]||c.status,c.status==="desclassificado"?"vermelho":c.status==="finalista"||c.status==="premiado"?"verde":c.status==="rascunho"?"amarelo":"azul")}</button>`;}).join("")}</div>`:`<div class="vazio">Nenhum caso cadastrado ainda. Use "Cadastrar caso" para registrar um caso de uma revenda ou de um RC.</div>`}</section>`;}
+function prForm(c){c=c||{};const d=S.prF||(S.prF={...(c.dados||{})});const D=c.id?S.prD.filter(x=>x.caso_id===c.id):[];
+  const ga=[["Lotação",prGanho(d.lot_a,d.lot_d)],["Ganho de peso",prGanho(d.gmd_a,d.gmd_d)],["Arrobas por hectare",prGanho(d.arr_a,d.arr_d)],["Leite por hectare",prGanho(d.leite_a,d.leite_d)]].filter(x=>x[1]!=null);
+  const fld=f=>{const v=d[f[0]]??"";const id="pr_"+f[0];const lb=`<label for="${id}">${esc(f[1])}${f[3]?" *":""}</label>`;
+    if(f[2]==="sel")return `<div>${lb}<select id="${id}" data-prf="${f[0]}"><option value="">—</option>${f[4].map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+    if(f[2]==="area")return `<div class="pr-full">${lb}<textarea id="${id}" data-prf="${f[0]}" rows="3" maxlength="${f[0]==="resumo"?1000:2000}">${esc(v)}</textarea></div>`;
+    return `<div>${lb}<input id="${id}" data-prf="${f[0]}" type="${f[2]==="data"?"date":"text"}" ${f[2]==="num"?'inputmode="decimal"':""} maxlength="200" placeholder="${esc(f[4]||"")}" value="${esc(v)}"></div>`;};
+  const m=prMedia(c);const me=(c.notas||{})[S.user&&S.user.id]||{};
+  return `<form class="form-card" id="f-pr" data-id="${c.id||""}"><h3 class="sec">${c.id?"Caso de "+esc(d.prod_nome||"produtor"):"Cadastrar caso"}</h3>
+   ${c.id?`<p class="meta" style="margin:0">Cadastrado por ${esc(c.criado_nome||"—")} em ${esc(fmtDataHora(c.criado_em))} · ${esc(PR_ST[c.status]||c.status)}</p>`:""}
+   ${ga.length?`<div class="resp-l">${ga.map(([t,g])=>`<div class="resp-i"><span class="meta">${esc(t)}</span><strong>${g>0?"+":""}${g}% em relação ao antes</strong></div>`).join("")}</div>`:""}
+   ${PR_F.map(([g,L])=>`<fieldset class="pr-g"><legend>${esc(g)}</legend><div class="pr-grid">${L.map(fld).join("")}</div></fieldset>`).join("")}
+   <fieldset class="pr-g"><legend>Documentos</legend>${c.id?`<div class="resp-l">${PR_DOCS.map(([k,t,ob])=>{const X=D.filter(x=>x.tipo===k);return `<div class="resp-i${ob&&!X.length?" al":""}"><span class="meta">${esc(t)}${ob?" · obrigatório":""}</span>${X.map(x=>`<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="link" data-a="pr-doc" data-v="${esc(x.path)}">${esc(x.nome)}</button>${ehAdmin()||x.por===(S.user&&S.user.id)?`<button type="button" class="link" data-a="pr-doc-del" data-v="${x.id}" aria-label="Remover ${esc(x.nome)}">remover</button>`:""}</span>`).join("")}<label class="btn sec pgd-up" style="margin-top:4px;align-self:flex-start">Enviar arquivo<input type="file" data-prdoc="${k}" multiple accept="image/*,video/*,application/pdf,.xlsx,.xls,.csv,.doc,.docx"></label></div>`;}).join("")}</div>`:`<p class="meta" style="margin:0">Salve a ficha primeiro; depois envie os documentos aqui.</p>`}</fieldset>
+   ${c.id&&ehAdmin()?`<fieldset class="pr-g"><legend>Banca julgadora</legend><p class="meta" style="margin:0 0 6px">Sua nota de 1 a 5 em cada critério.${m!=null?` Nota do caso (média da banca): <strong>${m}</strong>.`:""}</p>
+     ${PR_CRIT.map(k=>`<div class="pr-nota"><span><strong>${esc(k.t)}</strong> <span class="meta">peso ${k.p}</span></span><select data-prn="${k.k}" aria-label="${esc(k.t)}"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option ${+me[k.k]===n?"selected":""}>${n}</option>`).join("")}</select></div>`).join("")}
+     <div class="dupla"><div><label for="pr_st">Situação</label><select id="pr_st">${Object.entries(PR_ST).map(([k,t])=>`<option value="${k}" ${c.status===k?"selected":""}>${t}</option>`).join("")}</select></div><div><label for="pr_col">Colocação final (1 a 10)</label><input id="pr_col" inputmode="numeric" value="${c.colocacao||""}"></div></div>
+     <div><label for="pr_obs">Observações da validação e da auditoria</label><textarea id="pr_obs" rows="3" maxlength="3000">${esc(c.obs||"")}</textarea></div></fieldset>`:""}
+   <div class="acoes"><button class="btn" type="submit" data-pr-acao="salvar">${c.id?"Salvar":"Salvar ficha"}</button>${!ehAdmin()&&(!c.id||c.status==="rascunho")?`<button class="btn sec" type="submit" data-pr-acao="inscrever">Salvar e inscrever</button>`:""}<button class="btn sec" type="button" data-a="pr-volta">Voltar</button></div></form>`;}
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.prf||!S.prF)return;S.prF[t.dataset.prf]=t.value;});
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
+  if(t.dataset.prf&&S.prF){S.prF[t.dataset.prf]=t.value;return;}
+  if(t.dataset.prdoc){const f=document.getElementById("f-pr");const id=f&&+f.dataset.id;if(!id)return;const fs=[...(t.files||[])];
+    for(const x of fs){if(x.size>50*1024*1024){aviso(x.name+": acima de 50 MB.");continue;}const ext=(x.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6);
+      const path=`${id}/${t.dataset.prdoc}-${Date.now().toString(36)}.${ext}`;aviso("Enviando "+x.name+"…");const up=await sb.storage.from("premio").upload(path,x,{contentType:x.type||"application/octet-stream",upsert:false});
+      if(up.error){aviso("Não foi possível enviar "+x.name+".");continue;}const {data,error}=await sb.from("premio_docs").insert({caso_id:id,tipo:t.dataset.prdoc,nome:x.name.slice(0,200),path,tamanho:x.size,por:S.user.id}).select().maybeSingle();
+      if(error||!data){aviso("O arquivo subiu, mas não foi registrado.");continue;}S.prD.push(data);}
+    const w=window.scrollY;render();window.scrollTo(0,w);aviso("Documentos enviados.");}});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f-pr")return;ev.preventDefault();ev.stopImmediatePropagation();
+  const acao=(ev.submitter&&ev.submitter.dataset.prAcao)||"salvar";const id=+f.dataset.id||0;const d={...(S.prF||{})};
+  Object.keys(d).forEach(k=>{if(typeof d[k]==="string")d[k]=d[k].trim().slice(0,2000);});if(d.uf)d.uf=d.uf.toUpperCase().slice(0,2);
+  if(!d.prod_nome){aviso("Informe ao menos o nome do produtor.");return;}
+  const row={dados:d};const c=id?S.prC.find(x=>x.id===id):null;
+  let semDocs=false;if(acao==="inscrever"){const F=prCamposFalta(d);if(F.length){aviso("Para inscrever, falta: "+F.slice(0,3).join(", ")+(F.length>3?"…":""));return;}const DF=id?prDocsFalta(c,S.prD.filter(x=>x.caso_id===id)):["todos"];if(DF.length){if(id){aviso("Para inscrever, falta enviar: "+DF.slice(0,2).join("; ")+(DF.length>2?"…":""));return;}semDocs=true;}else row.status="inscrito";}
+  if(ehAdmin()&&id){const st=f.querySelector("#pr_st");if(st)row.status=st.value;const col=+((f.querySelector("#pr_col")||{}).value||0);row.colocacao=col>=1&&col<=10?col:null;row.obs=((f.querySelector("#pr_obs")||{}).value||"").trim()||null;
+    const N={...(c.notas||{})};const me={};f.querySelectorAll("[data-prn]").forEach(s=>{if(s.value)me[s.dataset.prn]=+s.value;});if(Object.keys(me).length)N[S.user.id]={...me,nome:(S.profile&&S.profile.nome)||"",em:new Date().toISOString()};else delete N[S.user.id];row.notas=N;}
+  const r=id?await sb.from("premio_casos").update(row).eq("id",id).select().maybeSingle():await sb.from("premio_casos").insert({...row,criado_por:S.user.id}).select().maybeSingle();
+  if(r.error||!r.data){aviso("Não foi possível salvar: "+((r.error&&r.error.message)||""));return;}
+  S.prC=S.prC.filter(x=>x.id!==r.data.id);S.prC.unshift(r.data);S.prF={...(r.data.dados||{})};S.prEd=r.data.id;render();window.scrollTo(0,0);aviso(row.status==="inscrito"?"Caso inscrito.":semDocs||!id?"Ficha salva. Agora envie os documentos obrigatórios e inscreva.":"Caso salvo.");});
+
 const vePropos=()=>!S.demo&&(ehAdmin()||temPerfil("Comercial Barenbrug"));
 function vProposito(){
   const ir=(id,t)=>`<button type="button" class="link" data-a="secao" data-v="${id}">${t}</button>`;
@@ -6641,7 +6767,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.id==="premio"?vePremio():x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
 /* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -14957,6 +15083,7 @@ function renderApp(){
   }
   if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
+  if(S.secao==="premio"){if(!vePremio()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Prêmio Cultive Confiança")+`<main class="largo">${vPremio()}</main>`;return;}
   if(S.secao==="proposito"){if(!vePropos()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Por que o Conecta existe")+`<main>${vProposito()}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
@@ -15203,6 +15330,12 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="rcc-apagar"){if(!rcCadGestor())return;if(S.rccApagar!==v){S.rccApagar=v;render();setTimeout(()=>{if(S.rccApagar===v){S.rccApagar=null;render();}},8000);return;}S.rccApagar=null;
     const {data:velho,error}=await sb.rpc("rc_cad_contrato",{p_user:v,p_acao:"apagar",p_path:null,p_nome:null,p_data:null});if(error){aviso("Não foi possível apagar: "+(error.message||"erro"));return;}
     const rm=await sb.storage.from("rc-cadastro").remove([velho]);S.rcCads=null;render();aviso(!rm.error&&(rm.data||[]).length?"Arquivo do contrato apagado. Anexe o contrato certo.":"O contrato saiu do cadastro, mas o arquivo não foi apagado. Avise o administrador.");return;}
+  if(a==="pr-aba"){S.prAba=v;S.prEd=undefined;render();return;}
+  if(a==="pr-novo"){S.prAba="casos";S.prEd=null;S.prF={};render();window.scrollTo(0,0);return;}
+  if(a==="pr-ed"){S.prEd=+v;const c=(S.prC||[]).find(x=>x.id===+v);S.prF={...((c&&c.dados)||{})};render();window.scrollTo(0,0);return;}
+  if(a==="pr-volta"){S.prEd=undefined;S.prF=null;render();return;}
+  if(a==="pr-doc"){if(!v)return;try{const {data}=await sb.storage.from("premio").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");else aviso("Não foi possível abrir o arquivo.");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
+  if(a==="pr-doc-del"){const d=(S.prD||[]).find(x=>x.id===+v);if(!d)return;const {error}=await sb.from("premio_docs").delete().eq("id",d.id);if(error){aviso("Não foi possível remover.");return;}if(ehAdmin())await sb.storage.from("premio").remove([d.path]);S.prD=S.prD.filter(x=>x.id!==d.id);const w=window.scrollY;render();window.scrollTo(0,w);aviso("Documento removido da ficha.");return;}
   if(a==="rcc-abrir"){if(!v)return;try{const {data}=await sb.storage.from("rc-cadastro").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");else aviso("Não foi possível abrir o arquivo.");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
   if(a==="rcc-ver"){S.rcCadSel=v||null;render();window.scrollTo(0,0);return;}
   if(a==="rcc-abrir-cad"){const id=(document.getElementById("rcc_novo")||{}).value;if(!id){aviso("Escolha o RC.");return;}b.disabled=true;const {error}=await sb.rpc("rc_cad_abrir",{p_user:id});if(error){b.disabled=false;aviso("Não foi possível abrir o cadastro.");return;}S.rcCads=null;render();aviso("Cadastro aberto. O RC recebe o aviso e vê a ficha ao entrar.");return;}
