@@ -1933,7 +1933,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126204632";
+const APP_VER="20261126205521";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6473,7 +6473,7 @@ function vPremio(){
   const abas=[["porque","Por que fazer"],["premio","O prêmio"],["regul","Regulamento"],["crit","Critérios"],["dados","Dados e documentos"],["casos","Casos inscritos"+(S.prC?` (${S.prC.length})`:"")]];
   if(T==="casos"&&S.prC===undefined){S.prC=null;carregarPremio();}
   const corpo={porque:prPorque,premio:prPremio,regul:prRegul,crit:prCrit,dados:prDados,casos:prCasos}[T]||prPorque;
-  return `<div><span class="rot">Proposta · safra 26/27 · uso interno</span><h1 class="titulo">Prêmio Cultive Confiança</h1><p class="sub">O prêmio para o melhor caso de resultado com híbridos Barenbrug na safra 26/27. Por enquanto só administradores e o Comercial Barenbrug veem esta área. Quando a proposta for aprovada, as revendas e os RCs passam a cadastrar os casos deles aqui.</p></div>
+  return `<div><span class="rot">Proposta · safra 26/27 · uso interno</span><h1 class="titulo">Prêmio Cultive Confiança</h1><p class="sub">O prêmio para o melhor caso de resultado com híbridos Barenbrug na safra 26/27. Por enquanto só administradores e o Comercial Barenbrug veem esta área, pelo projeto em Gestão de projetos. Quando a proposta for aprovada, as revendas e os RCs passam a cadastrar os casos deles aqui.</p></div>
   <div class="nota-admin" style="margin:0 0 10px"><strong>Proposta em revisão.</strong> Valores, datas e regras ainda não estão aprovados. Antes de divulgar, o regulamento passa pelo jurídico e pelo fiscal.</div>
   <div class="filtros" role="group" aria-label="Partes do prêmio">${abas.map(([k,t])=>`<button class="chip" data-a="pr-aba" data-v="${k}" aria-pressed="${k===T}">${esc(t)}</button>`).join("")}</div>
   ${corpo()}`;}
@@ -6767,7 +6767,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.id==="premio"?vePremio():x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.id==="premio"?false:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
 /* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -11165,6 +11165,7 @@ function vPJDet(p){const d=p.dados||{};if(!(S.pjCom||{})[p.id]){(S.pjCom=S.pjCom
   <section class="pj-topo"><span class="rot">Projeto · ${esc(p.status||"")}</span>${pjEdita()?`<p class="meta" style="margin:0">Quem vê: ${esc(pjQuemVeTxt(p))}</p>`:""}<h1 class="titulo">${esc(p.titulo)}</h1>${d.resumo?`<p>${esc(d.resumo)}</p>`:""}
     <div class="pj-chaves">${M.slice(0,6).map(m=>`<span>${esc(m.n)} <b>${pjF(m.d)}</b></span>`).join("")}</div>
     <p class="meta">${d.dono?"Responsável: "+esc(d.dono)+" · ":""}${feitas} de ${F.length} fases concluídas · atualizado em ${p.atualizado_em?new Date(p.atualizado_em).toLocaleDateString("pt-BR"):"—"}${p.atualizado_por?" por "+esc(p.atualizado_por):""}</p>
+    ${d.abrir_secao==="premio"&&vePremio()?`<div class="acoes"><button class="btn" data-a="pj-abre-premio">Abrir o Prêmio Cultive Confiança</button><span class="meta">por que fazer, regulamento, critérios, ficha e casos</span></div>`:""}
     ${ed?`<div class="acoes"><button class="btn" data-a="pj-edit" data-v="${p.id}">Editar projeto</button><span class="meta">fases, datas, responsáveis, marcos e quadros</span></div>`:""}</section>
   ${pjEscopoHTML(p)}
   ${lcRespostasHTML(p)}
@@ -15083,7 +15084,7 @@ function renderApp(){
   }
   if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
-  if(S.secao==="premio"){if(!vePremio()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Prêmio Cultive Confiança")+`<main class="largo">${vPremio()}</main>`;return;}
+  if(S.secao==="premio"){if(!vePremio()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Prêmio Cultive Confiança")+`<main class="largo">${S.prVolta?`<button class="link" data-a="pr-sair">‹ Voltar ao projeto</button>`:""}${vPremio()}</main>`;return;}
   if(S.secao==="proposito"){if(!vePropos()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Por que o Conecta existe")+`<main>${vProposito()}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
   if(S.secao==="mensagens"){app.innerHTML=cabecalho()+subnavSimples("Mensagens")+`<main>${vMensagens()}</main>`;return;}
@@ -15330,6 +15331,8 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="rcc-apagar"){if(!rcCadGestor())return;if(S.rccApagar!==v){S.rccApagar=v;render();setTimeout(()=>{if(S.rccApagar===v){S.rccApagar=null;render();}},8000);return;}S.rccApagar=null;
     const {data:velho,error}=await sb.rpc("rc_cad_contrato",{p_user:v,p_acao:"apagar",p_path:null,p_nome:null,p_data:null});if(error){aviso("Não foi possível apagar: "+(error.message||"erro"));return;}
     const rm=await sb.storage.from("rc-cadastro").remove([velho]);S.rcCads=null;render();aviso(!rm.error&&(rm.data||[]).length?"Arquivo do contrato apagado. Anexe o contrato certo.":"O contrato saiu do cadastro, mas o arquivo não foi apagado. Avise o administrador.");return;}
+  if(a==="pj-abre-premio"){if(!vePremio())return;S.prVolta={secao:S.secao,pag:S.pag};S.secao="premio";S.prAba="porque";S.prEd=undefined;render();window.scrollTo(0,0);return;}
+  if(a==="pr-sair"){const v0=S.prVolta||{};S.prVolta=null;S.secao=v0.secao||null;S.pag=v0.pag||"hub";render();window.scrollTo(0,0);return;}
   if(a==="pr-aba"){S.prAba=v;S.prEd=undefined;render();return;}
   if(a==="pr-novo"){S.prAba="casos";S.prEd=null;S.prF={};render();window.scrollTo(0,0);return;}
   if(a==="pr-ed"){S.prEd=+v;const c=(S.prC||[]).find(x=>x.id===+v);S.prF={...((c&&c.dados)||{})};render();window.scrollTo(0,0);return;}
