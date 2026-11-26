@@ -9711,6 +9711,8 @@ function gtRevendas(){
 }
 const USO_NOME=k=>{const x=SECOES.find(c=>c.id===k);return x?x.nome:({inicio:"Página inicial",privacidade:"Aviso de privacidade",seguranca:"Segurança",perfil:"Meu perfil"})[k]||k;};
 const usoH=m=>{m=Number(m)||0;const h=Math.floor(m/60),r=m%60;return h?`${h} h${r?" "+String(r).padStart(2,"0")+" min":""}`:`${r} min`;};
+/* administração do portal (Felipe e Thaís Mendonça): tempo em conta separada, fora do ranking */
+const USO_ADM=["2d142fa5-24ca-4766-af63-f7fb36744c48","cf88f94f-4731-460b-8c94-1183ac1ad896"];
 function gtTempo(){
   const D=S.usoDias||30;S.uso=S.uso||{};const U=S.uso[D];
   if(U===undefined){S.uso[D]=null;(async()=>{try{const {data,error}=await sb.rpc("uso_resumo",{p_dias:D});S.uso[D]=error||!data?{erro:1}:data;}catch(e){S.uso[D]={erro:1};}render();})();}
@@ -9718,19 +9720,21 @@ function gtTempo(){
   const cab=`<section class="bloco"><h2 class="sec">Tempo no portal${inf("Conta só o tempo com o portal aberto na tela e com alguma interação (clique, tecla, rolagem) nos últimos 2 minutos. Aba esquecida aberta ou em segundo plano não soma. A medição começou em 18/11/2026.")}</h2>`;
   if(!U)return cab+chips+`<div class="carregando">Calculando o tempo de uso…</div></section>`;
   if(U.erro)return cab+chips+`<div class="vazio">Não foi possível ler o tempo de uso agora.</div></section>`;
-  const P=(U.pessoas||[]).filter(x=>(S.equipe||[]).some(e=>e.id===x.id)||ehAdmin());const tot=P.reduce((t,x)=>t+x.min,0);const top=P[0];
+  const P0=(U.pessoas||[]).filter(x=>(S.equipe||[]).some(e=>e.id===x.id)||ehAdmin());const A=P0.filter(x=>USO_ADM.includes(x.id));const P=P0.filter(x=>!USO_ADM.includes(x.id));const tot=P.reduce((t,x)=>t+x.min,0);const top=P[0];
+  const SM={};P.forEach(x=>(x.secoes||[]).forEach(o=>{const k=SM[o.s]=SM[o.s]||{s:o.s,min:0,pessoas:0};k.min+=o.min||0;k.pessoas++;}));const SEC=Object.values(SM).sort((a,b)=>b.min-a.min);
+  const admH=A.length?`<h3 style="margin:16px 0 6px">Administração do portal · conta separada${inf("Felipe e Thaís usam o portal todos os dias para administrar. O tempo deles fica aqui, fora do ranking e dos totais acima, para não distorcer a leitura do uso das outras pessoas.")}</h3><div class="tab"><table class="sim-t"><thead><tr><th>Pessoa</th><th class="val">Tempo</th><th class="val">Dias com uso</th><th class="val">Média por dia</th><th>Onde passa o tempo</th><th>Último dia</th></tr></thead><tbody>${A.map(x=>`<tr><td>${esc(x.nome)}</td><td class="val"><strong>${usoH(x.min)}</strong></td><td class="val">${x.dias}</td><td class="val">${usoH(Math.round(x.min/Math.max(1,x.dias)))}</td><td style="white-space:normal;min-width:180px">${(x.secoes||[]).map(o=>`${esc(USO_NOME(o.s))} <span class="meta">${usoH(o.min)}</span>`).join(" · ")}</td><td>${esc(intData(x.ult))}</td></tr>`).join("")}</tbody></table></div>`:"";
   const cn=id=>(((S.canaisLista||[]).find(k=>k.id===id)||{}).nome)||"";
   return cab+`<p class="sub" style="margin:0 0 8px">Quem mais usa o portal no período e em que áreas passa o tempo.</p>${chips}
    ${P.length?`<div class="metrics">
     <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Mais tempo de plataforma</span><strong>${esc(top.nome)}</strong><span class="meta">${usoH(top.min)} em ${top.dias} ${top.dias===1?"dia":"dias"} · ${esc(top.perfil||"")}</span></div>
     <div class="metric"><span>Tempo total</span><strong>${usoH(tot)}</strong><span class="meta">${P.length} ${P.length===1?"pessoa":"pessoas"} com uso no período</span></div>
     <div class="metric"><span>Média por pessoa</span><strong>${usoH(Math.round(tot/P.length))}</strong><span class="meta">por dia de acesso: ${usoH(Math.round(tot/Math.max(1,P.reduce((t,x)=>t+x.dias,0))))}</span></div>
-    <div class="metric"><span>Área mais usada</span><strong>${esc(USO_NOME(((U.secoes||[])[0]||{}).s||""))}</strong><span class="meta">${usoH(((U.secoes||[])[0]||{}).min)}</span></div></div>
+    <div class="metric"><span>Área mais usada</span><strong>${esc(USO_NOME((SEC[0]||{}).s||""))}</strong><span class="meta">${usoH((SEC[0]||{}).min)}</span></div></div><p class="meta" style="margin:6px 0 0">Sem contar Felipe e Thaís, da administração do portal. O tempo deles está no fim deste quadro.</p>
    <div class="tab" style="margin-top:10px"><table class="sim-t"><thead><tr><th>#</th><th>Pessoa</th><th>Perfil</th><th class="val">Tempo</th><th class="val">Dias com uso</th><th class="val">Média por dia</th><th>Onde passa o tempo</th><th>Último dia</th></tr></thead><tbody>
     ${P.slice(0,S.usoTodos?500:20).map((x,i)=>`<tr${i===0?' style="background:var(--azul-claro)"':""}><td><strong>${i+1}º</strong></td><td><button class="link" data-a="verusuario" data-v="${x.id}">${esc(x.nome)}</button>${x.canal_id&&cn(x.canal_id)?`<br><span class="meta">${esc(cn(x.canal_id))}</span>`:""}</td><td>${esc(x.perfil||"")}</td><td class="val"><strong>${usoH(x.min)}</strong></td><td class="val">${x.dias}</td><td class="val">${usoH(Math.round(x.min/Math.max(1,x.dias)))}</td><td style="white-space:normal;min-width:180px">${(x.secoes||[]).map(o=>`${esc(USO_NOME(o.s))} <span class="meta">${usoH(o.min)}</span>`).join(" · ")}</td><td>${esc(intData(x.ult))}</td></tr>`).join("")}</tbody></table></div>
    ${P.length>20&&!S.usoTodos?`<div class="acoes"><button class="btn sec" data-a="uso-todos">Ver todas as ${P.length} pessoas</button></div>`:""}
-   ${(U.secoes||[]).length?`<h3 style="margin:14px 0 6px">Tempo por área</h3><div class="tab"><table class="sim-t"><thead><tr><th>Área</th><th class="val">Tempo</th><th class="val">Pessoas</th><th class="val">% do tempo</th></tr></thead><tbody>${U.secoes.map(o=>`<tr><td>${esc(USO_NOME(o.s))}</td><td class="val">${usoH(o.min)}</td><td class="val">${o.pessoas}</td><td class="val">${tot?Math.round(o.min/tot*100):0}%</td></tr>`).join("")}</tbody></table></div>`:""}`
-   :`<div class="vazio">Ainda sem tempo registrado no período. A medição começou agora: os números aparecem conforme as pessoas usam o portal.</div>`}</section>`;
+   ${SEC.length?`<h3 style="margin:14px 0 6px">Tempo por área</h3><div class="tab"><table class="sim-t"><thead><tr><th>Área</th><th class="val">Tempo</th><th class="val">Pessoas</th><th class="val">% do tempo</th></tr></thead><tbody>${SEC.map(o=>`<tr><td>${esc(USO_NOME(o.s))}</td><td class="val">${usoH(o.min)}</td><td class="val">${o.pessoas}</td><td class="val">${tot?Math.round(o.min/tot*100):0}%</td></tr>`).join("")}</tbody></table></div>`:""}${admH}`
+   :`<div class="vazio">Ainda sem tempo de outras pessoas no período. Os números aparecem conforme o time usa o portal.</div>${admH}`}</section>`;
 }
 function gtRanking(){
   if(!S.equipe)return `<div class="carregando">Carregando equipe…</div>`;
