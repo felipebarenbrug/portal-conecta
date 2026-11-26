@@ -8970,6 +8970,7 @@ function vAcaoEditor(a){
   return `<form class="form-card" id="f-acao" data-id="${a.id}" style="box-shadow:inset 0 0 0 2px var(--azul)">
     <h3 class="sec">${esc(a.tipo||"Ação")}</h3>
     <div class="meta">${esc(a.categoria||"")}${a.cidade?" · "+esc(a.cidade):""}${a.data_acao?" · "+esc(a.data_acao):""}</div>
+    <div class="dupla"><div><label for="a_cidade">${(a.verba||"IGDB")==="Bônus de Performance"?"Quem participa":"Cidade"}</label><input id="a_cidade" maxlength="120" value="${esc(a.cidade||"")}"></div><div><label for="a_data">Quando</label><input id="a_data" maxlength="80" value="${esc(a.data_acao||"")}" placeholder="Ex: 15/03/2027, março de 2027 ou durante a safra"></div></div>
     <div><label>Descrição</label><textarea id="a_descr" rows="3">${esc(a.descricao||"")}</textarea></div>
     <div class="dupla"><div><label>Status (aprovação Barenbrug)</label><select id="a_status">${["Em Análise","Aprovado","Reprovado"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
       ${(a.verba||"IGDB")==="Bônus de Performance"?`<div><label>Custo da campanha (R$)</label><input id="a_valor" type="number" step="0.01" value="${Number(a.valor_igdb)||0}"></div>`:"<div></div>"}</div>
@@ -15272,7 +15273,7 @@ document.addEventListener("submit",async ev=>{
     const an=sel&&Array.isArray(sel.anexos)?sel.anexos.slice():[];
     const nome=f.querySelector("#a_anexo_nome").value.trim(),url=f.querySelector("#a_anexo_url").value.trim();
     if(url)an.push({nome:nome||url,url});
-    const dados={descricao:f.querySelector("#a_descr").value.trim(),status:f.querySelector("#a_status").value,comentario:f.querySelector("#a_coment").value.trim(),anexos:an};
+    const dados={descricao:f.querySelector("#a_descr").value.trim(),cidade:f.querySelector("#a_cidade").value.trim(),data_acao:f.querySelector("#a_data").value.trim(),status:f.querySelector("#a_status").value,comentario:f.querySelector("#a_coment").value.trim(),anexos:an};
     if(f.querySelector("#a_pag")){const [o,E]=pgdPagColeta(f,"a",sel,true);if(E.length){aviso("Preencha: "+E.join(", ")+".");return;}Object.assign(dados,o);}else dados.valor_igdb=+f.querySelector("#a_valor").value||0;
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Salvando…";
     const {error}=await sb.from("acoes_pgd").update(dados).eq("id",id);
