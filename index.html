@@ -1345,6 +1345,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .kb-vazio{font-size:12px;color:var(--apagado);padding:6px 2px}
 .kb-dep{margin-top:12px}
 .rot-box{border:1px solid var(--linha);border-radius:10px;padding:12px;background:var(--branco)}
+.resp-l{display:grid;gap:6px}.resp-i{border-left:4px solid var(--azul);background:var(--papel);border-radius:6px;padding:6px 10px;min-width:0}.resp-i.al{border-left-color:#c0392b}.resp-i .meta{display:block;font-size:12px}.resp-i strong{display:block;font-size:14px;font-weight:600}.resp-al{display:block;color:#a33426;font-size:13px;margin-top:2px}
 .rot-res{background:var(--azul-claro);border-radius:8px;padding:8px 10px;font-size:14px}
 .rot-h{margin:14px 0 6px;font-size:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
 .rot-bl{border:1px solid var(--linha);border-radius:8px;padding:8px 10px;margin:0 0 8px;background:var(--branco)}
@@ -1927,7 +1928,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126194347";
+const APP_VER="20261126194726";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -7166,8 +7167,10 @@ function jrFormCand(c){c=c||{};const F=S.candF||(S.candF={respostas:{...(c.respo
     ${c.id&&(c.hist||[]).length?`<details class="meta" style="margin:0"><summary>Histórico de etapas (${c.hist.length})</summary><ul class="cond" style="margin:4px 0 0">${c.hist.map(h=>`<li>${esc(fmtDataHora(h.em))}: ${esc(JR_ETAPA[h.e]||h.e)}${h.de?" (vinha de "+esc((JR_ETAPA[h.de]||h.de).toLowerCase())+")":""}</li>`).join("")}</ul></details>`:""}
     ${c.origem==="landing"?`<div class="nota-admin" style="margin:0"><strong>Veio da landing page em ${esc(fmtDataHora(c.criado_em))}.</strong> ${[c.empresa?"Empresa: "+esc(c.empresa):"",c.email?"E-mail: "+esc(c.email):"",c.telefone?"Celular: "+esc(c.telefone):""].filter(Boolean).join(" · ")}. As respostas abaixo foram as que ele marcou; a nota fecha quando você avaliar o comportamental na entrevista.</div>`:""}
     <div class="jr-score"><span>Nota até agora</span>${jrFaixa(s)}${(()=>{const n=PIR_Q.filter(q=>!pirTem(F.respostas[q.k])).length+PIR_AV.filter(a=>F.avaliacao[a.k]==null).length;return n?`<span class="meta">parcial: faltam ${n} ${n===1?"resposta":"respostas"}</span>`:"";})()}${s.alertas.length?`<span class="ps-nao" style="margin:6px 0 0;display:block"><strong>Alerta:</strong> ${esc(s.alertas.join("; "))}</span>`:""}</div>
+    ${(()=>{const L=PIR_Q.filter(q=>pirTem(F.respostas[q.k]));return `<section class="rot-box"><h3 class="sec" style="margin:0 0 4px">Respostas do candidato</h3><p class="meta" style="margin:0 0 8px">${L.length?`${L.length} de ${PIR_Q.length} perguntas respondidas${c.origem==="landing"?" na landing page":""}. Para corrigir alguma, use "Editar respostas", mais abaixo.`:"Nenhuma resposta ainda. Preencha em Editar respostas, mais abaixo, durante a entrevista."}</p>
+     ${L.length?`<div class="resp-l">${L.map(q=>{const O=pirOps(q,F.respostas[q.k]);const al=O.filter(o=>o[2]);return `<div class="resp-i${al.length?" al":""}"><span class="meta">${esc(q.c)}${q.p&&!q.m&&O[0][1]!=null?" · nota "+O[0][1]+" de 5, peso "+q.p:" · contexto"}</span><strong>${esc(O.map(o=>o[0]).join("; "))}</strong>${al.map(o=>`<span class="resp-al">${esc(o[2])}</span>`).join("")}</div>`;}).join("")}</div>`:""}</section>`;})()}
     ${rotHTML(c,F,s)}
-    <details class="rot-bl" data-rot-d="resp"${(S.rotOpen&&S.rotOpen.resp!=null?S.rotOpen.resp:!c.id)?" open":""}><summary><strong>Respostas do formulário (scorecard)</strong> <span class="meta">${PIR_Q.filter(q=>pirTem(F.respostas[q.k])).length} de ${PIR_Q.length} respondidas</span></summary>
+    <details class="rot-bl" data-rot-d="resp"${(S.rotOpen&&S.rotOpen.resp!=null?S.rotOpen.resp:!c.id)?" open":""}><summary><strong>Editar respostas do formulário</strong> <span class="meta">${PIR_Q.filter(q=>pirTem(F.respostas[q.k])).length} de ${PIR_Q.length} respondidas</span></summary>
     ${PIR_Q.map((q,n)=>`<fieldset class="pir-q"><legend><span class="meta">${esc(q.b)}${q.p?" · peso "+q.p:" · contexto"}${q.m?" · várias opções":""}</span><br>${esc(q.l)}</legend><div class="pir-ops">${q.o.map((o,i)=>{const on=q.m?(F.respostas[q.k]||[]).includes(i):F.respostas[q.k]===i;return `<label class="pir-op${on?" sel":""}"><input type="${q.m?"checkbox":"radio"}" name="cd_${q.k}" value="${i}" ${on?"checked":""} data-cand="r:${q.k}"${q.m?' data-multi="1"':""}> ${esc(o[0])}</label>`;}).join("")}</div></fieldset>`).join("")}</details>
     ${F.formacao&&F.respostas.formacao==null?`<p class="meta">Formação informada antes: ${esc(F.formacao)}</p>`:""}
     <h4 class="rot-h">Comportamental: sua avaliação na entrevista</h4>${PIR_AV.map(a=>`<fieldset class="pir-q"><legend><span class="meta">Comportamental · peso ${a.p}</span><br>${esc(a.c)}</legend>${rotAvHTML(a,F)}<div class="pir-ops jr-nota">${[1,2,3,4,5].map(n=>`<label class="pir-op${+F.avaliacao[a.k]===n?" sel":""}"><input type="radio" name="cd_${a.k}" value="${n}" ${+F.avaliacao[a.k]===n?"checked":""} data-cand="a:${a.k}"> ${n}</label>`).join("")}</div></fieldset>`).join("")}
