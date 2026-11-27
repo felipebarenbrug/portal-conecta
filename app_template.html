@@ -6327,7 +6327,7 @@ function crmMulato(r,alvo){const Q=r&&r.qtd;if(!Q||!S.crmMul)return null;if(S.cr
   return {v,a,p};}
 function vMeuCRM(){
   const m=S.crmVista==="mapa";
-  return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button>${veRecompra()?`<button class="chip" data-a="crm-vista" data-v="recompra" aria-pressed="${S.crmVista==="recompra"}">Recompra</button>`:""}</div>`+(S.crmVista==="recompra"&&veRecompra()?vRecompra():m?vMapaGeo("crm"):vMeuCRMPainel());
+  return `<div class="filtros" style="margin-bottom:4px"><button class="chip" data-a="crm-vista" data-v="painel" aria-pressed="${!m}">Painel</button><button class="chip" data-a="crm-vista" data-v="mapa" aria-pressed="${m}">Mapa</button><button class="chip" data-a="crm-vista" data-v="fechfat" aria-pressed="${S.crmVista==="fechfat"}">Fechamento × faturamento</button>${veRecompra()?`<button class="chip" data-a="crm-vista" data-v="recompra" aria-pressed="${S.crmVista==="recompra"}">Recompra</button>`:""}</div>`+(S.crmVista==="fechfat"?vFechFat():S.crmVista==="recompra"&&veRecompra()?vRecompra():m?vMapaGeo("crm"):vMeuCRMPainel());
 }
 async function carregarCrmOrig(alvo){(S.crmOrig=S.crmOrig||{})[alvo]=null;let q=sb.from("crm_mapa").select("rep,st,kg_h,kg_c,rs,fat,cults").eq("st","V").gte("fat","2026-07-01").lte("fat","2027-06-30");
   if(/^IS: /.test(alvo))q=q.eq("dono","Inside Sales").eq("resp",alvo.slice(4));else q=q.eq("dono",alvo);
@@ -6345,6 +6345,70 @@ function crmOrigemHTML(alvo){const O=(S.crmOrig||{})[alvo];if(O===undefined){car
   return `<section class="bloco"><h2 class="sec">Vendas da safra por origem</h2><p class="sub" style="margin:0 0 8px">Pedidos ganhos com faturamento na safra 26/27 (jul/2026 a jun/2027): quanto veio de venda direta, via RC e via assessoras de vendas digital, e o peso de cada RC. Toque em cada um para ver kg, preço médio e cultivares.</p>
     <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"><div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo)"><span>Total vendido</span><strong>${rsF(T.rs)}</strong><span class="meta">${kgF(T.kg)} · ${T.n} pedidos · ${pk(T.rs,T.kg)}</span></div>${card("Venda direta",por("direta"),"direta")}${card("Via RCs",por("rc"),"rc")}${card("Via assessoras",por("is"),"is")}</div>
     ${dir?lin(dir):""}${linhas.map(lin).join("")}</section>`;}
+/* Fechamento x faturamento: cruza a previsão de fechamento (campo nativo do CRM) com a data de faturamento (campo personalizado), para o S&OP */
+async function carregarFF(){S.ffD=null;try{let L=[],de=0;for(;;){const {data,error}=await sb.from("crm_origem").select("did,dono,resp,nome,etapa,rt,rs,kg_h,kg_c,fat,prev,rep,st,atualizado_em").in("st",["A","Z"]).range(de,de+999);if(error)throw error;L=L.concat(data||[]);if(!data||data.length<1000)break;de+=1000;}S.ffD=L;}catch(e){S.ffD=[];S.ffErro=true;}render();}
+const FF_PESO={1:.05,2:.15,3:.35,4:.7,5:.9};
+function ffQuem(x){return x.dono==="Inside Sales"?"IS: "+(x.resp||""):x.dono;}
+function ffRot(q){return /^IS: /.test(q)?"Inside Sales · "+(q.slice(4)==="Felipe"?"Tobias":q.slice(4)):q;}
+function ffEstado(){if(!S.ff){const meu=S.profile&&S.profile.crm_dono;const ven=S.profile&&S.profile.is_vendedora;S.ff={base:"prev",jan:"mes",quem:ven?"IS: "+ven:meu||"__todos",paus:false,mes:""};}return S.ff;}
+function ffFiltrar(D,f){
+  const hj=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);const add=n=>new Date(new Date(hj+"T12:00:00Z").getTime()+n*864e5).toISOString().slice(0,10);
+  const m0=hj.slice(0,7);const m1=(()=>{const [a,b]=m0.split("-").map(Number);return b===12?(a+1)+"-01":a+"-"+String(b+1).padStart(2,"0");})();
+  return D.filter(x=>{if(!f.paus&&x.st==="Z")return false;if(f.quem!=="__todos"){if(f.quem==="__is"){if(x.dono!=="Inside Sales")return false;}else if(ffQuem(x)!==f.quem)return false;}
+    const d=f.base==="prev"?x.prev:x.fat;
+    if(f.jan==="sem")return !d;if(f.jan==="todas")return true;if(!d)return false;
+    if(f.jan==="mes")return d.slice(0,7)===m0;if(f.jan==="prox")return d.slice(0,7)===m1;if(f.jan==="venc")return d<hj;if(f.jan==="m")return d.slice(0,7)===f.mes;
+    const n=+f.jan;return d>=hj&&d<=add(n);});}
+function ffGap(x){if(!x.prev||!x.fat)return null;return Math.round((new Date(x.fat+"T12:00:00Z")-new Date(x.prev+"T12:00:00Z"))/864e5);}
+function vFechFat(){
+  if(S.ffD===undefined){carregarFF();return `<section class="bloco"><div class="carregando">Carregando as negociações em aberto…</div></section>`;}
+  if(S.ffD===null)return `<section class="bloco"><div class="carregando">Carregando as negociações em aberto…</div></section>`;
+  const f=ffEstado();const D=S.ffD;const hj=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+  const N=x=>Number(x)||0;const ton=k=>(N(k)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" t";const rsF=n=>"R$ "+Math.round(N(n)).toLocaleString("pt-BR");
+  const br=d=>d?d.split("-").reverse().join("/"):"";const nomeMes=m=>{const [a,b]=String(m).split("-");return (["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(+b||1)-1]||"")+"/"+String(a).slice(2);};
+  const quem=[...new Set(D.map(ffQuem))].sort((a,b)=>(/^IS: /.test(a)?1:0)-(/^IS: /.test(b)?1:0)||a.localeCompare(b));
+  if(f.quem!=="__todos"&&f.quem!=="__is"&&!quem.includes(f.quem))f.quem=quem.length===1?quem[0]:"__todos";
+  const temIS=quem.some(q=>/^IS: /.test(q));
+  const chipQ=quem.length>1?`<div class="filtros"><button class="chip" data-a="ff" data-k="quem" data-v="__todos" aria-pressed="${f.quem==="__todos"}">Todos</button>${temIS&&quem.filter(q=>/^IS: /.test(q)).length>1?`<button class="chip" data-a="ff" data-k="quem" data-v="__is" aria-pressed="${f.quem==="__is"}">Inside Sales · time</button>`:""}${quem.map(q=>`<button class="chip" data-a="ff" data-k="quem" data-v="${esc(q)}" aria-pressed="${f.quem===q}">${esc(ffRot(q))}</button>`).join("")}</div>`:"";
+  const meses=[...new Set(D.map(x=>(f.base==="prev"?x.prev:x.fat)||"").filter(Boolean).map(d=>d.slice(0,7)))].sort();
+  const J=[["mes","Este mês"],["prox","Próximo mês"],["30","Próximos 30 dias"],["45","Próximos 45 dias"],["60","Próximos 60 dias"],["90","Próximos 90 dias"],["venc","Data já passou"],["sem","Sem a data"],["todas","Todas"]];
+  const L=ffFiltrar(D,f).sort((a,b)=>String((f.base==="prev"?a.prev:a.fat)||"9").localeCompare(String((f.base==="prev"?b.prev:b.fat)||"9"))||N(b.rs)-N(a.rs));
+  const T=L.reduce((t,x)=>({n:t.n+1,rs:t.rs+N(x.rs),kh:t.kh+N(x.kg_h),kc:t.kc+N(x.kg_c),p:t.p+N(x.rs)*(FF_PESO[x.rt]||.05),pk:t.pk+(N(x.kg_h)+N(x.kg_c))*(FF_PESO[x.rt]||.05)}),{n:0,rs:0,kh:0,kc:0,p:0,pk:0});
+  const cls=x=>{const g=ffGap(x);if(!x.prev)return "semprev";if(!x.fat)return "semfat";if(g<0)return "antes";if(g<=30)return "a30";if(g<=60)return "a60";return "m60";};
+  const CL=[["a30","Fatura em até 30 dias do fechamento"],["a60","Fatura de 31 a 60 dias depois"],["m60","Fatura mais de 60 dias depois"],["antes","Faturamento antes do fechamento"],["semfat","Sem data de faturamento"],["semprev","Sem previsão de fechamento"]];
+  const G={};L.forEach(x=>{const k=cls(x);const g=G[k]||(G[k]={n:0,kg:0,rs:0});g.n++;g.kg+=N(x.kg_h)+N(x.kg_c);g.rs+=N(x.rs);});
+  const ruim=k=>k==="antes"||k==="semfat"||k==="semprev";
+  const qual=`<div class="tab"><table class="sim-t"><thead><tr><th>Como o faturamento está em relação ao fechamento</th><th class="val">Negociações</th><th class="val">Volume</th><th class="val">Valor</th></tr></thead><tbody>${CL.filter(([k])=>G[k]).map(([k,t])=>`<tr><td style="white-space:normal">${ruim(k)?`<b style="color:#a33426">${t}</b>`:t}</td><td class="val">${G[k].n}</td><td class="val">${ton(G[k].kg)}</td><td class="val">${rsF(G[k].rs)}</td></tr>`).join("")}</tbody></table></div>`;
+  /* matriz mês de fechamento x mês de faturamento */
+  const mk=d=>d?d.slice(0,7):"—";const RW=[...new Set(L.map(x=>mk(x.prev)))].sort((a,b)=>a==="—"?1:b==="—"?-1:a.localeCompare(b));const CO=[...new Set(L.map(x=>mk(x.fat)))].sort((a,b)=>a==="—"?1:b==="—"?-1:a.localeCompare(b));
+  const M={};L.forEach(x=>{const k=mk(x.prev)+"|"+mk(x.fat);M[k]=(M[k]||0)+N(x.kg_h)+N(x.kg_c);});
+  const rotM=m=>m==="—"?"sem data":nomeMes(m);
+  const matriz=L.length&&RW.length*CO.length>1?`<h3 class="pgd-h" style="margin:14px 0 6px">Mês de fechamento × mês de faturamento, em toneladas</h3><div class="tab"><table class="sim-t"><thead><tr><th>Fecha em ↓ / fatura em →</th>${CO.map(c=>`<th class="val">Fatura ${rotM(c)}</th>`).join("")}<th class="val">Total</th></tr></thead><tbody>${RW.map(r=>`<tr><td><strong>Fecha em ${rotM(r)}</strong></td>${CO.map(c=>{const v=M[r+"|"+c]||0;const fora=r!=="—"&&c!=="—"&&c<r;return `<td class="val"${fora&&v?' style="color:#a33426;font-weight:700"':r===c&&v?' style="font-weight:700"':""}>${v?(v/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}):"·"}</td>`;}).join("")}<td class="val"><strong>${(CO.reduce((t,c)=>t+(M[r+"|"+c]||0),0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})}</strong></td></tr>`).join("")}</tbody></table></div><p class="meta" style="margin:4px 0 0">Em vermelho: faturamento num mês anterior ao do fechamento, data a corrigir no CRM.</p>`:"";
+  const estr=n=>`<span class="estrelas" aria-label="${n||0} de 5 estrelas">${"★".repeat(n||0)}${"☆".repeat(5-(n||0))}</span>`;
+  const lin=x=>{const g=ffGap(x);const k=cls(x);const kg=N(x.kg_h)+N(x.kg_c);
+    const fe=x.prev?(x.prev<hj?`<b style="color:#a33426">fechamento previsto ${br(x.prev)} (já passou)</b>`:`fecha em ${br(x.prev)}`):`<b style="color:#a33426">sem previsão de fechamento</b>`;
+    const fa=x.fat?(k==="antes"?`<b style="color:#a33426">fatura em ${br(x.fat)}, ${-g} dias antes do fechamento</b>`:`fatura em ${br(x.fat)}${g!=null?` (${g} dias depois)`:""}`):`<b style="color:#a33426">sem data de faturamento</b>`;
+    return `<div class="neg"><div class="l1"><span>${esc(x.nome)}</span><span>${kg?ton(kg)+" · ":""}${rsF(x.rs)}</span></div><span class="meta">${fe} · ${fa}</span><span class="meta">${esc(x.etapa||"")}${x.st==="Z"?" · pausada":""} · ${estr(x.rt)} · ${x.rep?esc(x.rep):"venda direta"}${f.quem==="__todos"||f.quem==="__is"?" · "+esc(ffRot(ffQuem(x))):""}</span>${crmLnk(x.did)}</div>`;};
+  const atu=D.reduce((m,x)=>x.atualizado_em>m?x.atualizado_em:m,"");
+  const LIM=S.ffMais?L.length:60;
+  return `<div><h1 class="titulo">Fechamento × faturamento</h1><p class="sub">As negociações em aberto filtradas pela previsão de fechamento do CRM, com a data de faturamento ao lado. Serve para a reunião de S&amp;OP: escolha a janela, veja quanto fecha e quando fatura, e corrija no CRM as datas que não batem.${atu?" Atualizado em "+fmtDataHora(atu)+".":""}</p></div>
+  ${S.ffErro?`<div class="aviso-est">Não foi possível ler as negociações agora. Tente de novo em alguns minutos.</div>`:""}
+  ${chipQ}
+  <div class="filtros"><button class="chip" data-a="ff" data-k="base" data-v="prev" aria-pressed="${f.base==="prev"}">Filtrar pela previsão de fechamento</button><button class="chip" data-a="ff" data-k="base" data-v="fat" aria-pressed="${f.base==="fat"}">Filtrar pela data de faturamento</button></div>
+  <div class="filtros">${J.map(([k,t])=>`<button class="chip" data-a="ff" data-k="jan" data-v="${k}" aria-pressed="${f.jan===k}">${t}</button>`).join("")}${meses.length?`<select data-ffmes aria-label="Escolher um mês"><option value="">Escolher mês…</option>${meses.map(m=>`<option value="${m}" ${f.jan==="m"&&f.mes===m?"selected":""}>${nomeMes(m)}</option>`).join("")}</select>`:""}<label class="check" style="margin-left:6px"><input type="checkbox" data-ffpaus ${f.paus?"checked":""}> Incluir pausadas</label></div>
+  <div class="metrics" style="margin-top:8px">
+    <div class="metric" style="box-shadow:inset 0 0 0 2px var(--amarelo,#ffdb00)"><span>Negociações na janela</span><strong>${T.n}</strong><span class="meta">${rsF(T.rs)}</span></div>
+    <div class="metric"><span>Volume</span><strong>${ton(T.kh+T.kc)}</strong><span class="meta">híbridos ${ton(T.kh)} · convencionais ${ton(T.kc)}</span></div>
+    <div class="metric"><span>Ponderado pelas estrelas${inf("Cada negociação vezes a chance de fechar pelas estrelas: 1 estrela 5%, 2 estrelas 15%, 3 estrelas 35%, 4 estrelas 70%, 5 estrelas 90%.")}</span><strong>${ton(T.pk)}</strong><span class="meta">${rsF(T.p)}</span></div>
+  </div>
+  ${L.length?`<section class="bloco" style="margin-top:12px"><h2 class="sec">Qualidade das datas</h2>${qual}${matriz}</section>
+  <section class="bloco"><div class="l1" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 class="sec" style="margin:0">Negociações</h2><button class="btn sec" data-a="ff-xls">Baixar em Excel</button></div><div class="lista">${L.slice(0,LIM).map(lin).join("")}</div>${L.length>LIM?`<button class="btn sec" data-a="ff-mais" style="margin-top:8px">Ver todas (${L.length})</button>`:""}</section>`:`<section class="bloco"><div class="vazio">Nenhuma negociação em aberto nesta janela.</div></section>`}
+  <p class="meta" style="margin:10px 0 0">Previsão de fechamento é o campo nativo da negociação no CRM; data de faturamento é o campo personalizado. Entram as negociações em aberto do funil de vendas criadas a partir de junho de 2026, sem bonificação. A leitura do CRM roda duas vezes por dia.</p>`;
+}
+async function ffExcel(){const f=ffEstado();const L=ffFiltrar(S.ffD||[],f);try{await loLib();}catch(e){S.ffErro=true;render();return;}
+  const br=d=>d?d.split("-").reverse().join("/"):"";
+  const linhas=L.map(x=>({"Negociação":x.nome,"Responsável":ffRot(ffQuem(x)),"Representante":x.rep||"venda direta","Etapa":x.etapa||"","Estrelas":x.rt,"Previsão de fechamento":br(x.prev),"Data de faturamento":br(x.fat),"Dias entre fechamento e faturamento":ffGap(x),"Kg híbridos":Number(x.kg_h)||0,"Kg convencionais":Number(x.kg_c)||0,"Valor (R$)":Math.round(Number(x.rs)||0),"Pausada":x.st==="Z"?"sim":"","Link no CRM":"https://crm.rdstation.com/app/deals/"+x.did}));
+  const ws=XLSX.utils.json_to_sheet(linhas);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Fechamento x faturamento");XLSX.writeFile(wb,"fechamento_x_faturamento_"+new Date().toISOString().slice(0,10)+".xlsx");}
 function vMeuCRMPainel(X){
   const rows=X?[X.r]:(S.crm&&(ehAdmin()?S.crm.filter(x=>!String(x.dono).startsWith("IS: ")):S.crm));if(rows==null)return `<div class="carregando">Carregando seu CRM…</div>`;
   const adm=X?false:ehAdmin();const fmtN=n=>(Number(n)||0).toLocaleString("pt-BR");
@@ -7654,7 +7718,7 @@ function vRCCadastroDet(){
   <section class="bloco"><h2 class="sec">Contato no portal</h2><dl class="fv-dl"><div><dt>Nome</dt><dd>${esc(p.nome||"—")}</dd></div><div><dt>E-mail de acesso</dt><dd>${esc(p.email||"—")}</dd></div><div><dt>Cidade</dt><dd>${esc([p.cidade,p.uf].filter(Boolean).join("/")||"—")}</dd></div><div><dt>Responsável comercial</dt><dd>${esc(p.comercial_resp||"—")}</dd></div></dl></section>
   <section class="bloco"><h2 class="sec">Ficha cadastral</h2>${rcCadFichaVer(c,g?(S.rcCadBanco||{})[c.user_id]:undefined,g)}</section>`;}
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rcc)return;(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;});
-document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.rccmat){(S.rcCadForm=S.rcCadForm||{}).m_igual=t.checked;render();return;}if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.ffmes!==undefined){const f=ffEstado();if(t.value){f.jan="m";f.mes=t.value;}S.ffMais=false;render();return;}if(t.dataset.ffpaus!==undefined){ffEstado().paus=t.checked;render();return;}if(t.dataset.rccmat){(S.rcCadForm=S.rcCadForm||{}).m_igual=t.checked;render();return;}if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
   if(t.dataset.rcdoc){const f=t.files&&t.files[0];if(!f)return;if(f.size>15*1024*1024){aviso("Arquivo acima de 15 MB.");return;}const k=t.dataset.rcdoc,uid=S.profile.id;const ext=(f.name.split(".").pop()||"pdf").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);
     const path=`${uid}/${k}-${Date.now().toString(36)}.${ext}`;aviso("Enviando "+f.name+"…");const up=await sb.storage.from("rc-cadastro").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false});if(up.error){aviso("Não foi possível enviar o arquivo.");return;}
@@ -15715,6 +15779,9 @@ if(a==="pj-fsub"){pjColeta();const F=S.pjEd.dados.fases,i=+v;if(i>0)[F[i-1],F[i]
   if(a==="mrc-vis"){S.mrcVis=v;render();return;}
   if(a==="rcp-mais"){S.rcpF.n+=60;render();return;}
   if(a==="crm-vista"){S.crmVista=v;S.mapaPin=null;render();return;}
+  if(a==="ff"){const f=ffEstado();f[b.dataset.k]=v;S.ffMais=false;render();return;}
+  if(a==="ff-mais"){S.ffMais=true;render();return;}
+  if(a==="ff-xls"){ffExcel();return;}
   if(a==="im-modo"){S.imModo=v;S.mapaPin=null;render();return;}
   if(a==="cobb-canal"){const F=S.cobB||(S.cobB={st:"Ambos",raio:"100",dono:null,grp:"Todos"});F.canal=v||null;if(v)F.dono=null;render();if(v)setTimeout(()=>{const d=document.querySelector(".cob-det-canal");if(d)d.scrollIntoView({behavior:"smooth",block:"nearest"});},50);return;}
   if(a==="cob-fil-rm"){if(!ehAdmin())return;const {error}=await sb.from("canal_filiais").delete().eq("id",v);if(error){aviso("Não foi possível remover.");return;}S.imFil=(S.imFil||[]).filter(f=>String(f.id)!==String(v));S.canais=null;render();aviso("Filial removida.");return;}
