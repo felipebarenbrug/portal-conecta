@@ -1408,6 +1408,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .jr-dest strong{font-size:15px}
 @media(max-width:900px){.kb{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.kb{grid-template-columns:1fr}.kb-col{padding:8px 6px}}
+.jogo-m{max-width:640px;margin:0 auto;padding:8px 8px 24px}.jogo-f{display:block;width:100%;height:calc(100vh - 170px);height:calc(100dvh - 170px);min-height:520px;border:0;border-radius:14px;background:#FEDC00}.jogo-l{text-align:center;margin:8px 0 0;font-size:13px}
 </style>
 </head>
 <body>
@@ -1726,6 +1727,7 @@ async function carregarPrecos(){
 }
 const SECOES=[
   {id:"premio",nome:"Prêmio Cultive Confiança",desc:"Proposta do prêmio para o melhor caso de resultado com híbridos na safra 26/27: por que fazer, regulamento, critérios, dados e o cadastro dos casos.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
+  {id:"jogo",nome:"Jogo: Rumo ao Pasto Híbrido",desc:"Leve o boi do pasto degradado até o pasto híbrido Barenbrug desviando de cigarrinha, seca, geada, planta daninha e semente pirata. Uma partida dura 75 segundos.",ativo:true,perfis:null},
   {id:"proposito",nome:"Por que o Conecta existe",desc:"O propósito do portal: por que ele nasceu, o conceito Barenbrug que ele leva ao campo, o caminho que estamos seguindo e o que pedimos ao time.",ativo:true,perfis:["Administrador","Comercial Barenbrug"]},
   {id:"academia",nome:"Academia de Híbridos",desc:"Treinamento de vendas: trilha por cultivar, provas de certificação e base de conhecimento.",ativo:true,perfis:null},
   {id:"meu-crm",nome:"Meu CRM",desc:"Seu painel do CRM: o que já vendeu, o que está em aberto por data de faturamento, forecast ponderado, principais negociações e o que precisa atualizar.",ativo:true,perfis:["Comercial Barenbrug","Administrador"]},
@@ -1971,7 +1973,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126221535";
+const APP_VER="20261126224132";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -6805,7 +6807,7 @@ window.esFaltando=()=>[...ES_FALTA];
 
 function secoesVisiveis(){const acessos=Array.isArray(S.profile&&S.profile.acessos)&&S.profile.acessos.length?S.profile.acessos:["academia"];
   if(LANG()==="es")return SECOES.filter(x=>x.id==="academia"||x.id==="enxoval");
-  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"?true:x.id==="proposito"?vePropos():x.id==="premio"?false:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
+  return SECOES.filter(x=>x.id==="financeiro"?(ehFin()&&!S.demo):x.id==="inteligencia"?veInt():x.id==="acoes-mkt"?veAcoesArea():x.id==="brindes"||x.id==="vitrines"?false:x.id==="time-mkt"||x.id==="projetos"?veTimeMkt():x.id==="guia"||x.id==="jogo"?true:x.id==="proposito"?vePropos():x.id==="premio"?false:x.emdev?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):x.breve?(ehAdmin()||(x.perfis||[]).some(p=>temPerfil(p))):(ehAdmin()||acessos.includes(x.id))).filter(x=>!secOculta(x.id));}
 /* quem esta online agora (uso nos ultimos 3 minutos): todos veem; a Barenbrug ve todo mundo, RCs e franqueados veem o proprio grupo e a Barenbrug, revendas veem so a propria revenda (filtro no banco) */
 const veOnline=()=>!!(S.user&&S.profile&&!S.demo);
 function carregarOnline(){if(S.onBusy)return;S.onBusy=true;(async()=>{try{const {data}=await sb.rpc("online_agora");S.online=data||null;}catch(e){S.online=null;}S.onEm=Date.now();S.onBusy=false;if(!S.secao&&S.pag==="hub")render();})();}
@@ -15210,6 +15212,7 @@ function renderApp(){
   }
   if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
+  if(S.secao==="jogo"){app.innerHTML=cabecalho()+subnavSimples("Rumo ao Pasto Híbrido")+`<main class="jogo-m"><iframe class="jogo-f" src="jogo/rumo-ao-pasto-hibrido.html" title="Jogo Rumo ao Pasto Híbrido" allow="autoplay; fullscreen"></iframe><p class="jogo-l"><a href="jogo/rumo-ao-pasto-hibrido.html" target="_blank" rel="noopener">Abrir o jogo em tela cheia</a></p></main>`;return;}
   if(S.secao==="premio"){if(!vePremio()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Prêmio Cultive Confiança")+`<main class="largo">${S.prVolta?`<button class="link" data-a="pr-sair">‹ Voltar ao projeto</button>`:""}${vPremio()}</main>`;return;}
   if(S.secao==="proposito"){if(!vePropos()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Por que o Conecta existe")+`<main>${vProposito()}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
