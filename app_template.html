@@ -7386,7 +7386,7 @@ function rotAvHTML(a,F){const g=ROT_AV[a.k];const r=F.rot||(F.rot={ck:{},n:{}});
   return `<div class="rot-av"><p style="margin:0 0 4px"><strong>O que observar:</strong> ${esc(g.obs)}</p><ul class="cond" style="margin:0 0 4px">${g.perg.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
    <p class="meta" style="margin:0 0 6px">Nota 5: ${esc(g.n5)} Nota 3: ${esc(g.n3)} Nota 1: ${esc(g.n1)}</p>
    <textarea rows="2" maxlength="1500" data-rot-n="av_${a.k}" placeholder="O que você observou" aria-label="O que você observou">${esc(r.n["av_"+a.k]||"")}</textarea></div>`;}
-document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.id==="rcp-det"){S.rcpFechado=!d.open;return;}if(!d||!d.dataset||!d.dataset.rotD)return;(S.rotOpen||(S.rotOpen={}))[d.dataset.rotD]=d.open;},true);
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.id==="rcp-det"){S.rcpFechado=!d.open;return;}if(d&&d.id==="vit-guia"){S.vitGuiaFechado=!d.open;return;}if(!d||!d.dataset||!d.dataset.rotD)return;(S.rotOpen||(S.rotOpen={}))[d.dataset.rotD]=d.open;},true);
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rotN||!S.candF)return;const r=S.candF.rot||(S.candF.rot={ck:{},n:{}});(r.n||(r.n={}))[t.dataset.rotN]=t.value.slice(0,1500);});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rotCk||!S.candF)return;const r=S.candF.rot||(S.candF.rot={ck:{},n:{}});const ck=r.ck||(r.ck={});if(t.checked)ck[t.dataset.rotCk]=new Date().toISOString().slice(0,10);else delete ck[t.dataset.rotCk];const lb=t.closest("label");if(lb)lb.classList.toggle("ok",t.checked);
   const d=t.closest("details");if(d){const sp=d.querySelector("summary .meta");const b=ROT_PADRAO.find(x=>x.k===d.dataset.rotD);if(sp&&b)sp.textContent=b.ck.filter(([k])=>ck[k]).length+"/"+b.ck.length;}const h=document.querySelector(".rot-box .rot-h .meta");if(h)h.textContent=rotFeitos(r)+" de "+ROT_TOTAL+" itens apresentados";});
@@ -14046,6 +14046,7 @@ document.addEventListener("submit",async ev=>{const f=ev.target;if(!f||f.id!=="f
 const VIT_ST=["Planejada","Plantada","Em formação","Aberta para visitas","Encerrada"];
 const VIT_COR={"Planejada":"#8A8F98","Plantada":"#2E8B57","Em formação":"#E0A800","Aberta para visitas":"#0090D0","Encerrada":"#5B3A8E"};
 const VIT_CULT=["Sabiá","Cayana","Carcará","Mulato II","Outra"];
+const vitPode=v=>!!v&&(ehMkt()||(!!S.user&&(v.criado_por===S.user.id||v.responsavel_id===S.user.id)));
 const veVit=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||meusAcessos().includes("vitrines"));
 async function carregarVit(){
   if(S.vitBusy)return;S.vitBusy=true;
@@ -14081,10 +14082,28 @@ function vVitLista(){
     <span class="meta">Responsável: ${esc(v.responsavel_nome||"—")}</span>${vitAcao(v)?`<span class="meta">Ação: ${esc(vitAcao(v).titulo)}</span>`:""}</button>`;
   return `<div><h1 class="titulo">Áreas demonstrativas</h1><p class="sub">Vitrines de híbridos plantadas com revendas, RCs ou pela própria Barenbrug: onde estão, o que foi plantado, quem cuida e os documentos de cada uma.</p></div>
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px"><div class="metric"><span>Áreas</span><strong>${L.length}</strong><span class="meta">de ${(S.vit||[]).length} cadastradas</span></div><div class="metric"><span>Hectares</span><strong>${isNum(tot)} ha</strong></div><div class="metric"><span>Estados</span><strong>${new Set(L.map(v=>v.uf).filter(Boolean)).size}</strong></div><div class="metric"><span>Com revenda ou RC</span><strong>${L.filter(v=>v.parceiro_tipo&&v.parceiro_tipo!=="Institucional").length}</strong><span class="meta">${L.filter(v=>!v.parceiro_tipo||v.parceiro_tipo==="Institucional").length} institucionais</span></div></div>
-  ${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn" data-a="vit-nova">+ Nova área demonstrativa</button></div>`:""}
+  ${vitGuiaHTML()}
+  ${veVit()?`<div class="acoes" style="margin:0 0 10px"><button class="btn" data-a="vit-nova">+ Nova área demonstrativa</button></div>`:""}
   ${vitFiltrosHTML()}
   ${L.length?`<div class="vit-grid">${L.map(card).join("")}</div>`:`<div class="vazio">${(S.vit||[]).length?"Nenhuma área com esses filtros.":"Nenhuma área cadastrada ainda."+(g?" Use \"+ Nova área demonstrativa\".":"")}</div>`}`;
 }
+function vitGuiaHTML(){
+  const st=(n,t,b)=>`<li class="rcp-p"><span class="rcp-n">${n}</span><div class="rcp-c"><strong>${t}</strong><p>${b}</p></div></li>`;
+  return `<details class="bloco rcc-b rcp" id="vit-guia" ${S.vitGuiaFechado?"":"open"}><summary><h2 class="sec" style="display:inline">Ajude a mapear as áreas demonstrativas</h2></summary>
+  <p style="margin:8px 0 6px">O Marketing quer mapear as <strong>áreas onde a Barenbrug doou sementes</strong> para revendas, RCs ou produtores e que podem receber visita: um dia de campo, ou levar um produtor para ver o híbrido no chão numa região.</p>
+  <p style="margin:0 0 6px"><strong>Por que pedimos a ajuda do comercial.</strong> Vocês estão no dia a dia com as revendas e sabem onde já foram feitas áreas demonstrativas. Com tudo cadastrado aqui, o time inteiro passa a ter uma visão ampla: quando precisar levar um cliente para ver uma área, o mapa mostra a mais perto. E o Marketing usa o mapa para planejar ações de dia de campo em cada região.</p>
+  <p style="margin:0 0 10px">Cadastre as áreas que você conhece, mesmo que falte alguma informação. O que faltar pode ser completado depois.</p>
+  <h3 class="pgd-h" style="margin:0 0 8px">Como cadastrar uma área</h3>
+  <ol class="rcp-o">
+   ${st(1,"Clique em + Nova área demonstrativa","Fica logo abaixo deste quadro. Abre o formulário da área.")}
+   ${st(2,"Dê um nome e diga a situação","Ex.: “Vitrine Fazenda Boa Vista · Revenda X”. Situação: Planejada, Plantada, Em formação, Aberta para visitas ou Encerrada. Se souber, coloque a data do plantio.")}
+   ${st(3,"Informe onde fica","Fazenda ou endereço, cidade e estado. Se puder, cole as coordenadas: no Google Maps, aperte e segure no ponto (no celular) ou clique com o botão direito (no computador) e copie os números. Com coordenadas, o ponto fica no lugar exato do mapa.")}
+   ${st(4,"Diga quem é o parceiro","Revenda (escolha da lista do Conecta ou escreva o nome), RC, ou Institucional quando não há parceiro.")}
+   ${st(5,"Marque as cultivares e os hectares","Uma linha por cultivar (Sabiá, Cayana, Carcará, Mulato II ou outra), com a área de cada uma. Use + Cultivar para adicionar mais.")}
+   ${st(6,"Conte o motivo e se pode receber visita","No campo Motivo da vitrine, escreva para que a área foi feita e se dá para levar produtor ou fazer dia de campo (época boa, acesso, quem recebe). Se souber o PV da bonificação das sementes, coloque também.")}
+   ${st(7,"Salve e anexe fotos","Depois de salvar, a página da área abre. Em Documentos anexados, envie fotos, croqui ou outros arquivos. Você pode editar a área que cadastrou sempre que quiser.")}
+  </ol>
+  <p class="meta" style="margin:10px 0 0">Dúvidas: fale com o Marketing pelas Mensagens do portal.</p></details>`;}
 function vVitMapa(){
   if(!S.vit)return `<div class="carregando">Carregando o mapa…</div>`;
   if(!GEO)return `<div class="vazio">Não foi possível carregar o mapa. Recarregue a página.</div>`;
@@ -14110,12 +14129,12 @@ function vVitAcaoHTML(v){
     ${L.length?`<div class="tab" style="margin-top:8px"><table class="sim-t fin-t"><thead><tr><th>Cultivar</th><th>Para quê</th><th class="val">Quantidade</th><th class="val">Valor</th></tr></thead><tbody>${L.map(x=>`<tr><td><strong>${esc(x.cult)}</strong></td><td>${esc(x.fin||"")}${x.obs?`<br><span class="meta">${esc(x.obs)}</span>`:""}</td><td class="val">${isNum(x.kg)} kg</td><td class="val">${fmtK0(mkSemValor(x))}</td></tr>`).join("")}</tbody></table></div>`:""}
     <p class="meta">Valores da ação inteira, que pode ter outras áreas e custos além desta vitrine. As sementes usam o preço de tabela.</p></section>`;}
 function vVitCard(){
-  const v=(S.vit||[]).find(x=>x.id===S.vitSel);if(!v)return `<div class="carregando">Carregando…</div>`;const g=ehMkt();const A=Array.isArray(v.anexos)?v.anexos:[];
+  const v=(S.vit||[]).find(x=>x.id===S.vitSel);if(!v)return `<div class="carregando">Carregando…</div>`;const g=ehMkt(),pd=vitPode(v);const A=Array.isArray(v.anexos)?v.anexos:[];
   const lin=(r,t)=>`<div class="linha"><div><span class="meta">${r}</span><strong style="white-space:pre-wrap">${t}</strong></div></div>`;
   const ll=vitLL(v);
   return `<button class="voltar" data-a="pag" data-v="${S.vitVolta||"vit-lista"}">‹ ${S.vitVolta==="vit-mapa"?"Mapa":"Áreas"}</button>
   <div><span class="rot">Área demonstrativa · <span style="color:${VIT_COR[v.status]||"#8A8F98"}">${esc(v.status||"Planejada")}</span></span><h1 class="titulo">${esc(v.titulo)}</h1><p class="sub">${esc([v.local_nome,v.cidade&&v.uf?v.cidade+"/"+v.uf:v.uf].filter(Boolean).join(" · ")||"Local a definir")}</p></div>
-  ${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="vit-editar">Editar</button>${S.vitDel?`<button class="btn perigo" data-a="vit-excluir">Confirmar exclusão</button><button class="link" data-a="vit-del" data-v="0">não excluir</button>`:`<button class="link perigo" data-a="vit-del" data-v="1">Excluir</button>`}</div>`:""}
+  ${pd&&!g?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="vit-editar">Editar</button></div>`:""}${g?`<div class="acoes" style="margin:0 0 10px"><button class="btn sec" data-a="vit-editar">Editar</button>${S.vitDel?`<button class="btn perigo" data-a="vit-excluir">Confirmar exclusão</button><button class="link" data-a="vit-del" data-v="0">não excluir</button>`:`<button class="link perigo" data-a="vit-del" data-v="1">Excluir</button>`}</div>`:""}
   <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><div class="metric"><span>Área</span><strong>${vitHa(v)?isNum(vitHa(v))+" ha":"—"}</strong></div><div class="metric"><span>Data do plantio</span><strong>${vitData(v.data_plantio)}</strong></div><div class="metric"><span>PV da bonificação</span><strong>${esc(v.pv_bonificacao||"—")}</strong></div><div class="metric"><span>Parceiro</span><strong style="font-size:18px">${esc(vitParc(v))}</strong></div></div>
   <section class="bloco"><h2 class="sec">Dados da área</h2>
     ${lin("Responsável",esc(v.responsavel_nome||"—"))}
@@ -14128,8 +14147,8 @@ function vVitCard(){
   </section>
   ${vVitAcaoHTML(v)}
   <section class="bloco"><h2 class="sec">Documentos anexados</h2>
-    ${A.length?`<div class="lista">${A.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"arquivo")}</strong><span class="meta">${x.tam?Math.round(x.tam/1024).toLocaleString("pt-BR")+" KB · ":""}${fmtDataHora(x.em)}</span></div><span><button class="link" data-a="vit-baixar" data-v="${esc(x.path)}">abrir</button>${g?` · <button class="link perigo" data-a="vit-rem-arq" data-v="${esc(x.path)}">remover</button>`:""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum documento.</div>`}
-    ${g?`<div class="acoes" style="margin-top:8px"><input type="file" id="vit_arq" multiple><button class="btn sec" data-a="vit-anexar">Anexar</button></div><p class="meta">Fotos, croqui, laudo de solo, contrato, nota da bonificação. Até 50 MB por arquivo.</p>`:""}
+    ${A.length?`<div class="lista">${A.map(x=>`<div class="linha"><div><strong>${esc(x.nome||"arquivo")}</strong><span class="meta">${x.tam?Math.round(x.tam/1024).toLocaleString("pt-BR")+" KB · ":""}${fmtDataHora(x.em)}</span></div><span><button class="link" data-a="vit-baixar" data-v="${esc(x.path)}">abrir</button>${pd?` · <button class="link perigo" data-a="vit-rem-arq" data-v="${esc(x.path)}">remover</button>`:""}</span></div>`).join("")}</div>`:`<div class="vazio">Nenhum documento.</div>`}
+    ${pd?`<div class="acoes" style="margin-top:8px"><input type="file" id="vit_arq" multiple><button class="btn sec" data-a="vit-anexar">Anexar</button></div><p class="meta">Fotos, croqui, laudo de solo, contrato, nota da bonificação. Até 50 MB por arquivo.</p>`:""}
   </section>`;
 }
 function vVitForm(){
@@ -14139,7 +14158,7 @@ function vVitForm(){
   <form id="f-vit" class="form-card">
     <div><label for="vt_tit">Nome da área *</label><input id="vt_tit" required maxlength="140" value="${esc(v.titulo||"")}" placeholder="Ex.: Vitrine Fazenda Boa Vista · Tractor Terra"></div>
     <div class="dupla"><div><label for="vt_st">Situação</label><select id="vt_st">${VIT_ST.map(s=>`<option ${(v.status||"Planejada")===s?"selected":""}>${s}</option>`).join("")}</select></div><div><label for="vt_dt">Data do plantio</label><input id="vt_dt" type="date" value="${esc(v.data_plantio||"")}"></div></div>
-    <div class="dupla"><div><label for="vt_resp">Responsável</label><select id="vt_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${v.responsavel_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></div>
+    <div class="dupla">${!ehMkt()?`<div><label>Responsável</label><input disabled value="${esc(v.responsavel_nome||(v.id?"—":(S.profile&&S.profile.nome)||"Você"))}"><span class="meta">${v.id?"":"A área fica no seu nome."}</span></div>`:""}<div ${ehMkt()?"":"hidden"}><label for="vt_resp">Responsável</label><select id="vt_resp"><option value="">—</option>${P.map(p=>`<option value="${esc(p.id)}" ${v.responsavel_id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></div>
       <div><label for="vt_cor">Corresponsáveis</label><input id="vt_cor" list="vt_pessoas" value="${esc((v.corresponsaveis||[]).join(", "))}" placeholder="Nomes separados por vírgula"><datalist id="vt_pessoas">${P.map(p=>`<option value="${esc(p.nome)}">`).join("")}</datalist></div></div>
     <fieldset class="vit-fs"><legend>Localização</legend>
       <div><label for="vt_loc">Fazenda ou endereço</label><input id="vt_loc" maxlength="160" value="${esc(v.local_nome||"")}"></div>
@@ -14152,8 +14171,8 @@ function vVitForm(){
       <div id="vt_cults" style="display:grid;gap:6px">${cu.map((x,i)=>`<div class="mk-custo-l" data-vtc><div><label>Cultivar</label><select class="vt_c">${VIT_CULT.map(c=>`<option ${x.cult===c?"selected":""}>${c}</option>`).join("")}</select></div><div><label>Hectares</label><input class="vt_h" inputmode="decimal" value="${x.ha!=null?esc(String(x.ha).replace(".",",")):""}"></div>${cu.length>1?`<button type="button" class="link perigo" data-a="vit-cult-rm" data-v="${i}">remover</button>`:""}</div>`).join("")}</div>
       <button type="button" class="btn sec" data-a="vit-cult-add" style="justify-self:start">+ Cultivar</button>
       <div><label for="vt_ha">Tamanho total da área (ha)</label><input id="vt_ha" inputmode="decimal" value="${v.area_ha!=null?esc(String(v.area_ha).replace(".",",")):""}" placeholder="Em branco: soma das cultivares"></div></fieldset>
-    <div><label for="vt_mot">Motivo da vitrine</label><textarea id="vt_mot" rows="3" maxlength="2000">${esc(v.motivo||"")}</textarea></div>
-    <div><label for="vt_acao">Ação de marketing ligada</label><select id="vt_acao"><option value="">— nenhuma —</option>${(S.vitAcoes||[]).filter(a=>a.status!=="Cancelada"&&a.status!=="Recusada"||a.id===v.mkt_acao_id).map(a=>`<option value="${a.id}" ${v.mkt_acao_id===a.id?"selected":""}>${esc(a.titulo)}${a.inicio?" · "+mkData(a.inicio):""}</option>`).join("")}</select><span class="meta">A bonificação em sementes e os custos da ação aparecem na página da área.</span></div>
+    <div><label for="vt_mot">Motivo da vitrine</label><textarea id="vt_mot" rows="3" maxlength="2000" placeholder="Para que a área foi feita e se dá para levar produtor ou fazer dia de campo">${esc(v.motivo||"")}</textarea></div>
+    <div ${ehMkt()?"":"hidden"}><label for="vt_acao">Ação de marketing ligada</label><select id="vt_acao"><option value="">— nenhuma —</option>${(S.vitAcoes||[]).filter(a=>a.status!=="Cancelada"&&a.status!=="Recusada"||a.id===v.mkt_acao_id).map(a=>`<option value="${a.id}" ${v.mkt_acao_id===a.id?"selected":""}>${esc(a.titulo)}${a.inicio?" · "+mkData(a.inicio):""}</option>`).join("")}</select><span class="meta">A bonificação em sementes e os custos da ação aparecem na página da área.</span></div>
     <div class="dupla"><div><label for="vt_pv">PV do pedido da bonificação</label><input id="vt_pv" maxlength="60" value="${esc(v.pv_bonificacao||"")}" placeholder="Ex.: PV 12034"></div><div><label for="vt_obs">Observações</label><input id="vt_obs" maxlength="1000" value="${esc(v.obs||"")}"></div></div>
     <p class="meta">Os documentos são anexados depois de salvar, na página da área.</p>
     <div class="acoes"><button class="btn" type="submit">Salvar</button></div></form>`;
@@ -14504,7 +14523,9 @@ document.addEventListener("submit",async ev=>{
     S.mk=null;await carregarMkt();carregarMkCard(S.mkSel);aviso(ok?"Solicitação aprovada. Ela está no quadro como A fazer.":"Solicitação recusada.");return;}
   if(f.id==="f-mk-chk"){const t=val("mkc_t");if(!t)return;if(btn)btn.disabled=true;const {data,error}=await sb.rpc("mkt_checklist",{p_acao:S.mkSel,p_op:"add",p_id:null,p_txt:t,p_resp:val("mkc_r")||null,p_prazo:val("mkc_p")||null});
     if(error){if(btn)btn.disabled=false;aviso("Não foi possível adicionar a tarefa.");return;}S.mk=S.mk.map(x=>x.id===S.mkSel?{...x,checklist:data}:x);render();const e=document.getElementById("mkc_t");if(e)e.focus();return;}
-  if(f.id==="f-vit"){if(!ehMkt())return;const d=vitLerForm(f);if(!d.titulo){aviso("Dê um nome à área.");return;}if(btn)btn.disabled=true;const id=(S.vitForm||{}).id;
+  if(f.id==="f-vit"){const id=(S.vitForm||{}).id;const orig=id?(S.vit||[]).find(x=>x.id===id):null;if(id?!vitPode(orig):!veVit())return;const d=vitLerForm(f);if(!d.titulo){aviso("Dê um nome à área.");return;}
+    if(!ehMkt()){delete d.mkt_acao_id;if(id){d.responsavel_id=orig.responsavel_id;d.responsavel_nome=orig.responsavel_nome;}else{d.responsavel_id=S.user.id;d.responsavel_nome=(S.profile&&S.profile.nome)||null;}}
+    if(btn)btn.disabled=true;
     const q=id?sb.from("vitrines").update(d).eq("id",id).select().maybeSingle():sb.from("vitrines").insert(d).select().maybeSingle();const {data,error}=await q;
     if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a área.");return;}S.vit=id?S.vit.map(x=>x.id===id?data:x):[data,...(S.vit||[])];S.vitSel=data.id;S.vitForm=null;S.pag="vit-card";render();window.scrollTo(0,0);aviso(id?"Área salva.":"Área criada. Agora anexe os documentos.");return;}
   if(f.id==="f-mk-com-ed"){const tx=val("mk_com_ed");if(!tx)return;if(btn)btn.disabled=true;const {data,error}=await sb.from("mkt_comentarios").update({texto:tx.slice(0,4000),editado_em:new Date().toISOString()}).eq("id",+f.dataset.id).select("id").maybeSingle();if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar o comentário.");return;}S.mkComEd=null;carregarMkCard(S.mkSel);aviso("Comentário editado.");return;}
@@ -15417,8 +15438,8 @@ document.addEventListener("click",async ev=>{
   if(a==="mk-ir-vit"){if(!veVit())return;S.secao="vitrines";S.vitSel=+v;S.vitVolta="vit-lista";S.vitDel=false;S.pag="vit-card";render();window.scrollTo(0,0);return;}
   if(a==="mk-nova-vit"){if(!ehMkt())return;const ac=(S.mk||[]).find(x=>x.id===+v);if(!ac)return;const cu=mkSem(ac).filter(x=>/demonstrativa/i.test(x.fin||"")).map(x=>({cult:x.cult,ha:null}));
     S.secao="vitrines";if(!S.vit)await carregarVit();S.vitForm={mkt_acao_id:ac.id,titulo:"Vitrine · "+ac.titulo,status:"Planejada",cultivares:cu.length?cu:undefined,cidade:null};S.pag="vit-form";render();window.scrollTo(0,0);return;}
-  if(a==="vit-nova"){if(!ehMkt())return;S.vitForm={};S.pag="vit-form";render();window.scrollTo(0,0);return;}
-  if(a==="vit-editar"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x||!ehMkt())return;S.vitForm=JSON.parse(JSON.stringify(x));S.pag="vit-form";render();window.scrollTo(0,0);return;}
+  if(a==="vit-nova"){if(!veVit())return;S.vitForm={};S.pag="vit-form";render();window.scrollTo(0,0);return;}
+  if(a==="vit-editar"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x||!vitPode(x))return;S.vitForm=JSON.parse(JSON.stringify(x));S.pag="vit-form";render();window.scrollTo(0,0);return;}
   if(a==="vit-cult-add"||a==="vit-cult-rm"){const f=document.getElementById("f-vit");if(!f)return;const id=(S.vitForm||{}).id;S.vitForm={...vitLerForm(f),id};const L=S.vitForm.cultivares.length?S.vitForm.cultivares:[{cult:"Sabiá",ha:null}];if(a==="vit-cult-add")L.push({cult:"Cayana",ha:null});else L.splice(+v,1);S.vitForm.cultivares=L;render();return;}
   if(a==="vit-del"){S.vitDel=v==="1";render();return;}
   if(a==="vit-excluir"){const x=(S.vit||[]).find(q=>q.id===S.vitSel);if(!x)return;const {error}=await sb.from("vitrines").delete().eq("id",x.id);if(error){aviso("Não foi possível excluir.");return;}const arqs=(x.anexos||[]).map(q=>q.path).filter(Boolean);if(arqs.length){try{await sb.storage.from("vitrines").remove(arqs);}catch(e){}}S.vit=S.vit.filter(q=>q.id!==x.id);S.pag="vit-lista";render();aviso("Área excluída.");return;}
