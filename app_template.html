@@ -1409,6 +1409,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 @media(max-width:900px){.kb{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.kb{grid-template-columns:1fr}.kb-col{padding:8px 6px}}
 .jogo-m{max-width:640px;margin:0 auto;padding:8px 8px 24px}.jogo-f{display:block;width:100%;height:calc(100vh - 170px);height:calc(100dvh - 170px);min-height:520px;border:0;border-radius:14px;background:#FEDC00}.jogo-l{text-align:center;margin:8px 0 0;font-size:13px}
+.rcp summary{cursor:pointer;list-style:revert}.rcp-o,.rcp-t{margin:0;padding:0;display:flex;flex-direction:column;gap:12px}.rcp-o{list-style:none}.rcp-p{display:flex;gap:10px;align-items:flex-start}.rcp-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--amarelo,#FFDB00);color:#1E1E1E;font-weight:800;display:flex;align-items:center;justify-content:center}.rcp-c{min-width:0;flex:1}.rcp-c p{margin:4px 0 0}.rcp-l{margin:4px 0 6px;padding-left:18px;display:flex;flex-direction:column;gap:3px}.rcp-t{padding-left:20px;gap:8px}.rcp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.rcp-k{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;min-width:0}.rcp-k.on{border-color:#00A8E2;background:#f2fbfe}
 </style>
 </head>
 <body>
@@ -7320,7 +7321,7 @@ function rotAvHTML(a,F){const g=ROT_AV[a.k];const r=F.rot||(F.rot={ck:{},n:{}});
   return `<div class="rot-av"><p style="margin:0 0 4px"><strong>O que observar:</strong> ${esc(g.obs)}</p><ul class="cond" style="margin:0 0 4px">${g.perg.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
    <p class="meta" style="margin:0 0 6px">Nota 5: ${esc(g.n5)} Nota 3: ${esc(g.n3)} Nota 1: ${esc(g.n1)}</p>
    <textarea rows="2" maxlength="1500" data-rot-n="av_${a.k}" placeholder="O que você observou" aria-label="O que você observou">${esc(r.n["av_"+a.k]||"")}</textarea></div>`;}
-document.addEventListener("toggle",ev=>{const d=ev.target;if(!d||!d.dataset||!d.dataset.rotD)return;(S.rotOpen||(S.rotOpen={}))[d.dataset.rotD]=d.open;},true);
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d&&d.id==="rcp-det"){S.rcpFechado=!d.open;return;}if(!d||!d.dataset||!d.dataset.rotD)return;(S.rotOpen||(S.rotOpen={}))[d.dataset.rotD]=d.open;},true);
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rotN||!S.candF)return;const r=S.candF.rot||(S.candF.rot={ck:{},n:{}});(r.n||(r.n={}))[t.dataset.rotN]=t.value.slice(0,1500);});
 document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rotCk||!S.candF)return;const r=S.candF.rot||(S.candF.rot={ck:{},n:{}});const ck=r.ck||(r.ck={});if(t.checked)ck[t.dataset.rotCk]=new Date().toISOString().slice(0,10);else delete ck[t.dataset.rotCk];const lb=t.closest("label");if(lb)lb.classList.toggle("ok",t.checked);
   const d=t.closest("details");if(d){const sp=d.querySelector("summary .meta");const b=ROT_PADRAO.find(x=>x.k===d.dataset.rotD);if(sp&&b)sp.textContent=b.ck.filter(([k])=>ck[k]).length+"/"+b.ck.length;}const h=document.querySelector(".rot-box .rot-h .meta");if(h)h.textContent=rotFeitos(r)+" de "+ROT_TOTAL+" itens apresentados";});
@@ -7478,6 +7479,8 @@ const RCCAD_F=[["Empresa",[["razao","Razão social",1],["fantasia","Nome fantasi
   ["Registro no CORE",[["core_n","Número do registro",1],["core_uf","Estado do CORE (sigla)",1]]],
   ["Contato",[["email","E-mail da empresa",1],["site","Site"],["tel","Telefone"],["cel","Celular",1]]],
   ["Endereço da empresa",[["end","Rua e número",1],["compl","Complemento"],["bairro","Bairro",1],["cidade","Cidade",1],["uf","Estado (sigla)",1],["cep","CEP",1]]]];
+const RCCAD_MAT=[["m_dest","Quem recebe (nome completo)",1],["m_tel","Telefone de quem recebe",1],["m_cep","CEP",1],["m_end","Rua e número, ou estrada e km",1],["m_compl","Complemento"],["m_bairro","Bairro ou localidade",1],["m_cidade","Cidade",1],["m_uf","Estado (sigla)",1],["m_ref","Ponto de referência"],["m_horario","Melhor horário para entrega"]];
+const rcMatIgual=o=>o.m_igual===true||o.m_igual==="1";
 const RCCAD_BANCO=[["banco","Banco",1],["cod","Código do banco",1],["agencia","Agência",1],["conta","Conta",1],["titular","Titular da conta",1]];
 const RCCAD_ST=["Aguardando ficha","Enviado","Pendências","Conferido","Contrato enviado","Assinado"];
 const RCCAD_COR={"Aguardando ficha":"amarelo","Enviado":"azul","Pendências":"vermelho","Conferido":"azul","Contrato enviado":"azul","Assinado":"verde"};
@@ -7490,14 +7493,17 @@ async function carregarRcCadMeu(){if(S.rcCadBusy)return;S.rcCadBusy=true;const u
 function rcCadFichaForm(f,bn){const o={};RCCAD_F.forEach(([,L])=>L.forEach(([k])=>o[k]=f[k]||""));RCCAD_BANCO.forEach(([k])=>o["b_"+k]=(bn||{})[k]||"");
   [0,1,2].forEach(i=>{const s=(f.socios||[])[i]||{};o["s_nome_"+i]=s.nome||"";o["s_cpf_"+i]=s.cpf||"";o["s_pct_"+i]=s.pct||"";});
   [0,1].forEach(i=>{const r=(f.refs||[])[i]||{},x=(f.outras||[])[i]||{};o["r_emp_"+i]=r.empresa||"";o["r_tel_"+i]=r.tel||"";o["r_con_"+i]=r.contato||"";o["o_emp_"+i]=x.empresa||"";o["o_tel_"+i]=x.tel||"";o["o_con_"+i]=x.contato||"";});
+  RCCAD_MAT.forEach(([k])=>o[k]=f[k]||"");o.m_igual=f.m_igual===true;
   o.area=f.area||"";o.area_ufs=Array.isArray(f.area_ufs)?f.area_ufs.slice():[];o.area_base=f.area_base||"";o.area_raio=f.area_raio||"";return o;}
 function rcCadFichaDe(o){const f={};RCCAD_F.forEach(([,L])=>L.forEach(([k])=>f[k]=String(o[k]||"").trim()));["core_uf","uf"].forEach(k=>f[k]=f[k].toUpperCase().slice(0,2));
   f.socios=[0,1,2].map(i=>({nome:String(o["s_nome_"+i]||"").trim(),cpf:String(o["s_cpf_"+i]||"").trim(),pct:String(o["s_pct_"+i]||"").trim()})).filter(s=>s.nome||s.cpf);
   f.refs=[0,1].map(i=>({empresa:String(o["r_emp_"+i]||"").trim(),tel:String(o["r_tel_"+i]||"").trim(),contato:String(o["r_con_"+i]||"").trim()})).filter(r=>r.empresa);
   f.outras=[0,1].map(i=>({empresa:String(o["o_emp_"+i]||"").trim(),tel:String(o["o_tel_"+i]||"").trim(),contato:String(o["o_con_"+i]||"").trim()})).filter(r=>r.empresa);
+  RCCAD_MAT.forEach(([k])=>f[k]=String(o[k]||"").trim());f.m_uf=f.m_uf.toUpperCase().slice(0,2);f.m_igual=rcMatIgual(o);
   f.area=String(o.area||"").trim();f.area_ufs=Array.isArray(o.area_ufs)?o.area_ufs.slice():[];f.area_base=String(o.area_base||"").trim();f.area_raio=String(o.area_raio||"").trim();return f;}
 function rcCadFaltam(o,docs){const L=[];RCCAD_F.forEach(([,F])=>F.forEach(([k,t,ob])=>{if(ob&&!String(o[k]||"").trim())L.push(t);}));RCCAD_BANCO.forEach(([k,t])=>{if(!String(o["b_"+k]||"").trim())L.push(t);});
   if(!String(o.s_nome_0||"").trim()||!String(o.s_cpf_0||"").trim())L.push("Nome e CPF de pelo menos um sócio");if(!(o.area_ufs||[]).length)L.push("Estado(s) de atuação");if(!String(o.area_base||"").trim())L.push("Cidade-base da atuação");
+  RCCAD_MAT.forEach(([k,t,ob])=>{if(!ob)return;if(rcMatIgual(o)&&!["m_dest","m_tel"].includes(k))return;if(!String(o[k]||"").trim())L.push("Materiais: "+t.replace(/ \(sigla\)/,"").replace(/ \(nome completo\)/,""));});
   RCCAD_OBRIG.forEach(k=>{const d=(docs||{})[k];if(!d||!d.path||d.st==="pendente")L.push(RCCAD_DOCS.find(x=>x[0]===k)[1]);});return L;}
 function rcCadPassos(st){const P=[["Ficha e documentos",["Aguardando ficha","Pendências"]],["Conferência",["Enviado"]],["Contrato pela Clicksign",["Conferido","Contrato enviado"]],["Acesso liberado",["Assinado"]]];const i=P.findIndex(p=>p[1].includes(st));
   return `<ol class="mk-etapas" style="margin:0 0 12px">${P.map((p,j)=>`<li class="${j<i?"feito":j===i?"atual":""}"${j===i?' aria-current="step"':""}><span class="mk-n">${j+1}</span>${p[0]}</li>`).join("")}</ol>`;}
@@ -7508,6 +7514,9 @@ function rcCadFormHTML(o,ed){
   return `${RCCAD_F.map(([g,L])=>`<section class="bloco rcc-b"><h2 class="sec">${g}</h2>${grade(L.map(([k,t,ob])=>rcIn(o,k,t,ob,ed,k==="core_uf"||k==="uf"?'maxlength="2" style="text-transform:uppercase"':k==="email"?'type="email"':k==="cel"||k==="tel"?'inputmode="tel"':"")).join(""))}</section>`).join("")}
   <section class="bloco rcc-b"><h2 class="sec">Sócios</h2>${[0,1,2].map(i=>grade(rcIn(o,"s_nome_"+i,"Nome completo"+(i?"":""),!i,ed)+rcIn(o,"s_cpf_"+i,"CPF",!i,ed,'inputmode="numeric"')+rcIn(o,"s_pct_"+i,"Participação (%)",0,ed,'inputmode="decimal"'))).join("")}</section>
   <section class="bloco rcc-b"><h2 class="sec">Dados bancários para a comissão</h2><p class="meta" style="margin:0">A conta precisa ser da empresa. Estes dados ficam visíveis só para o Customer Service e o Financeiro da Barenbrug.</p>${grade(RCCAD_BANCO.map(([k,t,ob])=>rcIn(o,"b_"+k,t,ob,ed)).join(""))}</section>
+  <section class="bloco rcc-b"><h2 class="sec">Endereço para receber materiais</h2><p class="meta" style="margin:0">É para onde a Barenbrug manda, de vez em quando, materiais técnicos e promocionais que ajudam nas suas vendas: folhetos, banners, brindes e amostras. Pode ser o endereço da empresa ou outro onde sempre tenha alguém para receber, como sua casa, a fazenda ou um escritório parceiro.</p>
+    <label class="check" style="margin:6px 0"><input type="checkbox" data-rccmat="1" ${rcMatIgual(o)?"checked":""} ${ed?"":"disabled"}> Receber no endereço da empresa</label>
+    ${grade(RCCAD_MAT.filter(([k])=>!rcMatIgual(o)||["m_dest","m_tel","m_ref","m_horario"].includes(k)).map(([k,t,ob])=>rcIn(o,k,t,ob,ed,k==="m_uf"?'maxlength="2" style="text-transform:uppercase"':k==="m_tel"?'inputmode="tel"':k==="m_cep"?'inputmode="numeric"':k==="m_horario"?'placeholder="Ex.: dias úteis, das 8h às 17h"':"")).join(""))}</section>
   <section class="bloco rcc-b"><h2 class="sec">Referências</h2><p class="meta" style="margin:0">Opcional. Empresas com quem você já trabalha e outras marcas que você representa.</p>${[0,1].map(i=>tri("r_","Referência comercial",i)).join("")}${[0,1].map(i=>tri("o_","Outra representada",i)).join("")}</section>
   <section class="bloco rcc-b"><h2 class="sec">Área de atuação</h2><p class="meta" style="margin:0">Não precisa listar os municípios. Marque o estado ou os estados em que vai atuar, a cidade de onde sai para o campo e até que distância costuma ir.</p>
     <span class="meta" style="font-weight:700;margin-top:4px">Estado(s) de atuação</span>
@@ -7583,19 +7592,44 @@ document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.clos
 function rcCadFichaVer(c,bn,verBanco){const f=c.ficha||{};const v=x=>{const t=String(x==null?"":x).trim();return t?`<dd>${esc(t)}</dd>`:`<dd class="vz">não informado</dd>`;};
   const dl=L=>`<dl class="fv-dl">${L.map(([t,x])=>`<div><dt>${esc(t)}</dt>${v(x)}</div>`).join("")}</dl>`;const sec=(t,h)=>`<section class="fv-sec"><h3>${esc(t)}</h3>${h}</section>`;
   const blocos=RCCAD_F.map(([g,L])=>sec(g,dl(L.map(([k,t])=>[t.replace(/ \(sigla\)/,""),f[k]]))));
+  const mi=f.m_igual===true;blocos.push(sec("Endereço para receber materiais",dl([["Quem recebe",f.m_dest],["Telefone",f.m_tel],...(mi?[["Endereço","o mesmo da empresa"]]:[["Endereço",[f.m_end,f.m_compl].filter(Boolean).join(", ")],["Bairro",f.m_bairro],["Cidade",[f.m_cidade,f.m_uf].filter(Boolean).join("/")],["CEP",f.m_cep]]),["Ponto de referência",f.m_ref],["Horário para entrega",f.m_horario]])));
   const soc=(f.socios||[]).length?(f.socios||[]).map(x=>dl([["Nome",x.nome],["CPF",x.cpf],["Participação",x.pct?x.pct+"%":""]])).join(""):`<p class="meta" style="margin:0">Nenhum sócio informado.</p>`;
   const lista=(L,t)=>(L||[]).length?(L||[]).map(x=>dl([[t,x.empresa],["Telefone",x.tel],["Contato",x.contato]])).join(""):`<p class="meta" style="margin:0">Nenhuma.</p>`;
   return `<div class="fv"><div class="fv-2">${blocos.join("")}</div>
     <div class="fv-2">${sec("Sócios",soc)}${sec("Área de atuação",dl([["Estados",(f.area_ufs||[]).join(", ")],["Cidade-base",f.area_base],["Raio",f.area_raio],["Regiões principais",f.area]]))}</div>
     ${verBanco?sec("Dados bancários para a comissão",bn===null?`<span class="meta">Carregando…</span>`:dl(RCCAD_BANCO.map(([k,t])=>[t,(bn||{})[k]]))):""}
     <div class="fv-2">${sec("Referências comerciais",lista(f.refs,"Empresa"))}${sec("Outras representadas",lista(f.outras,"Empresa"))}</div></div>`;}
+function rcPassosHTML(){
+  const ir=gerePessoas()?`<button class="btn" data-a="guia-ir" data-v="gestao" data-p="gestao-cad">Ir para Cadastrar pessoa</button>`:`<p class="meta" style="margin:6px 0 0">Você não cadastra pessoas no portal. Peça ao Marketing para criar o acesso com estes dados.</p>`;
+  const st=(n,t,body)=>`<li class="rcp-p"><span class="rcp-n">${n}</span><div class="rcp-c"><strong>${t}</strong>${body}</div></li>`;
+  const ul=L=>`<ul class="rcp-l">${L.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+  return `<details class="bloco rcc-b rcp" ${S.rcpFechado?"":"open"} id="rcp-det"><summary><h2 class="sec" style="display:inline">Primeiros passos para cadastrar um RC novo</h2></summary>
+  <p class="meta" style="margin:6px 0 10px">Use quando o candidato foi aprovado na entrevista e está em Cadastro e contrato no funil de Candidatos a RC. O RC precisa ter a empresa aberta (ME ou EPP) e o registro no CORE.</p>
+  <ol class="rcp-o">
+   ${st(1,"Cadastre o RC no Portal Conecta",ul(["Em Painel de gerenciamento › Cadastro › Cadastrar pessoa, preencha nome completo e o e-mail da empresa do RC.","Perfil: <strong>RC</strong>.","Seções de acesso: as que ele vai usar depois do contrato, como Academia de Híbridos, Conecta RC, Meu CRM e Condições Comerciais.","Responsável comercial: quem vai acompanhar o RC. Vínculo no ranking: o nome dele no CRM, se já existir.","Cursos obrigatórios: Academia de Híbridos e Conecta RC.","Clique em Criar acesso. O RC recebe o e-mail com login e senha provisória; mande também a mensagem pronta pelo WhatsApp, porque o e-mail às vezes cai no spam."])+ir)}
+   ${st(2,"Volte aqui e peça a ficha e os documentos",`<p>Em <button class="link" data-a="rcp-pedir">Pedir a ficha e os documentos</button>, logo abaixo, escolha o nome do RC e clique em Pedir ficha e documentos. O cadastro dele abre e ele recebe o aviso.</p>`)}
+   ${st(3,"Acompanhe o cadastro na lista Cadastros",`<p>O status mostra em que ponto está: aguardando o RC, enviado, pendências, conferido, contrato enviado e assinado.</p>`)}
+  </ol>
+  <h3 class="pgd-h" style="margin:14px 0 6px">O que acontece depois</h3>
+  <ol class="rcp-t">
+   <li><strong>O RC entra no portal.</strong> Cria a senha dele, ativa a verificação em duas etapas e confirma o e-mail. Até o contrato ser assinado, ele vê só o cadastro e as mensagens.</li>
+   <li><strong>O RC preenche a Ficha Cadastral e envia os documentos.</strong> Dados da empresa, sócios, área de atuação, dados bancários para a comissão, o endereço para receber materiais técnicos e promocionais da Barenbrug, referências e outras representadas. Documentos: ${RCCAD_OBRIG.map(k=>(RCCAD_DOCS.find(d=>d[0]===k)||[,""])[1]).join(", ")}.</li>
+   <li><strong>O Customer Service confere.</strong> Marca cada documento como ok ou pendente. Se faltar algo, devolve com pendências e o RC corrige pelo portal.</li>
+   <li><strong>O contrato sai pela Clicksign.</strong> O portal gera o contrato preenchido a partir da ficha; o Customer Service confere e envia para o e-mail da empresa.</li>
+   <li><strong>Contrato assinado, acesso liberado.</strong> O Customer Service anexa o PDF assinado aqui e o acesso completo do RC abre na hora.</li>
+  </ol>
+  <h3 class="pgd-h" style="margin:14px 0 6px">O que libera para o RC</h3>
+  <div class="rcp-g"><div class="rcp-k"><strong>Antes do contrato</strong>${ul(["Só o cadastro: ficha, documentos e o status da conferência.","Mensagens, para tirar dúvidas com a Barenbrug."])}</div>
+   <div class="rcp-k on"><strong>Depois do contrato assinado</strong>${ul(["As seções marcadas no passo 1, como Academia de Híbridos, Conecta RC, Meu CRM e Condições Comerciais.","No primeiro acesso completo, ele responde o perfil do representante.",`Os cursos obrigatórios, em até ${PRAZO_CURSO_DIAS} dias. Depois do prazo, as outras áreas ficam bloqueadas até concluir.`,"Com os cursos aprovados, o Marketing devolve o RC ao comercial, que confirma: pronto para vender."])}</div></div>
+  </details>`;}
 function vRCCadastros(){
   if(!veRcCadastros())return vRCApresentacao();
   if(!S.rcCads){carregarRcCads();return `<div class="carregando">Carregando os cadastros…</div>`;}
   if(S.rcCadSel)return vRCCadastroDet();
   const {L,P,livres}=S.rcCads;const g=rcCadGestor();
   return `<div><h1 class="titulo">Cadastro RCs</h1><p class="sub">O RC envia a Ficha Cadastral e os documentos pelo portal, o Customer Service confere, o contrato sai pela Clicksign e, assinado, fica no cadastro do RC e libera o acesso completo.</p></div>
-  <section class="bloco rcc-b"><h2 class="sec">Pedir a ficha a um RC novo</h2><p class="meta" style="margin:0">Crie o acesso do RC com o perfil RC e escolha o nome aqui. Ele recebe o aviso e, ao entrar, vê só o cadastro até o contrato ser assinado.</p>
+  ${rcPassosHTML()}
+  <section class="bloco rcc-b" id="rcc-pedir"><h2 class="sec">Passo 2 · Pedir a ficha e os documentos</h2><p class="meta" style="margin:0">Escolha o RC que você acabou de cadastrar e clique em Pedir ficha e documentos. Só aparecem aqui os RCs que já têm acesso e ainda não têm cadastro aberto.</p>
     ${livres.length?`<div class="mk-link" style="margin-top:6px"><select id="rcc_novo" aria-label="RC"><option value="">Escolha o RC</option>${livres.map(p=>`<option value="${p.id}">${esc(p.nome||"")}${p.comercial_resp?" · "+esc(p.comercial_resp):""}</option>`).join("")}</select><button class="btn" data-a="rcc-abrir-cad">Pedir ficha e documentos</button></div>`:`<div class="vazio">Todos os RCs ativos já têm cadastro aberto, ou nenhum RC novo foi criado ainda.</div>`}</section>
   <section class="bloco rcc-b"><h2 class="sec">Cadastros</h2>${L.length?`<div class="lista">${L.map(c=>{const p=P[c.user_id]||{};return `<button class="linha rcc-it" data-a="rcc-ver" data-v="${c.user_id}"><div style="min-width:0;text-align:left"><strong>${esc((c.ficha||{}).razao||p.nome||"RC")}</strong><span class="meta">${esc(p.nome||"")}${p.comercial_resp?" · responsável: "+esc(p.comercial_resp):""} · atualizado ${fmtDataHora(c.atualizado_em)}</span></div>${stTag(c.status,RCCAD_COR[c.status])}</button>`;}).join("")}</div>`:`<div class="vazio">Nenhum cadastro aberto ainda.</div>`}</section>
   ${g?`<section class="bloco rcc-b"><h2 class="sec">Modelo do contrato da safra</h2><p class="meta" style="margin:0">O contrato padrão em Word, com os campos marcados com XXXXXXX, como no modelo da safra 26/27. O portal preenche razão social, CNPJ, sede, cidade, sócio, CPF, CORE e a data a partir da ficha. Os campos do anuente ficam para preencher à mão, quando for o caso. Ao trocar de safra, envie o modelo novo.</p><label class="btn sec pgd-up" style="margin-top:6px">Enviar modelo (.docx)<input type="file" data-rcmodelo="1" accept=".docx"></label></section>`:""}`;}
@@ -7619,7 +7653,7 @@ function vRCCadastroDet(){
   <section class="bloco"><h2 class="sec">Contato no portal</h2><dl class="fv-dl"><div><dt>Nome</dt><dd>${esc(p.nome||"—")}</dd></div><div><dt>E-mail de acesso</dt><dd>${esc(p.email||"—")}</dd></div><div><dt>Cidade</dt><dd>${esc([p.cidade,p.uf].filter(Boolean).join("/")||"—")}</dd></div><div><dt>Responsável comercial</dt><dd>${esc(p.comercial_resp||"—")}</dd></div></dl></section>
   <section class="bloco"><h2 class="sec">Ficha cadastral</h2>${rcCadFichaVer(c,g?(S.rcCadBanco||{})[c.user_id]:undefined,g)}</section>`;}
 document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.rcc)return;(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;});
-document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
+document.addEventListener("change",ev=>{const t=ev.target;if(!t||!t.dataset)return;if(t.dataset.rccmat){(S.rcCadForm=S.rcCadForm||{}).m_igual=t.checked;render();return;}if(t.dataset.rcc&&t.tagName==="SELECT"){(S.rcCadForm=S.rcCadForm||{})[t.dataset.rcc]=t.value;render();return;}if(!t.dataset.rccuf)return;const o=(S.rcCadForm=S.rcCadForm||{});const L=new Set(o.area_ufs||[]);if(t.checked)L.add(t.dataset.rccuf);else L.delete(t.dataset.rccuf);o.area_ufs=[...L].sort();render();});
 document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
   if(t.dataset.rcdoc){const f=t.files&&t.files[0];if(!f)return;if(f.size>15*1024*1024){aviso("Arquivo acima de 15 MB.");return;}const k=t.dataset.rcdoc,uid=S.profile.id;const ext=(f.name.split(".").pop()||"pdf").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);
     const path=`${uid}/${k}-${Date.now().toString(36)}.${ext}`;aviso("Enviando "+f.name+"…");const up=await sb.storage.from("rc-cadastro").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false});if(up.error){aviso("Não foi possível enviar o arquivo.");return;}
@@ -15483,6 +15517,7 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="pr-doc-del"){const d=(S.prD||[]).find(x=>x.id===+v);if(!d)return;const {error}=await sb.from("premio_docs").delete().eq("id",d.id);if(error){aviso("Não foi possível remover.");return;}if(ehAdmin())await sb.storage.from("premio").remove([d.path]);S.prD=S.prD.filter(x=>x.id!==d.id);const w=window.scrollY;render();window.scrollTo(0,w);aviso("Documento removido da ficha.");return;}
   if(a==="rcc-abrir"){if(!v)return;try{const {data}=await sb.storage.from("rc-cadastro").createSignedUrl(v,600);if(data&&data.signedUrl)window.open(data.signedUrl,"_blank","noopener");else aviso("Não foi possível abrir o arquivo.");}catch(e){aviso("Não foi possível abrir o arquivo.");}return;}
   if(a==="rcc-ver"){S.rcCadSel=v||null;render();window.scrollTo(0,0);return;}
+  if(a==="rcp-pedir"){const el=document.getElementById("rcc-pedir");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return;}
   if(a==="rcc-abrir-cad"){const id=(document.getElementById("rcc_novo")||{}).value;if(!id){aviso("Escolha o RC.");return;}b.disabled=true;const {error}=await sb.rpc("rc_cad_abrir",{p_user:id});if(error){b.disabled=false;aviso("Não foi possível abrir o cadastro.");return;}S.rcCads=null;render();aviso("Cadastro aberto. O RC recebe o aviso e vê a ficha ao entrar.");return;}
   if(a==="rcc-conf"&&v==="receber"){if(!rcCadGestor())return;b.disabled=true;const {error}=await sb.rpc("rc_cad_conferir",{p_user:S.rcCadSel,p_marcas:{},p_acao:"receber",p_obs:null});if(error){b.disabled=false;aviso("Não foi possível registrar: "+(error.message||"erro"));return;}S.rcCads=null;render();aviso("Cadastro recebido. Agora confira os documentos.");return;}
   if(a==="rcc-conf"){if(!rcCadGestor())return;const c=((S.rcCads||{}).L||[]).find(x=>x.user_id===S.rcCadSel);if(!c)return;const M={};let pend=0;
