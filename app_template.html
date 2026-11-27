@@ -1411,6 +1411,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .jogo-m{max-width:560px;margin:0 auto;padding:16px;min-height:calc(100dvh - 260px);display:flex;align-items:center;justify-content:center}.jogo-c{background:#FFDB00;border-radius:16px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}.jogo-c .titulo{margin:0;color:#1E1E1E}.jogo-c p{margin:0;max-width:34em;color:#1E1E1E}.jogo-b{font-size:1.15em;padding:14px 40px}
 .rcp summary{cursor:pointer;list-style:revert}.rcp-o,.rcp-t{margin:0;padding:0;display:flex;flex-direction:column;gap:12px}.rcp-o{list-style:none}.rcp-p{display:flex;gap:10px;align-items:flex-start}.rcp-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--amarelo,#FFDB00);color:#1E1E1E;font-weight:800;display:flex;align-items:center;justify-content:center}.rcp-c{min-width:0;flex:1}.rcp-c p{margin:4px 0 0}.rcp-l{margin:4px 0 6px;padding-left:18px;display:flex;flex-direction:column;gap:3px}.rcp-t{padding-left:20px;gap:8px}.rcp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.rcp-k{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;min-width:0}.rcp-k.on{border-color:#00A8E2;background:#f2fbfe}
 .uv-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}.uv-card{border:1px solid #e6eaee;border-radius:12px;padding:14px;display:grid;align-content:start;gap:10px;min-width:0;background:#fff}.uv-h{display:flex;flex-direction:column;gap:2px}.uv-h strong{font-size:16px}.uv-corpo{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:center}.uv-svg{width:100%;max-width:230px;justify-self:center}.uv-tog{display:flex;flex-wrap:wrap;gap:6px}.uv-c1{font-size:4.3px;font-weight:800;fill:#1E1E1E}.uv-c2{font-size:2.6px;fill:#6b7480}.uv-leg{display:grid;gap:6px;min-width:0}.uv-li{display:grid;grid-template-columns:12px minmax(0,1fr) auto 44px;gap:8px;align-items:center;font-size:13px}.uv-li i{width:12px;height:12px;border-radius:3px}.uv-k{display:flex;flex-direction:column;min-width:0;line-height:1.25}.uv-k .meta{font-size:11px}.uv-li strong{font-variant-numeric:tabular-nums;white-space:nowrap}.uv-p{text-align:right;color:#6b7480;font-variant-numeric:tabular-nums}.uv-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;border-top:1px solid #e6eaee;padding-top:10px}.uv-kpis div{display:flex;flex-direction:column;gap:2px;min-width:0}.uv-kpis span:first-child{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7480}.uv-kpis strong{font-size:18px}
+.mk-fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:0 0 10px}.mk-foto{padding:0;border:1px solid #e6eaee;border-radius:10px;overflow:hidden;aspect-ratio:1/1;background:#f3f5f7;cursor:pointer;max-width:100%}.mk-foto img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -7735,6 +7736,24 @@ async function rcCadSalvar(enviar){const o=S.rcCadForm||{};const ficha=rcCadFich
   if(enviar){S.rcCadMeu=undefined;S.rcCadForm=null;window.scrollTo(0,0);}else S.rcCadMeu={...S.rcCadMeu,ficha};render();aviso(enviar?"Ficha enviada para conferência.":"Ficha salva. Você pode continuar depois.");}
 
 const soCSRC=()=>!S.demo&&temPerfil("Customer Service")&&!ehAdmin()&&!temPerfil("Comercial Barenbrug")&&!temPerfil("RC")&&!temPerfil("Franqueado Nutron");
+/* ===== Eventos dos RCs: ações de marketing com RC envolvido (antes misturadas no quadro interno do Marketing) ===== */
+const veRcEventos=()=>!S.demo&&(ehMkt()||ehAdmin()||temPerfil("Comercial Barenbrug"));
+function vRCEventos(){
+  if(!S.mk){if(!S._rceBusy){S._rceBusy=1;carregarMkt().then(()=>{S._rceBusy=0;render();}).catch(()=>{S._rceBusy=0;});}return `<div class="carregando">Carregando os eventos…</div>`;}
+  const g=ehMkt();const X=S.mk.filter(a=>mkEhRC(a)&&!a.agrupador&&a.status!=="Cancelada");
+  const fs=S.rceF||"";const ABERTO=a=>!["Concluída","Recusada"].includes(a.status);
+  const L=X.filter(a=>!fs||(fs==="ab"?ABERTO(a):fs==="fe"?a.status==="Concluída":a.status==="Recusada"));
+  const rcDe=a=>a.rc_envolvido||((S.mk||[]).find(m=>m.id===a.mae_id)||{}).rc_envolvido||"Sem RC";
+  const grp={};L.forEach(a=>{(grp[rcDe(a)]=grp[rcDe(a)]||[]).push(a);});
+  const ped=x=>Number(x.verba_pedida)||Number(x.valor_prev)||0;
+  const tot=X.filter(a=>a.status!=="Recusada");
+  const st=a=>a.status==="Solicitada"?stTag("Aguardando o Marketing","amarelo"):a.status==="Em análise"?stTag("Em análise","azul"):a.status==="Pausada"?stTag("Pausada","cinza"):a.status==="Recusada"?stTag("Recusada","vermelho"):a.status==="Concluída"?stTag("Realizado","verde"):stTag("Aprovado · "+a.status,"verde");
+  const lin=a=>`<div class="linha mk-linha"><div style="min-width:0"><button class="link" data-a="mk-abrir" data-v="${a.id}" style="text-align:left"><strong>${esc(a.titulo)}</strong></button><span class="meta">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"sem data",a.local||"",a.tipo||""].filter(Boolean).join(" · "))}</span><span class="bd-tags">${st(a)}${g?stTag(mkFin(a),MK_FIN_COR[mkFin(a)]||"cinza"):""}</span></div>${g?`<div style="text-align:right"><strong class="val">${fmtK0(a.status==="Solicitada"?ped(a):mkCusto(a))}</strong><span class="meta" style="display:block">${a.status==="Solicitada"?"pedido":"verba"}</span></div>`:""}</div>`;
+  return `<div><h1 class="titulo">Eventos dos RCs</h1><p class="sub">Dias de campo, feiras, dias de negócio e outras ações que os RCs pedem ao Marketing. Ficam aqui, separados do quadro interno do Marketing. A verba de cada evento continua contando na Gestão das ações. Toque no evento para abrir o cartão.</p></div>
+  <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="metric"><span>Eventos</span><strong>${tot.length}</strong><span class="meta">${Object.keys(grp).length} ${Object.keys(grp).length===1?"RC":"RCs"}</span></div><div class="metric"><span>Em aberto</span><strong>${tot.filter(ABERTO).length}</strong></div><div class="metric"><span>Realizados</span><strong>${tot.filter(a=>a.status==="Concluída").length}</strong></div>${g?`<div class="metric"><span>Verba</span><strong>${fmtK0(tot.reduce((t,a)=>t+mkCusto(a),0))}</strong><span class="meta">aprovado e em análise</span></div>`:""}</div>
+  <div class="filtros" style="margin:10px 0 0">${[["","Todos"],["ab","Em aberto"],["fe","Realizados"],["re","Recusados"]].map(([k,t])=>`<button class="chip" data-a="rce-f" data-v="${k}" aria-pressed="${fs===k}">${t}</button>`).join("")}</div>
+  ${Object.keys(grp).length?Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).map(([rc,xs])=>`<section class="bloco"><h2 class="sec">${esc(rc)} · ${xs.length}</h2><div class="lista">${xs.slice().sort((a,b)=>String(a.inicio||"9").localeCompare(String(b.inicio||"9"))).map(lin).join("")}</div></section>`).join(""):`<div class="vazio">Nenhum evento de RC${fs?" com este filtro":""}.</div>`}
+  ${g?`<p class="meta" style="margin:10px 0 0">Para cadastrar um evento de RC, crie a ação em Ações de Marketing e preencha o campo RC envolvido. Ela aparece aqui automaticamente.</p>`:""}`;}
 function subnavRC(){
   if(soCSRC())return navGrupos([["Gestão dos RCs",[["rc-cand","Candidatos a RC"],["rc-cadastros","Cadastro RCs"],["rc-perfis","Perfis dos RCs"],["rc-guia","Jornada do novo RC"],["rc-meus","RCs por comercial"],["rc-ranking","Ranking de vendas"],["rc-mapa","Mapa de vendas"],["rc-cobertura","Cobertura dos RCs"]]],["O programa",[["rc-apresentacao","Apresentação"],["rc-faq","Perguntas frequentes"]]]],"Conecta RC",k=>S.pag===k||(k==="rc-perfis"&&S.pag==="rc-perfil"));
   const g=[];const ger=[];
@@ -7744,6 +7763,7 @@ function subnavRC(){
   if(veMeusRC())ger.push(["rc-meus",ehAdmin()?"RCs por comercial":"Meus RCs"]);
   if(vePainelRC()){ger.push(["rc-ranking","Ranking de vendas"]);ger.push(["rc-mapa",(ehAdmin()||temPerfil("Comercial Barenbrug"))?"Mapa de vendas":"Meu mapa"]);}
   if(ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("Marketing"))ger.push(["rc-cobertura","Cobertura dos RCs"]);
+  if(veRcEventos())ger.push(["rc-eventos","Eventos dos RCs"]);
   const G=[["O programa",[["rc-apresentacao","Apresentação"],["rc-curso","Curso de integração"],["rc-faq","Perguntas frequentes"]]],
     ["Vender",[["rc-pedido","Negociações"],["rc-calc","Calculadora"]]],
     [veGuiaRC()?"Gestão dos RCs":"Resultados",ger],
@@ -13065,6 +13085,17 @@ function vFinPremissas(C){
 /* ================= AÇÕES DE MARKETING + BRINDES DE MARKETING ================= */
 const ehMkt=()=>!S.demo&&(ehAdmin()||temPerfil("Marketing"));
 const meusAcessos=()=>Array.isArray(S.profile&&S.profile.acessos)?S.profile.acessos:[];
+const MK_EXT={pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",heic:"image/heic",heif:"image/heif",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",txt:"text/plain"};
+const mkTipoArq=f=>f.type&&MK_MIMES.includes(f.type)?f.type:(MK_EXT[String(f.name||"").split(".").pop().toLowerCase()]||f.type||"");
+async function mkSubirArquivos(id,files){let ok=0;
+  for(const f of files){if(f.size>15*1048576){aviso(`"${f.name}" passa de 15 MB.`);continue;}const tp=mkTipoArq(f);if(!MK_MIMES.includes(tp)){aviso(`Tipo de arquivo não aceito: ${f.name}`);continue;}
+    const path=`acoes/${id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}-${mkLimpo(f.name)}`;aviso(`Enviando ${f.name}…`);
+    try{const up=await sb.storage.from("mkt").upload(path,f,{contentType:tp,upsert:false});if(up.error)throw up.error;
+      const r=await sb.rpc("mkt_anexar",{p_acao:id,p_path:path,p_nome:f.name.slice(0,160),p_tipo:tp,p_tam:f.size,p_url:null});if(r.error){await sb.storage.from("mkt").remove([path]);throw r.error;}ok++;}catch(e){aviso(`Não foi possível enviar ${f.name}.`);}}
+  if(ok)aviso(ok===1?"Arquivo anexado.":ok+" arquivos anexados.");return ok;}
+const mkArqCampo=id=>`<div><label for="${id}">Fotos e PDFs (opcional)</label><input type="file" id="${id}" multiple accept="${MK_MIMES.join(",")},.heic,.heif,.pdf"><span class="meta">Fotos do local, convite, programação, orçamento. Até 15 MB por arquivo.</span></div>`;
+/* eventos dos RCs: ficam no Conecta RC, fora do quadro interno do Marketing */
+const mkEhRC=a=>!!a&&!ehTarefa(a)&&(!!a.rc_envolvido||(!!a.mae_id&&(S.mk||[]).some(m=>m.id===a.mae_id&&m.rc_envolvido)));
 const veAcoesMkt=()=>!S.demo&&(ehMkt()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
 const mkPodeSolic=()=>!S.demo&&(ehMkt()||ehAdmin()||temPerfil("Comercial Barenbrug")||temPerfil("RC")||meusAcessos().includes("acoes-mkt"));
 const MK_FORA=["Cancelada","Solicitada","Recusada"];const mkConta=a=>!MK_FORA.includes(a.status);
@@ -13075,7 +13106,7 @@ const MK_COLS=["Em análise","Pausada","A fazer","Em andamento","Concluída","Ca
 const MK_SIT_F=[["","Todas as situações"],["aprovadas","Aprovadas (verba aprovada ou paga)"],["analise","Em análise (provisionadas)"],["pausadas","Pausadas (provisionadas)"],["prov","Todas as provisionadas"],["pagas","Pagas"]];
 const mkSitOk=(a,k)=>!k||(k==="aprovadas"?(mkFin(a)==="Aprovada"||mkFin(a)==="Paga"):k==="analise"?a.status==="Em análise":k==="pausadas"?a.status==="Pausada":k==="prov"?mkFin(a)==="Provisionada":k==="pagas"?mkFin(a)==="Paga":true);
 
-const MK_MIMES=["image/jpeg","image/png","image/webp","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.ms-powerpoint","application/vnd.openxmlformats-officedocument.presentationml.presentation","text/plain"];
+const MK_MIMES=["image/jpeg","image/png","image/webp","image/heic","image/heif","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.ms-powerpoint","application/vnd.openxmlformats-officedocument.presentationml.presentation","text/plain"];
 const BD_LOCAIS=["Estoque UPI Guaíra","Escritório RP"];
 const BD_SAFRA="26/27";
 const bdEmprestado=id=>(S.bdEmp||[]).filter(e=>e.brinde_id===id&&!e.encerrado).reduce((t,e)=>t+Math.max(0,(Number(e.qtd)||0)-(Number(e.devolvido_qtd)||0)),0);
@@ -13500,7 +13531,7 @@ function vAcoesQuadro(){
   const meses=[...new Set(S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada").map(a=>String(a.inicio||"").slice(0,7)).filter(Boolean))].sort();
   const mesNome=k=>{const [y,m]=k.split("-");return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+y.slice(2);};
   const okData=a=>{if(!fd)return true;if(fd==="sem")return !a.inicio;if(fd==="passou")return !!a.inicio&&String(a.fim||a.inicio)<mkHoje();if(fd==="vem")return !!a.inicio&&String(a.fim||a.inicio)>=mkHoje();const i=String(a.inicio||"").slice(0,7),f=String(a.fim||a.inicio||"").slice(0,7);return !!i&&i<=fd&&f>=fd;};
-  const fF=S.mkFrente||"";const L=S.mk.filter(a=>a.status!=="Solicitada"&&a.status!=="Recusada"&&!(a.mae_id&&S.mk.some(m=>m.id===a.mae_id&&m.status!=="Solicitada"&&m.status!=="Recusada"))&&(!fF||(fF==="tarefa"?ehTarefa(a):!ehTarefa(a)))&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&(!frc||(frc==="sem"?!a.rc_envolvido:finNorm(a.rc_envolvido||"")===finNorm(frc)))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
+  const fF=S.mkFrente||"";const nRC=S.mk.filter(a=>mkEhRC(a)&&!a.agrupador&&a.status!=="Recusada"&&a.status!=="Cancelada").length;const L=S.mk.filter(a=>!mkEhRC(a)&&a.status!=="Solicitada"&&a.status!=="Recusada"&&!(a.mae_id&&S.mk.some(m=>m.id===a.mae_id&&m.status!=="Solicitada"&&m.status!=="Recusada"))&&(!fF||(fF==="tarefa"?ehTarefa(a):!ehTarefa(a)))&&(ft==="Todos"||a.tipo===ft)&&(!fr||(fr==="sem"?!a.responsavel_nome:a.responsavel_nome===fr))&&(!frc||(frc==="sem"?!a.rc_envolvido:finNorm(a.rc_envolvido||"")===finNorm(frc)))&&okData(a)&&mkSitOk(a,S.mkSitF||"")&&(!busca||finNorm([a.titulo,a.descricao,a.local,(a.envolvidos_nomes||[]).join(" ")].join(" ")).includes(busca)));
   const verCanc=!!S.mkCanc;const cols=MK_COLS.filter(s=>s!=="Cancelada"||verCanc);
   const tot=L.filter(mkConta).reduce((t,a)=>t+mkCustoQ(a),0);
   return `<div><h1 class="titulo">Ações de Marketing</h1><p class="sub">${g?"Quadro das ações institucionais da Barenbrug. Você vê todas; cada pessoa do time comercial vê só as ações em que está envolvida.":"As ações de marketing em que você está envolvido. Abra o cartão para ver os detalhes, anexar arquivos e comentar."}</p></div>
@@ -13509,7 +13540,6 @@ function vAcoesQuadro(){
     <div class="filtros" style="margin:0">${[["","Tudo"],["acao","Ações"],["tarefa","Tarefas do Marketing"]].map(([k,t])=>`<button class="chip" data-a="mk-frente-f" data-v="${k}" aria-pressed="${(S.mkFrente||"")===k}">${t}</button>`).join("")}${inf("Ações acontecem com o canal ou com o produtor e entram no calendário de ações. Tarefas do Marketing são o trabalho do dia a dia do time: plano de postagem, peça, vídeo, campanha, relatório. Arraste um cartão para outra coluna para mudar a etapa (no computador). No celular, abra o cartão e use os botões de etapa.")}</div>
     <select id="mk_tipo" aria-label="Tipo de ação">${["Todos",...(S.mkFrente==="tarefa"?TAREFA_NOMES:S.mkFrente==="acao"?MK_TIPOS:[...MK_TIPOS,...TAREFA_NOMES])].map(t=>`<option ${t===ft?"selected":""}>${t}</option>`).join("")}</select>
     <select id="mk_resp_f" aria-label="Responsável"><option value="">Todos os responsáveis</option><option value="sem" ${fr==="sem"?"selected":""}>Sem responsável</option>${resps.map(n=>`<option ${fr===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
-    ${(()=>{const R=[...new Set(S.mk.map(a=>a.rc_envolvido).filter(Boolean))].sort((a,b)=>a.localeCompare(b));return R.length?`<select id="mk_rc_f" aria-label="RC envolvido"><option value="">Todos os RCs</option><option value="sem" ${frc==="sem"?"selected":""}>Sem RC</option>${R.map(n=>`<option ${frc===n?"selected":""}>${esc(n)}${(()=>{const k=S.mk.filter(a=>a.rc_envolvido===n&&a.status!=="Solicitada"&&a.status!=="Recusada"&&!a.agrupador).length;return k?" ("+k+")":"";})()}</option>`).join("")}</select>`:"";})()}
     <select id="mk_mes_f" aria-label="Data da ação"><option value="">Qualquer data</option><option value="vem" ${fd==="vem"?"selected":""}>Daqui para a frente</option><option value="passou" ${fd==="passou"?"selected":""}>Já passaram</option>${meses.map(m=>`<option value="${m}" ${fd===m?"selected":""}>${mesNome(m)}</option>`).join("")}<option value="sem" ${fd==="sem"?"selected":""}>Sem data</option></select>
     <select id="mk_sit_f" aria-label="Situação">${MK_SIT_F.map(([k,t])=>`<option value="${k}" ${(S.mkSitF||"")===k?"selected":""}>${t}</option>`).join("")}</select>
     ${fr||fd||frc||S.mkSitF||ft!=="Todos"||S.mkBusca?`<button class="link" data-a="mk-limpa-f">limpar filtros</button>`:""}
@@ -13517,6 +13547,7 @@ function vAcoesQuadro(){
     ${g?`<button class="btn" data-a="mk-nova">+ Nova ação</button><button class="btn sec" data-a="mk-nova" data-v="tarefa">+ Nova tarefa</button>`:""}
   </div>
   ${g?`<p class="meta" style="margin:0">${L.filter(mkConta).length} ações · ${fmtK0(tot)} no total (realizado quando houver, senão previsto)</p>`:""}
+  ${nRC?`<p class="nota-admin" style="margin:6px 0 0">Os eventos dos RCs (${nRC}) ficam no <strong>Conecta RC › Eventos dos RCs</strong>. Este quadro mostra só as ações e tarefas internas do Marketing; a verba deles continua contando na Gestão. <button class="link" data-a="rce-ir">Ver eventos dos RCs</button></p>`:""}
   ${g&&frc&&frc!=="sem"?(()=>{const X=S.mk.filter(a=>!a.agrupador&&finNorm(a.rc_envolvido||"")===finNorm(frc)&&a.status!=="Recusada"&&a.status!=="Cancelada");const ped=X.reduce((t,a)=>t+(+a.verba_pedida||0),0);const an=X.filter(a=>a.status==="Em análise"||a.status==="Solicitada");const ap=X.filter(a=>!an.includes(a));const sAp=ap.reduce((t,a)=>t+mkCusto(a),0);
     return `<section class="bloco" style="margin:8px 0;box-shadow:inset 4px 0 0 var(--amarelo)"><h2 class="sec" style="margin:0 0 6px">${esc(frc)}: soma das ações com este RC envolvido</h2><div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="metric"><span>Pedido pelo RC</span><strong>${fmtK0(ped)}</strong><span class="meta">${X.length} ${X.length===1?"ação":"ações"}</span></div><div class="metric"><span>Aprovado</span><strong>${fmtK0(sAp)}</strong><span class="meta">${ap.length} ${ap.length===1?"ação aprovada":"ações aprovadas"}</span></div><div class="metric"><span>Ainda em análise</span><strong>${an.length}</strong><span class="meta">${an.length?"somam "+fmtK0(an.reduce((t,a)=>t+(+a.verba_pedida||0),0))+" pedidos":"nada pendente"}</span></div></div><p class="meta" style="margin:6px 0 0">Aprovado é o valor previsto (ou realizado) de cada cartão que já saiu de Em análise. Canceladas e recusadas ficam fora da conta.</p></section>`;})():""}
   <div class="mk-qw"><div class="mk-quadro">${cols.filter(st=>st!=="Concluída").map(st=>{const xs=L.filter(a=>a.status===st);const soma=xs.reduce((t,a)=>t+mkCustoQ(a),0);
@@ -13540,6 +13571,7 @@ function mkFormHTML(a){
     <div class="dupla"><div><label for="mk_ini">Data de início</label><input id="mk_ini" type="date" value="${esc(a.inicio||"")}"></div><div><label for="mk_fim"><span class="mk-so-acao">Data de fim</span><span class="mk-so-tarefa">Prazo</span></label><input id="mk_fim" type="date" value="${esc(a.fim||"")}"></div></div>
     <div class="mk-so-acao"><label for="mk_loc">Local</label><input id="mk_loc" maxlength="160" value="${esc(a.local||"")}" placeholder="Cidade/UF, fazenda, revenda…"></div>
     <div><label for="mk_desc">Descrição</label><textarea id="mk_desc" rows="4" maxlength="4000">${esc(a.descricao||"")}</textarea></div>
+    ${a.id?"":mkArqCampo("mk_arqs")}
     <div class="mk-so-tarefa"><label for="mk_entrega">Entrega${inf("O que sai desta tarefa: o link do vídeo, o PDF do plano, a data em que foi publicado. É o registro de que a tarefa foi feita, no lugar da medição de vendas das ações.")}</label><textarea id="mk_entrega" rows="2" maxlength="1000" placeholder="Ex.: plano de dezembro aprovado e publicado; link do vídeo final">${esc((a.resultado&&a.resultado.entrega)||"")}</textarea></div>
     <label class="check mk-so-tarefa"><input type="checkbox" id="mk_temcusto" data-a="mk-custo" ${C0?"checked":""}> Esta tarefa tem custo <span class="meta">(produção, fornecedor, compra)</span></label>
     <div class="mk-custo"><div class="dupla"><div><label for="mk_fin">Situação financeira</label><select id="mk_fin">${MK_FIN.map(t=>`<option ${t===mkFin(a)?"selected":""}>${t}</option>`).join("")}</select><span class="meta">Provisionada: reservada · Aprovada: a pagar · Paga: já debitada da verba</span></div>
@@ -13592,6 +13624,7 @@ function vAcoesSolicNova(){
     <div class="dupla"><div><label for="ms_pub">Público esperado</label><input id="ms_pub" maxlength="300" placeholder="Ex.: 40 pecuaristas da região, clientes da revenda X"></div><div><label for="ms_val">Verba pedida (R$)</label><input id="ms_val" inputmode="decimal" placeholder="0,00"><span class="meta">Deixe em branco se não precisar de verba.</span></div></div>
     <section class="mz-sol"><h3 class="pgd-h">Sobre o público e o seguimento</h3><p class="meta">Responda pensando em quem vai estar na ação e em quem atende os contatos depois. As respostas ajudam o Marketing a priorizar os pedidos da safra.</p>${mzCampos({},true)}</section>
     <div><label for="ms_rc">RC envolvido (se houver)</label><input id="ms_rc" list="ms_rc_l" maxlength="120" placeholder="Ex.: o RC que pediu a ação"><datalist id="ms_rc_l">${mkRcOps().map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
+    ${mkArqCampo("ms_arqs")}
     <div><label for="ms_br">Brindes de que precisa</label><textarea id="ms_br" rows="2" maxlength="2000" placeholder="Ex.: 40 bonés, 40 cadernetas, 1 banner. O Marketing confere o estoque e separa."></textarea></div>
     <div class="acoes"><button class="btn" type="submit">Enviar ao Marketing</button></div></form>`;
 }
@@ -13605,7 +13638,7 @@ function vAcoesCard(){
   const podeRem=x=>g||x.por===S.user.id;
   const idx=MK_STATUS.indexOf(a.status);
   const vp=S.mkVolta&&MK_VOLTA[S.mkVolta]?S.mkVolta:((a.solicitante||a.solicitante_nome)&&(a.status==="Solicitada"||!g)?"acoes-solic":"acoes-quadro");
-  return `<button class="voltar" data-a="pag" data-v="${vp}">‹ ${MK_VOLTA[vp]}</button>
+  return `<button class="voltar" data-a="${vp==="rc-eventos"?"rce-ir":"pag"}" data-v="${vp}">‹ ${MK_VOLTA[vp]}</button>
   ${capa?`<div class="mk-capa-g"><img src="${esc(capa)}" alt=""></div>`:""}
   <div><span class="rot">${a.agrupador?"Pedido agrupado":esc(a.tipo||"Ação")+" · "+esc(a.status)}</span><h1 class="titulo">${esc(a.titulo)}</h1>
     <p class="sub">${esc([a.inicio?mkData(a.inicio)+(a.fim&&a.fim!==a.inicio?" a "+mkData(a.fim):""):"",a.local||""].filter(Boolean).join(" · "))}</p></div>
@@ -13626,12 +13659,13 @@ function vAcoesCard(){
   ${ehTarefa(a)?"":vMkMatriz(a)+vMkResultado(a)}
   <section class="bloco"><h2 class="sec">Envolvidos</h2>${(a.envolvidos_nomes||[]).length?`<div class="mk-rod">${a.envolvidos_nomes.map(x=>`<span class="mk-pessoa">${esc(x)}</span>`).join("")}</div>`:`<div class="vazio">Ninguém marcado ainda.</div>`}</section>
   <section class="bloco"><h2 class="sec">Arquivos e links</h2>
+    ${(()=>{const F=anex.filter(x=>/^image\/(jpeg|png|webp)$/.test(x.tipo||""));return F.length?`<div class="mk-fotos">${F.map(x=>{const u=mkUrl(x.path);return `<button class="mk-foto" data-a="mk-baixar" data-v="${esc(x.path)}" aria-label="Abrir ${esc(x.nome||"foto")}">${u?`<img src="${esc(u)}" alt="${esc(x.nome||"")}" loading="lazy">`:`<span class="meta">carregando…</span>`}</button>`;}).join("")}</div>`:"";})()}
     <div class="lista">${anex.map(x=>`<div class="linha"><div><button class="link" data-a="mk-baixar" data-v="${esc(x.path)}">${esc(x.nome||"arquivo")}</button><span class="meta">${esc(x.tipo||"")} · ${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div><div class="acoes" style="margin:0">${g&&/^image\//.test(x.tipo||"")?`<button class="link" data-a="mk-capa" data-v="${esc(x.path)}">${a.capa_path===x.path?"capa":"usar como capa"}</button>`:""}${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.path)}">remover</button>`:""}</div></div>`).join("")}
     ${links.map(x=>`<div class="linha"><div><a class="link" href="${esc(urlOk(x.url))}" target="_blank" rel="noopener">${esc(x.nome||x.url)} ↗</a><span class="meta">${esc(x.por_nome||"")} · ${fmtDataHora(x.em)}</span></div>${podeRem(x)?`<button class="link perigo" data-a="mk-rem" data-v="${esc(x.url)}">remover</button>`:""}</div>`).join("")||""}
     ${!anex.length&&!links.length?`<div class="vazio">Nenhum arquivo ou link ainda.</div>`:""}</div>
-    <div class="mk-anexar"><label class="btn sec pgd-up">Anexar arquivos<input type="file" multiple data-mkup="${a.id}" accept="${MK_MIMES.join(",")}"></label>
+    <div class="mk-anexar"><label class="btn sec pgd-up">Anexar arquivos<input type="file" multiple data-mkup="${a.id}" accept="${MK_MIMES.join(",")},.heic,.heif,.pdf"></label>
       <form id="f-mk-link" class="mk-link"><input id="mk_lurl" type="url" placeholder="https://…" aria-label="Link" required><input id="mk_lnome" placeholder="Nome do link (opcional)" aria-label="Nome do link" maxlength="160"><button class="btn sec" type="submit">Adicionar link</button></form></div>
-    <p class="meta">Contratos, notas fiscais, fotos, orçamentos e apresentações. Até 15 MB por arquivo.</p></section>
+    <p class="meta">Fotos (inclusive do iPhone), PDFs, contratos, notas fiscais, orçamentos e apresentações. Até 15 MB por arquivo.</p></section>
   ${S.mkEv&&S.mkEv.length?`<section class="bloco"><h2 class="sec">Histórico</h2><div class="lista">${S.mkEv.map(e=>`<div class="linha"><div><strong>${esc(e.evento)}</strong><span class="meta">${esc(e.detalhe||"")} · ${esc(e.quem_nome||"")} · ${fmtDataHora(e.em)}</span></div></div>`).join("")}</div></section>`:""}`;
 }
 function mkTarefaResumo(a){const g=ehMkt();const ent=a.resultado&&a.resultado.entrega;const tc=mkTemCusto(a);
@@ -13643,7 +13677,7 @@ function mkTarefaResumo(a){const g=ehMkt();const ent=a.resultado&&a.resultado.en
     ${tc?`<div class="metric"><span>Custo</span><strong>${fmtK0(Number(a.valor_real)>0?a.valor_real:a.valor_prev)}</strong><span class="meta">${Number(a.valor_real)>0?"realizado":"previsto"}</span></div>`:""}</div>
   <section class="bloco"><h2 class="sec">Entrega${g?` <button class="link" data-a="mk-editar" style="font-size:14px;margin-left:8px">editar</button>`:""}</h2>${ent?`<p style="white-space:pre-wrap;margin:0">${esc(ent)}</p>`:`<p class="meta" style="margin:0">Ainda sem entrega registrada. Quando a tarefa terminar, registre aqui o que saiu: link, arquivo ou data de publicação.</p>`}
     ${g?`<div class="acoes" style="margin:10px 0 0"><button class="link" type="button" data-a="mk-virar-acao" data-v="${a.id}">Transformar em ação com canal ou produtor</button><span class="meta">Ganha os campos completos de ação (local, RC, matriz, resultado em vendas). Checklist, comentários e arquivos continuam.</span></div>`:""}</section>`;}
-const MK_VOLTA={"acoes-quadro":"Quadro","acoes-solic":"Solicitações","acoes-cal":"Calendário","acoes-eventos":"Eventos e resultado","acoes-mapa":"Mapa da safra","acoes-evtmerc":"Eventos do mercado"};
+const MK_VOLTA={"rc-eventos":"Eventos dos RCs","acoes-quadro":"Quadro","acoes-solic":"Solicitações","acoes-cal":"Calendário","acoes-eventos":"Eventos e resultado","acoes-mapa":"Mapa da safra","acoes-evtmerc":"Eventos do mercado"};
 const MK_PASSOS=["Em análise","A fazer","Em andamento","Concluída"];
 function mkPainelHTML(a){
   if(!ehMkt()||a.agrupador)return "";
@@ -13784,7 +13818,7 @@ function mkVcLer(){const C=S.mkVerbaEd||[],g=id=>{const e=document.getElementByI
 function vAcoesCal(){
   if(!S.mk)return `<div class="carregando">Carregando…</div>`;
   const g=ehMkt(),m=mkCal(),[y,mo]=m.split("-").map(Number),ff=S.mkCalF||"Todas";
-  const A=S.mk.filter(a=>mkConta(a)&&(ff==="Todas"||(ff==="Atrasadas"?mkAtrasada(a):mkFin(a)===ff)));
+  const A=S.mk.filter(a=>mkConta(a)&&!mkEhRC(a)&&(ff==="Todas"||(ff==="Atrasadas"?mkAtrasada(a):mkFin(a)===ff)));
   const nomeMes=(t=>t.charAt(0).toUpperCase()+t.slice(1))(new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}));
   const prim=new Date(y,mo-1,1).getDay(),dias=new Date(y,mo,0).getDate(),h=mkHoje();
   const cel=[];for(let i=0;i<prim;i++)cel.push(`<div class="mk-dia vazio-d"></div>`);
@@ -14460,7 +14494,9 @@ function vBrindes(){
 const mkNum=v=>{const t=String(v==null?"":v).trim();if(!t)return 0;const n=parseFloat(t.replace(/\./g,"").replace(",","."));return isFinite(n)?n:NaN;};
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,v=b.dataset.v;
-  if(a==="mk-abrir"){if(S.pag!=="acoes-card")S.mkVolta=S.pag;S.mkPn=null;S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
+  if(a==="rce-f"){S.rceF=v;render();return;}
+  if(a==="rce-ir"){S.secao="conecta-rc";S.pag="rc-eventos";render();window.scrollTo(0,0);return;}
+  if(a==="mk-abrir"){if(S.secao==="conecta-rc"){S.secao="acoes-mkt";S.mkVolta="rc-eventos";S.mkPn=null;S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}if(S.pag!=="acoes-card")S.mkVolta=S.pag;S.mkPn=null;S.mkSel=+v;S.mkEdit=false;S.mkCustoEd=null;S.mkDel=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(+v);return;}
   if(a==="mk-nova"){if(!ehMkt())return;S.mkPre=null;S.mkNovaTarefa=v==="tarefa";S.pag="acoes-nova";render();window.scrollTo(0,0);return;}
   if(a==="mk-canc"){S.mkCanc=b.checked;render();return;}
   if(a==="mk-editar"){S.mkEdit=true;S.mkPn=null;render();return;}
@@ -14522,12 +14558,8 @@ document.addEventListener("change",async ev=>{
   if(t.dataset&&t.dataset.bdq){const it=(S.bd||[]).find(x=>String(x.id)===t.dataset.bdq);if(!it)return;let q=parseInt(String(t.value).replace(/\D/g,""),10)||0;q=Math.max(0,Math.min(bdDisp(it),q));const C=bdCarr();if(q)C[t.dataset.bdq]=q;else delete C[t.dataset.bdq];render();return;}
   if(t.id==="pjc_f"){const e=document.getElementById("pjc_fn");if(e)e.textContent=t.files&&t.files[0]?t.files[0].name:"";return;}
   if(t.dataset&&t.dataset.pjst){const pid=+t.dataset.pid;t.disabled=true;const {data,error}=await sb.rpc("pj_fase_status",{p_proj:pid,p_fid:t.dataset.pjst,p_status:t.value});if(error||!data){aviso("Não foi possível mudar a situação.");t.disabled=false;return;}S.pj=(S.pj||[]).map(x=>x.id===pid?{...x,dados:data,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||x.atualizado_por}:x);aviso("Situação atualizada.");render();return;}
-  if(t.dataset&&t.dataset.mkup){const id=+t.dataset.mkup,files=[...(t.files||[])];if(!files.length)return;t.disabled=true;let ok=0;
-    for(const f of files){if(f.size>15*1048576){aviso(`"${f.name}" passa de 15 MB.`);continue;}if(!MK_MIMES.includes(f.type)){aviso(`Tipo de arquivo não aceito: ${f.name}`);continue;}
-      const path=`acoes/${id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}-${mkLimpo(f.name)}`;aviso(`Enviando ${f.name}…`);
-      try{const up=await sb.storage.from("mkt").upload(path,f,{contentType:f.type,upsert:false});if(up.error)throw up.error;
-        const r=await sb.rpc("mkt_anexar",{p_acao:id,p_path:path,p_nome:f.name.slice(0,160),p_tipo:f.type,p_tam:f.size,p_url:null});if(r.error){await sb.storage.from("mkt").remove([path]);throw r.error;}ok++;}catch(e){aviso(`Não foi possível enviar ${f.name}.`);}}
-    if(ok)aviso(ok===1?"Arquivo anexado.":ok+" arquivos anexados.");S.mk=null;await carregarMkt();carregarMkCard(id);return;}
+  if(t.dataset&&t.dataset.mkup){const id=+t.dataset.mkup,files=[...(t.files||[])];if(!files.length)return;t.disabled=true;
+    await mkSubirArquivos(id,files);S.mk=null;await carregarMkt();carregarMkCard(id);return;}
   if(t.dataset&&t.dataset.bdfoto){if(!ehMkt())return;const id=+t.dataset.bdfoto,f=(t.files||[])[0];if(!f)return;if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size>15*1048576){aviso("Use uma imagem JPG, PNG ou WebP de até 15 MB.");return;}
     const path=`brindes/${id}/${Date.now().toString(36)}-${mkLimpo(f.name)}`;aviso("Enviando a foto…");
     try{const up=await sb.storage.from("mkt").upload(path,f,{contentType:f.type,upsert:false});if(up.error)throw up.error;const old=((S.bd||[]).find(x=>x.id===id)||{}).foto;
@@ -14549,11 +14581,13 @@ document.addEventListener("submit",async ev=>{
     const orig=id?(S.mk||[]).find(x=>x.id===id):null;if(orig&&(orig.status==="Solicitada"||orig.status==="Em análise")){d.status=orig.status;d.valor_prev=orig.valor_prev;d.fin=orig.fin;}
     const q=id?sb.from("mkt_acoes").update(d).eq("id",id).select().maybeSingle():sb.from("mkt_acoes").insert(d).select().maybeSingle();
     const {data,error}=await q;if(error||!data){if(btn)btn.disabled=false;aviso("Não foi possível salvar a ação.");return;}
+    {const fi=document.getElementById("mk_arqs");const fs=fi&&fi.files?[...fi.files]:[];if(!id&&fs.length){await mkSubirArquivos(data.id,fs);S.mk=null;await carregarMkt();S.mkSel=data.id;S.mkEdit=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(data.id);return;}}
     S.mk=id?S.mk.map(x=>x.id===id?data:x):[...(S.mk||[]),data];S.mkSel=data.id;S.mkEdit=false;S.pag="acoes-card";render();window.scrollTo(0,0);carregarMkCard(data.id);aviso(id?"Ação salva.":"Ação criada.");return;}
   if(f.id==="f-mk-solic"){const d={p_titulo:val("ms_tit"),p_tipo:val("ms_tp"),p_descricao:val("ms_desc"),p_local:val("ms_loc")||null,p_inicio:val("ms_ini")||null,p_fim:val("ms_fim")||null,p_valor:mkNum(val("ms_val"))||0,p_publico:val("ms_pub")||null,p_brindes:val("ms_br")||null,p_matriz:mzLer(f)};
     if(!d.p_titulo||!d.p_descricao){aviso("Conte o que é a ação e o objetivo.");return;}{const F=mzFaltam(d.p_matriz);if(F.length){aviso("Falta responder: "+F.join(", ")+".");return;}}if(btn)btn.disabled=true;
     const {data,error}=await sb.rpc("mkt_solicitar",d);if(error){if(btn)btn.disabled=false;aviso("Não foi possível enviar a solicitação.");return;}
     {const rc=val("ms_rc");if(rc&&data){try{await sb.rpc("mkt_set_rc",{p_id:+data,p_rc:rc});}catch(e){}}}
+    {const fi=document.getElementById("ms_arqs");const fs=fi&&fi.files?[...fi.files]:[];if(fs.length&&data)await mkSubirArquivos(+data,fs);}
     S.mk=null;await carregarMkt();S.mkSel=data;S.pag="acoes-card";carregarMkCard(data);render();window.scrollTo(0,0);aviso("Solicitação enviada ao Marketing.");return;}
   if(f.id==="f-mk-re"){if(!ehMkt())return;const re=val("mk_re");if(!re){aviso("Informe o termo de busca.");return;}try{new RegExp(re,"i");}catch(e){aviso("O termo de busca tem um caractere inválido.");return;}
     const {error}=await sb.rpc("mkt_mede_vendas",{p_id:S.mkSel,p_on:true,p_re:re});if(error){aviso("Não foi possível salvar o termo.");return;}S.ev=undefined;render();aviso("Termo salvo. O resultado muda na próxima leitura do CRM.");return;}
@@ -15320,7 +15354,8 @@ function renderApp(){
     if(S.pag==="rc-cadastros"&&!veRcCadastros())S.pag="rc-apresentacao";
     if(soCSRC()){if(!["rc-cand","rc-cadastros","rc-perfis","rc-perfil","rc-guia","rc-meus","rc-ranking","rc-mapa","rc-cobertura","rc-apresentacao","rc-faq"].includes(S.pag)||(S.pag==="rc-apresentacao"&&!S._csRcIni))S.pag="rc-cadastros";S._csRcIni=1;}
     if((S.pag==="rc-perfis"||S.pag==="rc-perfil")&&!vePerfisRC())S.pag="rc-apresentacao";
-    const corpo={"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-cand":vRCCand,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
+    if(S.pag==="rc-eventos"&&!veRcEventos())S.pag="rc-apresentacao";
+    const corpo={"rc-eventos":vRCEventos,"rc-perfis":vRCPerfis,"rc-perfil":vRCPerfil,"rc-cadastros":vRCCadastros,"rc-apresentacao":vRCApresentacao,"rc-curso":vRCCurso,"rc-etapa":vRCEtapa,precos:vPrecos,"rc-ranking":vRCRanking,"rc-meus":vRCMeus,"rc-mapa":vRCMapa,"rc-cobertura":vRCCobertura,"rc-calc":vRCCalc,"rc-credito":vRCCredito,"rc-faq":vRCFaq,"rc-solo":()=>veEmBreve()?vEmDev("solo"):vRCApresentacao(),"rc-guia":vRCGuia,"rc-cand":vRCCand,"rc-pedido":vNegs,"rc-proposta":vNegs,"rc-nps":()=>vCnNps("conecta_rc")}[S.pag]||vRCApresentacao;
     if(S.pag==="rc-nps"&&!cnVeAba("conecta_rc"))S.pag="rc-apresentacao";
     app.innerHTML=cabecalho()+subnavRC()+`<main${["rc-cand","rc-cadastros","rc-perfis","rc-perfil","rc-pedido","rc-proposta"].includes(S.pag)?' class="largo"':""}>${cnAviso("conecta_rc")}${corpo()}</main>`;
     if(S.pag==="rc-mapa"&&!RC_DEALS_CACHE){carregarRCMapa().then(render);}
