@@ -80,7 +80,8 @@ footer{margin-top:8px;font-size:13px;font-weight:700;color:var(--foot);opacity:.
   <button id="up" aria-label="Avançar">▲ Avançar</button>
   <button id="snd" aria-label="Som">Som ligado</button>
 </div>
-<footer>Barenbrug do Brasil · Cultive Confiança</footer>
+<footer>Barenbrug do Brasil · Cultive Confiança<a id="volta" href="../" hidden> · Voltar ao portal</a></footer>
+<script>try{if(/[?&]portal=1/.test(location.search)){const v=document.getElementById("volta");v.hidden=false;v.style.cssText="color:inherit;font-weight:900"}}catch(e){}</script>
 <script>
 {
 const W=360,H=600,N=8,LANE_TOP=120,LANE_H=50,START_TOP=520,CX=180,GAME_TIME=75;

@@ -1408,7 +1408,7 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .jr-dest strong{font-size:15px}
 @media(max-width:900px){.kb{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.kb{grid-template-columns:1fr}.kb-col{padding:8px 6px}}
-.jogo-m{max-width:640px;margin:0 auto;padding:8px 8px 24px}.jogo-f{display:block;width:100%;height:calc(100vh - 170px);height:calc(100dvh - 170px);min-height:520px;border:0;border-radius:14px;background:#FEDC00}.jogo-l{text-align:center;margin:8px 0 0;font-size:13px}
+.jogo-m{max-width:560px;margin:0 auto;padding:16px;min-height:calc(100dvh - 260px);display:flex;align-items:center;justify-content:center}.jogo-c{background:#FFDB00;border-radius:16px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}.jogo-c .titulo{margin:0;color:#1E1E1E}.jogo-c p{margin:0;max-width:34em;color:#1E1E1E}.jogo-b{font-size:1.15em;padding:14px 40px}
 .rcp summary{cursor:pointer;list-style:revert}.rcp-o,.rcp-t{margin:0;padding:0;display:flex;flex-direction:column;gap:12px}.rcp-o{list-style:none}.rcp-p{display:flex;gap:10px;align-items:flex-start}.rcp-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--amarelo,#FFDB00);color:#1E1E1E;font-weight:800;display:flex;align-items:center;justify-content:center}.rcp-c{min-width:0;flex:1}.rcp-c p{margin:4px 0 0}.rcp-l{margin:4px 0 6px;padding-left:18px;display:flex;flex-direction:column;gap:3px}.rcp-t{padding-left:20px;gap:8px}.rcp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.rcp-k{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;min-width:0}.rcp-k.on{border-color:#00A8E2;background:#f2fbfe}
 </style>
 </head>
@@ -1974,7 +1974,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126225114";
+const APP_VER="20261127075239";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -15246,7 +15246,7 @@ function renderApp(){
   }
   if(S.secao==="analise-solo"&&!veEmBreve()){S.secao=null;S.pag="hub";}
   if(S.secao==="analise-solo"){app.innerHTML=cabecalho()+subnavSimples("Análise de Solo")+`<main>${vEmDev("solo")}</main>`;return;}
-  if(S.secao==="jogo"){app.innerHTML=cabecalho()+subnavSimples("Rumo ao Pasto Híbrido")+`<main class="jogo-m"><iframe class="jogo-f" src="jogo/rumo-ao-pasto-hibrido.html" title="Jogo Rumo ao Pasto Híbrido" allow="autoplay; fullscreen"></iframe><p class="jogo-l"><a href="jogo/rumo-ao-pasto-hibrido.html" target="_blank" rel="noopener">Abrir o jogo em tela cheia</a></p></main>`;return;}
+  if(S.secao==="jogo"){app.innerHTML=cabecalho()+subnavSimples("Rumo ao Pasto Híbrido")+`<main class="jogo-m"><section class="jogo-c"><span class="rot">Jogo</span><h1 class="titulo">Rumo ao Pasto Híbrido</h1><p>Leve o boi do pasto degradado até o pasto híbrido Barenbrug desviando de cigarrinha, seca, geada, planta daninha e semente pirata. Cada partida dura 75 segundos.</p><a class="btn jogo-b" href="jogo/rumo-ao-pasto-hibrido.html?portal=1">Abrir o jogo</a><p class="meta">O jogo abre em tela cheia. Para voltar, toque em Voltar ao portal, embaixo do jogo.</p></section></main>`;return;}
   if(S.secao==="premio"){if(!vePremio()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Prêmio Cultive Confiança")+`<main class="largo">${S.prVolta?`<button class="link" data-a="pr-sair">‹ Voltar ao projeto</button>`:""}${vPremio()}</main>`;return;}
   if(S.secao==="proposito"){if(!vePropos()){S.secao=null;S.pag="hub";render();return;}app.innerHTML=cabecalho()+subnavSimples("Por que o Conecta existe")+`<main>${vProposito()}</main>`;return;}
   if(S.secao==="guia"){app.innerHTML=cabecalho()+subnavSimples("Guia do Portal")+`<main>${vGuia()}</main>`;return;}
