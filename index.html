@@ -1366,6 +1366,32 @@ label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px
 .pr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pr-full{grid-column:1/-1}.pr-grid textarea{width:100%;font:inherit}
 .pr-nota{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--linha)}.pr-nota select{width:auto;min-width:70px}
 @media(max-width:560px){.pr-grid{grid-template-columns:1fr}}
+.sl-wrap{min-width:0}.sl-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-start}.sl-st{display:flex;gap:6px;flex-wrap:wrap}
+.sl-list{display:grid;gap:18px;margin-top:10px}.sl-item{min-width:0}.sl-num{font-size:12px;color:var(--apagado);margin:0 0 4px}
+.sl-s{background:#fff;border:1px solid var(--linha);border-radius:10px;padding:22px 24px;min-width:0;overflow-wrap:anywhere;color:#1E1E1E;aspect-ratio:auto}
+.sl-s.sl-fam{background:#FFDB00;border-color:#e9c800}.sl-rot{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#1E1E1E;margin-bottom:4px}
+.sl-t{color:#00A8E2;font-size:26px;margin:0 0 4px;font-weight:800;text-wrap:balance}.sl-fam .sl-t{color:#1E1E1E}.sl-sub{margin:0 0 12px;color:#5A6B74}.sl-fam .sl-sub{color:#1E1E1E}
+.sl-capa{background:#FFDB00;border-color:#e9c800;min-height:280px;display:flex;flex-direction:column;justify-content:space-between}.sl-logo{font-weight:900;letter-spacing:.02em}.sl-traco{display:block;width:44px;height:5px;background:#00A8E2;margin:24px 0 10px}
+.sl-capa h2{font-size:clamp(40px,8vw,72px);line-height:1;margin:0 0 10px;font-weight:900;color:#1E1E1E}.sl-capa-sub{font-size:20px;font-weight:800;margin:0}.sl-capa-l,.sl-capa-r{margin:4px 0 0;font-size:13px}
+.sl-cards{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}.sl-cards.sl-n2{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-cards.sl-n4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sl-card{background:#F2F2F2;border-radius:8px;padding:12px 14px;min-width:0}.sl-fam .sl-card{background:#fff}.sl-card.sl-dest{background:#FFDB00}.sl-card strong{display:block;font-size:16px;margin-bottom:4px}.sl-card p{margin:0;font-size:14px}.sl-card ul{margin:0;padding-left:18px;font-size:14px}
+.sl-faixa{background:#FFDB00;border-radius:8px;padding:10px 14px;font-weight:800;margin-top:10px}.sl-nota{font-size:13px;color:#5A6B74;margin:10px 0 0}
+.sl-tab{width:100%!important;border-collapse:collapse;font-size:14px}.sl-tab th{background:#FFDB00;text-align:left;padding:8px;color:#1E1E1E;text-transform:none;letter-spacing:0;font-size:13px;border:0}.sl-tab td{border-bottom:1px solid #ddd;padding:8px;vertical-align:top}
+.sl-circ{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#F2F2F2;border-radius:10px;padding:14px;margin-bottom:10px;max-width:560px}
+.sl-c{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px;font-weight:900;font-size:clamp(12px,2.4vw,18px);line-height:1.1;position:relative}.sl-c small{position:absolute;bottom:14%;font-size:7px;letter-spacing:.1em;opacity:.6}
+.sl-am{background:#FFDB00;color:#1E1E1E}.sl-az{background:#00A8E2;color:#fff}.sl-br{background:#fff;color:#00A8E2;border:2px solid #FFDB00}
+.sl-tvs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sl-tvs figure{margin:0;min-width:0}.sl-tvs figcaption{font-size:13px;font-weight:700;margin-top:4px}
+.sl-tv{aspect-ratio:16/9;border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}.sl-tvr{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.sl-tv strong{font-size:clamp(15px,2.2vw,26px);line-height:1.1;font-weight:900}.sl-tv em{font-style:normal}.sl-am.sl-tv em{background:#00A8E2;color:#fff;padding:0 4px}.sl-az.sl-tv em{color:#FFDB00}.sl-br.sl-tv{color:#00A8E2}.sl-tv p{margin:0;font-size:11px}
+.sl-tvl{position:absolute;right:10px;bottom:8px;font-size:9px;background:#FFDB00;color:#1E1E1E;padding:2px 5px;font-weight:900;z-index:1}.sl-az .sl-tvl{background:#FFDB00}
+.sl-tvf{padding:0;gap:0}.sl-tvf .sl-tvr,.sl-tvf strong{padding:0 14px;background:#00A8E2;color:#fff}.sl-tvf .sl-tvr{padding-top:10px}.sl-tvf strong{padding-bottom:10px}.sl-tvf strong em{color:#FFDB00;background:none;padding:0}.sl-tvf img{flex:1;object-fit:cover;min-height:0;width:100%}
+.sl-kit{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px;margin-bottom:10px;align-items:start}.sl-kit img{width:100%;border-radius:8px;display:block}
+.sl-carta{border-top:4px solid #FFDB00;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);padding:12px;font-size:13px}.sl-carta h3{color:#00A8E2;margin:0 0 8px;font-size:18px}.sl-carta p{margin:0 0 6px}
+.sl-fpend{border:2px dashed var(--linha);border-radius:8px;padding:30px 12px;text-align:center;color:var(--apagado);font-size:14px}
+.sl-com{margin-top:6px}.sl-cl{border-left:3px solid var(--azul);padding:6px 0 6px 10px;margin-top:6px}.sl-ci p{margin:2px 0 8px}.sl-cf{display:grid;gap:6px}.sl-cf textarea,#f-apdec textarea{width:100%;font:inherit}
+.sl-dec{border:1px solid var(--linha);border-radius:10px;padding:12px;margin-top:16px;background:var(--branco)}#f-apdec{display:grid;gap:8px}.sl-opts{display:flex;gap:8px;flex-wrap:wrap}
+.sl-ed{border:1px dashed var(--azul);border-radius:8px;padding:10px;margin-top:6px;display:grid;gap:8px;background:var(--papel)}.sl-ed-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.sl-ed textarea{width:100%;font:inherit}.sl-sub-ed{border:1px solid var(--linha);border-radius:8px;padding:8px;display:grid;gap:6px;margin:0}
+@media(max-width:700px){.sl-s{padding:16px 14px}.sl-cards,.sl-cards.sl-n2,.sl-cards.sl-n4,.sl-tvs,.sl-kit{grid-template-columns:1fr}.sl-t{font-size:22px}}
 .jr-dest{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--amarelo-claro);border:1px solid #e9d66b;border-radius:10px;padding:10px 12px;margin:10px 0}
 .jr-dest strong{font-size:15px}
 @media(max-width:900px){.kb{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -1933,7 +1959,7 @@ function vTour(){
 }
 function paintTour(){let tl=document.getElementById("tourlayer");if(!tl){tl=document.createElement("div");tl.id="tourlayer";document.body.appendChild(tl);}tl.innerHTML=vTour();}
 
-const APP_VER="20261126205521";
+const APP_VER="20261126214534";
 async function sessaoConfere(){
   try{const {data}=await sb.auth.getSession();const id=data&&data.session&&data.session.user&&data.session.user.id;
     if(S.user&&id&&id!==S.user.id){aviso("Você entrou com outro usuário neste navegador. Esta aba vai recarregar; nada foi gravado.");setTimeout(()=>location.reload(),2500);return false;}
@@ -11159,6 +11185,79 @@ function pjComPainel(p,f){const L=((S.pjCom||{})[p.id]||[]).filter(c=>c.fid===f.
    <form class="pj-cf" id="f-pjc" data-fid="${esc(f.fid)}" data-pid="${p.id}"><label class="sr" for="pjc_t">Comentário</label><textarea id="pjc_t" rows="2" maxlength="4000" placeholder="Seu comentário sobre esta fase"></textarea><div class="pj-cfa"><label class="link" style="cursor:pointer">Anexar arquivo<input type="file" id="pjc_f" hidden></label><span class="meta" id="pjc_fn"></span><button class="btn" type="submit">Enviar</button></div></form></div>`;}
 function pjMinhas(){if(!S.user)return [];const out=[];(S.pj||[]).forEach(p=>((p.dados||{}).fases||[]).forEach(f=>{if(pjSouResp(f))out.push([p,f]);}));return out;}
 function pjLinhas(t){return String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);}
+/* ===== Apresentação para validação dentro do projeto: slides editáveis, comentários por slide e aprovação ===== */
+async function carregarPJMid(pid){(S.pjMid=S.pjMid||{})[pid]=S.pjMid[pid]||{};try{const {data}=await sb.from("mkt_proj_midia").select("id,nome,mime,b64").eq("projeto_id",pid);(data||[]).forEach(m=>{S.pjMid[pid][m.id]=`data:${m.mime};base64,${m.b64}`;});}catch(e){}S.pjMid[pid]._ok=1;render();}
+async function carregarPJAprov(pid){try{const {data}=await sb.from("mkt_proj_aprov").select("*").eq("projeto_id",pid).order("em");(S.pjApr=S.pjApr||{})[pid]=data||[];}catch(e){(S.pjApr=S.pjApr||{})[pid]=[];}render();}
+const apImg=(pid,id)=>id&&S.pjMid&&S.pjMid[pid]?S.pjMid[pid][id]:null;
+const apLin=t=>String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);
+const apTx=t=>{const L=apLin(t);return L.length>1?`<ul>${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p>${esc(L[0]||"")}</p>`;};
+const AP_COR={amarelo:"sl-am",azul:"sl-az",branco:"sl-br",cinza:"sl-ci"};
+function apSlideHTML(p,s){const pid=p.id;
+  if(s.tipo==="capa")return `<div class="sl-s sl-capa"><div class="sl-logo">BARENBRUG</div><div class="sl-capa-t"><span class="sl-traco"></span><h2>${esc(s.titulo||"")}</h2><p class="sl-capa-sub">${esc(s.sub||"")}</p><p class="sl-capa-l">${esc(s.linha||"")}</p></div><p class="sl-capa-r">${esc(s.rodape||"")}</p></div>`;
+  const tb=s.tabela&&s.tabela.trim()?apLin(s.tabela).map(l=>l.split("|").map(x=>x.trim())):null;
+  return `<div class="sl-s${s.fundo==="amarelo"?" sl-fam":""}">${s.rot?`<span class="sl-rot">${esc(s.rot)}</span>`:""}<h2 class="sl-t">${esc(s.titulo||"")}</h2>${s.sub?`<p class="sl-sub">${esc(s.sub)}</p>`:""}
+   ${(s.circulos||[]).length?`<div class="sl-circ">${s.circulos.map(c=>`<div class="sl-c ${AP_COR[c.cor]||"sl-am"}"><span>${esc(c.t)}</span><small>CONEXÃO</small></div>`).join("")}</div>`:""}
+   ${(s.tvs||[]).length?`<div class="sl-tvs">${s.tvs.map(t=>{const im=apImg(pid,t.img);return `<figure><div class="sl-tv ${AP_COR[t.cor]||"sl-am"}${im?" sl-tvf":""}"><span class="sl-tvr">— ${esc(t.rot||"")}</span><strong>${esc(t.titulo||"")}${t.destaque?` <em>${esc(t.destaque)}</em>`:""}</strong>${t.texto?`<p>${esc(t.texto)}</p>`:""}${im?`<img src="${im}" alt="">`:""}<b class="sl-tvl">BARENBRUG</b></div><figcaption>${esc(t.leg||"")}</figcaption></figure>`;}).join("")}</div>`:""}
+   ${s.img!==undefined||s.carta?`<div class="sl-kit">${apImg(pid,s.img)?`<img src="${apImg(pid,s.img)}" alt="${esc(s.img_alt||"")}">`:(s.img?`<div class="carregando">Carregando imagem…</div>`:(pjEdita()?`<div class="sl-fpend">Foto pendente: envie em Editar apresentação.</div>`:""))}${s.carta?`<div class="sl-carta"><span class="sl-rot">— ${esc(s.carta.rot||"")}</span><h3>${esc(s.carta.titulo||"")}</h3>${apLin(s.carta.texto).map(x=>`<p>${esc(x)}</p>`).join("")}</div>`:""}</div>`:""}
+   ${(s.cards||[]).length?`<div class="sl-cards sl-n${Math.min(s.cards.length,4)}">${s.cards.map(c=>`<div class="sl-card${c.d?" sl-dest":""}"><strong>${esc(c.t||"")}</strong>${apTx(c.x)}</div>`).join("")}</div>`:""}
+   ${tb?`<div class="tab"><table class="sl-tab"><thead><tr>${tb[0].map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${tb.slice(1).map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:""}
+   ${s.faixa?`<div class="sl-faixa">${esc(s.faixa)}</div>`:""}${s.nota?`<p class="sl-nota">${esc(s.nota)}</p>`:""}</div>`;}
+function apEditHTML(p,s,i){const v=k=>esc(s[k]||"");const pid=p.id;const M=Object.keys((S.pjMid||{})[pid]||{}).filter(k=>k!=="_ok");
+  const imgSel=(nm,val)=>`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select data-ape="${i}|${nm}" style="width:auto"><option value="">Sem imagem</option>${M.map(k=>`<option value="${k}" ${String(val)===k?"selected":""}>Imagem ${k}</option>`).join("")}</select><label class="btn sec pgd-up">Enviar foto<input type="file" accept="image/*" data-apimg="${pid}" data-apslot="${i}|${nm}"></label></div>`;
+  const inp=(k,l,area)=>`<div><label>${l}</label>${area?`<textarea rows="3" data-ape="${i}|${k}">${v(k)}</textarea>`:`<input data-ape="${i}|${k}" value="${v(k)}">`}</div>`;
+  return `<div class="sl-ed"><div class="sl-ed-top"><strong>Slide ${i+1}</strong><span><button type="button" class="link" data-a="sl-mov" data-v="${i}|-1">subir</button> · <button type="button" class="link" data-a="sl-mov" data-v="${i}|1">descer</button> · <button type="button" class="link" data-a="sl-del" data-v="${i}">apagar slide</button></span></div>
+   ${s.tipo==="capa"?inp("titulo","Título")+inp("sub","Frase")+inp("linha","Linha de apoio")+inp("rodape","Rodapé"):inp("rot","Rótulo (em cima do título)")+inp("titulo","Título")+inp("sub","Subtítulo")}
+   ${s.tipo!=="capa"?`<div class="dupla"><div><label>Fundo</label><select data-ape="${i}|fundo"><option value="">Branco</option><option value="amarelo" ${s.fundo==="amarelo"?"selected":""}>Amarelo</option></select></div><div>${inp("faixa","Faixa de destaque")}</div></div>`:""}
+   ${(s.circulos||[]).map((c,j)=>`<div class="dupla"><div><label>Móbile ${j+1}</label><input data-ape="${i}|circulos.${j}.t" value="${esc(c.t)}"></div><div><label>Cor</label><select data-ape="${i}|circulos.${j}.cor">${["amarelo","azul","branco"].map(o=>`<option ${c.cor===o?"selected":""}>${o}</option>`).join("")}</select></div></div>`).join("")}
+   ${(s.tvs||[]).map((t,j)=>`<fieldset class="sl-sub-ed"><legend>Arte ${j+1}</legend><div class="dupla"><div><label>Rótulo</label><input data-ape="${i}|tvs.${j}.rot" value="${esc(t.rot)}"></div><div><label>Cor</label><select data-ape="${i}|tvs.${j}.cor">${["amarelo","azul","branco"].map(o=>`<option ${t.cor===o?"selected":""}>${o}</option>`).join("")}</select></div></div>
+     <div class="dupla"><div><label>Título</label><input data-ape="${i}|tvs.${j}.titulo" value="${esc(t.titulo)}"></div><div><label>Destaque do título</label><input data-ape="${i}|tvs.${j}.destaque" value="${esc(t.destaque||"")}"></div></div>
+     <div class="dupla"><div><label>Texto</label><input data-ape="${i}|tvs.${j}.texto" value="${esc(t.texto||"")}"></div><div><label>Legenda</label><input data-ape="${i}|tvs.${j}.leg" value="${esc(t.leg||"")}"></div></div><div><label>Foto</label>${imgSel("tvs."+j+".img",t.img)}</div></fieldset>`).join("")}
+   ${s.img!==undefined?`<div><label>Imagem do slide</label>${imgSel("img",s.img)}</div>`:""}
+   ${s.carta?`<fieldset class="sl-sub-ed"><legend>Carta</legend><div><label>Título</label><input data-ape="${i}|carta.titulo" value="${esc(s.carta.titulo)}"></div><div><label>Texto (um parágrafo por linha)</label><textarea rows="4" data-ape="${i}|carta.texto">${esc(s.carta.texto)}</textarea></div></fieldset>`:""}
+   ${(s.cards||[]).map((c,j)=>`<fieldset class="sl-sub-ed"><legend>Quadro ${j+1} <button type="button" class="link" data-a="sl-cdel" data-v="${i}|${j}">remover</button></legend><div><label>Título</label><input data-ape="${i}|cards.${j}.t" value="${esc(c.t)}"></div><div><label>Texto (uma linha por item vira lista)</label><textarea rows="3" data-ape="${i}|cards.${j}.x">${esc(c.x)}</textarea></div><label class="check"><input type="checkbox" data-ape="${i}|cards.${j}.d" ${c.d?"checked":""}> Destacar em amarelo</label></fieldset>`).join("")}
+   ${s.tipo!=="capa"?`<button type="button" class="btn sec" data-a="sl-cadd" data-v="${i}">+ Quadro</button>`:""}
+   ${s.tabela!==undefined?`<div><label>Tabela (uma linha por linha, colunas separadas por |; a primeira linha é o cabeçalho)</label><textarea rows="6" data-ape="${i}|tabela">${esc(s.tabela)}</textarea></div>`:""}
+   ${s.tipo!=="capa"?inp("nota","Nota de rodapé",1):""}</div>`;}
+function pjApresHTML(p){const A=(p.dados||{}).apres;if(!A||!(A.slides||[]).length)return "";const pid=p.id;
+  if(!(S.pjMid||{})[pid])carregarPJMid(pid);if(!(S.pjApr||{})[pid]){(S.pjApr=S.pjApr||{})[pid]=[];carregarPJAprov(pid);}
+  const ed=S.apEd===pid&&pjEdita();const W=ed?S.apW:A;const C=(S.pjCom||{})[pid]||[];const ver=A.versao||1;
+  const Ap=(S.pjApr[pid]||[]).filter(x=>x.versao===ver);const meu=Ap.find(x=>x.user_id===(S.user&&S.user.id));
+  const aprov=Ap.filter(x=>x.decisao==="aprovado").length,ajus=Ap.filter(x=>x.decisao==="ajustes").length;
+  return `<section class="bloco sl-wrap" id="pj_apres"><div class="sl-head"><div><span class="rot">Apresentação para validação · versão ${ver}</span><h2 class="sec" style="margin:2px 0">${esc(A.titulo||"Apresentação")}</h2>
+    <p class="meta" style="margin:0">${esc(A.texto||"Veja os slides, comente onde quiser ajustar e, no fim, aprove ou peça ajustes.")}</p></div>
+    <div class="sl-st">${aprov?`<span class="st-tag st-verde">${aprov} ${aprov===1?"aprovação":"aprovações"}</span>`:""}${ajus?`<span class="st-tag st-amarelo">${ajus} ${ajus===1?"pedido":"pedidos"} de ajuste</span>`:""}${!Ap.length?`<span class="st-tag st-cinza">Aguardando validação</span>`:""}</div></div>
+   ${pjEdita()?`<div class="acoes" style="margin:6px 0">${ed?`<button class="btn" data-a="sl-salvar" data-v="${pid}">Salvar slides</button><button class="btn sec" data-a="sl-nova" data-v="${pid}">Salvar como nova versão</button><button class="btn sec" data-a="sl-sadd">+ Slide</button><label class="btn sec pgd-up">Enviar imagem<input type="file" accept="image/*" data-apimg="${pid}"></label><button class="btn sec" data-a="sl-cancel">Cancelar</button>`:`<button class="btn sec" data-a="sl-editar" data-v="${pid}">Editar apresentação</button>`}</div>${ed?`<p class="meta">"Salvar slides" corrige esta versão. "Salvar como nova versão" abre uma nova rodada de validação: as aprovações anteriores ficam no histórico.</p>`:""}`:""}
+   <div class="sl-list">${W.slides.map((s,i)=>{const cs=C.filter(c=>c.fid==="slide:"+s.id);const ab=(S.apAb||{})[s.id];
+     return `<div class="sl-item"><div class="sl-num">${i+1} / ${W.slides.length}</div>${apSlideHTML(p,s)}${ed?apEditHTML(p,s,i):`<div class="sl-com"><button class="link" data-a="sl-coms" data-v="${s.id}">${cs.length?`Comentários (${cs.length})`:"Comentar este slide"}</button>
+       ${ab||cs.length?`<div class="sl-cl"${ab?"":" hidden"}>${cs.map(c=>`<div class="sl-ci"><strong>${esc(c.nome||"")}</strong> <span class="meta">${esc(fmtDataHora(c.criado_em))}</span><p>${esc(c.texto||"")}</p></div>`).join("")}
+       <form class="sl-cf" data-pid="${pid}" data-fid="slide:${s.id}"><textarea rows="2" maxlength="2000" placeholder="O que você ajustaria neste slide?" aria-label="Comentário"></textarea><button class="btn sec" type="submit">Enviar comentário</button></form></div>`:""}</div>`}</div>`;}).join("")}</div>
+   ${ed?"":`<div class="sl-dec"><h3 style="margin:0 0 4px">Sua validação da versão ${ver}</h3>
+    ${meu?`<p class="meta" style="margin:0 0 6px">Você ${meu.decisao==="aprovado"?"aprovou":"pediu ajustes"} em ${esc(fmtDataHora(meu.em))}. Pode mudar abaixo.</p>`:""}
+    <form id="f-apdec" data-pid="${pid}" data-ver="${ver}"><div class="sl-opts"><label class="pir-op${meu&&meu.decisao==="aprovado"?" sel":""}"><input type="radio" name="apd" value="aprovado" ${meu&&meu.decisao==="aprovado"?"checked":""}> Aprovado</label><label class="pir-op${meu&&meu.decisao==="ajustes"?" sel":""}"><input type="radio" name="apd" value="ajustes" ${meu&&meu.decisao==="ajustes"?"checked":""}> Precisa de ajustes</label></div>
+    <textarea id="apd_obs" rows="3" maxlength="2000" placeholder="Comentário geral (obrigatório se pedir ajustes)">${esc((meu&&meu.obs)||"")}</textarea><button class="btn" type="submit">Enviar validação</button></form>
+    ${Ap.length?`<div class="resp-l" style="margin-top:10px">${Ap.map(x=>`<div class="resp-i${x.decisao==="ajustes"?" al":""}"><span class="meta">${esc(fmtDataHora(x.em))}</span><strong>${esc(x.nome||"")}: ${x.decisao==="aprovado"?"aprovado":"precisa de ajustes"}</strong>${x.obs?`<span>${esc(x.obs)}</span>`:""}</div>`).join("")}</div>`:""}
+    ${(S.pjApr[pid]||[]).some(x=>x.versao<ver)?`<details class="meta" style="margin-top:8px"><summary>Validações das versões anteriores</summary>${(S.pjApr[pid]||[]).filter(x=>x.versao<ver).map(x=>`<p style="margin:4px 0">Versão ${x.versao} · ${esc(x.nome||"")}: ${x.decisao==="aprovado"?"aprovado":"ajustes"}${x.obs?" · "+esc(x.obs):""}</p>`).join("")}</details>`:""}</div>`}
+  </section>`;}
+const apSet=(o,path,val)=>{const k=path.split(".");let x=o;for(let i=0;i<k.length-1;i++){x=x[/^\d+$/.test(k[i])?+k[i]:k[i]];}x[k[k.length-1]]=val;};
+document.addEventListener("input",ev=>{const t=ev.target;if(!t||!t.dataset||!t.dataset.ape||!S.apW)return;const [i,pa]=[t.dataset.ape.split("|")[0],t.dataset.ape.split("|").slice(1).join("|")];apSet(S.apW.slides[+i],pa,t.type==="checkbox"?t.checked:t.value);});
+document.addEventListener("change",async ev=>{const t=ev.target;if(!t||!t.dataset)return;
+  if(t.dataset.ape&&S.apW){const i=+t.dataset.ape.split("|")[0],pa=t.dataset.ape.split("|").slice(1).join("|");apSet(S.apW.slides[i],pa,t.type==="checkbox"?t.checked:t.value);if(t.tagName==="SELECT"||t.type==="checkbox"){const w=window.scrollY;render();window.scrollTo(0,w);}return;}
+  if(t.dataset.apimg){const pid=+t.dataset.apimg;const f=t.files&&t.files[0];if(!f)return;if(!/^image\//.test(f.type)){aviso("Envie uma imagem.");return;}
+    const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);});const im=await new Promise((r,j)=>{const x=new Image();x.onload=()=>r(x);x.onerror=j;x.src=url;}).catch(()=>null);if(!im){aviso("Não foi possível ler a imagem.");return;}
+    const sc=Math.min(1,1400/Math.max(im.width,im.height));const cv=document.createElement("canvas");cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
+    const du=cv.toDataURL("image/jpeg",0.82);const b64=du.split(",")[1];if(b64.length>1400000){aviso("Imagem grande demais.");return;}
+    const {data,error}=await sb.from("mkt_proj_midia").insert({projeto_id:pid,nome:f.name.slice(0,120),mime:"image/jpeg",b64,por:S.user.id}).select("id").maybeSingle();if(error||!data){aviso("Não foi possível enviar a imagem.");return;}
+    ((S.pjMid=S.pjMid||{})[pid]=S.pjMid[pid]||{})[data.id]=du;if(t.dataset.apslot&&S.apW){const i=+t.dataset.apslot.split("|")[0];apSet(S.apW.slides[i],t.dataset.apslot.split("|").slice(1).join("|"),String(data.id));}const w=window.scrollY;render();window.scrollTo(0,w);aviso(t.dataset.apslot?"Foto colocada no slide. Clique em Salvar slides.":"Imagem "+data.id+" enviada. Escolha-a no slide.");}});
+document.addEventListener("submit",async ev=>{const f=ev.target;if(!f)return;
+  if(f.classList&&f.classList.contains("sl-cf")){ev.preventDefault();ev.stopImmediatePropagation();const tx=(f.querySelector("textarea").value||"").trim();if(!tx){aviso("Escreva o comentário.");return;}const pid=+f.dataset.pid;
+    const {error}=await sb.from("mkt_proj_coment").insert({projeto_id:pid,fid:f.dataset.fid,texto:tx,user_id:S.user.id,nome:(S.profile&&S.profile.nome)||""});if(error){aviso("Não foi possível comentar.");return;}(S.apAb=S.apAb||{})[f.dataset.fid.slice(6)]=true;aviso("Comentário enviado.");carregarPJCom(pid);return;}
+  if(f.id==="f-apdec"){ev.preventDefault();ev.stopImmediatePropagation();const pid=+f.dataset.pid,ver=+f.dataset.ver;const d=(f.querySelector("input[name=apd]:checked")||{}).value;const obs=(document.getElementById("apd_obs").value||"").trim();
+    if(!d){aviso("Escolha Aprovado ou Precisa de ajustes.");return;}if(d==="ajustes"&&!obs){aviso("Conte no comentário o que precisa ajustar.");return;}
+    const {error}=await sb.from("mkt_proj_aprov").upsert({projeto_id:pid,versao:ver,user_id:S.user.id,decisao:d,obs:obs||null},{onConflict:"projeto_id,versao,user_id"});if(error){aviso("Não foi possível registrar.");return;}aviso(d==="aprovado"?"Aprovação registrada. Obrigado.":"Pedido de ajuste registrado.");carregarPJAprov(pid);}});
+async function apGravar(pid,nova){const p=(S.pj||[]).find(x=>x.id===pid);if(!p||!S.apW)return;const A={...S.apW};if(nova)A.versao=(A.versao||1)+1;const dados={...(p.dados||{}),apres:A};
+  const {data,error}=await sb.from("mkt_projetos").update({dados,atualizado_em:new Date().toISOString(),atualizado_por:(S.profile&&S.profile.nome)||""}).eq("id",pid).select().maybeSingle();if(error||!data){aviso("Não foi possível salvar a apresentação.");return;}
+  Object.assign(p,data);S.apEd=null;S.apW=null;render();aviso(nova?"Nova versão "+A.versao+" aberta para validação.":"Slides salvos.");}
+
 function vPJDet(p){const d=p.dados||{};if(!(S.pjCom||{})[p.id]){(S.pjCom=S.pjCom||{})[p.id]=[];carregarPJCom(p.id);}const ed=pjEdita();const F=(d.fases||[]).slice().sort((a,b)=>String(a.ini||a.depois||"9999").localeCompare(String(b.ini||b.depois||"9999")));const M=pjMarcos(d.marcos);
   const feitas=F.filter(f=>f.status==="Feito").length;
   return `<button class="link" data-a="pj-lista">‹ Todos os projetos</button>
@@ -11168,6 +11267,7 @@ function vPJDet(p){const d=p.dados||{};if(!(S.pjCom||{})[p.id]){(S.pjCom=S.pjCom
     ${d.abrir_secao==="premio"&&vePremio()?`<div class="acoes"><button class="btn" data-a="pj-abre-premio">Abrir o Prêmio Cultive Confiança</button><span class="meta">por que fazer, regulamento, critérios, ficha e casos</span></div>`:""}
     ${ed?`<div class="acoes"><button class="btn" data-a="pj-edit" data-v="${p.id}">Editar projeto</button><span class="meta">fases, datas, responsáveis, marcos e quadros</span></div>`:""}</section>
   ${pjEscopoHTML(p)}
+  ${pjApresHTML(p)}
   ${lcRespostasHTML(p)}
   ${(()=>{const Mi=F.filter(f=>pjSouResp(f));if(!Mi.length)return "";const ab=Mi.filter(f=>f.status!=="Feito");return `<section class="bloco pj-minhas"><h2 class="sec" style="margin:0 0 4px">Suas fases neste projeto</h2><p class="meta" style="margin:0 0 8px">${ab.length?`${ab.length} em aberto. Mude a situação e comente direto na fase.`:"Todas as suas fases estão feitas."}</p><ul class="guia-l">${Mi.map(f=>`<li><button type="button" class="link" data-a="pj-ir" data-v="${p.id}" data-f="${esc(f.fid||"")}"><strong>${esc(f.nome)}</strong></button><span>${esc(f.status||"A fazer")}${f.fim?" · até "+esc(pjF(f.fim)):""}</span></li>`).join("")}</ul></section>`;})()}
   ${F.length?`<section class="bloco"><h2 class="sec">Linha do tempo</h2><p class="meta">Cada faixa é um público ou uma frente. Clique numa barra para abrir a fase. Os números marcam os marcos, com o nome na lista abaixo do gráfico, e a linha azul é hoje. No celular, arraste o gráfico para o lado.</p>${pjGantt(p)}</section>`:""}
@@ -15331,6 +15431,16 @@ if(a==="secao"){if(!secaoLiberada(v)){aviso("Conclua os cursos obrigatórios par
   if(a==="rcc-apagar"){if(!rcCadGestor())return;if(S.rccApagar!==v){S.rccApagar=v;render();setTimeout(()=>{if(S.rccApagar===v){S.rccApagar=null;render();}},8000);return;}S.rccApagar=null;
     const {data:velho,error}=await sb.rpc("rc_cad_contrato",{p_user:v,p_acao:"apagar",p_path:null,p_nome:null,p_data:null});if(error){aviso("Não foi possível apagar: "+(error.message||"erro"));return;}
     const rm=await sb.storage.from("rc-cadastro").remove([velho]);S.rcCads=null;render();aviso(!rm.error&&(rm.data||[]).length?"Arquivo do contrato apagado. Anexe o contrato certo.":"O contrato saiu do cadastro, mas o arquivo não foi apagado. Avise o administrador.");return;}
+  if(a==="sl-editar"){const pr=(S.pj||[]).find(x=>x.id===+v);if(!pr||!pjEdita())return;S.apEd=pr.id;S.apW=JSON.parse(JSON.stringify(pr.dados.apres));render();return;}
+  if(a==="sl-cancel"){S.apEd=null;S.apW=null;render();return;}
+  if(a==="sl-salvar"){await apGravar(+v,false);return;}
+  if(a==="sl-nova"){await apGravar(+v,true);return;}
+  if(a==="sl-sadd"){if(!S.apW)return;S.apW.slides.push({id:Date.now().toString(36),rot:"",titulo:"Novo slide",sub:"",cards:[{t:"Título",x:"Texto"}],nota:""});render();return;}
+  if(a==="sl-mov"){if(!S.apW)return;const [i,d]=v.split("|").map(Number);const j=i+d;const L=S.apW.slides;if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];const w=window.scrollY;render();window.scrollTo(0,w);return;}
+  if(a==="sl-del"){if(!S.apW)return;if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="confirmar: apagar";return;}S.apW.slides.splice(+v,1);render();return;}
+  if(a==="sl-cdel"){if(!S.apW)return;const [i,j]=v.split("|").map(Number);S.apW.slides[i].cards.splice(j,1);const w=window.scrollY;render();window.scrollTo(0,w);return;}
+  if(a==="sl-cadd"){if(!S.apW)return;const sl=S.apW.slides[+v];(sl.cards=sl.cards||[]).push({t:"",x:""});const w=window.scrollY;render();window.scrollTo(0,w);return;}
+  if(a==="sl-coms"){(S.apAb=S.apAb||{})[v]=!S.apAb[v];const w=window.scrollY;render();window.scrollTo(0,w);return;}
   if(a==="pj-abre-premio"){if(!vePremio())return;S.prVolta={secao:S.secao,pag:S.pag};S.secao="premio";S.prAba="porque";S.prEd=undefined;render();window.scrollTo(0,0);return;}
   if(a==="pr-sair"){const v0=S.prVolta||{};S.prVolta=null;S.secao=v0.secao||null;S.pag=v0.pag||"hub";render();window.scrollTo(0,0);return;}
   if(a==="pr-aba"){S.prAba=v;S.prEd=undefined;render();return;}
